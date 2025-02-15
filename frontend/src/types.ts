@@ -5,6 +5,7 @@ export interface Ingredient {
     Name: string;
     Quantity: number;
     Unit: string;
+    ID: number;
 }
 
 export interface Meal {

@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/lib/pq"
@@ -28,6 +29,7 @@ const MealsQueryFragment = `
 		m.relative_effort,
 		m.last_planned,
 		m.red_meat,
+		mi.id AS ingredient_id,
 		mi.name,
 		CASE WHEN mi.quantity = '' THEN NULL ELSE mi.quantity::numeric END AS quantity,
 		mi.unit
@@ -36,8 +38,21 @@ const MealsQueryFragment = `
 `
 
 // GetMealsByIDsQuery is the query used to retrieve meals (and their ingredients) for specific meal IDs.
-const GetMealsByIDsQuery = MealsQueryFragment + `
-	WHERE m.id = ANY($1);
+const GetMealsByIDsQuery = `
+	SELECT
+		m.id,
+		m.meal_name,
+		m.relative_effort,
+		m.last_planned,
+		m.red_meat,
+		mi.id AS ingredient_id,
+		mi.name,
+		CASE WHEN mi.quantity = '' THEN NULL ELSE mi.quantity::numeric END AS quantity,
+		mi.unit
+	FROM meals m
+	LEFT JOIN ingredients mi ON m.id = mi.meal_id
+	WHERE m.id = ANY($1)
+	ORDER BY m.id, mi.id;
 `
 
 // GetAllMealsQuery is the query used to retrieve all meals (and their ingredients).
@@ -52,49 +67,61 @@ const GetRandomMealExcludingQuery = MealsQueryFragment + `
 
 // processMealRows converts the SQL rows into a slice of Meal pointers.
 func processMealRows(rows *sql.Rows) ([]*Meal, error) {
-	// Use a map to group rows per meal.
-	mealsMap := make(map[int]*Meal)
+	var meals []*Meal
 	for rows.Next() {
-		var id int
-		var mealName string
-		var relativeEffort int
-		var lastPlanned sql.NullTime
-		var redMeat bool
-		var inName sql.NullString
-		var quantity sql.NullFloat64
-		var unit sql.NullString
-
-		if err := rows.Scan(&id, &mealName, &relativeEffort, &lastPlanned, &redMeat, &inName, &quantity, &unit); err != nil {
+		var (
+			mealID         int
+			mealName       string
+			relativeEffort int
+			nt             sql.NullTime // scan as sql.NullTime
+			redMeat        bool
+			ingredientID   sql.NullInt64 // using sql.NullInt64 since a meal may have 0 ingredients
+			ingredientName sql.NullString
+			quantity       sql.NullFloat64
+			unit           sql.NullString
+		)
+		err := rows.Scan(&mealID, &mealName, &relativeEffort, &nt, &redMeat,
+			&ingredientID, &ingredientName, &quantity, &unit)
+		if err != nil {
+			log.Printf("processMealRows: error scanning row (mealID=%d): %v", mealID, err)
 			return nil, err
 		}
 
-		meal, exists := mealsMap[id]
-		if !exists {
-			meal = &Meal{
-				ID:             id,
+		// Find or create the meal object
+		var m *Meal
+		for _, meal := range meals {
+			if meal.ID == mealID {
+				m = meal
+				break
+			}
+		}
+		if m == nil {
+			var lp time.Time
+			if nt.Valid {
+				lp = nt.Time
+			} else {
+				lp = time.Time{}
+			}
+			m = &Meal{
+				ID:             mealID,
 				MealName:       mealName,
 				RelativeEffort: relativeEffort,
+				LastPlanned:    lp,
 				RedMeat:        redMeat,
 				Ingredients:    []Ingredient{},
 			}
-			if lastPlanned.Valid {
-				meal.LastPlanned = lastPlanned.Time
-			}
-			mealsMap[id] = meal
+			meals = append(meals, m)
 		}
 
-		// Append ingredient if present.
-		if inName.Valid && inName.String != "" {
+		// Only add ingredient if ingredientID is valid (not NULL)
+		if ingredientID.Valid {
 			ing := Ingredient{
-				Name: inName.String,
+				ID:       int(ingredientID.Int64),
+				Name:     ingredientName.String,
+				Quantity: quantity.Float64,
+				Unit:     unit.String,
 			}
-			if quantity.Valid {
-				ing.Quantity = quantity.Float64
-			}
-			if unit.Valid {
-				ing.Unit = unit.String
-			}
-			meal.Ingredients = append(meal.Ingredients, ing)
+			m.Ingredients = append(m.Ingredients, ing)
 		}
 	}
 
@@ -102,10 +129,6 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 		return nil, err
 	}
 
-	var meals []*Meal
-	for _, meal := range mealsMap {
-		meals = append(meals, meal)
-	}
 	return meals, nil
 }
 
@@ -113,6 +136,7 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 func GetMealsByIDs(db *sql.DB, ids []int) ([]*Meal, error) {
 	rows, err := db.Query(GetMealsByIDsQuery, pq.Array(ids))
 	if err != nil {
+		log.Printf("GetMealsByIDs: error executing query: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -123,6 +147,7 @@ func GetMealsByIDs(db *sql.DB, ids []int) ([]*Meal, error) {
 func GetAllMeals(db *sql.DB) ([]*Meal, error) {
 	rows, err := db.Query(GetAllMealsQuery)
 	if err != nil {
+		log.Printf("GetAllMeals: error executing query: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -145,4 +170,44 @@ func SwapMeal(currentMealID int, db *sql.DB) (*Meal, error) {
 		return nil, errors.New("no alternative meal found")
 	}
 	return meals[0], nil
+}
+
+// UpdateMealIngredient updates a single ingredient for the specified meal using its ID.
+func UpdateMealIngredient(db *sql.DB, mealID int, ingredient Ingredient) error {
+	if ingredient.ID == 0 {
+		err := errors.New("ingredient ID not provided")
+		log.Printf("UpdateMealIngredient: %v (mealID=%d, ingredient=%+v)", err, mealID, ingredient)
+		return err
+	}
+
+	res, err := db.Exec("UPDATE ingredients SET name=$1, quantity=$2, unit=$3 WHERE id=$4 AND meal_id=$5",
+		ingredient.Name, ingredient.Quantity, ingredient.Unit, ingredient.ID, mealID)
+	if err != nil {
+		log.Printf("UpdateMealIngredient: error executing update (mealID=%d, ingredientID=%d): %v", mealID, ingredient.ID, err)
+		return err
+	}
+	rowsAffected, _ := res.RowsAffected()
+	log.Printf("UpdateMealIngredient: updated ingredientID=%d in mealID=%d, rowsAffected=%d", ingredient.ID, mealID, rowsAffected)
+	return nil
+}
+
+// DeleteMealIngredient deletes an ingredient by its ID.
+func DeleteMealIngredient(db *sql.DB, ingredientID int) error {
+	result, err := db.Exec("DELETE FROM ingredients WHERE id = $1", ingredientID)
+	if err != nil {
+		log.Printf("DeleteMealIngredient: error executing delete for ingredientID=%d: %v", ingredientID, err)
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("DeleteMealIngredient: error getting rows affected for ingredientID=%d: %v", ingredientID, err)
+		return err
+	}
+	if rowsAffected == 0 {
+		err := errors.New("ingredient not found")
+		log.Printf("DeleteMealIngredient: %v for ingredientID=%d", err, ingredientID)
+		return err
+	}
+	log.Printf("DeleteMealIngredient: deleted ingredientID=%d, rowsAffected=%d", ingredientID, rowsAffected)
+	return nil
 }
