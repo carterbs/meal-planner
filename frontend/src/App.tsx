@@ -40,10 +40,19 @@ const App: React.FC = () => {
     };
 
     const getShoppingList = () => {
-        fetch("/api/shoppinglist")
+        if (!mealPlan) return; // Ensure the meal plan is loaded
+        // Build an array of meal IDs from the stored plan.
+        const mealIDs = Object.values(mealPlan).map((meal) => meal.id);
+        fetch("/api/shoppinglist", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ plan: mealIDs }),
+        })
             .then((res) => res.json())
             .then((data: string[]) => setShoppingList(data))
-            .catch((err) => console.error("Error fetching shopping list:", err));
+            .catch((err) => console.error(err));
     };
 
     return (
@@ -62,9 +71,9 @@ const App: React.FC = () => {
                         {Object.entries(mealPlan).map(([day, meal]) => (
                             <tr key={day}>
                                 <td>{day}</td>
-                                <td>{meal}</td>
+                                <td>{meal.mealName}</td>
                                 <td>
-                                    {day !== "Friday" && meal !== "Eating out" && (
+                                    {day !== "Friday" && meal.mealName !== "Eating out" && (
                                         <button onClick={() => swapMeal(day)}>Swap Meal</button>
                                     )}
                                 </td>

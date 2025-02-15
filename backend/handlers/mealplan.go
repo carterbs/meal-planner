@@ -21,10 +21,17 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Create an output map from day to meal name
-	output := make(map[string]string)
+	// Create an output map from day to a simplified meal object.
+	type OutputMeal struct {
+		ID       int    `json:"id"`
+		MealName string `json:"mealName"`
+	}
+	output := make(map[string]OutputMeal)
 	for day, meal := range plan {
-		output[day] = meal.MealName
+		output[day] = OutputMeal{
+			ID:       meal.ID,
+			MealName: meal.MealName,
+		}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(output)
@@ -83,13 +90,32 @@ func SwapMeal(w http.ResponseWriter, r *http.Request) {
 
 // GetShoppingList returns all ingredients for the planned meals (no aggregation yet, per MVP).
 func GetShoppingList(w http.ResponseWriter, r *http.Request) {
-	// For now, we return a dummy static shopping list.
-	shoppingList := []string{
-		"1 cup unsalted butter",
-		"4 flats of party rolls",
-		"3 tablespoons yellow mustard",
-		// Additional ingredients…
+	// Decode the plan payload from the frontend.
+	type PlanPayload struct {
+		Plan []int `json:"plan"` // array of meal IDs
 	}
+	var payload PlanPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	// Retrieve the meals for the provided IDs.
+	meals, err := models.GetMealsByIDs(DB, payload.Plan)
+	if err != nil {
+		http.Error(w, "Error retrieving meals: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Log the retrieved meals.
+	log.Printf("Retrieved meals for shopping list: %+v", meals)
+
+	// Generate the shopping list from the retrieved meals.
+	shoppingList := models.GenerateShoppingListFromMeals(meals)
+
+	// Log the generated shopping list.
+	log.Printf("Generated shopping list: %+v", shoppingList)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(shoppingList)
 }

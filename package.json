@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "start": "concurrently \"yarn --cwd frontend start\" \"cd backend && go run main.go\""
+        "start": "concurrently \"yarn --cwd frontend start\" \"cd backend && go run main.go\"",
+        "test:backend": "cd backend && go test -v ./..."
     },
     "devDependencies": {
         "concurrently": "^7.6.0"

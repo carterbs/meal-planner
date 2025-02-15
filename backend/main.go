@@ -61,7 +61,7 @@ func main() {
 	r.Get("/api/mealplan", handlers.GetMealPlan)
 	r.Post("/api/mealplan/finalize", handlers.FinalizeMealPlan)
 	r.Post("/api/mealplan/swap", handlers.SwapMeal)
-	r.Get("/api/shoppinglist", handlers.GetShoppingList)
+	r.Post("/api/shoppinglist", handlers.GetShoppingList)
 
 	log.Println("Backend server starting on :8080")
 	http.ListenAndServe(":8080", r)

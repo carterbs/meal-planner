@@ -1,8 +1,13 @@
 // frontend/src/types.ts
 
 // Define the overall MealPlan type (mapping day to meal description)
+export interface Meal {
+    id: number;
+    mealName: string;
+}
+
 export interface MealPlan {
-    [day: string]: string;
+    [day: string]: Meal;
 }
 
 // Define the response type when swapping a meal
