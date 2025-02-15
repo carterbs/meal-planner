@@ -27,13 +27,13 @@ func TestGetAllMealsHandler(t *testing.T) {
 	// Setup rows for two meals:
 	// Meal A: one ingredient ("Eggs") with empty quantity.
 	// Meal B: two rows; one for "Milk" with valid quantity and one for "Bread" with empty quantity.
-	now := time.Now().Format(time.RFC3339)
+	now := time.Now()
 	rows := sqlmock.NewRows([]string{
 		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "name", "quantity", "unit",
 	}).
-		AddRow(1, "Meal A", 2, nil, false, "Eggs", nil, "dozen").
+		AddRow(1, "Meal A", 2, now, false, "Eggs", 0, "dozen").
 		AddRow(2, "Meal B", 3, now, true, "Milk", 2.5, "gallon").
-		AddRow(2, "Meal B", 3, now, true, "Bread", nil, "loaf")
+		AddRow(2, "Meal B", 3, now, true, "Bread", 0, "loaf")
 
 	// Expect the shared query for all meals.
 	mock.ExpectQuery(regexp.QuoteMeta(models.GetAllMealsQuery)).WillReturnRows(rows)

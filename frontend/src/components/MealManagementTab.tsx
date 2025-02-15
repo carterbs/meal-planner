@@ -1,5 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Meal } from "../types";
+import {
+    Box,
+    Typography,
+    Grid,
+    Paper,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemButton,
+    Card,
+    CardContent
+} from "@mui/material";
 
 interface MealManagementTabProps {
     showToast: (message: string) => void;
@@ -17,73 +29,71 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     }, []);
 
     return (
-        <div>
-            <h2>Meal Library</h2>
-            <div style={{ display: "flex", gap: "20px" }}>
-                <div style={{ flex: 1 }}>
-                    <h3>Available Meals</h3>
+        <Box sx={{ p: 2 }}>
+            <Typography variant="h4" gutterBottom>
+                Meal Library
+            </Typography>
+            <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                    <Typography variant="h6" gutterBottom>
+                        Available Meals
+                    </Typography>
                     {meals.length === 0 ? (
-                        <p>Loading meals...</p>
+                        <Typography>Loading meals...</Typography>
                     ) : (
-                        <ul>
-                            {meals.map((meal) => (
-                                <li
-                                    key={meal.id}
-                                    style={{
-                                        cursor: "pointer",
-                                        marginBottom: "5px",
-                                        backgroundColor: selectedMeal?.id === meal.id ? '#f0f0f0' : 'transparent',
-                                        padding: "5px"
-                                    }}
-                                    onClick={() => setSelectedMeal(meal)}
-                                >
-                                    {meal.mealName}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-
-                {selectedMeal && (
-                    <div style={{ flex: 1 }}>
-                        <h3>Meal Details</h3>
-                        <h4>{selectedMeal.mealName}</h4>
-                        <p>Effort Level: {selectedMeal.relativeEffort}</p>
-                        <p>Contains Red Meat: {selectedMeal.redMeat ? "Yes" : "No"}</p>
-                        <h4>Ingredients</h4>
-                        {selectedMeal.ingredients.length === 0 ? (
-                            <p>No ingredients found.</p>
-                        ) : (
-                            <ul>
-                                {selectedMeal.ingredients.map((ing, index) => (
-                                    <li key={index}>
-                                        {ing.Quantity} {ing.Unit} {ing.Name}
-                                    </li>
+                        <Paper variant="outlined">
+                            <List>
+                                {meals.map((meal) => (
+                                    <ListItem key={meal.id} disablePadding>
+                                        <ListItemButton
+                                            selected={selectedMeal?.id === meal.id}
+                                            onClick={() => setSelectedMeal(meal)}
+                                        >
+                                            <ListItemText primary={meal.mealName} />
+                                        </ListItemButton>
+                                    </ListItem>
                                 ))}
-                            </ul>
-                        )}
-                        <button
-                            onClick={() => {
-                                fetch("/api/meals/swap", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ meal_id: selectedMeal.id }),
-                                })
-                                    .then((res) => res.json())
-                                    .then((newMeal: any) => {
-                                        setSelectedMeal(newMeal);
-                                        showToast(`Swapped meal for ${newMeal.mealName}`);
-                                    })
-                                    .catch((err) =>
-                                        console.error("Error swapping meal:", err)
-                                    );
-                            }}
-                        >
-                            Get Alternative Meal
-                        </button>
-                    </div>
+                            </List>
+                        </Paper>
+                    )}
+                </Grid>
+                {selectedMeal && (
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="h6" gutterBottom>
+                            Meal Details
+                        </Typography>
+                        <Card variant="outlined">
+                            <CardContent>
+                                <Typography variant="h5" gutterBottom>
+                                    {selectedMeal.mealName}
+                                </Typography>
+                                <Typography variant="body1">
+                                    Effort Level: {selectedMeal.relativeEffort}
+                                </Typography>
+                                <Typography variant="body1">
+                                    Contains Red Meat: {selectedMeal.redMeat ? "Yes" : "No"}
+                                </Typography>
+                                <Typography variant="h6" sx={{ mt: 2 }}>
+                                    Ingredients
+                                </Typography>
+                                {selectedMeal.ingredients.length === 0 ? (
+                                    <Typography>No ingredients found.</Typography>
+                                ) : (
+                                    <List>
+                                        {selectedMeal.ingredients.map((ing, index) => (
+                                            <ListItem key={index}>
+                                                <ListItemText
+                                                    primary={`${ing.Quantity} ${ing.Unit} ${ing.Name}`}
+                                                />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
                 )}
-            </div>
-        </div>
+            </Grid>
+        </Box>
     );
 }; 

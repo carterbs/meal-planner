@@ -56,11 +56,19 @@ func TestGenerateShoppingListFromMeals(t *testing.T) {
 		meals = append(meals, meal)
 	}
 
-	// Expected aggregated list is unique and sorted.
-	expected := []string{"Bread", "Butter", "Cheese", "Coffee", "Eggs", "Jam", "Milk"}
+	// Expected aggregated ingredients.
+	expected := []Ingredient{
+		{Name: "Bread", Quantity: 3, Unit: "loaf"},
+		{Name: "Butter", Quantity: 1, Unit: "cup"},
+		{Name: "Cheese", Quantity: 1, Unit: "block"},
+		{Name: "Coffee", Quantity: 2, Unit: "cup"},
+		{Name: "Eggs", Quantity: 3, Unit: "dozen"},
+		{Name: "Jam", Quantity: 1, Unit: "jar"},
+		{Name: "Milk", Quantity: 2, Unit: "gallon"},
+	}
 
-	list := GenerateShoppingListFromMeals(meals)
-	if !reflect.DeepEqual(list, expected) {
-		t.Errorf("expected shopping list %v, got %v", expected, list)
+	actual := GenerateShoppingListFromMeals(meals)
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("expected shopping list %v, got %v", expected, actual)
 	}
 }

@@ -1,5 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { MealPlan, Meal } from "../types";
+import { MealPlan, Meal, Ingredient } from "../types";
+import {
+    Box,
+    Typography,
+    Table,
+    TableHead,
+    TableBody,
+    TableRow,
+    TableCell,
+    Button,
+    Paper,
+    List,
+    ListItem,
+    ListItemText
+} from "@mui/material";
 
 interface MealPlanTabProps {
     showToast: (message: string) => void;
@@ -7,7 +21,7 @@ interface MealPlanTabProps {
 
 export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
-    const [shoppingList, setShoppingList] = useState<string[]>([]);
+    const [shoppingList, setShoppingList] = useState<Ingredient[]>([]);
 
     useEffect(() => {
         fetch("/api/mealplan")
@@ -53,57 +67,76 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             body: JSON.stringify({ plan: mealIDs }),
         })
             .then((res) => res.json())
-            .then((data: string[]) => setShoppingList(data))
+            .then((data: Ingredient[]) => setShoppingList(data))
             .catch((err) => console.error(err));
     };
 
     return (
-        <div>
-            <h1>Weekly Meal Plan</h1>
+        <Box sx={{ p: 2 }}>
+            <Typography variant="h4" gutterBottom>
+                Weekly Meal Plan
+            </Typography>
             {mealPlan ? (
-                <table border={1} cellPadding={5}>
-                    <thead>
-                        <tr>
-                            <th>Day</th>
-                            <th>Meal</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Object.entries(mealPlan).map(([day, meal]) => (
-                            <tr key={day}>
-                                <td>{day}</td>
-                                <td>{meal.mealName}</td>
-                                <td>
-                                    {day !== "Friday" && meal.mealName !== "Eating out" && (
-                                        <button onClick={() => swapMeal(day)}>Swap Meal</button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                <Paper variant="outlined">
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Day</TableCell>
+                                <TableCell>Meal</TableCell>
+                                <TableCell>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {Object.entries(mealPlan).map(([day, meal]) => (
+                                <TableRow key={day}>
+                                    <TableCell>{day}</TableCell>
+                                    <TableCell>{meal.mealName}</TableCell>
+                                    <TableCell>
+                                        {day !== "Friday" && meal.mealName !== "Eating out" && (
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                size="small"
+                                                onClick={() => swapMeal(day)}
+                                            >
+                                                Swap Meal
+                                            </Button>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </Paper>
             ) : (
-                <p>Loading meal plan...</p>
+                <Typography>Loading meal plan...</Typography>
             )}
 
-            <div style={{ marginTop: "20px" }}>
-                <button onClick={finalizePlan}>Finalize Meal Plan</button>
-                <button onClick={getShoppingList} style={{ marginLeft: "10px" }}>
+            <Box sx={{ mt: 2 }}>
+                <Button variant="outlined" onClick={finalizePlan}>
+                    Finalize Meal Plan
+                </Button>
+                <Button variant="outlined" onClick={getShoppingList} sx={{ ml: 2 }}>
                     Get Shopping List
-                </button>
-            </div>
+                </Button>
+            </Box>
 
             {shoppingList.length > 0 && (
-                <div style={{ marginTop: "20px" }}>
-                    <h2>Shopping List</h2>
-                    <ul>
+                <Box sx={{ mt: 2 }}>
+                    <Typography variant="h5" gutterBottom>
+                        Shopping List
+                    </Typography>
+                    <List>
                         {shoppingList.map((item, index) => (
-                            <li key={index}>{item}</li>
+                            <ListItem key={index}>
+                                <ListItemText
+                                    primary={`${item.Quantity} ${item.Unit} ${item.Name}`} />
+
+                            </ListItem>
                         ))}
-                    </ul>
-                </div>
+                    </List>
+                </Box>
             )}
-        </div>
+        </Box>
     );
 }; 
