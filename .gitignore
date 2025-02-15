@@ -1,0 +1,27 @@
+# Go build artifacts
+bin/
+pkg/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go module files (optional: you can version go.mod, but if you want to ignore go.sum, uncomment the next line)
+# go.sum
+
+# Node modules and build output
+node_modules/
+build/
+dist/
+
+# Log files
+*.log
+
+# Environment files
+.env
+
+# Editor & OS specific files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/ 

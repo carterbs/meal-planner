@@ -1,0 +1,11 @@
+{
+    "name": "mealplanner",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "start": "concurrently \"yarn --cwd frontend start\" \"cd backend && go run main.go\""
+    },
+    "devDependencies": {
+        "concurrently": "^7.6.0"
+    }
+}
