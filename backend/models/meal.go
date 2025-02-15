@@ -8,7 +8,7 @@ import (
 )
 
 type Meal struct {
-	ID             int
+	ID             int          `json:"id"`
 	MealName       string       `json:"mealName"`
 	RelativeEffort int          `json:"relativeEffort"`
 	LastPlanned    time.Time    `json:"lastPlanned"`
@@ -19,8 +19,8 @@ type Meal struct {
 // MealColumns defines the column names for Meal queries.
 var MealColumns = []string{"id", "meal_name", "relative_effort", "last_planned", "red_meat"}
 
-// GetMealsByIDsQuery is the query used to retrieve meals (and their ingredients).
-const GetMealsByIDsQuery = `
+// MealsQueryFragment is the common fragment for querying meals along with ingredients.
+const MealsQueryFragment = `
 	SELECT
 		m.id,
 		m.meal_name,
@@ -32,17 +32,18 @@ const GetMealsByIDsQuery = `
 		mi.unit
 	FROM meals m
 	LEFT JOIN ingredients mi ON m.id = mi.meal_id
+`
+
+// GetMealsByIDsQuery is the query used to retrieve meals (and their ingredients) for specific meal IDs.
+const GetMealsByIDsQuery = MealsQueryFragment + `
 	WHERE m.id = ANY($1);
 `
 
-// GetMealsByIDs retrieves meals (including their ingredients) from the database given a slice of meal IDs.
-func GetMealsByIDs(db *sql.DB, ids []int) ([]*Meal, error) {
-	rows, err := db.Query(GetMealsByIDsQuery, pq.Array(ids))
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// GetAllMealsQuery is the query used to retrieve all meals (and their ingredients).
+const GetAllMealsQuery = MealsQueryFragment + `;`
 
+// processMealRows converts the SQL rows into a slice of Meal pointers.
+func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 	// Use a map to group rows per meal.
 	mealsMap := make(map[int]*Meal)
 	for rows.Next() {
@@ -59,7 +60,6 @@ func GetMealsByIDs(db *sql.DB, ids []int) ([]*Meal, error) {
 			return nil, err
 		}
 
-		// If we haven't seen this meal yet, create it.
 		meal, exists := mealsMap[id]
 		if !exists {
 			meal = &Meal{
@@ -94,10 +94,29 @@ func GetMealsByIDs(db *sql.DB, ids []int) ([]*Meal, error) {
 		return nil, err
 	}
 
-	// Convert mealsMap to a slice.
 	var meals []*Meal
 	for _, meal := range mealsMap {
 		meals = append(meals, meal)
 	}
 	return meals, nil
+}
+
+// GetMealsByIDs retrieves meals (including their ingredients) from the database for the given meal IDs.
+func GetMealsByIDs(db *sql.DB, ids []int) ([]*Meal, error) {
+	rows, err := db.Query(GetMealsByIDsQuery, pq.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return processMealRows(rows)
+}
+
+// GetAllMeals retrieves all meals (with their ingredients) from the database.
+func GetAllMeals(db *sql.DB) ([]*Meal, error) {
+	rows, err := db.Query(GetAllMealsQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return processMealRows(rows)
 }

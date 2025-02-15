@@ -1,9 +1,19 @@
 // frontend/src/types.ts
 
 // Define the overall MealPlan type (mapping day to meal description)
+export interface Ingredient {
+    Name: string;
+    Quantity: number;
+    Unit: string;
+}
+
 export interface Meal {
     id: number;
     mealName: string;
+    relativeEffort: number;
+    lastPlanned: string;
+    redMeat: boolean;
+    ingredients: Ingredient[];
 }
 
 export interface MealPlan {
