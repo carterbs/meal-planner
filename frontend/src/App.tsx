@@ -5,10 +5,19 @@ import { MealPlan, SwapMealResponse, Meal } from "./types";
 const App: React.FC = () => {
     const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
     const [shoppingList, setShoppingList] = useState<string[]>([]);
+    const [toast, setToast] = useState<string | null>(null);
 
     // New state for all meals and selected meal details.
     const [meals, setMeals] = useState<Meal[]>([]);
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+
+    // Helper function to show a toast message.
+    const showToast = (message: string) => {
+        setToast(message);
+        setTimeout(() => {
+            setToast(null);
+        }, 2000);
+    };
 
     // Fetch the meal plan on mount
     useEffect(() => {
@@ -50,7 +59,10 @@ const App: React.FC = () => {
             .then((newMeal: Meal) => {
                 // Update the meal plan for the given day with the new meal.
                 setMealPlan({ ...mealPlan, [day]: newMeal });
-                alert(`Swapped ${day} with: ${newMeal.mealName} (ID: ${newMeal.id})`);
+                // Clear any previously rendered shopping list.
+                setShoppingList([]);
+                // Show toast notification for 2 seconds.
+                showToast(`Swapped ${day} with: ${newMeal.mealName} (ID: ${newMeal.id})`);
             })
             .catch((err) => console.error("Error swapping meal:", err));
     };
@@ -82,7 +94,8 @@ const App: React.FC = () => {
             .then((res) => res.json())
             .then((newMeal) => {
                 setSelectedMeal(newMeal);
-                alert(`Swapped meal for ${newMeal.mealName} (ID: ${newMeal.id})`);
+                setShoppingList([]);
+                showToast(`Swapped meal for ${newMeal.mealName} (ID: ${newMeal.id})`);
             })
             .catch((err) => console.error("Error swapping individual meal:", err));
     };
@@ -167,6 +180,23 @@ const App: React.FC = () => {
                             <li key={index}>{item}</li>
                         ))}
                     </ul>
+                </div>
+            )}
+
+            {/* Toast Notification */}
+            {toast && (
+                <div
+                    style={{
+                        position: "fixed",
+                        bottom: 20,
+                        right: 20,
+                        background: "lightgray",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        zIndex: 9999,
+                    }}
+                >
+                    {toast}
                 </div>
             )}
         </div>
