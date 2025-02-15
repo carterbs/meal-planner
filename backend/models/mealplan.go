@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -80,20 +81,24 @@ func GenerateWeeklyMealPlan(db *sql.DB) (map[string]*Meal, error) {
 	return plan, nil
 }
 
+// buildPickMealQuery returns the SQL query for selecting a meal.
+// It appends an extra condition if excludeRedMeat is true.
+func buildPickMealQuery(excludeRedMeat bool) string {
+	columns := strings.Join(MealColumns, ", ")
+	query := "SELECT " + columns + " FROM meals WHERE relative_effort BETWEEN $1 AND $2 AND (last_planned IS NULL OR last_planned < $3)"
+	if excludeRedMeat {
+		query += " AND red_meat = false"
+	}
+	return query + " ORDER BY random() LIMIT 1;"
+}
+
 // pickMeal selects one meal from the database that meets the provided criteria:
 // - The meal's effort is between minEffort and maxEffort (inclusive)
 // - The meal has not been planned in the last 3 weeks (last_planned is either NULL or older than cutoff)
 // - If excludeRedMeat is true, only meals with red_meat = false are eligible.
 // The function orders the results randomly and returns the first matching meal.
 func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff time.Time) (*Meal, error) {
-	// Build the query
-	query := "SELECT id, meal_name, relative_effort, last_planned, red_meat FROM meals " +
-		"WHERE relative_effort BETWEEN $1 AND $2 " +
-		"AND (last_planned IS NULL OR last_planned < $3)"
-	if excludeRedMeat {
-		query += " AND red_meat = false"
-	}
-	query += " ORDER BY random() LIMIT 1;"
+	query := buildPickMealQuery(excludeRedMeat)
 
 	row := db.QueryRow(query, minEffort, maxEffort, cutoff)
 	var m Meal

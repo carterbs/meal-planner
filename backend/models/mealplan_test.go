@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"regexp"
 	"testing"
 	"time"
@@ -16,23 +17,69 @@ func TestPickMeal(t *testing.T) {
 	defer db.Close()
 
 	cutoff := time.Now().AddDate(0, 0, -21)
-	// Build a regex for the expected query.
-	queryRegex := regexp.QuoteMeta("SELECT id, meal_name, relative_effort, last_planned, red_meat FROM meals WHERE relative_effort BETWEEN $1 AND $2 AND (last_planned IS NULL OR last_planned < $3) ORDER BY random() LIMIT 1;")
 
-	// Return a test row (id=1, "Test Meal", effort=2, no last_planned, red_meat false)
-	rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat"}).
-		AddRow(1, "Test Meal", 2, nil, false)
+	t.Run("normal case without excluding red meat", func(t *testing.T) {
+		// Build a regex for the expected query by calling the helper.
+		queryRegex := regexp.QuoteMeta(buildPickMealQuery(false))
 
-	mock.ExpectQuery(queryRegex).
-		WithArgs(0, 2, sqlmock.AnyArg()).
-		WillReturnRows(rows)
+		// Return a test row using the shared MealColumns.
+		rows := sqlmock.NewRows(MealColumns).
+			AddRow(1, "Test Meal", 2, nil, false)
 
-	meal, err := pickMeal(db, 0, 2, false, cutoff)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if meal.ID != 1 || meal.MealName != "Test Meal" {
-		t.Errorf("expected meal with id=1 and name 'Test Meal', got: %+v", meal)
+		mock.ExpectQuery(queryRegex).
+			WithArgs(0, 2, sqlmock.AnyArg()).
+			WillReturnRows(rows)
+
+		meal, err := pickMeal(db, 0, 2, false, cutoff)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if meal.ID != 1 || meal.MealName != "Test Meal" {
+			t.Errorf("expected meal with id=1 and name 'Test Meal', got: %+v", meal)
+		}
+	})
+
+	t.Run("case excluding red meat", func(t *testing.T) {
+		// Build a regex for the expected query with red meat exclusion.
+		queryRegex := regexp.QuoteMeta(buildPickMealQuery(true))
+
+		// Return a test row that represents a meal without red meat.
+		rows := sqlmock.NewRows(MealColumns).
+			AddRow(2, "Non Red Meat Meal", 4, nil, false)
+
+		mock.ExpectQuery(queryRegex).
+			WithArgs(3, 5, sqlmock.AnyArg()).
+			WillReturnRows(rows)
+
+		meal, err := pickMeal(db, 3, 5, true, cutoff)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if meal.ID != 2 || meal.MealName != "Non Red Meat Meal" {
+			t.Errorf("expected meal with id=2 and name 'Non Red Meat Meal', got: %+v", meal)
+		}
+		if meal.RedMeat {
+			t.Errorf("expected redMeat false when excluding red meat, got true")
+		}
+	})
+
+	t.Run("no meal available", func(t *testing.T) {
+		// Build a regex for expected query (normal case).
+		queryRegex := regexp.QuoteMeta(buildPickMealQuery(false))
+
+		// Simulate no rows returned by returning sql.ErrNoRows.
+		mock.ExpectQuery(queryRegex).
+			WithArgs(0, 2, sqlmock.AnyArg()).
+			WillReturnError(sql.ErrNoRows)
+
+		_, err := pickMeal(db, 0, 2, false, cutoff)
+		if err == nil {
+			t.Error("expected error for no meal available, got nil")
+		}
+	})
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unmet expectations: %s", err)
 	}
 }
 
@@ -58,13 +105,13 @@ func TestGenerateWeeklyMealPlan(t *testing.T) {
 	}
 
 	// For simplicity, assume all selected meals are not red meat.
-	queryRegex := regexp.QuoteMeta("SELECT id, meal_name, relative_effort, last_planned, red_meat FROM meals WHERE relative_effort BETWEEN $1 AND $2 AND (last_planned IS NULL OR last_planned < $3) ORDER BY random() LIMIT 1;")
+	queryRegex := regexp.QuoteMeta(buildPickMealQuery(false))
 
 	for i, d := range days {
 		mock.ExpectQuery(queryRegex).
 			WithArgs(d.minEffort, d.maxEffort, sqlmock.AnyArg()).
 			WillReturnRows(
-				sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat"}).
+				sqlmock.NewRows(MealColumns).
 					AddRow(i+10, d.day+" Meal", (d.minEffort+d.maxEffort)/2, nil, false),
 			)
 	}

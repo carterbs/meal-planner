@@ -9,3 +9,6 @@ type Meal struct {
 	LastPlanned    time.Time
 	RedMeat        bool
 }
+
+// MealColumns defines the column names for Meal queries.
+var MealColumns = []string{"id", "meal_name", "relative_effort", "last_planned", "red_meat"}
