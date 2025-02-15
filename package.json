@@ -4,7 +4,8 @@
     "private": true,
     "scripts": {
         "start": "concurrently \"yarn --cwd frontend start\" \"cd backend && go run main.go\"",
-        "test:backend": "cd backend && go test -v ./..."
+        "test:backend": "cd backend && go test -v ./...",
+        "test:frontend": "cd frontend && yarn test"
     },
     "devDependencies": {
         "concurrently": "^7.6.0"
