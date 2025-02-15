@@ -39,15 +39,19 @@ const App: React.FC = () => {
     };
 
     const swapMeal = (day: string) => {
-        fetch("/api/mealplan/swap", {
+        const currentMeal = mealPlan ? mealPlan[day] : null;
+        if (!currentMeal) return;
+        fetch("/api/meals/swap", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ day, meal_id: 0 })
+            body: JSON.stringify({ meal_id: currentMeal.id }),
         })
             .then((res) => res.json())
-            .then((data: SwapMealResponse) =>
-                alert(`Swapped ${day} with: ${data.meal_name} (ID: ${data.new_meal_id})`)
-            )
+            .then((newMeal: Meal) => {
+                // Update the meal plan for the given day with the new meal.
+                setMealPlan({ ...mealPlan, [day]: newMeal });
+                alert(`Swapped ${day} with: ${newMeal.mealName} (ID: ${newMeal.id})`);
+            })
             .catch((err) => console.error("Error swapping meal:", err));
     };
 
@@ -65,6 +69,22 @@ const App: React.FC = () => {
             .then((res) => res.json())
             .then((data: string[]) => setShoppingList(data))
             .catch((err) => console.error(err));
+    };
+
+    // New function to swap the currently selected meal.
+    const swapIndividualMeal = () => {
+        if (!selectedMeal) return;
+        fetch("/api/meals/swap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ meal_id: selectedMeal.id }),
+        })
+            .then((res) => res.json())
+            .then((newMeal) => {
+                setSelectedMeal(newMeal);
+                alert(`Swapped meal for ${newMeal.mealName} (ID: ${newMeal.id})`);
+            })
+            .catch((err) => console.error("Error swapping individual meal:", err));
     };
 
     return (
@@ -129,6 +149,7 @@ const App: React.FC = () => {
                             ))}
                         </ul>
                     )}
+                    <button onClick={swapIndividualMeal}>Swap This Meal</button>
                 </div>
             )}
 

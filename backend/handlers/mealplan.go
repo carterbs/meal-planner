@@ -61,29 +61,25 @@ func FinalizeMealPlan(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Meal plan finalized"))
 }
 
-// SwapMeal runs the recommendation algorithm for a specific day and returns a replacement meal.
+// SwapMeal handles swapping a meal in the current meal plan.
+// It decodes the incoming payload, calls the real backend swap logic,
+// and returns the new meal as JSON.
 func SwapMeal(w http.ResponseWriter, r *http.Request) {
-	type SwapPayload struct {
-		Day    string `json:"day"`
-		MealID int    `json:"meal_id"` // ID of the current meal to be swapped
+	var payload struct {
+		Day    string `json:"day"`     // day of the meal plan (if needed)
+		MealID int    `json:"meal_id"` // current meal ID
 	}
-	var payload SwapPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	// Here you would run your recommendation algorithm specific to the day.
-	// For the MVP we return a dummy meal.
-	newMeal := struct {
-		Day       string `json:"day"`
-		NewMealID int    `json:"new_meal_id"`
-		MealName  string `json:"meal_name"`
-	}{
-		Day:       payload.Day,
-		NewMealID: 999, // dummy replacement ID
-		MealName:  "Dummy Replacement Meal",
+	newMeal, err := models.SwapMeal(payload.MealID, DB)
+	if err != nil {
+		http.Error(w, "Error swapping meal: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(newMeal)
 }

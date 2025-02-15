@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/lib/pq"
@@ -41,6 +42,13 @@ const GetMealsByIDsQuery = MealsQueryFragment + `
 
 // GetAllMealsQuery is the query used to retrieve all meals (and their ingredients).
 const GetAllMealsQuery = MealsQueryFragment + `;`
+
+// GetRandomMealExcludingQuery is used to retrieve a random meal excluding the provided meal id.
+const GetRandomMealExcludingQuery = MealsQueryFragment + `
+	WHERE m.id != $1
+	ORDER BY RANDOM()
+	LIMIT 1;
+`
 
 // processMealRows converts the SQL rows into a slice of Meal pointers.
 func processMealRows(rows *sql.Rows) ([]*Meal, error) {
@@ -119,4 +127,22 @@ func GetAllMeals(db *sql.DB) ([]*Meal, error) {
 	}
 	defer rows.Close()
 	return processMealRows(rows)
+}
+
+// SwapMeal returns a random meal that is not the current meal.
+func SwapMeal(currentMealID int, db *sql.DB) (*Meal, error) {
+	rows, err := db.Query(GetRandomMealExcludingQuery, currentMealID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	meals, err := processMealRows(rows)
+	if err != nil {
+		return nil, err
+	}
+	if len(meals) == 0 {
+		return nil, errors.New("no alternative meal found")
+	}
+	return meals[0], nil
 }
