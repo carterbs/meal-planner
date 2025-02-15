@@ -75,7 +75,11 @@ test("renders loading messages and then the meal plan and meals", async () => {
 
     render(<App />);
 
-    // Initially the UI should show a loading message for the meal plan.
+    // Verify tab buttons are present
+    expect(screen.getByRole("tab", { name: /Meal Plan/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Meal Management/i })).toBeInTheDocument();
+
+    // Initially the UI should show a loading message for the meal plan
     expect(screen.getByText(/Loading meal plan.../i)).toBeInTheDocument();
 
     // Wait for the meal plan to appear by asserting at least one occurrence of "Meal A" and "Meal B".
@@ -83,9 +87,6 @@ test("renders loading messages and then the meal plan and meals", async () => {
         expect(screen.getAllByText(/Meal A/i).length).toBeGreaterThan(0);
         expect(screen.getAllByText(/Meal B/i).length).toBeGreaterThan(0);
     });
-
-    // Also the meals section header is present.
-    expect(screen.getByText(/Meals/i)).toBeInTheDocument();
 });
 
 // Test swapping a meal from a meal plan row.
@@ -159,7 +160,7 @@ test("clicking Swap Meal updates the meal plan, clears shopping list, and shows 
     await waitFor(() => screen.getByText("Meal C", { selector: "td" }));
     expect(screen.getByText("Meal C", { selector: "td" })).toBeInTheDocument();
 
-    // Verify shopping list is cleared: the header should not be present.
+    // Verify shopping list is cleared: eggs should be gone
     expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
 
     // Verify toast message appears.
@@ -227,6 +228,9 @@ test("clicking Get Shopping List loads and renders the shopping list", async () 
 
     render(<App />);
 
+    // Ensure we're on the meal plan tab
+    expect(screen.getByText(/Weekly Meal Plan/i)).toBeInTheDocument();
+
     // Wait for the meal plan to load by ensuring "Meal A" is shown.
     await waitFor(() => expect(screen.getAllByText("Meal A").length).toBeGreaterThan(0));
 
@@ -240,4 +244,68 @@ test("clicking Get Shopping List loads and renders the shopping list", async () 
     expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
     expect(screen.queryByText("Milk")).not.toBeInTheDocument();
     expect(screen.queryByText("Bread")).not.toBeInTheDocument();
+});
+
+// Add new test for tab switching
+test("switches between meal plan and meal management tabs", async () => {
+    const mealPlanResponse = {
+        Monday: {
+            id: 1,
+            mealName: "Meal A",
+            relativeEffort: 2,
+            lastPlanned: "2023-10-01T00:00:00Z",
+            redMeat: false,
+            ingredients: [],
+        },
+    };
+    const mealsResponse = [
+        {
+            id: 1,
+            mealName: "Meal A",
+            relativeEffort: 2,
+            lastPlanned: "2023-10-01T00:00:00Z",
+            redMeat: false,
+            ingredients: [{ Name: "Eggs", Quantity: 0, Unit: "dozen" }],
+        },
+    ];
+
+    global.fetch = jest.fn((url: RequestInfo) => {
+        const urlStr = url.toString();
+        if (urlStr.includes("/api/mealplan")) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mealPlanResponse),
+            } as Response);
+        }
+        if (urlStr.includes("/api/meals")) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mealsResponse),
+            } as Response);
+        }
+        return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({}),
+        } as Response);
+    }) as jest.Mock;
+
+    render(<App />);
+
+    // Wait for content to load
+    await waitFor(() => {
+        expect(screen.getAllByText(/Meal A/i).length).toBeGreaterThan(0);
+    });
+
+    // Click on Meal Management tab
+    fireEvent.click(screen.getByText(/Meal Management/i));
+
+    // Verify meal management view is shown
+    expect(screen.getByText(/Meal Library/i)).toBeInTheDocument();
+    expect(screen.getByText(/Available Meals/i)).toBeInTheDocument();
+
+    // Click back to Meal Plan tab
+    fireEvent.click(screen.getByText(/Meal Plan/i));
+
+    // Verify meal plan view is shown
+    expect(screen.getByText(/Weekly Meal Plan/i)).toBeInTheDocument();
 }); 
