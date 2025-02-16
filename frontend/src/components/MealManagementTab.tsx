@@ -75,24 +75,35 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             .then((res) => res.json())
             .then((updatedMeal: Meal) => {
                 setSelectedMeal(updatedMeal);
-                if (editingIngredientIndex === ingredientId) {
-                    setEditingIngredientIndex(null);
-                    setEditedIngredient(null);
-                }
                 showToast("Ingredient deleted successfully");
             })
             .catch((err) => console.error("Error deleting ingredient", err));
     };
 
+    // Add this useEffect to clear selected meal when meals list changes
+    useEffect(() => {
+        setSelectedMeal(null);
+        setEditedIngredient(null);
+    }, [meals]);
+
+    // Existing useEffect for fetching meals...
     useEffect(() => {
         fetch("/api/meals")
-            .then((res) => res.json())
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
             .then((data: Meal[]) => setMeals(data))
-            .catch((err) => console.error("Error fetching meals:", err));
+            .catch((err) => {
+                console.error("Error fetching meals:", err);
+                showToast("Error loading meals");
+            });
     }, []);
 
     return (
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 2 }} data-testid="meal-management-tab">
             <Typography variant="h4" gutterBottom>
                 Meal Library
             </Typography>
@@ -116,7 +127,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                     sx={{ mb: 1 }}
                                 />
                             </Box>
-                            <List>
+                            <List data-testid="meals-list">
                                 {meals
                                     .filter((meal) =>
                                         meal.mealName.toLowerCase().includes(mealFilter.toLowerCase())
@@ -138,7 +149,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                         </Paper>
                     )}
                 </Grid>
-                {selectedMeal && (
+                {selectedMeal && meals.length > 0 && (
                     <Grid item xs={12} md={6}>
                         <Typography variant="h6" gutterBottom>
                             Meal Details
@@ -201,7 +212,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                                                         <ListItemText primary={`${ing.Quantity} ${ing.Unit} ${ing.Name}`} />
                                                         <Box sx={{ display: "flex", gap: 1 }}>
-                                                            <Button variant="outlined" onClick={() => startEditing(ing)}>
+                                                            <Button
+                                                                variant="outlined"
+                                                                onClick={() => startEditing(ing)}
+                                                                data-testid={`edit-ingredient-${ing.ID}`}
+                                                            >
                                                                 Edit
                                                             </Button>
                                                             <Button variant="outlined" color="error" onClick={() => deleteIngredient(ing.ID)}>

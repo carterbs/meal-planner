@@ -31,13 +31,19 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     }, []);
 
     const finalizePlan = () => {
+        if (!mealPlan) return;
         fetch("/api/mealplan/finalize", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan: {} })
+            body: JSON.stringify({ plan: mealPlan })
         })
-            .then((res) => res.text())
-            .then((text) => alert(text))
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error(`Finalize error: ${res.status}`);
+                }
+                return res.text();
+            })
+            .then((text) => showToast(text))
             .catch((err) => console.error("Error finalizing plan:", err));
     };
 
@@ -60,19 +66,18 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
 
     const getShoppingList = () => {
         if (!mealPlan) return;
-        const mealIDs = Object.values(mealPlan).map((meal) => meal.id);
-        fetch("/api/shoppinglist", {
+        fetch("/api/mealplan/shopping-list", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan: mealIDs }),
+            body: JSON.stringify({ plan: mealPlan }),
         })
             .then((res) => res.json())
-            .then((data: Ingredient[]) => setShoppingList(data))
-            .catch((err) => console.error(err));
+            .then((ingredients: Ingredient[]) => setShoppingList(ingredients))
+            .catch((err) => console.error("Error getting shopping list:", err));
     };
 
     return (
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 3 }} data-testid="meal-plan-component">
             <Typography variant="h4" gutterBottom>
                 Weekly Meal Plan
             </Typography>
@@ -88,33 +93,35 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {Object.entries(mealPlan)
-                                .sort((a, b) => {
-                                    const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-                                    // a[0] and b[0] are the day names
-                                    const dayA = weekDays.indexOf(a[0]);
-                                    const dayB = weekDays.indexOf(b[0]);
-                                    return dayA - dayB;
-                                })
-                                .map(([day, meal]) => (
-                                    <TableRow key={day}>
-                                        <TableCell>{day}</TableCell>
-                                        <TableCell>{meal.mealName}</TableCell>
-                                        <TableCell>{meal.relativeEffort}</TableCell>
-                                        <TableCell>
-                                            {day !== "Friday" && meal.mealName !== "Eating out" && (
-                                                <Button
-                                                    variant="contained"
-                                                    color="primary"
-                                                    size="small"
-                                                    onClick={() => swapMeal(day)}
-                                                >
-                                                    Swap Meal
-                                                </Button>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                            {mealPlan && (
+                                Object.entries(mealPlan)
+                                    .filter(([day, meal]) => meal)
+                                    .sort((a, b) => {
+                                        const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                                        const dayA = weekDays.indexOf(a[0]);
+                                        const dayB = weekDays.indexOf(b[0]);
+                                        return dayA - dayB;
+                                    })
+                                    .map(([day, meal]) => (
+                                        <TableRow key={day}>
+                                            <TableCell>{day}</TableCell>
+                                            <TableCell>{meal?.mealName}</TableCell>
+                                            <TableCell>{meal?.relativeEffort}</TableCell>
+                                            <TableCell>
+                                                {meal && day !== "Friday" && meal.mealName !== "Eating out" && (
+                                                    <Button
+                                                        variant="contained"
+                                                        color="primary"
+                                                        size="small"
+                                                        onClick={() => swapMeal(day)}
+                                                    >
+                                                        Swap Meal
+                                                    </Button>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                            )}
                         </TableBody>
                     </Table>
                 </Paper>
