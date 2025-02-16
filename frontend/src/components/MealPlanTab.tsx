@@ -78,10 +78,11 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
 
     const getShoppingList = () => {
         if (!mealPlan) return;
-        fetch("/api/mealplan/shopping-list", {
+        const mealIDs = Object.values(mealPlan).map(meal => meal.id);
+        fetch("/api/shoppinglist", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan: mealPlan }),
+            body: JSON.stringify({ plan: mealIDs }),
         })
             .then((res) => res.json())
             .then((ingredients: Ingredient[]) => setShoppingList(ingredients))
@@ -111,6 +112,33 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             .catch((err) => {
                 console.error("Error replacing meal:", err);
                 showToast("Error replacing meal");
+            });
+    };
+
+    const copyShoppingListToClipboard = () => {
+        const formattedList = shoppingList
+            .map(item => `${item.Quantity} ${item.Unit} ${item.Name}`)
+            .join('\n');
+        navigator.clipboard.writeText(formattedList)
+            .then(() => showToast('Shopping list copied to clipboard!'))
+            .catch(err => {
+                console.error('Failed to copy to clipboard:', err);
+                showToast('Failed to copy to clipboard');
+            });
+    };
+
+    const copyMealPlanToClipboard = () => {
+        if (!mealPlan) return;
+        const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        const formattedPlan = weekDays
+            .filter(day => mealPlan[day])
+            .map(day => `${day}: ${mealPlan[day].mealName}`)
+            .join('\n');
+        navigator.clipboard.writeText(formattedPlan)
+            .then(() => showToast('Meal plan copied to clipboard!'))
+            .catch(err => {
+                console.error('Failed to copy to clipboard:', err);
+                showToast('Failed to copy to clipboard');
             });
     };
 
@@ -167,6 +195,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                                                             >
                                                                 {availableMeals
                                                                     .filter(m => m.id !== meal.id)
+                                                                    .sort((a, b) => a.mealName.localeCompare(b.mealName))
                                                                     .map((m) => (
                                                                         <MenuItem key={m.id} value={m.id}>
                                                                             {m.mealName}
@@ -198,15 +227,55 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
 
             {shoppingList.length > 0 && (
                 <Box sx={{ mt: 2 }}>
-                    <Typography variant="h5" gutterBottom>
-                        Shopping List
-                    </Typography>
+                    <Box sx={{ mb: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                            <Typography variant="h5">
+                                Meal Plan Summary
+                            </Typography>
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={copyMealPlanToClipboard}
+                                data-testid="copy-meal-plan"
+                            >
+                                Copy to Clipboard
+                            </Button>
+                        </Box>
+                        <List dense>
+                            {Object.entries(mealPlan || {})
+                                .sort(([dayA], [dayB]) => {
+                                    const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                                    return weekDays.indexOf(dayA) - weekDays.indexOf(dayB);
+                                })
+                                .map(([day, meal]) => (
+                                    <ListItem key={day}>
+                                        <ListItemText
+                                            primary={`${day}: ${meal.mealName}`}
+                                        />
+                                    </ListItem>
+                                ))
+                            }
+                        </List>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                        <Typography variant="h5">
+                            Shopping List
+                        </Typography>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={copyShoppingListToClipboard}
+                            data-testid="copy-shopping-list"
+                        >
+                            Copy to Clipboard
+                        </Button>
+                    </Box>
                     <List>
                         {shoppingList.map((item, index) => (
                             <ListItem key={index}>
                                 <ListItemText
                                     primary={`${item.Quantity} ${item.Unit} ${item.Name}`} />
-
                             </ListItem>
                         ))}
                     </List>

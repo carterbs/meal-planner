@@ -589,4 +589,205 @@ describe("MealPlanTab", () => {
             expect(mockShowToast).toHaveBeenCalledWith("Plan finalized");
         });
     });
+
+    test("copies shopping list to clipboard", async () => {
+        // Mock clipboard API
+        const mockClipboard = {
+            writeText: jest.fn().mockResolvedValue(undefined)
+        };
+        Object.assign(navigator, {
+            clipboard: mockClipboard
+        });
+
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockMealPlan),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockShoppingList),
+            })) as jest.Mock;
+
+        render(<MealPlanTab showToast={mockShowToast} />);
+
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
+        });
+
+        // Click get shopping list button
+        fireEvent.click(screen.getByText("Get Shopping List"));
+
+        // Wait for shopping list to appear
+        await waitFor(() => {
+            expect(screen.getByText("2 cups Ingredient 1")).toBeInTheDocument();
+        });
+
+        // Click copy to clipboard button
+        fireEvent.click(screen.getByTestId("copy-shopping-list"));
+
+        // Verify clipboard was called with formatted list
+        const expectedClipboardText = "2 cups Ingredient 1\n1 tbsp Ingredient 2";
+        expect(mockClipboard.writeText).toHaveBeenCalledWith(expectedClipboardText);
+
+        // Verify toast was shown
+        expect(mockShowToast).toHaveBeenCalledWith("Shopping list copied to clipboard!");
+    });
+
+    test("handles clipboard error gracefully", async () => {
+        // Mock clipboard API with error
+        const mockClipboard = {
+            writeText: jest.fn().mockRejectedValue(new Error("Clipboard error"))
+        };
+        Object.assign(navigator, {
+            clipboard: mockClipboard
+        });
+
+        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockMealPlan),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockShoppingList),
+            })) as jest.Mock;
+
+        render(<MealPlanTab showToast={mockShowToast} />);
+
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
+        });
+
+        // Click get shopping list button
+        fireEvent.click(screen.getByText("Get Shopping List"));
+
+        // Wait for shopping list to appear
+        await waitFor(() => {
+            expect(screen.getByText("2 cups Ingredient 1")).toBeInTheDocument();
+        });
+
+        // Click copy to clipboard button
+        fireEvent.click(screen.getByTestId("copy-shopping-list"));
+
+        // Verify error was logged
+        expect(consoleError).toHaveBeenCalledWith("Failed to copy to clipboard:", expect.any(Error));
+
+        // Verify error toast was shown
+        expect(mockShowToast).toHaveBeenCalledWith("Failed to copy to clipboard");
+
+        consoleError.mockRestore();
+    });
+
+    test("shows and copies meal plan summary when shopping list is visible", async () => {
+        // Mock clipboard API
+        const mockClipboard = {
+            writeText: jest.fn().mockResolvedValue(undefined)
+        };
+        Object.assign(navigator, {
+            clipboard: mockClipboard
+        });
+
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockMealPlan),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockShoppingList),
+            })) as jest.Mock;
+
+        render(<MealPlanTab showToast={mockShowToast} />);
+
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
+        });
+
+        // Click get shopping list button to show the meal plan summary
+        fireEvent.click(screen.getByText("Get Shopping List"));
+
+        // Verify meal plan summary is shown
+        await waitFor(() => {
+            expect(screen.getByText("Meal Plan Summary")).toBeInTheDocument();
+            expect(screen.getByText("Monday: Test Meal 1")).toBeInTheDocument();
+            expect(screen.getByText("Tuesday: Test Meal 2")).toBeInTheDocument();
+            expect(screen.getByText("Friday: Eating out")).toBeInTheDocument();
+        });
+
+        // Click copy meal plan button
+        fireEvent.click(screen.getByTestId("copy-meal-plan"));
+
+        // Verify clipboard was called with formatted plan
+        const expectedClipboardText = "Monday: Test Meal 1\nTuesday: Test Meal 2\nFriday: Eating out";
+        expect(mockClipboard.writeText).toHaveBeenCalledWith(expectedClipboardText);
+
+        // Verify toast was shown
+        expect(mockShowToast).toHaveBeenCalledWith("Meal plan copied to clipboard!");
+    });
+
+    test("handles meal plan copy error gracefully", async () => {
+        // Mock clipboard API with error
+        const mockClipboard = {
+            writeText: jest.fn().mockRejectedValue(new Error("Clipboard error"))
+        };
+        Object.assign(navigator, {
+            clipboard: mockClipboard
+        });
+
+        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockMealPlan),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockShoppingList),
+            })) as jest.Mock;
+
+        render(<MealPlanTab showToast={mockShowToast} />);
+
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
+        });
+
+        // Click get shopping list button to show the meal plan summary
+        fireEvent.click(screen.getByText("Get Shopping List"));
+
+        // Wait for meal plan summary to appear
+        await waitFor(() => {
+            expect(screen.getByText("Meal Plan Summary")).toBeInTheDocument();
+        });
+
+        // Click copy meal plan button
+        fireEvent.click(screen.getByTestId("copy-meal-plan"));
+
+        // Verify error was logged
+        expect(consoleError).toHaveBeenCalledWith("Failed to copy to clipboard:", expect.any(Error));
+
+        // Verify error toast was shown
+        expect(mockShowToast).toHaveBeenCalledWith("Failed to copy to clipboard");
+
+        consoleError.mockRestore();
+    });
 }); 
