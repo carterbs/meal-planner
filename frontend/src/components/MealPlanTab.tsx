@@ -83,28 +83,38 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                             <TableRow>
                                 <TableCell>Day</TableCell>
                                 <TableCell>Meal</TableCell>
+                                <TableCell>Effort</TableCell>
                                 <TableCell>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {Object.entries(mealPlan).map(([day, meal]) => (
-                                <TableRow key={day}>
-                                    <TableCell>{day}</TableCell>
-                                    <TableCell>{meal.mealName}</TableCell>
-                                    <TableCell>
-                                        {day !== "Friday" && meal.mealName !== "Eating out" && (
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                size="small"
-                                                onClick={() => swapMeal(day)}
-                                            >
-                                                Swap Meal
-                                            </Button>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            {Object.entries(mealPlan)
+                                .sort((a, b) => {
+                                    const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                                    // a[0] and b[0] are the day names
+                                    const dayA = weekDays.indexOf(a[0]);
+                                    const dayB = weekDays.indexOf(b[0]);
+                                    return dayA - dayB;
+                                })
+                                .map(([day, meal]) => (
+                                    <TableRow key={day}>
+                                        <TableCell>{day}</TableCell>
+                                        <TableCell>{meal.mealName}</TableCell>
+                                        <TableCell>{meal.relativeEffort}</TableCell>
+                                        <TableCell>
+                                            {day !== "Friday" && meal.mealName !== "Eating out" && (
+                                                <Button
+                                                    variant="contained"
+                                                    color="primary"
+                                                    size="small"
+                                                    onClick={() => swapMeal(day)}
+                                                >
+                                                    Swap Meal
+                                                </Button>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
                         </TableBody>
                     </Table>
                 </Paper>

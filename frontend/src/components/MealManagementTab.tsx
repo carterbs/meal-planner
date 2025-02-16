@@ -24,6 +24,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
     const [editingIngredientIndex, setEditingIngredientIndex] = useState<number | null>(null);
     const [editedIngredient, setEditedIngredient] = useState<Ingredient | null>(null);
+    const [mealFilter, setMealFilter] = useState<string>("");
 
     // Function to start editing a specific ingredient based on its index in the meal's ingredients list
     const startEditing = (ingredient: Ingredient) => {
@@ -104,17 +105,35 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                         <Typography>Loading meals...</Typography>
                     ) : (
                         <Paper variant="outlined">
+                            <Box sx={{ p: 1 }}>
+                                <TextField
+                                    label="Search Meals"
+                                    variant="outlined"
+                                    size="small"
+                                    value={mealFilter}
+                                    onChange={(e) => setMealFilter(e.target.value)}
+                                    fullWidth
+                                    sx={{ mb: 1 }}
+                                />
+                            </Box>
                             <List>
-                                {meals.map((meal) => (
-                                    <ListItem key={meal.id} disablePadding>
-                                        <ListItemButton
-                                            selected={selectedMeal?.id === meal.id}
-                                            onClick={() => setSelectedMeal(meal)}
-                                        >
-                                            <ListItemText primary={meal.mealName} />
-                                        </ListItemButton>
-                                    </ListItem>
-                                ))}
+                                {meals
+                                    .filter((meal) =>
+                                        meal.mealName.toLowerCase().includes(mealFilter.toLowerCase())
+                                    )
+                                    .map((meal) => (
+                                        <ListItem key={meal.id} disablePadding>
+                                            <ListItemButton
+                                                selected={selectedMeal?.id === meal.id}
+                                                onClick={() => setSelectedMeal(meal)}
+                                            >
+                                                <ListItemText
+                                                    primary={meal.mealName}
+                                                    secondary={`Effort: ${meal.relativeEffort}`}
+                                                />
+                                            </ListItemButton>
+                                        </ListItem>
+                                    ))}
                             </List>
                         </Paper>
                     )}

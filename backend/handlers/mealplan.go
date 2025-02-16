@@ -21,16 +21,18 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Create an output map from day to a simplified meal object.
+	// Create an output map from day to a simplified meal object including effort.
 	type OutputMeal struct {
-		ID       int    `json:"id"`
-		MealName string `json:"mealName"`
+		ID             int    `json:"id"`
+		MealName       string `json:"mealName"`
+		RelativeEffort int    `json:"relativeEffort"`
 	}
 	output := make(map[string]OutputMeal)
 	for day, meal := range plan {
 		output[day] = OutputMeal{
-			ID:       meal.ID,
-			MealName: meal.MealName,
+			ID:             meal.ID,
+			MealName:       meal.MealName,
+			RelativeEffort: meal.RelativeEffort,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

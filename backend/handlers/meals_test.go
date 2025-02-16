@@ -34,11 +34,11 @@ func TestGetAllMealsHandler(t *testing.T) {
 	// Meal B: two rows; one for "Milk" with valid quantity and one for "Bread" with empty quantity.
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
-		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "name", "quantity", "unit",
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "ingredient_id", "name", "quantity", "unit",
 	}).
-		AddRow(1, "Meal A", 2, now, false, "Eggs", 0, "dozen").
-		AddRow(2, "Meal B", 3, now, true, "Milk", 2.5, "gallon").
-		AddRow(2, "Meal B", 3, now, true, "Bread", 0, "loaf")
+		AddRow(1, "Meal A", 2, now, false, 1, "Eggs", 0, "dozen").
+		AddRow(2, "Meal B", 3, now, true, 2, "Milk", 2.5, "gallon").
+		AddRow(2, "Meal B", 3, now, true, 3, "Bread", 0, "loaf")
 
 	// Expect the shared query for all meals.
 	mock.ExpectQuery(regexp.QuoteMeta(models.GetAllMealsQuery)).WillReturnRows(rows)
@@ -83,25 +83,23 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 
 	mealID := 1
 	updatedIngredient := models.Ingredient{
+		ID:       1,
 		Name:     "Sugar",
 		Quantity: 2.0,
 		Unit:     "cup",
 	}
 
-	// Simulate a transaction for the update.
-	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM ingredients WHERE meal_id = $1 AND name = $2")).
-		WithArgs(mealID, updatedIngredient.Name).
+	// Expect a single UPDATE query
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE ingredients SET name=$1, quantity=$2, unit=$3 WHERE id=$4 AND meal_id=$5")).
+		WithArgs(updatedIngredient.Name, updatedIngredient.Quantity, updatedIngredient.Unit, updatedIngredient.ID, mealID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO ingredients (meal_id, name, quantity, unit) VALUES ($1, $2, $3, $4)")).
-		WithArgs(mealID, updatedIngredient.Name, updatedIngredient.Quantity, updatedIngredient.Unit).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectCommit()
 
 	// Expect query to return updated meal.
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "name", "quantity", "unit"}).
-		AddRow(mealID, "Test Meal", 1, now, false, updatedIngredient.Name, updatedIngredient.Quantity, updatedIngredient.Unit)
+	rows := sqlmock.NewRows([]string{
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "ingredient_id", "name", "quantity", "unit",
+	}).
+		AddRow(mealID, "Test Meal", 1, now, false, 1, updatedIngredient.Name, updatedIngredient.Quantity, updatedIngredient.Unit)
 	mock.ExpectQuery(regexp.QuoteMeta(models.GetMealsByIDsQuery)).
 		WithArgs(pq.Array([]int{mealID})).
 		WillReturnRows(rows)
@@ -112,13 +110,13 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 		t.Fatalf("failed to marshal updated ingredient: %v", err)
 	}
 
-	req, err := http.NewRequest("PUT", "/api/meals/1/ingredients/0", bytes.NewReader(body))
+	req, err := http.NewRequest("PUT", "/api/meals/1/ingredients/1", bytes.NewReader(body))
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("mealId", "1")
-	rctx.URLParams.Add("index", "0")
+	rctx.URLParams.Add("ingredientId", "1")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	rr := httptest.NewRecorder()
@@ -157,35 +155,30 @@ func TestDeleteMealIngredientHandler(t *testing.T) {
 
 	mealID := 1
 
-	// First, expect a query to retrieve the meal with 2 ingredients.
-	now := time.Now()
-	rowsBefore := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "name", "quantity", "unit"}).
-		AddRow(mealID, "Test Meal", 1, now, false, "Salt", 1.0, "tsp").
-		AddRow(mealID, "Test Meal", 1, now, false, "Pepper", 0.5, "tsp")
-	mock.ExpectQuery(regexp.QuoteMeta(models.GetMealsByIDsQuery)).
-		WithArgs(pq.Array([]int{mealID})).
-		WillReturnRows(rowsBefore)
-
 	// Expect deletion of ingredient "Salt" (index 0).
-	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM ingredients WHERE meal_id = $1 AND name = $2")).
-		WithArgs(mealID, "Salt").
-		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM ingredients WHERE id = $1")).
+		WithArgs(1).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	// Then, expect a query to return the updated meal with only one ingredient ("Pepper").
-	rowsAfter := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "name", "quantity", "unit"}).
-		AddRow(mealID, "Test Meal", 1, now, false, "Pepper", 0.5, "tsp")
+	now := time.Now()
+	rowsAfter := sqlmock.NewRows([]string{
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "ingredient_id", "name", "quantity", "unit",
+	}).
+		AddRow(mealID, "Test Meal", 1, now, false, 2, "Pepper", 0.5, "tsp")
+
 	mock.ExpectQuery(regexp.QuoteMeta(models.GetMealsByIDsQuery)).
 		WithArgs(pq.Array([]int{mealID})).
 		WillReturnRows(rowsAfter)
 
-	// Create a DELETE request to remove the ingredient at index 0.
-	req, err := http.NewRequest("DELETE", "/api/meals/1/ingredients/0", nil)
+	// Create a DELETE request to remove the ingredient at index 1.
+	req, err := http.NewRequest("DELETE", "/api/meals/1/ingredients/1", nil)
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("mealId", "1")
-	rctx.URLParams.Add("index", "0")
+	rctx.URLParams.Add("ingredientId", "1")
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	rr := httptest.NewRecorder()

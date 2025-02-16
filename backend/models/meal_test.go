@@ -24,11 +24,11 @@ func TestGetMealsByIDs(t *testing.T) {
 	// Meal B: two rows. One for "Milk" with a valid quantity and one for "Bread" with an empty quantity.
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
-		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "name", "quantity", "unit",
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "ingredient_id", "name", "quantity", "unit",
 	}).
-		AddRow(1, "Meal A", 2, nil, false, "Eggs", nil, "dozen").
-		AddRow(2, "Meal B", 3, now, true, "Milk", 2.5, "gallon").
-		AddRow(2, "Meal B", 3, now, true, "Bread", nil, "loaf")
+		AddRow(1, "Meal A", 2, nil, false, 1, "Eggs", nil, "dozen").
+		AddRow(2, "Meal B", 3, now, true, 2, "Milk", 2.5, "gallon").
+		AddRow(2, "Meal B", 3, now, true, 3, "Bread", nil, "loaf")
 
 	mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
 
@@ -104,11 +104,11 @@ func TestGetAllMeals(t *testing.T) {
 	// Meal B: two rows; one for "Milk" with a valid quantity and one for "Bread" with an empty quantity.
 	now := time.Now()
 	rows := sqlmock.NewRows([]string{
-		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "name", "quantity", "unit",
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "ingredient_id", "name", "quantity", "unit",
 	}).
-		AddRow(1, "Meal A", 2, nil, false, "Eggs", nil, "dozen").
-		AddRow(2, "Meal B", 3, now, true, "Milk", 2.5, "gallon").
-		AddRow(2, "Meal B", 3, now, true, "Bread", nil, "loaf")
+		AddRow(1, "Meal A", 2, nil, false, 1, "Eggs", nil, "dozen").
+		AddRow(2, "Meal B", 3, now, true, 2, "Milk", 2.5, "gallon").
+		AddRow(2, "Meal B", 3, now, true, 3, "Bread", nil, "loaf")
 
 	// Expect the shared query for all meals.
 	mock.ExpectQuery(regexp.QuoteMeta(GetAllMealsQuery)).WillReturnRows(rows)
