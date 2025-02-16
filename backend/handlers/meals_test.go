@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -199,5 +200,136 @@ func TestDeleteMealIngredientHandler(t *testing.T) {
 	}
 	if meal.Ingredients[0].Name == "Salt" {
 		t.Errorf("expected ingredient 'Salt' to be deleted")
+	}
+}
+
+func TestDeleteMealHandler(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to open sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	DB = db
+
+	// Expect transaction to begin
+	mock.ExpectBegin()
+
+	// Expect deletion of ingredients first
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM ingredients WHERE meal_id = $1")).
+		WithArgs(1).
+		WillReturnResult(sqlmock.NewResult(0, 2)) // 2 ingredients deleted
+
+	// Then expect deletion of meal
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM meals WHERE id = $1")).
+		WithArgs(1).
+		WillReturnResult(sqlmock.NewResult(0, 1)) // 1 meal deleted
+
+	// Expect transaction to commit
+	mock.ExpectCommit()
+
+	req, err := http.NewRequest("DELETE", "/api/meals/1", nil)
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("mealId", "1")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(DeleteMealHandler)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	// Verify all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+// Add test for error cases
+func TestDeleteMealHandlerErrors(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to open sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	DB = db
+
+	tests := []struct {
+		name          string
+		mealID        string
+		setupMock     func()
+		expectedCode  int
+		expectedError string
+	}{
+		{
+			name:          "invalid meal ID",
+			mealID:        "invalid",
+			setupMock:     func() {},
+			expectedCode:  http.StatusBadRequest,
+			expectedError: "Invalid meal ID\n",
+		},
+		{
+			name:   "meal not found",
+			mealID: "1",
+			setupMock: func() {
+				mock.ExpectBegin()
+				mock.ExpectExec(regexp.QuoteMeta("DELETE FROM ingredients WHERE meal_id = $1")).
+					WithArgs(1).
+					WillReturnResult(sqlmock.NewResult(0, 0))
+				mock.ExpectExec(regexp.QuoteMeta("DELETE FROM meals WHERE id = $1")).
+					WithArgs(1).
+					WillReturnResult(sqlmock.NewResult(0, 0))
+				mock.ExpectRollback()
+			},
+			expectedCode:  http.StatusInternalServerError,
+			expectedError: "meal not found\n",
+		},
+		{
+			name:   "database error",
+			mealID: "1",
+			setupMock: func() {
+				mock.ExpectBegin()
+				mock.ExpectExec(regexp.QuoteMeta("DELETE FROM ingredients WHERE meal_id = $1")).
+					WithArgs(1).
+					WillReturnError(errors.New("database error"))
+				mock.ExpectRollback()
+			},
+			expectedCode:  http.StatusInternalServerError,
+			expectedError: "database error\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
+
+			req, err := http.NewRequest("DELETE", "/api/meals/"+tt.mealID, nil)
+			if err != nil {
+				t.Fatalf("failed to create request: %v", err)
+			}
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("mealId", tt.mealID)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(DeleteMealHandler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != tt.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, tt.expectedCode)
+			}
+
+			if rr.Body.String() != tt.expectedError {
+				t.Errorf("handler returned unexpected error: got %v want %v", rr.Body.String(), tt.expectedError)
+			}
+		})
 	}
 }

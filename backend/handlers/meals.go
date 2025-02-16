@@ -123,3 +123,25 @@ func DeleteMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(updatedMeals[0])
 }
+
+// DeleteMealHandler handles DELETE /api/meals/{mealId} and deletes a meal and its ingredients.
+func DeleteMealHandler(w http.ResponseWriter, r *http.Request) {
+	mealIdStr := chi.URLParam(r, "mealId")
+	if mealIdStr == "" {
+		http.Error(w, "Missing meal ID", http.StatusBadRequest)
+		return
+	}
+	mealID, err := strconv.Atoi(mealIdStr)
+	if err != nil {
+		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
+		return
+	}
+
+	err = models.DeleteMeal(DB, mealID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

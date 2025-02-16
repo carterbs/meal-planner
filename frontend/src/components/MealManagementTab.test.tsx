@@ -629,4 +629,66 @@ describe("MealManagementTab", () => {
         useStateSpy.mockRestore();
     });
 
+    test("deletes a meal", async () => {
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockMeals)
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true
+            })) as jest.Mock;
+
+        render(<MealManagementTab showToast={mockShowToast} />);
+
+        // Wait for meals to load and select one
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal")).toBeInTheDocument();
+        });
+        fireEvent.click(screen.getByText("Test Meal"));
+
+        // Find and click delete button
+        const deleteButton = screen.getByTestId("delete-meal-button");
+        fireEvent.click(deleteButton);
+
+        // Verify the meal was removed and toast was shown
+        await waitFor(() => {
+            expect(screen.queryByText("Test Meal")).not.toBeInTheDocument();
+            expect(mockShowToast).toHaveBeenCalledWith("Meal deleted successfully");
+        });
+    });
+
+    test("handles error when deleting meal", async () => {
+        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockMeals)
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: false
+            })) as jest.Mock;
+
+        render(<MealManagementTab showToast={mockShowToast} />);
+
+        // Wait for meals to load and select one
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal")).toBeInTheDocument();
+        });
+        fireEvent.click(screen.getByText("Test Meal"));
+
+        // Find and click delete button
+        const deleteButton = screen.getByTestId("delete-meal-button");
+        fireEvent.click(deleteButton);
+
+        // Verify error was handled
+        await waitFor(() => {
+            expect(consoleError).toHaveBeenCalled();
+            expect(mockShowToast).toHaveBeenCalledWith("Error deleting meal");
+        });
+
+        consoleError.mockRestore();
+    });
+
 }); 

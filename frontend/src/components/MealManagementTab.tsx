@@ -80,6 +80,26 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             .catch((err) => console.error("Error deleting ingredient", err));
     };
 
+    // Add this function inside MealManagementTab component
+    const deleteMeal = () => {
+        if (!selectedMeal) return;
+
+        fetch(`/api/meals/${selectedMeal.id}`, {
+            method: "DELETE",
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to delete meal");
+                // Remove meal from state and clear selection
+                setMeals(meals.filter(m => m.id !== selectedMeal.id));
+                setSelectedMeal(null);
+                showToast("Meal deleted successfully");
+            })
+            .catch((err) => {
+                console.error("Error deleting meal:", err);
+                showToast("Error deleting meal");
+            });
+    };
+
     // Add this useEffect to clear selected meal when meals list changes
     useEffect(() => {
         setSelectedMeal(null);
@@ -172,6 +192,16 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                         year: 'numeric'
                                     })}
                                 </Typography>
+                                <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+                                    <Button
+                                        variant="contained"
+                                        color="error"
+                                        onClick={deleteMeal}
+                                        data-testid="delete-meal-button"
+                                    >
+                                        Delete Meal
+                                    </Button>
+                                </Box>
                                 <Typography variant="h6" sx={{ mt: 2 }}>
                                     Ingredients
                                 </Typography>

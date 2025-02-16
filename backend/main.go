@@ -66,6 +66,7 @@ func main() {
 	r.Post("/api/meals/swap", handlers.SwapMealHandler)
 	r.Put("/api/meals/{mealId}/ingredients/{ingredientId}", handlers.UpdateMealIngredientHandler)
 	r.Delete("/api/meals/{mealId}/ingredients/{ingredientId}", handlers.DeleteMealIngredientHandler)
+	r.Delete("/api/meals/{mealId}", handlers.DeleteMealHandler)
 
 	log.Println("Backend server starting on :8080")
 	http.ListenAndServe(":8080", r)

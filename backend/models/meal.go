@@ -211,3 +211,35 @@ func DeleteMealIngredient(db *sql.DB, ingredientID int) error {
 	log.Printf("DeleteMealIngredient: deleted ingredientID=%d, rowsAffected=%d", ingredientID, rowsAffected)
 	return nil
 }
+
+// DeleteMeal deletes a meal and its ingredients by ID.
+func DeleteMeal(db *sql.DB, mealID int) error {
+	// Start a transaction since we need to delete from multiple tables
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Delete ingredients first due to foreign key constraint
+	_, err = tx.Exec("DELETE FROM ingredients WHERE meal_id = $1", mealID)
+	if err != nil {
+		return err
+	}
+
+	// Delete the meal
+	result, err := tx.Exec("DELETE FROM meals WHERE id = $1", mealID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.New("meal not found")
+	}
+
+	return tx.Commit()
+}
