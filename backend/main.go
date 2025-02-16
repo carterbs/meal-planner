@@ -59,7 +59,7 @@ func main() {
 	// Set up HTTP routes
 	r := chi.NewRouter()
 	r.Get("/api/mealplan", handlers.GetMealPlan)
-	r.Post("/api/mealplan/finalize", handlers.FinalizeMealPlan)
+	r.Post("/api/mealplan/finalize", handlers.FinalizeMealPlanHandler)
 	r.Post("/api/mealplan/swap", handlers.SwapMeal)
 	r.Post("/api/shoppinglist", handlers.GetShoppingList)
 	r.Get("/api/meals", handlers.GetAllMealsHandler)
@@ -67,6 +67,7 @@ func main() {
 	r.Put("/api/meals/{mealId}/ingredients/{ingredientId}", handlers.UpdateMealIngredientHandler)
 	r.Delete("/api/meals/{mealId}/ingredients/{ingredientId}", handlers.DeleteMealIngredientHandler)
 	r.Delete("/api/meals/{mealId}", handlers.DeleteMealHandler)
+	r.Post("/api/mealplan/replace", handlers.ReplaceMealHandler)
 
 	log.Println("Backend server starting on :8080")
 	http.ListenAndServe(":8080", r)

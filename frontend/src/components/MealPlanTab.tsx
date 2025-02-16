@@ -12,7 +12,11 @@ import {
     Paper,
     List,
     ListItem,
-    ListItemText
+    ListItemText,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
 } from "@mui/material";
 
 interface MealPlanTabProps {
@@ -22,12 +26,20 @@ interface MealPlanTabProps {
 export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
     const [shoppingList, setShoppingList] = useState<Ingredient[]>([]);
+    const [availableMeals, setAvailableMeals] = useState<Meal[]>([]);
 
     useEffect(() => {
         fetch("/api/mealplan")
             .then((res) => res.json())
             .then((data: MealPlan) => setMealPlan(data))
             .catch((err) => console.error("Error fetching meal plan:", err));
+    }, []);
+
+    useEffect(() => {
+        fetch("/api/meals")
+            .then((res) => res.json())
+            .then((data: Meal[]) => setAvailableMeals(data))
+            .catch((err) => console.error("Error fetching available meals:", err));
     }, []);
 
     const finalizePlan = () => {
@@ -76,6 +88,32 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             .catch((err) => console.error("Error getting shopping list:", err));
     };
 
+    const handleMealSelect = (day: string, newMealId: number) => {
+        if (!mealPlan) return;
+
+        fetch("/api/mealplan/replace", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                day,
+                new_meal_id: newMealId,
+            }),
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to replace meal");
+                return res.json();
+            })
+            .then((updatedMeal: Meal) => {
+                setMealPlan({ ...mealPlan, [day]: updatedMeal });
+                setShoppingList([]);
+                showToast(`Updated ${day}'s meal to: ${updatedMeal.mealName}`);
+            })
+            .catch((err) => {
+                console.error("Error replacing meal:", err);
+                showToast("Error replacing meal");
+            });
+    };
+
     return (
         <Box sx={{ p: 3 }} data-testid="meal-plan-component">
             <Typography variant="h4" gutterBottom>
@@ -109,14 +147,34 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                                             <TableCell>{meal?.relativeEffort}</TableCell>
                                             <TableCell>
                                                 {meal && day !== "Friday" && meal.mealName !== "Eating out" && (
-                                                    <Button
-                                                        variant="contained"
-                                                        color="primary"
-                                                        size="small"
-                                                        onClick={() => swapMeal(day)}
-                                                    >
-                                                        Swap Meal
-                                                    </Button>
+                                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                                        <Button
+                                                            variant="contained"
+                                                            color="primary"
+                                                            size="small"
+                                                            onClick={() => swapMeal(day)}
+                                                        >
+                                                            Swap Meal
+                                                        </Button>
+                                                        <FormControl size="small" sx={{ minWidth: 200 }}>
+                                                            <InputLabel id={`meal-select-${day}`}>Select Meal</InputLabel>
+                                                            <Select
+                                                                labelId={`meal-select-${day}`}
+                                                                value=""
+                                                                label="Select Meal"
+                                                                onChange={(e) => handleMealSelect(day, Number(e.target.value))}
+                                                                data-testid={`meal-select-${day}`}
+                                                            >
+                                                                {availableMeals
+                                                                    .filter(m => m.id !== meal.id)
+                                                                    .map((m) => (
+                                                                        <MenuItem key={m.id} value={m.id}>
+                                                                            {m.mealName}
+                                                                        </MenuItem>
+                                                                    ))}
+                                                            </Select>
+                                                        </FormControl>
+                                                    </Box>
                                                 )}
                                             </TableCell>
                                         </TableRow>

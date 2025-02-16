@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
 
 	"mealplanner/models"
 )
@@ -37,30 +36,6 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(output)
-}
-
-// FinalizeMealPlan finalizes the plan by updating each meal's last_planned timestamp.
-func FinalizeMealPlan(w http.ResponseWriter, r *http.Request) {
-	type FinalizePayload struct {
-		Plan map[string]int `json:"plan"` // Map day -> meal ID
-	}
-	var payload FinalizePayload
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid payload", http.StatusBadRequest)
-		return
-	}
-
-	now := time.Now()
-	for _, mealID := range payload.Plan {
-		_, err := DB.Exec("UPDATE meals SET last_planned = $1 WHERE id = $2", now, mealID)
-		if err != nil {
-			log.Println("Error updating meal:", err)
-			http.Error(w, "Internal error", http.StatusInternalServerError)
-			return
-		}
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Meal plan finalized"))
 }
 
 // SwapMeal handles swapping a meal in the current meal plan.

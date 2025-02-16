@@ -333,3 +333,97 @@ func TestDeleteMealHandlerErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestFinalizeMealPlanHandler(t *testing.T) {
+	tests := []struct {
+		name         string
+		payload      string
+		setupMock    func(mock sqlmock.Sqlmock)
+		expectedCode int
+		expectedBody string
+	}{
+		{
+			name:    "successful finalization",
+			payload: `{"plan": {"Monday": {"id": 1}, "Tuesday": {"id": 2}}}`,
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(regexp.QuoteMeta(`
+					UPDATE meals 
+					SET last_planned = NOW() 
+					WHERE id = ANY($1)
+				`)).WithArgs(pq.Array([]int{1, 2})).
+					WillReturnResult(sqlmock.NewResult(0, 2))
+				mock.ExpectCommit()
+			},
+			expectedCode: http.StatusOK,
+			expectedBody: "Plan finalized",
+		},
+		{
+			name:         "invalid json payload",
+			payload:      `{invalid json}`,
+			setupMock:    func(mock sqlmock.Sqlmock) {},
+			expectedCode: http.StatusBadRequest,
+			expectedBody: "Invalid request payload\n",
+		},
+		{
+			name:    "database error",
+			payload: `{"plan": {"Monday": {"id": 1}}}`,
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(regexp.QuoteMeta(`
+					UPDATE meals 
+					SET last_planned = NOW() 
+					WHERE id = ANY($1)
+				`)).WithArgs(pq.Array([]int{1})).
+					WillReturnError(errors.New("database error"))
+				mock.ExpectRollback()
+			},
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: "database error\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a new mock for each test case
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("failed to create sqlmock: %v", err)
+			}
+			defer db.Close()
+
+			// Set the DB for handlers
+			DB = db
+
+			// Setup mock expectations
+			tt.setupMock(mock)
+
+			req, err := http.NewRequest("POST", "/api/mealplan/finalize",
+				bytes.NewBufferString(tt.payload))
+			if err != nil {
+				t.Fatalf("failed to create request: %v", err)
+			}
+
+			// Set content type header
+			req.Header.Set("Content-Type", "application/json")
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(FinalizeMealPlanHandler)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != tt.expectedCode {
+				t.Errorf("handler returned wrong status code: got %v want %v",
+					status, tt.expectedCode)
+			}
+
+			if rr.Body.String() != tt.expectedBody {
+				t.Errorf("handler returned unexpected body: got %v want %v",
+					rr.Body.String(), tt.expectedBody)
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+		})
+	}
+}

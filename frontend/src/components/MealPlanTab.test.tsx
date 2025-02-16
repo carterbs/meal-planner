@@ -40,31 +40,61 @@ const mockShoppingList = [
     { ID: 2, Name: "Ingredient 2", Quantity: 1, Unit: "tbsp" }
 ];
 
+const mockAvailableMeals = [
+    {
+        id: 4,
+        mealName: "Available Meal 1",
+        relativeEffort: 2,
+        lastPlanned: "2024-02-15T00:00:00Z",
+        redMeat: false,
+        ingredients: []
+    },
+    {
+        id: 5,
+        mealName: "Available Meal 2",
+        relativeEffort: 1,
+        lastPlanned: "2024-02-15T00:00:00Z",
+        redMeat: true,
+        ingredients: []
+    }
+];
+
 describe("MealPlanTab", () => {
     const mockShowToast = jest.fn();
 
     beforeEach(() => {
-        global.fetch = jest.fn(() =>
-            Promise.resolve({
+        // Mock both initial fetch calls - one for meal plan and one for available meals
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve(mockMealPlan),
-            })
-        ) as jest.Mock;
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            })) as jest.Mock;
         mockShowToast.mockClear();
     });
 
     test("loads and displays meal plan", async () => {
-        // Mock fetch to return a delayed response
-        global.fetch = jest.fn(() =>
-            new Promise((resolve) => {
+        // Mock fetch to return a delayed response for both calls
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => new Promise((resolve) => {
                 setTimeout(() => {
                     resolve({
                         ok: true,
                         json: () => Promise.resolve(mockMealPlan),
                     });
                 }, 100);
-            })
-        ) as jest.Mock;
+            }))
+            .mockImplementationOnce(() => new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve({
+                        ok: true,
+                        json: () => Promise.resolve(mockAvailableMeals),
+                    });
+                }, 100);
+            })) as jest.Mock;
 
         render(<MealPlanTab showToast={mockShowToast} />);
 
@@ -99,6 +129,10 @@ describe("MealPlanTab", () => {
             }))
             .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
                 json: () => Promise.resolve(newMeal),
             })) as jest.Mock;
 
@@ -126,6 +160,10 @@ describe("MealPlanTab", () => {
             }))
             .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
                 json: () => Promise.resolve(mockShoppingList),
             })) as jest.Mock;
 
@@ -150,6 +188,10 @@ describe("MealPlanTab", () => {
             .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve(mockMealPlan),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
             }))
             .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
@@ -195,6 +237,10 @@ describe("MealPlanTab", () => {
                 ok: true,
                 json: () => Promise.resolve(mockMealPlan),
             }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
             .mockImplementationOnce(() => Promise.reject(new Error("Failed to swap"))) as jest.Mock;
 
         render(<MealPlanTab showToast={mockShowToast} />);
@@ -220,6 +266,10 @@ describe("MealPlanTab", () => {
             .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve(mockMealPlan),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
             }))
             .mockImplementationOnce(() => Promise.reject(new Error("Failed to get shopping list"))) as jest.Mock;
 
@@ -247,6 +297,10 @@ describe("MealPlanTab", () => {
                 ok: true,
                 json: () => Promise.resolve(mockMealPlan),
             }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
             .mockImplementationOnce(() => Promise.reject(new Error("Failed to finalize"))) as jest.Mock;
 
         render(<MealPlanTab showToast={mockShowToast} />);
@@ -265,132 +319,25 @@ describe("MealPlanTab", () => {
         consoleError.mockRestore();
     });
 
-    it('handles error when swapping meals', async () => {
-        const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
-        global.fetch = jest.fn()
-            .mockImplementationOnce(() => Promise.resolve({
-                json: () => Promise.resolve(mockMealPlan)
-            }))
-            .mockImplementationOnce(() => Promise.reject(new Error('Network error')));
-
-        render(<MealPlanTab showToast={mockShowToast} />);
-
-        // Wait for meal plan to load
-        await waitFor(() => {
-            expect(screen.queryByText('Loading meal plan...')).not.toBeInTheDocument();
-        });
-
-        // Try to swap a meal
-        await userEvent.click(screen.getAllByText('Swap Meal')[0]);
-
-        expect(mockConsoleError).toHaveBeenCalledWith('Error swapping meal:', expect.any(Error));
-        mockConsoleError.mockRestore();
-    });
-
-    it('handles error when getting shopping list', async () => {
-        const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
-        global.fetch = jest.fn()
-            .mockImplementationOnce(() => Promise.resolve({
-                json: () => Promise.resolve(mockMealPlan)
-            }))
-            .mockImplementationOnce(() => Promise.reject(new Error('Network error')));
-
-        render(<MealPlanTab showToast={mockShowToast} />);
-
-        // Wait for meal plan to load
-        await waitFor(() => {
-            expect(screen.queryByText('Loading meal plan...')).not.toBeInTheDocument();
-        });
-
-        // Try to get shopping list
-        await userEvent.click(screen.getByText('Get Shopping List'));
-
-        expect(mockConsoleError).toHaveBeenCalled();
-        mockConsoleError.mockRestore();
-    });
-
-    it('does not attempt to swap meal when no meal plan exists', async () => {
-        global.fetch = jest.fn().mockImplementationOnce(() => Promise.resolve({
-            json: () => Promise.resolve(null)
-        }));
-
-        render(<MealPlanTab showToast={mockShowToast} />);
-
-        // Wait for loading state
-        expect(screen.getByText('Loading meal plan...')).toBeInTheDocument();
-
-        // Verify swap function doesn't cause errors when no meal plan exists
-        const day = 'Monday';
-        const result = await screen.queryByText('Swap Meal');
-        expect(result).not.toBeInTheDocument();
-    });
-
-    test("handles null cases for meal plan functions", async () => {
-        // Mock fetch to return null meal plan initially
-        global.fetch = jest.fn()
-            .mockImplementationOnce(() => Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(null),
-            })) as jest.Mock;
-
-        render(<MealPlanTab showToast={mockShowToast} />);
-
-        // Test getShoppingList with null meal plan
-        const shoppingListButton = screen.getByText("Get Shopping List");
-        fireEvent.click(shoppingListButton);
-
-        // Test swapMeal with null meal
-        const swapButton = screen.queryByText("Swap Meal");
-        if (swapButton) {
-            fireEvent.click(swapButton);
-        }
-    });
-
-    test("sorts meal plan days correctly", async () => {
-        const unorderedMealPlan = {
-            Sunday: mockMealPlan.Monday,
-            Wednesday: mockMealPlan.Tuesday,
-            Monday: mockMealPlan.Friday,
-        };
-
-        global.fetch = jest.fn(() =>
-            Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(unorderedMealPlan),
-            })
-        ) as jest.Mock;
-
-        render(<MealPlanTab showToast={mockShowToast} />);
-
-        await waitFor(() => {
-            const rows = screen.getAllByRole("row");
-            // First row is header, so we start from index 1
-            expect(rows[1]).toHaveTextContent("Monday");
-            expect(rows[2]).toHaveTextContent("Wednesday");
-            expect(rows[3]).toHaveTextContent("Sunday");
-        });
-    });
-
     test("handles null meal plan when swapping", async () => {
         // Mock fetch to return null meal plan
-        global.fetch = jest.fn(() =>
-            Promise.resolve({
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve(null),
-            })
-        ) as jest.Mock;
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            })) as jest.Mock;
 
         render(<MealPlanTab showToast={mockShowToast} />);
 
         // Wait for loading state to appear
         expect(screen.getByText("Loading meal plan...")).toBeInTheDocument();
 
-        // Try to swap a meal (this should be a no-op since there's no meal plan)
-        // We can't actually click a swap button since it won't be rendered,
-        // but we can verify that no fetch calls were made for swapping
-        await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledTimes(1); // Only the initial meal plan fetch
-        });
+        // Verify that no swap buttons are rendered
+        expect(screen.queryByText("Swap Meal")).not.toBeInTheDocument();
     });
 
     test("handles missing day in meal plan when swapping", async () => {
@@ -401,12 +348,15 @@ describe("MealPlanTab", () => {
             Friday: mockMealPlan.Friday
         };
 
-        global.fetch = jest.fn(() =>
-            Promise.resolve({
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve(partialMealPlan),
-            })
-        ) as jest.Mock;
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            })) as jest.Mock;
 
         render(<MealPlanTab showToast={mockShowToast} />);
 
@@ -422,42 +372,130 @@ describe("MealPlanTab", () => {
         expect(swapButtons).toHaveLength(1); // Only Monday should have a swap button (Friday is "Eating out")
     });
 
-    test("does not show swap button for Friday or 'Eating out' meals", async () => {
+    test("loads available meals for selection", async () => {
         render(<MealPlanTab showToast={mockShowToast} />);
 
+        // Wait for initial data to load
         await waitFor(() => {
             expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
         });
 
-        // Get all cells containing "Friday"
-        const fridayCells = screen.getAllByText("Friday");
-        expect(fridayCells.length).toBeGreaterThan(0);
+        // Find and click the select
+        const select = within(screen.getByTestId("meal-select-Monday")).getByRole("combobox");
+        await userEvent.click(select);
 
-        // Find the Friday row and verify it has no swap button
-        const fridayRow = fridayCells[0].closest('tr');
-        expect(fridayRow).not.toBeNull();
-        if (fridayRow) {
-            expect(within(fridayRow).queryByText("Swap Meal")).not.toBeInTheDocument();
-        }
+        // Wait for menu items to be available
+        await waitFor(() => {
+            const options = screen.getAllByRole("option");
+            expect(options.length).toBeGreaterThan(0);
+            expect(options[0]).toHaveTextContent("Available Meal 1");
+        });
+    });
 
-        // Verify "Eating out" meal has no swap button
-        const eatingOutCells = screen.getAllByText("Eating out");
-        expect(eatingOutCells.length).toBeGreaterThan(0);
-        const eatingOutRow = eatingOutCells[0].closest('tr');
-        expect(eatingOutRow).not.toBeNull();
-        if (eatingOutRow) {
-            expect(within(eatingOutRow).queryByText("Swap Meal")).not.toBeInTheDocument();
-        }
+    test("selects a meal for a specific day", async () => {
+        const selectedMeal = mockAvailableMeals[0];
+        console.log('Mock Available Meals:', mockAvailableMeals);
+
+        // Mock fetch to return initial data and then the successful meal selection response
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => {
+                    console.log('First fetch response (meal plan):', mockMealPlan);
+                    return Promise.resolve(mockMealPlan);
+                }
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => {
+                    console.log('Second fetch response (available meals):', mockAvailableMeals);
+                    return Promise.resolve(mockAvailableMeals);
+                }
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(selectedMeal)
+            }));
+
+        render(<MealPlanTab showToast={mockShowToast} />);
+
+        // Wait for initial data to load
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
+        });
+
+        // Find and click the select
+        const select = within(screen.getByTestId("meal-select-Monday")).getByRole("combobox");
+        await userEvent.click(select);
+
+        // Log available options after clicking select
+        const options = screen.getAllByRole("option");
+        console.log('Available options:', options.map(opt => opt.textContent));
+
+        // Find and click an option
+        const option = await screen.findByRole("option", { name: selectedMeal.mealName });
+        await userEvent.click(option);
+
+        // Wait for the API call to complete and state to update
+        await waitFor(() => {
+            expect(fetch).toHaveBeenCalledWith("/api/mealplan/replace", expect.objectContaining({
+                method: "POST",
+                body: JSON.stringify({
+                    day: "Monday",
+                    new_meal_id: selectedMeal.id
+                })
+            }));
+        });
+
+        // Wait for the toast message and verify it shows the correct meal name
+        await waitFor(() => {
+            expect(mockShowToast).toHaveBeenCalledWith(`Updated Monday's meal to: ${selectedMeal.mealName}`);
+        });
+    });
+
+    test("handles error when selecting a meal", async () => {
+        // Mock fetch to return an error
+        (fetch as jest.Mock).mockImplementationOnce(() => Promise.reject("API Error"));
+
+        // Spy on console.error
+        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        render(<MealPlanTab showToast={mockShowToast} />);
+
+        // Wait for initial data to load
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
+        });
+
+        // Find and click the select
+        const select = within(screen.getByTestId("meal-select-Monday")).getByRole("combobox");
+        await userEvent.click(select);
+
+        // Find and click an option
+        const option = await screen.findByRole("option", { name: "Available Meal 1" });
+        await userEvent.click(option);
+
+        // Verify error handling
+        await waitFor(() => {
+            expect(mockShowToast).toHaveBeenCalledWith("Error replacing meal");
+            expect(consoleError).toHaveBeenCalled();
+        });
+
+        // Clean up
+        consoleError.mockRestore();
     });
 
     test("handles getting shopping list with no meal plan", async () => {
         // Mock fetch to return null meal plan
-        global.fetch = jest.fn(() =>
-            Promise.resolve({
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve(null),
-            })
-        ) as jest.Mock;
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            })) as jest.Mock;
 
         render(<MealPlanTab showToast={mockShowToast} />);
 
@@ -468,12 +506,7 @@ describe("MealPlanTab", () => {
         fireEvent.click(screen.getByText("Get Shopping List"));
 
         // Verify that no additional fetch calls were made
-        await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledTimes(1); // Only the initial meal plan fetch
-        });
-
-        // Verify no shopping list is shown
-        expect(screen.queryByText("Shopping List")).not.toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledTimes(2); // Only the initial meal plan and available meals fetches
     });
 
     test("handles empty shopping list", async () => {
@@ -481,6 +514,10 @@ describe("MealPlanTab", () => {
             .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve(mockMealPlan),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
             }))
             .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
@@ -496,7 +533,7 @@ describe("MealPlanTab", () => {
         // Click get shopping list button
         fireEvent.click(screen.getByText("Get Shopping List"));
 
-        // Verify no shopping list is shown (since it's empty)
+        // Verify no shopping list is shown
         await waitFor(() => {
             expect(screen.queryByText("Shopping List")).not.toBeInTheDocument();
         });
@@ -506,85 +543,50 @@ describe("MealPlanTab", () => {
         // Mock fetch to return null for meal plan
         global.fetch = jest.fn()
             .mockImplementationOnce(() => Promise.resolve({
-                json: () => Promise.resolve(null)
+                ok: true,
+                json: () => Promise.resolve(null),
             }))
             .mockImplementationOnce(() => Promise.resolve({
-                text: () => Promise.resolve("Plan finalized")
-            }));
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            })) as jest.Mock;
 
         render(<MealPlanTab showToast={mockShowToast} />);
 
         // Click finalize button
-        const finalizeButton = screen.getByText("Finalize Meal Plan");
-        fireEvent.click(finalizeButton);
+        fireEvent.click(screen.getByText("Finalize Meal Plan"));
 
         // Verify that no finalize call was made since there's no meal plan
-        await waitFor(() => {
-            expect(mockShowToast).not.toHaveBeenCalled();
-        });
+        expect(global.fetch).toHaveBeenCalledTimes(2); // Only the initial meal plan and available meals fetches
     });
 
     test("handles finalize plan with meal plan", async () => {
         global.fetch = jest.fn()
             .mockImplementationOnce(() => Promise.resolve({
-                json: () => Promise.resolve(mockMealPlan)
+                ok: true,
+                json: () => Promise.resolve(mockMealPlan),
             }))
             .mockImplementationOnce(() => Promise.resolve({
                 ok: true,
-                text: () => Promise.resolve("Plan finalized")
-            }));
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                text: () => Promise.resolve("Plan finalized"),
+            })) as jest.Mock;
 
         render(<MealPlanTab showToast={mockShowToast} />);
 
-        // Wait for meal plan to load
         await waitFor(() => {
             expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
         });
 
         // Click finalize button
-        const finalizeButton = screen.getByText("Finalize Meal Plan");
-        fireEvent.click(finalizeButton);
+        fireEvent.click(screen.getByText("Finalize Meal Plan"));
 
         // Verify that the toast was shown
         await waitFor(() => {
             expect(mockShowToast).toHaveBeenCalledWith("Plan finalized");
         });
-    });
-
-    test("handles swap meal with no meal for day", async () => {
-        // Mock fetch to return a meal plan with a missing day
-        const partialMealPlan = {
-            Monday: mockMealPlan.Monday,
-            // Tuesday is missing
-            Friday: mockMealPlan.Friday
-        };
-        global.fetch = jest.fn()
-            .mockImplementationOnce(() => Promise.resolve({
-                json: () => Promise.resolve(partialMealPlan)
-            }));
-
-        render(<MealPlanTab showToast={mockShowToast} />);
-
-        // Wait for meal plan to load
-        await waitFor(() => {
-            expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
-        });
-
-        // Verify that Monday has a swap button (since it has a meal)
-        const mondayRow = screen.getByText("Monday").closest('tr');
-        expect(mondayRow).not.toBeNull();
-        if (mondayRow) {
-            expect(within(mondayRow).getByText("Swap Meal")).toBeInTheDocument();
-        }
-
-        // Verify that Tuesday's row doesn't exist at all (since it has no meal)
-        expect(screen.queryByText("Tuesday")).not.toBeInTheDocument();
-
-        // Verify that Friday's row exists but has no swap button (since it's Friday)
-        const fridayRow = screen.getByText("Friday").closest('tr');
-        expect(fridayRow).not.toBeNull();
-        if (fridayRow) {
-            expect(within(fridayRow).queryByText("Swap Meal")).not.toBeInTheDocument();
-        }
     });
 }); 

@@ -243,3 +243,29 @@ func DeleteMeal(db *sql.DB, mealID int) error {
 
 	return tx.Commit()
 }
+
+// UpdateLastPlannedDates updates the last_planned date to current time for the given meal IDs
+func UpdateLastPlannedDates(db *sql.DB, mealIDs []int) error {
+	if len(mealIDs) == 0 {
+		return nil
+	}
+
+	// Start a transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Update last_planned date for all meals in the plan
+	_, err = tx.Exec(`
+		UPDATE meals 
+		SET last_planned = NOW() 
+		WHERE id = ANY($1)
+	`, pq.Array(mealIDs))
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}

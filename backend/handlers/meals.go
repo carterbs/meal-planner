@@ -145,3 +145,51 @@ func DeleteMealHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+// ReplaceMealHandler handles POST /api/meals/replace and returns a new meal to replace the current one.
+func ReplaceMealHandler(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		Day       string `json:"day"`
+		NewMealID int    `json:"new_meal_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	meals, err := models.GetMealsByIDs(DB, []int{payload.NewMealID})
+	if err != nil || len(meals) == 0 {
+		http.Error(w, "Meal not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(meals[0])
+}
+
+// FinalizeMealPlanHandler handles POST /api/mealplan/finalize and updates the last planned date for all meals in the plan
+func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		Plan map[string]models.Meal `json:"plan"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Extract meal IDs from the plan
+	var mealIDs []int
+	for _, meal := range payload.Plan {
+		mealIDs = append(mealIDs, meal.ID)
+	}
+
+	// Update last planned date for all meals in the plan
+	err := models.UpdateLastPlannedDates(DB, mealIDs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Plan finalized"))
+}
