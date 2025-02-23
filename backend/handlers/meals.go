@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"sort"
 	"strconv"
+	"strings"
 
 	"mealplanner/models"
 
@@ -17,6 +19,12 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving meals: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Sort meals alphabetically by name (A -> Z), case-insensitive
+	sort.Slice(meals, func(i, j int) bool {
+		return strings.ToLower(meals[i].MealName) < strings.ToLower(meals[j].MealName)
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(meals)
 }
@@ -182,6 +190,9 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 	for _, meal := range payload.Plan {
 		mealIDs = append(mealIDs, meal.ID)
 	}
+
+	// Sort meal IDs to ensure consistent order
+	sort.Ints(mealIDs)
 
 	// Update last planned date for all meals in the plan
 	err := models.UpdateLastPlannedDates(DB, mealIDs)

@@ -427,3 +427,72 @@ func TestFinalizeMealPlanHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAllMealsHandler_AlphabeticalOrder(t *testing.T) {
+	// Create a new sqlmock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	// Store the original DB and restore it after the test
+	originalDB := DB
+	DB = db
+	defer func() { DB = originalDB }()
+
+	// Setup rows with meals in non-alphabetical order
+	rows := sqlmock.NewRows([]string{
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat",
+		"ingredient_id", "name", "quantity", "unit",
+	}).
+		AddRow(1, "Zucchini Pasta", 2, nil, false, nil, nil, nil, nil).
+		AddRow(2, "apple pie", 3, nil, false, nil, nil, nil, nil).
+		AddRow(3, "Meatballs", 4, nil, true, nil, nil, nil, nil).
+		AddRow(4, "banana bread", 2, nil, false, nil, nil, nil, nil)
+
+	// Expect the query
+	mock.ExpectQuery(regexp.QuoteMeta(models.GetAllMealsQuery)).
+		WillReturnRows(rows)
+
+	// Create a request to pass to our handler
+	req, err := http.NewRequest("GET", "/api/meals", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(GetAllMealsHandler)
+
+	// Call the handler
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	// Parse the response body
+	var response []*models.Meal
+	if err := json.NewDecoder(rr.Body).Decode(&response); err != nil {
+		t.Fatalf("couldn't parse response: %v", err)
+	}
+
+	// Verify meals are sorted alphabetically (case-insensitive)
+	expectedOrder := []string{"apple pie", "banana bread", "Meatballs", "Zucchini Pasta"}
+	if len(response) != len(expectedOrder) {
+		t.Fatalf("expected %d meals, got %d", len(expectedOrder), len(response))
+	}
+
+	for i, expectedName := range expectedOrder {
+		if response[i].MealName != expectedName {
+			t.Errorf("meal at position %d: expected %q, got %q", i, expectedName, response[i].MealName)
+		}
+	}
+
+	// Verify all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled expectations: %s", err)
+	}
+}
