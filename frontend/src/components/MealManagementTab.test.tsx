@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { MealManagementTab } from "./MealManagementTab";
 import '@testing-library/jest-dom';
 import userEvent from "@testing-library/user-event";
@@ -192,22 +192,32 @@ describe("MealManagementTab", () => {
             }))
             .mockImplementationOnce(() => Promise.reject(new Error("Failed to update"))) as jest.Mock;
 
-        render(<MealManagementTab showToast={mockShowToast} />);
-
-        await waitFor(() => {
-            expect(screen.getByText("Test Meal")).toBeInTheDocument();
+        await act(async () => {
+            render(<MealManagementTab showToast={mockShowToast} />);
         });
-        fireEvent.click(screen.getByText("Test Meal"));
+
+        await act(async () => {
+            await waitFor(() => {
+                expect(screen.getByText("Test Meal")).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText("Test Meal"));
+        });
 
         // Click edit button
-        const editButton = screen.getByRole('button', { name: 'Edit' });
-        fireEvent.click(editButton);
+        await act(async () => {
+            const editButton = screen.getByRole('button', { name: 'Edit' });
+            fireEvent.click(editButton);
+        });
 
         // Try to save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        });
 
-        await waitFor(() => {
-            expect(consoleError).toHaveBeenCalledWith("Error updating ingredient", expect.any(Error));
+        await act(async () => {
+            await waitFor(() => {
+                expect(consoleError).toHaveBeenCalledWith("Error updating ingredient", expect.any(Error));
+            });
         });
 
         consoleError.mockRestore();
@@ -230,23 +240,43 @@ describe("MealManagementTab", () => {
     });
 
     test("handles invalid ingredient edits", async () => {
-        render(<MealManagementTab showToast={mockShowToast} />);
-
-        await waitFor(() => {
-            expect(screen.getByText("Test Meal")).toBeInTheDocument();
+        await act(async () => {
+            render(<MealManagementTab showToast={mockShowToast} />);
         });
-        fireEvent.click(screen.getByText("Test Meal"));
+
+        await act(async () => {
+            await waitFor(() => {
+                expect(screen.getByText("Test Meal")).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText("Test Meal"));
+        });
 
         // Click edit button
-        const editButton = screen.getByRole('button', { name: 'Edit' });
-        fireEvent.click(editButton);
+        await act(async () => {
+            const editButton = screen.getByRole('button', { name: 'Edit' });
+            fireEvent.click(editButton);
+        });
 
         // Try to edit with invalid values
         const quantityInput = screen.getByLabelText("Quantity");
-        fireEvent.change(quantityInput, { target: { value: "invalid" } });
+        await act(async () => {
+            fireEvent.change(quantityInput, { target: { value: "invalid" } });
+        });
 
-        // The value should be converted to 0 or ignored
-        expect(quantityInput).toHaveValue(0);
+        // The value should be null for invalid input
+        expect(quantityInput).toHaveValue(null);
+
+        // Empty string should also result in null
+        await act(async () => {
+            fireEvent.change(quantityInput, { target: { value: "" } });
+        });
+        expect(quantityInput).toHaveValue(null);
+
+        // Valid number should be accepted
+        await act(async () => {
+            fireEvent.change(quantityInput, { target: { value: "42" } });
+        });
+        expect(quantityInput).toHaveValue(42);
     });
 
     test('handles error when deleting an ingredient', async () => {
@@ -258,18 +288,26 @@ describe("MealManagementTab", () => {
             }))
             .mockImplementationOnce(() => Promise.reject(new Error('Network error')));
 
-        render(<MealManagementTab showToast={mockShowToast} />);
-
-        await waitFor(() => {
-            expect(screen.getByText('Test Meal')).toBeInTheDocument();
+        await act(async () => {
+            render(<MealManagementTab showToast={mockShowToast} />);
         });
-        fireEvent.click(screen.getByText('Test Meal'));
+
+        await act(async () => {
+            await waitFor(() => {
+                expect(screen.getByText('Test Meal')).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText('Test Meal'));
+        });
 
         // Try to delete an ingredient
-        const deleteButton = screen.getByRole('button', { name: 'Delete' });
-        await userEvent.click(deleteButton);
+        await act(async () => {
+            const deleteButton = screen.getByRole('button', { name: 'Delete' });
+            await userEvent.click(deleteButton);
+        });
 
-        expect(mockConsoleError).toHaveBeenCalledWith('Error deleting ingredient', expect.any(Error));
+        await act(async () => {
+            expect(mockConsoleError).toHaveBeenCalledWith('Error deleting ingredient', expect.any(Error));
+        });
         mockConsoleError.mockRestore();
     });
 
@@ -517,21 +555,77 @@ describe("MealManagementTab", () => {
         consoleError.mockRestore();
     });
 
-    test("handles ingredient editing state correctly", async () => {
-        render(<MealManagementTab showToast={mockShowToast} />);
+    test("displays meals in alphabetical order", async () => {
+        const unsortedMeals = [
+            {
+                id: 1,
+                mealName: "Zucchini Pasta",
+                relativeEffort: 2,
+                lastPlanned: "2024-01-01",
+                redMeat: false,
+                ingredients: []
+            },
+            {
+                id: 2,
+                mealName: "Apple Pie",
+                relativeEffort: 3,
+                lastPlanned: "2024-01-01",
+                redMeat: false,
+                ingredients: []
+            },
+            {
+                id: 3,
+                mealName: "meatballs",
+                relativeEffort: 2,
+                lastPlanned: "2024-01-01",
+                redMeat: true,
+                ingredients: []
+            }
+        ];
 
-        // Wait for meal to load and select it
-        await waitFor(() => {
-            expect(screen.getByText("Test Meal")).toBeInTheDocument();
+        global.fetch = jest.fn(() =>
+            Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(unsortedMeals)
+            })
+        ) as jest.Mock;
+
+        await act(async () => {
+            render(<MealManagementTab showToast={mockShowToast} />);
         });
-        fireEvent.click(screen.getByText("Test Meal"));
+
+        await act(async () => {
+            await waitFor(() => {
+                const mealsList = screen.getByTestId("meals-list");
+                const mealItems = within(mealsList).getAllByRole("button");
+                expect(mealItems).toHaveLength(3);
+                expect(mealItems[0]).toHaveTextContent("Apple Pie");
+                expect(mealItems[1]).toHaveTextContent("meatballs");
+                expect(mealItems[2]).toHaveTextContent("Zucchini Pasta");
+            });
+        });
+    });
+
+    test("handles ingredient editing state correctly", async () => {
+        await act(async () => {
+            render(<MealManagementTab showToast={mockShowToast} />);
+        });
+
+        await act(async () => {
+            await waitFor(() => {
+                expect(screen.getByText("Test Meal")).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText("Test Meal"));
+        });
 
         // Verify initial state - edit form should not be visible
         expect(screen.queryByLabelText("Name")).not.toBeInTheDocument();
 
         // Try to start editing without a selected meal (should do nothing)
-        const editButton = screen.getByTestId("edit-ingredient-1");
-        fireEvent.click(editButton);
+        await act(async () => {
+            const editButton = screen.getByTestId("edit-ingredient-1");
+            fireEvent.click(editButton);
+        });
 
         // Verify edit form is visible with correct initial values
         const nameInput = screen.getByLabelText("Name");
@@ -543,8 +637,10 @@ describe("MealManagementTab", () => {
         expect(unitInput).toHaveValue("cup");
 
         // Test cancel editing
-        const cancelButton = screen.getByRole('button', { name: 'Cancel' });
-        fireEvent.click(cancelButton);
+        await act(async () => {
+            const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+            fireEvent.click(cancelButton);
+        });
 
         // Verify edit form is hidden after canceling
         expect(screen.queryByLabelText("Name")).not.toBeInTheDocument();

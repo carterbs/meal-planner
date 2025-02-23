@@ -43,7 +43,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
         if (!editedIngredient) return;
         setEditedIngredient({
             ...editedIngredient,
-            [field]: field === "Quantity" ? (value === "" ? null : (isNaN(Number(value)) ? 0 : Number(value))) : value,
+            [field]: field === "Quantity" ? (value === "" || isNaN(Number(value)) ? null : Number(value)) : value,
         });
     };
 
@@ -152,6 +152,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                     .filter((meal) =>
                                         meal.mealName.toLowerCase().includes(mealFilter.toLowerCase())
                                     )
+                                    .sort((a, b) => a.mealName.toLowerCase().localeCompare(b.mealName.toLowerCase()))
                                     .map((meal) => (
                                         <ListItem key={meal.id} disablePadding>
                                             <ListItemButton
