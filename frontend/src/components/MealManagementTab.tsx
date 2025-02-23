@@ -5,15 +5,13 @@ import {
     Typography,
     Grid,
     Paper,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemButton,
     Card,
     CardContent,
     Button,
     TextField
 } from "@mui/material";
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { format } from 'date-fns';
 
 interface MealManagementTabProps {
     showToast: (message: string) => void;
@@ -25,6 +23,40 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     const [editingIngredientIndex, setEditingIngredientIndex] = useState<number | null>(null);
     const [editedIngredient, setEditedIngredient] = useState<Ingredient | null>(null);
     const [mealFilter, setMealFilter] = useState<string>("");
+
+    // Column definitions for the DataGrid
+    const columns: GridColDef[] = [
+        {
+            field: 'mealName',
+            headerName: 'Meal Name',
+            flex: 1,
+            minWidth: 200,
+        },
+        {
+            field: 'relativeEffort',
+            headerName: 'Effort Level',
+            width: 120,
+            type: 'number',
+        },
+        {
+            field: 'lastPlanned',
+            headerName: 'Last Planned',
+            width: 150,
+            valueFormatter: (value: string | null) => {
+                if (!value) return 'Never';
+                const date = new Date(value);
+                return format(date, 'MM-dd-yyyy');
+            }
+        },
+        {
+            field: 'redMeat',
+            headerName: 'Red Meat',
+            width: 100,
+            renderCell: (params) => {
+                return params.value ? '🥩' : '❌';
+            },
+        },
+    ];
 
     // Function to start editing a specific ingredient based on its index in the meal's ingredients list
     const startEditing = (ingredient: Ingredient) => {
@@ -47,11 +79,10 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
         });
     };
 
-    // Function to save the updated ingredient by merging it back into the meal's ingredients and making a PUT request
+    // Function to save the updated ingredient
     const saveIngredient = () => {
         if (!selectedMeal || !editedIngredient) return;
 
-        // Call the new endpoint with the single ingredient payload.
         fetch(`/api/meals/${selectedMeal.id}/ingredients/${editedIngredient.ID}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -66,7 +97,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             .catch((err) => console.error("Error updating ingredient", err));
     };
 
-    // Function to delete a single ingredient by its index using a DELETE request
+    // Function to delete a single ingredient
     const deleteIngredient = (ingredientId: number) => {
         if (!selectedMeal) return;
         fetch(`/api/meals/${selectedMeal.id}/ingredients/${ingredientId}`, {
@@ -80,7 +111,6 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             .catch((err) => console.error("Error deleting ingredient", err));
     };
 
-    // Add this function inside MealManagementTab component
     const deleteMeal = () => {
         if (!selectedMeal) return;
 
@@ -89,7 +119,6 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
         })
             .then((res) => {
                 if (!res.ok) throw new Error("Failed to delete meal");
-                // Remove meal from state and clear selection
                 setMeals(meals.filter(m => m.id !== selectedMeal.id));
                 setSelectedMeal(null);
                 showToast("Meal deleted successfully");
@@ -100,13 +129,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             });
     };
 
-    // Add this useEffect to clear selected meal when meals list changes
     useEffect(() => {
         setSelectedMeal(null);
         setEditedIngredient(null);
     }, [meals]);
 
-    // Existing useEffect for fetching meals...
     useEffect(() => {
         fetch("/api/meals")
             .then((res) => {
@@ -122,6 +149,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             });
     }, []);
 
+    // Filter meals based on search term
+    const filteredMeals = meals.filter((meal) =>
+        meal.mealName.toLowerCase().includes(mealFilter.toLowerCase())
+    );
+
     return (
         <Box sx={{ p: 2 }} data-testid="meal-management-tab">
             <Typography variant="h4" gutterBottom>
@@ -132,43 +164,60 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                     <Typography variant="h6" gutterBottom>
                         Available Meals
                     </Typography>
-                    {meals.length === 0 ? (
-                        <Typography>Loading meals...</Typography>
-                    ) : (
-                        <Paper variant="outlined">
-                            <Box sx={{ p: 1 }}>
-                                <TextField
-                                    label="Search Meals"
-                                    variant="outlined"
-                                    size="small"
-                                    value={mealFilter}
-                                    onChange={(e) => setMealFilter(e.target.value)}
-                                    fullWidth
-                                    sx={{ mb: 1 }}
-                                />
-                            </Box>
-                            <List data-testid="meals-list">
-                                {meals
-                                    .filter((meal) =>
-                                        meal.mealName.toLowerCase().includes(mealFilter.toLowerCase())
-                                    )
-                                    .sort((a, b) => a.mealName.toLowerCase().localeCompare(b.mealName.toLowerCase()))
-                                    .map((meal) => (
-                                        <ListItem key={meal.id} disablePadding>
-                                            <ListItemButton
-                                                selected={selectedMeal?.id === meal.id}
-                                                onClick={() => setSelectedMeal(meal)}
-                                            >
-                                                <ListItemText
-                                                    primary={meal.mealName}
-                                                    secondary={`Effort: ${meal.relativeEffort}`}
-                                                />
-                                            </ListItemButton>
-                                        </ListItem>
-                                    ))}
-                            </List>
-                        </Paper>
-                    )}
+                    <Box sx={{ mb: 2 }}>
+                        <TextField
+                            label="Search Meals"
+                            variant="outlined"
+                            size="small"
+                            value={mealFilter}
+                            onChange={(e) => setMealFilter(e.target.value)}
+                            fullWidth
+                        />
+                    </Box>
+                    <Paper sx={{ height: 400, width: '100%', boxShadow: 'none' }}>
+                        <DataGrid
+                            rows={filteredMeals}
+                            columns={columns}
+                            getRowId={(row) => row.id}
+                            initialState={{
+                                sorting: {
+                                    sortModel: [{ field: 'mealName', sort: 'asc' }],
+                                },
+                            }}
+                            onRowClick={(params) => {
+                                const meal = meals.find(m => m.id === params.id);
+                                if (meal) setSelectedMeal(meal);
+                            }}
+                            rowSelection={false}
+                            disableRowSelectionOnClick
+                            autoHeight
+                            density="comfortable"
+                            sx={{
+                                '& .MuiDataGrid-row:hover': {
+                                    cursor: 'pointer',
+                                    backgroundColor: 'action.hover',
+                                    boxShadow: 'none',
+                                },
+                                '& .MuiDataGrid-row.Mui-selected': {
+                                    backgroundColor: 'primary.light',
+                                },
+                                '& .MuiDataGrid-cell': {
+                                    textDecoration: 'none',
+                                    borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                                },
+                                '& .MuiDataGrid-row:focus, & .MuiDataGrid-cell:focus': {
+                                    outline: 'none',
+                                },
+                                '& .MuiDataGrid-row': {
+                                    boxShadow: 'none',
+                                },
+                                border: '1px solid rgba(224, 224, 224, 1)',
+                                '& .MuiDataGrid-columnHeaders': {
+                                    borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                                },
+                            }}
+                        />
+                    </Paper>
                 </Grid>
                 {selectedMeal && meals.length > 0 && (
                     <Grid item xs={12} md={6}>
@@ -187,11 +236,9 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                     Contains Red Meat: {selectedMeal.redMeat ? "Yes" : "No"}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 2 }}>
-                                    Last Eaten: {new Date(selectedMeal.lastPlanned).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric'
-                                    })}
+                                    Last Eaten: {selectedMeal.lastPlanned ?
+                                        format(new Date(selectedMeal.lastPlanned), 'MMM d, yyyy') :
+                                        'Never'}
                                 </Typography>
                                 <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
                                     <Button
@@ -209,28 +256,45 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                 {selectedMeal.ingredients.length === 0 ? (
                                     <Typography>No ingredients found.</Typography>
                                 ) : (
-                                    <List>
+                                    <Box component="ul" sx={{ listStyle: 'none', p: 0 }}>
                                         {selectedMeal.ingredients.map((ing) => (
-                                            <ListItem key={ing.ID}>
+                                            <Box
+                                                component="li"
+                                                key={ing.ID}
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    p: 1,
+                                                    borderBottom: '1px solid',
+                                                    borderColor: 'divider',
+                                                    '&:last-child': {
+                                                        borderBottom: 'none',
+                                                    },
+                                                }}
+                                            >
                                                 {editedIngredient && editedIngredient.ID === ing.ID ? (
-                                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: '100%' }}>
                                                         <TextField
                                                             label="Name"
                                                             value={editedIngredient?.Name || ""}
                                                             onChange={(e) => handleIngredientChange("Name", e.target.value)}
+                                                            fullWidth
                                                         />
                                                         <TextField
                                                             label="Quantity"
                                                             type="number"
                                                             value={editedIngredient?.Quantity === null ? "" : editedIngredient?.Quantity}
                                                             onChange={(e) => handleIngredientChange("Quantity", e.target.value)}
+                                                            fullWidth
                                                         />
                                                         <TextField
                                                             label="Unit"
                                                             value={editedIngredient?.Unit || ""}
                                                             onChange={(e) => handleIngredientChange("Unit", e.target.value)}
+                                                            fullWidth
                                                         />
-                                                        <Box sx={{ display: "flex", gap: 1 }}>
+                                                        <Box sx={{ display: "flex", gap: 1, justifyContent: 'flex-end', mt: 1 }}>
                                                             <Button variant="contained" color="primary" onClick={saveIngredient}>
                                                                 Save
                                                             </Button>
@@ -240,25 +304,33 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                         </Box>
                                                     </Box>
                                                 ) : (
-                                                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                                                        <ListItemText primary={`${ing.Quantity ? ing.Quantity + " " : ""}${ing.Unit ? ing.Unit + " " : ""}${ing.Name}`.trim()} />
+                                                    <>
+                                                        <Typography>
+                                                            {`${ing.Quantity ? ing.Quantity + " " : ""}${ing.Unit ? ing.Unit + " " : ""}${ing.Name}`.trim()}
+                                                        </Typography>
                                                         <Box sx={{ display: "flex", gap: 1 }}>
                                                             <Button
                                                                 variant="outlined"
                                                                 onClick={() => startEditing(ing)}
                                                                 data-testid={`edit-ingredient-${ing.ID}`}
+                                                                size="small"
                                                             >
                                                                 Edit
                                                             </Button>
-                                                            <Button variant="outlined" color="error" onClick={() => deleteIngredient(ing.ID)}>
+                                                            <Button
+                                                                variant="outlined"
+                                                                color="error"
+                                                                onClick={() => deleteIngredient(ing.ID)}
+                                                                size="small"
+                                                            >
                                                                 Delete
                                                             </Button>
                                                         </Box>
-                                                    </Box>
+                                                    </>
                                                 )}
-                                            </ListItem>
+                                            </Box>
                                         ))}
-                                    </List>
+                                    </Box>
                                 )}
                             </CardContent>
                         </Card>

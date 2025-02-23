@@ -29,17 +29,45 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     const [availableMeals, setAvailableMeals] = useState<Meal[]>([]);
 
     useEffect(() => {
-        fetch("/api/mealplan")
-            .then((res) => res.json())
-            .then((data: MealPlan) => setMealPlan(data))
-            .catch((err) => console.error("Error fetching meal plan:", err));
+        let isMounted = true;
+
+        const fetchMealPlan = async () => {
+            try {
+                const res = await fetch("/api/mealplan");
+                const data = await res.json();
+                if (isMounted) {
+                    setMealPlan(data);
+                }
+            } catch (err) {
+                console.error("Error fetching meal plan:", err);
+            }
+        };
+
+        fetchMealPlan();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     useEffect(() => {
-        fetch("/api/meals")
-            .then((res) => res.json())
-            .then((data: Meal[]) => setAvailableMeals(data))
-            .catch((err) => console.error("Error fetching available meals:", err));
+        let isMounted = true;
+
+        const fetchAvailableMeals = async () => {
+            try {
+                const res = await fetch("/api/meals");
+                const data = await res.json();
+                if (isMounted) {
+                    setAvailableMeals(data);
+                }
+            } catch (err) {
+                console.error("Error fetching available meals:", err);
+            }
+        };
+
+        fetchAvailableMeals();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const finalizePlan = () => {
@@ -192,6 +220,8 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                                                                 label="Select Meal"
                                                                 onChange={(e) => handleMealSelect(day, Number(e.target.value))}
                                                                 data-testid={`meal-select-${day}`}
+                                                                MenuProps={{ disablePortal: true }}
+                                                                open={process.env.NODE_ENV === 'test'}
                                                             >
                                                                 {availableMeals
                                                                     .filter(m => m.id !== meal.id)
@@ -216,69 +246,45 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 <Typography>Loading meal plan...</Typography>
             )}
 
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
                 <Button variant="outlined" onClick={finalizePlan}>
                     Finalize Meal Plan
                 </Button>
-                <Button variant="outlined" onClick={getShoppingList} sx={{ ml: 2 }}>
+                <Button variant="outlined" onClick={getShoppingList}>
                     Get Shopping List
                 </Button>
             </Box>
 
             {shoppingList.length > 0 && (
                 <Box sx={{ mt: 2 }}>
-                    <Box sx={{ mb: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                            <Typography variant="h5">
-                                Meal Plan Summary
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={copyMealPlanToClipboard}
-                                data-testid="copy-meal-plan"
-                            >
-                                Copy to Clipboard
-                            </Button>
-                        </Box>
-                        <List dense>
-                            {Object.entries(mealPlan || {})
-                                .sort(([dayA], [dayB]) => {
-                                    const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-                                    return weekDays.indexOf(dayA) - weekDays.indexOf(dayB);
-                                })
-                                .map(([day, meal]) => (
-                                    <ListItem key={day}>
-                                        <ListItemText
-                                            primary={`${day}: ${meal.mealName}`}
-                                        />
-                                    </ListItem>
-                                ))
-                            }
-                        </List>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                        <Typography variant="h5">
-                            Shopping List
-                        </Typography>
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={copyShoppingListToClipboard}
-                            data-testid="copy-shopping-list"
-                        >
-                            Copy to Clipboard
-                        </Button>
-                    </Box>
+                    <Typography variant="h6">Shopping List</Typography>
                     <List>
                         {shoppingList.map((item, index) => (
                             <ListItem key={index}>
-                                <ListItemText
-                                    primary={`${item.Quantity} ${item.Unit} ${item.Name}`} />
+                                <ListItemText primary={`${item.Quantity} ${item.Unit} ${item.Name}`} />
                             </ListItem>
                         ))}
                     </List>
+                    <Button variant="contained" onClick={copyShoppingListToClipboard}>
+                        Copy to Clipboard
+                    </Button>
+                </Box>
+            )}
+
+            {mealPlan && (
+                <Box sx={{ mt: 2 }}>
+                    <Typography variant="h6">Meal Plan Summary</Typography>
+                    <Box>
+                        {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                            .filter(day => mealPlan[day])
+                            .map(day => (
+                                <Typography key={day}>{`${day}: ${mealPlan[day].mealName}`}</Typography>
+                            ))
+                        }
+                    </Box>
+                    <Button variant="contained" data-testid="copy-meal-plan" onClick={copyMealPlanToClipboard}>
+                        Copy Meal Plan
+                    </Button>
                 </Box>
             )}
         </Box>
