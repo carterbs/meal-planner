@@ -43,7 +43,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
         if (!editedIngredient) return;
         setEditedIngredient({
             ...editedIngredient,
-            [field]: field === "Quantity" ? Number(value) : value,
+            [field]: field === "Quantity" ? (value === "" ? null : (isNaN(Number(value)) ? 0 : Number(value))) : value,
         });
     };
 
@@ -221,7 +221,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                         <TextField
                                                             label="Quantity"
                                                             type="number"
-                                                            value={editedIngredient?.Quantity || 0}
+                                                            value={editedIngredient?.Quantity === null ? "" : editedIngredient?.Quantity}
                                                             onChange={(e) => handleIngredientChange("Quantity", e.target.value)}
                                                         />
                                                         <TextField
@@ -240,7 +240,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                     </Box>
                                                 ) : (
                                                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                                                        <ListItemText primary={`${ing.Quantity} ${ing.Unit} ${ing.Name}`} />
+                                                        <ListItemText primary={`${ing.Quantity ? ing.Quantity + " " : ""}${ing.Unit ? ing.Unit + " " : ""}${ing.Name}`.trim()} />
                                                         <Box sx={{ display: "flex", gap: 1 }}>
                                                             <Button
                                                                 variant="outlined"
