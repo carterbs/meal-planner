@@ -1,5 +1,5 @@
 // frontend/src/App.tsx
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Tabs, Tab } from '@mui/material';
 import { MealPlanTab } from './components/MealPlanTab';
 import { MealManagementTab } from './components/MealManagementTab';
@@ -9,13 +9,27 @@ const App: React.FC = () => {
     const [activeTab, setActiveTab] = useState(0);
     const [toast, setToast] = useState<string | null>(null);
 
-    // Helper function to show a toast message
+    const toastTimeout = process.env.NODE_ENV === 'test' ? 10 : 2000;
+    const toastTimeoutRef = useRef<number | null>(null);
+
     const showToast = (message: string) => {
         setToast(message);
-        setTimeout(() => {
+        if (toastTimeoutRef.current) {
+            clearTimeout(toastTimeoutRef.current);
+        }
+        toastTimeoutRef.current = window.setTimeout(() => {
             setToast(null);
-        }, 2000);
+        }, toastTimeout);
     };
+
+    // Cleanup the timeout on component unmount
+    useEffect(() => {
+        return () => {
+            if (toastTimeoutRef.current) {
+                clearTimeout(toastTimeoutRef.current);
+            }
+        };
+    }, []);
 
     return (
         <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>

@@ -31,40 +31,29 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     useEffect(() => {
         let isMounted = true;
 
-        const fetchMealPlan = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch("/api/mealplan");
-                const data = await res.json();
+                const [mealPlanRes, availableMealsRes] = await Promise.all([
+                    fetch("/api/mealplan"),
+                    fetch("/api/meals")
+                ]);
+
+                const [mealPlanData, availableMealsData] = await Promise.all([
+                    mealPlanRes.json(),
+                    availableMealsRes.json()
+                ]);
+
                 if (isMounted) {
-                    setMealPlan(data);
+                    setMealPlan(mealPlanData);
+                    setAvailableMeals(availableMealsData);
                 }
             } catch (err) {
-                console.error("Error fetching meal plan:", err);
+                console.error("Error fetching meal plan or available meals:", err);
             }
         };
 
-        fetchMealPlan();
-        return () => {
-            isMounted = false;
-        };
-    }, []);
+        fetchData();
 
-    useEffect(() => {
-        let isMounted = true;
-
-        const fetchAvailableMeals = async () => {
-            try {
-                const res = await fetch("/api/meals");
-                const data = await res.json();
-                if (isMounted) {
-                    setAvailableMeals(data);
-                }
-            } catch (err) {
-                console.error("Error fetching available meals:", err);
-            }
-        };
-
-        fetchAvailableMeals();
         return () => {
             isMounted = false;
         };

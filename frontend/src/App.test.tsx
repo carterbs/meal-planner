@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import App from "./App";
 import '@testing-library/jest-dom';
@@ -167,14 +167,16 @@ test("clicking Swap Meal updates the meal plan, clears shopping list, and shows 
     const toastMessage = screen.getByText(/Swapped Monday with: Meal C/i);
     expect(toastMessage).toBeInTheDocument();
 
-    // Wait for toast to disappear after 2 seconds.
-    await waitFor(
-        () => {
-            expect(screen.queryByText(/Swapped Monday with: Meal C/i)).not.toBeInTheDocument();
-        },
-        { timeout: 3500 }
-    );
-});
+    // Advance timers to trigger toast clearance (toastTimeout should be 10ms in test env)
+    act(() => {
+        jest.advanceTimersByTime(10);
+    });
+
+    // Wait for toast to disappear after advancing timers
+    await waitFor(() => {
+        expect(screen.queryByText(/Swapped Monday with: Meal C/i)).not.toBeInTheDocument();
+    }, { timeout: 100 });
+}, 5000);
 
 // Test getting the shopping list.
 test("clicking Get Shopping List loads and renders the shopping list", async () => {
