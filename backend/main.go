@@ -63,6 +63,7 @@ func main() {
 	r.Post("/api/mealplan/swap", handlers.SwapMeal)
 	r.Post("/api/shoppinglist", handlers.GetShoppingList)
 	r.Get("/api/meals", handlers.GetAllMealsHandler)
+	r.Post("/api/meals", handlers.CreateMealHandler)
 	r.Post("/api/meals/swap", handlers.SwapMealHandler)
 	r.Put("/api/meals/{mealId}/ingredients/{ingredientId}", handlers.UpdateMealIngredientHandler)
 	r.Delete("/api/meals/{mealId}/ingredients/{ingredientId}", handlers.DeleteMealIngredientHandler)

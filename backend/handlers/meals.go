@@ -204,3 +204,30 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Plan finalized"))
 }
+
+// CreateMealHandler handles POST /api/meals and creates a new meal with ingredients.
+func CreateMealHandler(w http.ResponseWriter, r *http.Request) {
+	var meal models.Meal
+	if err := json.NewDecoder(r.Body).Decode(&meal); err != nil {
+		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Validate the meal data
+	if meal.MealName == "" {
+		http.Error(w, "Meal name is required", http.StatusBadRequest)
+		return
+	}
+
+	// Create the meal in the database
+	createdMeal, err := models.CreateMeal(DB, meal)
+	if err != nil {
+		http.Error(w, "Error creating meal: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return the created meal with the assigned IDs
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(createdMeal)
+}

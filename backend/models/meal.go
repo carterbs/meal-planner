@@ -269,3 +269,50 @@ func UpdateLastPlannedDates(db *sql.DB, mealIDs []int) error {
 
 	return tx.Commit()
 }
+
+// CreateMeal inserts a new meal and its ingredients into the database
+func CreateMeal(db *sql.DB, meal Meal) (*Meal, error) {
+	// Start a transaction
+	tx, err := db.Begin()
+	if err != nil {
+		log.Printf("CreateMeal: error starting transaction: %v", err)
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Insert the meal
+	var mealID int
+	err = tx.QueryRow(
+		"INSERT INTO meals (meal_name, relative_effort, red_meat) VALUES ($1, $2, $3) RETURNING id",
+		meal.MealName, meal.RelativeEffort, meal.RedMeat,
+	).Scan(&mealID)
+	if err != nil {
+		log.Printf("CreateMeal: error inserting meal: %v", err)
+		return nil, err
+	}
+	meal.ID = mealID
+
+	// Insert the ingredients
+	for i := range meal.Ingredients {
+		var ingredientID int
+		err = tx.QueryRow(
+			"INSERT INTO ingredients (meal_id, quantity, unit, name) VALUES ($1, $2, $3, $4) RETURNING id",
+			mealID, meal.Ingredients[i].Quantity, meal.Ingredients[i].Unit, meal.Ingredients[i].Name,
+		).Scan(&ingredientID)
+		if err != nil {
+			log.Printf("CreateMeal: error inserting ingredient %d: %v", i, err)
+			return nil, err
+		}
+		meal.Ingredients[i].ID = ingredientID
+		meal.Ingredients[i].MealID = mealID
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		log.Printf("CreateMeal: error committing transaction: %v", err)
+		return nil, err
+	}
+
+	log.Printf("CreateMeal: created meal with ID %d and %d ingredients", mealID, len(meal.Ingredients))
+	return &meal, nil
+}
