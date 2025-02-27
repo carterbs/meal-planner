@@ -2,18 +2,56 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"mealplanner/db"
 	"mealplanner/handlers"
 	"mealplanner/models"
 
-	"github.com/joho/godotenv" // add this import
-
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 )
+
+// CustomErrorWriter implements http.ResponseWriter and adds custom error handling
+type CustomErrorWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *CustomErrorWriter) WriteHeader(statusCode int) {
+	w.status = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *CustomErrorWriter) Write(b []byte) (int, error) {
+	return w.ResponseWriter.Write(b)
+}
+
+// DBErrorMiddleware checks for database connection errors and provides helpful messages
+func DBErrorMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cw := &CustomErrorWriter{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(cw, r)
+
+		// If we got an internal server error, check if it might be a DB connection issue
+		if cw.status == http.StatusInternalServerError {
+			// This is a bit of a hack, but for demo purposes it's fine.
+			// In a real app, we would need to capture the error from the handler.
+			if handlers.DB == nil || handlers.DB.Ping() != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusServiceUnavailable)
+				errorMessage := `{"error": "Database connection issue. Please make sure Docker is running and the database container is started."}`
+				w.Write([]byte(errorMessage))
+				return
+			}
+		}
+	})
+}
 
 func main() {
 	// Load env variables from .env file automatically
@@ -24,40 +62,113 @@ func main() {
 	seedFlag := flag.Bool("seed", false, "Seed the database using the CSV")
 	flag.Parse()
 
-	// Read DB config from env variables (set these in your environment)
-	config := db.Config{
-		Host:     os.Getenv("DB_HOST"),
-		Port:     os.Getenv("DB_PORT"),
-		User:     os.Getenv("DB_USER"),
-		Password: os.Getenv("DB_PASSWORD"),
-		DBName:   os.Getenv("DB_NAME"),
+	// Read DB config from env variables with reasonable defaults
+	config := db.DefaultConfig()
+	if os.Getenv("DB_HOST") != "" {
+		config.Host = os.Getenv("DB_HOST")
+	}
+	if os.Getenv("DB_PORT") != "" {
+		config.Port = os.Getenv("DB_PORT")
+	}
+	if os.Getenv("DB_USER") != "" {
+		config.User = os.Getenv("DB_USER")
+	}
+	if os.Getenv("DB_PASSWORD") != "" {
+		config.Password = os.Getenv("DB_PASSWORD")
+	}
+	if os.Getenv("DB_NAME") != "" {
+		config.DBName = os.Getenv("DB_NAME")
 	}
 
+	// Attempt to connect to the database with helpful error messaging
 	connection, err := db.ConnectDB(config)
 	if err != nil {
-		log.Fatalf("Error connecting to the database: %v", err)
-	}
-	defer connection.Close()
-
-	// Run migrations
-	if err := models.Migrate(connection); err != nil {
-		log.Fatalf("Migration error: %v", err)
-	}
-
-	// Seed the DB only if the flag is provided
-	if *seedFlag {
-		if err := models.SeedDB(connection, "Meal_db.csv"); err != nil {
-			log.Fatalf("Seeding error: %v", err)
+		if db.IsConnectionError(err) {
+			fmt.Println("\n-------------------------------------------------------------")
+			fmt.Println("❌ DATABASE CONNECTION ERROR")
+			fmt.Println("-------------------------------------------------------------")
+			fmt.Println("Could not connect to the PostgreSQL database.")
+			fmt.Println("\n🔍 TROUBLESHOOTING STEPS:")
+			fmt.Println("1. Make sure Docker is running on your system")
+			fmt.Println("2. Check if the database container is started:")
+			fmt.Println("   $ docker ps | grep postgres")
+			fmt.Println("3. If not running, start it with:")
+			fmt.Println("   $ docker-compose up -d")
+			fmt.Println("\n🚨 Error details:", err)
+			fmt.Println("-------------------------------------------------------------\n")
+			
+			// Continue execution with nil DB - the middleware will handle errors
+			// This allows the frontend to at least load and show appropriate errors
+			log.Println("Starting with nil database connection. API calls will return connection errors.")
 		} else {
-			log.Println("Database seeded successfully!")
+			log.Fatalf("Error connecting to the database: %v", err)
+		}
+	} else {
+		defer connection.Close()
+		
+		// Run migrations (only if we have a connection)
+		if err := models.Migrate(connection); err != nil {
+			log.Printf("Migration error: %v", err)
+		}
+
+		// Seed the DB only if the flag is provided and we have a connection
+		if *seedFlag {
+			if err := models.SeedDB(connection, "Meal_db.csv"); err != nil {
+				log.Printf("Seeding error: %v", err)
+			} else {
+				log.Println("Database seeded successfully!")
+			}
 		}
 	}
 
-	// Set database connection in handlers (for simplicity)
+	// Set database connection in handlers (might be nil if connection failed)
 	handlers.DB = connection
 
-	// Set up HTTP routes
+	// Set up HTTP routes with Chi router
 	r := chi.NewRouter()
+
+	// Add middleware
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(30 * time.Second))
+	r.Use(DBErrorMiddleware)
+
+	// Enable CORS for development
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	// Special endpoint to check database connectivity
+	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
+		if handlers.DB == nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte(`{"status":"error","message":"Database not connected. Make sure Docker is running and the database container is started."}`))
+			return
+		}
+		
+		if err := handlers.DB.Ping(); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte(`{"status":"error","message":"Database connection lost. Make sure Docker is running and the database container is started."}`))
+			return
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok","message":"Database connection is healthy"}`))
+	})
+
+	// Register API routes
 	r.Get("/api/mealplan", handlers.GetMealPlan)
 	r.Post("/api/mealplan/finalize", handlers.FinalizeMealPlanHandler)
 	r.Post("/api/mealplan/swap", handlers.SwapMeal)
@@ -71,5 +182,7 @@ func main() {
 	r.Post("/api/mealplan/replace", handlers.ReplaceMealHandler)
 
 	log.Println("Backend server starting on :8080")
-	http.ListenAndServe(":8080", r)
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
 }

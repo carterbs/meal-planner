@@ -1,13 +1,16 @@
 // frontend/src/App.tsx
 import React, { useState, useRef, useEffect } from "react";
-import { Tabs, Tab } from '@mui/material';
+import { Tabs, Tab, Box, CircularProgress } from '@mui/material';
 import { MealPlanTab } from './components/MealPlanTab';
 import { MealManagementTab } from './components/MealManagementTab';
 import { Toast } from './components/Toast';
+import { DatabaseConnectionError } from './components/DatabaseConnectionError';
 
 const App: React.FC = () => {
     const [activeTab, setActiveTab] = useState(0);
     const [toast, setToast] = useState<string | null>(null);
+    const [dbConnected, setDbConnected] = useState<boolean | null>(null); // null = checking, true = connected, false = error
+    const [isLoading, setIsLoading] = useState(true);
 
     const toastTimeout = process.env.NODE_ENV === 'test' ? 10 : 2000;
     const toastTimeoutRef = useRef<number | null>(null);
@@ -22,6 +25,26 @@ const App: React.FC = () => {
         }, toastTimeout);
     };
 
+    // Check database connection
+    const checkDbConnection = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/health');
+            const data = await response.json();
+            setDbConnected(data.status === 'ok');
+        } catch (error) {
+            console.error('Error checking database connection:', error);
+            setDbConnected(false);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Check database connection on mount
+    useEffect(() => {
+        checkDbConnection();
+    }, []);
+
     // Cleanup the timeout on component unmount
     useEffect(() => {
         return () => {
@@ -30,6 +53,27 @@ const App: React.FC = () => {
             }
         };
     }, []);
+
+    // Show loading spinner while checking database connection
+    if (isLoading) {
+        return (
+            <Box 
+                sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '100vh' 
+                }}
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    // Show database connection error if connection failed
+    if (dbConnected === false) {
+        return <DatabaseConnectionError onRetry={checkDbConnection} />;
+    }
 
     return (
         <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
