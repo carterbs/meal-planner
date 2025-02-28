@@ -54,7 +54,7 @@ func setupMealRows(fields []string) *sqlmock.Rows {
 // expectMealQuery sets up expectations for a meal query
 func (h *testHelper) expectMealQuery(queryRegex string, args ...interface{}) *sqlmock.Rows {
 	rows := sqlmock.NewRows([]string{
-		"id", "meal_name", "relative_effort", "last_planned", "red_meat",
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url",
 		"ingredient_id", "name", "quantity", "unit",
 	})
 	
@@ -123,9 +123,9 @@ func TestGetAllMealsHandler(t *testing.T) {
 	rows := helper.expectMealQuery(models.GetAllMealsQuery)
 	
 	// Add meal data to rows
-	rows.AddRow(1, "Meal A", 2, now, false, 1, "Eggs", 0, "dozen")
-	rows.AddRow(2, "Meal B", 3, now, true, 2, "Milk", 2.5, "gallon")
-	rows.AddRow(2, "Meal B", 3, now, true, 3, "Bread", 0, "loaf")
+	rows.AddRow(1, "Meal A", 2, now, false, "https://example.com/meala", 1, "Eggs", 0, "dozen")
+	rows.AddRow(2, "Meal B", 3, now, true, "https://example.com/mealb", 2, "Milk", 2.5, "gallon")
+	rows.AddRow(2, "Meal B", 3, now, true, "https://example.com/mealb", 3, "Bread", 0, "loaf")
 	
 	// Create request and response recorder
 	req, err := createRequest("GET", "/api/meals", nil)
@@ -180,7 +180,7 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 	// Expect query to return updated meal
 	now := time.Now()
 	rows := helper.expectMealQuery(models.GetMealsByIDsQuery, pq.Array([]int{mealID}))
-	rows.AddRow(mealID, "Test Meal", 1, now, false, 1, updatedIngredient.Name, updatedIngredient.Quantity, updatedIngredient.Unit)
+	rows.AddRow(mealID, "Test Meal", 1, now, false, "https://example.com/test", 1, updatedIngredient.Name, updatedIngredient.Quantity, updatedIngredient.Unit)
 
 	// Create a PUT request to update the ingredient
 	req, err := createRequest("PUT", "/api/meals/1/ingredients/1", updatedIngredient)
@@ -240,7 +240,7 @@ func TestDeleteMealIngredientHandler(t *testing.T) {
 	// Expect query to return updated meal
 	now := time.Now()
 	rows := helper.expectMealQuery(models.GetMealsByIDsQuery, pq.Array([]int{mealID}))
-	rows.AddRow(mealID, "Test Meal", 1, now, false, 2, "Pepper", 0.5, "tsp")
+	rows.AddRow(mealID, "Test Meal", 1, now, false, "https://example.com/test", 2, "Pepper", 0.5, "tsp")
 
 	// Create request and add URL parameters
 	req, err := createRequest("DELETE", "/api/meals/1/ingredients/1", nil)
@@ -533,13 +533,13 @@ func TestGetAllMealsHandler_AlphabeticalOrder(t *testing.T) {
 
 	// Setup rows with meals in non-alphabetical order
 	rows := sqlmock.NewRows([]string{
-		"id", "meal_name", "relative_effort", "last_planned", "red_meat",
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url",
 		"ingredient_id", "name", "quantity", "unit",
 	}).
-		AddRow(1, "Zucchini Pasta", 2, nil, false, nil, nil, nil, nil).
-		AddRow(2, "apple pie", 3, nil, false, nil, nil, nil, nil).
-		AddRow(3, "Meatballs", 4, nil, true, nil, nil, nil, nil).
-		AddRow(4, "banana bread", 2, nil, false, nil, nil, nil, nil)
+		AddRow(1, "Zucchini Pasta", 2, nil, false, "https://example.com/zucchini", nil, nil, nil, nil).
+		AddRow(2, "apple pie", 3, nil, false, "https://example.com/apple", nil, nil, nil, nil).
+		AddRow(3, "Meatballs", 4, nil, true, "https://example.com/meatballs", nil, nil, nil, nil).
+		AddRow(4, "banana bread", 2, nil, false, "https://example.com/banana", nil, nil, nil, nil)
 
 	// Expect the query
 	mock.ExpectQuery(regexp.QuoteMeta(models.GetAllMealsQuery)).
@@ -606,6 +606,7 @@ func TestCreateMealHandler(t *testing.T) {
 		MealName:       "Test Recipe",
 		RelativeEffort: 2,
 		RedMeat:        false,
+		URL:            "https://example.com/test-recipe",
 		Ingredients: []models.Ingredient{
 			{Name: "Ingredient 1", Quantity: 1, Unit: "cup"},
 			{Name: "Ingredient 2", Quantity: 2, Unit: "tbsp"},
@@ -623,8 +624,8 @@ func TestCreateMealHandler(t *testing.T) {
 	mock.ExpectBegin()
 	
 	// 2. Insert meal
-	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO meals (meal_name, relative_effort, red_meat) VALUES ($1, $2, $3) RETURNING id")).
-		WithArgs(newMeal.MealName, newMeal.RelativeEffort, newMeal.RedMeat).
+	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO meals (meal_name, relative_effort, red_meat, url) VALUES ($1, $2, $3, $4) RETURNING id")).
+		WithArgs(newMeal.MealName, newMeal.RelativeEffort, newMeal.RedMeat, newMeal.URL).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(expectedMealID))
 	
 	// 3. Insert first ingredient
@@ -681,6 +682,9 @@ func TestCreateMealHandler(t *testing.T) {
 	if createdMeal.RedMeat != newMeal.RedMeat {
 		t.Errorf("expected red meat %t, got %t", newMeal.RedMeat, createdMeal.RedMeat)
 	}
+	if createdMeal.URL != newMeal.URL {
+		t.Errorf("expected URL %q, got %q", newMeal.URL, createdMeal.URL)
+	}
 
 	// Verify ingredients
 	if len(createdMeal.Ingredients) != len(newMeal.Ingredients) {
@@ -730,6 +734,7 @@ func TestCreateMealHandler_ValidationError(t *testing.T) {
 		MealName:       "", // Invalid: empty name
 		RelativeEffort: 2,
 		RedMeat:        false,
+		URL:            "https://example.com/test-recipe",
 		Ingredients: []models.Ingredient{
 			{Name: "Ingredient 1", Quantity: 1, Unit: "cup"},
 		},
@@ -784,6 +789,7 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 		MealName:       "Test Recipe",
 		RelativeEffort: 2,
 		RedMeat:        false,
+		URL:            "https://example.com/test-recipe",
 		Ingredients: []models.Ingredient{
 			{Name: "Ingredient 1", Quantity: 1, Unit: "cup"},
 		},
@@ -791,8 +797,8 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 
 	// Set up mock to simulate a database error
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO meals (meal_name, relative_effort, red_meat) VALUES ($1, $2, $3) RETURNING id")).
-		WithArgs(newMeal.MealName, newMeal.RelativeEffort, newMeal.RedMeat).
+	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO meals (meal_name, relative_effort, red_meat, url) VALUES ($1, $2, $3, $4) RETURNING id")).
+		WithArgs(newMeal.MealName, newMeal.RelativeEffort, newMeal.RedMeat, newMeal.URL).
 		WillReturnError(errors.New("database error"))
 	mock.ExpectRollback()
 

@@ -84,6 +84,23 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                 return params.value ? '🥩' : '❌';
             },
         },
+        {
+            field: 'url',
+            headerName: 'Recipe URL',
+            width: 120,
+            renderCell: (params) => {
+                if (!params.value) return '';
+                return <Button
+                    variant="text"
+                    size="small"
+                    href={params.value}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Link
+                </Button>;
+            },
+        },
     ];
 
     // Function to start editing a specific ingredient based on its index in the meal's ingredients list
@@ -297,11 +314,16 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                     <Typography variant="body1">
                                         Contains Red Meat: {selectedMeal.redMeat ? "Yes" : "No"}
                                     </Typography>
-                                    <Typography variant="body2" sx={{ mb: 2 }}>
+                                    <Typography variant="body2">
                                         Last Eaten: {selectedMeal.lastPlanned ?
                                             format(new Date(selectedMeal.lastPlanned), 'MMM d, yyyy') :
                                             'Never'}
                                     </Typography>
+                                    {selectedMeal.url && (
+                                        <Typography variant="body2" sx={{ mb: 2 }}>
+                                            Recipe URL: <a href={selectedMeal.url} target="_blank" rel="noopener noreferrer">{selectedMeal.url}</a>
+                                        </Typography>
+                                    )}
                                     <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
                                         <Button
                                             variant="contained"

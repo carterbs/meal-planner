@@ -95,7 +95,7 @@ func main() {
 			fmt.Println("3. If not running, start it with:")
 			fmt.Println("   $ docker-compose up -d")
 			fmt.Println("\n🚨 Error details:", err)
-			fmt.Println("-------------------------------------------------------------\n")
+			fmt.Println("-------------------------------------------------------------")
 			
 			// Continue execution with nil DB - the middleware will handle errors
 			// This allows the frontend to at least load and show appropriate errors

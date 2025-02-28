@@ -14,6 +14,7 @@ export interface Meal {
     relativeEffort: number;
     lastPlanned: string;
     redMeat: boolean;
+    url?: string;
     ingredients: Ingredient[];
 }
 

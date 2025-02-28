@@ -8,7 +8,8 @@ func Migrate(db *sql.DB) error {
 		meal_name TEXT NOT NULL,
 		relative_effort INTEGER NOT NULL,
 		last_planned TIMESTAMP,
-		red_meat BOOLEAN NOT NULL DEFAULT false
+		red_meat BOOLEAN NOT NULL DEFAULT false,
+		url TEXT
 	)`
 	ingredientTable := `CREATE TABLE IF NOT EXISTS ingredients (
 		id SERIAL PRIMARY KEY,
