@@ -9,39 +9,21 @@ import {
     CardContent,
     Button,
     TextField,
-    Tabs,
-    Tab
+    CardActionArea,
+    Stack,
+    Divider,
+    IconButton,
+    Fade
 } from "@mui/material";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { format } from 'date-fns';
 import AddRecipeForm from "../AddRecipeForm";
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import AddIcon from '@mui/icons-material/Add';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 interface MealManagementTabProps {
     showToast: (message: string) => void;
-}
-
-// Tab panel component for displaying tab content
-interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
-
-    return (
-        <Box
-            role="tabpanel"
-            hidden={value !== index}
-            id={`meal-tabpanel-${index}`}
-            aria-labelledby={`meal-tab-${index}`}
-            sx={{ pt: 2 }}
-            {...other}
-        >
-            {value === index && children}
-        </Box>
-    );
 }
 
 export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast }) => {
@@ -50,7 +32,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     const [editingIngredientIndex, setEditingIngredientIndex] = useState<number | null>(null);
     const [editedIngredient, setEditedIngredient] = useState<Ingredient | null>(null);
     const [mealFilter, setMealFilter] = useState<string>("");
-    const [tabValue, setTabValue] = useState<number>(0);
+    const [currentView, setCurrentView] = useState<"main" | "browse" | "add">("main");
 
     // Column definitions for the DataGrid
     const columns: GridColDef[] = [
@@ -98,73 +80,154 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                     rel="noopener noreferrer"
                 >
                     Link
-                </Button>;
+                </Button>
             },
         },
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 120,
+            renderCell: (params) => (
+                <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        const meal = meals.find(m => m.id === params.id);
+                        if (meal) {
+                            setSelectedMeal(meal);
+                            deleteMeal(meal);
+                        }
+                    }}
+                >
+                    Delete
+                </Button>
+            ),
+        }
     ];
 
-    // Function to start editing a specific ingredient based on its index in the meal's ingredients list
-    const startEditing = (ingredient: Ingredient) => {
+    // Handle adding a new ingredient to a meal
+    const addIngredient = () => {
         if (!selectedMeal) return;
-        setEditedIngredient({ ...ingredient });
+
+        // Create a default new ingredient
+        const newIngredient: Ingredient = {
+            ID: Date.now(), // Temporary ID for the UI
+            Name: "",
+            Quantity: 0,
+            Unit: ""
+        };
+
+        // Add to the UI temporarily
+        const updatedMeal = {
+            ...selectedMeal,
+            ingredients: [...selectedMeal.ingredients, newIngredient]
+        };
+        setSelectedMeal(updatedMeal);
+        setEditingIngredientIndex(updatedMeal.ingredients.length - 1);
+        setEditedIngredient(newIngredient);
     };
 
-    // Function to cancel editing for the current ingredient
+    // Start editing an ingredient
+    const startEditing = (ingredient: Ingredient) => {
+        if (!selectedMeal) return;
+        const index = selectedMeal.ingredients.findIndex(i => i.ID === ingredient.ID);
+        if (index !== -1) {
+            setEditingIngredientIndex(index);
+            setEditedIngredient({ ...ingredient });
+        }
+    };
+
+    // Cancel ingredient editing
     const cancelIngredientEdit = () => {
         setEditingIngredientIndex(null);
         setEditedIngredient(null);
     };
 
-    // Update handleIngredientChange to update the single edited ingredient
-    const handleIngredientChange = (field: "Name" | "Quantity" | "Unit", value: string) => {
-        if (!editedIngredient) return;
-        setEditedIngredient({
-            ...editedIngredient,
-            [field]: field === "Quantity" ? (value === "" || isNaN(Number(value)) ? null : Number(value)) : value,
-        });
-    };
-
-    // Function to save the updated ingredient
+    // Save edited ingredient
     const saveIngredient = () => {
-        if (!selectedMeal || !editedIngredient) return;
+        if (!selectedMeal || editingIngredientIndex === null || !editedIngredient) return;
 
-        fetch(`/api/meals/${selectedMeal.id}/ingredients/${editedIngredient.ID}`, {
+        // Update the ingredient in the selectedMeal 
+        const updatedIngredients = [...selectedMeal.ingredients];
+        updatedIngredients[editingIngredientIndex] = editedIngredient;
+
+        const updatedMeal = {
+            ...selectedMeal,
+            ingredients: updatedIngredients
+        };
+
+        // Save to backend
+        fetch(`/api/meals/${selectedMeal.id}/ingredients`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(editedIngredient),
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedIngredients),
         })
-            .then((res) => res.json())
-            .then((updatedMeal: Meal) => {
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to update ingredients");
+                // Update local state
                 setSelectedMeal(updatedMeal);
+                setEditingIngredientIndex(null);
                 setEditedIngredient(null);
                 showToast("Ingredient updated successfully");
+
+                // Also update the meal in the meals array
+                const updatedMeals = meals.map(m => m.id === selectedMeal.id ? updatedMeal : m);
+                setMeals(updatedMeals);
             })
-            .catch((err) => console.error("Error updating ingredient", err));
+            .catch((err) => {
+                console.error("Error updating ingredients:", err);
+                showToast("Error updating ingredient");
+            });
     };
 
-    // Function to delete a single ingredient
+    // Delete an ingredient
     const deleteIngredient = (ingredientId: number) => {
         if (!selectedMeal) return;
-        fetch(`/api/meals/${selectedMeal.id}/ingredients/${ingredientId}`, {
-            method: "DELETE",
+
+        const updatedIngredients = selectedMeal.ingredients.filter(i => i.ID !== ingredientId);
+        const updatedMeal = {
+            ...selectedMeal,
+            ingredients: updatedIngredients
+        };
+
+        // Save to backend
+        fetch(`/api/meals/${selectedMeal.id}/ingredients`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedIngredients),
         })
-            .then((res) => res.json())
-            .then((updatedMeal: Meal) => {
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to delete ingredient");
+                // Update local state
                 setSelectedMeal(updatedMeal);
                 showToast("Ingredient deleted successfully");
+
+                // Also update the meal in the meals array
+                const updatedMeals = meals.map(m => m.id === selectedMeal.id ? updatedMeal : m);
+                setMeals(updatedMeals);
             })
-            .catch((err) => console.error("Error deleting ingredient", err));
+            .catch((err) => {
+                console.error("Error deleting ingredient:", err);
+                showToast("Error deleting ingredient");
+            });
     };
 
-    const deleteMeal = () => {
-        if (!selectedMeal) return;
+    // Delete a meal
+    const deleteMeal = (mealToDelete: Meal = selectedMeal!) => {
+        if (!mealToDelete) return;
 
-        fetch(`/api/meals/${selectedMeal.id}`, {
+        fetch(`/api/meals/${mealToDelete.id}`, {
             method: "DELETE",
         })
             .then((res) => {
                 if (!res.ok) throw new Error("Failed to delete meal");
-                setMeals(meals.filter(m => m.id !== selectedMeal.id));
+                setMeals(meals.filter(m => m.id !== mealToDelete.id));
                 setSelectedMeal(null);
                 showToast("Meal deleted successfully");
             })
@@ -192,17 +255,12 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                 console.error("Error fetching meals:", err);
                 showToast("Error loading meals");
             });
-    }, []);
+    }, [showToast]);
 
     // Filter meals based on search term
     const filteredMeals = meals.filter((meal) =>
         meal.mealName.toLowerCase().includes(mealFilter.toLowerCase())
     );
-
-    // Function to handle tab change
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setTabValue(newValue);
-    };
 
     // Function to refresh meals after adding a new one
     const handleRecipeAdded = () => {
@@ -216,216 +274,315 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             .then((data: Meal[]) => {
                 setMeals(data);
                 showToast("New recipe added successfully!");
-                setTabValue(0); // Switch back to meal list tab
+                setCurrentView("main"); // Return to main view
             })
             .catch((err) => {
                 console.error("Error fetching meals:", err);
-                showToast("Error loading meals after adding recipe");
+                showToast("Error loading meals");
             });
     };
 
-    return (
-        <Box sx={{ p: 2 }} data-testid="meal-management-tab">
-            <Typography variant="h4" gutterBottom>
-                Meal Library
-            </Typography>
+    // Update input field for editing ingredient
+    const handleIngredientChange = (field: keyof Ingredient, value: string | number) => {
+        if (!editedIngredient) return;
+        setEditedIngredient({
+            ...editedIngredient,
+            [field]: value
+        });
+    };
 
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={tabValue} onChange={handleTabChange} aria-label="meal management tabs">
-                    <Tab label="Browse Meals" id="meal-tab-0" aria-controls="meal-tabpanel-0" />
-                    <Tab label="Add New Recipe" id="meal-tab-1" aria-controls="meal-tabpanel-1" />
-                </Tabs>
-            </Box>
-
-            <TabPanel value={tabValue} index={0}>
-                <Grid container spacing={2}>
+    // Render the main menu with options
+    const renderMainView = () => {
+        return (
+            <Box sx={{ py: 3 }} data-testid="meal-management-tab">
+                <Typography variant="h4" gutterBottom>
+                    Meal Library
+                </Typography>
+                <Grid container spacing={4} sx={{ mt: 1 }}>
                     <Grid item xs={12} md={6}>
-                        <Typography variant="h6" gutterBottom>
-                            Available Meals
-                        </Typography>
-                        <Box sx={{ mb: 2 }}>
-                            <TextField
-                                label="Search Meals"
-                                variant="outlined"
-                                size="small"
-                                value={mealFilter}
-                                onChange={(e) => setMealFilter(e.target.value)}
-                                fullWidth
-                            />
-                        </Box>
-                        <Paper sx={{ height: 400, width: '100%', boxShadow: 'none' }}>
-                            <DataGrid
-                                rows={filteredMeals}
-                                columns={columns}
-                                getRowId={(row) => row.id}
-                                initialState={{
-                                    sorting: {
-                                        sortModel: [{ field: 'mealName', sort: 'asc' }],
-                                    },
-                                }}
-                                onRowClick={(params) => {
-                                    const meal = meals.find(m => m.id === params.id);
-                                    if (meal) setSelectedMeal(meal);
-                                }}
-                                rowSelection={false}
-                                disableRowSelectionOnClick
-                                autoHeight
-                                density="comfortable"
+                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <CardActionArea
+                                onClick={() => setCurrentView("browse")}
                                 sx={{
-                                    '& .MuiDataGrid-row:hover': {
-                                        cursor: 'pointer',
-                                        backgroundColor: 'action.hover',
-                                        boxShadow: 'none',
-                                    },
-                                    '& .MuiDataGrid-row.Mui-selected': {
-                                        backgroundColor: 'primary.light',
-                                    },
-                                    '& .MuiDataGrid-cell': {
-                                        textDecoration: 'none',
-                                        borderBottom: '1px solid rgba(224, 224, 224, 1)',
-                                    },
-                                    '& .MuiDataGrid-row:focus, & .MuiDataGrid-cell:focus': {
-                                        outline: 'none',
-                                    },
-                                    '& .MuiDataGrid-row': {
-                                        boxShadow: 'none',
-                                    },
-                                    border: '1px solid rgba(224, 224, 224, 1)',
-                                    '& .MuiDataGrid-columnHeaders': {
-                                        borderBottom: '1px solid rgba(224, 224, 224, 1)',
-                                    },
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    height: '100%',
+                                    alignItems: 'center',
+                                    padding: 4
                                 }}
-                            />
-                        </Paper>
+                            >
+                                <MenuBookIcon sx={{ fontSize: 80, color: 'primary.main', mb: 2 }} />
+                                <Typography variant="h5" component="div" gutterBottom>
+                                    Browse Meals
+                                </Typography>
+                                <Typography variant="body1" color="text.secondary" align="center">
+                                    View, search, and manage your saved recipes
+                                </Typography>
+                            </CardActionArea>
+                        </Card>
                     </Grid>
-                    {selectedMeal && meals.length > 0 && (
+                    <Grid item xs={12} md={6}>
+                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <CardActionArea
+                                onClick={() => setCurrentView("add")}
+                                sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    height: '100%',
+                                    alignItems: 'center',
+                                    padding: 4
+                                }}
+                            >
+                                <AddIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
+                                <Typography variant="h5" component="div" gutterBottom>
+                                    Add New Recipe
+                                </Typography>
+                                <Typography variant="body1" color="text.secondary" align="center">
+                                    Create a new recipe to add to your meal library
+                                </Typography>
+                            </CardActionArea>
+                        </Card>
+                    </Grid>
+                </Grid>
+            </Box>
+        );
+    };
+
+    // Render the browse meals view
+    const renderBrowseView = () => {
+        return (
+            <Fade in={true}>
+                <Box sx={{ py: 2 }}>
+                    <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+                        <IconButton onClick={() => setCurrentView("main")} aria-label="back to main menu">
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Typography variant="h5">Browse Meals</Typography>
+                    </Stack>
+
+                    <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
                             <Typography variant="h6" gutterBottom>
-                                Meal Details
+                                Available Meals
                             </Typography>
-                            <Card variant="outlined">
-                                <CardContent>
-                                    <Typography variant="h5" gutterBottom>
-                                        {selectedMeal.mealName}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        Effort Level: {selectedMeal.relativeEffort}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        Contains Red Meat: {selectedMeal.redMeat ? "Yes" : "No"}
-                                    </Typography>
-                                    <Typography variant="body2">
-                                        Last Eaten: {selectedMeal.lastPlanned ?
-                                            format(new Date(selectedMeal.lastPlanned), 'MMM d, yyyy') :
-                                            'Never'}
-                                    </Typography>
-                                    {selectedMeal.url && (
-                                        <Typography variant="body2" sx={{ mb: 2 }}>
-                                            Recipe URL: <a href={selectedMeal.url} target="_blank" rel="noopener noreferrer">{selectedMeal.url}</a>
-                                        </Typography>
-                                    )}
-                                    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-                                        <Button
-                                            variant="contained"
-                                            color="error"
-                                            onClick={deleteMeal}
-                                            data-testid="delete-meal-button"
-                                        >
-                                            Delete Meal
-                                        </Button>
-                                    </Box>
-                                    <Typography variant="h6" sx={{ mt: 2 }}>
-                                        Ingredients
-                                    </Typography>
-                                    {selectedMeal.ingredients.length === 0 ? (
-                                        <Typography>No ingredients found.</Typography>
-                                    ) : (
-                                        <Box component="ul" sx={{ listStyle: 'none', p: 0 }}>
-                                            {selectedMeal.ingredients.map((ing) => (
-                                                <Box
-                                                    component="li"
-                                                    key={ing.ID}
-                                                    sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'space-between',
-                                                        p: 1,
-                                                        borderBottom: '1px solid',
-                                                        borderColor: 'divider',
-                                                        '&:last-child': {
-                                                            borderBottom: 'none',
-                                                        },
-                                                    }}
-                                                >
-                                                    {editedIngredient && editedIngredient.ID === ing.ID ? (
-                                                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: '100%' }}>
-                                                            <TextField
-                                                                label="Name"
-                                                                value={editedIngredient?.Name || ""}
-                                                                onChange={(e) => handleIngredientChange("Name", e.target.value)}
-                                                                fullWidth
-                                                            />
-                                                            <TextField
-                                                                label="Quantity"
-                                                                type="number"
-                                                                value={editedIngredient?.Quantity === null ? "" : editedIngredient?.Quantity}
-                                                                onChange={(e) => handleIngredientChange("Quantity", e.target.value)}
-                                                                fullWidth
-                                                            />
-                                                            <TextField
-                                                                label="Unit"
-                                                                value={editedIngredient?.Unit || ""}
-                                                                onChange={(e) => handleIngredientChange("Unit", e.target.value)}
-                                                                fullWidth
-                                                            />
-                                                            <Box sx={{ display: "flex", gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-                                                                <Button variant="contained" color="primary" onClick={saveIngredient}>
-                                                                    Save
-                                                                </Button>
-                                                                <Button variant="outlined" onClick={cancelIngredientEdit}>
-                                                                    Cancel
-                                                                </Button>
-                                                            </Box>
-                                                        </Box>
-                                                    ) : (
-                                                        <>
-                                                            <Typography>
-                                                                {`${ing.Quantity ? ing.Quantity + " " : ""}${ing.Unit ? ing.Unit + " " : ""}${ing.Name}`.trim()}
-                                                            </Typography>
-                                                            <Box sx={{ display: "flex", gap: 1 }}>
-                                                                <Button
-                                                                    variant="outlined"
-                                                                    onClick={() => startEditing(ing)}
-                                                                    data-testid={`edit-ingredient-${ing.ID}`}
-                                                                    size="small"
-                                                                >
-                                                                    Edit
-                                                                </Button>
-                                                                <Button
-                                                                    variant="outlined"
-                                                                    color="error"
-                                                                    onClick={() => deleteIngredient(ing.ID)}
-                                                                    size="small"
-                                                                >
-                                                                    Delete
-                                                                </Button>
-                                                            </Box>
-                                                        </>
-                                                    )}
-                                                </Box>
-                                            ))}
-                                        </Box>
-                                    )}
-                                </CardContent>
-                            </Card>
+                            <Box sx={{ mb: 2 }}>
+                                <TextField
+                                    label="Search Meals"
+                                    variant="outlined"
+                                    size="small"
+                                    value={mealFilter}
+                                    onChange={(e) => setMealFilter(e.target.value)}
+                                    fullWidth
+                                />
+                            </Box>
+                            <Paper sx={{ height: 400, width: '100%', boxShadow: 'none' }}>
+                                <DataGrid
+                                    rows={filteredMeals}
+                                    columns={columns}
+                                    getRowId={(row) => row.id}
+                                    initialState={{
+                                        sorting: {
+                                            sortModel: [{ field: 'mealName', sort: 'asc' }],
+                                        },
+                                    }}
+                                    onRowClick={(params) => {
+                                        const meal = meals.find(m => m.id === params.id);
+                                        if (meal) setSelectedMeal(meal);
+                                    }}
+                                    rowSelection={false}
+                                    disableRowSelectionOnClick
+                                    autoHeight
+                                    density="comfortable"
+                                    sx={{
+                                        '& .MuiDataGrid-row:hover': {
+                                            cursor: 'pointer',
+                                            backgroundColor: 'action.hover',
+                                            boxShadow: 'none',
+                                        },
+                                        '& .MuiDataGrid-row.Mui-selected': {
+                                            backgroundColor: 'primary.light',
+                                        },
+                                        '& .MuiDataGrid-cell': {
+                                            textDecoration: 'none',
+                                            borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                                        },
+                                        '& .MuiDataGrid-row:focus, & .MuiDataGrid-cell:focus': {
+                                            outline: 'none',
+                                        },
+                                        '& .MuiDataGrid-row': {
+                                            boxShadow: 'none',
+                                        },
+                                        border: '1px solid rgba(224, 224, 224, 1)',
+                                        '& .MuiDataGrid-columnHeaders': {
+                                            borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                                        },
+                                    }}
+                                />
+                            </Paper>
                         </Grid>
-                    )}
-                </Grid>
-            </TabPanel>
 
-            <TabPanel value={tabValue} index={1}>
-                <AddRecipeForm onRecipeAdded={handleRecipeAdded} />
-            </TabPanel>
+                        {selectedMeal && (
+                            <Grid item xs={12} md={6}>
+                                <Card variant="outlined">
+                                    <CardContent>
+                                        <Typography variant="h6" gutterBottom>
+                                            {selectedMeal.mealName}
+                                        </Typography>
+
+                                        <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                                            Effort Level: {selectedMeal.relativeEffort}
+                                        </Typography>
+
+                                        {selectedMeal.url && (
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                href={selectedMeal.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                sx={{ mb: 2 }}
+                                            >
+                                                View Recipe Online
+                                            </Button>
+                                        )}
+
+                                        <Divider sx={{ my: 2 }} />
+
+                                        <Typography variant="subtitle1" gutterBottom>
+                                            Ingredients:
+                                        </Typography>
+
+                                        <Button
+                                            variant="outlined"
+                                            onClick={addIngredient}
+                                            sx={{ mb: 2 }}
+                                        >
+                                            Add Ingredient
+                                        </Button>
+
+                                        {selectedMeal.ingredients.length === 0 ? (
+                                            <Typography color="text.secondary">
+                                                No ingredients listed for this meal.
+                                            </Typography>
+                                        ) : (
+                                            <Box sx={{ mt: 1 }}>
+                                                {selectedMeal.ingredients.map((ing, index) => (
+                                                    <Box
+                                                        key={ing.ID || index}
+                                                        sx={{
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                            alignItems: "center",
+                                                            mb: 1,
+                                                            p: 1,
+                                                            borderRadius: 1,
+                                                            bgcolor: 'background.paper',
+                                                            border: "1px solid",
+                                                            borderColor: "divider"
+                                                        }}
+                                                    >
+                                                        {editingIngredientIndex === index ? (
+                                                            <Box sx={{ width: "100%" }}>
+                                                                <Grid container spacing={2}>
+                                                                    <Grid item xs={6}>
+                                                                        <TextField
+                                                                            label="Name"
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            value={editedIngredient?.Name || ""}
+                                                                            onChange={(e) => handleIngredientChange("Name", e.target.value)}
+                                                                        />
+                                                                    </Grid>
+                                                                    <Grid item xs={3}>
+                                                                        <TextField
+                                                                            label="Quantity"
+                                                                            size="small"
+                                                                            type="number"
+                                                                            fullWidth
+                                                                            value={editedIngredient?.Quantity || 0}
+                                                                            onChange={(e) => handleIngredientChange("Quantity", parseFloat(e.target.value))}
+                                                                        />
+                                                                    </Grid>
+                                                                    <Grid item xs={3}>
+                                                                        <TextField
+                                                                            label="Unit"
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            value={editedIngredient?.Unit || ""}
+                                                                            onChange={(e) => handleIngredientChange("Unit", e.target.value)}
+                                                                        />
+                                                                    </Grid>
+                                                                </Grid>
+                                                                <Box sx={{ display: "flex", gap: 1, justifyContent: 'flex-end', mt: 1 }}>
+                                                                    <Button variant="contained" color="primary" onClick={saveIngredient}>
+                                                                        Save
+                                                                    </Button>
+                                                                    <Button variant="outlined" onClick={cancelIngredientEdit}>
+                                                                        Cancel
+                                                                    </Button>
+                                                                </Box>
+                                                            </Box>
+                                                        ) : (
+                                                            <>
+                                                                <Typography>
+                                                                    {`${ing.Quantity ? ing.Quantity + " " : ""}${ing.Unit ? ing.Unit + " " : ""}${ing.Name}`.trim()}
+                                                                </Typography>
+                                                                <Box sx={{ display: "flex", gap: 1 }}>
+                                                                    <Button
+                                                                        variant="outlined"
+                                                                        onClick={() => startEditing(ing)}
+                                                                        data-testid={`edit-ingredient-${ing.ID}`}
+                                                                        size="small"
+                                                                    >
+                                                                        Edit
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="outlined"
+                                                                        color="error"
+                                                                        onClick={() => deleteIngredient(ing.ID)}
+                                                                        size="small"
+                                                                    >
+                                                                        Delete
+                                                                    </Button>
+                                                                </Box>
+                                                            </>
+                                                        )}
+                                                    </Box>
+                                                ))}
+                                            </Box>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        )}
+                    </Grid>
+                </Box>
+            </Fade>
+        );
+    };
+
+    // Render the add recipe view
+    const renderAddView = () => {
+        return (
+            <Fade in={true}>
+                <Box sx={{ py: 2 }}>
+                    <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+                        <IconButton onClick={() => setCurrentView("main")} aria-label="back to main menu">
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Typography variant="h5">Add New Recipe</Typography>
+                    </Stack>
+                    <AddRecipeForm onRecipeAdded={handleRecipeAdded} />
+                </Box>
+            </Fade>
+        );
+    };
+
+    return (
+        <Box data-testid="meal-management-tab">
+            {currentView === "main" && renderMainView()}
+            {currentView === "browse" && renderBrowseView()}
+            {currentView === "add" && renderAddView()}
         </Box>
     );
 };
