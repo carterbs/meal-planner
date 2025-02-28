@@ -210,7 +210,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                                                                 onChange={(e) => handleMealSelect(day, Number(e.target.value))}
                                                                 data-testid={`meal-select-${day}`}
                                                                 MenuProps={{ disablePortal: true }}
-                                                                open={process.env.NODE_ENV === 'test'}
+                                                                open={process.env.NODE_ENV === 'test' ? true : undefined}
                                                             >
                                                                 {availableMeals
                                                                     .filter(m => m.id !== meal.id)

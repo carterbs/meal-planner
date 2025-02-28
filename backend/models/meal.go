@@ -15,11 +15,12 @@ type Meal struct {
 	RelativeEffort int          `json:"relativeEffort"`
 	LastPlanned    time.Time    `json:"lastPlanned"`
 	RedMeat        bool         `json:"redMeat"`
+	URL            string       `json:"url"`
 	Ingredients    []Ingredient `json:"ingredients"`
 }
 
 // MealColumns defines the column names for Meal queries.
-var MealColumns = []string{"id", "meal_name", "relative_effort", "last_planned", "red_meat"}
+var MealColumns = []string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"}
 
 // MealsQueryFragment is the common fragment for querying meals along with ingredients.
 const MealsQueryFragment = `
@@ -29,6 +30,7 @@ const MealsQueryFragment = `
 		m.relative_effort,
 		m.last_planned,
 		m.red_meat,
+		m.url,
 		mi.id AS ingredient_id,
 		mi.name,
 		CASE WHEN mi.quantity = '' THEN NULL ELSE mi.quantity::numeric END AS quantity,
@@ -38,19 +40,7 @@ const MealsQueryFragment = `
 `
 
 // GetMealsByIDsQuery is the query used to retrieve meals (and their ingredients) for specific meal IDs.
-const GetMealsByIDsQuery = `
-	SELECT
-		m.id,
-		m.meal_name,
-		m.relative_effort,
-		m.last_planned,
-		m.red_meat,
-		mi.id AS ingredient_id,
-		mi.name,
-		CASE WHEN mi.quantity = '' THEN NULL ELSE mi.quantity::numeric END AS quantity,
-		mi.unit
-	FROM meals m
-	LEFT JOIN ingredients mi ON m.id = mi.meal_id
+const GetMealsByIDsQuery = MealsQueryFragment + `
 	WHERE m.id = ANY($1)
 	ORDER BY m.id, mi.id;
 `
@@ -75,12 +65,13 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 			relativeEffort int
 			nt             sql.NullTime // scan as sql.NullTime
 			redMeat        bool
+			url            sql.NullString // URL could be NULL
 			ingredientID   sql.NullInt64 // using sql.NullInt64 since a meal may have 0 ingredients
 			ingredientName sql.NullString
 			quantity       sql.NullFloat64
 			unit           sql.NullString
 		)
-		err := rows.Scan(&mealID, &mealName, &relativeEffort, &nt, &redMeat,
+		err := rows.Scan(&mealID, &mealName, &relativeEffort, &nt, &redMeat, &url,
 			&ingredientID, &ingredientName, &quantity, &unit)
 		if err != nil {
 			log.Printf("processMealRows: error scanning row (mealID=%d): %v", mealID, err)
@@ -102,12 +93,19 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 			} else {
 				lp = time.Time{}
 			}
+			
+			urlValue := ""
+			if url.Valid {
+				urlValue = url.String
+			}
+			
 			m = &Meal{
 				ID:             mealID,
 				MealName:       mealName,
 				RelativeEffort: relativeEffort,
 				LastPlanned:    lp,
 				RedMeat:        redMeat,
+				URL:            urlValue,
 				Ingredients:    []Ingredient{},
 			}
 			meals = append(meals, m)
@@ -283,8 +281,8 @@ func CreateMeal(db *sql.DB, meal Meal) (*Meal, error) {
 	// Insert the meal
 	var mealID int
 	err = tx.QueryRow(
-		"INSERT INTO meals (meal_name, relative_effort, red_meat) VALUES ($1, $2, $3) RETURNING id",
-		meal.MealName, meal.RelativeEffort, meal.RedMeat,
+		"INSERT INTO meals (meal_name, relative_effort, red_meat, url) VALUES ($1, $2, $3, $4) RETURNING id",
+		meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL,
 	).Scan(&mealID)
 	if err != nil {
 		log.Printf("CreateMeal: error inserting meal: %v", err)

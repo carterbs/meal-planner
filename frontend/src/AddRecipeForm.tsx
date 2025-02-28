@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { Meal, Ingredient } from './types';
 import DeleteIcon from '@mui/icons-material/Delete';
+import RepeatIcon from '@mui/icons-material/Repeat';
 
 interface AddRecipeFormProps {
   onRecipeAdded: () => void;
@@ -25,6 +26,7 @@ const initialMealState: Omit<Meal, 'id' | 'lastPlanned'> = {
   mealName: '',
   relativeEffort: 3,
   redMeat: false,
+  url: '',
   ingredients: []
 };
 
@@ -34,9 +36,39 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Convert Unicode fraction characters to decimal values
+  const convertFractions = (input: string): string => {
+    const fractionMap: Record<string, string> = {
+      '¼': '0.25',
+      '½': '0.5',
+      '¾': '0.75',
+      '⅓': '0.33',
+      '⅔': '0.67',
+      '⅕': '0.2',
+      '⅖': '0.4',
+      '⅗': '0.6',
+      '⅘': '0.8',
+      '⅙': '0.17',
+      '⅚': '0.83',
+      '⅛': '0.125',
+      '⅜': '0.375',
+      '⅝': '0.625',
+      '⅞': '0.875'
+    };
+    
+    // Handle mixed numbers (e.g., 1½ -> 1.5)
+    return input.replace(/(\d)([¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (match, digit, fraction) => {
+      return `${digit} ${fractionMap[fraction] || fraction}`;
+    }).replace(/[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, match => fractionMap[match] || match);
+  };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMeal({ ...meal, mealName: e.target.value });
+  };
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMeal({ ...meal, url: e.target.value });
   };
 
   const handleEffortChange = (e: Event, newValue: number | number[]) => {
@@ -50,6 +82,36 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   const handleRawIngredientsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRawIngredients(e.target.value);
   };
+  
+  const doubleIngredientQuantities = () => {
+    // Double quantities in already processed ingredients
+    const doubledIngredients = meal.ingredients.map(ing => ({
+      ...ing,
+      Quantity: ing.Quantity * 2
+    }));
+    
+    setMeal({ ...meal, ingredients: doubledIngredients });
+    
+    // Double quantities in raw ingredients text
+    if (rawIngredients.trim()) {
+      const lines = rawIngredients.split('\n');
+      const doubledLines = lines.map(line => {
+        // Convert any Unicode fractions first
+        const processed = convertFractions(line);
+        
+        // Look for number at the beginning of the line
+        const match = processed.match(/^\s*(\d*\.?\d+)/);
+        if (match && match[1]) {
+          const quantity = parseFloat(match[1]);
+          const doubled = (quantity * 2).toString();
+          return processed.replace(match[1], doubled);
+        }
+        return line;
+      });
+      
+      setRawIngredients(doubledLines.join('\n'));
+    }
+  };
 
   const processIngredients = () => {
     if (!rawIngredients.trim()) return;
@@ -61,20 +123,23 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
     // Transform raw text to ingredients
     const newIngredients: Omit<Ingredient, 'ID'>[] = ingredientLines.map(line => {
+      // First convert any fraction characters to decimal values
+      const processedLine = convertFractions(line);
+      
       // Try to parse quantity, unit, and name
       // This is a basic implementation - can be enhanced with more sophisticated parsing
-      const parts = line.trim().split(' ');
+      const parts = processedLine.trim().split(' ');
       
       // Attempt to extract quantity (assume it's the first part if numeric)
       let quantityStr = parts[0];
       let quantity = parseFloat(quantityStr);
       let unit = '';
-      let name = line.trim();
+      let name = processedLine.trim();
 
       // If we have a valid quantity
       if (!isNaN(quantity)) {
         // Remove quantity from the beginning
-        name = line.trim().substring(quantityStr.length).trim();
+        name = processedLine.trim().substring(quantityStr.length).trim();
         
         // Try to extract unit (assume it's the next word after quantity)
         const unitParts = name.split(' ');
@@ -202,6 +267,17 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
           </Grid>
           
           <Grid item xs={12}>
+            <TextField
+              label="Recipe URL (optional)"
+              fullWidth
+              value={meal.url}
+              onChange={handleUrlChange}
+              placeholder="https://example.com/recipe"
+              type="url"
+            />
+          </Grid>
+          
+          <Grid item xs={12}>
             <Typography gutterBottom>Effort Level</Typography>
             <Slider
               value={meal.relativeEffort}
@@ -239,18 +315,29 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               fullWidth
               value={rawIngredients}
               onChange={handleRawIngredientsChange}
-              placeholder="1 cup flour&#10;2 tbsp sugar&#10;1/4 tsp salt"
+              placeholder="1 cup flour&#10;2 tbsp sugar&#10;¼ tsp salt"
               helperText="Paste a list of ingredients, one per line"
             />
             
-            <Button 
-              variant="outlined" 
-              onClick={processIngredients}
-              disabled={!rawIngredients.trim()}
-              sx={{ mt: 1 }}
-            >
-              Process Ingredients
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+              <Button 
+                variant="outlined" 
+                onClick={processIngredients}
+                disabled={!rawIngredients.trim()}
+              >
+                Process Ingredients
+              </Button>
+              
+              <Button
+                variant="outlined"
+                startIcon={<RepeatIcon />}
+                onClick={doubleIngredientQuantities}
+                disabled={!rawIngredients.trim() && meal.ingredients.length === 0}
+                title="Double all ingredient quantities"
+              >
+                Double Quantities
+              </Button>
+            </Box>
           </Grid>
           
           {meal.ingredients.length > 0 && (

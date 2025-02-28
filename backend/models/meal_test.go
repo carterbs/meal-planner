@@ -16,6 +16,7 @@ type testMeal struct {
 	Effort      int
 	LastPlanned *time.Time
 	RedMeat     bool
+	URL         string
 	Ingredients []testIngredient
 }
 
@@ -39,14 +40,14 @@ func setupTestDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
 // setupMealRows creates mock rows for meal queries
 func setupMealRows(meals []testMeal) *sqlmock.Rows {
 	rows := sqlmock.NewRows([]string{
-		"id", "meal_name", "relative_effort", "last_planned", "red_meat",
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url",
 		"ingredient_id", "name", "quantity", "unit",
 	})
 
 	for _, meal := range meals {
 		// If meal has no ingredients, add a row with null ingredient values
 		if len(meal.Ingredients) == 0 {
-			rows.AddRow(meal.ID, meal.Name, meal.Effort, meal.LastPlanned, meal.RedMeat,
+			rows.AddRow(meal.ID, meal.Name, meal.Effort, meal.LastPlanned, meal.RedMeat, meal.URL,
 				nil, nil, nil, nil)
 			continue
 		}
@@ -54,7 +55,7 @@ func setupMealRows(meals []testMeal) *sqlmock.Rows {
 		// Add a row for each ingredient
 		for _, ing := range meal.Ingredients {
 			rows.AddRow(
-				meal.ID, meal.Name, meal.Effort, meal.LastPlanned, meal.RedMeat,
+				meal.ID, meal.Name, meal.Effort, meal.LastPlanned, meal.RedMeat, meal.URL,
 				ing.ID, ing.Name, ing.Quantity, ing.Unit)
 		}
 	}
@@ -77,6 +78,9 @@ func assertMealEquals(t *testing.T, expected testMeal, actual *Meal) {
 	}
 	if actual.RedMeat != expected.RedMeat {
 		t.Errorf("expected red meat %t, got %t", expected.RedMeat, actual.RedMeat)
+	}
+	if actual.URL != expected.URL {
+		t.Errorf("expected URL %q, got %q", expected.URL, actual.URL)
 	}
 
 	if len(actual.Ingredients) != len(expected.Ingredients) {
@@ -145,6 +149,7 @@ func TestGetMealsByIDs(t *testing.T) {
 			Effort:      2,
 			LastPlanned: nil,
 			RedMeat:     false,
+			URL:         "https://example.com/meala",
 			Ingredients: []testIngredient{
 				{ID: 1, Name: "Eggs", Quantity: nil, Unit: "dozen"},
 			},
@@ -155,6 +160,7 @@ func TestGetMealsByIDs(t *testing.T) {
 			Effort:      3,
 			LastPlanned: &now,
 			RedMeat:     true,
+			URL:         "https://example.com/mealb",
 			Ingredients: []testIngredient{
 				{ID: 2, Name: "Milk", Quantity: 2.5, Unit: "gallon"},
 				{ID: 3, Name: "Bread", Quantity: nil, Unit: "loaf"},
@@ -199,6 +205,9 @@ func TestGetAllMeals(t *testing.T) {
 	db, mock := setupTestDB(t)
 	defer db.Close()
 
+	// In tests we use the shared query
+	expectedQuery := GetAllMealsQuery
+
 	// Setup test data
 	now := time.Now()
 	testMeals := []testMeal{
@@ -208,6 +217,7 @@ func TestGetAllMeals(t *testing.T) {
 			Effort:      2,
 			LastPlanned: nil,
 			RedMeat:     false,
+			URL:         "https://example.com/meala",
 			Ingredients: []testIngredient{
 				{ID: 1, Name: "Eggs", Quantity: nil, Unit: "dozen"},
 			},
@@ -218,6 +228,7 @@ func TestGetAllMeals(t *testing.T) {
 			Effort:      3,
 			LastPlanned: &now,
 			RedMeat:     true,
+			URL:         "https://example.com/mealb",
 			Ingredients: []testIngredient{
 				{ID: 2, Name: "Milk", Quantity: 2.5, Unit: "gallon"},
 				{ID: 3, Name: "Bread", Quantity: nil, Unit: "loaf"},
@@ -227,15 +238,14 @@ func TestGetAllMeals(t *testing.T) {
 
 	// Setup mock rows and expectations
 	rows := setupMealRows(testMeals)
-	mock.ExpectQuery(regexp.QuoteMeta(GetAllMealsQuery)).WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).
+		WillReturnRows(rows)
 
-	// Call GetAllMeals from the model
+	// Call GetAllMeals
 	meals, err := GetAllMeals(db)
 	if err != nil {
 		t.Fatalf("unexpected error calling GetAllMeals: %v", err)
 	}
-
-	// Verify that we got exactly 2 meals
 	if len(meals) != 2 {
 		t.Fatalf("expected 2 meals, got %d", len(meals))
 	}
@@ -256,165 +266,237 @@ func TestGetAllMeals(t *testing.T) {
 	assertMealEquals(t, testMeals[1], mealB)
 }
 
-// setupTransactionExpectations sets up the mock transaction expectations for meal operations
-func setupTransactionExpectations(mock sqlmock.Sqlmock, success bool) {
-	mock.ExpectBegin()
-	if !success {
-		mock.ExpectRollback()
-	} else {
-		mock.ExpectCommit()
+// TestSwapMeal tests the SwapMeal function to ensure it returns a different meal.
+func TestSwapMeal(t *testing.T) {
+	// Create a new sqlmock database connection
+	db, mock := setupTestDB(t)
+	defer db.Close()
+
+	currentMealID := 1
+	expectedQuery := GetRandomMealExcludingQuery
+
+	// Setup test data
+	now := time.Now()
+	testMeals := []testMeal{
+		{
+			ID:          2,
+			Name:        "Meal B",
+			Effort:      3,
+			LastPlanned: &now,
+			RedMeat:     true,
+			URL:         "https://example.com/mealb",
+			Ingredients: []testIngredient{
+				{ID: 2, Name: "Milk", Quantity: 2.5, Unit: "gallon"},
+				{ID: 3, Name: "Bread", Quantity: nil, Unit: "loaf"},
+			},
+		},
+	}
+
+	// Setup mock rows and expectations
+	rows := setupMealRows(testMeals)
+	mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).
+		WithArgs(currentMealID).
+		WillReturnRows(rows)
+
+	// Call SwapMeal
+	newMeal, err := SwapMeal(currentMealID, db)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if newMeal.ID == currentMealID {
+		t.Errorf("expected different meal, got same id %d", currentMealID)
+	}
+
+	// Verify properties of the returned meal
+	assertMealEquals(t, testMeals[0], newMeal)
+}
+
+// TestUpdateMealIngredient tests the UpdateMealIngredient function to ensure it properly updates an ingredient.
+func TestUpdateMealIngredient(t *testing.T) {
+	// Create a new sqlmock database connection
+	db, mock := setupTestDB(t)
+	defer db.Close()
+
+	mealID := 1
+	ingredient := Ingredient{
+		ID:       2,
+		Name:     "Updated Milk",
+		Quantity: 3.0,
+		Unit:     "cup",
+	}
+
+	// Setup expectations for update query
+	mock.ExpectExec("UPDATE ingredients SET").
+		WithArgs(ingredient.Name, ingredient.Quantity, ingredient.Unit, ingredient.ID, mealID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// Call UpdateMealIngredient
+	err := UpdateMealIngredient(db, mealID, ingredient)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled expectations: %s", err)
 	}
 }
 
-// setupMealInsertExpectations sets up the mock expectations for inserting a meal
-func setupMealInsertExpectations(mock sqlmock.Sqlmock, meal Meal, expectedID int, ingredientIDs []int, expectError bool) {
-	// Expect meal insert with QueryRow
-	mealQuery := mock.ExpectQuery("INSERT INTO meals \\(meal_name, relative_effort, red_meat\\) VALUES \\(\\$1, \\$2, \\$3\\) RETURNING id").
-		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat)
-	
-	if expectError {
-		mealQuery.WillReturnError(sql.ErrConnDone)
-		return
+// TestDeleteMealIngredient tests the DeleteMealIngredient function to ensure it properly deletes an ingredient.
+func TestDeleteMealIngredient(t *testing.T) {
+	// Create a new sqlmock database connection
+	db, mock := setupTestDB(t)
+	defer db.Close()
+
+	ingredientID := 2
+
+	// Setup expectations for delete query
+	mock.ExpectExec("DELETE FROM ingredients WHERE id = \\$1").
+		WithArgs(ingredientID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// Call DeleteMealIngredient
+	err := DeleteMealIngredient(db, ingredientID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
+
+	// Verify all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled expectations: %s", err)
+	}
+}
+
+// TestDeleteMeal tests the DeleteMeal function to ensure it properly deletes a meal and its ingredients.
+func TestDeleteMeal(t *testing.T) {
+	// Create a new sqlmock database connection
+	db, mock := setupTestDB(t)
+	defer db.Close()
+
+	mealID := 1
+
+	// Setup expectations for transaction
+	mock.ExpectBegin()
 	
-	mealQuery.WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(expectedID))
+	// Expect ingredients deletion
+	mock.ExpectExec("DELETE FROM ingredients WHERE meal_id = \\$1").
+		WithArgs(mealID).
+		WillReturnResult(sqlmock.NewResult(0, 2))
 	
-	// Expect ingredient inserts
-	for i, ing := range meal.Ingredients {
-		mock.ExpectQuery("INSERT INTO ingredients \\(meal_id, quantity, unit, name\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\) RETURNING id").
-			WithArgs(expectedID, ing.Quantity, ing.Unit, ing.Name).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(ingredientIDs[i]))
+	// Expect meal deletion
+	mock.ExpectExec("DELETE FROM meals WHERE id = \\$1").
+		WithArgs(mealID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	
+	// Expect transaction commit
+	mock.ExpectCommit()
+
+	// Call DeleteMeal
+	err := DeleteMeal(db, mealID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled expectations: %s", err)
 	}
 }
 
 func TestCreateMeal(t *testing.T) {
-	// Create a new mock database connection
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create sqlmock: %v", err)
-	}
+	// Create a new sqlmock database connection
+	db, mock := setupTestDB(t)
 	defer db.Close()
 
-	// Test meal to create
 	meal := Meal{
 		MealName:       "Test Meal",
 		RelativeEffort: 3,
 		RedMeat:        false,
+		URL:            "https://example.com/testmeal",
 		Ingredients: []Ingredient{
-			{Name: "Ingredient 1", Quantity: 1.5, Unit: "cup"},
-			{Name: "Ingredient 2", Quantity: 2, Unit: "tbsp"},
+			{Name: "Test Ingredient 1", Quantity: 1.5, Unit: "cup"},
+			{Name: "Test Ingredient 2", Quantity: 2, Unit: "tbsp"},
 		},
 	}
 
-	// Expected IDs to be returned
-	expectedMealID := 10
-	expectedIngIDs := []int{100, 101}
-
-	// Set up mock expectations for transaction
+	// Setup expectations for transaction
 	mock.ExpectBegin()
-
-	// Set up mock expectations for inserting meal
-	mealRows := sqlmock.NewRows([]string{"id"}).AddRow(expectedMealID)
-	mock.ExpectQuery("INSERT INTO meals").
-		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat).
-		WillReturnRows(mealRows)
-
-	// Set up mock expectations for inserting ingredients
-	for i, ing := range meal.Ingredients {
-		ingRows := sqlmock.NewRows([]string{"id"}).AddRow(expectedIngIDs[i])
-		mock.ExpectQuery("INSERT INTO ingredients").
-			WithArgs(expectedMealID, ing.Quantity, ing.Unit, ing.Name).
-			WillReturnRows(ingRows)
+	
+	// Expect meal insertion
+	mock.ExpectQuery("INSERT INTO meals \\(meal_name, relative_effort, red_meat, url\\) VALUES").
+		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	
+	// Expect ingredient insertions
+	for i := range meal.Ingredients {
+		mock.ExpectQuery("INSERT INTO ingredients \\(meal_id, quantity, unit, name\\) VALUES").
+			WithArgs(1, meal.Ingredients[i].Quantity, meal.Ingredients[i].Unit, meal.Ingredients[i].Name).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(i + 1))
 	}
-
-	// Expect transaction to commit
+	
+	// Expect transaction commit
 	mock.ExpectCommit()
 
-	// Call the function being tested
+	// Call CreateMeal
 	createdMeal, err := CreateMeal(db, meal)
 	if err != nil {
 		t.Fatalf("Error creating meal: %v", err)
 	}
 
-	// Verify meal data
-	if createdMeal.ID != expectedMealID {
-		t.Errorf("Expected meal ID %d, got %d", expectedMealID, createdMeal.ID)
+	// Verify created meal
+	if createdMeal.ID != 1 {
+		t.Errorf("expected meal ID 1, got %d", createdMeal.ID)
 	}
 	if createdMeal.MealName != meal.MealName {
-		t.Errorf("Expected meal name %q, got %q", meal.MealName, createdMeal.MealName)
+		t.Errorf("expected meal name %q, got %q", meal.MealName, createdMeal.MealName)
 	}
-	if createdMeal.RelativeEffort != meal.RelativeEffort {
-		t.Errorf("Expected effort %d, got %d", meal.RelativeEffort, createdMeal.RelativeEffort)
+	if createdMeal.URL != meal.URL {
+		t.Errorf("expected URL %q, got %q", meal.URL, createdMeal.URL)
 	}
-	if createdMeal.RedMeat != meal.RedMeat {
-		t.Errorf("Expected red meat %t, got %t", meal.RedMeat, createdMeal.RedMeat)
-	}
-	
-	// Verify ingredients
 	if len(createdMeal.Ingredients) != len(meal.Ingredients) {
-		t.Fatalf("Expected %d ingredients, got %d", len(meal.Ingredients), len(createdMeal.Ingredients))
-	}
-	
-	for i, ing := range createdMeal.Ingredients {
-		if ing.ID != expectedIngIDs[i] {
-			t.Errorf("Ingredient %d: expected ID %d, got %d", i, expectedIngIDs[i], ing.ID)
-		}
-		if ing.Name != meal.Ingredients[i].Name {
-			t.Errorf("Ingredient %d: expected name %q, got %q", i, meal.Ingredients[i].Name, ing.Name)
-		}
-		if ing.Quantity != meal.Ingredients[i].Quantity {
-			t.Errorf("Ingredient %d: expected quantity %v, got %v", i, meal.Ingredients[i].Quantity, ing.Quantity)
-		}
-		if ing.Unit != meal.Ingredients[i].Unit {
-			t.Errorf("Ingredient %d: expected unit %q, got %q", i, meal.Ingredients[i].Unit, ing.Unit)
-		}
+		t.Errorf("expected %d ingredients, got %d", len(meal.Ingredients), len(createdMeal.Ingredients))
 	}
 
-	// Verify that all expectations were met
+	// Verify all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("Unfulfilled expectations: %s", err)
+		t.Errorf("unfulfilled expectations: %s", err)
 	}
 }
 
 func TestCreateMeal_Error(t *testing.T) {
-	// Create a new mock database connection
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create sqlmock: %v", err)
-	}
+	// Create a new sqlmock database connection
+	db, mock := setupTestDB(t)
 	defer db.Close()
 
-	// Test meal to create
 	meal := Meal{
 		MealName:       "Test Meal",
 		RelativeEffort: 3,
 		RedMeat:        false,
+		URL:            "https://example.com/testmeal",
 		Ingredients: []Ingredient{
-			{Name: "Ingredient 1", Quantity: 1.5, Unit: "cup"},
+			{Name: "Test Ingredient", Quantity: 1, Unit: "cup"},
 		},
 	}
 
-	// Expect begin transaction
+	// Setup expectations for transaction
 	mock.ExpectBegin()
 	
-	// Simulate error in meal insertion
+	// Expect meal insertion with error
 	mock.ExpectQuery("INSERT INTO meals").
-		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat).
+		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL).
 		WillReturnError(sql.ErrConnDone)
 	
-	// Expect rollback
+	// Expect transaction rollback
 	mock.ExpectRollback()
 
-	// Call the function being tested
-	_, err = CreateMeal(db, meal)
-	
-	// Assertions
+	// Call CreateMeal
+	_, err := CreateMeal(db, meal)
 	if err == nil {
-		t.Error("Expected an error, but got nil")
+		t.Fatal("expected error, got nil")
 	}
 
-	// Verify that all expectations were met
+	// Verify all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("Unfulfilled expectations: %s", err)
+		t.Errorf("unfulfilled expectations: %s", err)
 	}
 }

@@ -103,7 +103,11 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 	row := db.QueryRow(query, minEffort, maxEffort, cutoff)
 	var m Meal
 	var lastPlanned sql.NullTime
-	err := row.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat)
+	var url sql.NullString
+	err := row.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url)
+	if url.Valid {
+		m.URL = url.String
+	}
 	if err != nil {
 		return nil, err
 	}

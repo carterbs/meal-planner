@@ -23,8 +23,8 @@ func TestPickMeal(t *testing.T) {
 		queryRegex := regexp.QuoteMeta(buildPickMealQuery(false))
 
 		// Return a test row using the shared MealColumns.
-		rows := sqlmock.NewRows(MealColumns).
-			AddRow(1, "Test Meal", 2, nil, false)
+		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"}).
+			AddRow(1, "Test Meal", 2, nil, false, "https://example.com/test")
 
 		mock.ExpectQuery(queryRegex).
 			WithArgs(0, 2, sqlmock.AnyArg()).
@@ -44,8 +44,8 @@ func TestPickMeal(t *testing.T) {
 		queryRegex := regexp.QuoteMeta(buildPickMealQuery(true))
 
 		// Return a test row that represents a meal without red meat.
-		rows := sqlmock.NewRows(MealColumns).
-			AddRow(2, "Non Red Meat Meal", 4, nil, false)
+		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"}).
+			AddRow(2, "Non Red Meat Meal", 4, nil, false, "https://example.com/nonredmeat")
 
 		mock.ExpectQuery(queryRegex).
 			WithArgs(3, 5, sqlmock.AnyArg()).
@@ -111,8 +111,8 @@ func TestGenerateWeeklyMealPlan(t *testing.T) {
 		mock.ExpectQuery(queryRegex).
 			WithArgs(d.minEffort, d.maxEffort, sqlmock.AnyArg()).
 			WillReturnRows(
-				sqlmock.NewRows(MealColumns).
-					AddRow(i+10, d.day+" Meal", (d.minEffort+d.maxEffort)/2, nil, false),
+				sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"}).
+					AddRow(i+10, d.day+" Meal", (d.minEffort+d.maxEffort)/2, nil, false, "https://example.com/"+d.day),
 			)
 	}
 
