@@ -147,16 +147,86 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     const copyMealPlanToClipboard = () => {
         if (!mealPlan) return;
         const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-        const formattedPlan = weekDays
+
+        // Create an HTML table representation that will be properly recognized by Apple Notes
+        let htmlContent = '<table style="border-collapse: collapse; width: 100%;">';
+
+        // Add table header with styling
+        htmlContent += `
+          <thead>
+            <tr>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Day</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Meal</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Effort</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">URL</th>
+            </tr>
+          </thead>
+          <tbody>
+        `;
+
+        // Add each day's meal information as table rows
+        weekDays
             .filter(day => mealPlan[day])
-            .map(day => `${day}: ${mealPlan[day].mealName}`)
-            .join('\n');
-        navigator.clipboard.writeText(formattedPlan)
-            .then(() => showToast('Meal plan copied to clipboard!'))
-            .catch(err => {
-                console.error('Failed to copy to clipboard:', err);
-                showToast('Failed to copy to clipboard');
+            .forEach(day => {
+                const meal = mealPlan[day];
+                const url = meal.url || 'N/A';
+                const urlDisplay = meal.url ?
+                    `<a href="${meal.url}" style="color: #2196f3; text-decoration: underline;">${meal.url}</a>` :
+                    'N/A';
+
+                htmlContent += `
+                  <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${day}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${meal.mealName}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${meal.relativeEffort}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${urlDisplay}</td>
+                  </tr>
+                `;
             });
+
+        htmlContent += '</tbody></table>';
+
+        // Also create a plain text fallback for applications that don't support HTML
+        let textContent = 'Day | Meal | Effort | URL\n';
+        textContent += '----|------|--------|----\n';
+
+        weekDays
+            .filter(day => mealPlan[day])
+            .forEach(day => {
+                const meal = mealPlan[day];
+                textContent += `${day} | ${meal.mealName} | ${meal.relativeEffort} | ${meal.url || 'N/A'}\n`;
+            });
+
+        // Use the modern clipboard API to write both HTML and text formats
+        // This makes both formats available so the receiving application can choose the best one
+        try {
+            const clipboardItem = new ClipboardItem({
+                'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                'text/plain': new Blob([textContent], { type: 'text/plain' })
+            });
+
+            navigator.clipboard.write([clipboardItem])
+                .then(() => showToast('Meal plan copied to clipboard!'))
+                .catch(err => {
+                    console.error('Failed to copy formatted content:', err);
+                    // Fall back to plain text if the enhanced version fails
+                    navigator.clipboard.writeText(textContent)
+                        .then(() => showToast('Meal plan copied to clipboard (plain text only)!'))
+                        .catch(err => {
+                            console.error('Failed to copy to clipboard:', err);
+                            showToast('Failed to copy to clipboard');
+                        });
+                });
+        } catch (error) {
+            // Handle browsers that don't support ClipboardItem
+            console.error('Advanced clipboard features not supported:', error);
+            navigator.clipboard.writeText(textContent)
+                .then(() => showToast('Meal plan copied to clipboard (basic format)!'))
+                .catch(err => {
+                    console.error('Failed to copy to clipboard:', err);
+                    showToast('Failed to copy to clipboard');
+                });
+        }
     };
 
     return (
@@ -245,36 +315,64 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             </Box>
 
             {shoppingList.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                    <Typography variant="h6">Shopping List</Typography>
-                    <List>
-                        {shoppingList.map((item, index) => (
-                            <ListItem key={index}>
-                                <ListItemText primary={`${item.Quantity} ${item.Unit} ${item.Name}`} />
-                            </ListItem>
-                        ))}
-                    </List>
-                    <Button variant="contained" onClick={copyShoppingListToClipboard}>
-                        Copy to Clipboard
-                    </Button>
-                </Box>
-            )}
+                <>
+                    {mealPlan && (
+                        <Box sx={{ mt: 4, mb: 4, p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+                            <Typography variant="h6" gutterBottom>Meal Plan Summary</Typography>
+                            <Table sx={{ mb: 2 }}>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Day</TableCell>
+                                        <TableCell>Meal</TableCell>
+                                        <TableCell>Effort</TableCell>
+                                        <TableCell>URL</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                                        .filter(day => mealPlan[day])
+                                        .map(day => (
+                                            <TableRow key={day}>
+                                                <TableCell>{day}</TableCell>
+                                                <TableCell>{mealPlan[day].mealName}</TableCell>
+                                                <TableCell>{mealPlan[day].relativeEffort}</TableCell>
+                                                <TableCell>
+                                                    {mealPlan[day].url ? (
+                                                        <a href={mealPlan[day].url} target="_blank" rel="noopener noreferrer">
+                                                            Link
+                                                        </a>
+                                                    ) : 'N/A'}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    }
+                                </TableBody>
+                            </Table>
+                            <Button
+                                variant="contained"
+                                data-testid="copy-meal-plan"
+                                onClick={copyMealPlanToClipboard}
+                                sx={{ mt: 1 }}
+                            >
+                                Copy Meal Plan
+                            </Button>
+                        </Box>
+                    )}
 
-            {mealPlan && (
-                <Box sx={{ mt: 2 }}>
-                    <Typography variant="h6">Meal Plan Summary</Typography>
-                    <Box>
-                        {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-                            .filter(day => mealPlan[day])
-                            .map(day => (
-                                <Typography key={day}>{`${day}: ${mealPlan[day].mealName}`}</Typography>
-                            ))
-                        }
+                    <Box sx={{ mt: 2 }}>
+                        <Typography variant="h6">Shopping List</Typography>
+                        <List>
+                            {shoppingList.map((item, index) => (
+                                <ListItem key={index}>
+                                    <ListItemText primary={`${item.Quantity} ${item.Unit} ${item.Name}`} />
+                                </ListItem>
+                            ))}
+                        </List>
+                        <Button variant="contained" onClick={copyShoppingListToClipboard}>
+                            Copy to Clipboard
+                        </Button>
                     </Box>
-                    <Button variant="contained" data-testid="copy-meal-plan" onClick={copyMealPlanToClipboard}>
-                        Copy Meal Plan
-                    </Button>
-                </Box>
+                </>
             )}
         </Box>
     );

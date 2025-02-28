@@ -21,6 +21,8 @@ import AddRecipeForm from "../AddRecipeForm";
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { alpha } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 
 interface MealManagementTabProps {
     showToast: (message: string) => void;
@@ -33,6 +35,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     const [editedIngredient, setEditedIngredient] = useState<Ingredient | null>(null);
     const [mealFilter, setMealFilter] = useState<string>("");
     const [currentView, setCurrentView] = useState<"main" | "browse" | "add">("main");
+    const theme = useTheme();
 
     // Column definitions for the DataGrid
     const columns: GridColDef[] = [
@@ -295,12 +298,47 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     const renderMainView = () => {
         return (
             <Box sx={{ py: 3 }} data-testid="meal-management-tab">
-                <Typography variant="h4" gutterBottom>
+                <Typography
+                    variant="h4"
+                    gutterBottom
+                    sx={{
+                        fontFamily: 'Playfair Display, serif',
+                        fontWeight: 700,
+                        mb: 4,
+                        color: theme.palette.text.primary,
+                        position: 'relative',
+                        display: 'inline-block',
+                        '&:after': {
+                            content: '""',
+                            position: 'absolute',
+                            left: 0,
+                            bottom: -8,
+                            width: '40%',
+                            height: 3,
+                            background: `linear-gradient(to right, ${theme.palette.primary.main}, transparent)`,
+                            borderRadius: 2
+                        }
+                    }}
+                >
                     Meal Library
                 </Typography>
-                <Grid container spacing={4} sx={{ mt: 1 }}>
+                <Grid container spacing={5} sx={{ mt: 1 }}>
                     <Grid item xs={12} md={6}>
-                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <Card
+                            sx={{
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                borderRadius: 3,
+                                overflow: 'hidden',
+                                transition: 'all 0.3s ease',
+                                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                                '&:hover': {
+                                    transform: 'translateY(-8px)',
+                                    boxShadow: `0 12px 30px ${alpha(theme.palette.primary.main, 0.15)}`,
+                                }
+                            }}
+                        >
                             <CardActionArea
                                 onClick={() => setCurrentView("browse")}
                                 sx={{
@@ -308,21 +346,74 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                     flexDirection: 'column',
                                     height: '100%',
                                     alignItems: 'center',
-                                    padding: 4
+                                    padding: 5,
+                                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.15)} 100%)`,
                                 }}
                             >
-                                <MenuBookIcon sx={{ fontSize: 80, color: 'primary.main', mb: 2 }} />
-                                <Typography variant="h5" component="div" gutterBottom>
+                                <Box
+                                    sx={{
+                                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                        borderRadius: '50%',
+                                        p: 3,
+                                        mb: 3,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.2)}`,
+                                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                                    }}
+                                >
+                                    <MenuBookIcon
+                                        sx={{
+                                            fontSize: 64,
+                                            color: theme.palette.primary.main,
+                                        }}
+                                    />
+                                </Box>
+                                <Typography
+                                    variant="h5"
+                                    component="div"
+                                    gutterBottom
+                                    sx={{
+                                        fontFamily: 'Playfair Display, serif',
+                                        fontWeight: 700,
+                                        color: theme.palette.primary.dark,
+                                        mb: 2
+                                    }}
+                                >
                                     Browse Meals
                                 </Typography>
-                                <Typography variant="body1" color="text.secondary" align="center">
+                                <Typography
+                                    variant="body1"
+                                    color="text.secondary"
+                                    align="center"
+                                    sx={{
+                                        fontWeight: 500,
+                                        maxWidth: '80%',
+                                        lineHeight: 1.6
+                                    }}
+                                >
                                     View, search, and manage your saved recipes
                                 </Typography>
                             </CardActionArea>
                         </Card>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <Card
+                            sx={{
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                borderRadius: 3,
+                                overflow: 'hidden',
+                                transition: 'all 0.3s ease',
+                                border: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`,
+                                '&:hover': {
+                                    transform: 'translateY(-8px)',
+                                    boxShadow: `0 12px 30px ${alpha(theme.palette.secondary.main, 0.15)}`,
+                                }
+                            }}
+                        >
                             <CardActionArea
                                 onClick={() => setCurrentView("add")}
                                 sx={{
@@ -330,14 +421,53 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                     flexDirection: 'column',
                                     height: '100%',
                                     alignItems: 'center',
-                                    padding: 4
+                                    padding: 5,
+                                    background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.light, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.15)} 100%)`,
                                 }}
                             >
-                                <AddIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
-                                <Typography variant="h5" component="div" gutterBottom>
+                                <Box
+                                    sx={{
+                                        bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                                        borderRadius: '50%',
+                                        p: 3,
+                                        mb: 3,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: `0 8px 20px ${alpha(theme.palette.secondary.main, 0.2)}`,
+                                        border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
+                                    }}
+                                >
+                                    <AddIcon
+                                        sx={{
+                                            fontSize: 64,
+                                            color: theme.palette.secondary.main,
+                                        }}
+                                    />
+                                </Box>
+                                <Typography
+                                    variant="h5"
+                                    component="div"
+                                    gutterBottom
+                                    sx={{
+                                        fontFamily: 'Playfair Display, serif',
+                                        fontWeight: 700,
+                                        color: theme.palette.secondary.dark,
+                                        mb: 2
+                                    }}
+                                >
                                     Add New Recipe
                                 </Typography>
-                                <Typography variant="body1" color="text.secondary" align="center">
+                                <Typography
+                                    variant="body1"
+                                    color="text.secondary"
+                                    align="center"
+                                    sx={{
+                                        fontWeight: 500,
+                                        maxWidth: '80%',
+                                        lineHeight: 1.6
+                                    }}
+                                >
                                     Create a new recipe to add to your meal library
                                 </Typography>
                             </CardActionArea>
@@ -352,17 +482,32 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     const renderBrowseView = () => {
         return (
             <Fade in={true}>
-                <Box sx={{ py: 2 }}>
+                <Box sx={{ py: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
                         <IconButton onClick={() => setCurrentView("main")} aria-label="back to main menu">
                             <ArrowBackIcon />
                         </IconButton>
-                        <Typography variant="h5">Browse Meals</Typography>
+                        <Typography
+                            variant="h5"
+                            sx={{
+                                fontFamily: 'Playfair Display, serif',
+                                fontWeight: 700,
+                            }}
+                        >
+                            Browse Meals
+                        </Typography>
                     </Stack>
 
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
-                            <Typography variant="h6" gutterBottom>
+                    <Grid container spacing={3} sx={{ flexGrow: 1, height: '100%' }}>
+                        <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <Typography
+                                variant="h6"
+                                gutterBottom
+                                sx={{
+                                    fontWeight: 600,
+                                    mb: 2
+                                }}
+                            >
                                 Available Meals
                             </Typography>
                             <Box sx={{ mb: 2 }}>
@@ -373,9 +518,34 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                     value={mealFilter}
                                     onChange={(e) => setMealFilter(e.target.value)}
                                     fullWidth
+                                    InputProps={{
+                                        sx: {
+                                            borderRadius: 2,
+                                            bgcolor: 'background.paper',
+                                            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: alpha(theme.palette.primary.main, 0.2),
+                                            },
+                                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: theme.palette.primary.main,
+                                            },
+                                        }
+                                    }}
                                 />
                             </Box>
-                            <Paper sx={{ height: 400, width: '100%', boxShadow: 'none' }}>
+                            <Paper
+                                sx={{
+                                    flexGrow: 1,
+                                    width: '100%',
+                                    boxShadow: 'none',
+                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                                    borderRadius: 2,
+                                    overflow: 'hidden',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    minHeight: '500px'
+                                }}
+                            >
                                 <DataGrid
                                     rows={filteredMeals}
                                     columns={columns}
@@ -384,6 +554,9 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                         sorting: {
                                             sortModel: [{ field: 'mealName', sort: 'asc' }],
                                         },
+                                        pagination: {
+                                            paginationModel: { pageSize: 10 }
+                                        }
                                     }}
                                     onRowClick={(params) => {
                                         const meal = meals.find(m => m.id === params.id);
@@ -391,20 +564,23 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                     }}
                                     rowSelection={false}
                                     disableRowSelectionOnClick
-                                    autoHeight
-                                    density="comfortable"
+                                    pageSizeOptions={[5, 10, 25]}
+                                    pagination={true}
                                     sx={{
+                                        flexGrow: 1,
                                         '& .MuiDataGrid-row:hover': {
                                             cursor: 'pointer',
-                                            backgroundColor: 'action.hover',
+                                            backgroundColor: alpha(theme.palette.primary.main, 0.04),
                                             boxShadow: 'none',
+                                            transition: 'background-color 0.2s ease',
                                         },
                                         '& .MuiDataGrid-row.Mui-selected': {
-                                            backgroundColor: 'primary.light',
+                                            backgroundColor: alpha(theme.palette.primary.main, 0.08),
                                         },
                                         '& .MuiDataGrid-cell': {
                                             textDecoration: 'none',
-                                            borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                                            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                                            padding: '12px 16px',
                                         },
                                         '& .MuiDataGrid-row:focus, & .MuiDataGrid-cell:focus': {
                                             outline: 'none',
@@ -412,9 +588,20 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                         '& .MuiDataGrid-row': {
                                             boxShadow: 'none',
                                         },
-                                        border: '1px solid rgba(224, 224, 224, 1)',
+                                        border: 'none',
                                         '& .MuiDataGrid-columnHeaders': {
-                                            borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                                            backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                                            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                                            '& .MuiDataGrid-columnHeader': {
+                                                padding: '12px 16px',
+                                            },
+                                            '& .MuiDataGrid-columnHeaderTitle': {
+                                                fontWeight: 600,
+                                                color: theme.palette.text.primary,
+                                            },
+                                        },
+                                        '& .MuiDataGrid-footerContainer': {
+                                            borderTop: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
                                         },
                                     }}
                                 />
@@ -422,16 +609,84 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                         </Grid>
 
                         {selectedMeal && (
-                            <Grid item xs={12} md={6}>
-                                <Card variant="outlined">
-                                    <CardContent>
-                                        <Typography variant="h6" gutterBottom>
+                            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography
+                                    variant="h6"
+                                    gutterBottom
+                                    sx={{
+                                        fontWeight: 600,
+                                        mb: 2
+                                    }}
+                                >
+                                    Meal Details
+                                </Typography>
+                                <Card
+                                    variant="outlined"
+                                    sx={{
+                                        borderRadius: 2,
+                                        borderColor: alpha(theme.palette.primary.main, 0.1),
+                                        boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}`,
+                                        height: '100%',
+                                    }}
+                                >
+                                    <CardContent sx={{ p: 3 }}>
+                                        <Typography
+                                            variant="h5"
+                                            gutterBottom
+                                            sx={{
+                                                fontFamily: 'Playfair Display, serif',
+                                                fontWeight: 700,
+                                                color: theme.palette.primary.dark,
+                                                mb: 2
+                                            }}
+                                        >
                                             {selectedMeal.mealName}
                                         </Typography>
 
-                                        <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                                            Effort Level: {selectedMeal.relativeEffort}
-                                        </Typography>
+                                        <Stack
+                                            direction="row"
+                                            spacing={2}
+                                            sx={{
+                                                mb: 3,
+                                                flexWrap: 'wrap',
+                                                gap: 1
+                                            }}
+                                        >
+                                            <Box
+                                                sx={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                                                    color: theme.palette.primary.main,
+                                                    py: 0.5,
+                                                    px: 1.5,
+                                                    borderRadius: 4,
+                                                    fontWeight: 500,
+                                                    fontSize: '0.875rem'
+                                                }}
+                                            >
+                                                Effort Level: {selectedMeal.relativeEffort}
+                                            </Box>
+                                            <Box
+                                                sx={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    bgcolor: selectedMeal.redMeat
+                                                        ? alpha(theme.palette.secondary.main, 0.08)
+                                                        : alpha(theme.palette.success.main, 0.08),
+                                                    color: selectedMeal.redMeat
+                                                        ? theme.palette.secondary.main
+                                                        : theme.palette.success.main,
+                                                    py: 0.5,
+                                                    px: 1.5,
+                                                    borderRadius: 4,
+                                                    fontWeight: 500,
+                                                    fontSize: '0.875rem'
+                                                }}
+                                            >
+                                                {selectedMeal.redMeat ? '🥩 Red Meat' : '🥗 No Red Meat'}
+                                            </Box>
+                                        </Stack>
 
                                         {selectedMeal.url && (
                                             <Button
@@ -446,26 +701,75 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                             </Button>
                                         )}
 
-                                        <Divider sx={{ my: 2 }} />
+                                        <Divider sx={{ my: 3 }} />
 
-                                        <Typography variant="subtitle1" gutterBottom>
-                                            Ingredients:
-                                        </Typography>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                            <Typography
+                                                variant="h6"
+                                                sx={{
+                                                    fontWeight: 600,
+                                                    color: theme.palette.text.primary,
+                                                }}
+                                            >
+                                                Ingredients:
+                                            </Typography>
 
-                                        <Button
-                                            variant="outlined"
-                                            onClick={addIngredient}
-                                            sx={{ mb: 2 }}
-                                        >
-                                            Add Ingredient
-                                        </Button>
+                                            <Button
+                                                variant="outlined"
+                                                color="primary"
+                                                onClick={addIngredient}
+                                                startIcon={<AddIcon />}
+                                                sx={{
+                                                    borderRadius: 6,
+                                                    px: 2,
+                                                    borderWidth: 2,
+                                                }}
+                                            >
+                                                Add Ingredient
+                                            </Button>
+                                        </Box>
 
                                         {selectedMeal.ingredients.length === 0 ? (
-                                            <Typography color="text.secondary">
-                                                No ingredients listed for this meal.
-                                            </Typography>
+                                            <Box
+                                                sx={{
+                                                    textAlign: 'center',
+                                                    py: 4,
+                                                    px: 2,
+                                                    bgcolor: alpha(theme.palette.background.default, 0.5),
+                                                    borderRadius: 2,
+                                                    border: `1px dashed ${alpha(theme.palette.text.secondary, 0.2)}`,
+                                                }}
+                                            >
+                                                <Typography color="text.secondary">
+                                                    No ingredients listed for this meal.
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                    Click "Add Ingredient" to add some!
+                                                </Typography>
+                                            </Box>
                                         ) : (
-                                            <Box sx={{ mt: 1 }}>
+                                            <Box
+                                                sx={{
+                                                    mt: 1,
+                                                    maxHeight: '400px',
+                                                    overflowY: 'auto',
+                                                    pr: 1,
+                                                    '&::-webkit-scrollbar': {
+                                                        width: '8px',
+                                                    },
+                                                    '&::-webkit-scrollbar-track': {
+                                                        backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                                                        borderRadius: '8px',
+                                                    },
+                                                    '&::-webkit-scrollbar-thumb': {
+                                                        backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                                                        borderRadius: '8px',
+                                                        '&:hover': {
+                                                            backgroundColor: alpha(theme.palette.primary.main, 0.3),
+                                                        },
+                                                    },
+                                                }}
+                                            >
                                                 {selectedMeal.ingredients.map((ing, index) => (
                                                     <Box
                                                         key={ing.ID || index}
@@ -473,12 +777,18 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                             display: "flex",
                                                             justifyContent: "space-between",
                                                             alignItems: "center",
-                                                            mb: 1,
-                                                            p: 1,
-                                                            borderRadius: 1,
+                                                            mb: 1.5,
+                                                            p: 2,
+                                                            borderRadius: 2,
                                                             bgcolor: 'background.paper',
                                                             border: "1px solid",
-                                                            borderColor: "divider"
+                                                            borderColor: alpha(theme.palette.primary.main, 0.1),
+                                                            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.05)}`,
+                                                            transition: 'all 0.2s ease',
+                                                            '&:hover': {
+                                                                borderColor: alpha(theme.palette.primary.main, 0.3),
+                                                                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.08)}`,
+                                                            }
                                                         }}
                                                     >
                                                         {editingIngredientIndex === index ? (
@@ -514,17 +824,26 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                                     </Grid>
                                                                 </Grid>
                                                                 <Box sx={{ display: "flex", gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-                                                                    <Button variant="contained" color="primary" onClick={saveIngredient}>
+                                                                    <Button
+                                                                        variant="contained"
+                                                                        color="primary"
+                                                                        onClick={saveIngredient}
+                                                                        sx={{ borderRadius: 6 }}
+                                                                    >
                                                                         Save
                                                                     </Button>
-                                                                    <Button variant="outlined" onClick={cancelIngredientEdit}>
+                                                                    <Button
+                                                                        variant="outlined"
+                                                                        onClick={cancelIngredientEdit}
+                                                                        sx={{ borderRadius: 6 }}
+                                                                    >
                                                                         Cancel
                                                                     </Button>
                                                                 </Box>
                                                             </Box>
                                                         ) : (
                                                             <>
-                                                                <Typography>
+                                                                <Typography fontWeight={500}>
                                                                     {`${ing.Quantity ? ing.Quantity + " " : ""}${ing.Unit ? ing.Unit + " " : ""}${ing.Name}`.trim()}
                                                                 </Typography>
                                                                 <Box sx={{ display: "flex", gap: 1 }}>
@@ -533,6 +852,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                                         onClick={() => startEditing(ing)}
                                                                         data-testid={`edit-ingredient-${ing.ID}`}
                                                                         size="small"
+                                                                        sx={{ borderRadius: 6 }}
                                                                     >
                                                                         Edit
                                                                     </Button>
@@ -541,6 +861,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                                         color="error"
                                                                         onClick={() => deleteIngredient(ing.ID)}
                                                                         size="small"
+                                                                        sx={{ borderRadius: 6 }}
                                                                     >
                                                                         Delete
                                                                     </Button>
