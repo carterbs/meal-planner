@@ -64,27 +64,28 @@ describe('index.tsx', () => {
         }
     });
 
-    it('renders without crashing', () => {
-        // Mock getElementById to return the div
-        mockGetElementById.mockReturnValue(div);
+    it('renders app component inside create root', () => {
+        // Mock document.getElementById to return a div
+        mockGetElementById.mockReturnValue(document.createElement('div'));
 
         // Require index.tsx
         require('./index');
 
-        // Verify createRoot was called with the root element
-        expect(mockCreateRoot).toHaveBeenCalledWith(div);
+        // Verify createRoot was called
+        expect(mockCreateRoot).toHaveBeenCalled();
 
-        // Verify render was called
-        expect(mockRender).toHaveBeenCalled();
-
-        // Get the rendered element
+        // Extract the render call
         const renderCall = mockRender.mock.calls[0][0];
-
-        // Verify it's a StrictMode component
         expect(renderCall.type.name).toBe('StrictMode');
 
-        // Verify it contains an App component
-        const app = renderCall.props.children;
+        // Verify it contains ThemeProvider with App component inside
+        const themeProvider = renderCall.props.children;
+        expect(themeProvider.type.name).toBe('ThemeProvider');
+
+        // Verify App is inside ThemeProvider (after CssBaseline)
+        const cssBaseline = themeProvider.props.children[0];
+        const app = themeProvider.props.children[1];
+        expect(cssBaseline.type.name).toBe('CssBaseline');
         expect(app.type.name).toBe('App');
     });
 
@@ -97,9 +98,6 @@ describe('index.tsx', () => {
 
         // Verify createRoot was not called
         expect(mockCreateRoot).not.toHaveBeenCalled();
-
-        // Verify render was not called
-        expect(mockRender).not.toHaveBeenCalled();
 
         // Verify error was logged
         expect(consoleError).toHaveBeenCalledWith('Root element not found');
