@@ -96,7 +96,7 @@ func main() {
 			fmt.Println("   $ docker-compose up -d")
 			fmt.Println("\n🚨 Error details:", err)
 			fmt.Println("-------------------------------------------------------------")
-			
+
 			// Continue execution with nil DB - the middleware will handle errors
 			// This allows the frontend to at least load and show appropriate errors
 			log.Println("Starting with nil database connection. API calls will return connection errors.")
@@ -105,7 +105,7 @@ func main() {
 		}
 	} else {
 		defer connection.Close()
-		
+
 		// Run migrations (only if we have a connection)
 		if err := models.Migrate(connection); err != nil {
 			log.Printf("Migration error: %v", err)
@@ -155,17 +155,77 @@ func main() {
 			w.Write([]byte(`{"status":"error","message":"Database not connected. Make sure Docker is running and the database container is started."}`))
 			return
 		}
-		
+
 		if err := handlers.DB.Ping(); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusServiceUnavailable)
 			w.Write([]byte(`{"status":"error","message":"Database connection lost. Make sure Docker is running and the database container is started."}`))
 			return
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok","message":"Database connection is healthy"}`))
+	})
+
+	// Add endpoint to reconnect to the database
+	r.Post("/api/reconnect", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		// If DB is already connected, just confirm it's working
+		if handlers.DB != nil {
+			if err := handlers.DB.Ping(); err == nil {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"status":"ok","message":"Database connection is already established and healthy"}`))
+				return
+			}
+
+			// If we have a DB object but ping fails, close it before reconnecting
+			handlers.DB.Close()
+		}
+
+		// Read DB config from env variables with reasonable defaults
+		config := db.DefaultConfig()
+		if os.Getenv("DB_HOST") != "" {
+			config.Host = os.Getenv("DB_HOST")
+		}
+		if os.Getenv("DB_PORT") != "" {
+			config.Port = os.Getenv("DB_PORT")
+		}
+		if os.Getenv("DB_USER") != "" {
+			config.User = os.Getenv("DB_USER")
+		}
+		if os.Getenv("DB_PASSWORD") != "" {
+			config.Password = os.Getenv("DB_PASSWORD")
+		}
+		if os.Getenv("DB_NAME") != "" {
+			config.DBName = os.Getenv("DB_NAME")
+		}
+
+		// Attempt to reconnect to the database
+		connection, err := db.ConnectDB(config)
+		if err != nil {
+			if db.IsConnectionError(err) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				w.Write([]byte(`{"status":"error","message":"Failed to reconnect to database. Make sure Docker is running and the database container is started."}`))
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf(`{"status":"error","message":"Database reconnection failed: %s"}`, err.Error())))
+			return
+		}
+
+		// Update the global DB connection
+		handlers.DB = connection
+
+		// Ensure migrations are up to date
+		if err := models.Migrate(connection); err != nil {
+			log.Printf("Migration error during reconnection: %v", err)
+			// We don't fail the reconnect if migrations have issues
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok","message":"Successfully reconnected to the database"}`))
 	})
 
 	// Register API routes
