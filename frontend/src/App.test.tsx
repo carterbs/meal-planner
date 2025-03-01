@@ -313,4 +313,155 @@ test("renders both tabs in the header", async () => {
 
     // Verify meal plan content is showing
     expect(container.textContent).toContain('Weekly Meal Plan');
+});
+
+// Test database reconnection functionality
+test("DatabaseConnectionError retries connection when button is clicked", async () => {
+    // First request to health will fail, trigger DB error screen
+    // Second request to reconnect will succeed
+    let requestCount = 0;
+
+    global.fetch = jest.fn(((url: RequestInfo) => {
+        const urlStr = url.toString();
+
+        if (urlStr.includes("/api/health")) {
+            // First return error to show the DB error screen
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: "error", message: "Database connection lost" }),
+            } as Response);
+        }
+
+        if (urlStr.includes("/api/reconnect")) {
+            // Reconnect should succeed
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: "ok", message: "Successfully reconnected to the database" }),
+            } as Response);
+        }
+
+        // For other API calls
+        if (urlStr.includes("/api/mealplan")) {
+            requestCount++;
+            // First show loading, then return actual meal plan
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(requestCount > 1
+                    ? { Monday: { id: 1, mealName: "Meal A" } }
+                    : {}
+                ),
+            } as Response);
+        }
+
+        if (urlStr.includes("/api/meals")) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve([{ id: 1, mealName: "Meal A" }]),
+            } as Response);
+        }
+
+        return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({}),
+        } as Response);
+    })) as jest.Mock;
+
+    // Override the NODE_ENV for testing to make the skip test conditions work correctly
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+
+    const { queryByText, getByText } = render(<App />);
+
+    // Wait for the database connection error screen to appear
+    // First we'll see loading
+    expect(getByText("Preparing your culinary experience...")).toBeInTheDocument();
+
+    // Then we should see the error screen
+    await waitFor(() => {
+        expect(getByText("Database Connection Error")).toBeInTheDocument();
+    }, { timeout: 1000 });
+
+    // Verify that the retry button is present
+    const retryButton = getByText("Retry Connection");
+    expect(retryButton).toBeInTheDocument();
+
+    // Click the retry button
+    fireEvent.click(retryButton);
+
+    // Check that button shows loading state
+    expect(getByText("Attempting to Reconnect...")).toBeInTheDocument();
+
+    // Fast-forward time to get past the minimum loading duration
+    act(() => {
+        jest.advanceTimersByTime(1000);
+    });
+
+    // Wait for the app to transition to the main screen after successful reconnection
+    await waitFor(() => {
+        // Check that we're back on the main app screen by looking for a specific element
+        expect(queryByText("Database Connection Error")).not.toBeInTheDocument();
+        expect(getByText("Meal Planner")).toBeInTheDocument();
+    }, { timeout: 1000 });
+
+    // Verify toast message appears after successful reconnection
+    expect(getByText("Successfully reconnected to the database")).toBeInTheDocument();
+
+    // Restore env
+    process.env.NODE_ENV = originalEnv;
+});
+
+// Test database reconnection fails
+test("DatabaseConnectionError handles reconnection failure", async () => {
+    // Both initial connection and reconnection attempt will fail
+    global.fetch = jest.fn(((url: RequestInfo) => {
+        const urlStr = url.toString();
+
+        if (urlStr.includes("/api/health") || urlStr.includes("/api/reconnect")) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: "error", message: "Database connection lost" }),
+            } as Response);
+        }
+
+        return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({}),
+        } as Response);
+    })) as jest.Mock;
+
+    // Override the NODE_ENV for testing
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+
+    const { queryByText, getByText } = render(<App />);
+
+    // First we'll see loading
+    expect(getByText("Preparing your culinary experience...")).toBeInTheDocument();
+
+    // Then we should see the error screen
+    await waitFor(() => {
+        expect(getByText("Database Connection Error")).toBeInTheDocument();
+    }, { timeout: 1000 });
+
+    // Click the retry button
+    fireEvent.click(getByText("Retry Connection"));
+
+    // Check that button shows loading state
+    expect(getByText("Attempting to Reconnect...")).toBeInTheDocument();
+
+    // Fast-forward time to get past the minimum loading duration
+    act(() => {
+        jest.advanceTimersByTime(1000);
+    });
+
+    // Wait for the reconnection attempt to complete and fail
+    await waitFor(() => {
+        // We should still be on the error screen
+        expect(getByText("Database Connection Error")).toBeInTheDocument();
+        expect(getByText("Retry Connection")).toBeInTheDocument();
+        expect(queryByText("Attempting to Reconnect...")).not.toBeInTheDocument();
+    });
+
+    // Restore env
+    process.env.NODE_ENV = originalEnv;
 }); 

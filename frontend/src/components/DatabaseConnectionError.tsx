@@ -1,16 +1,43 @@
-import React from 'react';
-import { Box, Typography, Button, Paper, Alert, AlertTitle, useTheme, alpha, Fade } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Button, Paper, Alert, AlertTitle, useTheme, alpha, Fade, CircularProgress } from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SyncProblemIcon from '@mui/icons-material/SyncProblem';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 interface DatabaseConnectionErrorProps {
-  onRetry: () => void;
+  onRetry: () => Promise<void>;
 }
 
 export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = ({ onRetry }) => {
   const theme = useTheme();
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  // Minimum duration to show the loading state (in milliseconds)
+  const MIN_LOADING_DURATION = 1000;
+
+  const handleRetry = async () => {
+    if (isRetrying) return; // Prevent multiple clicks
+
+    setIsRetrying(true);
+    const startTime = Date.now();
+
+    try {
+      await onRetry();
+    } catch (error) {
+      console.error('Retry failed:', error);
+    } finally {
+      // Calculate how much time has passed
+      const elapsedTime = Date.now() - startTime;
+
+      // If the operation was too fast, wait a bit longer to avoid jittery UI
+      if (elapsedTime < MIN_LOADING_DURATION) {
+        await new Promise(resolve => setTimeout(resolve, MIN_LOADING_DURATION - elapsedTime));
+      }
+
+      setIsRetrying(false);
+    }
+  };
 
   return (
     <Box
@@ -159,9 +186,10 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
             <Button
               variant="contained"
               color="primary"
-              onClick={onRetry}
+              onClick={handleRetry}
               size="large"
-              startIcon={<ReplayIcon />}
+              disabled={isRetrying}
+              startIcon={isRetrying ? <CircularProgress size={20} color="inherit" /> : <ReplayIcon />}
               sx={{
                 px: 4,
                 py: 1.5,
@@ -175,7 +203,7 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
                 }
               }}
             >
-              Retry Connection
+              {isRetrying ? 'Attempting to Reconnect...' : 'Retry Connection'}
             </Button>
           </Box>
         </Paper>

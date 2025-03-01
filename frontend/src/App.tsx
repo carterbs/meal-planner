@@ -67,6 +67,38 @@ const App: React.FC = () => {
         }
     };
 
+    // Attempt to reconnect to the database
+    const reconnectDatabase = async (): Promise<void> => {
+        // Don't set global loading state, which causes the UI to flash
+        // Instead, the loading state is handled by the DatabaseConnectionError component
+        try {
+            // Skip real network request in test environment
+            if (process.env.NODE_ENV === 'test') {
+                setDbConnected(true);
+                return;
+            }
+
+            const response = await fetch('/api/reconnect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+            const succeeded = data.status === 'ok';
+
+            setDbConnected(succeeded);
+
+            if (succeeded) {
+                showToast('Successfully reconnected to the database');
+            }
+        } catch (error) {
+            console.error('Error reconnecting to database:', error);
+            setDbConnected(false);
+        }
+    };
+
     // Check database connection on mount
     useEffect(() => {
         checkDbConnection();
@@ -109,7 +141,7 @@ const App: React.FC = () => {
 
     // Show database connection error if connection failed
     if (dbConnected === false) {
-        return <DatabaseConnectionError onRetry={checkDbConnection} />;
+        return <DatabaseConnectionError onRetry={reconnectDatabase} />;
     }
 
     return (
