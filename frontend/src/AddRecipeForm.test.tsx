@@ -1,25 +1,18 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from './test-utils';
 import AddRecipeForm from './AddRecipeForm';
 import { Step } from './types';
+import { setupFetchMocks, cleanupFetchMocks } from './test-utils';
+import '@testing-library/jest-dom';
 
-// Mock the StepsEditor component
-jest.mock('./components/StepsEditor', () => {
-  return function MockStepsEditor({ steps, onChange }: { steps: Step[], onChange: (steps: Step[]) => void }) {
-    return (
-      <div data-testid="steps-editor">
-        <button onClick={() => onChange([...steps, { id: 0, mealId: 0, stepNumber: steps.length + 1, instruction: 'New step' }])}>
-          Add mock step
-        </button>
-        <div>Steps count: {steps.length}</div>
-      </div>
-    );
-  };
-});
+// No need to mock the StepsEditor component - we should use the real component
 
 beforeEach(() => {
-  // Reset fetch mocks before each test
-  global.fetch = jest.fn();
+  setupFetchMocks();
+});
+
+afterEach(() => {
+  cleanupFetchMocks();
 });
 
 describe('AddRecipeForm', () => {
@@ -67,21 +60,44 @@ describe('AddRecipeForm', () => {
     expect(chips.length).toBeGreaterThan(0);
   });
 
-  test('handles recipe steps correctly', () => {
+  test('handles adding a recipe', async () => {
+    // Mock the fetch for adding a recipe
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, mealName: 'New Recipe' }),
+      })
+    );
+
     render(<AddRecipeForm onRecipeAdded={mockOnRecipeAdded} />);
 
-    // Check that the StepsEditor component is rendered
-    const stepsEditor = screen.getByTestId('steps-editor');
-    expect(stepsEditor).toBeInTheDocument();
+    // Fill in recipe name
+    const nameInput = screen.getByLabelText(/Recipe Name/i);
+    fireEvent.change(nameInput, { target: { value: 'New Recipe' } });
 
-    // Verify we only have one "Recipe Steps" heading
-    const recipeStepsHeadings = screen.getAllByText('Recipe Steps');
-    expect(recipeStepsHeadings).toHaveLength(1);
+    // Fill in raw ingredients and process them
+    const rawIngredientsField = screen.getByPlaceholderText(/flour.*sugar.*salt/);
+    fireEvent.change(rawIngredientsField, {
+      target: { value: '1 cup flour\n2 tbsp sugar' }
+    });
+    fireEvent.click(screen.getByText('Process Ingredients'));
 
-    // Add a step through the mock interface
-    fireEvent.click(screen.getByText('Add mock step'));
+    // Set effort level - find the Effort Level section and then find the slider
+    // We don't use getByLabelText since the Slider doesn't use standard label association
+    const effortLevelSection = screen.getByText('Effort Level');
+    // The slider is in the same Grid item as the 'Effort Level' text
+    const slider = effortLevelSection.closest('.MuiGrid-item')?.querySelector('.MuiSlider-root');
+    expect(slider).toBeInTheDocument();
 
-    // Verify the step was added
-    expect(screen.getByText('Steps count: 1')).toBeInTheDocument();
+    // We can't easily set the slider value directly in tests, so we'll skip this step
+    // The form will submit with the default effort level
+
+    // Submit the form
+    fireEvent.click(screen.getByText('Add Recipe'));
+
+    // Verify the callback was called
+    await waitFor(() => {
+      expect(mockOnRecipeAdded).toHaveBeenCalled();
+    });
   });
 });

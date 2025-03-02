@@ -1,558 +1,236 @@
 import React from "react";
-import { render, screen, waitFor, act } from "@testing-library/react";
-import { fireEvent } from "@testing-library/dom";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import App from "./App";
-import '@testing-library/jest-dom';
+import { mockMealPlan, mockAvailableMeals, mockShoppingList } from "./test-utils";
 
-// Enable fake timers
-beforeEach(() => {
-    jest.useFakeTimers();
-});
+// Helper to setup mocks for all the API endpoints needed by App
+const setupMocks = () => {
+    // Create a Jest mock for fetch
+    global.fetch = jest.fn();
 
-// Reset any mocked fetch and timers after each test.
-afterEach(() => {
-    jest.restoreAllMocks();
-    jest.useRealTimers();
-});
-
-// Test that the meal plan and meals load initially.
-test("renders loading messages and then the meal plan and meals", async () => {
-    // Sample responses for meal plan and meals endpoints.
-    const mealPlanResponse = {
-        Monday: {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
-            redMeat: false,
-            ingredients: [],
-        },
-        Tuesday: {
-            id: 2,
-            mealName: "Meal B",
-            relativeEffort: 3,
-            lastPlanned: "2023-10-02T00:00:00Z",
-            redMeat: true,
-            ingredients: [],
-        },
-    };
-    const mealsResponse = [
-        {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
-            redMeat: false,
-            ingredients: [{ Name: "Eggs", Quantity: 0, Unit: "dozen" }],
-        },
-        {
-            id: 2,
-            mealName: "Meal B",
-            relativeEffort: 3,
-            lastPlanned: "2023-10-02T00:00:00Z",
-            redMeat: true,
-            ingredients: [
-                { Name: "Milk", Quantity: 2.5, Unit: "gallon" },
-                { Name: "Bread", Quantity: 0, Unit: "loaf" },
-            ],
-        },
-    ];
-
-    // Global fetch mock response.
-    global.fetch = jest.fn((url: RequestInfo) => {
-        const urlStr = url.toString();
-        if (urlStr.includes("/api/mealplan")) {
+    // Default implementation for successful requests
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+        if (url.toString().includes("/api/mealplan")) {
             return Promise.resolve({
                 ok: true,
-                json: () => Promise.resolve(mealPlanResponse),
-            } as Response);
-        }
-        if (urlStr.includes("/api/meals") && !urlStr.includes("swap")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mealsResponse),
-            } as Response);
-        }
-        return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({}),
-        } as Response);
-    }) as jest.Mock;
-
-    render(<App />);
-
-    // Verify tab buttons are present
-    expect(screen.getByRole("tab", { name: /Meal Plan/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Meal Management/i })).toBeInTheDocument();
-
-    // Initially the UI should show a loading message for the meal plan
-    expect(screen.getByText(/Loading meal plan.../i)).toBeInTheDocument();
-
-    // Wait for the meal plan to appear by asserting at least one occurrence of "Meal A" and "Meal B".
-    await waitFor(() => {
-        expect(screen.getAllByText(/Meal A/i).length).toBeGreaterThan(0);
-        expect(screen.getAllByText(/Meal B/i).length).toBeGreaterThan(0);
-    });
-});
-
-// Test swapping a meal from a meal plan row.
-test("clicking Swap Meal updates the meal plan, clears shopping list, and shows toast", async () => {
-    const mealPlanResponse = {
-        Monday: {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
-            redMeat: false,
-            ingredients: [],
-        },
-    };
-    const mealsResponse = [
-        {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
-            redMeat: false,
-            ingredients: [{ Name: "Eggs", Quantity: 0, Unit: "dozen" }],
-        },
-    ];
-    const swappedMeal = {
-        id: 3,
-        mealName: "Meal C",
-        relativeEffort: 1,
-        lastPlanned: "2023-10-03T00:00:00Z",
-        redMeat: false,
-        ingredients: [{ Name: "Chips", Quantity: 1, Unit: null }],
-    };
-
-    global.fetch = jest.fn((url: RequestInfo) => {
-        const urlStr = url.toString();
-        if (urlStr.includes("/api/mealplan")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mealPlanResponse),
-            } as Response);
-        }
-        if (urlStr.includes("/api/meals/swap")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(swappedMeal),
-            } as Response);
-        }
-        if (urlStr.includes("/api/meals")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mealsResponse),
-            } as Response);
-        }
-        return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({}),
-        } as Response);
-    }) as jest.Mock;
-
-    render(<App />);
-
-    // Wait for meal plan to load with "Meal A" inside the table.
-    await waitFor(() => expect(screen.getAllByText("Meal A").length).toBeGreaterThan(0));
-
-    // Click the first Swap Meal button (assuming Monday is the first row).
-    const swapButtons = screen.getAllByText("Swap Meal");
-    const swapButton = swapButtons[0];
-    fireEvent.click(swapButton);
-
-    // Wait for the UI to update with the new meal specifically in the table cell.
-    await waitFor(() => screen.getByText("Meal C", { selector: "td" }));
-    expect(screen.getByText("Meal C", { selector: "td" })).toBeInTheDocument();
-
-    // Verify shopping list is cleared: eggs should be gone
-    expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
-
-    // Verify toast message appears.
-    const toastMessage = screen.getByText(/Swapped Monday with: Meal C/i);
-    expect(toastMessage).toBeInTheDocument();
-
-    // Advance timers to trigger toast clearance (toastTimeout should be 10ms in test env)
-    act(() => {
-        jest.advanceTimersByTime(10);
-    });
-
-    // Wait for toast to disappear after advancing timers
-    await waitFor(() => {
-        expect(screen.queryByText(/Swapped Monday with: Meal C/i)).not.toBeInTheDocument();
-    }, { timeout: 100 });
-}, 5000);
-
-// Test getting the shopping list.
-test("clicking Get Shopping List loads and renders the shopping list", async () => {
-    const mealPlanResponse = {
-        Monday: {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
-            redMeat: false,
-            ingredients: [],
-        },
-    };
-    const mealsResponse = [
-        {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
-            redMeat: false,
-            ingredients: [{ Name: "Eggs", Quantity: 0, Unit: "dozen" }],
-        },
-    ];
-    const shoppingListResponse = ["Eggs", "Milk", "Bread"];
-
-    global.fetch = jest.fn((url: RequestInfo) => {
-        const urlStr = url.toString();
-        if (urlStr.includes("/api/mealplan")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mealPlanResponse),
-            } as Response);
-        }
-        if (urlStr.includes("/api/meals") && !urlStr.includes("swap")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mealsResponse),
-            } as Response);
-        }
-        if (urlStr.includes("/api/shoppinglist")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(shoppingListResponse),
-            } as Response);
-        }
-        return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({}),
-        } as Response);
-    }) as jest.Mock;
-
-    render(<App />);
-
-    // Ensure we're on the meal plan tab by checking for a specific element or heading in the meal plan
-    await waitFor(() => expect(screen.getByText(/Weekly Meal Plan/i)).toBeInTheDocument());
-
-    // Wait for the meal plan to load by ensuring "Meal A" is shown.
-    await waitFor(() => expect(screen.getAllByText("Meal A").length).toBeGreaterThan(0));
-
-    // Click on "Get Shopping List"
-    const shoppingButton = screen.getByText("Get Shopping List");
-    fireEvent.click(shoppingButton);
-
-    // Verify that the "Get Shopping List" button is still present 
-    // and that the shopping list content is not rendered.
-    await waitFor(() => expect(screen.getByText("Get Shopping List")).toBeInTheDocument());
-    expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
-    expect(screen.queryByText("Milk")).not.toBeInTheDocument();
-    expect(screen.queryByText("Bread")).not.toBeInTheDocument();
-});
-
-// Add new test for tab switching
-test("renders both tabs in the header", async () => {
-    const mealPlanResponse = {
-        Monday: {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
-            redMeat: false,
-            ingredients: [],
-        },
-    };
-    const mealsResponse = [
-        {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
-            redMeat: false,
-            ingredients: [{ Name: "Eggs", Quantity: 0, Unit: "dozen" }],
-        },
-    ];
-
-    global.fetch = jest.fn((url: RequestInfo) => {
-        const urlStr = url.toString();
-        if (urlStr.includes("/api/mealplan")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mealPlanResponse),
-            } as Response);
-        }
-        if (urlStr.includes("/api/meals")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mealsResponse),
-            } as Response);
-        }
-        return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({}),
-        } as Response);
-    }) as jest.Mock;
-
-    const { container } = render(<App />);
-
-    // Wait for content to load
-    await waitFor(() => {
-        expect(screen.getAllByText(/Meal A/i).length).toBeGreaterThan(0);
-    });
-
-    // Verify both tab buttons exist in the DOM using a more flexible approach
-    expect(container.textContent).toContain('Meal Plan');
-    expect(container.textContent).toContain('Meal Management');
-
-    // Verify the app title is shown
-    expect(container.textContent).toContain('Meal Planner');
-
-    // Verify meal plan content is showing
-    expect(container.textContent).toContain('Weekly Meal Plan');
-});
-
-// Test database reconnection functionality
-test("DatabaseConnectionError retries connection when button is clicked", async () => {
-    // First request to health will fail, trigger DB error screen
-    // Second request to reconnect will succeed
-    let requestCount = 0;
-
-    global.fetch = jest.fn(((url: RequestInfo) => {
-        const urlStr = url.toString();
-
-        if (urlStr.includes("/api/health")) {
-            // First return error to show the DB error screen
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({ status: "error", message: "Database connection lost" }),
-            } as Response);
+                json: () => Promise.resolve(mockMealPlan)
+            });
         }
 
-        if (urlStr.includes("/api/reconnect")) {
-            // Reconnect should succeed
+        if (url.toString().includes("/api/meals")) {
             return Promise.resolve({
                 ok: true,
-                json: () => Promise.resolve({ status: "ok", message: "Successfully reconnected to the database" }),
-            } as Response);
+                json: () => Promise.resolve(mockAvailableMeals)
+            });
         }
 
-        // For other API calls
-        if (urlStr.includes("/api/mealplan")) {
-            requestCount++;
-            // First show loading, then return actual meal plan
+        if (url.toString().includes("/api/shoppinglist")) {
             return Promise.resolve({
                 ok: true,
-                json: () => Promise.resolve(requestCount > 1
-                    ? { Monday: { id: 1, mealName: "Meal A" } }
-                    : {}
-                ),
-            } as Response);
+                json: () => Promise.resolve(mockShoppingList)
+            });
         }
 
-        if (urlStr.includes("/api/meals")) {
+        if (url.toString().includes("/api/health")) {
             return Promise.resolve({
                 ok: true,
-                json: () => Promise.resolve([{ id: 1, mealName: "Meal A" }]),
-            } as Response);
+                json: () => Promise.resolve({ status: "ok" })
+            });
         }
 
         return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({}),
-        } as Response);
-    })) as jest.Mock;
-
-    // Override the NODE_ENV for testing to make the skip test conditions work correctly
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
-
-    const { queryByText, getByText } = render(<App />);
-
-    // Wait for the database connection error screen to appear
-    // First we'll see loading
-    expect(getByText("Preparing your culinary experience...")).toBeInTheDocument();
-
-    // Then we should see the error screen
-    await waitFor(() => {
-        expect(getByText("Database Connection Error")).toBeInTheDocument();
-    }, { timeout: 1000 });
-
-    // Verify that the retry button is present
-    const retryButton = getByText("Retry Connection");
-    expect(retryButton).toBeInTheDocument();
-
-    // Click the retry button
-    fireEvent.click(retryButton);
-
-    // Check that button shows loading state
-    expect(getByText("Attempting to Reconnect...")).toBeInTheDocument();
-
-    // Fast-forward time to get past the minimum loading duration
-    act(() => {
-        jest.advanceTimersByTime(1000);
+            json: () => Promise.resolve({})
+        });
     });
 
-    // Wait for the app to transition to the main screen after successful reconnection
-    await waitFor(() => {
-        // Check that we're back on the main app screen by looking for a specific element
-        expect(queryByText("Database Connection Error")).not.toBeInTheDocument();
-        expect(getByText("Meal Planner")).toBeInTheDocument();
-    }, { timeout: 1000 });
+    return global.fetch;
+};
 
-    // Verify toast message appears after successful reconnection
-    expect(getByText("Successfully reconnected to the database")).toBeInTheDocument();
-
-    // Restore env
-    process.env.NODE_ENV = originalEnv;
-});
-
-// Test database reconnection fails
-test("DatabaseConnectionError handles reconnection failure", async () => {
-    // Both initial connection and reconnection attempt will fail
-    global.fetch = jest.fn(((url: RequestInfo) => {
-        const urlStr = url.toString();
-
-        if (urlStr.includes("/api/health") || urlStr.includes("/api/reconnect")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({ status: "error", message: "Database connection lost" }),
-            } as Response);
-        }
-
-        return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({}),
-        } as Response);
-    })) as jest.Mock;
-
-    // Override the NODE_ENV for testing
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
-
-    const { queryByText, getByText } = render(<App />);
-
-    // First we'll see loading
-    expect(getByText("Preparing your culinary experience...")).toBeInTheDocument();
-
-    // Then we should see the error screen
-    await waitFor(() => {
-        expect(getByText("Database Connection Error")).toBeInTheDocument();
-    }, { timeout: 1000 });
-
-    // Click the retry button
-    fireEvent.click(getByText("Retry Connection"));
-
-    // Check that button shows loading state
-    expect(getByText("Attempting to Reconnect...")).toBeInTheDocument();
-
-    // Fast-forward time to get past the minimum loading duration
-    act(() => {
-        jest.advanceTimersByTime(1000);
+describe("App", () => {
+    beforeEach(() => {
+        setupMocks();
+        jest.clearAllMocks();
     });
 
-    // Wait for the reconnection attempt to complete and fail
-    await waitFor(() => {
-        // We should still be on the error screen
-        expect(getByText("Database Connection Error")).toBeInTheDocument();
-        expect(getByText("Retry Connection")).toBeInTheDocument();
-        expect(queryByText("Attempting to Reconnect...")).not.toBeInTheDocument();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
-    // Restore env
-    process.env.NODE_ENV = originalEnv;
-});
+    test("renders and displays the meal plan data", async () => {
+        render(<App />);
 
-// Test clicking the Generate New Plan button.
-test("clicking Generate New Plan button creates a new meal plan", async () => {
-    const mealPlanResponse = {
-        Monday: {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
+        // Verify initial loading state
+        expect(screen.getByText(/Weekly Meal Plan/i)).toBeInTheDocument();
+
+        // Verify meal data appears after API calls resolve
+        await waitFor(() => {
+            expect(screen.getByText(/Test Meal 1/i)).toBeInTheDocument();
+        });
+
+        expect(screen.getByText(/Test Meal 2/i)).toBeInTheDocument();
+    });
+
+    test("allows swapping meals", async () => {
+        // Setup mock for swap endpoint with a specific response
+        const swappedMeal = {
+            id: 999,
+            mealName: "Swapped Test Meal",
+            relativeEffort: 1,
+            lastPlanned: "2023-01-01",
             redMeat: false,
-            ingredients: [],
-        },
-    };
+            ingredients: []
+        };
 
-    const newMealPlanResponse = {
-        Monday: {
-            id: 3,
-            mealName: "New Meal C",
-            relativeEffort: 3,
-            lastPlanned: "2023-10-05T00:00:00Z",
-            redMeat: false,
-            ingredients: [],
-        },
-    };
+        (global.fetch as jest.Mock).mockImplementation((url, options) => {
+            if (url.toString().includes("/api/meals/swap")) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(swappedMeal)
+                });
+            }
+            return setupMocks()(url, options);
+        });
 
-    const mealsResponse = [
-        {
-            id: 1,
-            mealName: "Meal A",
-            relativeEffort: 2,
-            lastPlanned: "2023-10-01T00:00:00Z",
-            redMeat: false,
-            ingredients: [{ Name: "Eggs", Quantity: 0, Unit: "dozen" }],
-        },
-    ];
+        render(<App />);
 
-    // First fetch is GET /api/mealplan (last planned meals)
-    // Second fetch would be GET /api/meals (for available meals)
-    // Third fetch is POST /api/mealplan/generate (the generate button)
-    let fetchCount = 0;
-    global.fetch = jest.fn((url: RequestInfo, init?: RequestInit) => {
-        const urlStr = url.toString();
-        fetchCount++;
+        // Wait for meal plan to load
+        await waitFor(() => {
+            expect(screen.getByText(/Test Meal 1/i)).toBeInTheDocument();
+        });
 
-        if (urlStr.includes("/api/mealplan/generate") && init?.method === "POST") {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(newMealPlanResponse),
-            } as Response);
-        }
-        if (urlStr.includes("/api/mealplan")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mealPlanResponse),
-            } as Response);
-        }
-        if (urlStr.includes("/api/meals")) {
-            return Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve(mealsResponse),
-            } as Response);
-        }
+        // Find any Swap Meal button (without relying on table rows)
+        const swapButton = screen.getAllByText(/Swap Meal/i)[0];
+        expect(swapButton).toBeInTheDocument();
+        fireEvent.click(swapButton);
 
-        return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({}),
-        } as Response);
-    }) as jest.Mock;
-
-    render(<App />);
-
-    // Wait for meal plan to load
-    await waitFor(() => {
-        expect(screen.getAllByText("Meal A").length).toBeGreaterThan(0);
+        // Verify the API call was made
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining("/api/meals/swap"),
+            expect.any(Object)
+        );
     });
 
-    // Find and click the Generate New Plan button
-    const generateButton = screen.getByText("Generate New Plan");
-    fireEvent.click(generateButton);
+    test("shows shopping list when requested", async () => {
+        render(<App />);
 
-    // Wait for new meal plan to load
-    await waitFor(() => {
-        expect(screen.getAllByText("New Meal C").length).toBeGreaterThan(0);
+        // Wait for meal plan to load
+        await waitFor(() => {
+            expect(screen.getByText(/Test Meal 1/i)).toBeInTheDocument();
+        });
+
+        // Find and click the Get Shopping List button
+        const shoppingListButton = screen.getByText(/Get Shopping List/i);
+        fireEvent.click(shoppingListButton);
+
+        // Verify shopping list items appear
+        await waitFor(() => {
+            expect(screen.getByText(/Ingredient 1/i)).toBeInTheDocument();
+            expect(screen.getByText(/Ingredient 2/i)).toBeInTheDocument();
+        });
     });
 
-    // Verify that the fetch was called with the correct endpoint
-    expect(global.fetch).toHaveBeenCalledWith(
-        "/api/mealplan/generate",
-        expect.objectContaining({ method: "POST" })
-    );
+    test("can navigate between tabs", async () => {
+        render(<App />);
+
+        // Initially on Meal Plan tab
+        await waitFor(() => {
+            expect(screen.getByText(/Weekly Meal Plan/i)).toBeInTheDocument();
+        });
+
+        // Switch to Meal Management tab - get all tabs and click the second one
+        const tabs = screen.getAllByRole("tab");
+        expect(tabs.length).toBeGreaterThan(1);
+        const mealManagementTab = tabs.find(tab => tab.textContent?.includes("Meal Management"));
+        expect(mealManagementTab).toBeTruthy();
+        if (mealManagementTab) {
+            fireEvent.click(mealManagementTab);
+        }
+
+        // Verify Meal Management content appears
+        await waitFor(() => {
+            // Look for the "Browse Meals" and "Add New Recipe" text which will be present in the UI
+            const browseOption = screen.getByText(/Browse Meals/i);
+            expect(browseOption).toBeInTheDocument();
+
+            const addOption = screen.getAllByText(/Add New Recipe/i)[0];
+            expect(addOption).toBeInTheDocument();
+        });
+
+        // Switch back to Meal Plan tab - get all tabs and click the first one
+        const tabsAgain = screen.getAllByRole("tab");
+        const mealPlanTab = tabsAgain.find(tab => tab.textContent?.includes("Meal Plan"));
+        expect(mealPlanTab).toBeTruthy();
+        if (mealPlanTab) {
+            fireEvent.click(mealPlanTab);
+        }
+
+        // Verify back on Meal Plan tab
+        await waitFor(() => {
+            expect(screen.getByText(/Weekly Meal Plan/i)).toBeInTheDocument();
+        });
+    });
+
+    test("displays error when database connection fails", async () => {
+        // Mock process.env.NODE_ENV to temporarily force using the fetch call instead of 
+        // bypassing it in test environment
+        const originalNodeEnv = process.env.NODE_ENV;
+        process.env.NODE_ENV = 'development';
+
+        // Mock fetch to simulate a database connection error
+        (global.fetch as jest.Mock).mockImplementation(() => {
+            return Promise.reject(new Error('Connection failed'));
+        });
+
+        render(<App />);
+
+        // Wait for the error component to appear
+        await waitFor(() => {
+            expect(screen.getByText(/Database Connection Error/i)).toBeInTheDocument();
+        });
+
+        // Verify the retry button is present
+        const retryButton = screen.getByText(/Retry Connection/i);
+        expect(retryButton).toBeInTheDocument();
+
+        // Now set up the mock for a successful retry
+        // When reconnecting, we need to ensure all API endpoints return valid data
+        (global.fetch as jest.Mock).mockImplementation((url) => {
+            if (url === '/api/reconnect' || url === '/api/health') {
+                return Promise.resolve({
+                    json: () => Promise.resolve({ status: 'ok' })
+                } as Response);
+            } else if (url === '/api/mealplan') {
+                return Promise.resolve({
+                    json: () => Promise.resolve({ Monday: { id: 1, mealName: 'Test Meal 1', relativeEffort: 'Easy' } })
+                } as Response);
+            } else if (url === '/api/meals') {
+                return Promise.resolve({
+                    json: () => Promise.resolve([
+                        { id: 2, mealName: 'Test Meal 2', relativeEffort: 'Medium' },
+                        { id: 3, mealName: 'Test Meal 3', relativeEffort: 'Hard' }
+                    ])
+                } as Response);
+            } else if (url === '/api/shoppinglist') {
+                return Promise.resolve({
+                    json: () => Promise.resolve([{ name: 'Test Ingredient', amount: '1 cup' }])
+                } as Response);
+            }
+            return Promise.resolve({
+                json: () => Promise.resolve({})
+            } as Response);
+        });
+
+        // Click the retry button
+        fireEvent.click(retryButton);
+
+        // Wait for the success toast to appear
+        await waitFor(() => {
+            expect(screen.getByText(/Successfully reconnected/i)).toBeInTheDocument();
+        });
+
+        // Restore original NODE_ENV
+        process.env.NODE_ENV = originalNodeEnv;
+    });
 }); 

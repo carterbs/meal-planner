@@ -5,7 +5,9 @@
     "scripts": {
         "start": "concurrently \"yarn --cwd frontend start\" \"cd backend && go run main.go\"",
         "test:backend": "cd backend && go test -v ./...",
-        "test:frontend": "cd frontend && yarn test"
+        "test:frontend": "cd frontend && yarn test",
+        "db:backup": "node scripts/backup-db.js",
+        "db:restore": "node scripts/restore-db.js"
     },
     "devDependencies": {
         "concurrently": "^7.6.0"
