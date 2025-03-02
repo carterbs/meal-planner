@@ -25,7 +25,8 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
     try {
       await onRetry();
     } catch (error) {
-      console.error('Retry failed:', error);
+      // Use console.debug instead of console.error since the UI already shows an error state
+      console.debug('Database retry attempt failed:', error);
     } finally {
       // Calculate how much time has passed
       const elapsedTime = Date.now() - startTime;
