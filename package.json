@@ -4,6 +4,7 @@
     "private": true,
     "scripts": {
         "start": "concurrently \"yarn --cwd frontend start\" \"cd backend && go run main.go\"",
+        "test": "concurrently \"yarn test:backend\" \"yarn test:frontend\"",
         "test:backend": "cd backend && go test -v ./...",
         "test:frontend": "cd frontend && yarn test",
         "db:backup": "node scripts/backup-db.js",
