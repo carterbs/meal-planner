@@ -41,25 +41,25 @@ const testProcess = spawn('yarn', ['test'], {
     shell: true,
 });
 
-// Process backend test output
+// Process test output
 testProcess.stdout.on('data', (data) => {
     const output = data.toString();
     const lines = output.split('\n');
 
     lines.forEach(line => {
-        // Capture individual test results
+        // Capture individual test results for backend
         const testPassMatch = line.match(/--- PASS: (\w+)/);
         if (testPassMatch) {
             backendResults.pass++;
         }
 
-        // Capture individual test failures
+        // Capture individual test failures for backend
         const testFailMatch = line.match(/--- FAIL: (\w+)/);
         if (testFailMatch) {
             backendResults.fail++;
         }
 
-        // Capture package results
+        // Capture package results for backend
         const packageMatch = line.match(/ok\s+(\S+)\s+(\d+\.\d+)s/);
         if (packageMatch) {
             const [, packageName, time] = packageMatch;
@@ -78,10 +78,10 @@ testProcess.stdout.on('data', (data) => {
             };
         }
 
-        // Capture frontend test summary
-        const suitesMatch = line.match(/Test Suites:\s+(\d+)\s+passed,\s+(\d+)\s+failed,\s+(\d+)\s+total/);
+        // Capture frontend test summary with proper regex that handles both pass/fail formats
+        const suitesMatch = line.match(/Test Suites:\s+(\d+)\s+passed,(?:\s+(\d+)\s+failed,)?\s+(\d+)\s+total/);
         if (suitesMatch) {
-            const [, pass, fail, total] = suitesMatch;
+            const [, pass, fail = '0', total] = suitesMatch;
             frontendResults.suites = {
                 pass: parseInt(pass, 10),
                 fail: parseInt(fail, 10),
@@ -89,9 +89,9 @@ testProcess.stdout.on('data', (data) => {
             };
         }
 
-        const testsMatch = line.match(/Tests:\s+(\d+)\s+passed,\s+(\d+)\s+failed,\s+(\d+)\s+total/);
+        const testsMatch = line.match(/Tests:\s+(\d+)\s+passed,(?:\s+(\d+)\s+failed,)?\s+(\d+)\s+total/);
         if (testsMatch) {
-            const [, pass, fail, total] = testsMatch;
+            const [, pass, fail = '0', total] = testsMatch;
             frontendResults.tests = {
                 pass: parseInt(pass, 10),
                 fail: parseInt(fail, 10),
@@ -101,11 +101,33 @@ testProcess.stdout.on('data', (data) => {
     });
 });
 
-// Handle errors
+// Process stderr as well in case some output goes there
 testProcess.stderr.on('data', (data) => {
-    // Just logging errors to detect any issues with test execution
-    // Not processing these for the summary unless needed
-    // console.error(data.toString());
+    const output = data.toString();
+    const lines = output.split('\n');
+
+    lines.forEach(line => {
+        // Some Jest output might be in stderr, particularly if there are warnings
+        const suitesMatch = line.match(/Test Suites:\s+(\d+)\s+passed,(?:\s+(\d+)\s+failed,)?\s+(\d+)\s+total/);
+        if (suitesMatch) {
+            const [, pass, fail = '0', total] = suitesMatch;
+            frontendResults.suites = {
+                pass: parseInt(pass, 10),
+                fail: parseInt(fail, 10),
+                total: parseInt(total, 10)
+            };
+        }
+
+        const testsMatch = line.match(/Tests:\s+(\d+)\s+passed,(?:\s+(\d+)\s+failed,)?\s+(\d+)\s+total/);
+        if (testsMatch) {
+            const [, pass, fail = '0', total] = testsMatch;
+            frontendResults.tests = {
+                pass: parseInt(pass, 10),
+                fail: parseInt(fail, 10),
+                total: parseInt(total, 10)
+            };
+        }
+    });
 });
 
 // Print summary when done
@@ -128,12 +150,12 @@ testProcess.on('close', (code) => {
             const statusColor = result.status === 'pass' ? chalk.green : chalk.red;
             console.log(`${statusColor('■')} ${pkg.padEnd(30)} ${formatTime(result.time * 1000)}`);
         });
-    } else {
-        // If no packages were detected, show test counts
-        const backendTotal = backendResults.pass + backendResults.fail;
-        const statusColor = backendResults.fail === 0 ? chalk.green : chalk.red;
-        console.log(`${statusColor('■')} Total Tests: ${backendTotal} (${backendResults.pass} passed, ${backendResults.fail} failed)`);
     }
+
+    // Also show test counts for backend
+    const backendTotal = backendResults.pass + backendResults.fail;
+    const statusColor = backendResults.fail === 0 ? chalk.green : chalk.red;
+    console.log(`${statusColor('■')} Total Tests: ${backendTotal} (${backendResults.pass} passed, ${backendResults.fail} failed)`);
 
     // Frontend summary
     console.log(chalk.cyan('\n🔹 FRONTEND TESTS'));
