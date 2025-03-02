@@ -1,14 +1,11 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "../test-utils";
 import { MealManagementTab } from "./MealManagementTab";
 import '@testing-library/jest-dom';
 import userEvent from "@testing-library/user-event";
+import { setupFetchMocks, cleanupFetchMocks } from "../test-utils";
 
-// Mock axios
-// jest.mock('axios');
-// const axios = require('axios');
-
-// Mock the DataGrid component with a simple implementation
+// We still need to mock the DataGrid component as it's complex and has virtual scrolling behavior
 jest.mock('@mui/x-data-grid', () => ({
     DataGrid: ({ rows, onRowClick }: any) => (
         <div data-testid="mock-data-grid">
@@ -47,6 +44,7 @@ describe("MealManagementTab", () => {
     const mockShowToast = jest.fn();
 
     beforeEach(() => {
+        // Setup fetch mock with our custom data
         global.fetch = jest.fn(() =>
             Promise.resolve({
                 ok: true,
@@ -54,6 +52,10 @@ describe("MealManagementTab", () => {
             })
         ) as jest.Mock;
         mockShowToast.mockClear();
+    });
+
+    afterEach(() => {
+        cleanupFetchMocks();
     });
 
     test("loads and displays main menu with cards", async () => {
@@ -134,7 +136,6 @@ describe("MealManagementTab", () => {
         });
 
         // Now that we're in edit mode, find and click the edit ingredient button
-        // Since we can't rely on the data-testid, let's use a more general approach
         const editButtons = screen.getAllByRole('button');
         const editButton = Array.from(editButtons).find(
             button => button.innerHTML.includes('edit') || button.innerHTML.includes('Edit')
@@ -205,7 +206,6 @@ describe("MealManagementTab", () => {
         });
 
         // Now that we're in edit mode, find and click the delete ingredient button
-        // Since we can't rely on the data-testid, let's use a more general approach
         const deleteButtons = screen.getAllByRole('button');
         const deleteButton = Array.from(deleteButtons).find(
             button => button.innerHTML.includes('delete') || button.innerHTML.includes('Delete')

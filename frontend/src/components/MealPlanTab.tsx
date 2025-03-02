@@ -316,7 +316,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                                                                 MenuProps={{ disablePortal: true }}
                                                                 open={process.env.NODE_ENV === 'test' ? true : undefined}
                                                             >
-                                                                {availableMeals
+                                                                {(Array.isArray(availableMeals) ? availableMeals : [])
                                                                     .filter(m => m.id !== meal.id)
                                                                     .sort((a, b) => a.mealName.localeCompare(b.mealName))
                                                                     .map((m) => (
