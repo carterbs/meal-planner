@@ -99,6 +99,12 @@ To run only frontend tests:
 yarn test:frontend
 ```
 
+To run tests with a concise, easy-to-read summary report:
+
+```bash
+yarn test:summary
+```
+
 ## Database Management
 
 ```bash
