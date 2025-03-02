@@ -60,7 +60,8 @@ const App: React.FC = () => {
             const data = await response.json();
             setDbConnected(data.status === 'ok');
         } catch (error) {
-            console.error('Error checking database connection:', error);
+            // Use console.debug instead of console.error since we have a UI for users
+            console.debug('Database connection check failed:', error);
             setDbConnected(false);
         } finally {
             setIsLoading(false);
@@ -94,7 +95,8 @@ const App: React.FC = () => {
                 showToast('Successfully reconnected to the database');
             }
         } catch (error) {
-            console.error('Error reconnecting to database:', error);
+            // Use console.debug instead of console.error since we have a UI for users
+            console.debug('Database reconnection attempt failed:', error);
             setDbConnected(false);
         }
     };
