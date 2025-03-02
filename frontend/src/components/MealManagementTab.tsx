@@ -13,7 +13,9 @@ import {
     Stack,
     Divider,
     IconButton,
-    Fade
+    Fade,
+    Switch,
+    FormControlLabel
 } from "@mui/material";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { format } from 'date-fns';
@@ -21,6 +23,8 @@ import AddRecipeForm from "../AddRecipeForm";
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { alpha } from '@mui/material/styles';
 import { useTheme } from '@mui/material/styles';
 import StepsEditor from './StepsEditor';
@@ -39,6 +43,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     const [loading, setLoading] = useState<boolean>(false);
     const [toastMessage, setToastMessage] = useState<string>("");
     const [toastSeverity, setToastSeverity] = useState<'success' | 'error'>('success');
+    const [editMode, setEditMode] = useState<boolean>(false);
     const theme = useTheme();
 
     // Column definitions for the DataGrid
@@ -377,6 +382,23 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
         }
     };
 
+    // Set view mode when a new meal is selected
+    useEffect(() => {
+        setEditMode(false);
+        setEditingIngredientIndex(-1);
+        setEditedIngredient(null);
+    }, [selectedMeal?.id]);
+
+    // Function to toggle between edit and view modes
+    const toggleEditMode = () => {
+        // If switching from edit to view mode, reset any active editing
+        if (editMode) {
+            setEditingIngredientIndex(-1);
+            setEditedIngredient(null);
+        }
+        setEditMode(!editMode);
+    };
+
     // Render the main menu with options
     const renderMainView = () => {
         return (
@@ -693,16 +715,24 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
 
                         {selectedMeal && (
                             <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-                                <Typography
-                                    variant="h6"
-                                    gutterBottom
-                                    sx={{
-                                        fontWeight: 600,
-                                        mb: 2
-                                    }}
-                                >
-                                    Meal Details
-                                </Typography>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        Meal Details
+                                    </Typography>
+                                    <Button
+                                        variant={editMode ? "outlined" : "contained"}
+                                        color={editMode ? "secondary" : "primary"}
+                                        onClick={toggleEditMode}
+                                        startIcon={editMode ? null : <EditIcon />}
+                                    >
+                                        {editMode ? "Done" : "Edit Recipe"}
+                                    </Button>
+                                </Box>
                                 <Card
                                     variant="outlined"
                                     sx={{
@@ -796,61 +826,25 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                             >
                                                 Ingredients:
                                             </Typography>
-
-                                            <Button
-                                                variant="outlined"
-                                                color="primary"
-                                                onClick={addIngredient}
-                                                startIcon={<AddIcon />}
-                                                sx={{
-                                                    borderRadius: 6,
-                                                    px: 2,
-                                                    borderWidth: 2,
-                                                }}
-                                            >
-                                                Add Ingredient
-                                            </Button>
+                                            {editMode && (
+                                                <Button
+                                                    variant="outlined"
+                                                    onClick={addIngredient}
+                                                    startIcon={<AddIcon />}
+                                                    size="small"
+                                                >
+                                                    Add Ingredient
+                                                </Button>
+                                            )}
                                         </Box>
 
-                                        {selectedMeal.ingredients.length === 0 ? (
+                                        {selectedMeal.ingredients.length > 0 ? (
                                             <Box
                                                 sx={{
-                                                    textAlign: 'center',
-                                                    py: 4,
-                                                    px: 2,
-                                                    bgcolor: alpha(theme.palette.background.default, 0.5),
-                                                    borderRadius: 2,
-                                                    border: `1px dashed ${alpha(theme.palette.text.secondary, 0.2)}`,
-                                                }}
-                                            >
-                                                <Typography color="text.secondary">
-                                                    No ingredients listed for this meal.
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                    Click "Add Ingredient" to add some!
-                                                </Typography>
-                                            </Box>
-                                        ) : (
-                                            <Box
-                                                sx={{
-                                                    mt: 1,
-                                                    maxHeight: '400px',
-                                                    overflowY: 'auto',
-                                                    pr: 1,
-                                                    '&::-webkit-scrollbar': {
-                                                        width: '8px',
-                                                    },
-                                                    '&::-webkit-scrollbar-track': {
-                                                        backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                                                        borderRadius: '8px',
-                                                    },
-                                                    '&::-webkit-scrollbar-thumb': {
-                                                        backgroundColor: alpha(theme.palette.primary.main, 0.2),
-                                                        borderRadius: '8px',
-                                                        '&:hover': {
-                                                            backgroundColor: alpha(theme.palette.primary.main, 0.3),
-                                                        },
-                                                    },
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    gap: 1.5,
+                                                    mt: 2,
                                                 }}
                                             >
                                                 {selectedMeal.ingredients.map((ing, index) => (
@@ -874,7 +868,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                             }
                                                         }}
                                                     >
-                                                        {editingIngredientIndex === index ? (
+                                                        {editMode && editingIngredientIndex === index ? (
                                                             <Box sx={{ width: "100%" }}>
                                                                 <Grid container spacing={2}>
                                                                     <Grid item xs={6}>
@@ -929,31 +923,37 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                                 <Typography fontWeight={500}>
                                                                     {`${ing.Quantity ? ing.Quantity + " " : ""}${ing.Unit ? ing.Unit + " " : ""}${ing.Name}`.trim()}
                                                                 </Typography>
-                                                                <Box sx={{ display: "flex", gap: 1 }}>
-                                                                    <Button
-                                                                        variant="outlined"
-                                                                        onClick={() => startEditing(ing)}
-                                                                        data-testid={`edit-ingredient-${ing.ID}`}
-                                                                        size="small"
-                                                                        sx={{ borderRadius: 6 }}
-                                                                    >
-                                                                        Edit
-                                                                    </Button>
-                                                                    <Button
-                                                                        variant="outlined"
-                                                                        color="error"
-                                                                        onClick={() => deleteIngredient(ing.ID)}
-                                                                        size="small"
-                                                                        sx={{ borderRadius: 6 }}
-                                                                    >
-                                                                        Delete
-                                                                    </Button>
-                                                                </Box>
+                                                                {editMode && (
+                                                                    <Box sx={{ display: "flex", gap: 1 }}>
+                                                                        <Button
+                                                                            variant="outlined"
+                                                                            onClick={() => startEditing(ing)}
+                                                                            data-testid={`edit-ingredient-${ing.ID}`}
+                                                                            size="small"
+                                                                            sx={{ borderRadius: 6 }}
+                                                                        >
+                                                                            Edit
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="outlined"
+                                                                            color="error"
+                                                                            onClick={() => deleteIngredient(ing.ID)}
+                                                                            size="small"
+                                                                            sx={{ borderRadius: 6 }}
+                                                                        >
+                                                                            Delete
+                                                                        </Button>
+                                                                    </Box>
+                                                                )}
                                                             </>
                                                         )}
                                                     </Box>
                                                 ))}
                                             </Box>
+                                        ) : (
+                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 3, fontStyle: 'italic' }}>
+                                                No ingredients added yet.
+                                            </Typography>
                                         )}
 
                                         {/* Recipe Steps section */}
@@ -967,22 +967,27 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                     <StepsEditor
                                                         steps={selectedMeal.steps || []}
                                                         onChange={(updatedSteps) => {
-                                                            setSelectedMeal({
-                                                                ...selectedMeal,
-                                                                steps: updatedSteps
-                                                            });
+                                                            if (editMode) {
+                                                                setSelectedMeal({
+                                                                    ...selectedMeal,
+                                                                    steps: updatedSteps
+                                                                });
+                                                            }
                                                         }}
+                                                        readOnly={!editMode}
                                                     />
-                                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                                                        <Button
-                                                            variant="contained"
-                                                            color="primary"
-                                                            onClick={() => handleSaveSteps(selectedMeal.id, selectedMeal.steps || [])}
-                                                            disabled={loading}
-                                                        >
-                                                            Save Steps
-                                                        </Button>
-                                                    </Box>
+                                                    {editMode && (
+                                                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                                                            <Button
+                                                                variant="contained"
+                                                                color="primary"
+                                                                onClick={() => handleSaveSteps(selectedMeal.id, selectedMeal.steps || [])}
+                                                                disabled={loading}
+                                                            >
+                                                                Save Steps
+                                                            </Button>
+                                                        </Box>
+                                                    )}
                                                 </>
                                             ) : (
                                                 <StepsEditor
