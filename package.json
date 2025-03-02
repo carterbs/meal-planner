@@ -7,10 +7,15 @@
         "test": "concurrently \"yarn test:backend\" \"yarn test:frontend\"",
         "test:backend": "cd backend && go test -v ./...",
         "test:frontend": "cd frontend && yarn test",
+        "test:summary": "node scripts/test-summary.js",
         "db:backup": "node scripts/backup-db.js",
         "db:restore": "node scripts/restore-db.js"
     },
     "devDependencies": {
-        "concurrently": "^7.6.0"
+        "concurrently": "^7.6.0",
+        "chalk": "^4.1.2"
+    },
+    "dependencies": {
+        "chalk": "4"
     }
 }
