@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
-import { 
-  TextField, 
-  Button, 
-  Grid, 
-  Typography, 
-  FormControlLabel, 
-  Switch, 
-  Box, 
-  Paper, 
+import {
+  TextField,
+  Button,
+  Grid,
+  Typography,
+  FormControlLabel,
+  Switch,
+  Box,
+  Paper,
   Slider,
   Chip,
   IconButton,
   Snackbar,
-  Alert
+  Alert,
+  Divider
 } from '@mui/material';
-import { Meal, Ingredient } from './types';
+import { Meal, Ingredient, Step } from './types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RepeatIcon from '@mui/icons-material/Repeat';
+import StepsEditor from './components/StepsEditor';
 
 interface AddRecipeFormProps {
   onRecipeAdded: () => void;
@@ -27,7 +29,8 @@ const initialMealState: Omit<Meal, 'id' | 'lastPlanned'> = {
   relativeEffort: 3,
   redMeat: false,
   url: '',
-  ingredients: []
+  ingredients: [],
+  steps: []
 };
 
 const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
@@ -36,7 +39,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Convert Unicode fraction characters to decimal values
   const convertFractions = (input: string): string => {
     const fractionMap: Record<string, string> = {
@@ -56,7 +59,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
       '⅝': '0.625',
       '⅞': '0.875'
     };
-    
+
     // Handle mixed numbers (e.g., 1½ -> 1.5)
     return input.replace(/(\d)([¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (match, digit, fraction) => {
       return `${digit} ${fractionMap[fraction] || fraction}`;
@@ -82,23 +85,23 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   const handleRawIngredientsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRawIngredients(e.target.value);
   };
-  
+
   const doubleIngredientQuantities = () => {
     // Double quantities in already processed ingredients
     const doubledIngredients = meal.ingredients.map(ing => ({
       ...ing,
       Quantity: ing.Quantity * 2
     }));
-    
+
     setMeal({ ...meal, ingredients: doubledIngredients });
-    
+
     // Double quantities in raw ingredients text
     if (rawIngredients.trim()) {
       const lines = rawIngredients.split('\n');
       const doubledLines = lines.map(line => {
         // Convert any Unicode fractions first
         const processed = convertFractions(line);
-        
+
         // Look for number at the beginning of the line
         const match = processed.match(/^\s*(\d*\.?\d+)/);
         if (match && match[1]) {
@@ -108,7 +111,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
         }
         return line;
       });
-      
+
       setRawIngredients(doubledLines.join('\n'));
     }
   };
@@ -125,11 +128,11 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     const newIngredients: Omit<Ingredient, 'ID'>[] = ingredientLines.map(line => {
       // First convert any fraction characters to decimal values
       const processedLine = convertFractions(line);
-      
+
       // Try to parse quantity, unit, and name
       // This is a basic implementation - can be enhanced with more sophisticated parsing
       const parts = processedLine.trim().split(' ');
-      
+
       // Attempt to extract quantity (assume it's the first part if numeric)
       let quantityStr = parts[0];
       let quantity = parseFloat(quantityStr);
@@ -140,7 +143,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
       if (!isNaN(quantity)) {
         // Remove quantity from the beginning
         name = processedLine.trim().substring(quantityStr.length).trim();
-        
+
         // Try to extract unit (assume it's the next word after quantity)
         const unitParts = name.split(' ');
         if (unitParts.length > 0) {
@@ -151,7 +154,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
             'pinch', 'dash', 'handful', 'clove', 'cloves', 'bunch', 'can',
             'slice', 'slices', 'piece', 'pieces'
           ];
-          
+
           if (commonUnits.includes(unit.toLowerCase())) {
             name = name.substring(unit.length).trim();
           } else {
@@ -187,13 +190,15 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     setMeal({ ...meal, ingredients: updatedIngredients });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Process any remaining raw ingredients
-    processIngredients();
-    
-    if (!meal.mealName.trim()) {
+  const handleStepsChange = (newSteps: Step[]) => {
+    setMeal({
+      ...meal,
+      steps: newSteps
+    });
+  };
+
+  const addRecipe = async () => {
+    if (meal.mealName.trim() === '') {
       setError('Recipe name is required');
       return;
     }
@@ -207,42 +212,43 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     setError(null);
 
     try {
-      // Convert to the format expected by the backend
-      const mealData = {
-        ...meal,
-        ingredients: meal.ingredients.map(ing => ({
-          Name: ing.Name,
-          Quantity: ing.Quantity,
-          Unit: ing.Unit,
-          MealID: 0 // This will be set by the backend
-        }))
-      };
-
       const response = await fetch('/api/meals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(mealData),
+        body: JSON.stringify({
+          mealName: meal.mealName,
+          relativeEffort: meal.relativeEffort,
+          redMeat: meal.redMeat,
+          url: meal.url,
+          ingredients: meal.ingredients,
+          steps: meal.steps
+        }),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to create recipe');
+        throw new Error('Error adding recipe');
       }
 
-      // Reset form
+      setSuccess(true);
       setMeal(initialMealState);
       setRawIngredients('');
-      setSuccess(true);
-      
-      // Notify parent component that a recipe was added
       onRecipeAdded();
-    } catch (err: any) {
-      setError(err.message || 'Error creating recipe');
+    } catch (err) {
+      setError('Error adding recipe: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Process any remaining raw ingredients
+    processIngredients();
+
+    await addRecipe();
   };
 
   const effortLabelFormat = (value: number) => {
@@ -250,8 +256,8 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   };
 
   return (
-    <Paper sx={{ p: 3, mb: 3 }}>
-      <Typography variant="h5" gutterBottom>
+    <Paper elevation={3} sx={{ p: 3 }}>
+      <Typography variant="h5" component="h2" gutterBottom align="center">
         Add New Recipe
       </Typography>
       <form onSubmit={handleSubmit}>
@@ -265,7 +271,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               required
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <TextField
               label="Recipe URL (optional)"
@@ -276,7 +282,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               type="url"
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <Typography gutterBottom>Effort Level</Typography>
             <Slider
@@ -290,24 +296,24 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               valueLabelFormat={effortLabelFormat}
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <FormControlLabel
               control={
-                <Switch 
-                  checked={meal.redMeat} 
-                  onChange={handleRedMeatChange} 
+                <Switch
+                  checked={meal.redMeat}
+                  onChange={handleRedMeatChange}
                 />
               }
               label="Contains Red Meat"
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
               Ingredients
             </Typography>
-            
+
             <TextField
               label="Paste Ingredients (one per line)"
               multiline
@@ -318,16 +324,16 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               placeholder="1 cup flour&#10;2 tbsp sugar&#10;¼ tsp salt"
               helperText="Paste a list of ingredients, one per line"
             />
-            
+
             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 onClick={processIngredients}
                 disabled={!rawIngredients.trim()}
               >
                 Process Ingredients
               </Button>
-              
+
               <Button
                 variant="outlined"
                 startIcon={<RepeatIcon />}
@@ -339,7 +345,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               </Button>
             </Box>
           </Grid>
-          
+
           {meal.ingredients.length > 0 && (
             <Grid item xs={12}>
               <Typography variant="subtitle2" gutterBottom>
@@ -357,11 +363,19 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               </Box>
             </Grid>
           )}
-          
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Recipe Steps section */}
+          <StepsEditor
+            steps={meal.steps || []}
+            onChange={handleStepsChange}
+          />
+
           <Grid item xs={12}>
-            <Button 
-              type="submit" 
-              variant="contained" 
+            <Button
+              type="submit"
+              variant="contained"
               color="primary"
               disabled={loading || meal.mealName === ''}
               fullWidth
@@ -371,20 +385,20 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
           </Grid>
         </Grid>
       </form>
-      
-      <Snackbar 
-        open={success} 
-        autoHideDuration={6000} 
+
+      <Snackbar
+        open={success}
+        autoHideDuration={6000}
         onClose={() => setSuccess(false)}
       >
         <Alert severity="success" onClose={() => setSuccess(false)}>
           Recipe added successfully!
         </Alert>
       </Snackbar>
-      
-      <Snackbar 
-        open={!!error} 
-        autoHideDuration={6000} 
+
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
         onClose={() => setError(null)}
       >
         <Alert severity="error" onClose={() => setError(null)}>

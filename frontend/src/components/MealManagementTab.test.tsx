@@ -103,9 +103,14 @@ describe("MealManagementTab", () => {
                 ok: true,
                 json: () => Promise.resolve(mockMeals),
             }))
-            .mockImplementationOnce(() => Promise.resolve({
-                ok: true,
-            })) as jest.Mock;
+            .mockImplementationOnce((url, options) => {
+                // Verify correct URL and payload for ingredient update
+                expect(url).toBe('/api/meals/1/ingredients/1');
+                expect(options.method).toBe('PUT');
+                return Promise.resolve({
+                    ok: true,
+                });
+            }) as jest.Mock;
 
         await act(async () => {
             render(<MealManagementTab showToast={mockShowToast} />);
@@ -163,9 +168,14 @@ describe("MealManagementTab", () => {
                 ok: true,
                 json: () => Promise.resolve(mockMeals),
             }))
-            .mockImplementationOnce(() => Promise.resolve({
-                ok: true,
-            })) as jest.Mock;
+            .mockImplementationOnce((url, options) => {
+                // Verify correct URL and method for ingredient deletion
+                expect(url).toBe('/api/meals/1/ingredients/1');
+                expect(options.method).toBe('DELETE');
+                return Promise.resolve({
+                    ok: true,
+                });
+            }) as jest.Mock;
 
         await act(async () => {
             render(<MealManagementTab showToast={mockShowToast} />);
@@ -205,7 +215,12 @@ describe("MealManagementTab", () => {
                 ok: true,
                 json: () => Promise.resolve(mockMeals),
             }))
-            .mockImplementationOnce(() => Promise.reject(new Error("Failed to update"))) as jest.Mock;
+            .mockImplementationOnce((url, options) => {
+                // Verify correct URL for ingredient update
+                expect(url).toBe('/api/meals/1/ingredients/1');
+                expect(options.method).toBe('PUT');
+                return Promise.reject(new Error("Failed to update"));
+            }) as jest.Mock;
 
         await act(async () => {
             render(<MealManagementTab showToast={mockShowToast} />);
@@ -344,5 +359,75 @@ describe("MealManagementTab", () => {
         expect(screen.getByText("Meal Library")).toBeInTheDocument();
         expect(screen.getByText("Browse Meals")).toBeInTheDocument();
         expect(screen.getByText("Add New Recipe")).toBeInTheDocument();
+    });
+
+    test("maintains selected meal view after editing an ingredient", async () => {
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockMeals),
+            }))
+            .mockImplementationOnce((url, options) => {
+                // Verify correct URL and payload for ingredient update
+                expect(url).toBe('/api/meals/1/ingredients/1');
+                expect(options.method).toBe('PUT');
+                return Promise.resolve({
+                    ok: true,
+                });
+            }) as jest.Mock;
+
+        await act(async () => {
+            render(<MealManagementTab showToast={mockShowToast} />);
+        });
+
+        // Click the Browse Meals card
+        await act(async () => {
+            fireEvent.click(screen.getByText("Browse Meals"));
+        });
+
+        // Wait for meal to load and select it
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal")).toBeInTheDocument();
+        });
+
+        await act(async () => {
+            fireEvent.click(screen.getByText("Test Meal"));
+        });
+
+        // Verify meal details are initially shown
+        expect(screen.getByText("Effort Level: 2")).toBeInTheDocument();
+        expect(screen.getByText("1 cup Test Ingredient")).toBeInTheDocument();
+
+        // Click edit button for the ingredient
+        await act(async () => {
+            const editButton = screen.getByRole('button', { name: 'Edit' });
+            fireEvent.click(editButton);
+        });
+
+        // Update ingredient fields
+        const nameInput = screen.getByLabelText("Name");
+        const quantityInput = screen.getByLabelText("Quantity");
+        const unitInput = screen.getByLabelText("Unit");
+
+        await act(async () => {
+            fireEvent.change(nameInput, { target: { value: "Updated Ingredient" } });
+            fireEvent.change(quantityInput, { target: { value: "3" } });
+            fireEvent.change(unitInput, { target: { value: "tablespoons" } });
+        });
+
+        // Save changes
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        });
+
+        // Verify toast was shown
+        await waitFor(() => {
+            expect(mockShowToast).toHaveBeenCalledWith("Ingredient updated successfully");
+        });
+
+        // Verify meal details are STILL shown after update (this is the key check)
+        expect(screen.getByText("Effort Level: 2")).toBeInTheDocument();
+        // Should now show the updated ingredient format
+        expect(screen.getByText("3 tablespoons Updated Ingredient")).toBeInTheDocument();
     });
 }); 

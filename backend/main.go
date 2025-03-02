@@ -241,6 +241,15 @@ func main() {
 	r.Delete("/api/meals/{mealId}", handlers.DeleteMealHandler)
 	r.Post("/api/mealplan/replace", handlers.ReplaceMealHandler)
 
+	// New routes for recipe steps
+	r.Get("/api/meals/{mealId}/steps", handlers.GetStepsHandler)
+	r.Post("/api/meals/{mealId}/steps", handlers.AddStepHandler)
+	r.Post("/api/meals/{mealId}/steps/bulk", handlers.AddBulkStepsHandler)
+	r.Put("/api/meals/{mealId}/steps/{stepId}", handlers.UpdateStepHandler)
+	r.Delete("/api/meals/{mealId}/steps/{stepId}", handlers.DeleteStepHandler)
+	r.Put("/api/meals/{mealId}/steps/reorder", handlers.ReorderStepsHandler)
+	r.Delete("/api/meals/{mealId}/steps", handlers.DeleteAllStepsHandler)
+
 	log.Println("Backend server starting on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatalf("Error starting server: %v", err)

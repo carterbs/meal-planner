@@ -17,6 +17,7 @@ type Meal struct {
 	RedMeat        bool         `json:"redMeat"`
 	URL            string       `json:"url"`
 	Ingredients    []Ingredient `json:"ingredients"`
+	Steps          []Step       `json:"steps,omitempty"`
 }
 
 // MealColumns defines the column names for Meal queries.
@@ -66,7 +67,7 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 			nt             sql.NullTime // scan as sql.NullTime
 			redMeat        bool
 			url            sql.NullString // URL could be NULL
-			ingredientID   sql.NullInt64 // using sql.NullInt64 since a meal may have 0 ingredients
+			ingredientID   sql.NullInt64  // using sql.NullInt64 since a meal may have 0 ingredients
 			ingredientName sql.NullString
 			quantity       sql.NullFloat64
 			unit           sql.NullString
@@ -93,12 +94,12 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 			} else {
 				lp = time.Time{}
 			}
-			
+
 			urlValue := ""
 			if url.Valid {
 				urlValue = url.String
 			}
-			
+
 			m = &Meal{
 				ID:             mealID,
 				MealName:       mealName,
@@ -107,6 +108,7 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 				RedMeat:        redMeat,
 				URL:            urlValue,
 				Ingredients:    []Ingredient{},
+				Steps:          []Step{},
 			}
 			meals = append(meals, m)
 		}
@@ -138,7 +140,23 @@ func GetMealsByIDs(db *sql.DB, ids []int) ([]*Meal, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return processMealRows(rows)
+
+	meals, err := processMealRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load steps for each meal
+	for _, meal := range meals {
+		steps, err := GetStepsForMeal(db, meal.ID)
+		if err != nil {
+			log.Printf("GetMealsByIDs: error getting steps for mealID=%d: %v", meal.ID, err)
+			continue // Skip steps if error, but don't fail the whole request
+		}
+		meal.Steps = steps
+	}
+
+	return meals, nil
 }
 
 // GetAllMeals retrieves all meals (with their ingredients) from the database.
@@ -149,7 +167,23 @@ func GetAllMeals(db *sql.DB) ([]*Meal, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return processMealRows(rows)
+
+	meals, err := processMealRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load steps for each meal
+	for _, meal := range meals {
+		steps, err := GetStepsForMeal(db, meal.ID)
+		if err != nil {
+			log.Printf("GetAllMeals: error getting steps for mealID=%d: %v", meal.ID, err)
+			continue // Skip steps if error, but don't fail the whole request
+		}
+		meal.Steps = steps
+	}
+
+	return meals, nil
 }
 
 // SwapMeal returns a random meal that is not the current meal.
@@ -219,7 +253,13 @@ func DeleteMeal(db *sql.DB, mealID int) error {
 	}
 	defer tx.Rollback()
 
-	// Delete ingredients first due to foreign key constraint
+	// Delete steps first (recipe_steps has a foreign key to meals)
+	_, err = tx.Exec("DELETE FROM recipe_steps WHERE meal_id = $1", mealID)
+	if err != nil {
+		return err
+	}
+
+	// Delete ingredients (ingredients has a foreign key to meals)
 	_, err = tx.Exec("DELETE FROM ingredients WHERE meal_id = $1", mealID)
 	if err != nil {
 		return err
@@ -305,12 +345,44 @@ func CreateMeal(db *sql.DB, meal Meal) (*Meal, error) {
 		meal.Ingredients[i].MealID = mealID
 	}
 
+	// Insert the steps if any
+	if len(meal.Steps) > 0 {
+		// Prepare statement for inserting steps
+		stmtStep, err := tx.Prepare(`
+			INSERT INTO recipe_steps (meal_id, step_number, instruction) 
+			VALUES ($1, $2, $3) 
+			RETURNING id
+		`)
+		if err != nil {
+			log.Printf("CreateMeal: error preparing statement for steps: %v", err)
+			return nil, err
+		}
+		defer stmtStep.Close()
+
+		for i := range meal.Steps {
+			var stepID int
+			// Make sure step number is set correctly (1-indexed)
+			meal.Steps[i].StepNumber = i + 1
+			meal.Steps[i].MealID = mealID
+
+			err = stmtStep.QueryRow(
+				mealID, meal.Steps[i].StepNumber, meal.Steps[i].Instruction,
+			).Scan(&stepID)
+			if err != nil {
+				log.Printf("CreateMeal: error inserting step %d: %v", i, err)
+				return nil, err
+			}
+			meal.Steps[i].ID = stepID
+		}
+	}
+
 	// Commit the transaction
 	if err = tx.Commit(); err != nil {
 		log.Printf("CreateMeal: error committing transaction: %v", err)
 		return nil, err
 	}
 
-	log.Printf("CreateMeal: created meal with ID %d and %d ingredients", mealID, len(meal.Ingredients))
+	log.Printf("CreateMeal: created meal with ID %d, %d ingredients, and %d steps",
+		mealID, len(meal.Ingredients), len(meal.Steps))
 	return &meal, nil
 }
