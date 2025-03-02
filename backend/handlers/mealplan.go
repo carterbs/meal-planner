@@ -12,19 +12,26 @@ import (
 // DB is a global database connection (set in main.go)
 var DB *sql.DB
 
-// GetMealPlan generates a weekly meal plan with effort levels.
-// For this MVP, Friday is labeled "Eating out" and other days have dummy meal names.
+// GetMealPlan retrieves a meal plan - either the last saved one or generates a new one if none exists.
 func GetMealPlan(w http.ResponseWriter, r *http.Request) {
-	plan, err := models.GenerateWeeklyMealPlan(DB)
+	// First try to get the last planned meals
+	plan, err := models.GetLastPlannedMeals(DB)
 	if err != nil {
-		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
-		return
+		// If we couldn't get last planned meals, generate a new one
+		log.Printf("No recent meal plan found, generating new one: %v", err)
+		plan, err = models.GenerateWeeklyMealPlan(DB)
+		if err != nil {
+			http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
+
 	// Create an output map from day to a simplified meal object including effort.
 	type OutputMeal struct {
 		ID             int    `json:"id"`
 		MealName       string `json:"mealName"`
 		RelativeEffort int    `json:"relativeEffort"`
+		URL            string `json:"url,omitempty"`
 	}
 	output := make(map[string]OutputMeal)
 	for day, meal := range plan {
@@ -32,6 +39,35 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 			ID:             meal.ID,
 			MealName:       meal.MealName,
 			RelativeEffort: meal.RelativeEffort,
+			URL:            meal.URL,
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(output)
+}
+
+// GenerateMealPlan generates a new weekly meal plan regardless of whether a recent one exists.
+func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
+	plan, err := models.GenerateWeeklyMealPlan(DB)
+	if err != nil {
+		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create an output map from day to a simplified meal object including effort.
+	type OutputMeal struct {
+		ID             int    `json:"id"`
+		MealName       string `json:"mealName"`
+		RelativeEffort int    `json:"relativeEffort"`
+		URL            string `json:"url,omitempty"`
+	}
+	output := make(map[string]OutputMeal)
+	for day, meal := range plan {
+		output[day] = OutputMeal{
+			ID:             meal.ID,
+			MealName:       meal.MealName,
+			RelativeEffort: meal.RelativeEffort,
+			URL:            meal.URL,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

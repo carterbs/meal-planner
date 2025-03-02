@@ -118,3 +118,75 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 	}
 	return &m, nil
 }
+
+// GetLastPlannedMeals retrieves the most recently planned meals to reconstruct the last meal plan
+func GetLastPlannedMeals(db *sql.DB) (map[string]*Meal, error) {
+	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	plan := make(map[string]*Meal)
+
+	// Query to get the 7 most recently planned meals
+	query := `
+		SELECT ` + strings.Join(MealColumns, ", ") + `
+		FROM meals
+		WHERE last_planned IS NOT NULL
+		ORDER BY last_planned DESC
+		LIMIT 7
+	`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	dayIndex := 0
+
+	for rows.Next() {
+		var m Meal
+		var lastPlanned sql.NullTime
+		var url sql.NullString
+		err := rows.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url)
+		if err != nil {
+			return nil, err
+		}
+
+		if lastPlanned.Valid {
+			m.LastPlanned = lastPlanned.Time
+		}
+
+		if url.Valid {
+			m.URL = url.String
+		}
+
+		// Don't overwrite Friday's "Eating out" with a real meal
+		if dayIndex < len(weekdays) && weekdays[dayIndex] != "Friday" {
+			plan[weekdays[dayIndex]] = &m
+		} else if dayIndex < len(weekdays) && weekdays[dayIndex] == "Friday" {
+			// Set Friday to "Eating out"
+			plan["Friday"] = &Meal{
+				MealName: "Eating out",
+			}
+			// Process this meal for the next day
+			if dayIndex+1 < len(weekdays) {
+				plan[weekdays[dayIndex+1]] = &m
+				dayIndex++
+			}
+		}
+
+		dayIndex++
+	}
+
+	// If not enough meals were found, fill in Friday as "Eating out" if not already set
+	if _, ok := plan["Friday"]; !ok {
+		plan["Friday"] = &Meal{
+			MealName: "Eating out",
+		}
+	}
+
+	// If we didn't get a full meal plan, return an error so we can generate a new one
+	if len(plan) < 6 {
+		return nil, errors.New("not enough recently planned meals found")
+	}
+
+	return plan, nil
+}

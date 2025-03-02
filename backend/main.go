@@ -230,6 +230,7 @@ func main() {
 
 	// Register API routes
 	r.Get("/api/mealplan", handlers.GetMealPlan)
+	r.Post("/api/mealplan/generate", handlers.GenerateMealPlan)
 	r.Post("/api/mealplan/finalize", handlers.FinalizeMealPlanHandler)
 	r.Post("/api/mealplan/swap", handlers.SwapMeal)
 	r.Post("/api/shoppinglist", handlers.GetShoppingList)

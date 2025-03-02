@@ -464,4 +464,95 @@ test("DatabaseConnectionError handles reconnection failure", async () => {
 
     // Restore env
     process.env.NODE_ENV = originalEnv;
+});
+
+// Test clicking the Generate New Plan button.
+test("clicking Generate New Plan button creates a new meal plan", async () => {
+    const mealPlanResponse = {
+        Monday: {
+            id: 1,
+            mealName: "Meal A",
+            relativeEffort: 2,
+            lastPlanned: "2023-10-01T00:00:00Z",
+            redMeat: false,
+            ingredients: [],
+        },
+    };
+
+    const newMealPlanResponse = {
+        Monday: {
+            id: 3,
+            mealName: "New Meal C",
+            relativeEffort: 3,
+            lastPlanned: "2023-10-05T00:00:00Z",
+            redMeat: false,
+            ingredients: [],
+        },
+    };
+
+    const mealsResponse = [
+        {
+            id: 1,
+            mealName: "Meal A",
+            relativeEffort: 2,
+            lastPlanned: "2023-10-01T00:00:00Z",
+            redMeat: false,
+            ingredients: [{ Name: "Eggs", Quantity: 0, Unit: "dozen" }],
+        },
+    ];
+
+    // First fetch is GET /api/mealplan (last planned meals)
+    // Second fetch would be GET /api/meals (for available meals)
+    // Third fetch is POST /api/mealplan/generate (the generate button)
+    let fetchCount = 0;
+    global.fetch = jest.fn((url: RequestInfo, init?: RequestInit) => {
+        const urlStr = url.toString();
+        fetchCount++;
+
+        if (urlStr.includes("/api/mealplan/generate") && init?.method === "POST") {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(newMealPlanResponse),
+            } as Response);
+        }
+        if (urlStr.includes("/api/mealplan")) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mealPlanResponse),
+            } as Response);
+        }
+        if (urlStr.includes("/api/meals")) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mealsResponse),
+            } as Response);
+        }
+
+        return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({}),
+        } as Response);
+    }) as jest.Mock;
+
+    render(<App />);
+
+    // Wait for meal plan to load
+    await waitFor(() => {
+        expect(screen.getAllByText("Meal A").length).toBeGreaterThan(0);
+    });
+
+    // Find and click the Generate New Plan button
+    const generateButton = screen.getByText("Generate New Plan");
+    fireEvent.click(generateButton);
+
+    // Wait for new meal plan to load
+    await waitFor(() => {
+        expect(screen.getAllByText("New Meal C").length).toBeGreaterThan(0);
+    });
+
+    // Verify that the fetch was called with the correct endpoint
+    expect(global.fetch).toHaveBeenCalledWith(
+        "/api/mealplan/generate",
+        expect.objectContaining({ method: "POST" })
+    );
 }); 

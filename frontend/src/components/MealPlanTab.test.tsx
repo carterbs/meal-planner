@@ -782,4 +782,111 @@ describe("MealPlanTab", () => {
 
         consoleError.mockRestore();
     });
+
+    test("generates new meal plan when button is clicked", async () => {
+        const newMealPlan = {
+            Monday: {
+                id: 10,
+                mealName: "New Generated Meal",
+                relativeEffort: 3,
+                lastPlanned: "2024-02-16T00:00:00Z",
+                redMeat: false,
+                ingredients: []
+            },
+            Tuesday: {
+                id: 11,
+                mealName: "Another New Meal",
+                relativeEffort: 2,
+                lastPlanned: "2024-02-16T00:00:00Z",
+                redMeat: true,
+                ingredients: []
+            },
+            Friday: {
+                id: 3,
+                mealName: "Eating out",
+                relativeEffort: 1,
+                lastPlanned: "2024-02-16T00:00:00Z",
+                redMeat: false,
+                ingredients: []
+            }
+        };
+
+        // Mock fetch to return initial meal plan, then available meals
+        // Then the 3rd call will be for the generate button
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockMealPlan),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(newMealPlan),
+            })) as jest.Mock;
+
+        render(<MealPlanTab showToast={mockShowToast} />);
+
+        // Wait for initial meal plan to load
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
+            expect(screen.getByText("Test Meal 2")).toBeInTheDocument();
+        });
+
+        // Find and click the Generate New Plan button
+        const generateButton = screen.getByText("Generate New Plan");
+        expect(generateButton).toBeInTheDocument();
+
+        fireEvent.click(generateButton);
+
+        // Expect the button to be disabled while generating
+        expect(generateButton).toBeDisabled();
+
+        // Verify that the new meals appear after generating
+        await waitFor(() => {
+            expect(screen.getByText("New Generated Meal")).toBeInTheDocument();
+            expect(screen.getByText("Another New Meal")).toBeInTheDocument();
+            expect(generateButton).not.toBeDisabled();
+        });
+
+        // Verify the toast message
+        expect(mockShowToast).toHaveBeenCalledWith("New meal plan generated!");
+    });
+
+    test("handles error when generating new meal plan", async () => {
+        const consoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        global.fetch = jest.fn()
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockMealPlan),
+            }))
+            .mockImplementationOnce(() => Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockAvailableMeals),
+            }))
+            .mockImplementationOnce(() => Promise.reject(new Error("Failed to generate meal plan"))) as jest.Mock;
+
+        render(<MealPlanTab showToast={mockShowToast} />);
+
+        // Wait for initial meal plan to load
+        await waitFor(() => {
+            expect(screen.getByText("Test Meal 1")).toBeInTheDocument();
+        });
+
+        // Find and click the Generate New Plan button
+        const generateButton = screen.getByText("Generate New Plan");
+        fireEvent.click(generateButton);
+
+        // Wait for the error to be logged and toast to be shown
+        await waitFor(() => {
+            expect(consoleError).toHaveBeenCalled();
+            expect(mockShowToast).toHaveBeenCalledWith("Error generating new meal plan");
+            expect(generateButton).not.toBeDisabled();
+        });
+
+        consoleError.mockRestore();
+    });
 }); 
