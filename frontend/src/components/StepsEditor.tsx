@@ -137,7 +137,8 @@ const SortableItem: React.FC<SortableItemProps> = ({
 };
 
 const StepsEditor: React.FC<StepsEditorProps> = ({ steps, onChange, readOnly = false }) => {
-    const [stepInputMode, setStepInputMode] = useState<'bulk' | 'individual'>('bulk');
+    // Default to individual mode instead of bulk
+    const [stepInputMode, setStepInputMode] = useState<'bulk' | 'individual'>('individual');
     const [bulkStepsText, setBulkStepsText] = useState('');
     const [bulkStepsPreview, setBulkStepsPreview] = useState<string[]>([]);
     const [newStepText, setNewStepText] = useState('');
@@ -253,50 +254,45 @@ const StepsEditor: React.FC<StepsEditorProps> = ({ steps, onChange, readOnly = f
     const addStep = () => {
         if (!newStepText.trim()) return;
 
-        const newStep: Step = {
+        const updatedSteps = [...steps, {
             id: 0, // Will be assigned by backend
-            mealId: steps.length > 0 ? steps[0].mealId : 0,
+            mealId: 0, // Will be assigned by backend
             stepNumber: steps.length + 1,
             instruction: newStepText.trim()
-        };
+        }];
 
-        onChange([...steps, newStep]);
+        onChange(updatedSteps);
         setNewStepText('');
     };
 
     const updateStep = (index: number, instruction: string) => {
         const updatedSteps = [...steps];
-        updatedSteps[index] = {
-            ...updatedSteps[index],
-            instruction
-        };
+        updatedSteps[index].instruction = instruction;
         onChange(updatedSteps);
-        setEditingIndex(null);
     };
 
     const deleteStep = (index: number) => {
-        const updatedSteps = steps.filter((_, i) => i !== index);
-        // Renumber remaining steps
-        updatedSteps.forEach((step, i) => {
-            step.stepNumber = i + 1;
-        });
+        const updatedSteps = [...steps];
+        updatedSteps.splice(index, 1);
+        // Update step numbers
+        updatedSteps.forEach((step, i) => step.stepNumber = i + 1);
         onChange(updatedSteps);
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
 
-        if (!over || active.id === over.id) {
-            return;
-        }
+        if (over && active.id !== over.id) {
+            const oldIndex = parseInt(active.id.toString().split('-')[1]);
+            const newIndex = parseInt(over.id.toString().split('-')[1]);
 
-        const activeIndex = steps.findIndex((step) => `step-${step.id || steps.indexOf(step)}` === active.id);
-        const overIndex = steps.findIndex((step) => `step-${step.id || steps.indexOf(step)}` === over.id);
+            const reorderedSteps = arrayMove(
+                [...steps],
+                oldIndex,
+                newIndex
+            );
 
-        if (activeIndex !== -1 && overIndex !== -1) {
-            const reorderedSteps = arrayMove(steps, activeIndex, overIndex);
-
-            // Renumber all steps
+            // Update step numbers
             reorderedSteps.forEach((step, index) => {
                 step.stepNumber = index + 1;
             });
@@ -334,145 +330,136 @@ const StepsEditor: React.FC<StepsEditorProps> = ({ steps, onChange, readOnly = f
     }
 
     return (
-        <Box sx={{ mt: 2 }}>
-            <FormControl fullWidth>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6">Recipe Steps</Typography>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={stepInputMode === 'individual'}
-                                onChange={() => setStepInputMode(mode => mode === 'bulk' ? 'individual' : 'bulk')}
-                            />
-                        }
-                        label={stepInputMode === 'individual' ? "Individual Mode" : "Bulk Mode"}
-                    />
-                </Box>
+        <Grid item xs={12}>
+            {/* Recipe Steps heading is now in the main form, removed from here */}
 
-                {stepInputMode === 'bulk' ? (
-                    // Bulk text area mode
-                    <Box>
-                        <TextField
-                            multiline
-                            rows={8}
-                            placeholder="Paste all recipe steps here. Each line, numbered item, or paragraph will become a separate step."
-                            value={bulkStepsText}
-                            onChange={handleBulkStepsChange}
-                            fullWidth
+            {stepInputMode === 'bulk' ? (
+                // Bulk text area mode
+                <Box>
+                    <TextField
+                        label="Paste Recipe Steps (one per line or paragraph)"
+                        multiline
+                        rows={5}
+                        fullWidth
+                        value={bulkStepsText}
+                        onChange={handleBulkStepsChange}
+                        placeholder="Paste all recipe steps here. Each line, numbered item, or paragraph will become a separate step."
+                        helperText="Paste a list of steps, one per line or paragraph"
+                    />
+
+                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                        <Button
                             variant="outlined"
-                        />
-                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="body2" color="text.secondary">
-                                {bulkStepsPreview.length} steps detected
+                            onClick={confirmBulkSteps}
+                            disabled={bulkStepsPreview.length === 0}
+                        >
+                            Process Steps
+                        </Button>
+
+                        <Button
+                            variant="outlined"
+                            onClick={() => setStepInputMode('individual')}
+                        >
+                            Switch to Individual Mode
+                        </Button>
+                    </Box>
+
+                    {bulkStepsPreview.length > 0 && (
+                        <Box sx={{ mt: 2 }}>
+                            <Typography variant="subtitle2" gutterBottom>
+                                Preview: {bulkStepsPreview.length} steps detected
                             </Typography>
+                        </Box>
+                    )}
+                </Box>
+            ) : (
+                // Individual step mode
+                <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => setStepInputMode('bulk')}
+                        >
+                            Paste Multiple Steps
+                        </Button>
+                    </Box>
+
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={steps.map((step, index) => `${index}`)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <List
+                                sx={{
+                                    bgcolor: 'background.paper',
+                                    borderRadius: 1,
+                                    ...(steps.length > 0 ? { border: 1, borderColor: 'divider' } : {})
+                                }}
+                            >
+                                {steps.map((step, index) => (
+                                    <SortableItem
+                                        key={`step-${index}`}
+                                        id={`${index}`}
+                                        step={step}
+                                        index={index}
+                                        editingIndex={editingIndex}
+                                        setEditingIndex={setEditingIndex}
+                                        onChange={onChange}
+                                        steps={steps}
+                                        deleteStep={deleteStep}
+                                    />
+                                ))}
+                                {steps.length === 0 && (
+                                    <ListItem>
+                                        <ListItemText
+                                            primary="No steps added yet. Add steps using the form below."
+                                            primaryTypographyProps={{ color: 'text.secondary', align: 'center' }}
+                                        />
+                                    </ListItem>
+                                )}
+                            </List>
+                        </SortableContext>
+                    </DndContext>
+
+                    <Grid container spacing={1} sx={{ mt: 2 }}>
+                        <Grid item xs>
+                            <TextField
+                                fullWidth
+                                label="Add a step"
+                                placeholder="Enter a new step instruction"
+                                value={newStepText}
+                                onChange={(e) => setNewStepText(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        addStep();
+                                    }
+                                }}
+                                variant="outlined"
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item>
                             <Button
                                 variant="contained"
                                 color="primary"
-                                onClick={confirmBulkSteps}
-                                disabled={bulkStepsPreview.length === 0}
+                                onClick={addStep}
+                                disabled={!newStepText.trim()}
+                                startIcon={<AddIcon />}
+                                sx={{ height: '100%' }}
                             >
-                                Confirm Steps
+                                Add
                             </Button>
-                        </Box>
-
-                        {bulkStepsPreview.length > 0 && (
-                            <Paper sx={{ mt: 2, p: 2, bgcolor: 'background.default' }}>
-                                <Typography variant="subtitle2" gutterBottom>Preview:</Typography>
-                                <List dense>
-                                    {bulkStepsPreview.map((step, idx) => (
-                                        <ListItem key={idx}>
-                                            <ListItemText
-                                                primary={`${idx + 1}. ${step}`}
-                                                primaryTypographyProps={{
-                                                    variant: 'body2',
-                                                    style: { whiteSpace: 'normal', wordBreak: 'break-word' }
-                                                }}
-                                            />
-                                        </ListItem>
-                                    ))}
-                                </List>
-                            </Paper>
-                        )}
-                    </Box>
-                ) : (
-                    // Individual step mode
-                    <Box>
-                        <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
-                        >
-                            <SortableContext
-                                items={steps.map((step, index) => `step-${step.id || index}`)}
-                                strategy={verticalListSortingStrategy}
-                            >
-                                <List
-                                    sx={{
-                                        bgcolor: 'background.paper',
-                                        borderRadius: 1,
-                                        ...(steps.length > 0 ? { border: 1, borderColor: 'divider' } : {})
-                                    }}
-                                >
-                                    {steps.map((step, index) => (
-                                        <SortableItem
-                                            key={`step-${step.id || index}`}
-                                            id={`step-${step.id || index}`}
-                                            step={step}
-                                            index={index}
-                                            editingIndex={editingIndex}
-                                            setEditingIndex={setEditingIndex}
-                                            onChange={onChange}
-                                            steps={steps}
-                                            deleteStep={deleteStep}
-                                        />
-                                    ))}
-                                    {steps.length === 0 && (
-                                        <ListItem>
-                                            <ListItemText
-                                                primary="No steps added yet. Add steps using the form below or switch to Bulk Mode."
-                                                primaryTypographyProps={{ color: 'text.secondary', align: 'center' }}
-                                            />
-                                        </ListItem>
-                                    )}
-                                </List>
-                            </SortableContext>
-                        </DndContext>
-
-                        <Grid container spacing={1} sx={{ mt: 2 }}>
-                            <Grid item xs>
-                                <TextField
-                                    fullWidth
-                                    label="Add a step"
-                                    placeholder="Enter a new step instruction"
-                                    value={newStepText}
-                                    onChange={(e) => setNewStepText(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                            e.preventDefault();
-                                            addStep();
-                                        }
-                                    }}
-                                    variant="outlined"
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={addStep}
-                                    disabled={!newStepText.trim()}
-                                    startIcon={<AddIcon />}
-                                    sx={{ height: '100%' }}
-                                >
-                                    Add
-                                </Button>
-                            </Grid>
                         </Grid>
-                    </Box>
-                )}
-            </FormControl>
-        </Box>
+                    </Grid>
+                </Box>
+            )}
+        </Grid>
     );
 };
 

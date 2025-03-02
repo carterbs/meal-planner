@@ -364,13 +364,19 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
             </Grid>
           )}
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ width: '100%', my: 3 }} />
 
-          {/* Recipe Steps section */}
-          <StepsEditor
-            steps={meal.steps || []}
-            onChange={handleStepsChange}
-          />
+          {/* Recipe Steps section - Only one heading here */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Recipe Steps
+            </Typography>
+
+            <StepsEditor
+              steps={meal.steps || []}
+              onChange={handleStepsChange}
+            />
+          </Grid>
 
           <Grid item xs={12}>
             <Button
