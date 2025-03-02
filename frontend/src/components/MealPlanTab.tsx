@@ -27,12 +27,15 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
     const [shoppingList, setShoppingList] = useState<Ingredient[]>([]);
     const [availableMeals, setAvailableMeals] = useState<Meal[]>([]);
+    const [isLoadingMealPlan, setIsLoadingMealPlan] = useState<boolean>(true);
+    const [isGeneratingPlan, setIsGeneratingPlan] = useState<boolean>(false);
 
     useEffect(() => {
         let isMounted = true;
 
         const fetchData = async () => {
             try {
+                setIsLoadingMealPlan(true);
                 const [mealPlanRes, availableMealsRes] = await Promise.all([
                     fetch("/api/mealplan"),
                     fetch("/api/meals")
@@ -49,6 +52,10 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 }
             } catch (err) {
                 console.error("Error fetching meal plan or available meals:", err);
+            } finally {
+                if (isMounted) {
+                    setIsLoadingMealPlan(false);
+                }
             }
         };
 
@@ -74,6 +81,31 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             })
             .then((text) => showToast(text))
             .catch((err) => console.error("Error finalizing plan:", err));
+    };
+
+    const generateNewPlan = () => {
+        setIsGeneratingPlan(true);
+        fetch('/api/mealplan/generate', {
+            method: 'POST',
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to generate meal plan');
+                }
+                return response.json();
+            })
+            .then(data => {
+                setMealPlan(data);
+                setShoppingList([]);
+                showToast('New meal plan generated!');
+            })
+            .catch(err => {
+                console.error('Error generating meal plan:', err);
+                showToast('Error generating new meal plan');
+            })
+            .finally(() => {
+                setIsGeneratingPlan(false);
+            });
     };
 
     const swapMeal = (day: string) => {
@@ -234,7 +266,9 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             <Typography variant="h4" gutterBottom>
                 Weekly Meal Plan
             </Typography>
-            {mealPlan ? (
+            {isLoadingMealPlan ? (
+                <Typography>Loading meal plan...</Typography>
+            ) : mealPlan ? (
                 <Paper variant="outlined">
                     <Table>
                         <TableHead>
@@ -302,14 +336,30 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                     </Table>
                 </Paper>
             ) : (
-                <Typography>Loading meal plan...</Typography>
+                <Typography>No meal plan available. Generate a new one to get started.</Typography>
             )}
 
             <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-                <Button variant="outlined" onClick={finalizePlan}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={generateNewPlan}
+                    disabled={isGeneratingPlan}
+                >
+                    {isGeneratingPlan ? "Generating..." : "Generate New Plan"}
+                </Button>
+                <Button
+                    variant="outlined"
+                    onClick={finalizePlan}
+                    disabled={!mealPlan}
+                >
                     Finalize Meal Plan
                 </Button>
-                <Button variant="outlined" onClick={getShoppingList}>
+                <Button
+                    variant="outlined"
+                    onClick={getShoppingList}
+                    disabled={!mealPlan}
+                >
                     Get Shopping List
                 </Button>
             </Box>
