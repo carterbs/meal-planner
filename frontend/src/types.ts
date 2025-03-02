@@ -8,6 +8,13 @@ export interface Ingredient {
     ID: number;
 }
 
+export interface Step {
+    id: number;
+    mealId: number;
+    stepNumber: number;
+    instruction: string;
+}
+
 export interface Meal {
     id: number;
     mealName: string;
@@ -16,6 +23,7 @@ export interface Meal {
     redMeat: boolean;
     url?: string;
     ingredients: Ingredient[];
+    steps?: Step[];
 }
 
 export interface MealPlan {

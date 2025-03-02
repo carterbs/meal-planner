@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Meal, Ingredient } from "../types";
+import { Meal, Ingredient, Step } from "../types";
 import {
     Box,
     Typography,
@@ -23,6 +23,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { alpha } from '@mui/material/styles';
 import { useTheme } from '@mui/material/styles';
+import StepsEditor from './StepsEditor';
 
 interface MealManagementTabProps {
     showToast: (message: string) => void;
@@ -35,6 +36,9 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     const [editedIngredient, setEditedIngredient] = useState<Ingredient | null>(null);
     const [mealFilter, setMealFilter] = useState<string>("");
     const [currentView, setCurrentView] = useState<"main" | "browse" | "add">("main");
+    const [loading, setLoading] = useState<boolean>(false);
+    const [toastMessage, setToastMessage] = useState<string>("");
+    const [toastSeverity, setToastSeverity] = useState<'success' | 'error'>('success');
     const theme = useTheme();
 
     // Column definitions for the DataGrid
@@ -122,14 +126,19 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             Unit: ""
         };
 
-        // Add to the UI temporarily
+        // Create updated meal with the new ingredient
         const updatedMeal = {
             ...selectedMeal,
             ingredients: [...selectedMeal.ingredients, newIngredient]
         };
+
+        // Update the selected meal directly
         setSelectedMeal(updatedMeal);
         setEditingIngredientIndex(updatedMeal.ingredients.length - 1);
         setEditedIngredient(newIngredient);
+
+        // Update the meals array with the new meal data
+        setMeals(prev => prev.map(m => m.id === selectedMeal.id ? updatedMeal : m));
     };
 
     // Start editing an ingredient
@@ -162,27 +171,28 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
         };
 
         // Save to backend
-        fetch(`/api/meals/${selectedMeal.id}/ingredients`, {
+        fetch(`/api/meals/${selectedMeal.id}/ingredients/${editedIngredient.ID}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(updatedIngredients),
+            body: JSON.stringify(editedIngredient),
         })
             .then((res) => {
-                if (!res.ok) throw new Error("Failed to update ingredients");
-                // Update local state
+                if (!res.ok) throw new Error("Failed to update ingredient");
+
+                // First, update the selected meal directly 
                 setSelectedMeal(updatedMeal);
                 setEditingIngredientIndex(null);
                 setEditedIngredient(null);
-                showToast("Ingredient updated successfully");
 
-                // Also update the meal in the meals array
-                const updatedMeals = meals.map(m => m.id === selectedMeal.id ? updatedMeal : m);
-                setMeals(updatedMeals);
+                // Then update the meals array with the new meal data
+                setMeals(prev => prev.map(m => m.id === selectedMeal.id ? updatedMeal : m));
+
+                showToast("Ingredient updated successfully");
             })
             .catch((err) => {
-                console.error("Error updating ingredients:", err);
+                console.error("Error updating ingredient:", err);
                 showToast("Error updating ingredient");
             });
     };
@@ -198,22 +208,22 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
         };
 
         // Save to backend
-        fetch(`/api/meals/${selectedMeal.id}/ingredients`, {
-            method: "PUT",
+        fetch(`/api/meals/${selectedMeal.id}/ingredients/${ingredientId}`, {
+            method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
-            },
-            body: JSON.stringify(updatedIngredients),
+            }
         })
             .then((res) => {
                 if (!res.ok) throw new Error("Failed to delete ingredient");
-                // Update local state
-                setSelectedMeal(updatedMeal);
-                showToast("Ingredient deleted successfully");
 
-                // Also update the meal in the meals array
-                const updatedMeals = meals.map(m => m.id === selectedMeal.id ? updatedMeal : m);
-                setMeals(updatedMeals);
+                // First, update the selected meal directly
+                setSelectedMeal(updatedMeal);
+
+                // Then update the meals array with the new meal data
+                setMeals(prev => prev.map(m => m.id === selectedMeal.id ? updatedMeal : m));
+
+                showToast("Ingredient deleted successfully");
             })
             .catch((err) => {
                 console.error("Error deleting ingredient:", err);
@@ -241,9 +251,14 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     };
 
     useEffect(() => {
+        // No need to reset selectedMeal when meals update
+    }, [meals]);
+
+    useEffect(() => {
+        // Reset selected meal when changing views
         setSelectedMeal(null);
         setEditedIngredient(null);
-    }, [meals]);
+    }, [currentView]);
 
     useEffect(() => {
         fetch("/api/meals")
@@ -292,6 +307,74 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             ...editedIngredient,
             [field]: value
         });
+    };
+
+    // Add a function to fetch meals directly
+    const fetchMeals = () => {
+        fetch("/api/meals")
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then((data: Meal[]) => setMeals(data))
+            .catch((err) => {
+                console.error("Error fetching meals:", err);
+                showToast("Error loading meals");
+            });
+    };
+
+    // Fix the handleSaveSteps function
+    const handleSaveSteps = async (mealId: number, steps: Step[]) => {
+        try {
+            setLoading(true);
+
+            // Delete existing steps first, then add new ones in bulk
+            await fetch(`/api/meals/${mealId}/steps`, {
+                method: 'DELETE',
+            });
+
+            // Only add new steps if there are any
+            if (steps.length > 0) {
+                const response = await fetch(`/api/meals/${mealId}/steps/bulk`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ instructions: steps.map(step => step.instruction) }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save steps');
+                }
+            }
+
+            // Fetch fresh data from the server but keep the selected meal visible
+            const res = await fetch("/api/meals");
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            const data: Meal[] = await res.json();
+
+            // Update the meals array
+            setMeals(data);
+
+            // Keep the currently selected meal, but with updated data
+            if (selectedMeal) {
+                const updatedSelectedMeal = data.find(m => m.id === selectedMeal.id);
+                if (updatedSelectedMeal) {
+                    setSelectedMeal(updatedSelectedMeal);
+                }
+            }
+
+            showToast("Recipe steps saved successfully");
+        } catch (error) {
+            console.error('Error saving steps:', error);
+            showToast("Error saving steps");
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Render the main menu with options
@@ -872,6 +955,43 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                                 ))}
                                             </Box>
                                         )}
+
+                                        {/* Recipe Steps section */}
+                                        <Box sx={{ mt: 3 }}>
+                                            <Typography variant="h6" gutterBottom>
+                                                Recipe Steps
+                                            </Typography>
+
+                                            {selectedMeal ? (
+                                                <>
+                                                    <StepsEditor
+                                                        steps={selectedMeal.steps || []}
+                                                        onChange={(updatedSteps) => {
+                                                            setSelectedMeal({
+                                                                ...selectedMeal,
+                                                                steps: updatedSteps
+                                                            });
+                                                        }}
+                                                    />
+                                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                                                        <Button
+                                                            variant="contained"
+                                                            color="primary"
+                                                            onClick={() => handleSaveSteps(selectedMeal.id, selectedMeal.steps || [])}
+                                                            disabled={loading}
+                                                        >
+                                                            Save Steps
+                                                        </Button>
+                                                    </Box>
+                                                </>
+                                            ) : (
+                                                <StepsEditor
+                                                    steps={[]}
+                                                    readOnly={true}
+                                                    onChange={() => { }}
+                                                />
+                                            )}
+                                        </Box>
                                     </CardContent>
                                 </Card>
                             </Grid>
