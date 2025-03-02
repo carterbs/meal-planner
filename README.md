@@ -81,11 +81,21 @@ yarn start
 
 ## Testing
 
-```bash
-# Run backend tests
-yarn test:backend
+To run all tests for both the frontend and backend simultaneously:
 
-# Run frontend tests
+```bash
+yarn test
+```
+
+To run only backend tests:
+
+```bash
+yarn test:backend
+```
+
+To run only frontend tests:
+
+```bash
 yarn test:frontend
 ```
 
@@ -97,4 +107,4 @@ yarn db:backup
 
 # Restore the database
 yarn db:restore
-``` 
+```
