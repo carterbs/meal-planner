@@ -6,18 +6,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/go-chi/chi/v5"
 	"github.com/lib/pq"
 
 	"mealplanner/models"
-
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/go-chi/chi/v5"
 )
 
 // testHelper contains utilities for testing handlers
@@ -32,17 +32,17 @@ func setupTest(t *testing.T) *testHelper {
 	if err != nil {
 		t.Fatalf("failed to create sqlmock: %v", err)
 	}
-	
+
 	// Store the original DB
 	originalDB := DB
 	DB = db
-	
+
 	// Restore the original DB after the test
 	t.Cleanup(func() {
 		db.Close()
 		DB = originalDB
 	})
-	
+
 	return &testHelper{db, mock}
 }
 
@@ -57,13 +57,13 @@ func (h *testHelper) expectMealQuery(queryRegex string, args ...interface{}) *sq
 		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url",
 		"ingredient_id", "name", "quantity", "unit",
 	})
-	
+
 	expectation := h.mock.ExpectQuery(regexp.QuoteMeta(queryRegex))
 	if len(args) > 0 {
 		expectation.WithArgs(args[0]) // Handle single argument case
 	}
 	expectation.WillReturnRows(rows)
-	
+
 	return rows
 }
 
@@ -80,7 +80,7 @@ func (h *testHelper) expectTransaction(success bool) {
 // createRequest creates an HTTP request with optional body
 func createRequest(method, path string, body interface{}) (*http.Request, error) {
 	var bodyBuffer *bytes.Buffer
-	
+
 	if body != nil {
 		bodyBytes, err := json.Marshal(body)
 		if err != nil {
@@ -90,16 +90,16 @@ func createRequest(method, path string, body interface{}) (*http.Request, error)
 	} else {
 		bodyBuffer = bytes.NewBuffer(nil)
 	}
-	
+
 	req, err := http.NewRequest(method, path, bodyBuffer)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	
+
 	return req, nil
 }
 
@@ -115,43 +115,43 @@ func addURLParams(req *http.Request, params map[string]string) *http.Request {
 func TestGetAllMealsHandler(t *testing.T) {
 	// Setup test helper
 	helper := setupTest(t)
-	
+
 	// Setup test data
 	now := time.Now()
-	
+
 	// Setup rows for meals in the response
 	rows := helper.expectMealQuery(models.GetAllMealsQuery)
-	
+
 	// Add meal data to rows
 	rows.AddRow(1, "Meal A", 2, now, false, "https://example.com/meala", 1, "Eggs", 0, "dozen")
 	rows.AddRow(2, "Meal B", 3, now, true, "https://example.com/mealb", 2, "Milk", 2.5, "gallon")
 	rows.AddRow(2, "Meal B", 3, now, true, "https://example.com/mealb", 3, "Bread", 0, "loaf")
-	
+
 	// Create request and response recorder
 	req, err := createRequest("GET", "/api/meals", nil)
 	if err != nil {
 		t.Fatalf("could not create request: %v", err)
 	}
-	
+
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(GetAllMealsHandler)
 	handler.ServeHTTP(rr, req)
-	
+
 	// Check response status
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
-	
+
 	// Decode and verify response
 	var meals []*models.Meal
 	if err := json.NewDecoder(rr.Body).Decode(&meals); err != nil {
 		t.Fatalf("could not decode response: %v", err)
 	}
-	
+
 	if len(meals) != 2 {
 		t.Errorf("expected 2 meals, got %d", len(meals))
 	}
-	
+
 	// Verify all expectations were met
 	if err := helper.mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("unfulfilled expectations: %s", err)
@@ -163,7 +163,7 @@ func TestGetAllMealsHandler(t *testing.T) {
 func TestUpdateMealIngredientHandler(t *testing.T) {
 	// Setup test helper
 	helper := setupTest(t)
-	
+
 	mealID := 1
 	updatedIngredient := models.Ingredient{
 		ID:       1,
@@ -187,7 +187,7 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
-	
+
 	// Add URL parameters
 	req = addURLParams(req, map[string]string{
 		"mealId":       "1",
@@ -216,7 +216,7 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 	if meal.Ingredients[0].Quantity != updatedIngredient.Quantity {
 		t.Errorf("expected quantity %v, got %v", updatedIngredient.Quantity, meal.Ingredients[0].Quantity)
 	}
-	
+
 	// Verify all expectations were met
 	if err := helper.mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("unfulfilled expectations: %s", err)
@@ -228,7 +228,7 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 func TestDeleteMealIngredientHandler(t *testing.T) {
 	// Setup test helper
 	helper := setupTest(t)
-	
+
 	mealID := 1
 	ingredientID := 1
 
@@ -247,7 +247,7 @@ func TestDeleteMealIngredientHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
-	
+
 	req = addURLParams(req, map[string]string{
 		"mealId":       "1",
 		"ingredientId": "1",
@@ -276,7 +276,7 @@ func TestDeleteMealIngredientHandler(t *testing.T) {
 	if meal.Ingredients[0].Name != "Pepper" {
 		t.Errorf("expected remaining ingredient to be 'Pepper', got %s", meal.Ingredients[0].Name)
 	}
-	
+
 	// Verify all expectations were met
 	if err := helper.mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("unfulfilled expectations: %s", err)
@@ -284,29 +284,32 @@ func TestDeleteMealIngredientHandler(t *testing.T) {
 }
 
 func TestDeleteMealHandler(t *testing.T) {
-	// Create a direct connection to avoid cleanup timing issues
+	// Create a new sqlmock database connection
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("failed to create sqlmock: %v", err)
 	}
 	defer db.Close()
-	
-	// Store the original DB and restore after test
-	originalDB := DB
+
+	// Set the DB for handlers
 	DB = db
-	defer func() { DB = originalDB }()
-	
+
 	mealID := 1
 
 	// Expect transaction
 	mock.ExpectBegin()
 
-	// Expect deletion of ingredients
+	// First expect deletion of recipe steps
+	mock.ExpectExec("DELETE FROM recipe_steps WHERE meal_id = \\$1").
+		WithArgs(mealID).
+		WillReturnResult(sqlmock.NewResult(0, 2)) // 2 steps deleted
+
+	// Next expect deletion of ingredients
 	mock.ExpectExec("DELETE FROM ingredients WHERE meal_id = \\$1").
 		WithArgs(mealID).
 		WillReturnResult(sqlmock.NewResult(0, 2)) // 2 ingredients deleted
 
-	// Expect deletion of meal
+	// Finally expect deletion of meal
 	mock.ExpectExec("DELETE FROM meals WHERE id = \\$1").
 		WithArgs(mealID).
 		WillReturnResult(sqlmock.NewResult(0, 1)) // 1 meal deleted
@@ -343,82 +346,103 @@ func TestDeleteMealHandler(t *testing.T) {
 
 // Add test for error cases
 func TestDeleteMealHandlerErrors(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to open sqlmock: %v", err)
-	}
-	defer db.Close()
-
-	DB = db
-
 	tests := []struct {
-		name          string
-		mealID        string
-		setupMock     func()
-		expectedCode  int
-		expectedError string
+		name         string
+		mealID       string
+		setupMock    func(mock sqlmock.Sqlmock)
+		expectedCode int
+		expectedBody string
 	}{
 		{
-			name:          "invalid meal ID",
-			mealID:        "invalid",
-			setupMock:     func() {},
-			expectedCode:  http.StatusBadRequest,
-			expectedError: "Invalid meal ID\n",
-		},
-		{
 			name:   "meal not found",
-			mealID: "1",
-			setupMock: func() {
+			mealID: "999",
+			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.ExpectExec(regexp.QuoteMeta("DELETE FROM ingredients WHERE meal_id = $1")).
-					WithArgs(1).
+				mock.ExpectExec("DELETE FROM recipe_steps WHERE meal_id = \\$1").
+					WithArgs(999).
 					WillReturnResult(sqlmock.NewResult(0, 0))
-				mock.ExpectExec(regexp.QuoteMeta("DELETE FROM meals WHERE id = $1")).
-					WithArgs(1).
+				mock.ExpectExec("DELETE FROM ingredients WHERE meal_id = \\$1").
+					WithArgs(999).
 					WillReturnResult(sqlmock.NewResult(0, 0))
+				mock.ExpectExec("DELETE FROM meals WHERE id = \\$1").
+					WithArgs(999).
+					WillReturnResult(sqlmock.NewResult(0, 0))
+				// When no rows are affected, the transaction should still commit
 				mock.ExpectRollback()
+				// Return a specific error for meal not found
+				// This simulates the behavior in the models.DeleteMeal function
 			},
-			expectedCode:  http.StatusInternalServerError,
-			expectedError: "meal not found\n",
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: "meal not found\n",
 		},
 		{
 			name:   "database error",
 			mealID: "1",
-			setupMock: func() {
+			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.ExpectExec(regexp.QuoteMeta("DELETE FROM ingredients WHERE meal_id = $1")).
+				mock.ExpectExec("DELETE FROM recipe_steps WHERE meal_id = \\$1").
 					WithArgs(1).
-					WillReturnError(errors.New("database error"))
+					WillReturnError(fmt.Errorf("database error"))
 				mock.ExpectRollback()
 			},
-			expectedCode:  http.StatusInternalServerError,
-			expectedError: "database error\n",
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: "database error\n",
+		},
+		{
+			name:   "invalid id",
+			mealID: "abc",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				// No DB interactions expected
+			},
+			expectedCode: http.StatusBadRequest,
+			expectedBody: "Invalid meal ID\n",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setupMock()
+			// Create a new mock for each test case
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("failed to create sqlmock: %v", err)
+			}
+			defer db.Close()
 
-			req, err := http.NewRequest("DELETE", "/api/meals/"+tt.mealID, nil)
+			// Set the DB for handlers
+			DB = db
+
+			// Setup mock expectations
+			tt.setupMock(mock)
+
+			// Create request
+			req, err := createRequest("DELETE", fmt.Sprintf("/api/meals/%s", tt.mealID), nil)
 			if err != nil {
 				t.Fatalf("failed to create request: %v", err)
 			}
 
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("mealId", tt.mealID)
-			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+			// Add URL parameters
+			req = addURLParams(req, map[string]string{
+				"mealId": tt.mealID,
+			})
 
+			// Execute request
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(DeleteMealHandler)
 			handler.ServeHTTP(rr, req)
 
+			// Check response status
 			if status := rr.Code; status != tt.expectedCode {
 				t.Errorf("handler returned wrong status code: got %v want %v", status, tt.expectedCode)
 			}
 
-			if rr.Body.String() != tt.expectedError {
-				t.Errorf("handler returned unexpected error: got %v want %v", rr.Body.String(), tt.expectedError)
+			// Check response body
+			if rr.Body.String() != tt.expectedBody {
+				t.Errorf("handler returned unexpected error: got %v want %v", rr.Body.String(), tt.expectedBody)
+			}
+
+			// Verify all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 		})
 	}
@@ -615,29 +639,29 @@ func TestCreateMealHandler(t *testing.T) {
 
 	// Expected meal ID after creation
 	const expectedMealID = 10
-	
+
 	// Expected ingredient IDs after creation
 	expectedIngIDs := []int{100, 101}
 
 	// Setup mock expectations
 	// 1. Begin transaction
 	mock.ExpectBegin()
-	
+
 	// 2. Insert meal
 	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO meals (meal_name, relative_effort, red_meat, url) VALUES ($1, $2, $3, $4) RETURNING id")).
 		WithArgs(newMeal.MealName, newMeal.RelativeEffort, newMeal.RedMeat, newMeal.URL).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(expectedMealID))
-	
+
 	// 3. Insert first ingredient
 	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO ingredients (meal_id, quantity, unit, name) VALUES ($1, $2, $3, $4) RETURNING id")).
 		WithArgs(expectedMealID, newMeal.Ingredients[0].Quantity, newMeal.Ingredients[0].Unit, newMeal.Ingredients[0].Name).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(expectedIngIDs[0]))
-	
+
 	// 4. Insert second ingredient
 	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO ingredients (meal_id, quantity, unit, name) VALUES ($1, $2, $3, $4) RETURNING id")).
 		WithArgs(expectedMealID, newMeal.Ingredients[1].Quantity, newMeal.Ingredients[1].Unit, newMeal.Ingredients[1].Name).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(expectedIngIDs[1]))
-	
+
 	// 5. Commit transaction
 	mock.ExpectCommit()
 

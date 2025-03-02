@@ -226,22 +226,44 @@ func ReorderSteps(db *sql.DB, mealID int, stepIDs []int) error {
 	}
 	defer tx.Rollback()
 
-	// Prepare statement for updating step numbers
-	stmt, err := tx.Prepare(`
+	// First, set all step numbers to negative values to avoid unique constraint conflicts
+	// This is a two-phase approach to avoid unique constraint violations
+	stmt1, err := tx.Prepare(`
+		UPDATE recipe_steps 
+		SET step_number = -1 * step_number 
+		WHERE id = $1 AND meal_id = $2
+	`)
+	if err != nil {
+		log.Printf("ReorderSteps: error preparing first statement for mealID=%d: %v", mealID, err)
+		return err
+	}
+	defer stmt1.Close()
+
+	// First phase: set all step numbers to negative
+	for _, stepID := range stepIDs {
+		_, err := stmt1.Exec(stepID, mealID)
+		if err != nil {
+			log.Printf("ReorderSteps: error setting negative step number for stepID=%d, mealID=%d: %v", stepID, mealID, err)
+			return err
+		}
+	}
+
+	// Prepare statement for updating step numbers to their final values
+	stmt2, err := tx.Prepare(`
 		UPDATE recipe_steps 
 		SET step_number = $1 
 		WHERE id = $2 AND meal_id = $3
 	`)
 	if err != nil {
-		log.Printf("ReorderSteps: error preparing statement for mealID=%d: %v", mealID, err)
+		log.Printf("ReorderSteps: error preparing second statement for mealID=%d: %v", mealID, err)
 		return err
 	}
-	defer stmt.Close()
+	defer stmt2.Close()
 
-	// Update each step's number according to its position in the stepIDs slice
+	// Second phase: update each step's number according to its position in the stepIDs slice
 	for i, stepID := range stepIDs {
 		stepNumber := i + 1 // steps are 1-indexed
-		_, err := stmt.Exec(stepNumber, stepID, mealID)
+		_, err := stmt2.Exec(stepNumber, stepID, mealID)
 		if err != nil {
 			log.Printf("ReorderSteps: error updating step number for stepID=%d, mealID=%d: %v", stepID, mealID, err)
 			return err
