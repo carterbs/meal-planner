@@ -69,8 +69,8 @@ func TestReconnectEndpoint(t *testing.T) {
 	})
 
 	t.Run("already connected", func(t *testing.T) {
-		// Setup: Create a working mock DB
-		db, mock, err := sqlmock.New()
+		// Setup: Create a working mock DB with ping monitoring enabled
+		db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 		if err != nil {
 			t.Fatalf("Failed to create mock db: %v", err)
 		}
@@ -127,8 +127,8 @@ func TestReconnectEndpoint(t *testing.T) {
 	})
 
 	t.Run("connection exists but ping fails", func(t *testing.T) {
-		// Setup: Create a mock DB that will fail on ping
-		db, mock, err := sqlmock.New()
+		// Setup: Create a mock DB that will fail on ping, with ping monitoring enabled
+		db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 		if err != nil {
 			t.Fatalf("Failed to create mock db: %v", err)
 		}

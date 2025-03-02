@@ -66,7 +66,7 @@ func setupMealRows(meals []testMeal) *sqlmock.Rows {
 // assertMealEquals verifies that a meal matches expected values
 func assertMealEquals(t *testing.T, expected testMeal, actual *Meal) {
 	t.Helper()
-	
+
 	if actual.ID != expected.ID {
 		t.Errorf("expected meal ID %d, got %d", expected.ID, actual.ID)
 	}
@@ -98,7 +98,7 @@ func assertMealEquals(t *testing.T, expected testMeal, actual *Meal) {
 				if expectedIng.ID > 0 && actualIng.ID != expectedIng.ID {
 					t.Errorf("ingredient %s: expected ID %d, got %d", expectedIng.Name, expectedIng.ID, actualIng.ID)
 				}
-				
+
 				// For quantity, handle nil cases
 				if expectedIng.Quantity == nil && actualIng.Quantity != 0 {
 					t.Errorf("ingredient %s: expected quantity 0 (nil), got %v", expectedIng.Name, actualIng.Quantity)
@@ -109,7 +109,7 @@ func assertMealEquals(t *testing.T, expected testMeal, actual *Meal) {
 						}
 					}
 				}
-				
+
 				if actualIng.Unit != expectedIng.Unit {
 					t.Errorf("ingredient %s: expected unit %q, got %q", expectedIng.Name, expectedIng.Unit, actualIng.Unit)
 				}
@@ -377,17 +377,22 @@ func TestDeleteMeal(t *testing.T) {
 
 	// Setup expectations for transaction
 	mock.ExpectBegin()
-	
-	// Expect ingredients deletion
+
+	// First expect recipe_steps deletion
+	mock.ExpectExec("DELETE FROM recipe_steps WHERE meal_id = \\$1").
+		WithArgs(mealID).
+		WillReturnResult(sqlmock.NewResult(0, 2))
+
+	// Next expect ingredients deletion
 	mock.ExpectExec("DELETE FROM ingredients WHERE meal_id = \\$1").
 		WithArgs(mealID).
 		WillReturnResult(sqlmock.NewResult(0, 2))
-	
-	// Expect meal deletion
+
+	// Finally expect meal deletion
 	mock.ExpectExec("DELETE FROM meals WHERE id = \\$1").
 		WithArgs(mealID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	
+
 	// Expect transaction commit
 	mock.ExpectCommit()
 
@@ -421,19 +426,19 @@ func TestCreateMeal(t *testing.T) {
 
 	// Setup expectations for transaction
 	mock.ExpectBegin()
-	
+
 	// Expect meal insertion
 	mock.ExpectQuery("INSERT INTO meals \\(meal_name, relative_effort, red_meat, url\\) VALUES").
 		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	
+
 	// Expect ingredient insertions
 	for i := range meal.Ingredients {
 		mock.ExpectQuery("INSERT INTO ingredients \\(meal_id, quantity, unit, name\\) VALUES").
 			WithArgs(1, meal.Ingredients[i].Quantity, meal.Ingredients[i].Unit, meal.Ingredients[i].Name).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(i + 1))
 	}
-	
+
 	// Expect transaction commit
 	mock.ExpectCommit()
 
@@ -480,12 +485,12 @@ func TestCreateMeal_Error(t *testing.T) {
 
 	// Setup expectations for transaction
 	mock.ExpectBegin()
-	
+
 	// Expect meal insertion with error
 	mock.ExpectQuery("INSERT INTO meals").
 		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL).
 		WillReturnError(sql.ErrConnDone)
-	
+
 	// Expect transaction rollback
 	mock.ExpectRollback()
 

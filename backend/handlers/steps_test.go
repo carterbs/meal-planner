@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	_ "github.com/mattn/go-sqlite3" // Import SQLite driver
 )
 
 func setupStepHandlerTest(t *testing.T) *sql.DB {

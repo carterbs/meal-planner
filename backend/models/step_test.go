@@ -3,6 +3,8 @@ package models
 import (
 	"database/sql"
 	"testing"
+
+	_ "github.com/mattn/go-sqlite3" // Import SQLite driver
 )
 
 func setupStepDB(t *testing.T) *sql.DB {
