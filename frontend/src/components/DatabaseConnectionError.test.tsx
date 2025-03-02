@@ -77,8 +77,8 @@ describe('DatabaseConnectionError Component', () => {
         // Create a mock function that rejects
         const mockRetry = jest.fn(() => Promise.reject(new Error('Connection failed')));
 
-        // Spy on console.error to prevent the error from appearing in test output
-        jest.spyOn(console, 'error').mockImplementation(() => { });
+        // Spy on console.debug to prevent the error from appearing in test output
+        jest.spyOn(console, 'debug').mockImplementation(() => { });
 
         render(
             <ThemeProvider theme={theme}>
@@ -105,10 +105,10 @@ describe('DatabaseConnectionError Component', () => {
         });
 
         // Error should have been logged
-        expect(console.error).toHaveBeenCalled();
+        expect(console.debug).toHaveBeenCalled();
 
-        // Restore console.error
-        (console.error as jest.Mock).mockRestore();
+        // Restore console.debug
+        (console.debug as jest.Mock).mockRestore();
     });
 
     test('prevents multiple clicks while retrying', async () => {
