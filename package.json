@@ -8,10 +8,12 @@
         "test:frontend": "cd frontend && yarn test",
         "test": "node scripts/test-summary.js",
         "db:backup": "node scripts/backup-db.js",
-        "db:restore": "node scripts/restore-db.js"
+        "db:restore": "node scripts/restore-db.js",
+        "dev": "node scripts/dev-start.js"
     },
     "devDependencies": {
+        "chalk": "^4.1.2",
         "concurrently": "^7.6.0",
-        "chalk": "^4.1.2"
+        "wait-on": "^7.1.0"
     }
 }
