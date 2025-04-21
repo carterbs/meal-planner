@@ -5,7 +5,6 @@ This directory contains comprehensive documentation for the Meal Planner applica
 ## Available Documentation
 
 - **[MealPlannerSummary.md](./MealPlannerSummary.md)** - Complete system overview covering both backend and frontend components
-- **[MealPlannerSummary-be.md](./MealPlannerSummary-be.md)** - Detailed backend-only documentation (earlier version)
 
 ## Documentation Purpose
 
