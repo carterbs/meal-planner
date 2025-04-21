@@ -107,10 +107,42 @@ yarn test:summary
 
 ## Database Management
 
-```bash
-# Backup the database
-yarn db:backup
+This project includes utility scripts for backing up and restoring the PostgreSQL database. The scripts use Docker Compose to interact with the `db` service and save backups in the `db-backups/` directory.
 
-# Restore the database
+#### Prerequisites
+
+Make sure the Docker containers are running:
+
+```bash
+docker-compose up -d
+```
+
+#### Backup
+
+Create a timestamped SQL dump (stored in `db-backups/`, max 7 retained):
+
+```bash
+yarn db:backup
+```
+
+List existing backups:
+
+```bash
+ls db-backups
+```
+
+#### Restore
+
+Restore from a backup (interactive selection):
+
+```bash
 yarn db:restore
 ```
+
+Or specify a backup file:
+
+```bash
+yarn db:restore backup-2023-05-01T12-00-00-000Z.sql
+```
+
+**Warning:** Restoring will overwrite the current database!

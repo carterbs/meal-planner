@@ -25,6 +25,3 @@ dist/
 Thumbs.db
 .idea/
 .vscode/ 
-
-# Database backups
-db-backups/ 
