@@ -49,6 +49,12 @@ cd backend
 go run main.go --seed
 ```
 
+5. **Optional:** Run the backend using in-memory dummy data (no database needed)
+```bash
+cd backend
+go run main.go --dummy
+```
+
 ## Project Structure
 
 - `backend/` - Go backend server
@@ -73,6 +79,9 @@ yarn start
 # Start only the backend server
 cd backend
 go run main.go
+
+# Start the backend with dummy data
+go run main.go --dummy
 
 # Start only the frontend server
 cd frontend
