@@ -7,14 +7,24 @@ import (
 	"strconv"
 	"strings"
 
+	"mealplanner/dummy"
 	"mealplanner/models"
 
 	"github.com/go-chi/chi/v5"
 )
 
+// UseDummy indicates whether the server is running with in-memory data
+var UseDummy bool
+
 // GetAllMealsHandler handles GET /api/meals and returns all meals with their ingredients.
 func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
-	meals, err := models.GetAllMeals(DB)
+	var meals []*models.Meal
+	var err error
+    if UseDummy {
+		meals, err = dummy.GetAllMeals()
+	} else {
+		meals, err = models.GetAllMeals(DB)
+	}
 	if err != nil {
 		http.Error(w, "Error retrieving meals: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -39,7 +49,13 @@ func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newMeal, err := models.SwapMeal(payload.MealID, DB)
+	var newMeal *models.Meal
+	var err error
+    if UseDummy {
+		newMeal, err = dummy.SwapMeal(payload.MealID)
+	} else {
+		newMeal, err = models.SwapMeal(payload.MealID, DB)
+	}
 	if err != nil {
 		http.Error(w, "Error swapping meal: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -50,6 +66,10 @@ func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
 
 // UpdateMealIngredientHandler handles updating a single ingredient for a specific meal.
 func UpdateMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	mealIdStr := chi.URLParam(r, "mealId")
 	if mealIdStr == "" {
 		http.Error(w, "Missing meal ID", http.StatusBadRequest)
@@ -97,6 +117,10 @@ func UpdateMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteMealIngredientHandler handles DELETE /api/meals/{mealId}/ingredients/{ingredientId} and deletes a specific ingredient.
 func DeleteMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	// Parse ingredientId from URL.
 	ingredientIdStr := chi.URLParam(r, "ingredientId")
 	if ingredientIdStr == "" {
@@ -134,6 +158,10 @@ func DeleteMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteMealHandler handles DELETE /api/meals/{mealId} and deletes a meal and its ingredients.
 func DeleteMealHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	mealIdStr := chi.URLParam(r, "mealId")
 	if mealIdStr == "" {
 		http.Error(w, "Missing meal ID", http.StatusBadRequest)
@@ -156,6 +184,10 @@ func DeleteMealHandler(w http.ResponseWriter, r *http.Request) {
 
 // ReplaceMealHandler handles POST /api/meals/replace and returns a new meal to replace the current one.
 func ReplaceMealHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	var payload struct {
 		Day       string `json:"day"`
 		NewMealID int    `json:"new_meal_id"`
@@ -177,6 +209,12 @@ func ReplaceMealHandler(w http.ResponseWriter, r *http.Request) {
 
 // FinalizeMealPlanHandler handles POST /api/mealplan/finalize and updates the last planned date for all meals in the plan
 func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		// In dummy mode, nothing to finalize
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Plan finalized"))
+		return
+	}
 	var payload struct {
 		Plan map[string]models.Meal `json:"plan"`
 	}
@@ -207,6 +245,10 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 
 // CreateMealHandler handles POST /api/meals and creates a new meal with ingredients.
 func CreateMealHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	var meal models.Meal
 	if err := json.NewDecoder(r.Body).Decode(&meal); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)

@@ -15,6 +15,10 @@ import (
 
 // GetStepsHandler handles GET /api/meals/{mealId}/steps and returns all steps for a meal.
 func GetStepsHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	mealIDStr := chi.URLParam(r, "mealId")
 	if mealIDStr == "" {
 		http.Error(w, "Missing meal ID", http.StatusBadRequest)
@@ -39,6 +43,10 @@ func GetStepsHandler(w http.ResponseWriter, r *http.Request) {
 
 // AddStepHandler handles POST /api/meals/{mealId}/steps and adds a new step to a meal.
 func AddStepHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	mealIDStr := chi.URLParam(r, "mealId")
 	if mealIDStr == "" {
 		http.Error(w, "Missing meal ID", http.StatusBadRequest)
@@ -73,6 +81,10 @@ func AddStepHandler(w http.ResponseWriter, r *http.Request) {
 
 // AddBulkStepsHandler handles POST /api/meals/{mealId}/steps/bulk and adds multiple steps to a meal from text.
 func AddBulkStepsHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	mealIDStr := chi.URLParam(r, "mealId")
 	if mealIDStr == "" {
 		http.Error(w, "Missing meal ID", http.StatusBadRequest)
@@ -250,6 +262,10 @@ func parseStepsFromText(text string) []string {
 
 // UpdateStepHandler handles PUT /api/meals/{mealId}/steps/{stepId} and updates a step.
 func UpdateStepHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	mealIDStr := chi.URLParam(r, "mealId")
 	stepIDStr := chi.URLParam(r, "stepId")
 
@@ -291,6 +307,10 @@ func UpdateStepHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteStepHandler handles DELETE /api/meals/{mealId}/steps/{stepId} and deletes a step.
 func DeleteStepHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	mealIDStr := chi.URLParam(r, "mealId")
 	stepIDStr := chi.URLParam(r, "stepId")
 
@@ -322,6 +342,10 @@ func DeleteStepHandler(w http.ResponseWriter, r *http.Request) {
 
 // ReorderStepsHandler handles PUT /api/meals/{mealId}/steps/reorder and reorders steps.
 func ReorderStepsHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	mealIDStr := chi.URLParam(r, "mealId")
 	if mealIDStr == "" {
 		http.Error(w, "Missing meal ID", http.StatusBadRequest)
@@ -359,6 +383,10 @@ func ReorderStepsHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteAllStepsHandler handles DELETE /api/meals/{mealId}/steps and deletes all steps for a meal.
 func DeleteAllStepsHandler(w http.ResponseWriter, r *http.Request) {
+    if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
 	mealIDStr := chi.URLParam(r, "mealId")
 	if mealIDStr == "" {
 		http.Error(w, "Missing meal ID", http.StatusBadRequest)
