@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"mealplanner/db"
+	"mealplanner/dummy"
 	"mealplanner/handlers"
 	"mealplanner/models"
 
@@ -39,7 +41,7 @@ func DBErrorMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(cw, r)
 
 		// If we got an internal server error, check if it might be a DB connection issue
-		if cw.status == http.StatusInternalServerError {
+		if cw.status == http.StatusInternalServerError && !handlers.UseDummy {
 			// This is a bit of a hack, but for demo purposes it's fine.
 			// In a real app, we would need to capture the error from the handler.
 			if handlers.DB == nil || handlers.DB.Ping() != nil {
@@ -60,6 +62,7 @@ func main() {
 	}
 
 	seedFlag := flag.Bool("seed", false, "Seed the database using the CSV")
+	dummyFlag := flag.Bool("dummy", false, "Use in-memory dummy data instead of a database")
 	flag.Parse()
 
 	// Read DB config from env variables with reasonable defaults
@@ -80,8 +83,12 @@ func main() {
 		config.DBName = os.Getenv("DB_NAME")
 	}
 
-	// Attempt to connect to the database with helpful error messaging
-	connection, err := db.ConnectDB(config)
+	var connection *sql.DB
+	var err error
+	if !*dummyFlag {
+		// Attempt to connect to the database with helpful error messaging
+		connection, err = db.ConnectDB(config)
+	}
 	if err != nil {
 		if db.IsConnectionError(err) {
 			fmt.Println("\n-------------------------------------------------------------")
@@ -103,7 +110,9 @@ func main() {
 		} else {
 			log.Fatalf("Error connecting to the database: %v", err)
 		}
-	} else {
+	}
+
+	if connection != nil {
 		defer connection.Close()
 
 		// Run migrations (only if we have a connection)
@@ -123,6 +132,17 @@ func main() {
 
 	// Set database connection in handlers (might be nil if connection failed)
 	handlers.DB = connection
+	if connection == nil || *dummyFlag {
+		handlers.UseDummy = true
+		if err := dummy.Load("Meal_db.csv"); err != nil {
+			log.Fatalf("Failed to load dummy data: %v", err)
+		}
+		if connection == nil {
+			log.Println("Running in dummy data mode (database unavailable)")
+		} else {
+			log.Println("Running in dummy data mode (forced)")
+		}
+	}
 
 	// Set up HTTP routes with Chi router
 	r := chi.NewRouter()
@@ -149,15 +169,20 @@ func main() {
 
 	// Special endpoint to check database connectivity
 	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if handlers.UseDummy {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status":"ok","message":"Running with dummy data"}`))
+			return
+		}
+
 		if handlers.DB == nil {
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusServiceUnavailable)
 			w.Write([]byte(`{"status":"error","message":"Database not connected. Make sure Docker is running and the database container is started."}`))
 			return
 		}
 
 		if err := handlers.DB.Ping(); err != nil {
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusServiceUnavailable)
 			w.Write([]byte(`{"status":"error","message":"Database connection lost. Make sure Docker is running and the database container is started."}`))
 			return
@@ -172,8 +197,8 @@ func main() {
 	r.Post("/api/reconnect", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		// If DB is already connected, just confirm it's working
-		if handlers.DB != nil {
+		// If DB is already connected and not in dummy mode, just confirm it's working
+		if handlers.DB != nil && !handlers.UseDummy {
 			if err := handlers.DB.Ping(); err == nil {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(`{"status":"ok","message":"Database connection is already established and healthy"}`))
@@ -217,6 +242,7 @@ func main() {
 
 		// Update the global DB connection
 		handlers.DB = connection
+		handlers.UseDummy = false
 
 		// Ensure migrations are up to date
 		if err := models.Migrate(connection); err != nil {

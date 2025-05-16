@@ -6,23 +6,30 @@ import (
 	"log"
 	"net/http"
 
+	"mealplanner/dummy"
 	"mealplanner/models"
 )
 
 // DB is a global database connection (set in main.go)
 var DB *sql.DB
+var UseDummy bool
 
 // GetMealPlan retrieves a meal plan - either the last saved one or generates a new one if none exists.
 func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	// First try to get the last planned meals
-	plan, err := models.GetLastPlannedMeals(DB)
-	if err != nil {
-		// If we couldn't get last planned meals, generate a new one
-		log.Printf("No recent meal plan found, generating new one: %v", err)
-		plan, err = models.GenerateWeeklyMealPlan(DB)
+	var plan map[string]*models.Meal
+	var err error
+    if UseDummy {
+		plan, err = dummy.GenerateWeeklyMealPlan()
+	} else {
+		plan, err = models.GetLastPlannedMeals(DB)
 		if err != nil {
-			http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
-			return
+			log.Printf("No recent meal plan found, generating new one: %v", err)
+			plan, err = models.GenerateWeeklyMealPlan(DB)
+			if err != nil {
+				http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 
@@ -48,7 +55,13 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 
 // GenerateMealPlan generates a new weekly meal plan regardless of whether a recent one exists.
 func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
-	plan, err := models.GenerateWeeklyMealPlan(DB)
+	var plan map[string]*models.Meal
+	var err error
+    if UseDummy {
+		plan, err = dummy.GenerateWeeklyMealPlan()
+	} else {
+		plan, err = models.GenerateWeeklyMealPlan(DB)
+	}
 	if err != nil {
 		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -87,7 +100,13 @@ func SwapMeal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newMeal, err := models.SwapMeal(payload.MealID, DB)
+	var newMeal *models.Meal
+	var err error
+    if UseDummy {
+		newMeal, err = dummy.SwapMeal(payload.MealID)
+	} else {
+		newMeal, err = models.SwapMeal(payload.MealID, DB)
+	}
 	if err != nil {
 		http.Error(w, "Error swapping meal: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -110,7 +129,13 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve the meals for the provided IDs.
-	meals, err := models.GetMealsByIDs(DB, payload.Plan)
+	var meals []*models.Meal
+	var err error
+    if UseDummy {
+		meals, err = dummy.GetMealsByIDs(payload.Plan)
+	} else {
+		meals, err = models.GetMealsByIDs(DB, payload.Plan)
+	}
 	if err != nil {
 		http.Error(w, "Error retrieving meals: "+err.Error(), http.StatusInternalServerError)
 		return
