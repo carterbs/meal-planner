@@ -54,6 +54,11 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 
 // GenerateMealPlan generates a new weekly meal plan regardless of whether a recent one exists.
 func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		SkipDays []string `json:"skip_days"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&input)
+
 	var plan map[string]*models.Meal
 	var err error
 	if UseDummy {
@@ -64,6 +69,10 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	for _, day := range input.SkipDays {
+		delete(plan, day)
 	}
 
 	// Create an output map from day to a simplified meal object including effort.
