@@ -79,6 +79,53 @@ describe("MealPlanTab", () => {
         expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining("generated"));
     });
 
+    test("generates a new meal plan with skip days", async () => {
+        const fetchMock = jest.fn((url: RequestInfo, options?: RequestInit) => {
+            if (url.toString().includes("/api/mealplan/generate")) {
+                const body = JSON.parse(options?.body as string);
+                expect(body).toEqual({ skip_days: ["Monday", "Friday"] });
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockMealPlan),
+                });
+            }
+            return (setupFetchMocks() as jest.Mock)(url, options);
+        }) as jest.Mock;
+        global.fetch = fetchMock;
+
+        await act(async () => {
+            render(<MealPlanTab showToast={mockShowToast} />);
+        });
+
+        await waitForLoadingToComplete();
+
+        // select skip days by changing value
+        const select = screen.getByLabelText("Skip Days");
+        await act(async () => {
+            fireEvent.mouseDown(select);
+            jest.advanceTimersByTime(500);
+        });
+
+        const listbox = screen.getByRole('listbox');
+        const mondayOption = within(listbox).getByText('Monday');
+        const fridayOption = within(listbox).getByText('Friday');
+
+        await act(async () => {
+            fireEvent.click(mondayOption);
+            fireEvent.click(fridayOption);
+            jest.advanceTimersByTime(500);
+        });
+
+        const generateButton = screen.getByText("Generate New Plan");
+
+        await act(async () => {
+            fireEvent.click(generateButton);
+            jest.advanceTimersByTime(1000);
+        });
+
+        expect(mockShowToast).toHaveBeenCalled();
+    });
+
     test("swaps a meal successfully", async () => {
         // Create a new meal for the swap response
         const newMeal = {

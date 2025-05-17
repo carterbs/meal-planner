@@ -29,6 +29,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     const [availableMeals, setAvailableMeals] = useState<Meal[]>([]);
     const [isLoadingMealPlan, setIsLoadingMealPlan] = useState<boolean>(true);
     const [isGeneratingPlan, setIsGeneratingPlan] = useState<boolean>(false);
+    const [skipDays, setSkipDays] = useState<string[]>([]);
 
     useEffect(() => {
         let isMounted = true;
@@ -87,6 +88,8 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
         setIsGeneratingPlan(true);
         fetch('/api/mealplan/generate', {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(skipDays.length ? { skip_days: skipDays } : {}),
         })
             .then(response => {
                 if (!response.ok) {
@@ -339,7 +342,22 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 <Typography>No meal plan available. Generate a new one to get started.</Typography>
             )}
 
-            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+            <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel id="skip-day-label">Skip Days</InputLabel>
+                    <Select
+                        labelId="skip-day-label"
+                        multiple
+                        value={skipDays}
+                        label="Skip Days"
+                        onChange={(e) => setSkipDays(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
+                        renderValue={(selected) => (selected as string[]).join(', ')}
+                    >
+                        {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(day => (
+                            <MenuItem key={day} value={day}>{day}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
                 <Button
                     variant="contained"
                     color="primary"
