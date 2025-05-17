@@ -11,5 +11,5 @@ yarn install
 popd
 
 pushd backend
-go build
+go mod download
 popd
