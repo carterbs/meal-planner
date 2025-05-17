@@ -19,7 +19,7 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	// First try to get the last planned meals
 	var plan map[string]*models.Meal
 	var err error
-    if UseDummy {
+	if UseDummy {
 		plan, err = dummy.GenerateWeeklyMealPlan()
 	} else {
 		plan, err = models.GetLastPlannedMeals(DB)
@@ -55,9 +55,16 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 
 // GenerateMealPlan generates a new weekly meal plan regardless of whether a recent one exists.
 func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
+    var input struct {
+            SkipDays []string `json:"skip_days"`
+            // DEPRECATED: kept for backward compatibility with older clients
+            SkipDay  string   `json:"skip_day"`
+    }
+    _ = json.NewDecoder(r.Body).Decode(&input)
+
 	var plan map[string]*models.Meal
 	var err error
-    if UseDummy {
+	if UseDummy {
 		plan, err = dummy.GenerateWeeklyMealPlan()
 	} else {
 		plan, err = models.GenerateWeeklyMealPlan(DB)
@@ -66,6 +73,15 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+    if len(input.SkipDays) > 0 {
+            for _, day := range input.SkipDays {
+                    delete(plan, day)
+            }
+    } else if input.SkipDay != "" {
+            // backward compatibility with single day field
+            delete(plan, input.SkipDay)
+    }
 
 	// Create an output map from day to a simplified meal object including effort.
 	type OutputMeal struct {
@@ -102,7 +118,7 @@ func SwapMeal(w http.ResponseWriter, r *http.Request) {
 
 	var newMeal *models.Meal
 	var err error
-    if UseDummy {
+	if UseDummy {
 		newMeal, err = dummy.SwapMeal(payload.MealID)
 	} else {
 		newMeal, err = models.SwapMeal(payload.MealID, DB)
@@ -131,7 +147,7 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 	// Retrieve the meals for the provided IDs.
 	var meals []*models.Meal
 	var err error
-    if UseDummy {
+	if UseDummy {
 		meals, err = dummy.GetMealsByIDs(payload.Plan)
 	} else {
 		meals, err = models.GetMealsByIDs(DB, payload.Plan)
