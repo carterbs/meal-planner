@@ -1,6 +1,6 @@
 # AGENTS Instructions for Meal Planner
 
-This repository contains a Go backend and a React/TypeScript frontend for a personal meal planning application.
+This repository contains a Go backend and a React/TypeScript frontend for a personal meal planning application. All dependencies should be pre-installed and ready to go.
 
 ## Repository layout
 - `backend/` – Go API server and database migrations
@@ -11,25 +11,17 @@ This repository contains a Go backend and a React/TypeScript frontend for a pers
 - `docker-compose.yml` – PostgreSQL and pgAdmin services
 
 ## Development workflow
-1. Ensure Docker and Docker Compose are installed.
-2. Install Go (>=1.20) and Node with Yarn (Berry). The root `package.json` defines shared scripts.
-3. Start the development environment with:
-   ```bash
-   yarn dev
-   ```
-   This script starts Docker containers (if needed) and then runs both frontend and backend servers.
-4. Alternatively run only the servers with:
-   ```bash
-   yarn start
-   ```
-   The backend accepts a `--dummy` flag to operate entirely in memory. When running locally without PostgreSQL, start it manually with:
+1. Start the development environment with:
    ```bash
    cd backend && go run main.go --dummy
    ```
-5. Backend environment variables can be set via a `.env` file. Defaults match the values in `docker-compose.yml` (user `mealuser`, password `mealpass`, database `mealplanner`).
+   Start the frontend with
+   ```bash
+   cd frontend && yarn start
+   ```
 
 ## Testing
-- Run **all tests** with:
+- Run **all tests** from the root of the repo with:
   ```bash
   yarn test
   ```
