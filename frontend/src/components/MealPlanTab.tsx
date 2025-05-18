@@ -380,6 +380,13 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 >
                     Get Shopping List
                 </Button>
+                <Button
+                    variant="outlined"
+                    onClick={() => window.open('/api/mealplan/ics', '_blank')}
+                    disabled={!mealPlan}
+                >
+                    Add to Google Calendar
+                </Button>
             </Box>
 
             {shoppingList.length > 0 && (

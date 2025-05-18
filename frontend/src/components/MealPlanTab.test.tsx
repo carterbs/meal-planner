@@ -317,4 +317,23 @@ describe("MealPlanTab", () => {
             value: originalClipboard,
         });
     });
-}); 
+
+    test("opens calendar export", async () => {
+        const openSpy = jest.spyOn(window, "open").mockImplementation(() => null as any);
+
+        await act(async () => {
+            render(<MealPlanTab showToast={mockShowToast} />);
+        });
+
+        await waitForLoadingToComplete();
+
+        const calendarButton = screen.getByText("Add to Google Calendar");
+        await act(async () => {
+            fireEvent.click(calendarButton);
+            jest.advanceTimersByTime(500);
+        });
+
+        expect(openSpy).toHaveBeenCalledWith('/api/mealplan/ics', '_blank');
+        openSpy.mockRestore();
+    });
+});
