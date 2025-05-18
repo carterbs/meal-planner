@@ -10,6 +10,7 @@ The Meal Planner helps users:
 - Avoid repeating meals from recent weeks
 - Create shopping lists for planned meals
 - Manage a collection of recipes with step-by-step instructions
+- Export your meal plan to calendar formats
 
 ## Technology Stack
 
@@ -42,6 +43,8 @@ docker-compose up -d
 yarn
 yarn start
 ```
+
+The weekly plan can be exported as a calendar file from `/api/mealplan/ics` or by clicking the **Add to Google Calendar** button in the Meal Plan tab.
 
 4. Optional: Seed the database with sample data
 ```bash

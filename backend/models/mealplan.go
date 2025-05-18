@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -189,4 +190,39 @@ func GetLastPlannedMeals(db *sql.DB) (map[string]*Meal, error) {
 	}
 
 	return plan, nil
+}
+
+// MealPlanToICS generates an iCalendar representation of the meal plan starting from the provided monday date.
+// Each meal becomes an all-day event with the meal name as the title.
+func MealPlanToICS(plan map[string]*Meal, monday time.Time) string {
+	monday = monday.UTC().Truncate(24 * time.Hour)
+	weekDays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	var b strings.Builder
+	b.WriteString("BEGIN:VCALENDAR\r\n")
+	b.WriteString("VERSION:2.0\r\n")
+	b.WriteString("PRODID:-//Meal Planner//EN\r\n")
+	for i, day := range weekDays {
+		meal, ok := plan[day]
+		if !ok || meal == nil {
+			continue
+		}
+		eventDate := monday.AddDate(0, 0, i)
+		b.WriteString("BEGIN:VEVENT\r\n")
+		b.WriteString("DTSTAMP:" + time.Now().UTC().Format("20060102T150405Z") + "\r\n")
+		b.WriteString("UID:" + fmt.Sprintf("%d-%s@mealplanner", meal.ID, eventDate.Format("20060102")) + "\r\n")
+		b.WriteString("DTSTART;VALUE=DATE:" + eventDate.Format("20060102") + "\r\n")
+		b.WriteString("SUMMARY:" + escapeICSString(meal.MealName) + "\r\n")
+		if meal.URL != "" {
+			b.WriteString("URL:" + meal.URL + "\r\n")
+		}
+		b.WriteString("END:VEVENT\r\n")
+	}
+	b.WriteString("END:VCALENDAR\r\n")
+	return b.String()
+}
+
+// escapeICSString escapes commas and semicolons in strings to conform to the iCalendar format.
+func escapeICSString(s string) string {
+	replacer := strings.NewReplacer(",", "\\,", ";", "\\;", "\n", "\\n")
+	return replacer.Replace(s)
 }
