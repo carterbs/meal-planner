@@ -144,6 +144,7 @@ The frontend communicates with the backend through a RESTful API with these key 
 - `/api/meals` - For recipe management
 - `/api/meals/{mealId}/steps` - For recipe step operations
 - `/api/shoppinglist` - For shopping list generation
+- `/api/mealplan/ics` - Export the meal plan as an iCalendar file
 
 ## Core Features
 
@@ -208,6 +209,7 @@ API Endpoints:
 2. **Copy to Clipboard**
    - One-click copying of meal plans for sharing
    - One-click copying of shopping lists
+   - Exporting the meal plan as an `.ics` calendar file
 
 3. **Visual Feedback**
    - Toast notifications for operation success/failure

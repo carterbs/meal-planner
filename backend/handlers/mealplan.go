@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"mealplanner/dummy"
 	"mealplanner/models"
@@ -160,4 +161,30 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(shoppingList)
+}
+
+// MealPlanICSHandler returns the current meal plan as an iCalendar file.
+func MealPlanICSHandler(w http.ResponseWriter, r *http.Request) {
+	var plan map[string]*models.Meal
+	var err error
+	if UseDummy {
+		plan, err = dummy.GenerateWeeklyMealPlan()
+	} else {
+		plan, err = models.GetLastPlannedMeals(DB)
+		if err != nil {
+			plan, err = models.GenerateWeeklyMealPlan(DB)
+			if err != nil {
+				http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+	monday := time.Now()
+	for monday.Weekday() != time.Monday {
+		monday = monday.AddDate(0, 0, -1)
+	}
+	ics := models.MealPlanToICS(plan, monday)
+	w.Header().Set("Content-Type", "text/calendar")
+	w.Header().Set("Content-Disposition", "attachment; filename=mealplan.ics")
+	w.Write([]byte(ics))
 }
