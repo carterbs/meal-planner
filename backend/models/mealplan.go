@@ -195,6 +195,7 @@ func GetLastPlannedMeals(db *sql.DB) (map[string]*Meal, error) {
 // MealPlanToICS generates an iCalendar representation of the meal plan starting from the provided monday date.
 // Each meal becomes an all-day event with the meal name as the title.
 func MealPlanToICS(plan map[string]*Meal, monday time.Time) string {
+	monday = monday.UTC().Truncate(24 * time.Hour)
 	weekDays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
 	var b strings.Builder
 	b.WriteString("BEGIN:VCALENDAR\r\n")
