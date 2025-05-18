@@ -5,6 +5,7 @@ A full-stack application for planning weekly meals, generating shopping lists, a
 ## Overview
 
 The Meal Planner helps users:
+
 - Generate weekly meal plans based on cooking effort preferences
 - Limit red meat consumption
 - Avoid repeating meals from recent weeks
@@ -28,31 +29,36 @@ The Meal Planner helps users:
 ### Installation
 
 1. Clone the repository
+
 ```bash
 git clone <repository-url>
 cd meal-planner
 ```
 
 2. Start the database using Docker
+
 ```bash
 docker-compose up -d
 ```
 
 3. Install dependencies and start the application
+
 ```bash
 yarn
 yarn start
 ```
 
-The weekly plan can be exported as a calendar file from `/api/mealplan/ics` or by clicking the **Add to Google Calendar** button in the Meal Plan tab.
+The weekly plan can be exported as a calendar file from `/api/mealplan/ics` or by clicking the **Add to Google Calendar** button in the Meal Plan tab. The button downloads an `.ics` file and then opens Google Calendar's import page in a new tab.
 
 4. Optional: Seed the database with sample data
+
 ```bash
 cd backend
 go run main.go --seed
 ```
 
 5. **Optional:** Run the backend using in-memory dummy data (no database needed)
+
 ```bash
 cd backend
 go run main.go --dummy

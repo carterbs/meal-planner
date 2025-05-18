@@ -7,6 +7,7 @@ The Meal Planner is a full-stack application designed to help users plan their w
 ## Technology Stack
 
 ### Backend
+
 - **Language**: Go (version 1.20)
 - **Database**: PostgreSQL
 - **Primary Libraries**:
@@ -17,6 +18,7 @@ The Meal Planner is a full-stack application designed to help users plan their w
   - `github.com/gorilla/mux` - URL routing and dispatching
 
 ### Frontend
+
 - **Language**: TypeScript
 - **Framework**: React 18
 - **UI Library**: Material UI 6 (MUI)
@@ -29,17 +31,20 @@ The Meal Planner is a full-stack application designed to help users plan their w
   - `react-beautiful-dnd` - Drag and drop for lists
 
 ### Infrastructure
+
 - **Docker** - Containerization for development and deployment
 - **Docker Compose** - Multi-container management
 - **Makefile** - Build automation
 
 ### Testing
+
 - Go's native testing package with high test coverage
 - React Testing Library with Jest for frontend tests
 
 ## Architecture
 
 ### Backend
+
 The application follows a layered architecture:
 
 1. **API Layer** (handlers) - HTTP request handling, input validation, and response formatting
@@ -47,6 +52,7 @@ The application follows a layered architecture:
 3. **Data Access Layer** (db) - Database connection management and query execution
 
 ### Frontend
+
 The frontend follows a component-based architecture:
 
 1. **App Component** - Main application container with routing and global state
@@ -59,6 +65,7 @@ The frontend follows a component-based architecture:
 The database consists of several core tables:
 
 1. **meals** - Stores meal information:
+
    - `id` - Primary key
    - `meal_name` - Name of the meal
    - `relative_effort` - Cooking effort rating (0-10)
@@ -67,6 +74,7 @@ The database consists of several core tables:
    - `url` - Optional link to external recipe
 
 2. **ingredients** - Stores ingredients for each meal:
+
    - `id` - Primary key
    - `meal_id` - Foreign key referencing meals
    - `name` - Ingredient name
@@ -90,6 +98,7 @@ The frontend application is structured around a tabbed interface with two main s
 2. **Meal Management Tab** - For browsing, creating, and editing recipes
 
 The application uses a custom Material UI theme with a warm, culinary-focused color palette:
+
 - Primary Color: Sage green (#5E8B3F)
 - Secondary Color: Terracotta (#E9773E)
 - Background: Soft cream (#F8F6F2)
@@ -98,6 +107,7 @@ The application uses a custom Material UI theme with a warm, culinary-focused co
 ### Key Components
 
 1. **MealPlanTab** - Displays the weekly meal plan with:
+
    - Days of the week
    - Assigned meals with effort levels
    - Meal swapping functionality
@@ -106,6 +116,7 @@ The application uses a custom Material UI theme with a warm, culinary-focused co
    - Plan finalization
 
 2. **MealManagementTab** - Provides recipe management with:
+
    - Tabular view of all recipes
    - Detail view for individual recipes
    - Ingredient management
@@ -113,11 +124,13 @@ The application uses a custom Material UI theme with a warm, culinary-focused co
    - Delete functionality
 
 3. **StepsEditor** - Specialized component for:
+
    - Adding, editing, and deleting recipe steps
    - Reordering steps with drag and drop
    - Bulk text import for steps
 
 4. **AddRecipeForm** - Complex form for creating new recipes:
+
    - Basic recipe details (name, effort level, red meat status)
    - Bulk ingredient parsing from text
    - Step management
@@ -132,6 +145,7 @@ The application uses a custom Material UI theme with a warm, culinary-focused co
 ### State Management
 
 The application uses React's useState and useEffect hooks for state management with:
+
 - Local component state for UI elements
 - Lifted state for shared data between components
 - Toast notifications for user feedback
@@ -140,6 +154,7 @@ The application uses React's useState and useEffect hooks for state management w
 ### API Integration
 
 The frontend communicates with the backend through a RESTful API with these key endpoints:
+
 - `/api/mealplan` - For meal plan operations
 - `/api/meals` - For recipe management
 - `/api/meals/{mealId}/steps` - For recipe step operations
@@ -151,6 +166,7 @@ The frontend communicates with the backend through a RESTful API with these key 
 ### 1. Meal Planning
 
 The application generates a weekly meal plan based on several criteria:
+
 - Different effort levels for different days of the week:
   - Monday: Low effort (0-2)
   - Tuesday-Thursday: Low-medium effort (3-5)
@@ -162,6 +178,7 @@ The application generates a weekly meal plan based on several criteria:
 - Allows users to swap individual meals if they don't like the suggestion
 
 API Endpoints:
+
 - `GET /api/mealplan` - Retrieves the current meal plan (or generates a new one)
 - `POST /api/mealplan/generate` - Generates a new meal plan
 - `POST /api/mealplan/finalize` - Finalizes a meal plan
@@ -173,6 +190,7 @@ API Endpoints:
 The application can generate a shopping list based on the selected meal plan.
 
 API Endpoints:
+
 - `POST /api/shoppinglist` - Generates a shopping list from a meal plan
 
 ### 3. Recipe Management
@@ -180,6 +198,7 @@ API Endpoints:
 Users can view, create, update, and delete meals (recipes) in the system.
 
 API Endpoints:
+
 - `GET /api/meals` - Lists all meals in the database
 - `POST /api/meals` - Creates a new meal
 - `DELETE /api/meals/{mealId}` - Deletes a meal
@@ -191,6 +210,7 @@ API Endpoints:
 The application allows detailed management of recipe preparation steps.
 
 API Endpoints:
+
 - `GET /api/meals/{mealId}/steps` - Gets all steps for a meal
 - `POST /api/meals/{mealId}/steps` - Adds a step to a meal
 - `POST /api/meals/{mealId}/steps/bulk` - Adds multiple steps at once
@@ -202,6 +222,7 @@ API Endpoints:
 ## User Experience Features
 
 1. **Intelligent Form Processing**
+
    - Automatic conversion of common fraction characters to decimal values
    - Bulk ingredient parsing from text
    - Step reordering via drag and drop
@@ -209,13 +230,16 @@ API Endpoints:
 2. **Copy to Clipboard**
    - One-click copying of meal plans for sharing
    - One-click copying of shopping lists
-   - Exporting the meal plan as an `.ics` calendar file
+
+- Exporting the meal plan as an `.ics` calendar file and opening Google Calendar's import page
 
 3. **Visual Feedback**
+
    - Toast notifications for operation success/failure
    - Loading indicators for asynchronous operations
 
 4. **Error Handling**
+
    - Specialized error handling for database connection issues
    - Reconnection functionality
    - User-friendly error messages
@@ -227,6 +251,7 @@ API Endpoints:
 ## Error Handling
 
 The application includes robust error handling, especially for database connectivity:
+
 - Custom error messages for database connection issues
 - Middleware that provides user-friendly error messages
 - Health check endpoint (`/api/health`) to verify database connectivity
@@ -235,26 +260,31 @@ The application includes robust error handling, especially for database connecti
 ## User Stories
 
 1. **Weekly Meal Planning**
+
    - As a user, I want the application to generate a weekly meal plan based on my preferences
    - As a user, I want different effort levels for different days of the week
    - As a user, I want to avoid repeating meals from recent weeks
    - As a user, I want to limit red meat consumption
 
 2. **Customizing Meal Plans**
+
    - As a user, I want to swap individual meals if I don't like the suggestion
    - As a user, I want to save my meal plan for the week
 
 3. **Shopping List Generation**
+
    - As a user, I want to generate a shopping list based on my meal plan
    - As a user, I want to see all ingredients needed for the week
 
 4. **Recipe Management**
+
    - As a user, I want to view all available recipes
    - As a user, I want to add new recipes to the system
    - As a user, I want to update ingredients in existing recipes
    - As a user, I want to delete recipes I no longer use
 
 5. **Recipe Steps Management**
+
    - As a user, I want to add detailed preparation steps to my recipes
    - As a user, I want to update and reorder steps as needed
    - As a user, I want to see clear instructions when cooking
@@ -267,6 +297,7 @@ The application includes robust error handling, especially for database connecti
 ## Development Setup
 
 The application uses Docker for local development:
+
 - PostgreSQL is deployed via Docker Compose
 - Environment variables are loaded from a `.env` file
 - Database migrations are automatically applied when the application starts
@@ -278,28 +309,34 @@ The application uses Docker for local development:
 Based on the codebase review, potential improvements could include:
 
 1. **Shopping List Optimization**
+
    - Grouping similar ingredients
    - Converting units for better aggregation
    - Highlighting pantry staples
 
 2. **Enhanced Meal Planning Algorithms**
+
    - Consider dietary restrictions
    - Balance nutritional content
    - Support for themed meal days
 
 3. **User Authentication**
+
    - Personal recipe collections
    - Sharing functionality
 
 4. **Media Support**
+
    - Recipe images
    - Step-by-step photos
 
 5. **Mobile Optimization**
+
    - Responsive design for mobile use
-   - Potential mobile app version 
+   - Potential mobile app version
 
 6. **Advanced Frontend Features**
+
    - Meal plan calendar view
    - Nutrition information
    - Recipe rating system
@@ -309,4 +346,4 @@ Based on the codebase review, potential improvements could include:
 7. **Performance Optimizations**
    - Code splitting for faster load times
    - Caching frequently accessed data
-   - Optimistic UI updates 
+   - Optimistic UI updates
