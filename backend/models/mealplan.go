@@ -105,7 +105,7 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 	var m Meal
 	var lastPlanned sql.NullTime
 	var url sql.NullString
-	err := row.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url)
+	err := row.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url, &m.MealType)
 	if url.Valid {
 		m.URL = url.String
 	}
@@ -146,7 +146,7 @@ func GetLastPlannedMeals(db *sql.DB) (map[string]*Meal, error) {
 		var m Meal
 		var lastPlanned sql.NullTime
 		var url sql.NullString
-		err := rows.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url)
+		err := rows.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url, &m.MealType)
 		if err != nil {
 			return nil, err
 		}

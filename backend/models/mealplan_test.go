@@ -23,8 +23,8 @@ func TestPickMeal(t *testing.T) {
 		queryRegex := regexp.QuoteMeta(buildPickMealQuery(false))
 
 		// Return a test row using the shared MealColumns.
-		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"}).
-			AddRow(1, "Test Meal", 2, nil, false, "https://example.com/test")
+		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"}).
+			AddRow(1, "Test Meal", 2, nil, false, "https://example.com/test", "dinner")
 
 		mock.ExpectQuery(queryRegex).
 			WithArgs(0, 2, sqlmock.AnyArg()).
@@ -44,8 +44,8 @@ func TestPickMeal(t *testing.T) {
 		queryRegex := regexp.QuoteMeta(buildPickMealQuery(true))
 
 		// Return a test row that represents a meal without red meat.
-		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"}).
-			AddRow(2, "Non Red Meat Meal", 4, nil, false, "https://example.com/nonredmeat")
+		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"}).
+			AddRow(2, "Non Red Meat Meal", 4, nil, false, "https://example.com/nonredmeat", "dinner")
 
 		mock.ExpectQuery(queryRegex).
 			WithArgs(3, 5, sqlmock.AnyArg()).
@@ -111,8 +111,8 @@ func TestGenerateWeeklyMealPlan(t *testing.T) {
 		mock.ExpectQuery(queryRegex).
 			WithArgs(d.minEffort, d.maxEffort, sqlmock.AnyArg()).
 			WillReturnRows(
-				sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"}).
-					AddRow(i+10, d.day+" Meal", (d.minEffort+d.maxEffort)/2, nil, false, "https://example.com/"+d.day),
+				sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"}).
+					AddRow(i+10, d.day+" Meal", (d.minEffort+d.maxEffort)/2, nil, false, "https://example.com/"+d.day, "dinner"),
 			)
 	}
 
@@ -160,19 +160,19 @@ func TestGetLastPlannedMeals(t *testing.T) {
 		}
 
 		// Setup expected query and result
-		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"})
+		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"})
 
 		// Add rows for each day of the week
-		rows.AddRow(1, "Monday Meal", 2, lastPlannedDates[0], false, "https://example.com/monday")
-		rows.AddRow(2, "Tuesday Meal", 3, lastPlannedDates[1], false, "https://example.com/tuesday")
-		rows.AddRow(3, "Wednesday Meal", 4, lastPlannedDates[2], true, "https://example.com/wednesday")
-		rows.AddRow(4, "Thursday Meal", 3, lastPlannedDates[3], false, "https://example.com/thursday")
-		rows.AddRow(5, "Friday Meal", 1, lastPlannedDates[4], false, "https://example.com/friday")
-		rows.AddRow(6, "Saturday Meal", 5, lastPlannedDates[5], true, "https://example.com/saturday")
-		rows.AddRow(7, "Sunday Meal", 7, lastPlannedDates[6], false, "https://example.com/sunday")
+		rows.AddRow(1, "Monday Meal", 2, lastPlannedDates[0], false, "https://example.com/monday", "dinner")
+		rows.AddRow(2, "Tuesday Meal", 3, lastPlannedDates[1], false, "https://example.com/tuesday", "dinner")
+		rows.AddRow(3, "Wednesday Meal", 4, lastPlannedDates[2], true, "https://example.com/wednesday", "dinner")
+		rows.AddRow(4, "Thursday Meal", 3, lastPlannedDates[3], false, "https://example.com/thursday", "dinner")
+		rows.AddRow(5, "Friday Meal", 1, lastPlannedDates[4], false, "https://example.com/friday", "dinner")
+		rows.AddRow(6, "Saturday Meal", 5, lastPlannedDates[5], true, "https://example.com/saturday", "dinner")
+		rows.AddRow(7, "Sunday Meal", 7, lastPlannedDates[6], false, "https://example.com/sunday", "dinner")
 
 		queryRegex := regexp.QuoteMeta(`
-			SELECT id, meal_name, relative_effort, last_planned, red_meat, url
+			SELECT id, meal_name, relative_effort, last_planned, red_meat, url, meal_type
 			FROM meals
 			WHERE last_planned IS NOT NULL
 			ORDER BY last_planned DESC
@@ -213,12 +213,12 @@ func TestGetLastPlannedMeals(t *testing.T) {
 
 	t.Run("not enough meals found", func(t *testing.T) {
 		// Setup expected query with fewer than 7 meals
-		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"})
-		rows.AddRow(1, "Monday Meal", 2, time.Now(), false, "https://example.com/monday")
-		rows.AddRow(2, "Tuesday Meal", 3, time.Now().AddDate(0, 0, -1), false, "https://example.com/tuesday")
+		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"})
+		rows.AddRow(1, "Monday Meal", 2, time.Now(), false, "https://example.com/monday", "dinner")
+		rows.AddRow(2, "Tuesday Meal", 3, time.Now().AddDate(0, 0, -1), false, "https://example.com/tuesday", "dinner")
 
 		queryRegex := regexp.QuoteMeta(`
-			SELECT id, meal_name, relative_effort, last_planned, red_meat, url
+			SELECT id, meal_name, relative_effort, last_planned, red_meat, url, meal_type
 			FROM meals
 			WHERE last_planned IS NOT NULL
 			ORDER BY last_planned DESC
@@ -238,10 +238,10 @@ func TestGetLastPlannedMeals(t *testing.T) {
 
 	t.Run("no last planned meals", func(t *testing.T) {
 		// Setup expected query with no rows
-		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"})
+		rows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"})
 
 		queryRegex := regexp.QuoteMeta(`
-			SELECT id, meal_name, relative_effort, last_planned, red_meat, url
+			SELECT id, meal_name, relative_effort, last_planned, red_meat, url, meal_type
 			FROM meals
 			WHERE last_planned IS NOT NULL
 			ORDER BY last_planned DESC
@@ -261,7 +261,7 @@ func TestGetLastPlannedMeals(t *testing.T) {
 
 	t.Run("database error", func(t *testing.T) {
 		queryRegex := regexp.QuoteMeta(`
-			SELECT id, meal_name, relative_effort, last_planned, red_meat, url
+			SELECT id, meal_name, relative_effort, last_planned, red_meat, url, meal_type
 			FROM meals
 			WHERE last_planned IS NOT NULL
 			ORDER BY last_planned DESC

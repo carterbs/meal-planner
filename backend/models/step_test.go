@@ -22,7 +22,8 @@ func setupStepDB(t *testing.T) *sql.DB {
 			relative_effort INTEGER DEFAULT 3,
 			last_planned TIMESTAMP,
 			red_meat BOOLEAN DEFAULT FALSE,
-			url TEXT
+			url TEXT,
+			meal_type VARCHAR(20) NOT NULL DEFAULT 'dinner'
 		)
 	`)
 	if err != nil {
@@ -46,8 +47,8 @@ func setupStepDB(t *testing.T) *sql.DB {
 
 	// Insert a test meal
 	_, err = db.Exec(`
-		INSERT INTO meals (id, meal_name, relative_effort, red_meat)
-		VALUES (1, 'Test Meal', 3, 0)
+		INSERT INTO meals (id, meal_name, relative_effort, red_meat, meal_type)
+		VALUES (1, 'Test Meal', 3, 0, 'dinner')
 	`)
 	if err != nil {
 		t.Fatalf("Error inserting test meal: %v", err)

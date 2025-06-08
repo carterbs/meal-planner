@@ -16,12 +16,13 @@ type Meal struct {
 	LastPlanned    time.Time    `json:"lastPlanned"`
 	RedMeat        bool         `json:"redMeat"`
 	URL            string       `json:"url"`
+	MealType       string       `json:"mealType"`
 	Ingredients    []Ingredient `json:"ingredients"`
 	Steps          []Step       `json:"steps,omitempty"`
 }
 
 // MealColumns defines the column names for Meal queries.
-var MealColumns = []string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url"}
+var MealColumns = []string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"}
 
 // MealsQueryFragment is the common fragment for querying meals along with ingredients.
 const MealsQueryFragment = `
@@ -32,6 +33,7 @@ const MealsQueryFragment = `
 		m.last_planned,
 		m.red_meat,
 		m.url,
+		m.meal_type,
 		mi.id AS ingredient_id,
 		mi.name,
 		CASE WHEN mi.quantity = '' THEN NULL ELSE mi.quantity::numeric END AS quantity,
@@ -67,12 +69,13 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 			nt             sql.NullTime // scan as sql.NullTime
 			redMeat        bool
 			url            sql.NullString // URL could be NULL
+			mealType       string         // meal_type has a default, so it won't be NULL
 			ingredientID   sql.NullInt64  // using sql.NullInt64 since a meal may have 0 ingredients
 			ingredientName sql.NullString
 			quantity       sql.NullFloat64
 			unit           sql.NullString
 		)
-		err := rows.Scan(&mealID, &mealName, &relativeEffort, &nt, &redMeat, &url,
+		err := rows.Scan(&mealID, &mealName, &relativeEffort, &nt, &redMeat, &url, &mealType,
 			&ingredientID, &ingredientName, &quantity, &unit)
 		if err != nil {
 			log.Printf("processMealRows: error scanning row (mealID=%d): %v", mealID, err)
@@ -107,6 +110,7 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 				LastPlanned:    lp,
 				RedMeat:        redMeat,
 				URL:            urlValue,
+				MealType:       mealType,
 				Ingredients:    []Ingredient{},
 				Steps:          []Step{},
 			}
@@ -320,15 +324,21 @@ func CreateMeal(db *sql.DB, meal Meal) (*Meal, error) {
 
 	// Insert the meal
 	var mealID int
+	// Set default meal_type to "dinner" if not provided
+	mealType := meal.MealType
+	if mealType == "" {
+		mealType = "dinner"
+	}
 	err = tx.QueryRow(
-		"INSERT INTO meals (meal_name, relative_effort, red_meat, url) VALUES ($1, $2, $3, $4) RETURNING id",
-		meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL,
+		"INSERT INTO meals (meal_name, relative_effort, red_meat, url, meal_type) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+		meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL, mealType,
 	).Scan(&mealID)
 	if err != nil {
 		log.Printf("CreateMeal: error inserting meal: %v", err)
 		return nil, err
 	}
 	meal.ID = mealID
+	meal.MealType = mealType
 
 	// Insert the ingredients
 	for i := range meal.Ingredients {
