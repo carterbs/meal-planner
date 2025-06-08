@@ -382,7 +382,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 </Button>
                 <Button
                     variant="outlined"
-                    onClick={() => window.open('/api/mealplan/ics', '_blank')}
+                    onClick={() => window.open('http://localhost:8080/api/mealplan/ics', '_blank')}
                     disabled={!mealPlan}
                 >
                     Add to Google Calendar
