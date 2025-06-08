@@ -17,6 +17,7 @@ import (
 var UseDummy bool
 
 // GetAllMealsHandler handles GET /api/meals and returns all meals with their ingredients.
+// Supports optional query parameter "type" to filter by meal type (breakfast, lunch, dinner).
 func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 	var meals []*models.Meal
 	var err error
@@ -28,6 +29,18 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Error retrieving meals: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Filter by meal type if specified
+	mealType := r.URL.Query().Get("type")
+	if mealType != "" {
+		filteredMeals := []*models.Meal{}
+		for _, meal := range meals {
+			if meal.MealType == mealType {
+				filteredMeals = append(filteredMeals, meal)
+			}
+		}
+		meals = filteredMeals
 	}
 
 	// Sort meals alphabetically by name (A -> Z), case-insensitive
