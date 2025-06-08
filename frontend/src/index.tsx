@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { ExperimentalPlanner } from "./components/ExperimentalPlanner";
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
@@ -18,11 +19,13 @@ try {
     }
 
     const root = ReactDOM.createRoot(rootElement);
+    const path = window.location.pathname;
+    const element = path === '/experimental' ? <ExperimentalPlanner /> : <App />;
     root.render(
         <React.StrictMode>
             <ThemeProvider theme={theme}>
                 <CssBaseline />
-                <App />
+                {element}
             </ThemeProvider>
         </React.StrictMode>
     );
