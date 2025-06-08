@@ -333,7 +333,7 @@ describe("MealPlanTab", () => {
             jest.advanceTimersByTime(500);
         });
 
-        expect(openSpy).toHaveBeenCalledWith('/api/mealplan/ics', '_blank');
+        expect(openSpy).toHaveBeenCalledWith('http://localhost:8080/api/mealplan/ics', '_blank');
         openSpy.mockRestore();
     });
 
