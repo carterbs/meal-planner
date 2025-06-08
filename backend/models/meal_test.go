@@ -40,14 +40,14 @@ func setupTestDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
 // setupMealRows creates mock rows for meal queries
 func setupMealRows(meals []testMeal) *sqlmock.Rows {
 	rows := sqlmock.NewRows([]string{
-		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url",
+		"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type",
 		"ingredient_id", "name", "quantity", "unit",
 	})
 
 	for _, meal := range meals {
 		// If meal has no ingredients, add a row with null ingredient values
 		if len(meal.Ingredients) == 0 {
-			rows.AddRow(meal.ID, meal.Name, meal.Effort, meal.LastPlanned, meal.RedMeat, meal.URL,
+			rows.AddRow(meal.ID, meal.Name, meal.Effort, meal.LastPlanned, meal.RedMeat, meal.URL, "dinner",
 				nil, nil, nil, nil)
 			continue
 		}
@@ -55,7 +55,7 @@ func setupMealRows(meals []testMeal) *sqlmock.Rows {
 		// Add a row for each ingredient
 		for _, ing := range meal.Ingredients {
 			rows.AddRow(
-				meal.ID, meal.Name, meal.Effort, meal.LastPlanned, meal.RedMeat, meal.URL,
+				meal.ID, meal.Name, meal.Effort, meal.LastPlanned, meal.RedMeat, meal.URL, "dinner",
 				ing.ID, ing.Name, ing.Quantity, ing.Unit)
 		}
 	}
@@ -428,8 +428,8 @@ func TestCreateMeal(t *testing.T) {
 	mock.ExpectBegin()
 
 	// Expect meal insertion
-	mock.ExpectQuery("INSERT INTO meals \\(meal_name, relative_effort, red_meat, url\\) VALUES").
-		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL).
+	mock.ExpectQuery("INSERT INTO meals \\(meal_name, relative_effort, red_meat, url, meal_type\\) VALUES").
+		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL, "dinner").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 	// Expect ingredient insertions
@@ -488,7 +488,7 @@ func TestCreateMeal_Error(t *testing.T) {
 
 	// Expect meal insertion with error
 	mock.ExpectQuery("INSERT INTO meals").
-		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL).
+		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL, "dinner").
 		WillReturnError(sql.ErrConnDone)
 
 	// Expect transaction rollback
