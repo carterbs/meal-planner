@@ -10,6 +10,7 @@ export const mockMealPlan: MealPlan = {
         relativeEffort: 2,
         lastPlanned: "2024-02-15T00:00:00Z",
         redMeat: false,
+        mealType: "dinner",
         ingredients: [
             { ID: 1, Name: "Ingredient 1", Quantity: 2, Unit: "cups" }
         ]
@@ -20,6 +21,7 @@ export const mockMealPlan: MealPlan = {
         relativeEffort: 3,
         lastPlanned: "2024-02-15T00:00:00Z",
         redMeat: true,
+        mealType: "dinner",
         ingredients: [
             { ID: 2, Name: "Ingredient 2", Quantity: 1, Unit: "tbsp" }
         ]
@@ -30,6 +32,7 @@ export const mockMealPlan: MealPlan = {
         relativeEffort: 1,
         lastPlanned: "2024-02-15T00:00:00Z",
         redMeat: false,
+        mealType: "dinner",
         ingredients: []
     }
 };
@@ -41,6 +44,7 @@ export const mockAvailableMeals: Meal[] = [
         relativeEffort: 2,
         lastPlanned: "2024-02-15T00:00:00Z",
         redMeat: false,
+        mealType: "dinner",
         ingredients: []
     },
     {
@@ -49,6 +53,7 @@ export const mockAvailableMeals: Meal[] = [
         relativeEffort: 1,
         lastPlanned: "2024-02-15T00:00:00Z",
         redMeat: true,
+        mealType: "dinner",
         ingredients: []
     }
 ];

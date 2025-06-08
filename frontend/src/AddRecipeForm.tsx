@@ -29,6 +29,7 @@ const initialMealState: Omit<Meal, 'id' | 'lastPlanned'> = {
   relativeEffort: 3,
   redMeat: false,
   url: '',
+  mealType: 'dinner',
   ingredients: [],
   steps: []
 };
