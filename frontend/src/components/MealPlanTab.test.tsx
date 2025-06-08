@@ -336,4 +336,112 @@ describe("MealPlanTab", () => {
         expect(openSpy).toHaveBeenCalledWith('/api/mealplan/ics', '_blank');
         openSpy.mockRestore();
     });
+
+    test("displays shopping list items with quantities correctly", async () => {
+        const shoppingListWithQuantities = [
+            { ID: 1, Name: "Flour", Quantity: 2, Unit: "cups" },
+            { ID: 2, Name: "Sugar", Quantity: 1, Unit: "tbsp" },
+            { ID: 3, Name: "Salt", Quantity: 0.5, Unit: "tsp" }
+        ];
+
+        setupFetchMocks({ shoppingList: shoppingListWithQuantities });
+
+        await act(async () => {
+            render(<MealPlanTab showToast={mockShowToast} />);
+        });
+
+        await waitForLoadingToComplete();
+
+        const shoppingListButton = screen.getByText("Get Shopping List");
+        
+        await act(async () => {
+            fireEvent.click(shoppingListButton);
+            jest.advanceTimersByTime(500);
+        });
+
+        // Check that items with quantities display correctly
+        expect(screen.getByText("2 cups Flour")).toBeInTheDocument();
+        expect(screen.getByText("1 tbsp Sugar")).toBeInTheDocument();
+        expect(screen.getByText("0.5 tsp Salt")).toBeInTheDocument();
+    });
+
+    test("displays shopping list items without quantities correctly (no leading 0)", async () => {
+        const shoppingListWithZeroQuantities = [
+            { ID: 1, Name: "Melon", Quantity: 0, Unit: "" },
+            { ID: 2, Name: "Tortellini", Quantity: 0, Unit: "" },
+            { ID: 3, Name: "Bread", Quantity: 1, Unit: "loaf" }
+        ];
+
+        setupFetchMocks({ shoppingList: shoppingListWithZeroQuantities });
+
+        await act(async () => {
+            render(<MealPlanTab showToast={mockShowToast} />);
+        });
+
+        await waitForLoadingToComplete();
+
+        const shoppingListButton = screen.getByText("Get Shopping List");
+        
+        await act(async () => {
+            fireEvent.click(shoppingListButton);
+            jest.advanceTimersByTime(500);
+        });
+
+        // Check that items without quantities display just the name (no "0" prefix)
+        expect(screen.getByText("Melon")).toBeInTheDocument();
+        expect(screen.getByText("Tortellini")).toBeInTheDocument();
+        expect(screen.getByText("1 loaf Bread")).toBeInTheDocument();
+
+        // Make sure we don't see "0  Melon" or "0  Tortellini"
+        expect(screen.queryByText("0  Melon")).not.toBeInTheDocument();
+        expect(screen.queryByText("0  Tortellini")).not.toBeInTheDocument();
+    });
+
+    test("clipboard copy formats items correctly (with and without quantities)", async () => {
+        const mixedShoppingList = [
+            { ID: 1, Name: "Flour", Quantity: 2, Unit: "cups" },
+            { ID: 2, Name: "Melon", Quantity: 0, Unit: "" },
+            { ID: 3, Name: "Salt", Quantity: 1, Unit: "tsp" }
+        ];
+
+        setupFetchMocks({ shoppingList: mixedShoppingList });
+
+        // Mock clipboard API
+        const mockClipboardWrite = jest.fn().mockResolvedValue(undefined);
+        const originalClipboard = navigator.clipboard;
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: { writeText: mockClipboardWrite },
+        });
+
+        await act(async () => {
+            render(<MealPlanTab showToast={mockShowToast} />);
+        });
+
+        await waitForLoadingToComplete();
+
+        const shoppingListButton = screen.getByText("Get Shopping List");
+        
+        await act(async () => {
+            fireEvent.click(shoppingListButton);
+            jest.advanceTimersByTime(500);
+        });
+
+        const copyButton = screen.getByText("Copy to Clipboard");
+
+        await act(async () => {
+            fireEvent.click(copyButton);
+            jest.advanceTimersByTime(500);
+        });
+
+        // Verify clipboard was called with correctly formatted text
+        expect(mockClipboardWrite).toHaveBeenCalledWith("2 cups Flour\nMelon\n1 tsp Salt");
+        expect(mockShowToast).toHaveBeenCalledWith('Shopping list copied to clipboard!');
+
+        // Restore original clipboard
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: originalClipboard,
+        });
+    });
 });

@@ -169,7 +169,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
 
     const copyShoppingListToClipboard = () => {
         const formattedList = shoppingList
-            .map(item => `${item.Quantity} ${item.Unit} ${item.Name}`)
+            .map(item => `${item.Quantity > 0 ? `${item.Quantity} ${item.Unit} ` : ''}${item.Name}`)
             .join('\n');
         navigator.clipboard.writeText(formattedList)
             .then(() => showToast('Shopping list copied to clipboard!'))
@@ -439,7 +439,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                         <List>
                             {shoppingList.map((item, index) => (
                                 <ListItem key={index}>
-                                    <ListItemText primary={`${item.Quantity} ${item.Unit} ${item.Name}`} />
+                                    <ListItemText primary={`${item.Quantity > 0 ? `${item.Quantity} ${item.Unit} ` : ''}${item.Name}`} />
                                 </ListItem>
                             ))}
                         </List>
