@@ -4,6 +4,7 @@ import App from "./App";
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
+import { BrowserRouter } from 'react-router-dom';
 
 // Add Google Fonts
 const fontLink = document.createElement('link');
@@ -20,10 +21,12 @@ try {
     const root = ReactDOM.createRoot(rootElement);
     root.render(
         <React.StrictMode>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <App />
-            </ThemeProvider>
+            <BrowserRouter>
+                <ThemeProvider theme={theme}>
+                    <CssBaseline />
+                    <App />
+                </ThemeProvider>
+            </BrowserRouter>
         </React.StrictMode>
     );
 } catch (error) {

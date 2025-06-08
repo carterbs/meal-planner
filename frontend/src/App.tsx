@@ -24,6 +24,8 @@ import { MealPlanTab } from './components/MealPlanTab';
 import { MealManagementTab } from './components/MealManagementTab';
 import { Toast } from './components/Toast';
 import { DatabaseConnectionError } from './components/DatabaseConnectionError';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import Timeline from './components/Timeline';
 
 const App: React.FC = () => {
     const theme = useTheme();
@@ -146,7 +148,7 @@ const App: React.FC = () => {
         return <DatabaseConnectionError onRetry={reconnectDatabase} />;
     }
 
-    return (
+    const MainContent = (
         <Box
             sx={{
                 display: 'flex',
@@ -284,6 +286,13 @@ const App: React.FC = () => {
 
             <Toast message={toast} />
         </Box>
+    );
+
+    return (
+        <Routes>
+            <Route path="/timeline" element={<Timeline />} />
+            <Route path="*" element={MainContent} />
+        </Routes>
     );
 };
 
