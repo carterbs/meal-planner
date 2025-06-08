@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import Wizard from "./wizard/Wizard";
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
@@ -18,11 +19,12 @@ try {
     }
 
     const root = ReactDOM.createRoot(rootElement);
+    const isWizard = window.location.pathname.startsWith('/wizard');
     root.render(
         <React.StrictMode>
             <ThemeProvider theme={theme}>
                 <CssBaseline />
-                <App />
+                {isWizard ? <Wizard /> : <App />}
             </ThemeProvider>
         </React.StrictMode>
     );

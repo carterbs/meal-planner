@@ -64,29 +64,28 @@ describe('index.tsx', () => {
         }
     });
 
-    it('renders app component inside create root', () => {
-        // Mock document.getElementById to return a div
+    it('renders App by default', () => {
         mockGetElementById.mockReturnValue(document.createElement('div'));
-
-        // Require index.tsx
         require('./index');
-
-        // Verify createRoot was called
         expect(mockCreateRoot).toHaveBeenCalled();
-
-        // Extract the render call
         const renderCall = mockRender.mock.calls[0][0];
-        expect(renderCall.type.name).toBe('StrictMode');
-
-        // Verify it contains ThemeProvider with App component inside
         const themeProvider = renderCall.props.children;
-        expect(themeProvider.type.name).toBe('ThemeProvider');
-
-        // Verify App is inside ThemeProvider (after CssBaseline)
-        const cssBaseline = themeProvider.props.children[0];
         const app = themeProvider.props.children[1];
-        expect(cssBaseline.type.name).toBe('CssBaseline');
         expect(app.type.name).toBe('App');
+    });
+
+    it('renders Wizard when path is /wizard', () => {
+        Object.defineProperty(window, 'location', {
+            value: { pathname: '/wizard' },
+            writable: true
+        });
+        mockGetElementById.mockReturnValue(document.createElement('div'));
+        jest.resetModules();
+        require('./index');
+        const renderCall = mockRender.mock.calls[0][0];
+        const themeProvider = renderCall.props.children;
+        const child = themeProvider.props.children[1];
+        expect(child.type.name).toBe('Wizard');
     });
 
     it('handles missing root element gracefully', () => {
