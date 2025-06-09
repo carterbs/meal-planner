@@ -60,7 +60,7 @@ let theme = createTheme({
             contrastText: '#FFFFFF',
         },
         background: {
-            default: `linear-gradient(135deg, ${offWhite} 0%, ${paleSage} 100%)`,
+            default: paleSage,
             paper: warmCream,
         },
         text: {
