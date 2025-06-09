@@ -17,7 +17,7 @@ import {
     Avatar,
     Fade
 } from '@mui/material';
-import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import FoodBankIcon from '@mui/icons-material/FoodBank';
 import { MealPlanTab } from './components/MealPlanTab';
@@ -125,17 +125,17 @@ const App: React.FC = () => {
                     justifyContent: 'center',
                     alignItems: 'center',
                     height: '100vh',
-                    backgroundColor: theme.palette.background.default,
+                    background: 'linear-gradient(135deg, #f4f7f0 0%, #eef4ea 100%)',
                     gap: 3
                 }}
             >
-                <FoodBankIcon sx={{ fontSize: 60, color: 'primary.main', mb: 1 }} />
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
-                    Meal Planner
+                <RestaurantIcon sx={{ fontSize: 60, color: '#7fb069', mb: 1 }} />
+                <Typography variant="h1" sx={{ color: '#7fb069' }}>
+                    🍴 Weekly Meal Plan
                 </Typography>
-                <CircularProgress color="primary" />
-                <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-                    Preparing your culinary experience...
+                <CircularProgress sx={{ color: '#7fb069' }} />
+                <Typography variant="body1" sx={{ mt: 2, color: '#6b7668' }}>
+                    Plan your meals for the week ahead
                 </Typography>
             </Box>
         );
@@ -152,135 +152,147 @@ const App: React.FC = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 minHeight: '100vh',
-                background: `
-                    linear-gradient(${alpha(theme.palette.primary.light, 0.01)}, ${alpha(theme.palette.background.default, 1)}),
-                    radial-gradient(circle at 25px 25px, ${alpha(theme.palette.primary.light, 0.15)} 2%, transparent 0%),
-                    radial-gradient(circle at 75px 75px, ${alpha(theme.palette.secondary.light, 0.1)} 2%, transparent 0%)
-                `,
-                backgroundSize: '100px 100px',
-                backgroundColor: theme.palette.background.default
+                background: 'linear-gradient(135deg, #f4f7f0 0%, #eef4ea 100%)',
+                padding: '20px',
             }}
         >
-            <AppBar
-                position="sticky"
-                elevation={0}
-                sx={{
-                    backdropFilter: 'blur(8px)',
-                    borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                }}
-            >
-                <Container maxWidth="lg">
-                    <Toolbar
-                        disableGutters
-                        sx={{
-                            py: 1.5,
-                            display: 'flex',
-                            justifyContent: 'space-between'
-                        }}
-                    >
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <RestaurantMenuIcon
-                                sx={{
-                                    fontSize: 32,
-                                    color: 'primary.main',
-                                    mr: 1
-                                }}
-                            />
-                            <Typography
-                                variant="h4"
-                                component="h1"
-                                sx={{
-                                    fontWeight: 700,
-                                    fontFamily: 'Playfair Display, serif',
-                                    color: theme.palette.text.primary,
-                                    letterSpacing: '-0.02em',
-                                }}
-                            >
-                                Meal Planner
-                            </Typography>
-                        </Stack>
-
-                        <Tabs
-                            value={activeTab}
-                            onChange={(_, newValue) => setActiveTab(newValue)}
-                            indicatorColor="primary"
-                            textColor="primary"
-                            sx={{
-                                '& .MuiTab-root': {
-                                    minWidth: 120,
-                                    fontWeight: 600,
-                                }
-                            }}
-                        >
-                            <Tab
-                                label="Meal Plan"
-                                icon={<CalendarMonthIcon />}
-                                iconPosition="start"
-                            />
-                            <Tab
-                                label="Meal Management"
-                                icon={<FoodBankIcon />}
-                                iconPosition="start"
-                            />
-                        </Tabs>
-                    </Toolbar>
-                </Container>
-            </AppBar>
-
             <Container
-                maxWidth="lg"
+                maxWidth={false}
                 sx={{
-                    flex: 1,
-                    py: 5,
+                    maxWidth: '1400px',
+                    margin: '0 auto',
+                    background: 'linear-gradient(135deg, #fefffe 0%, #f9fdf7 100%)',
+                    borderRadius: '16px',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
+                    overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
+                    minHeight: 'calc(100vh - 40px)',
                 }}
             >
-                <Fade in={true} timeout={800}>
-                    <Paper
-                        elevation={0}
+                {/* Header */}
+                <Box
+                    sx={{
+                        padding: '24px 40px',
+                        background: 'linear-gradient(135deg, #8b9a7a 0%, #a8b89a 100%)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        color: 'white',
+                        '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                        },
+                    }}
+                >
+                    <Box sx={{ position: 'relative', zIndex: 1 }}>
+                        <Typography
+                            variant="h1"
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                color: 'white',
+                                marginBottom: '4px',
+                            }}
+                        >
+                            <span style={{ fontSize: '1.2rem' }}>🍴</span>
+                            Weekly Meal Plan
+                        </Typography>
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
+                                color: 'rgba(255,255,255,0.9)',
+                            }}
+                        >
+                            Plan your meals for the week ahead
+                        </Typography>
+                    </Box>
+                </Box>
+
+                {/* Navigation Tabs - moved to a separate section */}
+                <Box
+                    sx={{
+                        backgroundColor: 'white',
+                        borderBottom: '1px solid #e5e7eb',
+                        padding: '0 40px',
+                    }}
+                >
+                    <Tabs
+                        value={activeTab}
+                        onChange={(_, newValue) => setActiveTab(newValue)}
+                        indicatorColor="primary"
+                        textColor="primary"
                         sx={{
-                            p: { xs: 2, sm: 4 },
-                            mb: 2,
-                            borderRadius: 3,
-                            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
-                            flex: 1,
-                            overflow: 'hidden',
-                            border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                            position: 'relative',
-                            '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: '6px',
-                                background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                                borderRadius: '3px 3px 0 0',
-                            }
+                            '& .MuiTab-root': {
+                                minWidth: 120,
+                                fontWeight: 500,
+                                fontSize: '0.875rem',
+                                color: '#6b7668',
+                                textTransform: 'none',
+                                padding: '12px 0',
+                                marginRight: '24px',
+                                '&.Mui-selected': {
+                                    color: '#4a5d3a',
+                                    fontWeight: 600,
+                                },
+                            },
+                            '& .MuiTabs-indicator': {
+                                background: 'linear-gradient(90deg, #7fb069 0%, #1b998b 100%)',
+                                height: 3,
+                            },
                         }}
                     >
-                        {activeTab === 0 && <MealPlanTab showToast={showToast} />}
-                        {activeTab === 1 && <MealManagementTab showToast={showToast} />}
-                    </Paper>
-                </Fade>
-            </Container>
+                        <Tab
+                            label="Meal Plan"
+                            icon={<CalendarMonthIcon />}
+                            iconPosition="start"
+                        />
+                        <Tab
+                            label="Meal Management"
+                            icon={<FoodBankIcon />}
+                            iconPosition="start"
+                        />
+                    </Tabs>
+                </Box>
 
-            <Box
-                component="footer"
-                sx={{
-                    py: 3,
-                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                    borderTop: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                    backdropFilter: 'blur(8px)',
-                }}
-            >
-                <Container maxWidth="lg">
-                    <Typography variant="body2" color="text.secondary" align="center">
-                        © {new Date().getFullYear()} Meal Planner — Simplify your meal prep and planning
-                    </Typography>
-                </Container>
-            </Box>
+                {/* Main Content */}
+                <Box
+                    sx={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        backgroundColor: 'white',
+                    }}
+                >
+                    <Fade in={true} timeout={800}>
+                        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            {activeTab === 0 && <MealPlanTab showToast={showToast} />}
+                            {activeTab === 1 && <MealManagementTab showToast={showToast} />}
+                        </Box>
+                    </Fade>
+                </Box>
+
+                {/* Footer */}
+                <Box
+                    sx={{
+                        py: 3,
+                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                        borderTop: '1px solid #e8f0e5',
+                        backdropFilter: 'blur(8px)',
+                    }}
+                >
+                    <Container maxWidth="lg">
+                        <Typography variant="body2" color="#8a9584" align="center">
+                            © {new Date().getFullYear()} Meal Planner — Simplify your meal prep and planning
+                        </Typography>
+                    </Container>
+                </Box>
+            </Container>
 
             <Toast message={toast} />
         </Box>
