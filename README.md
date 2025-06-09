@@ -158,3 +158,43 @@ yarn db:restore backup-2023-05-01T12-00-00-000Z.sql
 ```
 
 **Warning:** Restoring will overwrite the current database!
+
+## Troubleshooting
+
+### Database Connection Issues
+
+If you're experiencing database connection problems, here are the most common solutions:
+
+#### Issue: Backend can't connect to database
+**Symptoms:** API calls fail, health endpoint returns database connection errors
+
+**Solution:** The backend needs database credentials as environment variables. You have two options:
+
+**Option 1: Create a `.env` file (Recommended)**
+Create a `.env` file in the project root with:
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=mealuser
+DB_PASSWORD=mealpass
+DB_NAME=mealplanner
+```
+
+#### Issue: Database container exists but won't connect
+Check container logs:
+```bash
+docker logs meal-planner_db_1
+```
+
+Test direct database connection:
+```bash
+PGPASSWORD=mealpass docker exec meal-planner_db_1 psql -U mealuser -d mealplanner -c "SELECT 1;"
+```
+
+#### Verify Everything Works
+Test the backend health endpoint:
+```bash
+curl http://localhost:8080/api/health
+```
+
+Should return: `{"status":"ok","message":"Database connection is healthy"}`

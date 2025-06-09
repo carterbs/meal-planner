@@ -7,7 +7,7 @@ const readline = require('readline');
 
 // Configuration
 const BACKUP_DIR = path.join(__dirname, '..', 'db-backups');
-const CONTAINER_NAME = 'meal-planner-db-1'; // Adjust if your container name is different
+const CONTAINER_NAME = 'meal-planner_db_1'; // Adjust if your container name is different
 const DB_NAME = 'mealplanner';
 const DB_USER = 'mealuser';
 
