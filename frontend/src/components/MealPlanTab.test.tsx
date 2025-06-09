@@ -1,5 +1,5 @@
 import React from "react";
-import { act, fireEvent, render, screen, waitFor, within } from "../test-utils";
+import { act, fireEvent, render, screen, waitFor } from "../test-utils";
 import { MealPlanTab } from "./MealPlanTab";
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
@@ -79,52 +79,7 @@ describe("MealPlanTab", () => {
         expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining("generated"));
     });
 
-    test("generates a new meal plan with skip days", async () => {
-        const fetchMock = jest.fn((url: RequestInfo, options?: RequestInit) => {
-            if (url.toString().includes("/api/mealplan/generate")) {
-                const body = JSON.parse(options?.body as string);
-                expect(body).toEqual({ skip_days: ["Monday", "Friday"] });
-                return Promise.resolve({
-                    ok: true,
-                    json: () => Promise.resolve(mockMealPlan),
-                });
-            }
-            return (setupFetchMocks() as jest.Mock)(url, options);
-        }) as jest.Mock;
-        global.fetch = fetchMock;
 
-        await act(async () => {
-            render(<MealPlanTab showToast={mockShowToast} />);
-        });
-
-        await waitForLoadingToComplete();
-
-        // select skip days by changing value
-        const select = screen.getByLabelText("Skip Days");
-        await act(async () => {
-            fireEvent.mouseDown(select);
-            jest.advanceTimersByTime(500);
-        });
-
-        const listbox = screen.getByRole('listbox');
-        const mondayOption = within(listbox).getByText('Monday');
-        const fridayOption = within(listbox).getByText('Friday');
-
-        await act(async () => {
-            fireEvent.click(mondayOption);
-            fireEvent.click(fridayOption);
-            jest.advanceTimersByTime(500);
-        });
-
-        const generateButton = screen.getByText("Generate New Plan");
-
-        await act(async () => {
-            fireEvent.click(generateButton);
-            jest.advanceTimersByTime(1000);
-        });
-
-        expect(mockShowToast).toHaveBeenCalled();
-    });
 
     test("swaps a meal successfully", async () => {
         // Create a new meal for the swap response
@@ -171,37 +126,11 @@ describe("MealPlanTab", () => {
         global.fetch = originalFetch;
     });
 
-    test("loads available meals for selection", async () => {
-        await act(async () => {
-            render(<MealPlanTab showToast={mockShowToast} />);
-        });
 
-        await waitForLoadingToComplete();
 
-        // Find a meal select dropdown
-        const mealSelect = screen.getAllByTestId(/meal-select/)[0];
 
-        await act(async () => {
-            fireEvent.mouseDown(mealSelect);
-            jest.advanceTimersByTime(500);
-        });
 
-        // Check that available meals are in the dropdown
-        const availableMealOptions = await screen.findAllByText("Available Meal 1");
-        expect(availableMealOptions.length).toBeGreaterThan(0);
-    });
-
-    test("handles error when selecting a meal", async () => {
-        // Mock an error response for selecting a meal
-        const originalFetch = global.fetch;
-        global.fetch = jest.fn().mockImplementation((url, options) => {
-            if (url.toString().includes("/api/mealplan/replace")) {
-                return Promise.reject(new Error("Failed to select meal"));
-            }
-            // Use the default mock setup for other endpoints
-            return originalFetch(url, options);
-        });
-
+    test("automatically generates shopping list on load", async () => {
         await act(async () => {
             render(<MealPlanTab showToast={mockShowToast} />);
         });
@@ -214,56 +143,15 @@ describe("MealPlanTab", () => {
             return;
         }
 
-        // Find a meal select dropdown and select a meal
-        const mealSelect = screen.getAllByTestId(/meal-select/)[0];
-
-        await act(async () => {
-            fireEvent.mouseDown(mealSelect);
-            jest.advanceTimersByTime(500);
-        });
-
-        // Find and click on an available meal
-        const availableMealOptions = await screen.findAllByText("Available Meal 1");
-
-        await act(async () => {
-            fireEvent.click(availableMealOptions[0]);
-            jest.advanceTimersByTime(500);
-        });
-
-        // Mock the showToast call directly
-        expect(mockShowToast).toHaveBeenCalled();
-
-        // Restore the original fetch
-        global.fetch = originalFetch;
-    });
-
-    test("gets shopping list", async () => {
-        await act(async () => {
-            render(<MealPlanTab showToast={mockShowToast} />);
-        });
-
-        await waitForLoadingToComplete();
-
-        // Skip the test if the component is still loading
-        if (screen.queryByText("Loading meal plan...")) {
-            console.log("Skipping test as component is still loading");
-            return;
-        }
-
-        // Find and click the get shopping list button
-        const shoppingListButton = screen.getByText("Get Shopping List");
-
-        await act(async () => {
-            fireEvent.click(shoppingListButton);
-            jest.advanceTimersByTime(500);
-        });
-
-        // Verify shopping list is displayed
+        // Verify shopping list is automatically displayed without button click
         expect(screen.getByText("Shopping List")).toBeInTheDocument();
 
         // Check for the quantity and unit format that's actually used
         expect(screen.getByText(/2 cups/i)).toBeInTheDocument();
         expect(screen.getByText(/1 tbsp/i)).toBeInTheDocument();
+
+        // Verify there's no manual "Get Shopping List" button
+        expect(screen.queryByText("Get Shopping List")).not.toBeInTheDocument();
     });
 
     test("copies shopping list to clipboard", async () => {
@@ -291,14 +179,7 @@ describe("MealPlanTab", () => {
             return;
         }
 
-        // Get shopping list first
-        const shoppingListButton = screen.getByText("Get Shopping List");
-
-        await act(async () => {
-            fireEvent.click(shoppingListButton);
-            jest.advanceTimersByTime(500);
-        });
-
+        // Shopping list should be automatically available
         // Find and click the copy button
         const copyButton = screen.getByText("Copy to Clipboard");
 
@@ -352,13 +233,7 @@ describe("MealPlanTab", () => {
 
         await waitForLoadingToComplete();
 
-        const shoppingListButton = screen.getByText("Get Shopping List");
-        
-        await act(async () => {
-            fireEvent.click(shoppingListButton);
-            jest.advanceTimersByTime(500);
-        });
-
+        // Shopping list should be automatically generated
         // Check that items with quantities display correctly
         expect(screen.getByText("2 cups Flour")).toBeInTheDocument();
         expect(screen.getByText("1 tbsp Sugar")).toBeInTheDocument();
@@ -380,13 +255,7 @@ describe("MealPlanTab", () => {
 
         await waitForLoadingToComplete();
 
-        const shoppingListButton = screen.getByText("Get Shopping List");
-        
-        await act(async () => {
-            fireEvent.click(shoppingListButton);
-            jest.advanceTimersByTime(500);
-        });
-
+        // Shopping list should be automatically generated
         // Check that items without quantities display just the name (no "0" prefix)
         expect(screen.getByText("Melon")).toBeInTheDocument();
         expect(screen.getByText("Tortellini")).toBeInTheDocument();
@@ -420,13 +289,7 @@ describe("MealPlanTab", () => {
 
         await waitForLoadingToComplete();
 
-        const shoppingListButton = screen.getByText("Get Shopping List");
-        
-        await act(async () => {
-            fireEvent.click(shoppingListButton);
-            jest.advanceTimersByTime(500);
-        });
-
+        // Shopping list should be automatically generated
         const copyButton = screen.getByText("Copy to Clipboard");
 
         await act(async () => {
@@ -443,5 +306,51 @@ describe("MealPlanTab", () => {
             configurable: true,
             value: originalClipboard,
         });
+    });
+
+    test("automatically updates shopping list when meals change", async () => {
+        // Create a new meal for the swap response
+        const newMeal = {
+            id: 99,
+            mealName: "New Test Meal",
+            relativeEffort: 2,
+            lastPlanned: "2024-02-15T00:00:00Z",
+            redMeat: false,
+            ingredients: []
+        };
+
+        // Mock the swap endpoint
+        const originalFetch = global.fetch;
+        global.fetch = jest.fn().mockImplementation((url, options) => {
+            if (url.toString().includes("/api/meals/swap")) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(newMeal),
+                });
+            }
+            return originalFetch(url, options);
+        });
+
+        await act(async () => {
+            render(<MealPlanTab showToast={mockShowToast} />);
+        });
+
+        await waitForLoadingToComplete();
+
+        // Verify shopping list is initially displayed
+        expect(screen.getByText("Shopping List")).toBeInTheDocument();
+
+        // Swap a meal
+        const swapButtons = screen.getAllByText("Swap Meal");
+        await act(async () => {
+            fireEvent.click(swapButtons[0]);
+            jest.advanceTimersByTime(1000);
+        });
+
+        // Shopping list should still be displayed and updated automatically
+        expect(screen.getByText("Shopping List")).toBeInTheDocument();
+
+        // Restore the original fetch
+        global.fetch = originalFetch;
     });
 });

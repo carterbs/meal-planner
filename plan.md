@@ -1,76 +1,50 @@
-# Meal Type Categorization Implementation Plan
+
+
+---
+
+# Automatic Shopping List Generation Plan
 
 ## Overview
-Add support for categorizing meals by type (breakfast, lunch, dinner) to enable future breakfast menu functionality. All existing meals will be categorized as "dinner" meals during the transition.
+Convert shopping list from manual generation (via button click) to automatic generation on page load and automatic updates when meals change.
 
-## Current State Analysis
-- **Backend**: Meal struct in `backend/models/meal.go:12-21` has no meal type field
-- **Frontend**: Meal interface in `frontend/src/types.ts:18-27` has no meal type field  
-- **Database**: Current meals table schema doesn't include meal type
+## Current State
+- Shopping list generated manually via "Get Shopping List" button
+- Stored in `shoppingList` state in `MealPlanTab.tsx`
+- API: `POST /api/shoppinglist` with `{plan: mealIDs[]}`
 
-## Implementation Phases
+## Implementation Steps
 
-### Phase 1: Database Schema Changes
-1. **Add meal_type column** to meals table with default value 'dinner'
-2. **Update existing meals** to have meal_type = 'dinner'
-3. **Create migration** to handle this change safely
+### Step 1: Create Reusable Shopping List Function
+- Extract `getShoppingList()` logic into `generateShoppingListAutomatic()`
+- Add loading state management (`isLoadingShoppingList`)
+- Add error handling state (`shoppingListError`)
+- Make it debounced to prevent rapid successive calls
 
-**Files to modify:**
-- `backend/migrations/add_meal_type.sql` (new file)
+### Step 2: Auto-generate on Page Load
+- Modify main `useEffect` to call shopping list generation after meal plan loads
+- Only generate if meal plan contains meals
 
-### Phase 2: Backend Updates
-1. **Update Meal struct** (`backend/models/meal.go:12`) to include MealType field
-2. **Update MealColumns** (`backend/models/meal.go:24`) to include meal_type
-3. **Update SQL queries** (`backend/models/meal.go:27-41`) to select meal_type
-4. **Update processMealRows** function to handle meal_type scanning
-5. **Update CreateMeal** function to support meal_type parameter
+### Step 3: Auto-update on Meal Changes
+- Hook into `swapMeal()` to regenerate after successful swap
+- Hook into `toggleSkipMeal()` to regenerate after skip changes
+- Hook into `generateNewPlan()` to trigger auto-generation
 
-**Files to modify:**
-- `backend/models/meal.go`
+### Step 4: Update UI
+- Remove manual "Get Shopping List" button
+- Add loading indicator for shopping list section
+- Add error display for shopping list failures
+- Show empty state when no meals are planned
 
-### Phase 3: API Handler Updates
-1. **Update meal handlers** in `backend/handlers/meals.go` to support meal_type filtering
-2. **Add endpoint** for getting meals by type (breakfast/lunch/dinner)
-3. **Update meal creation** to accept meal_type parameter
+### Step 5: Add Debouncing
+- Use `useCallback` and state dependencies to debounce rapid changes
+- Prevent multiple API calls when user makes quick successive changes
 
-**Files to modify:**
-- `backend/handlers/meals.go`
-
-### Phase 4: Frontend Updates
-1. **Update Meal interface** (`frontend/src/types.ts:18`) to include mealType field
-2. **Update components** to display and filter by meal type
-3. **Update meal creation forms** to include meal type selection
-
-**Files to modify:**
-- `frontend/src/types.ts`
-- `frontend/src/components/MealManagementTab.tsx`
-- `frontend/src/AddRecipeForm.tsx`
-
-### Phase 5: Testing & Validation
-1. **Database migration testing**
-2. **Backend API testing** with meal types
-3. **Frontend component testing** with meal type support
-4. **End-to-end testing** of meal type functionality
-
-**Files to modify:**
-- `backend/models/meal_test.go`
-- `backend/handlers/meals_test.go`
-- `frontend/src/components/MealManagementTab.test.tsx`
-- `frontend/src/AddRecipeForm.test.tsx`
+## Files to Modify
+- `frontend/src/components/MealPlanTab.tsx` (main implementation)
+- `frontend/src/components/MealPlanTab.test.tsx` (update tests)
 
 ## Key Benefits
-- All existing meals automatically categorized as "dinner"
-- Foundation for breakfast/lunch support
-- Backwards compatible migration
-- Clean separation of meal types for future features
-
-## Testing Strategy
-- Run backend tests: `cd backend && go test ./...`
-- Run frontend tests: `npm test -- --watchAll=false`
-- Test migration rollback capability
-- Verify API endpoints work with meal type filtering
-
-## Commit Strategy
-- Commit after each phase completion
-- Include tests in same commit as implementation
-- Use descriptive commit messages explaining the "why"
+- Always up-to-date shopping list
+- No manual intervention required
+- Better user experience
+- Simplified UI (fewer buttons)
