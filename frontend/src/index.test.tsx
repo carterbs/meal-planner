@@ -2,11 +2,12 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { ExperimentalPlanner } from './components/ExperimentalPlanner';
+import { setupFetchMocks, cleanupFetchMocks } from './test-utils';
 
 // Mock createRoot function
 const mockRender = jest.fn();
 const mockUnmount = jest.fn();
-const mockCreateRoot = jest.fn(() => ({
+var mockCreateRoot = jest.fn(() => ({
     render: mockRender,
     unmount: mockUnmount
 }));
@@ -54,6 +55,7 @@ describe('index.tsx', () => {
 
         // Clear module cache before each test
         jest.resetModules();
+        setupFetchMocks();
     });
 
     afterEach(() => {
@@ -64,6 +66,7 @@ describe('index.tsx', () => {
             document.body.removeChild(div);
         }
         Object.defineProperty(window, 'location', { value: new URL('http://localhost/'), writable: true });
+        cleanupFetchMocks();
     });
 
     it('renders app component inside create root', () => {
