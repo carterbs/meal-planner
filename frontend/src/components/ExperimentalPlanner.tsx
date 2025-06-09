@@ -24,6 +24,7 @@ export interface MealSlot {
     mealType: MealType;
     state: 'empty'|'suggested'|'planned'|'skipped';
     meal?: Meal;
+    previousState?: 'empty'|'suggested'|'planned';
 }
 
 const days: Day[] = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -34,7 +35,7 @@ const createEmptyGrid = () => {
     days.forEach(d => {
         grid[d] = {} as any;
         mealTypes.forEach(mt => {
-            grid[d][mt] = { day: d, mealType: mt, state: 'empty' };
+            grid[d][mt] = { day: d, mealType: mt, state: 'empty', previousState: undefined } as MealSlot;
         });
     });
     return grid;
@@ -60,12 +61,14 @@ const MealCell: React.FC<MealCellProps> = ({ slot, onSkip, onReplace, availableM
     let content: React.ReactNode = null;
     if (slot.state === 'skipped') {
         content = <span style={{ textDecoration: 'line-through' }}>Skipped</span>;
+    } else if (slot.state === 'suggested') {
+        content = <span style={{ color: 'blue' }}>{slot.meal?.mealName}</span>;
     } else if (slot.state === 'planned') {
         content = slot.meal?.mealName || 'Planned';
     }
 
     return (
-        <TableCell data-testid={`cell-${slot.day}-${slot.mealType}`}>
+        <TableCell data-testid={`cell-${slot.day}-${slot.mealType}`} data-state={slot.state}>
             {editing ? (
                 <Autocomplete
                     options={availableMeals}
@@ -154,20 +157,20 @@ export const ExperimentalPlanner: React.FC = () => {
                 days.forEach(d => {
                     const meal = data[dayToFull[d]];
                     if (meal) {
-                        newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'planned', meal };
+                        newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'suggested', meal };
                     } else {
-                        newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'empty' };
+                        newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'suggested', meal: dummyMeal(d, 'Dinner') };
                     }
                 });
             } else {
                 days.forEach(d => {
-                    newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'planned', meal: dummyMeal(d, 'Dinner') };
+                    newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'suggested', meal: dummyMeal(d, 'Dinner') };
                 });
             }
         } catch (err) {
             console.error('Failed to load meal plan', err);
             days.forEach(d => {
-                newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'planned', meal: dummyMeal(d, 'Dinner') };
+                newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'suggested', meal: dummyMeal(d, 'Dinner') };
             });
         }
 
@@ -179,13 +182,24 @@ export const ExperimentalPlanner: React.FC = () => {
     const toggleSkip = (day: Day, mealType: MealType) => {
         setGrid(prev => {
             const slot = prev[day][mealType];
-            let newState: MealSlot['state'];
             if (slot.state === 'skipped') {
-                newState = slot.meal ? 'planned' : 'empty';
+                const restore = slot.previousState ?? (slot.meal ? 'planned' : 'empty');
+                return {
+                    ...prev,
+                    [day]: {
+                        ...prev[day],
+                        [mealType]: { ...slot, state: restore, previousState: undefined }
+                    }
+                };
             } else {
-                newState = 'skipped';
+                return {
+                    ...prev,
+                    [day]: {
+                        ...prev[day],
+                        [mealType]: { ...slot, previousState: slot.state, state: 'skipped' }
+                    }
+                };
             }
-            return { ...prev, [day]: { ...prev[day], [mealType]: { ...slot, state: newState } } };
         });
         if (shoppingList.length > 0) setListStale(true);
     };
@@ -195,7 +209,7 @@ export const ExperimentalPlanner: React.FC = () => {
         days.forEach(d => {
             mealTypes.forEach(mt => {
                 const slot = grid[d][mt];
-                if (slot.state === 'planned' && slot.meal) {
+                if ((slot.state === 'planned' || slot.state === 'suggested') && slot.meal) {
                     list.push(...slot.meal.ingredients);
                 }
             });
