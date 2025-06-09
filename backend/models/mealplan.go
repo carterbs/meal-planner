@@ -256,12 +256,28 @@ func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 				continue
 			}
 
+			var startHour, startMinute int
+			switch mealType {
+			case "Breakfast":
+				startHour, startMinute = 7, 0
+			case "Lunch":
+				startHour, startMinute = 12, 0
+			case "Dinner":
+				startHour, startMinute = 18, 30
+			default:
+				continue // Should not happen for known meal types
+			}
+
 			eventDate := monday.AddDate(0, 0, i)
+			startTime := time.Date(eventDate.Year(), eventDate.Month(), eventDate.Day(), startHour, startMinute, 0, 0, time.UTC)
+			endTime := startTime.Add(30 * time.Minute)
+
 			b.WriteString("BEGIN:VEVENT\r\n")
 			b.WriteString("DTSTAMP:" + time.Now().UTC().Format("20060102T150405Z") + "\r\n")
-			b.WriteString("UID:" + fmt.Sprintf("%d-%s-%s@mealplanner", meal.ID, mealType, eventDate.Format("20060102")) + "\r\n")
-			b.WriteString("DTSTART;VALUE=DATE:" + eventDate.Format("20060102") + "\r\n")
-			b.WriteString("SUMMARY:" + escapeICSString(fmt.Sprintf("%s: %s", mealType, meal.MealName)) + "\r\n")
+			b.WriteString("UID:" + fmt.Sprintf("%d-%s-%s@mealplanner", meal.ID, mealType, startTime.Format("20060102T150405Z")) + "\r\n")
+			b.WriteString("DTSTART:" + startTime.Format("20060102T150405Z") + "\r\n")
+			b.WriteString("DTEND:" + endTime.Format("20060102T150405Z") + "\r\n")
+			b.WriteString("SUMMARY:" + escapeICSString(fmt.Sprintf("%s: %s", meal.MealName, mealType)) + "\r\n")
 			if meal.URL != "" {
 				b.WriteString("URL:" + meal.URL + "\r\n")
 			}
