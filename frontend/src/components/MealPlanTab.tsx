@@ -1,29 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { MealPlan, Meal, Ingredient } from "../types";
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Box,
     Typography,
     Button,
-    List,
-    ListItem,
-    ListItemText,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
     Card,
-    CardContent,
-    Grid,
-    Stack,
-    Chip,
-    IconButton,
     CircularProgress,
-} from "@mui/material";
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+} from '@mui/material';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+
+import { Meal, Ingredient } from '../types';
 
 interface MealPlanTabProps {
     showToast: (message: string) => void;
@@ -45,8 +32,58 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     const [availableMeals, setAvailableMeals] = useState<Meal[]>([]);
     const [isLoadingMealPlan, setIsLoadingMealPlan] = useState<boolean>(true);
     const [isGeneratingPlan, setIsGeneratingPlan] = useState<boolean>(false);
+    const [isLoadingShoppingList, setIsLoadingShoppingList] = useState<boolean>(false);
+    const [shoppingListError, setShoppingListError] = useState<string | null>(null);
     const [skipDays, setSkipDays] = useState<string[]>([]);
     const [skippedMeals, setSkippedMeals] = useState<Set<string>>(new Set());
+
+    // Debounced shopping list generation function
+    const generateShoppingListAutomatic = useCallback(async () => {
+        if (!mealPlan) return;
+
+        // Get all non-skipped meals
+        const mealIDs: number[] = [];
+        WEEK_DAYS.forEach(day => {
+            MEAL_TYPES.forEach(mealType => {
+                const meal = mealPlan[day][mealType];
+                const mealKey = `${day}-${mealType}`;
+                if (meal && !skippedMeals.has(mealKey)) {
+                    mealIDs.push(meal.id);
+                }
+            });
+        });
+
+        // Don't generate shopping list if no meals are planned
+        if (mealIDs.length === 0) {
+            setShoppingList([]);
+            setShoppingListError(null);
+            return;
+        }
+
+        setIsLoadingShoppingList(true);
+        setShoppingListError(null);
+
+        try {
+            const response = await fetch("/api/shoppinglist", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan: mealIDs }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to generate shopping list: ${response.status}`);
+            }
+
+            const ingredients: Ingredient[] = await response.json();
+            setShoppingList(ingredients);
+        } catch (err) {
+            console.error("Error getting shopping list:", err);
+            setShoppingListError("Failed to generate shopping list");
+            setShoppingList([]);
+        } finally {
+            setIsLoadingShoppingList(false);
+        }
+    }, [mealPlan, skippedMeals]);
 
     useEffect(() => {
         let isMounted = true;
@@ -101,6 +138,13 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             isMounted = false;
         };
     }, []);
+
+    // Auto-generate shopping list when meal plan or skipped meals change
+    useEffect(() => {
+        if (mealPlan && !isLoadingMealPlan) {
+            generateShoppingListAutomatic();
+        }
+    }, [mealPlan, generateShoppingListAutomatic, isLoadingMealPlan]);
 
     const finalizePlan = () => {
         if (!mealPlan) return;
@@ -164,6 +208,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 setShoppingList([]);
                 setSkippedMeals(new Set());
                 showToast('New meal plan generated!');
+                // Shopping list will be auto-generated via useEffect
             })
             .catch(err => {
                 console.error('Error generating meal plan:', err);
@@ -189,8 +234,8 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                     const updatedPlan = { ...mealPlan };
                     updatedPlan[day][mealType] = newMeal;
                     setMealPlan(updatedPlan);
-                    setShoppingList([]);
                     showToast(`Swapped ${day} ${mealType} with: ${newMeal.mealName}`);
+                    // Shopping list will be auto-updated via useEffect
                 }
             })
             .catch((err) => console.error("Error swapping meal:", err));
@@ -209,31 +254,6 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
         }
 
         setSkippedMeals(newSkippedMeals);
-    };
-
-    const getShoppingList = () => {
-        if (!mealPlan) return;
-
-        // Get all non-skipped meals
-        const mealIDs: number[] = [];
-        WEEK_DAYS.forEach(day => {
-            MEAL_TYPES.forEach(mealType => {
-                const meal = mealPlan[day][mealType];
-                const mealKey = `${day}-${mealType}`;
-                if (meal && !skippedMeals.has(mealKey)) {
-                    mealIDs.push(meal.id);
-                }
-            });
-        });
-
-        fetch("/api/shoppinglist", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan: mealIDs }),
-        })
-            .then((res) => res.json())
-            .then((ingredients: Ingredient[]) => setShoppingList(ingredients))
-            .catch((err) => console.error("Error getting shopping list:", err));
     };
 
     const copyShoppingListToClipboard = () => {
@@ -493,7 +513,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 )}
 
                 {/* Shopping List Section */}
-                {shoppingList.length > 0 && (
+                {mealPlan && (
                     <Box
                         sx={{
                             marginTop: '30px',
@@ -511,60 +531,88 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                                 marginBottom: '15px',
                                 fontSize: '1.1rem',
                                 fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
                             }}
                         >
                             Shopping List
+                            {isLoadingShoppingList && (
+                                <CircularProgress size={16} sx={{ color: '#7fb069' }} />
+                            )}
                         </Typography>
-                        <Box
-                            sx={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                                gap: '10px',
-                                marginBottom: '20px',
-                            }}
-                        >
-                            {shoppingList.map((item, index) => (
+
+                        {shoppingListError && (
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: '#d32f2f',
+                                    marginBottom: '15px',
+                                    padding: '10px',
+                                    backgroundColor: '#ffebee',
+                                    borderRadius: '6px',
+                                    border: '1px solid #ffcdd2',
+                                }}
+                            >
+                                {shoppingListError}
+                            </Typography>
+                        )}
+
+                        {!isLoadingShoppingList && !shoppingListError && shoppingList.length === 0 && (
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: '#8a9584',
+                                    fontStyle: 'italic',
+                                    marginBottom: '15px',
+                                }}
+                            >
+                                No ingredients needed - add some meals to your plan!
+                            </Typography>
+                        )}
+
+                        {shoppingList.length > 0 && (
+                            <>
                                 <Box
-                                    key={index}
                                     sx={{
-                                        background: 'linear-gradient(135deg, #fefffe 0%, #fafcf8 100%)',
-                                        padding: '10px 12px',
-                                        borderRadius: '6px',
-                                        fontSize: '0.875rem',
-                                        border: '1px solid #e8f0e5',
-                                        color: '#6b7668',
-                                        transition: 'all 0.2s ease',
-                                        '&:hover': {
-                                            background: 'linear-gradient(135deg, #fafcf8 0%, #f6faf3 100%)',
-                                            transform: 'translateY(-1px)',
-                                            boxShadow: '0 2px 8px rgba(127, 176, 105, 0.08)',
-                                        },
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                                        gap: '10px',
+                                        marginBottom: '20px',
                                     }}
                                 >
-                                    {`${item.Quantity > 0 ? `${item.Quantity} ${item.Unit} ` : ''}${item.Name}`}
+                                    {shoppingList.map((item, index) => (
+                                        <Box
+                                            key={index}
+                                            sx={{
+                                                background: 'linear-gradient(135deg, #fefffe 0%, #fafcf8 100%)',
+                                                padding: '10px 12px',
+                                                borderRadius: '6px',
+                                                fontSize: '0.875rem',
+                                                border: '1px solid #e8f0e5',
+                                                color: '#6b7668',
+                                                transition: 'all 0.2s ease',
+                                                '&:hover': {
+                                                    background: 'linear-gradient(135deg, #fafcf8 0%, #f6faf3 100%)',
+                                                    transform: 'translateY(-1px)',
+                                                    boxShadow: '0 2px 8px rgba(127, 176, 105, 0.08)',
+                                                },
+                                            }}
+                                        >
+                                            {`${item.Quantity > 0 ? `${item.Quantity} ${item.Unit} ` : ''}${item.Name}`}
+                                        </Box>
+                                    ))}
                                 </Box>
-                            ))}
-                        </Box>
-                        <Button
-                            variant="contained"
-                            onClick={copyShoppingListToClipboard}
-                            startIcon={<ShoppingCartIcon />}
-                        >
-                            Copy to Clipboard
-                        </Button>
-                    </Box>
-                )}
-
-                {/* Action Buttons */}
-                {mealPlan && (
-                    <Box sx={{ marginTop: '30px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                        <Button
-                            variant="outlined"
-                            onClick={getShoppingList}
-                            startIcon={<ShoppingCartIcon />}
-                        >
-                            Get Shopping List
-                        </Button>
+                                <Button
+                                    variant="contained"
+                                    onClick={copyShoppingListToClipboard}
+                                    startIcon={<ShoppingCartIcon />}
+                                    disabled={isLoadingShoppingList}
+                                >
+                                    Copy to Clipboard
+                                </Button>
+                            </>
+                        )}
                     </Box>
                 )}
             </Box>
