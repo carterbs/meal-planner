@@ -1,22 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography, Alert } from '@mui/material';
+import { Meal, Ingredient } from '../types';
 
 // Day and MealType enums
 export type Day = 'Mon'|'Tue'|'Wed'|'Thu'|'Fri'|'Sat'|'Sun';
 export type MealType = 'Breakfast'|'Lunch'|'Dinner';
-
-export interface Ingredient {
-    name: string;
-    quantity: number;
-    unit: string;
-}
-
-export interface Meal {
-    id: string;
-    title: string;
-    ingredients: Ingredient[];
-    tags: string[];
-}
 
 export interface MealSlot {
     day: Day;
@@ -63,23 +51,57 @@ export const ExperimentalPlanner: React.FC = () => {
         localStorage.setItem('experimental-plan', JSON.stringify(grid));
     }, [grid]);
 
-    const generateWeek = () => {
+    const dummyMeal = (day: Day, mealType: MealType): Meal => ({
+        id: 0,
+        mealName: `${mealType} ${day}`,
+        relativeEffort: 1,
+        lastPlanned: '',
+        redMeat: false,
+        mealType: mealType.toLowerCase() as any,
+        ingredients: []
+    });
+
+    const dayToFull: Record<Day, string> = {
+        Mon: 'Monday',
+        Tue: 'Tuesday',
+        Wed: 'Wednesday',
+        Thu: 'Thursday',
+        Fri: 'Friday',
+        Sat: 'Saturday',
+        Sun: 'Sunday'
+    };
+
+    const generateWeek = async () => {
         const newGrid = createEmptyGrid();
         days.forEach(d => {
-            mealTypes.forEach(mt => {
-                newGrid[d][mt] = {
-                    day: d,
-                    mealType: mt,
-                    state: 'planned',
-                    meal: {
-                        id: `${d}-${mt}`,
-                        title: `${mt} ${d}`,
-                        ingredients: [{ name: `${mt} ingredient`, quantity: 1, unit: '' }],
-                        tags: []
-                    }
-                };
-            });
+            newGrid[d]['Breakfast'] = { day: d, mealType: 'Breakfast', state: 'planned', meal: dummyMeal(d, 'Breakfast') };
+            newGrid[d]['Lunch'] = { day: d, mealType: 'Lunch', state: 'planned', meal: dummyMeal(d, 'Lunch') };
         });
+
+        try {
+            const res = await fetch('/api/mealplan');
+            if (res.ok) {
+                const data: Record<string, Meal> = await res.json();
+                days.forEach(d => {
+                    const meal = data[dayToFull[d]];
+                    if (meal) {
+                        newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'planned', meal };
+                    } else {
+                        newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'empty' };
+                    }
+                });
+            } else {
+                days.forEach(d => {
+                    newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'planned', meal: dummyMeal(d, 'Dinner') };
+                });
+            }
+        } catch (err) {
+            console.error('Failed to load meal plan', err);
+            days.forEach(d => {
+                newGrid[d]['Dinner'] = { day: d, mealType: 'Dinner', state: 'planned', meal: dummyMeal(d, 'Dinner') };
+            });
+        }
+
         setGrid(newGrid);
         setShoppingList([]);
         setListStale(false);
@@ -134,7 +156,7 @@ export const ExperimentalPlanner: React.FC = () => {
                                     if (slot.state === 'skipped') {
                                         content = <span style={{ textDecoration: 'line-through' }}>Skipped</span>;
                                     } else if (slot.state === 'planned') {
-                                        content = slot.meal?.title || 'Planned';
+                                        content = slot.meal?.mealName || 'Planned';
                                     }
                                     return (
                                         <TableCell key={day+mt} data-testid={`cell-${day}-${mt}`}>
@@ -158,7 +180,7 @@ export const ExperimentalPlanner: React.FC = () => {
                 <Box sx={{ mt: 2 }}>
                     <Typography variant="h6">Shopping List</Typography>
                     <ul>
-                        {shoppingList.map((i, idx) => <li key={idx}>{i.name}</li>)}
+                        {shoppingList.map((i, idx) => <li key={idx}>{i.Name}</li>)}
                     </ul>
                 </Box>
             )}
