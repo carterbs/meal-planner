@@ -105,35 +105,8 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 ]);
 
                 if (isMounted) {
-                    // Transform the old meal plan format to new extended format
-                    const extendedMealPlan: ExtendedMealPlan = {};
-                    WEEK_DAYS.forEach(day => {
-                        extendedMealPlan[day] = {
-                            Breakfast: mealPlanData[day] ? {
-                                id: mealPlanData[day].id + 1000, // fake ID to avoid conflicts
-                                mealName: `Breakfast ${day.slice(0, 3)}`,
-                                relativeEffort: 1,
-                                lastPlanned: new Date().toISOString(),
-                                redMeat: false,
-                                url: '',
-                                mealType: 'breakfast',
-                                ingredients: [] // no ingredients for fake breakfast
-                            } : null,
-                            Lunch: mealPlanData[day] ? {
-                                id: mealPlanData[day].id + 2000, // fake ID to avoid conflicts
-                                mealName: `Lunch ${day.slice(0, 3)}`,
-                                relativeEffort: 2,
-                                lastPlanned: new Date().toISOString(),
-                                redMeat: false,
-                                url: '',
-                                mealType: 'lunch',
-                                ingredients: [] // no ingredients for fake lunch
-                            } : null,
-                            Dinner: mealPlanData[day] || null,
-                        };
-                    });
-
-                    setMealPlan(extendedMealPlan);
+                    // The new API returns the extended meal plan format directly.
+                    setMealPlan(mealPlanData);
                     setAvailableMeals(availableMealsData);
                 }
             } catch (err) {
@@ -152,8 +125,6 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
         };
     }, []);
 
-
-
     // Auto-generate shopping list when meal plan or skipped meals change
     useEffect(() => {
         if (mealPlan && !isLoadingMealPlan) {
@@ -164,18 +135,11 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     const finalizePlan = () => {
         if (!mealPlan) return;
 
-        // Convert back to old format for API compatibility
-        const oldFormat: { [day: string]: Meal } = {};
-        WEEK_DAYS.forEach(day => {
-            if (mealPlan[day]?.Dinner) {
-                oldFormat[day] = mealPlan[day].Dinner!;
-            }
-        });
-
+        // The API now accepts the full extended meal plan.
         fetch("/api/mealplan/finalize", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan: oldFormat })
+            body: JSON.stringify(mealPlan)
         })
             .then((res) => {
                 if (!res.ok) {
@@ -201,35 +165,8 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 return response.json();
             })
             .then(data => {
-                // Transform new data to extended format
-                const extendedMealPlan: ExtendedMealPlan = {};
-                WEEK_DAYS.forEach(day => {
-                    extendedMealPlan[day] = {
-                        Breakfast: data[day] ? {
-                            id: data[day].id + 1000,
-                            mealName: `Breakfast ${day.slice(0, 3)}`,
-                            relativeEffort: 1,
-                            lastPlanned: new Date().toISOString(),
-                            redMeat: false,
-                            url: '',
-                            mealType: 'breakfast',
-                            ingredients: []
-                        } : null,
-                        Lunch: data[day] ? {
-                            id: data[day].id + 2000,
-                            mealName: `Lunch ${day.slice(0, 3)}`,
-                            relativeEffort: 2,
-                            lastPlanned: new Date().toISOString(),
-                            redMeat: false,
-                            url: '',
-                            mealType: 'lunch',
-                            ingredients: []
-                        } : null,
-                        Dinner: data[day] || null,
-                    };
-                });
-
-                setMealPlan(extendedMealPlan);
+                // The new API returns the extended meal plan format directly.
+                setMealPlan(data);
                 setShoppingList([]);
                 setSkippedMeals(new Set());
                 showToast('New meal plan generated!');
@@ -248,22 +185,47 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
         const currentMeal = mealPlan?.[day]?.[mealType];
         if (!currentMeal) return;
 
+        // Optimistically update UI
+        const originalPlan = mealPlan;
+        const optimisticPlan = JSON.parse(JSON.stringify(mealPlan));
+        optimisticPlan[day][mealType] = { ...currentMeal, mealName: "Swapping..." };
+        setMealPlan(optimisticPlan);
+
         fetch("/api/meals/swap", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ meal_id: currentMeal.id }),
+            body: JSON.stringify({
+                meal_id: currentMeal.id,
+                meal_type: mealType.toLowerCase(),
+            }),
         })
-            .then((res) => res.json())
-            .then((newMeal: Meal) => {
-                if (mealPlan) {
-                    const updatedPlan = { ...mealPlan };
-                    updatedPlan[day][mealType] = newMeal;
-                    setMealPlan(updatedPlan);
-                    showToast(`Swapped ${day} ${mealType} with: ${newMeal.mealName}`);
-                    // Shopping list will be auto-updated via useEffect
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to swap meal');
                 }
+                return response.json();
             })
-            .catch((err) => console.error("Error swapping meal:", err));
+            .then(newMeal => {
+                setMealPlan(prevPlan => {
+                    if (!prevPlan) return null;
+                    const newPlan = JSON.parse(JSON.stringify(prevPlan));
+                    newPlan[day][mealType] = newMeal;
+                    return newPlan;
+                });
+            })
+            .catch(err => {
+                console.error('Error swapping meal:', err);
+                showToast(`Error swapping ${mealType}`);
+                // Revert on error
+                setMealPlan(originalPlan);
+            });
+    };
+
+    const toggleSkipDay = (day: string) => {
+        setSkipDays(prev => {
+            const newSkipDays = prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day];
+            return newSkipDays;
+        });
     };
 
     const toggleSkipMeal = (day: string, mealType: string) => {
@@ -657,8 +619,6 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                         ))}
                     </Box>
                 )}
-
-
             </Box>
         </Box>
     );
