@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within, cleanup, setupFetchMocks, cleanupFetchMocks, mockMealPlan } from '../test-utils';
+import { render, screen, fireEvent, within, cleanup, setupFetchMocks, cleanupFetchMocks, mockMealPlan, mockAvailableMeals } from '../test-utils';
 import { ExperimentalPlanner } from './ExperimentalPlanner';
 
 describe('ExperimentalPlanner', () => {
@@ -25,9 +25,32 @@ describe('ExperimentalPlanner', () => {
     test('skip Monday Lunch', async () => {
         render(<ExperimentalPlanner />);
         const cell = await screen.findByTestId('cell-Mon-Lunch');
-        const skipButton = within(cell).getByText('Skip');
+        const skipButton = within(cell).getByTestId('skip-Mon-Lunch');
         fireEvent.click(skipButton);
         expect(within(cell).getByText('Skipped')).toHaveStyle('text-decoration: line-through');
+    });
+
+    test('unskip restores planned meal', async () => {
+        render(<ExperimentalPlanner />);
+        const cell = await screen.findByTestId('cell-Mon-Dinner');
+        const mealText = mockMealPlan.Monday.mealName;
+        const skipButton = within(cell).getByTestId('skip-Mon-Dinner');
+        fireEvent.click(skipButton);
+        expect(within(cell).getByText('Skipped')).toBeInTheDocument();
+        fireEvent.click(skipButton);
+        expect(within(cell).queryByText('Skipped')).not.toBeInTheDocument();
+        expect(within(cell).getByText((content) => content.startsWith(mealText))).toBeInTheDocument();
+    });
+
+    test('replace meal using typeahead', async () => {
+        render(<ExperimentalPlanner />);
+        const cell = await screen.findByTestId('cell-Mon-Dinner');
+        fireEvent.click(within(cell).getByText('Replace'));
+        const input = within(cell).getByTestId('replace-input-Mon-Dinner').querySelector('input');
+        if (!input) throw new Error('input missing');
+        fireEvent.change(input, { target: { value: mockAvailableMeals[0].mealName.slice(0, 8) } });
+        fireEvent.click(screen.getByText(mockAvailableMeals[0].mealName));
+        expect(await within(cell).findByText(mockAvailableMeals[0].mealName)).toBeInTheDocument();
     });
 
     test('editing after shopping list shows banner', async () => {
@@ -35,7 +58,7 @@ describe('ExperimentalPlanner', () => {
         await screen.findByText(mockMealPlan.Monday.mealName);
         fireEvent.click(screen.getByText('Generate Shopping List'));
         const cell = screen.getByTestId('cell-Mon-Breakfast');
-        const skipButton = within(cell).getByText('Skip');
+        const skipButton = within(cell).getByTestId('skip-Mon-Breakfast');
         fireEvent.click(skipButton);
         expect(screen.getByText(/Shopping list out of date/)).toBeInTheDocument();
     });
@@ -43,7 +66,7 @@ describe('ExperimentalPlanner', () => {
     test('restores latest draft from localStorage', async () => {
         const { unmount } = render(<ExperimentalPlanner />);
         const cell = await screen.findByTestId('cell-Mon-Lunch');
-        fireEvent.click(within(cell).getByText('Skip'));
+        fireEvent.click(within(cell).getByTestId('skip-Mon-Lunch'));
         unmount();
         render(<ExperimentalPlanner />);
         const restored = await screen.findByTestId('cell-Mon-Lunch');

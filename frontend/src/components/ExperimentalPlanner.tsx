@@ -1,5 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography, Alert } from '@mui/material';
+import {
+    Box,
+    Button,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    Typography,
+    Alert,
+    Autocomplete,
+    TextField
+} from '@mui/material';
 import { Meal, Ingredient } from '../types';
 
 // Day and MealType enums
@@ -27,8 +40,56 @@ const createEmptyGrid = () => {
     return grid;
 };
 
+interface MealCellProps {
+    slot: MealSlot;
+    onSkip: () => void;
+    onReplace: (meal: Meal) => void;
+    availableMeals: Meal[];
+}
+
+const MealCell: React.FC<MealCellProps> = ({ slot, onSkip, onReplace, availableMeals }) => {
+    const [editing, setEditing] = useState(false);
+
+    const handleSelect = (_: any, value: Meal | null) => {
+        if (value) {
+            onReplace(value);
+        }
+        setEditing(false);
+    };
+
+    let content: React.ReactNode = null;
+    if (slot.state === 'skipped') {
+        content = <span style={{ textDecoration: 'line-through' }}>Skipped</span>;
+    } else if (slot.state === 'planned') {
+        content = slot.meal?.mealName || 'Planned';
+    }
+
+    return (
+        <TableCell data-testid={`cell-${slot.day}-${slot.mealType}`}>
+            {editing ? (
+                <Autocomplete
+                    options={availableMeals}
+                    getOptionLabel={(m) => m.mealName}
+                    onChange={handleSelect}
+                    size="small"
+                    openOnFocus
+                    disablePortal
+                    renderInput={(params) => <TextField {...params} label="Meal" data-testid={`replace-input-${slot.day}-${slot.mealType}`} />}
+                />
+            ) : (
+                <>
+                    {content}
+                    <Button size="small" onClick={() => setEditing(true)}>Replace</Button>
+                </>
+            )}
+            <Button size="small" onClick={onSkip} data-testid={`skip-${slot.day}-${slot.mealType}`}>{slot.state === 'skipped' ? 'Unskip' : 'Skip'}</Button>
+        </TableCell>
+    );
+};
+
 export const ExperimentalPlanner: React.FC = () => {
     const [grid, setGrid] = useState<Record<Day, Record<MealType, MealSlot>>>(createEmptyGrid());
+    const [availableMeals, setAvailableMeals] = useState<Meal[]>([]);
     const [shoppingList, setShoppingList] = useState<Ingredient[]>([]);
     const [listStale, setListStale] = useState(false);
 
@@ -44,6 +105,14 @@ export const ExperimentalPlanner: React.FC = () => {
             }
         }
         generateWeek();
+    }, []);
+
+    // fetch available meals
+    useEffect(() => {
+        fetch('/api/meals')
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setAvailableMeals(Array.isArray(data) ? data : []))
+            .catch(() => setAvailableMeals([]));
     }, []);
 
     // persist draft
@@ -110,7 +179,12 @@ export const ExperimentalPlanner: React.FC = () => {
     const toggleSkip = (day: Day, mealType: MealType) => {
         setGrid(prev => {
             const slot = prev[day][mealType];
-            const newState = slot.state === 'skipped' ? 'empty' : 'skipped';
+            let newState: MealSlot['state'];
+            if (slot.state === 'skipped') {
+                newState = slot.meal ? 'planned' : 'empty';
+            } else {
+                newState = 'skipped';
+            }
             return { ...prev, [day]: { ...prev[day], [mealType]: { ...slot, state: newState } } };
         });
         if (shoppingList.length > 0) setListStale(true);
@@ -128,6 +202,17 @@ export const ExperimentalPlanner: React.FC = () => {
         });
         setShoppingList(list);
         setListStale(false);
+    };
+
+    const replaceMeal = (day: Day, mealType: MealType, meal: Meal) => {
+        setGrid(prev => ({
+            ...prev,
+            [day]: {
+                ...prev[day],
+                [mealType]: { day, mealType, state: 'planned', meal }
+            }
+        }));
+        if (shoppingList.length > 0) setListStale(true);
     };
 
     return (
@@ -150,23 +235,15 @@ export const ExperimentalPlanner: React.FC = () => {
                         {mealTypes.map(mt => (
                             <TableRow key={mt} sx={{ backgroundColor: mt === 'Lunch' ? 'rgba(0,0,0,0.02)' : undefined }}>
                                 <TableCell component="th" scope="row">{mt}</TableCell>
-                                {days.map(day => {
-                                    const slot = grid[day][mt];
-                                    let content: React.ReactNode = null;
-                                    if (slot.state === 'skipped') {
-                                        content = <span style={{ textDecoration: 'line-through' }}>Skipped</span>;
-                                    } else if (slot.state === 'planned') {
-                                        content = slot.meal?.mealName || 'Planned';
-                                    }
-                                    return (
-                                        <TableCell key={day+mt} data-testid={`cell-${day}-${mt}`}>
-                                            {content}
-                                            <Button size="small" onClick={() => toggleSkip(day, mt)}>
-                                                {slot.state === 'skipped' ? 'Unskip' : 'Skip'}
-                                            </Button>
-                                        </TableCell>
-                                    );
-                                })}
+                                {days.map(day => (
+                                    <MealCell
+                                        key={day+mt}
+                                        slot={grid[day][mt]}
+                                        onSkip={() => toggleSkip(day, mt)}
+                                        onReplace={(meal) => replaceMeal(day, mt, meal)}
+                                        availableMeals={availableMeals}
+                                    />
+                                ))}
                             </TableRow>
                         ))}
                     </TableBody>
