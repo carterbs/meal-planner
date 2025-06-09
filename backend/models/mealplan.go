@@ -8,85 +8,93 @@ import (
 	"time"
 )
 
-// GenerateWeeklyMealPlan generates a weekly plan as a map from day to Meal pointer.
-// It uses different effort thresholds for each day, avoids repeating a meal in the last 3 weeks,
-// and only allows at most one red meat selection during the week.
-func GenerateWeeklyMealPlan(db *sql.DB) (map[string]*Meal, error) {
-	plan := make(map[string]*Meal)
+type DayMealPlan struct {
+	Breakfast *Meal `json:"Breakfast"`
+	Lunch     *Meal `json:"Lunch"`
+	Dinner    *Meal `json:"Dinner"`
+}
+
+type WeeklyMealPlan struct {
+	Monday    DayMealPlan `json:"Monday"`
+	Tuesday   DayMealPlan `json:"Tuesday"`
+	Wednesday DayMealPlan `json:"Wednesday"`
+	Thursday  DayMealPlan `json:"Thursday"`
+	Friday    DayMealPlan `json:"Friday"`
+	Saturday  DayMealPlan `json:"Saturday"`
+	Sunday    DayMealPlan `json:"Sunday"`
+}
+
+// GenerateWeeklyMealPlan generates a weekly plan with breakfast, lunch, and dinner.
+func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
+	plan := &WeeklyMealPlan{}
 	redMeatUsed := false
 	threeWeeksAgo := time.Now().AddDate(0, 0, -21)
 
-	// Monday: Low effort (e.g., effort 0-2)
-	mondayMeal, err := pickMeal(db, 0, 2, redMeatUsed, threeWeeksAgo)
-	if err != nil {
-		return nil, errors.New("failed picking Monday meal: " + err.Error())
-	}
-	plan["Monday"] = mondayMeal
-	if mondayMeal.RedMeat {
-		redMeatUsed = true
+	days := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"}
+
+	for _, day := range days {
+		var dayPlan DayMealPlan
+		var err error
+
+		// Breakfast: Low effort
+		dayPlan.Breakfast, err = pickMeal(db, 0, 2, false, threeWeeksAgo, "breakfast")
+		if err != nil {
+			return nil, fmt.Errorf("failed picking breakfast for %s: %w", day, err)
+		}
+
+		// Lunch: Low effort
+		dayPlan.Lunch, err = pickMeal(db, 0, 2, false, threeWeeksAgo, "lunch")
+		if err != nil {
+			return nil, fmt.Errorf("failed picking lunch for %s: %w", day, err)
+		}
+
+		// Dinner: Existing logic
+		minEffort, maxEffort := 3, 5 // Default for Tue-Thu, Sat
+		if day == "Monday" {
+			minEffort, maxEffort = 0, 2
+		} else if day == "Sunday" {
+			minEffort, maxEffort = 6, 100
+		}
+
+		dayPlan.Dinner, err = pickMeal(db, minEffort, maxEffort, redMeatUsed, threeWeeksAgo, "dinner")
+		if err != nil {
+			// If we fail to get a dinner, it might be because of red meat restriction.
+			// The old logic would just fail. Here we can be more robust if needed, but for now, we fail.
+			return nil, fmt.Errorf("failed picking dinner for %s: %w", day, err)
+		}
+		if dayPlan.Dinner != nil && dayPlan.Dinner.RedMeat {
+			redMeatUsed = true
+		}
+
+		switch day {
+		case "Monday":
+			plan.Monday = dayPlan
+		case "Tuesday":
+			plan.Tuesday = dayPlan
+		case "Wednesday":
+			plan.Wednesday = dayPlan
+		case "Thursday":
+			plan.Thursday = dayPlan
+		case "Saturday":
+			plan.Saturday = dayPlan
+		case "Sunday":
+			plan.Sunday = dayPlan
+		}
 	}
 
-	// Tuesday: Low-medium effort (e.g., effort 3 to 5)
-	tuesdayMeal, err := pickMeal(db, 3, 5, redMeatUsed, threeWeeksAgo)
-	if err != nil {
-		return nil, errors.New("failed picking Tuesday meal: " + err.Error())
-	}
-	plan["Tuesday"] = tuesdayMeal
-	if tuesdayMeal.RedMeat {
-		redMeatUsed = true
-	}
-
-	// Wednesday: Low-medium effort (range: 3-5)
-	wednesdayMeal, err := pickMeal(db, 3, 5, redMeatUsed, threeWeeksAgo)
-	if err != nil {
-		return nil, errors.New("failed picking Wednesday meal: " + err.Error())
-	}
-	plan["Wednesday"] = wednesdayMeal
-	if wednesdayMeal.RedMeat {
-		redMeatUsed = true
-	}
-
-	// Thursday: Low-medium effort (range: 3-5)
-	thursdayMeal, err := pickMeal(db, 3, 5, redMeatUsed, threeWeeksAgo)
-	if err != nil {
-		return nil, errors.New("failed picking Thursday meal: " + err.Error())
-	}
-	plan["Thursday"] = thursdayMeal
-	if thursdayMeal.RedMeat {
-		redMeatUsed = true
-	}
-
-	// Friday: Fixed "Eating out" value
-	plan["Friday"] = &Meal{
+	// Friday: Fixed "Eating out" value for dinner
+	plan.Friday.Dinner = &Meal{
 		MealName: "Eating out",
 	}
-
-	// Saturday: Middle effort (using the same range as Tue-Thu)
-	saturdayMeal, err := pickMeal(db, 3, 5, redMeatUsed, threeWeeksAgo)
-	if err != nil {
-		return nil, errors.New("failed picking Saturday meal: " + err.Error())
-	}
-	plan["Saturday"] = saturdayMeal
-	if saturdayMeal.RedMeat {
-		redMeatUsed = true
-	}
-
-	// Sunday: High effort (e.g., effort 6 to an arbitrarily high maximum)
-	sundayMeal, err := pickMeal(db, 6, 100, redMeatUsed, threeWeeksAgo)
-	if err != nil {
-		return nil, errors.New("failed picking Sunday meal: " + err.Error())
-	}
-	plan["Sunday"] = sundayMeal
-	// redMeatUsed update not needed for the last day
 
 	return plan, nil
 }
 
 // buildPickMealQuery returns the SQL query for selecting a meal.
 // It appends an extra condition if excludeRedMeat is true.
-func buildPickMealQuery(excludeRedMeat bool) string {
+func buildPickMealQuery(excludeRedMeat bool, mealType string) string {
 	columns := strings.Join(MealColumns, ", ")
-	query := "SELECT " + columns + " FROM meals WHERE relative_effort BETWEEN $1 AND $2 AND (last_planned IS NULL OR last_planned < $3)"
+	query := "SELECT " + columns + " FROM meals WHERE relative_effort BETWEEN $1 AND $2 AND (last_planned IS NULL OR last_planned < $3) AND meal_type = $4"
 	if excludeRedMeat {
 		query += " AND red_meat = false"
 	}
@@ -97,11 +105,12 @@ func buildPickMealQuery(excludeRedMeat bool) string {
 // - The meal's effort is between minEffort and maxEffort (inclusive)
 // - The meal has not been planned in the last 3 weeks (last_planned is either NULL or older than cutoff)
 // - If excludeRedMeat is true, only meals with red_meat = false are eligible.
+// - Filters by meal_type.
 // The function orders the results randomly and returns the first matching meal.
-func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff time.Time) (*Meal, error) {
-	query := buildPickMealQuery(excludeRedMeat)
+func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff time.Time, mealType string) (*Meal, error) {
+	query := buildPickMealQuery(excludeRedMeat, mealType)
 
-	row := db.QueryRow(query, minEffort, maxEffort, cutoff)
+	row := db.QueryRow(query, minEffort, maxEffort, cutoff, mealType)
 	var m Meal
 	var lastPlanned sql.NullTime
 	var url sql.NullString
@@ -110,6 +119,10 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 		m.URL = url.String
 	}
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// It's okay to not find a meal (e.g., no breakfasts in DB). Return nil.
+			return nil, nil
+		}
 		return nil, err
 	}
 	if lastPlanned.Valid {
@@ -121,27 +134,69 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 }
 
 // GetLastPlannedMeals retrieves the most recently planned meals to reconstruct the last meal plan
-func GetLastPlannedMeals(db *sql.DB) (map[string]*Meal, error) {
-	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
-	plan := make(map[string]*Meal)
+func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
+	plan := &WeeklyMealPlan{}
+	// Friday is handled separately as "Eating out" for dinner
+	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"}
+	numMealsNeeded := len(weekdays)
 
-	// Query to get the 7 most recently planned meals
-	query := `
-		SELECT ` + strings.Join(MealColumns, ", ") + `
+	lastBreakfasts, err := getLastPlannedMealsByType(db, "breakfast", numMealsNeeded)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get last planned breakfasts: %w", err)
+	}
+
+	lastLunches, err := getLastPlannedMealsByType(db, "lunch", numMealsNeeded)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get last planned lunches: %w", err)
+	}
+
+	lastDinners, err := getLastPlannedMealsByType(db, "dinner", numMealsNeeded)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get last planned dinners: %w", err)
+	}
+
+	// If we don't have enough meals for each type, it's better to generate a fresh plan.
+	if len(lastBreakfasts) < numMealsNeeded || len(lastLunches) < numMealsNeeded || len(lastDinners) < numMealsNeeded {
+		return nil, errors.New("not enough recently planned meals to reconstruct a full plan")
+	}
+
+	dayMap := map[string]*DayMealPlan{
+		"Monday":    &plan.Monday,
+		"Tuesday":   &plan.Tuesday,
+		"Wednesday": &plan.Wednesday,
+		"Thursday":  &plan.Thursday,
+		"Saturday":  &plan.Saturday,
+		"Sunday":    &plan.Sunday,
+	}
+
+	for i, day := range weekdays {
+		dayPlan := dayMap[day]
+		dayPlan.Breakfast = lastBreakfasts[i]
+		dayPlan.Lunch = lastLunches[i]
+		dayPlan.Dinner = lastDinners[i]
+	}
+
+	// Handle Friday "Eating out"
+	plan.Friday.Dinner = &Meal{MealName: "Eating out"}
+
+	return plan, nil
+}
+
+// getLastPlannedMealsByType is a helper function to retrieve the most recently planned meals of a specific type.
+func getLastPlannedMealsByType(db *sql.DB, mealType string, limit int) ([]*Meal, error) {
+	query := `SELECT ` + strings.Join(MealColumns, ", ") + `
 		FROM meals
-		WHERE last_planned IS NOT NULL
+		WHERE meal_type = $1 AND last_planned IS NOT NULL
 		ORDER BY last_planned DESC
-		LIMIT 7
-	`
+		LIMIT $2`
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, mealType, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	dayIndex := 0
-
+	var meals []*Meal
 	for rows.Next() {
 		var m Meal
 		var lastPlanned sql.NullTime
@@ -150,73 +205,70 @@ func GetLastPlannedMeals(db *sql.DB) (map[string]*Meal, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		if lastPlanned.Valid {
 			m.LastPlanned = lastPlanned.Time
 		}
-
 		if url.Valid {
 			m.URL = url.String
 		}
-
-		// Don't overwrite Friday's "Eating out" with a real meal
-		if dayIndex < len(weekdays) && weekdays[dayIndex] != "Friday" {
-			plan[weekdays[dayIndex]] = &m
-		} else if dayIndex < len(weekdays) && weekdays[dayIndex] == "Friday" {
-			// Set Friday to "Eating out"
-			plan["Friday"] = &Meal{
-				MealName: "Eating out",
-			}
-			// Process this meal for the next day
-			if dayIndex+1 < len(weekdays) {
-				plan[weekdays[dayIndex+1]] = &m
-				dayIndex++
-			}
-		}
-
-		dayIndex++
+		meals = append(meals, &m)
 	}
-
-	// If not enough meals were found, fill in Friday as "Eating out" if not already set
-	if _, ok := plan["Friday"]; !ok {
-		plan["Friday"] = &Meal{
-			MealName: "Eating out",
-		}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
-
-	// If we didn't get a full meal plan, return an error so we can generate a new one
-	if len(plan) < 6 {
-		return nil, errors.New("not enough recently planned meals found")
+	// Reverse the slice to get the meals in chronological order (oldest of the batch first)
+	for i, j := 0, len(meals)-1; i < j; i, j = i+1, j-1 {
+		meals[i], meals[j] = meals[j], meals[i]
 	}
-
-	return plan, nil
+	return meals, nil
 }
 
 // MealPlanToICS generates an iCalendar representation of the meal plan starting from the provided monday date.
 // Each meal becomes an all-day event with the meal name as the title.
-func MealPlanToICS(plan map[string]*Meal, monday time.Time) string {
+func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 	monday = monday.UTC().Truncate(24 * time.Hour)
 	weekDays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	dayPlans := map[string]DayMealPlan{
+		"Monday":    plan.Monday,
+		"Tuesday":   plan.Tuesday,
+		"Wednesday": plan.Wednesday,
+		"Thursday":  plan.Thursday,
+		"Friday":    plan.Friday,
+		"Saturday":  plan.Saturday,
+		"Sunday":    plan.Sunday,
+	}
+
 	var b strings.Builder
 	b.WriteString("BEGIN:VCALENDAR\r\n")
 	b.WriteString("VERSION:2.0\r\n")
 	b.WriteString("PRODID:-//Meal Planner//EN\r\n")
+
 	for i, day := range weekDays {
-		meal, ok := plan[day]
-		if !ok || meal == nil {
-			continue
+		dayPlan := dayPlans[day]
+		meals := map[string]*Meal{
+			"Breakfast": dayPlan.Breakfast,
+			"Lunch":     dayPlan.Lunch,
+			"Dinner":    dayPlan.Dinner,
 		}
-		eventDate := monday.AddDate(0, 0, i)
-		b.WriteString("BEGIN:VEVENT\r\n")
-		b.WriteString("DTSTAMP:" + time.Now().UTC().Format("20060102T150405Z") + "\r\n")
-		b.WriteString("UID:" + fmt.Sprintf("%d-%s@mealplanner", meal.ID, eventDate.Format("20060102")) + "\r\n")
-		b.WriteString("DTSTART;VALUE=DATE:" + eventDate.Format("20060102") + "\r\n")
-		b.WriteString("SUMMARY:" + escapeICSString(meal.MealName) + "\r\n")
-		if meal.URL != "" {
-			b.WriteString("URL:" + meal.URL + "\r\n")
+
+		for mealType, meal := range meals {
+			if meal == nil || meal.MealName == "" {
+				continue
+			}
+
+			eventDate := monday.AddDate(0, 0, i)
+			b.WriteString("BEGIN:VEVENT\r\n")
+			b.WriteString("DTSTAMP:" + time.Now().UTC().Format("20060102T150405Z") + "\r\n")
+			b.WriteString("UID:" + fmt.Sprintf("%d-%s-%s@mealplanner", meal.ID, mealType, eventDate.Format("20060102")) + "\r\n")
+			b.WriteString("DTSTART;VALUE=DATE:" + eventDate.Format("20060102") + "\r\n")
+			b.WriteString("SUMMARY:" + escapeICSString(fmt.Sprintf("%s: %s", mealType, meal.MealName)) + "\r\n")
+			if meal.URL != "" {
+				b.WriteString("URL:" + meal.URL + "\r\n")
+			}
+			b.WriteString("END:VEVENT\r\n")
 		}
-		b.WriteString("END:VEVENT\r\n")
 	}
+
 	b.WriteString("END:VCALENDAR\r\n")
 	return b.String()
 }

@@ -259,7 +259,6 @@ func main() {
 	r.Post("/api/mealplan/generate", handlers.GenerateMealPlan)
 	r.Post("/api/mealplan/finalize", handlers.FinalizeMealPlanHandler)
 	r.Get("/api/mealplan/ics", handlers.MealPlanICSHandler)
-	r.Post("/api/mealplan/swap", handlers.SwapMeal)
 	r.Post("/api/shoppinglist", handlers.GetShoppingList)
 	r.Get("/api/meals", handlers.GetAllMealsHandler)
 	r.Post("/api/meals", handlers.CreateMealHandler)

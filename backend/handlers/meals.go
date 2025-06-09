@@ -21,7 +21,7 @@ var UseDummy bool
 func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 	var meals []*models.Meal
 	var err error
-    if UseDummy {
+	if UseDummy {
 		meals, err = dummy.GetAllMeals()
 	} else {
 		meals, err = models.GetAllMeals(DB)
@@ -55,7 +55,8 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 // SwapMealHandler handles POST /api/meals/swap and returns a new meal to replace the current one.
 func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
-		MealID int `json:"meal_id"`
+		MealID   int    `json:"meal_id"`
+		MealType string `json:"meal_type"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
@@ -64,10 +65,10 @@ func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
 
 	var newMeal *models.Meal
 	var err error
-    if UseDummy {
-		newMeal, err = dummy.SwapMeal(payload.MealID)
+	if UseDummy {
+		newMeal, err = models.SwapMeal(payload.MealID, payload.MealType, DB)
 	} else {
-		newMeal, err = models.SwapMeal(payload.MealID, DB)
+		newMeal, err = models.SwapMeal(payload.MealID, payload.MealType, DB)
 	}
 	if err != nil {
 		http.Error(w, "Error swapping meal: "+err.Error(), http.StatusInternalServerError)
@@ -79,7 +80,7 @@ func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
 
 // UpdateMealIngredientHandler handles updating a single ingredient for a specific meal.
 func UpdateMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
-    if UseDummy {
+	if UseDummy {
 		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
 		return
 	}
@@ -130,7 +131,7 @@ func UpdateMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteMealIngredientHandler handles DELETE /api/meals/{mealId}/ingredients/{ingredientId} and deletes a specific ingredient.
 func DeleteMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
-    if UseDummy {
+	if UseDummy {
 		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
 		return
 	}
@@ -171,7 +172,7 @@ func DeleteMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteMealHandler handles DELETE /api/meals/{mealId} and deletes a meal and its ingredients.
 func DeleteMealHandler(w http.ResponseWriter, r *http.Request) {
-    if UseDummy {
+	if UseDummy {
 		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
 		return
 	}
@@ -197,7 +198,7 @@ func DeleteMealHandler(w http.ResponseWriter, r *http.Request) {
 
 // ReplaceMealHandler handles POST /api/meals/replace and returns a new meal to replace the current one.
 func ReplaceMealHandler(w http.ResponseWriter, r *http.Request) {
-    if UseDummy {
+	if UseDummy {
 		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
 		return
 	}
@@ -222,24 +223,31 @@ func ReplaceMealHandler(w http.ResponseWriter, r *http.Request) {
 
 // FinalizeMealPlanHandler handles POST /api/mealplan/finalize and updates the last planned date for all meals in the plan
 func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
-    if UseDummy {
+	if UseDummy {
 		// In dummy mode, nothing to finalize
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Plan finalized"))
 		return
 	}
-	var payload struct {
-		Plan map[string]models.Meal `json:"plan"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	var plan models.WeeklyMealPlan
+	if err := json.NewDecoder(r.Body).Decode(&plan); err != nil {
+		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Extract meal IDs from the plan
 	var mealIDs []int
-	for _, meal := range payload.Plan {
-		mealIDs = append(mealIDs, meal.ID)
+	days := []models.DayMealPlan{plan.Monday, plan.Tuesday, plan.Wednesday, plan.Thursday, plan.Friday, plan.Saturday, plan.Sunday}
+	for _, dayPlan := range days {
+		if dayPlan.Breakfast != nil && dayPlan.Breakfast.ID != 0 {
+			mealIDs = append(mealIDs, dayPlan.Breakfast.ID)
+		}
+		if dayPlan.Lunch != nil && dayPlan.Lunch.ID != 0 {
+			mealIDs = append(mealIDs, dayPlan.Lunch.ID)
+		}
+		if dayPlan.Dinner != nil && dayPlan.Dinner.ID != 0 {
+			mealIDs = append(mealIDs, dayPlan.Dinner.ID)
+		}
 	}
 
 	// Sort meal IDs to ensure consistent order
@@ -248,17 +256,17 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 	// Update last planned date for all meals in the plan
 	err := models.UpdateLastPlannedDates(DB, mealIDs)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to finalize meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Plan finalized"))
+	w.Write([]byte("Meal plan finalized successfully."))
 }
 
 // CreateMealHandler handles POST /api/meals and creates a new meal with ingredients.
 func CreateMealHandler(w http.ResponseWriter, r *http.Request) {
-    if UseDummy {
+	if UseDummy {
 		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
 		return
 	}
