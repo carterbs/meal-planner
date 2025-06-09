@@ -33,22 +33,43 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Create an output map from day to a simplified meal object including effort.
-	type OutputMeal struct {
-		ID             int    `json:"id"`
-		MealName       string `json:"mealName"`
-		RelativeEffort int    `json:"relativeEffort"`
-		URL            string `json:"url,omitempty"`
+	// Get meal IDs to fetch full meal details with ingredients
+	mealIDs := make([]int, 0, len(plan))
+	for _, meal := range plan {
+		mealIDs = append(mealIDs, meal.ID)
 	}
-	output := make(map[string]OutputMeal)
+
+	// Fetch meals with ingredients
+	var mealsWithIngredients []*models.Meal
+	if UseDummy {
+		mealsWithIngredients, err = dummy.GetMealsByIDs(mealIDs)
+	} else {
+		mealsWithIngredients, err = models.GetMealsByIDs(DB, mealIDs)
+	}
+	if err != nil {
+		log.Printf("Error fetching meals with ingredients: %v", err)
+		// Fall back to original plan without ingredients
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(plan)
+		return
+	}
+
+	// Create a map of meal ID to full meal for quick lookup
+	mealMap := make(map[int]*models.Meal)
+	for _, meal := range mealsWithIngredients {
+		mealMap[meal.ID] = meal
+	}
+
+	// Replace meals in plan with full meal objects
+	output := make(map[string]*models.Meal)
 	for day, meal := range plan {
-		output[day] = OutputMeal{
-			ID:             meal.ID,
-			MealName:       meal.MealName,
-			RelativeEffort: meal.RelativeEffort,
-			URL:            meal.URL,
+		if fullMeal, exists := mealMap[meal.ID]; exists {
+			output[day] = fullMeal
+		} else {
+			output[day] = meal // fallback to original meal
 		}
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(output)
 }
@@ -76,22 +97,43 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 		delete(plan, day)
 	}
 
-	// Create an output map from day to a simplified meal object including effort.
-	type OutputMeal struct {
-		ID             int    `json:"id"`
-		MealName       string `json:"mealName"`
-		RelativeEffort int    `json:"relativeEffort"`
-		URL            string `json:"url,omitempty"`
+	// Get meal IDs to fetch full meal details with ingredients
+	mealIDs := make([]int, 0, len(plan))
+	for _, meal := range plan {
+		mealIDs = append(mealIDs, meal.ID)
 	}
-	output := make(map[string]OutputMeal)
+
+	// Fetch meals with ingredients
+	var mealsWithIngredients []*models.Meal
+	if UseDummy {
+		mealsWithIngredients, err = dummy.GetMealsByIDs(mealIDs)
+	} else {
+		mealsWithIngredients, err = models.GetMealsByIDs(DB, mealIDs)
+	}
+	if err != nil {
+		log.Printf("Error fetching meals with ingredients: %v", err)
+		// Fall back to original plan without ingredients
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(plan)
+		return
+	}
+
+	// Create a map of meal ID to full meal for quick lookup
+	mealMap := make(map[int]*models.Meal)
+	for _, meal := range mealsWithIngredients {
+		mealMap[meal.ID] = meal
+	}
+
+	// Replace meals in plan with full meal objects
+	output := make(map[string]*models.Meal)
 	for day, meal := range plan {
-		output[day] = OutputMeal{
-			ID:             meal.ID,
-			MealName:       meal.MealName,
-			RelativeEffort: meal.RelativeEffort,
-			URL:            meal.URL,
+		if fullMeal, exists := mealMap[meal.ID]; exists {
+			output[day] = fullMeal
+		} else {
+			output[day] = meal // fallback to original meal
 		}
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(output)
 }

@@ -5,10 +5,12 @@ import {
     Button,
     Card,
     CircularProgress,
+    IconButton,
 } from '@mui/material';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { Meal, Ingredient } from '../types';
 
@@ -36,6 +38,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     const [shoppingListError, setShoppingListError] = useState<string | null>(null);
     const [skipDays, setSkipDays] = useState<string[]>([]);
     const [skippedMeals, setSkippedMeals] = useState<Set<string>>(new Set());
+    const [removedIngredients, setRemovedIngredients] = useState<Set<string>>(new Set());
 
     // Debounced shopping list generation function
     const generateShoppingListAutomatic = useCallback(async () => {
@@ -107,14 +110,24 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                     WEEK_DAYS.forEach(day => {
                         extendedMealPlan[day] = {
                             Breakfast: mealPlanData[day] ? {
-                                ...mealPlanData[day],
+                                id: mealPlanData[day].id + 1000, // fake ID to avoid conflicts
                                 mealName: `Breakfast ${day.slice(0, 3)}`,
-                                relativeEffort: 1
+                                relativeEffort: 1,
+                                lastPlanned: new Date().toISOString(),
+                                redMeat: false,
+                                url: '',
+                                mealType: 'breakfast',
+                                ingredients: [] // no ingredients for fake breakfast
                             } : null,
                             Lunch: mealPlanData[day] ? {
-                                ...mealPlanData[day],
+                                id: mealPlanData[day].id + 2000, // fake ID to avoid conflicts
                                 mealName: `Lunch ${day.slice(0, 3)}`,
-                                relativeEffort: 2
+                                relativeEffort: 2,
+                                lastPlanned: new Date().toISOString(),
+                                redMeat: false,
+                                url: '',
+                                mealType: 'lunch',
+                                ingredients: [] // no ingredients for fake lunch
                             } : null,
                             Dinner: mealPlanData[day] || null,
                         };
@@ -138,6 +151,8 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             isMounted = false;
         };
     }, []);
+
+
 
     // Auto-generate shopping list when meal plan or skipped meals change
     useEffect(() => {
@@ -191,14 +206,24 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 WEEK_DAYS.forEach(day => {
                     extendedMealPlan[day] = {
                         Breakfast: data[day] ? {
-                            ...data[day],
+                            id: data[day].id + 1000,
                             mealName: `Breakfast ${day.slice(0, 3)}`,
-                            relativeEffort: 1
+                            relativeEffort: 1,
+                            lastPlanned: new Date().toISOString(),
+                            redMeat: false,
+                            url: '',
+                            mealType: 'breakfast',
+                            ingredients: []
                         } : null,
                         Lunch: data[day] ? {
-                            ...data[day],
+                            id: data[day].id + 2000,
                             mealName: `Lunch ${day.slice(0, 3)}`,
-                            relativeEffort: 2
+                            relativeEffort: 2,
+                            lastPlanned: new Date().toISOString(),
+                            redMeat: false,
+                            url: '',
+                            mealType: 'lunch',
+                            ingredients: []
                         } : null,
                         Dinner: data[day] || null,
                     };
@@ -257,15 +282,56 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
     };
 
     const copyShoppingListToClipboard = () => {
-        const formattedList = shoppingList
-            .map(item => `${item.Quantity > 0 ? `${item.Quantity} ${item.Unit} ` : ''}${item.Name}`)
+        if (!mealPlan) return;
+
+        // Collect all ingredients from visible meal cards
+        const allIngredients: { [name: string]: { quantity: number; unit: string; name: string } } = {};
+
+        WEEK_DAYS.forEach(day => {
+            MEAL_TYPES.forEach(mealType => {
+                const meal = mealPlan[day][mealType];
+                const mealKey = `${day}-${mealType}`;
+
+                if (meal && !skippedMeals.has(mealKey) && meal.ingredients) {
+                    meal.ingredients.forEach(ingredient => {
+                        const ingredientKey = `${meal.id}-${ingredient.ID}`;
+
+                        // Skip removed ingredients
+                        if (removedIngredients.has(ingredientKey)) return;
+
+                        // Aggregate ingredients by name
+                        if (allIngredients[ingredient.Name]) {
+                            allIngredients[ingredient.Name].quantity += ingredient.Quantity;
+                        } else {
+                            allIngredients[ingredient.Name] = {
+                                quantity: ingredient.Quantity,
+                                unit: ingredient.Unit,
+                                name: ingredient.Name
+                            };
+                        }
+                    });
+                }
+            });
+        });
+
+        // Format for clipboard
+        const formattedList = Object.values(allIngredients)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(item => `${item.quantity > 0 ? `${item.quantity} ${item.unit} ` : ''}${item.name}`)
             .join('\n');
+
         navigator.clipboard.writeText(formattedList)
             .then(() => showToast('Shopping list copied to clipboard!'))
             .catch(err => {
                 console.error('Failed to copy to clipboard:', err);
                 showToast('Failed to copy to clipboard');
             });
+    };
+
+    const removeIngredient = (mealId: number, ingredientId: number) => {
+        const ingredientKey = `${mealId}-${ingredientId}`;
+        setRemovedIngredients(prev => new Set([...prev, ingredientKey]));
+        showToast('Ingredient removed from shopping list');
     };
 
     const renderMealSlot = (day: string, mealType: string, meal: Meal | null) => {
@@ -319,6 +385,72 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                     <Typography variant="mealEffort">
                         Effort: {meal?.relativeEffort || 1}
                     </Typography>
+
+                    {/* Ingredients */}
+                    {meal?.ingredients && meal.ingredients.length > 0 && !isSkipped && (
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                                gap: '6px',
+                                marginTop: '8px',
+                            }}
+                        >
+                            {meal.ingredients
+                                .filter(ingredient => !removedIngredients.has(`${meal.id}-${ingredient.ID}`))
+                                .map((ingredient, index) => (
+                                    <Box
+                                        key={index}
+                                        sx={{
+                                            background: 'linear-gradient(135deg, #fefffe 0%, #fafcf8 100%)',
+                                            padding: '6px 8px',
+                                            borderRadius: '6px',
+                                            fontSize: '0.75rem',
+                                            border: '1px solid #e8f0e5',
+                                            color: '#6b7668',
+                                            transition: 'all 0.2s ease',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '4px',
+                                            '&:hover': {
+                                                background: 'linear-gradient(135deg, #fafcf8 0%, #f6faf3 100%)',
+                                                transform: 'translateY(-1px)',
+                                                boxShadow: '0 2px 8px rgba(127, 176, 105, 0.08)',
+                                            },
+                                        }}
+                                    >
+                                        <Typography
+                                            sx={{
+                                                fontSize: '0.75rem',
+                                                flex: 1,
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            {`${ingredient.Quantity > 0 ? `${ingredient.Quantity} ${ingredient.Unit} ` : ''}${ingredient.Name}`}
+                                        </Typography>
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => removeIngredient(meal.id, ingredient.ID)}
+                                            sx={{
+                                                padding: '2px',
+                                                width: '16px',
+                                                height: '16px',
+                                                color: '#8a9584',
+                                                '&:hover': {
+                                                    color: '#d32f2f',
+                                                    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                                                },
+                                            }}
+                                        >
+                                            <CloseIcon sx={{ fontSize: '12px' }} />
+                                        </IconButton>
+                                    </Box>
+                                ))}
+                        </Box>
+                    )}
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -428,6 +560,20 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                     >
                         Finalize Meal Plan
                     </Button>
+                    <Button
+                        variant="contained"
+                        onClick={copyShoppingListToClipboard}
+                        disabled={!mealPlan}
+                        startIcon={<ShoppingCartIcon />}
+                        sx={{
+                            background: 'linear-gradient(135deg, #1b998b 0%, #7fb069 100%)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #178a7a 0%, #6fa055 100%)',
+                            },
+                        }}
+                    >
+                        Copy Shopping List
+                    </Button>
                 </Box>
                 <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '12px', alignItems: 'center' }}>
                     <Button
@@ -512,109 +658,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                     </Box>
                 )}
 
-                {/* Shopping List Section */}
-                {mealPlan && (
-                    <Box
-                        sx={{
-                            marginTop: '30px',
-                            padding: '25px',
-                            background: 'linear-gradient(135deg, #f6faf3 0%, #f2f7ef 100%)',
-                            borderRadius: '12px',
-                            border: '1px solid #e8f0e5',
-                            boxShadow: '0 4px 15px rgba(127, 176, 105, 0.05)',
-                        }}
-                    >
-                        <Typography
-                            variant="h5"
-                            sx={{
-                                color: '#4a5d3a',
-                                marginBottom: '15px',
-                                fontSize: '1.1rem',
-                                fontWeight: 600,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                            }}
-                        >
-                            Shopping List
-                            {isLoadingShoppingList && (
-                                <CircularProgress size={16} sx={{ color: '#7fb069' }} />
-                            )}
-                        </Typography>
 
-                        {shoppingListError && (
-                            <Typography
-                                variant="body2"
-                                sx={{
-                                    color: '#d32f2f',
-                                    marginBottom: '15px',
-                                    padding: '10px',
-                                    backgroundColor: '#ffebee',
-                                    borderRadius: '6px',
-                                    border: '1px solid #ffcdd2',
-                                }}
-                            >
-                                {shoppingListError}
-                            </Typography>
-                        )}
-
-                        {!isLoadingShoppingList && !shoppingListError && shoppingList.length === 0 && (
-                            <Typography
-                                variant="body2"
-                                sx={{
-                                    color: '#8a9584',
-                                    fontStyle: 'italic',
-                                    marginBottom: '15px',
-                                }}
-                            >
-                                No ingredients needed - add some meals to your plan!
-                            </Typography>
-                        )}
-
-                        {shoppingList.length > 0 && (
-                            <>
-                                <Box
-                                    sx={{
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                                        gap: '10px',
-                                        marginBottom: '20px',
-                                    }}
-                                >
-                                    {shoppingList.map((item, index) => (
-                                        <Box
-                                            key={index}
-                                            sx={{
-                                                background: 'linear-gradient(135deg, #fefffe 0%, #fafcf8 100%)',
-                                                padding: '10px 12px',
-                                                borderRadius: '6px',
-                                                fontSize: '0.875rem',
-                                                border: '1px solid #e8f0e5',
-                                                color: '#6b7668',
-                                                transition: 'all 0.2s ease',
-                                                '&:hover': {
-                                                    background: 'linear-gradient(135deg, #fafcf8 0%, #f6faf3 100%)',
-                                                    transform: 'translateY(-1px)',
-                                                    boxShadow: '0 2px 8px rgba(127, 176, 105, 0.08)',
-                                                },
-                                            }}
-                                        >
-                                            {`${item.Quantity > 0 ? `${item.Quantity} ${item.Unit} ` : ''}${item.Name}`}
-                                        </Box>
-                                    ))}
-                                </Box>
-                                <Button
-                                    variant="contained"
-                                    onClick={copyShoppingListToClipboard}
-                                    startIcon={<ShoppingCartIcon />}
-                                    disabled={isLoadingShoppingList}
-                                >
-                                    Copy to Clipboard
-                                </Button>
-                            </>
-                        )}
-                    </Box>
-                )}
             </Box>
         </Box>
     );
