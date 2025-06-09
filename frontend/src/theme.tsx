@@ -1,22 +1,36 @@
 import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
 
-// Define color palette
-const primaryColor = '#5E8B3F'; // Fresh sage green
-const secondaryColor = '#E9773E'; // Warm terracotta
-const backgroundLight = '#F8F6F2'; // Soft cream background
-const backgroundDark = '#2D3133'; // Deep charcoal for dark mode
+// Define color palette following the "crunchy mom aesthetic" style guide
+const primaryColor = '#7fb069'; // Sage Green
+const secondaryColor = '#1b998b'; // Teal
+const dustySage = '#8b9a7a'; // Header background start
+const softOlive = '#a8b89a'; // Header background end
+const warmCream = '#fefffe'; // Primary background
+const lightSage = '#f9fdf7'; // Container background
+const offWhite = '#f4f7f0'; // Body background start
+const paleSage = '#eef4ea'; // Body background end
+const darkGreen = '#4a5d3a'; // Primary text
+const greenGray = '#6b7668'; // Secondary text
+const mutedGreen = '#8a9584'; // Tertiary text
+const borderColor = '#e8f0e5';
 
 // Declare custom fonts
 declare module '@mui/material/styles' {
     interface TypographyVariants {
         cardTitle: React.CSSProperties;
         recipeHeading: React.CSSProperties;
+        dayHeader: React.CSSProperties;
+        mealName: React.CSSProperties;
+        mealEffort: React.CSSProperties;
     }
 
     interface TypographyVariantsOptions {
         cardTitle?: React.CSSProperties;
         recipeHeading?: React.CSSProperties;
+        dayHeader?: React.CSSProperties;
+        mealName?: React.CSSProperties;
+        mealEffort?: React.CSSProperties;
     }
 }
 
@@ -24,6 +38,9 @@ declare module '@mui/material/Typography' {
     interface TypographyPropsVariantOverrides {
         cardTitle: true;
         recipeHeading: true;
+        dayHeader: true;
+        mealName: true;
+        mealEffort: true;
     }
 }
 
@@ -33,114 +50,146 @@ let theme = createTheme({
         primary: {
             main: primaryColor,
             light: alpha(primaryColor, 0.8),
-            dark: '#3A5A25',
+            dark: '#6fa055',
             contrastText: '#FFFFFF',
         },
         secondary: {
             main: secondaryColor,
             light: alpha(secondaryColor, 0.8),
-            dark: '#C45E2D',
+            dark: '#178a7a',
             contrastText: '#FFFFFF',
         },
         background: {
-            default: backgroundLight,
-            paper: '#FFFFFF',
+            default: `linear-gradient(135deg, ${offWhite} 0%, ${paleSage} 100%)`,
+            paper: warmCream,
         },
         text: {
-            primary: '#333333',
-            secondary: '#666666',
+            primary: darkGreen,
+            secondary: greenGray,
         },
         error: {
             main: '#D32F2F',
         },
         warning: {
-            main: '#EF8F33',
+            main: '#e09e60',
         },
         info: {
-            main: '#4C94E8',
+            main: secondaryColor,
         },
         success: {
-            main: '#4CAF50',
+            main: primaryColor,
         },
-        divider: '#E0E0E0',
+        divider: borderColor,
     },
     typography: {
         fontFamily: [
-            'Montserrat',
+            '-apple-system',
+            'BlinkMacSystemFont',
             '"Segoe UI"',
             'Roboto',
-            'Arial',
             'sans-serif',
         ].join(','),
         h1: {
-            fontFamily: 'Playfair Display, serif',
-            fontWeight: 700,
+            fontSize: '1.5rem',
+            fontWeight: 600,
+            color: darkGreen,
             letterSpacing: '-0.01em',
         },
         h2: {
-            fontFamily: 'Playfair Display, serif',
-            fontWeight: 700,
-            letterSpacing: '-0.01em',
+            fontSize: '1.3rem',
+            fontWeight: 600,
+            color: darkGreen,
         },
         h3: {
-            fontFamily: 'Playfair Display, serif',
+            fontSize: '1.1rem',
             fontWeight: 600,
+            color: darkGreen,
         },
         h4: {
-            fontFamily: 'Playfair Display, serif',
+            fontSize: '1rem',
             fontWeight: 600,
+            color: darkGreen,
         },
         h5: {
-            fontFamily: 'Playfair Display, serif',
+            fontSize: '0.875rem',
             fontWeight: 600,
+            color: darkGreen,
         },
         h6: {
-            fontFamily: 'Montserrat, sans-serif',
+            fontSize: '0.75rem',
             fontWeight: 600,
+            color: darkGreen,
         },
         subtitle1: {
+            fontSize: '0.875rem',
             fontWeight: 500,
+            color: greenGray,
         },
         subtitle2: {
+            fontSize: '0.75rem',
             fontWeight: 500,
+            color: mutedGreen,
         },
         body1: {
-            fontSize: '1rem',
+            fontSize: '0.875rem',
+            fontWeight: 500,
             lineHeight: 1.6,
+            color: darkGreen,
+        },
+        body2: {
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            color: greenGray,
         },
         button: {
-            fontWeight: 600,
-            letterSpacing: '0.03em',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            letterSpacing: '0.01em',
             textTransform: 'none',
         },
-        // Custom variants
+        // Custom variants following the style guide
         cardTitle: {
-            fontFamily: 'Playfair Display, serif',
             fontSize: '1.5rem',
             fontWeight: 600,
             marginBottom: '0.5rem',
+            color: darkGreen,
         },
         recipeHeading: {
-            fontFamily: 'Montserrat, sans-serif',
             fontSize: '1.2rem',
             fontWeight: 600,
             letterSpacing: '0.02em',
+            color: darkGreen,
+        },
+        dayHeader: {
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            color: darkGreen,
+        },
+        mealName: {
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            color: darkGreen,
+            lineHeight: 1.4,
+        },
+        mealEffort: {
+            fontSize: '0.75rem',
+            color: mutedGreen,
         },
     },
     shape: {
-        borderRadius: 10,
+        borderRadius: 12,
     },
     shadows: [
         'none',
-        '0 2px 8px rgba(0, 0, 0, 0.04)',
-        '0 3px 10px rgba(0, 0, 0, 0.06)',
-        '0 5px 15px rgba(0, 0, 0, 0.08)',
-        '0 8px 20px rgba(0, 0, 0, 0.1)',
-        '0 10px 25px rgba(0, 0, 0, 0.12)',
-        '0 12px 28px rgba(0, 0, 0, 0.14)',
-        '0 14px 30px rgba(0, 0, 0, 0.16)',
-        '0 16px 32px rgba(0, 0, 0, 0.18)',
-        '0 18px 34px rgba(0, 0, 0, 0.2)',
+        '0 4px 15px rgba(127, 176, 105, 0.08)',
+        '0 8px 25px rgba(127, 176, 105, 0.15)',
+        '0 10px 40px rgba(0, 0, 0, 0.1)',
+        '0 20px 60px rgba(0,0,0,0.08)',
+        '0 4px 15px rgba(127, 176, 105, 0.05)',
+        '0 2px 8px rgba(127, 176, 105, 0.1)',
+        '0 4px 15px rgba(127, 176, 105, 0.3)',
+        '0 6px 20px rgba(127, 176, 105, 0.4)',
+        '0 6px 20px rgba(0,0,0,0.15)',
         '0 20px 36px rgba(0, 0, 0, 0.22)',
         '0 22px 38px rgba(0, 0, 0, 0.24)',
         '0 24px 40px rgba(0, 0, 0, 0.26)',
@@ -161,34 +210,52 @@ let theme = createTheme({
         MuiAppBar: {
             styleOverrides: {
                 root: {
-                    backgroundColor: '#FFFFFF',
-                    backgroundImage: `linear-gradient(to right, ${alpha(primaryColor, 0.05)}, ${alpha(primaryColor, 0.1)})`,
-                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+                    background: `linear-gradient(135deg, ${dustySage} 0%, ${softOlive} 100%)`,
+                    boxShadow: 'none',
+                    borderBottom: `1px solid ${borderColor}`,
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                        pointerEvents: 'none',
+                    },
                 },
             },
         },
         MuiButton: {
             styleOverrides: {
                 root: {
-                    borderRadius: 8,
-                    padding: '8px 22px',
-                    boxShadow: 'none',
+                    borderRadius: 6,
+                    padding: '10px 20px',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    textTransform: 'none',
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                        boxShadow: '0 4px 12px rgba(94, 139, 63, 0.2)',
-                        transform: 'translateY(-1px)',
-                        transition: 'all 0.2s',
+                        transform: 'translateY(-2px)',
                     },
                 },
                 contained: {
-                    '&:active': {
-                        boxShadow: '0 2px 6px rgba(94, 139, 63, 0.2)',
-                        transform: 'translateY(0)',
+                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+                    color: 'white',
+                    border: 'none',
+                    boxShadow: '0 4px 15px rgba(127, 176, 105, 0.3)',
+                    '&:hover': {
+                        background: `linear-gradient(135deg, #6fa055 0%, #178a7a 100%)`,
+                        boxShadow: '0 6px 20px rgba(127, 176, 105, 0.4)',
                     },
                 },
                 outlined: {
-                    borderWidth: 2,
+                    background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                    color: '#6b7280',
+                    border: '1px solid #e2e8f0',
                     '&:hover': {
-                        borderWidth: 2,
+                        background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+                        borderColor: '#d1d5db',
                     },
                 },
             },
@@ -196,23 +263,15 @@ let theme = createTheme({
         MuiCard: {
             styleOverrides: {
                 root: {
+                    background: `linear-gradient(135deg, ${warmCream} 0%, #fbfef9 100%)`,
+                    border: `1px solid ${borderColor}`,
                     borderRadius: 12,
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                    boxShadow: '0 4px 15px rgba(127, 176, 105, 0.08)',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                     overflow: 'hidden',
-                    transition: 'transform 0.3s, box-shadow 0.3s',
                     '&:hover': {
-                        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
-                        transform: 'translateY(-4px)',
-                    },
-                },
-            },
-        },
-        MuiCardContent: {
-            styleOverrides: {
-                root: {
-                    padding: '24px',
-                    '&:last-child': {
-                        paddingBottom: '24px',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 8px 25px rgba(127, 176, 105, 0.15)',
                     },
                 },
             },
@@ -220,140 +279,114 @@ let theme = createTheme({
         MuiPaper: {
             styleOverrides: {
                 root: {
-                    borderRadius: 12,
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+                    background: `linear-gradient(135deg, ${warmCream} 0%, ${lightSage} 100%)`,
+                    borderRadius: 16,
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
+                    border: `1px solid ${borderColor}`,
+                },
+                elevation1: {
+                    boxShadow: '0 4px 15px rgba(127, 176, 105, 0.08)',
+                },
+                elevation2: {
+                    boxShadow: '0 8px 25px rgba(127, 176, 105, 0.15)',
+                },
+                elevation3: {
+                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+                },
+            },
+        },
+        MuiContainer: {
+            styleOverrides: {
+                root: {
+                    maxWidth: '1400px !important',
                 },
             },
         },
         MuiTableCell: {
             styleOverrides: {
                 root: {
-                    padding: '16px 24px',
+                    borderBottom: `1px solid ${borderColor}`,
+                    padding: '16px',
                 },
                 head: {
+                    background: `linear-gradient(135deg, #fafcf8 0%, #f6faf3 100%)`,
                     fontWeight: 600,
-                    backgroundColor: alpha(primaryColor, 0.05),
-                },
-            },
-        },
-        MuiTabs: {
-            styleOverrides: {
-                root: {
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                    '& .MuiTabs-indicator': {
-                        height: 3,
-                        borderRadius: '3px 3px 0 0',
-                    },
-                },
-                flexContainer: {
-                    gap: 8,
+                    color: darkGreen,
+                    borderBottom: `1px solid ${borderColor}`,
                 },
             },
         },
         MuiTab: {
             styleOverrides: {
                 root: {
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
                     textTransform: 'none',
-                    letterSpacing: '0.02em',
-                    padding: '12px 24px',
-                    borderRadius: '8px 8px 0 0',
-                    transition: 'background-color 0.2s',
-                    '&:hover': {
-                        backgroundColor: alpha(primaryColor, 0.05),
-                    },
-                    '&.Mui-selected': {
-                        fontWeight: 700,
-                    },
-                },
-            },
-        },
-        MuiTextField: {
-            styleOverrides: {
-                root: {
-                    '& .MuiOutlinedInput-root': {
-                        borderRadius: 8,
-                        '& fieldset': {
-                            borderColor: '#E0E0E0',
-                            transition: 'border-color 0.2s',
-                        },
-                        '&:hover fieldset': {
-                            borderColor: primaryColor,
-                        },
-                        '&.Mui-focused fieldset': {
-                            borderColor: primaryColor,
-                            borderWidth: 2,
-                        },
-                    },
-                },
-            },
-        },
-        MuiSelect: {
-            styleOverrides: {
-                outlined: {
-                    borderRadius: 8,
-                },
-            },
-        },
-        MuiChip: {
-            styleOverrides: {
-                root: {
-                    borderRadius: 6,
                     fontWeight: 500,
-                    '&.MuiChip-colorPrimary': {
-                        backgroundColor: alpha(primaryColor, 0.1),
-                        color: primaryColor,
+                    fontSize: '0.875rem',
+                    color: 'rgba(255,255,255,0.9)',
+                    '&.Mui-selected': {
+                        color: 'white',
+                        fontWeight: 600,
                     },
-                    '&.MuiChip-colorSecondary': {
-                        backgroundColor: alpha(secondaryColor, 0.1),
-                        color: secondaryColor,
-                    },
+                },
+            },
+        },
+        MuiTabs: {
+            styleOverrides: {
+                indicator: {
+                    background: 'white',
+                    height: 3,
                 },
             },
         },
     },
 });
 
-// Declare module augmentation for DataGrid components
+// Add custom color properties for the crunchy mom aesthetic
 declare module '@mui/material/styles' {
-    interface Components {
-        MuiDataGrid?: {
-            styleOverrides?: {
-                root?: React.CSSProperties | any;
-            };
+    interface Palette {
+        sage: {
+            light: string;
+            main: string;
+            dark: string;
+        };
+        natural: {
+            cream: string;
+            sage: string;
+            border: string;
+        };
+    }
+
+    interface PaletteOptions {
+        sage?: {
+            light?: string;
+            main?: string;
+            dark?: string;
+        };
+        natural?: {
+            cream?: string;
+            sage?: string;
+            border?: string;
         };
     }
 }
 
-// Add DataGrid styling
+// Augment the theme with custom colors
 theme = createTheme(theme, {
-    components: {
-        // @ts-ignore - MuiDataGrid is a valid component but TypeScript doesn't recognize it
-        MuiDataGrid: {
-            styleOverrides: {
-                root: {
-                    border: 'none',
-                    borderRadius: 12,
-                    '& .MuiDataGrid-columnHeaders': {
-                        backgroundColor: alpha(primaryColor, 0.05),
-                        borderRadius: '12px 12px 0 0',
-                    },
-                    '& .MuiDataGrid-row': {
-                        transition: 'background-color 0.2s, transform 0.2s',
-                    },
-                    '& .MuiDataGrid-row:hover': {
-                        backgroundColor: alpha(primaryColor, 0.03),
-                        transform: 'translateY(-1px)',
-                    },
-                },
-            },
+    palette: {
+        sage: {
+            light: lightSage,
+            main: primaryColor,
+            dark: dustySage,
+        },
+        natural: {
+            cream: warmCream,
+            sage: lightSage,
+            border: borderColor,
         },
     },
 });
 
-// Make fonts responsive
+// Make theme responsive
 theme = responsiveFontSizes(theme);
 
 export default theme; 
