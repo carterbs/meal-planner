@@ -33,12 +33,15 @@ interface MealManagementTabProps {
     showToast: (message: string) => void;
 }
 
+const mealTypes = ["All", "Breakfast", "Lunch", "Dinner"];
+
 export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast }) => {
     const [meals, setMeals] = useState<Meal[]>([]);
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
     const [editingIngredientIndex, setEditingIngredientIndex] = useState<number | null>(null);
     const [editedIngredient, setEditedIngredient] = useState<Ingredient | null>(null);
     const [mealFilter, setMealFilter] = useState<string>("");
+    const [mealTypeFilter, setMealTypeFilter] = useState<string>("All");
     const [currentView, setCurrentView] = useState<"main" | "browse" | "add">("main");
     const [loading, setLoading] = useState<boolean>(false);
     const [toastMessage, setToastMessage] = useState<string>("");
@@ -53,6 +56,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
             headerName: 'Meal Name',
             flex: 1,
             minWidth: 200,
+        },
+        {
+            field: 'mealType',
+            headerName: 'Meal Type',
+            width: 120,
         },
         {
             field: 'relativeEffort',
@@ -266,19 +274,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
     }, [currentView]);
 
     useEffect(() => {
-        fetch("/api/meals")
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            })
-            .then((data: Meal[]) => setMeals(data))
-            .catch((err) => {
-                console.error("Error fetching meals:", err);
-                showToast("Error loading meals");
-            });
-    }, [showToast]);
+        fetchMeals();
+    }, [mealTypeFilter]);
 
     // Filter meals based on search term
     const filteredMeals = meals.filter((meal) =>
@@ -316,17 +313,21 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
 
     // Add a function to fetch meals directly
     const fetchMeals = () => {
-        fetch("/api/meals")
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
+        setLoading(true);
+        let url = "/api/meals";
+        if (mealTypeFilter !== "All") {
+            url += `?type=${mealTypeFilter.toLowerCase()}`;
+        }
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                setMeals(data);
+                setLoading(false);
             })
-            .then((data: Meal[]) => setMeals(data))
-            .catch((err) => {
+            .catch(err => {
                 console.error("Error fetching meals:", err);
-                showToast("Error loading meals");
+                setLoading(false);
+                showToast("Error fetching meals");
             });
     };
 
@@ -615,7 +616,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                             >
                                 Available Meals
                             </Typography>
-                            <Box sx={{ mb: 2 }}>
+                            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <TextField
                                     label="Search Meals"
                                     variant="outlined"
@@ -637,6 +638,18 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({ showToast 
                                         }
                                     }}
                                 />
+                                <Box>
+                                    {mealTypes.map(type => (
+                                        <Button
+                                            key={type}
+                                            variant={mealTypeFilter === type ? "contained" : "outlined"}
+                                            onClick={() => setMealTypeFilter(type)}
+                                            sx={{ ml: 1 }}
+                                        >
+                                            {type}
+                                        </Button>
+                                    ))}
+                                </Box>
                             </Box>
                             <Paper
                                 sx={{
