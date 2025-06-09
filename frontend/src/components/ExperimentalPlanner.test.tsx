@@ -20,6 +20,10 @@ describe('ExperimentalPlanner', () => {
         cells.forEach(cell => {
             expect(cell.textContent).not.toBe('');
         });
+        days.forEach(day => {
+            const dinner = screen.getByTestId(`cell-${day}-Dinner`);
+            expect(dinner.getAttribute('data-state')).toBe('suggested');
+        });
     });
 
     test('skip Monday Lunch', async () => {
@@ -40,6 +44,7 @@ describe('ExperimentalPlanner', () => {
         fireEvent.click(skipButton);
         expect(within(cell).queryByText('Skipped')).not.toBeInTheDocument();
         expect(within(cell).getByText((content) => content.startsWith(mealText))).toBeInTheDocument();
+        expect(cell.getAttribute('data-state')).toBe('suggested');
     });
 
     test('replace meal using typeahead', async () => {
@@ -60,7 +65,7 @@ describe('ExperimentalPlanner', () => {
         const cell = screen.getByTestId('cell-Mon-Breakfast');
         const skipButton = within(cell).getByTestId('skip-Mon-Breakfast');
         fireEvent.click(skipButton);
-        expect(screen.getByText(/Shopping list out of date/)).toBeInTheDocument();
+        expect(await screen.findByText(/Shopping list out of date/)).toBeInTheDocument();
     });
 
     test('restores latest draft from localStorage', async () => {
