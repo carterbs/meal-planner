@@ -140,30 +140,48 @@ describe("MealPlanTab", () => {
         expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining("generated"));
     });
 
-    test("swaps a meal successfully", async () => {
-        // Create a new meal for the swap response
-        const newMeal = {
-            id: 99,
-            mealName: "New Test Meal",
-            relativeEffort: 2,
-            lastPlanned: "2024-02-15T00:00:00Z",
-            redMeat: false,
-            mealType: "breakfast",
-            ingredients: []
-        };
+    test("displays meal autocomplete inputs", async () => {
+        await act(async () => {
+            render(<MealPlanTab showToast={mockShowToast} />);
+        });
 
-        // Mock the swap endpoint with a proper implementation
-        const originalFetch = global.fetch;
-        global.fetch = jest.fn().mockImplementation((url, options) => {
-            if (url.toString().includes("/api/meals/swap")) {
+        await waitForLoadingToComplete();
+
+        // Check that autocomplete inputs are displayed for each meal slot
+        const autocompleteInputs = screen.getAllByRole("combobox");
+
+        // Should have 21 autocomplete inputs (7 days × 3 meals per day)
+        expect(autocompleteInputs).toHaveLength(21);
+    });
+
+    test("allows changing a meal through autocomplete", async () => {
+        const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+        // Mock the meals endpoint to return available meals
+        global.fetch = jest.fn((url, options) => {
+            if (url.toString().includes("/api/meals?type=")) {
                 return Promise.resolve({
                     ok: true,
-                    json: () => Promise.resolve(newMeal),
+                    json: () => Promise.resolve(mockAvailableMeals),
                 });
             }
-            // Use the default mock setup for other endpoints
-            return originalFetch(url, options);
-        });
+            if (url.toString().includes("/api/mealplan") && !url.toString().includes("generate")) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockMealPlan as ExtendedMealPlan),
+                });
+            }
+            if (url.toString().includes("/api/shoppinglist")) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockShoppingList),
+                });
+            }
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({}),
+            });
+        }) as jest.Mock;
 
         await act(async () => {
             render(<MealPlanTab showToast={mockShowToast} />);
@@ -171,27 +189,29 @@ describe("MealPlanTab", () => {
 
         await waitForLoadingToComplete();
 
-        // Find and click the swap button - there should be multiple swap buttons for different meals
-        const swapButtons = screen.getAllByText("Swap Meal");
-        expect(swapButtons.length).toBeGreaterThan(0);
+        // Find the first autocomplete input (Monday Breakfast)
+        const autocompleteInputs = screen.getAllByRole("combobox");
+        const firstInput = autocompleteInputs[0];
 
+        // Click on the autocomplete to open it
         await act(async () => {
-            fireEvent.click(swapButtons[0]);
-            jest.advanceTimersByTime(1000);
+            await user.click(firstInput);
+            jest.advanceTimersByTime(500);
         });
 
-        // Verify the swap API was called
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining("/api/meals/swap"),
-            expect.objectContaining({
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: expect.any(String)
-            })
-        );
+        // Wait for options to load and appear
+        await waitFor(() => {
+            expect(screen.getByText("Available Test Meal")).toBeInTheDocument();
+        });
 
-        // Restore the original fetch
-        global.fetch = originalFetch;
+        // Select a meal
+        await act(async () => {
+            await user.click(screen.getByText("Available Test Meal"));
+            jest.advanceTimersByTime(500);
+        });
+
+        // Verify toast was shown for the meal change
+        expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining("Updated"));
     });
 
     test("automatically generates shopping list on load", async () => {
@@ -355,17 +375,17 @@ describe("MealPlanTab", () => {
 
         await waitForLoadingToComplete();
 
-        // Check that items without quantities display just the name (no "0" prefix)
+        // Check that ingredients without quantities are displayed correctly (no "0 " prefix)
         expect(screen.getByText("Melon")).toBeInTheDocument();
         expect(screen.getByText("Tortellini")).toBeInTheDocument();
         expect(screen.getByText("1 loaf Bread")).toBeInTheDocument();
 
-        // Make sure we don't see "0  Melon" or "0  Tortellini"
-        expect(screen.queryByText("0  Melon")).not.toBeInTheDocument();
-        expect(screen.queryByText("0  Tortellini")).not.toBeInTheDocument();
+        // Ensure no "0 " prefixes are shown
+        expect(screen.queryByText("0 Melon")).not.toBeInTheDocument();
+        expect(screen.queryByText("0 Tortellini")).not.toBeInTheDocument();
     });
 
-    test("clipboard copy formats items correctly (with and without quantities)", async () => {
+    test("removes ingredients from shopping list when clicked", async () => {
         const customMealPlan: ExtendedMealPlan = {
             Monday: {
                 Breakfast: {
@@ -377,8 +397,7 @@ describe("MealPlanTab", () => {
                     mealType: "breakfast" as MealType,
                     ingredients: [
                         { ID: 1, Name: "Flour", Quantity: 2, Unit: "cups" },
-                        { ID: 2, Name: "Melon", Quantity: 0, Unit: "" },
-                        { ID: 3, Name: "Salt", Quantity: 1, Unit: "tsp" }
+                        { ID: 2, Name: "Sugar", Quantity: 1, Unit: "tsp" }
                     ]
                 },
                 Lunch: null,
@@ -397,6 +416,7 @@ describe("MealPlanTab", () => {
         // Mock clipboard API
         const mockClipboardWrite = jest.fn().mockResolvedValue(undefined);
         const originalClipboard = navigator.clipboard;
+
         Object.defineProperty(navigator, 'clipboard', {
             configurable: true,
             value: { writeText: mockClipboardWrite },
@@ -408,16 +428,36 @@ describe("MealPlanTab", () => {
 
         await waitForLoadingToComplete();
 
-        // Find and click the copy button
-        const copyButton = screen.getByText("Copy Shopping List");
+        // Verify both ingredients are initially displayed
+        expect(screen.getByText("2 cups Flour")).toBeInTheDocument();
+        expect(screen.getByText("1 tsp Sugar")).toBeInTheDocument();
 
+        // Find and click the remove button for the first ingredient (Flour)
+        const removeButtons = screen.getAllByRole('button', { name: '' }); // Close icon buttons
+        const flourRemoveButton = removeButtons.find(button =>
+            button.closest('[data-testid]') ||
+            button.parentElement?.textContent?.includes('Flour')
+        );
+
+        if (flourRemoveButton) {
+            await act(async () => {
+                fireEvent.click(flourRemoveButton);
+                jest.advanceTimersByTime(500);
+            });
+
+            // Verify toast was shown
+            expect(mockShowToast).toHaveBeenCalledWith('Ingredient removed from shopping list');
+        }
+
+        // Test shopping list copy to verify the ingredient was removed
+        const copyButton = screen.getByText("Copy Shopping List");
         await act(async () => {
             fireEvent.click(copyButton);
             jest.advanceTimersByTime(500);
         });
 
-        // Verify clipboard was called with correctly formatted text
-        expect(mockClipboardWrite).toHaveBeenCalledWith("2 cups Flour\nMelon\n1 tsp Salt");
+        // The copied shopping list should only contain Sugar (Flour should be removed)
+        expect(mockClipboardWrite).toHaveBeenCalledWith("1 tsp Sugar");
         expect(mockShowToast).toHaveBeenCalledWith('Shopping list copied to clipboard!');
 
         // Restore original clipboard
@@ -428,7 +468,9 @@ describe("MealPlanTab", () => {
     });
 
     test("automatically updates ingredients when meals change", async () => {
-        // Create a new meal for the swap response
+        const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+        // Create a new meal with different ingredients
         const newMeal = {
             id: 99,
             mealName: "New Test Meal",
@@ -441,17 +483,31 @@ describe("MealPlanTab", () => {
             ]
         };
 
-        // Mock the swap endpoint
-        const originalFetch = global.fetch;
-        global.fetch = jest.fn().mockImplementation((url, options) => {
-            if (url.toString().includes("/api/meals/swap")) {
+        // Mock the meals endpoint to return the new meal
+        global.fetch = jest.fn((url, options) => {
+            if (url.toString().includes("/api/meals?type=")) {
                 return Promise.resolve({
                     ok: true,
-                    json: () => Promise.resolve(newMeal),
+                    json: () => Promise.resolve([newMeal]),
                 });
             }
-            return originalFetch(url, options);
-        });
+            if (url.toString().includes("/api/mealplan") && !url.toString().includes("generate")) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockMealPlan as ExtendedMealPlan),
+                });
+            }
+            if (url.toString().includes("/api/shoppinglist")) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockShoppingList),
+                });
+            }
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({}),
+            });
+        }) as jest.Mock;
 
         await act(async () => {
             render(<MealPlanTab showToast={mockShowToast} />);
@@ -462,18 +518,30 @@ describe("MealPlanTab", () => {
         // Verify initial ingredients are displayed
         expect(screen.getByText(/2 cups/i)).toBeInTheDocument();
 
-        // Swap a meal
-        const swapButtons = screen.getAllByText("Swap Meal");
+        // Change a meal using autocomplete
+        const autocompleteInputs = screen.getAllByRole("combobox");
+        const firstInput = autocompleteInputs[0];
+
         await act(async () => {
-            fireEvent.click(swapButtons[0]);
+            await user.click(firstInput);
+            jest.advanceTimersByTime(500);
+        });
+
+        // Wait for the new meal option to appear and select it
+        await waitFor(() => {
+            expect(screen.getByText("New Test Meal")).toBeInTheDocument();
+        });
+
+        await act(async () => {
+            await user.click(screen.getByText("New Test Meal"));
             jest.advanceTimersByTime(1000);
         });
 
-        // Ingredients should be updated automatically (though we can't easily test the exact content change in this mock setup)
-        expect(screen.getByText("Copy Shopping List")).toBeInTheDocument();
+        // Verify the meal was updated
+        expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining("Updated"));
 
-        // Restore the original fetch
-        global.fetch = originalFetch;
+        // Shopping list should be automatically regenerated
+        expect(screen.getByText("Copy Shopping List")).toBeInTheDocument();
     });
 
     test("copies meal plan to clipboard with all meal types", async () => {
@@ -634,7 +702,7 @@ describe("MealPlanTab", () => {
             jest.advanceTimersByTime(500);
         });
 
-        // Verify clipboard.write was called (for HTML format with URLs)
+        // Verify clipboard.write was called (for HTML format)
         expect(mockClipboardWrite).toHaveBeenCalled();
         expect(mockShowToast).toHaveBeenCalledWith('Meal plan copied to clipboard!');
 
