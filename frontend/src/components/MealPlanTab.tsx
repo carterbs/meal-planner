@@ -10,6 +10,7 @@ import {
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { Meal, Ingredient } from '../types';
@@ -290,6 +291,116 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             });
     };
 
+    const copyMealPlanToClipboard = () => {
+        if (!mealPlan) return;
+
+        // Create an HTML table representation that will be properly recognized by Apple Notes
+        let htmlContent = '<table style="border-collapse: collapse; width: 100%;">';
+
+        // Add table header with styling
+        htmlContent += `
+          <thead>
+            <tr>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Day</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Meals</th>
+            </tr>
+          </thead>
+          <tbody>
+        `;
+
+        // Add each day's meal information as table rows
+        WEEK_DAYS.forEach(day => {
+            const dayMeals = MEAL_TYPES
+                .map(mealType => {
+                    const meal = mealPlan[day][mealType];
+                    const mealKey = `${day}-${mealType}`;
+
+                    if (meal && !skippedMeals.has(mealKey)) {
+                        // Format meal name with URL if available
+                        const mealDisplay = meal.url
+                            ? `<a href="${meal.url}" style="color: #2196f3; text-decoration: underline;">${meal.mealName}</a>`
+                            : meal.mealName;
+                        return `${mealType}: ${mealDisplay} (${meal.relativeEffort})`;
+                    }
+                    return null;
+                })
+                .filter(Boolean);
+
+            if (dayMeals.length > 0) {
+                // Join meals with line breaks for multi-line cell
+                const mealsHtml = dayMeals.join('<br>');
+
+                htmlContent += `
+                  <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${day}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${mealsHtml}</td>
+                  </tr>
+                `;
+            }
+        });
+
+        htmlContent += '</tbody></table>';
+
+        // Also create a plain text fallback for applications that don't support HTML
+        let textContent = 'Day | Meals\n';
+        textContent += '----|-------\n';
+
+        WEEK_DAYS.forEach(day => {
+            const dayMeals = MEAL_TYPES
+                .map(mealType => {
+                    const meal = mealPlan[day][mealType];
+                    const mealKey = `${day}-${mealType}`;
+
+                    if (meal && !skippedMeals.has(mealKey)) {
+                        // Format meal name with URL if available
+                        const mealName = meal.url
+                            ? `${meal.mealName} (${meal.url})`
+                            : meal.mealName;
+                        return `${mealType}: ${mealName} (${meal.relativeEffort})`;
+                    }
+                    return null;
+                })
+                .filter(Boolean);
+
+            if (dayMeals.length > 0) {
+                // Join meals with semicolons for plain text
+                const mealsText = dayMeals.join('; ');
+                textContent += `${day} | ${mealsText}\n`;
+            }
+        });
+
+        // Use the modern clipboard API to write both HTML and text formats
+        // This makes both formats available so the receiving application can choose the best one
+        try {
+            const clipboardItem = new ClipboardItem({
+                'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                'text/plain': new Blob([textContent], { type: 'text/plain' })
+            });
+
+            navigator.clipboard.write([clipboardItem])
+                .then(() => showToast('Meal plan copied to clipboard!'))
+                .catch(err => {
+                    console.error('Failed to copy formatted content:', err);
+                    // Fall back to plain text if the enhanced version fails
+                    navigator.clipboard.writeText(textContent)
+                        .then(() => showToast('Meal plan copied to clipboard (plain text only)!'))
+                        .catch(err => {
+                            console.error('Failed to copy to clipboard:', err);
+                            showToast('Failed to copy to clipboard');
+                        });
+                });
+        } catch (error) {
+            // Handle browsers that don't support ClipboardItem
+            console.error('Advanced clipboard features not supported:', error);
+            navigator.clipboard.writeText(textContent)
+                .then(() => showToast('Meal plan copied to clipboard (basic format)!'))
+                .catch(err => {
+                    console.error('Failed to copy to clipboard:', err);
+                    showToast('Failed to copy to clipboard');
+                });
+        }
+    };
+
     const removeIngredient = (mealId: number, ingredientId: number) => {
         const ingredientKey = `${mealId}-${ingredientId}`;
         setRemovedIngredients(prev => new Set([...prev, ingredientKey]));
@@ -535,6 +646,20 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                         }}
                     >
                         Copy Shopping List
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={copyMealPlanToClipboard}
+                        disabled={!mealPlan}
+                        startIcon={<ContentCopyIcon />}
+                        sx={{
+                            background: 'linear-gradient(135deg, #1b998b 0%, #7fb069 100%)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #178a7a 0%, #6fa055 100%)',
+                            },
+                        }}
+                    >
+                        Copy Meal Plan
                     </Button>
                 </Box>
                 <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '12px', alignItems: 'center' }}>

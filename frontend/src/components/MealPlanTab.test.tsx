@@ -4,6 +4,7 @@ import { MealPlanTab } from "./MealPlanTab";
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import { mockMealPlan, mockAvailableMeals, mockShoppingList, setupFetchMocks, cleanupFetchMocks } from "../test-utils";
+import { MealType } from "../types";
 
 // Extended meal plan interface for the new structure
 interface ExtendedMealPlan {
@@ -287,7 +288,7 @@ describe("MealPlanTab", () => {
                     relativeEffort: 2,
                     lastPlanned: "2024-02-15T00:00:00Z",
                     redMeat: false,
-                    mealType: "breakfast",
+                    mealType: "breakfast" as MealType,
                     ingredients: [
                         { ID: 1, Name: "Flour", Quantity: 2, Unit: "cups" },
                         { ID: 2, Name: "Sugar", Quantity: 1, Unit: "tbsp" },
@@ -320,7 +321,7 @@ describe("MealPlanTab", () => {
     });
 
     test("displays ingredients without quantities correctly (no leading 0)", async () => {
-        const customMealPlan = {
+        const customMealPlan: ExtendedMealPlan = {
             Monday: {
                 Breakfast: {
                     id: 1,
@@ -328,7 +329,7 @@ describe("MealPlanTab", () => {
                     relativeEffort: 2,
                     lastPlanned: "2024-02-15T00:00:00Z",
                     redMeat: false,
-                    mealType: "breakfast",
+                    mealType: "breakfast" as MealType,
                     ingredients: [
                         { ID: 1, Name: "Melon", Quantity: 0, Unit: "" },
                         { ID: 2, Name: "Tortellini", Quantity: 0, Unit: "" },
@@ -365,7 +366,7 @@ describe("MealPlanTab", () => {
     });
 
     test("clipboard copy formats items correctly (with and without quantities)", async () => {
-        const customMealPlan = {
+        const customMealPlan: ExtendedMealPlan = {
             Monday: {
                 Breakfast: {
                     id: 1,
@@ -373,7 +374,7 @@ describe("MealPlanTab", () => {
                     relativeEffort: 2,
                     lastPlanned: "2024-02-15T00:00:00Z",
                     redMeat: false,
-                    mealType: "breakfast",
+                    mealType: "breakfast" as MealType,
                     ingredients: [
                         { ID: 1, Name: "Flour", Quantity: 2, Unit: "cups" },
                         { ID: 2, Name: "Melon", Quantity: 0, Unit: "" },
@@ -473,5 +474,174 @@ describe("MealPlanTab", () => {
 
         // Restore the original fetch
         global.fetch = originalFetch;
+    });
+
+    test("copies meal plan to clipboard with all meal types", async () => {
+        const customMealPlan: ExtendedMealPlan = {
+            Monday: {
+                Breakfast: {
+                    id: 1,
+                    mealName: "Oatmeal",
+                    relativeEffort: 1,
+                    lastPlanned: "2024-02-15T00:00:00Z",
+                    redMeat: false,
+                    mealType: "breakfast" as MealType,
+                    ingredients: []
+                },
+                Lunch: {
+                    id: 2,
+                    mealName: "Sandwich",
+                    relativeEffort: 2,
+                    lastPlanned: "2024-02-15T00:00:00Z",
+                    redMeat: false,
+                    mealType: "lunch" as MealType,
+                    ingredients: []
+                },
+                Dinner: {
+                    id: 3,
+                    mealName: "Pasta",
+                    relativeEffort: 3,
+                    lastPlanned: "2024-02-15T00:00:00Z",
+                    redMeat: false,
+                    mealType: "dinner" as MealType,
+                    ingredients: []
+                }
+            },
+            Tuesday: {
+                Breakfast: null,
+                Lunch: {
+                    id: 4,
+                    mealName: "Salad",
+                    relativeEffort: 2,
+                    lastPlanned: "2024-02-15T00:00:00Z",
+                    redMeat: false,
+                    mealType: "lunch" as MealType,
+                    ingredients: []
+                },
+                Dinner: null
+            },
+            Wednesday: { Breakfast: null, Lunch: null, Dinner: null },
+            Thursday: { Breakfast: null, Lunch: null, Dinner: null },
+            Friday: { Breakfast: null, Lunch: null, Dinner: null },
+            Saturday: { Breakfast: null, Lunch: null, Dinner: null },
+            Sunday: { Breakfast: null, Lunch: null, Dinner: null }
+        };
+
+        setupFetchMocks({ mealPlan: customMealPlan });
+
+        // Mock clipboard API with both write and writeText methods
+        const mockClipboardWrite = jest.fn().mockResolvedValue(undefined);
+        const mockClipboardWriteText = jest.fn().mockResolvedValue(undefined);
+        const originalClipboard = navigator.clipboard;
+
+        // Mock ClipboardItem constructor
+        global.ClipboardItem = jest.fn().mockImplementation((data) => ({ data })) as any;
+
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: {
+                write: mockClipboardWrite,
+                writeText: mockClipboardWriteText
+            },
+        });
+
+        await act(async () => {
+            render(<MealPlanTab showToast={mockShowToast} />);
+        });
+
+        await waitForLoadingToComplete();
+
+        // Find and click the copy meal plan button
+        const copyButton = screen.getByText("Copy Meal Plan");
+
+        await act(async () => {
+            fireEvent.click(copyButton);
+            jest.advanceTimersByTime(500);
+        });
+
+        // Verify clipboard.write was called (for HTML format)
+        expect(mockClipboardWrite).toHaveBeenCalled();
+        expect(mockShowToast).toHaveBeenCalledWith('Meal plan copied to clipboard!');
+
+        // Restore original clipboard
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: originalClipboard,
+        });
+    });
+
+    test("copies meal plan with URLs to clipboard correctly", async () => {
+        const customMealPlan: ExtendedMealPlan = {
+            Monday: {
+                Breakfast: {
+                    id: 1,
+                    mealName: "Pancakes",
+                    relativeEffort: 3,
+                    lastPlanned: "2024-02-15T00:00:00Z",
+                    redMeat: false,
+                    mealType: "breakfast" as MealType,
+                    url: "https://example.com/pancakes",
+                    ingredients: []
+                },
+                Lunch: {
+                    id: 2,
+                    mealName: "Sandwich",
+                    relativeEffort: 1,
+                    lastPlanned: "2024-02-15T00:00:00Z",
+                    redMeat: false,
+                    mealType: "lunch" as MealType,
+                    ingredients: []
+                },
+                Dinner: null
+            },
+            Tuesday: { Breakfast: null, Lunch: null, Dinner: null },
+            Wednesday: { Breakfast: null, Lunch: null, Dinner: null },
+            Thursday: { Breakfast: null, Lunch: null, Dinner: null },
+            Friday: { Breakfast: null, Lunch: null, Dinner: null },
+            Saturday: { Breakfast: null, Lunch: null, Dinner: null },
+            Sunday: { Breakfast: null, Lunch: null, Dinner: null }
+        };
+
+        setupFetchMocks({ mealPlan: customMealPlan });
+
+        // Mock clipboard API with both write and writeText methods
+        const mockClipboardWrite = jest.fn().mockResolvedValue(undefined);
+        const mockClipboardWriteText = jest.fn().mockResolvedValue(undefined);
+        const originalClipboard = navigator.clipboard;
+
+        // Mock ClipboardItem constructor
+        global.ClipboardItem = jest.fn().mockImplementation((data) => ({ data })) as any;
+
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: {
+                write: mockClipboardWrite,
+                writeText: mockClipboardWriteText
+            },
+        });
+
+        await act(async () => {
+            render(<MealPlanTab showToast={mockShowToast} />);
+        });
+
+        await waitForLoadingToComplete();
+
+        // Find and click the copy meal plan button
+        const copyButton = screen.getByText("Copy Meal Plan");
+
+        await act(async () => {
+            fireEvent.click(copyButton);
+            jest.advanceTimersByTime(500);
+        });
+
+        // Verify clipboard.write was called (for HTML format with URLs)
+        expect(mockClipboardWrite).toHaveBeenCalled();
+        expect(mockShowToast).toHaveBeenCalledWith('Meal plan copied to clipboard!');
+
+        // Restore original clipboard
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: originalClipboard,
+        });
     });
 });
