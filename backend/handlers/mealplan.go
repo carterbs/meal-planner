@@ -44,7 +44,13 @@ func populateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, e
 		return plan, nil // No meals to populate
 	}
 
-	mealsWithIngredients, err := models.GetMealsByIDs(DB, mealIDs)
+	var mealsWithIngredients []*models.Meal
+	var err error
+	if UseDummy {
+		mealsWithIngredients, err = dummy.GetMealsByIDs(mealIDs)
+	} else {
+		mealsWithIngredients, err = models.GetMealsByIDs(DB, mealIDs)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -93,9 +99,8 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	var plan *models.WeeklyMealPlan
 	var err error
 	if UseDummy {
-		// When in dummy mode, we will now use the real generation logic
-		// as the dummy data structures are out of date.
-		plan, err = models.GenerateWeeklyMealPlan(DB)
+		// Use dummy data generation
+		plan, err = dummy.GenerateWeeklyMealPlanStruct()
 	} else {
 		plan, err = models.GetLastPlannedMeals(DB)
 		if err != nil {
@@ -129,8 +134,8 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	var plan *models.WeeklyMealPlan
 	var err error
 	if UseDummy {
-		// This part needs to be updated if dummy data is to be used with the new structure
-		plan, err = models.GenerateWeeklyMealPlan(DB) // Fallback to real data for now
+		// Use dummy data generation
+		plan, err = dummy.GenerateWeeklyMealPlanStruct()
 	} else {
 		plan, err = models.GenerateWeeklyMealPlan(DB)
 	}
@@ -139,9 +144,6 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Skipping days logic would need adjustment for the new plan structure
-	// For now, this logic is effectively disabled as skipDays are not handled.
-
 	detailedPlan, err := populateMealDetails(plan)
 	if err != nil {
 		log.Printf("Error fetching meals with ingredients: %v", err)
@@ -149,8 +151,44 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(detailedPlan)
+	// Handle skip_days by converting to a map and excluding skipped days
+	if len(input.SkipDays) > 0 {
+		skipSet := make(map[string]bool)
+		for _, day := range input.SkipDays {
+			skipSet[day] = true
+		}
+
+		// Convert to map format and exclude skipped days
+		result := make(map[string]interface{})
+
+		if !skipSet["Monday"] && detailedPlan.Monday.Dinner != nil {
+			result["Monday"] = detailedPlan.Monday.Dinner
+		}
+		if !skipSet["Tuesday"] && detailedPlan.Tuesday.Dinner != nil {
+			result["Tuesday"] = detailedPlan.Tuesday.Dinner
+		}
+		if !skipSet["Wednesday"] && detailedPlan.Wednesday.Dinner != nil {
+			result["Wednesday"] = detailedPlan.Wednesday.Dinner
+		}
+		if !skipSet["Thursday"] && detailedPlan.Thursday.Dinner != nil {
+			result["Thursday"] = detailedPlan.Thursday.Dinner
+		}
+		if !skipSet["Friday"] && detailedPlan.Friday.Dinner != nil {
+			result["Friday"] = detailedPlan.Friday.Dinner
+		}
+		if !skipSet["Saturday"] && detailedPlan.Saturday.Dinner != nil {
+			result["Saturday"] = detailedPlan.Saturday.Dinner
+		}
+		if !skipSet["Sunday"] && detailedPlan.Sunday.Dinner != nil {
+			result["Sunday"] = detailedPlan.Sunday.Dinner
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(detailedPlan)
+	}
 }
 
 // GetShoppingList returns all ingredients for the planned meals (no aggregation yet, per MVP).
@@ -196,7 +234,7 @@ func MealPlanICSHandler(w http.ResponseWriter, r *http.Request) {
 	var plan *models.WeeklyMealPlan
 	var err error
 	if UseDummy {
-		plan, err = models.GenerateWeeklyMealPlan(DB)
+		plan, err = dummy.GenerateWeeklyMealPlanStruct()
 	} else {
 		plan, err = models.GetLastPlannedMeals(DB)
 		if err != nil {
