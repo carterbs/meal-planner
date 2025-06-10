@@ -1,7 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import { ExperimentalPlanner } from './components/ExperimentalPlanner';
 import { setupFetchMocks, cleanupFetchMocks } from './test-utils';
 
 // Mock createRoot function
@@ -92,20 +91,6 @@ describe('index.tsx', () => {
         const app = themeProvider.props.children[1];
         expect(cssBaseline.type.name).toBe('CssBaseline');
         expect(app.type.name).toBe('App');
-    });
-
-    it('renders experimental planner when path is /experimental', () => {
-        mockGetElementById.mockReturnValue(document.createElement('div'));
-        Object.defineProperty(window, 'location', { value: { pathname: '/experimental' }, writable: true });
-
-        require('./index');
-
-        const renderCall = mockRender.mock.calls[0][0];
-        const themeProvider = renderCall.props.children;
-        const cssBaseline = themeProvider.props.children[0];
-        const exp = themeProvider.props.children[1];
-        expect(cssBaseline.type.name).toBe('CssBaseline');
-        expect(exp.type.name).toBe('ExperimentalPlanner');
     });
 
     it('handles missing root element gracefully', () => {
