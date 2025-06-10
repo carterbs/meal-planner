@@ -297,7 +297,7 @@ describe("MealManagementTab", () => {
 
         await waitFor(() => {
             expect(consoleError).toHaveBeenCalledWith("Error fetching meals:", expect.any(Error));
-            expect(mockShowToast).toHaveBeenCalledWith("Error loading meals");
+            expect(mockShowToast).toHaveBeenCalledWith("Error fetching meals");
         });
 
         consoleError.mockRestore();
