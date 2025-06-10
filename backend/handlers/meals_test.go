@@ -458,7 +458,7 @@ func TestFinalizeMealPlanHandler(t *testing.T) {
 	}{
 		{
 			name:    "successful finalization",
-			payload: `{"plan": {"Monday": {"id": 1}, "Tuesday": {"id": 2}}}`,
+			payload: `{"Monday": {"Dinner": {"id": 1}}, "Tuesday": {"Dinner": {"id": 2}}}`,
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(regexp.QuoteMeta(`
@@ -470,18 +470,18 @@ func TestFinalizeMealPlanHandler(t *testing.T) {
 				mock.ExpectCommit()
 			},
 			expectedCode: http.StatusOK,
-			expectedBody: "Plan finalized",
+			expectedBody: "Meal plan finalized successfully.",
 		},
 		{
 			name:         "invalid json payload",
 			payload:      `{invalid json}`,
 			setupMock:    func(mock sqlmock.Sqlmock) {},
 			expectedCode: http.StatusBadRequest,
-			expectedBody: "Invalid request payload\n",
+			expectedBody: "Invalid request payload: invalid character 'i' looking for beginning of object key string\n",
 		},
 		{
 			name:    "database error",
-			payload: `{"plan": {"Monday": {"id": 1}}}`,
+			payload: `{"Monday": {"Dinner": {"id": 1}}}`,
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(regexp.QuoteMeta(`
@@ -493,7 +493,7 @@ func TestFinalizeMealPlanHandler(t *testing.T) {
 				mock.ExpectRollback()
 			},
 			expectedCode: http.StatusInternalServerError,
-			expectedBody: "database error\n",
+			expectedBody: "Failed to finalize meal plan: database error\n",
 		},
 	}
 

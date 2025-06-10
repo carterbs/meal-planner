@@ -140,6 +140,75 @@ func GenerateWeeklyMealPlan() (map[string]*models.Meal, error) {
 	return plan, nil
 }
 
+// GenerateWeeklyMealPlanStruct creates a meal plan using the new WeeklyMealPlan struct format
+func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
+	rand.Seed(time.Now().UnixNano())
+	redUsed := false
+
+	pick := func(min, max int, mealType string) *models.Meal {
+		filtered := make([]*models.Meal, 0)
+		for _, m := range meals {
+			if m.RelativeEffort >= min && m.RelativeEffort <= max {
+				if redUsed && m.RedMeat {
+					continue
+				}
+				filtered = append(filtered, m)
+			}
+		}
+		if len(filtered) == 0 {
+			return nil
+		}
+		m := filtered[rand.Intn(len(filtered))]
+		if m.RedMeat {
+			redUsed = true
+		}
+		// Create a copy with the meal type set
+		mealCopy := *m
+		mealCopy.MealType = mealType
+		return &mealCopy
+	}
+
+	plan := &models.WeeklyMealPlan{
+		Monday: models.DayMealPlan{
+			Breakfast: pick(0, 2, "breakfast"),
+			Lunch:     pick(0, 2, "lunch"),
+			Dinner:    pick(0, 2, "dinner"),
+		},
+		Tuesday: models.DayMealPlan{
+			Breakfast: pick(0, 2, "breakfast"),
+			Lunch:     pick(0, 2, "lunch"),
+			Dinner:    pick(3, 5, "dinner"),
+		},
+		Wednesday: models.DayMealPlan{
+			Breakfast: pick(0, 2, "breakfast"),
+			Lunch:     pick(0, 2, "lunch"),
+			Dinner:    pick(3, 5, "dinner"),
+		},
+		Thursday: models.DayMealPlan{
+			Breakfast: pick(0, 2, "breakfast"),
+			Lunch:     pick(0, 2, "lunch"),
+			Dinner:    pick(3, 5, "dinner"),
+		},
+		Friday: models.DayMealPlan{
+			Breakfast: pick(0, 2, "breakfast"),
+			Lunch:     pick(0, 2, "lunch"),
+			Dinner:    &models.Meal{MealName: "Eating out"},
+		},
+		Saturday: models.DayMealPlan{
+			Breakfast: pick(0, 2, "breakfast"),
+			Lunch:     pick(0, 2, "lunch"),
+			Dinner:    pick(3, 5, "dinner"),
+		},
+		Sunday: models.DayMealPlan{
+			Breakfast: pick(0, 2, "breakfast"),
+			Lunch:     pick(0, 2, "lunch"),
+			Dinner:    pick(6, 100, "dinner"),
+		},
+	}
+
+	return plan, nil
+}
+
 // Helper functions copied from seed.go
 func parseIngredient(s string) (string, string, string) {
 	tokens := strings.Fields(s)
