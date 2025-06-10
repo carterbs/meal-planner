@@ -14,6 +14,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { Meal, Ingredient } from '../types';
+import { MealAutocomplete } from './MealAutocomplete';
 
 interface MealPlanTabProps {
     showToast: (message: string) => void;
@@ -182,44 +183,21 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
             });
     };
 
-    const swapMeal = (day: string, mealType: string) => {
-        const currentMeal = mealPlan?.[day]?.[mealType];
-        if (!currentMeal) return;
+    const updateMeal = (day: string, mealType: string, newMeal: Meal | null) => {
+        if (!mealPlan) return;
 
-        // Optimistically update UI
-        const originalPlan = mealPlan;
-        const optimisticPlan = JSON.parse(JSON.stringify(mealPlan));
-        optimisticPlan[day][mealType] = { ...currentMeal, mealName: "Swapping..." };
-        setMealPlan(optimisticPlan);
+        setMealPlan(prevPlan => {
+            if (!prevPlan) return null;
+            const newPlan = JSON.parse(JSON.stringify(prevPlan));
+            newPlan[day][mealType] = newMeal;
+            return newPlan;
+        });
 
-        fetch("/api/meals/swap", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                meal_id: currentMeal.id,
-                meal_type: mealType.toLowerCase(),
-            }),
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to swap meal');
-                }
-                return response.json();
-            })
-            .then(newMeal => {
-                setMealPlan(prevPlan => {
-                    if (!prevPlan) return null;
-                    const newPlan = JSON.parse(JSON.stringify(prevPlan));
-                    newPlan[day][mealType] = newMeal;
-                    return newPlan;
-                });
-            })
-            .catch(err => {
-                console.error('Error swapping meal:', err);
-                showToast(`Error swapping ${mealType}`);
-                // Revert on error
-                setMealPlan(originalPlan);
-            });
+        if (newMeal) {
+            showToast(`Updated ${day} ${mealType} to: ${newMeal.mealName}`);
+        } else {
+            showToast(`Cleared ${day} ${mealType}`);
+        }
     };
 
     const toggleSkipDay = (day: string) => {
@@ -446,18 +424,19 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 </Typography>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography
-                        variant="mealName"
-                        sx={{
-                            textDecoration: isSkipped ? 'line-through' : 'none',
-                            color: isSkipped ? '#8a9584' : '#4a5d3a',
-                        }}
-                    >
-                        {meal?.mealName || `${mealType} ${day.slice(0, 3)}`}
-                    </Typography>
-                    <Typography variant="mealEffort">
-                        Effort: {meal?.relativeEffort || 1}
-                    </Typography>
+                    <MealAutocomplete
+                        value={meal}
+                        onChange={(newMeal) => updateMeal(day, mealType, newMeal)}
+                        mealType={mealType}
+                        disabled={isSkipped}
+                        placeholder={`Select ${mealType.toLowerCase()}...`}
+                    />
+
+                    {meal && (
+                        <Typography variant="mealEffort">
+                            Effort: {meal.relativeEffort}
+                        </Typography>
+                    )}
 
                     {/* Ingredients */}
                     {meal?.ingredients && meal.ingredients.length > 0 && !isSkipped && (
@@ -527,31 +506,6 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                        size="small"
-                        onClick={() => swapMeal(day, mealType)}
-                        disabled={!meal}
-                        sx={{
-                            padding: '6px 12px',
-                            border: '1px solid #e8f0e5',
-                            borderRadius: '6px',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            background: 'linear-gradient(135deg, #f0f8ed 0%, #f5faf2 100%)',
-                            color: '#7fb069',
-                            borderColor: '#c8dbb8',
-                            textTransform: 'none',
-                            minWidth: 'auto',
-                            '&:hover': {
-                                background: 'linear-gradient(135deg, #e8f4e3 0%, #f0f8ed 100%)',
-                                borderColor: '#b0cc96',
-                                transform: 'translateY(-1px)',
-                                boxShadow: '0 2px 8px rgba(127, 176, 105, 0.1)',
-                            },
-                        }}
-                    >
-                        Swap Meal
-                    </Button>
                     <Button
                         size="small"
                         onClick={() => toggleSkipMeal(day, mealType)}
