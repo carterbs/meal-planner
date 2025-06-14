@@ -14,6 +14,7 @@ import (
 	"mealplanner/handlers"
 	"mealplanner/models"
 
+	"github.com/fatih/color"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -58,7 +59,8 @@ func DBErrorMiddleware(next http.Handler) http.Handler {
 func main() {
 	// Load env variables from .env file automatically
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, proceeding with existing env variables")
+		color.Yellow("⚠️  No .env file found, proceeding with existing env variables")
+		fmt.Println()
 	}
 
 	seedFlag := flag.Bool("seed", false, "Seed the database using the CSV")
@@ -86,30 +88,15 @@ func main() {
 	var connection *sql.DB
 	var err error
 	if !*dummyFlag {
-		// Attempt to connect to the database with helpful error messaging
+		// Try to connect to database, but don't block server startup
 		connection, err = db.ConnectDB(config)
 	}
 	if err != nil {
-		if db.IsConnectionError(err) {
-			fmt.Println("\n-------------------------------------------------------------")
-			fmt.Println("❌ DATABASE CONNECTION ERROR")
-			fmt.Println("-------------------------------------------------------------")
-			fmt.Println("Could not connect to the PostgreSQL database.")
-			fmt.Println("\n🔍 TROUBLESHOOTING STEPS:")
-			fmt.Println("1. Make sure Docker is running on your system")
-			fmt.Println("2. Check if the database container is started:")
-			fmt.Println("   $ docker ps | grep postgres")
-			fmt.Println("3. If not running, start it with:")
-			fmt.Println("   $ docker-compose up -d")
-			fmt.Println("\n🚨 Error details:", err)
-			fmt.Println("-------------------------------------------------------------")
-
-			// Continue execution with nil DB - the middleware will handle errors
-			// This allows the frontend to at least load and show appropriate errors
-			log.Println("Starting with nil database connection. API calls will return connection errors.")
-		} else {
+		if !db.IsConnectionError(err) {
+			// Only show fatal errors for config issues, not connection issues
 			log.Fatalf("Error connecting to the database: %v", err)
 		}
+		// For connection errors, just continue silently with nil DB
 	}
 
 	if connection != nil {
@@ -227,8 +214,29 @@ func main() {
 			config.DBName = os.Getenv("DB_NAME")
 		}
 
-		// Attempt to reconnect to the database
-		connection, err := db.ConnectDB(config)
+		// Attempt to reconnect to the database with retry logic
+		var connection *sql.DB
+		var err error
+		maxRetries := 5
+		retryDelay := time.Duration(500) * time.Millisecond
+		
+		for i := 0; i < maxRetries; i++ {
+			connection, err = db.ConnectDB(config)
+			if err == nil {
+				break // Success!
+			}
+			
+			if !db.IsConnectionError(err) {
+				// Non-connection error, don't retry
+				break
+			}
+			
+			if i < maxRetries-1 {
+				// Wait before retrying (except on last attempt)
+				time.Sleep(retryDelay)
+				retryDelay *= 2 // Exponential backoff
+			}
+		}
 		if err != nil {
 			if db.IsConnectionError(err) {
 				w.WriteHeader(http.StatusServiceUnavailable)
