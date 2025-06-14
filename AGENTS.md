@@ -1,9 +1,35 @@
-# AGENTS Instructions for Meal Planner
+# AGENTS.md
 
-This repository contains a Go backend and a React/TypeScript frontend for a personal meal planning application. All dependencies should be pre-installed and ready to go.
+This file provides guidance to OpenAI Codex and other AI agents when working with code in this repository.
+
+This repository contains a Go backend, React/TypeScript frontend, and TypeScript MCP server for a personal meal planning application. All dependencies should be pre-installed and ready to go.
+
+## Codex-Specific Guidelines
+
+### Agent Behavior
+- **Scope**: These instructions apply to the entire directory tree rooted at this folder
+- **Precedence**: Direct system/developer/user instructions take precedence over these guidelines
+- **Compliance**: All code changes must follow these instructions for every file touched
+
+### Required Validation Checks
+After making any code changes, you MUST run these validation commands and ensure they pass:
+
+```bash
+yarn test
+```
+
+This runs comprehensive tests across all components (Go backend, React frontend, TypeScript MCP server).
+
+### Code Quality Requirements
+- All new code must include appropriate tests
+- Maintain existing test coverage levels
+- Follow the Fix-Test-Commit workflow
+- Use `yarn` package manager exclusively (never npm)
+- Follow existing code patterns and architectural conventions
 
 ## Repository layout
 - `backend/` – Go API server and database migrations
+- `backend/mcp/` – TypeScript MCP server (port 3001)
 - `frontend/` – React application
 - `scripts/` – Node scripts for development and database management
 - `docs/` – Project documentation
@@ -53,4 +79,17 @@ This repository contains a Go backend and a React/TypeScript frontend for a pers
   yarn test
   ```
   This command runs both backend and frontend test suites.
+
+## Comprehensive Project Guidelines
+
+For complete project information including:
+- **Essential Commands**: All development, testing, and database management commands
+- **Architecture Overview**: Detailed technical architecture and component relationships
+- **Testing Requirements**: Complete testing strategy and coverage requirements
+- **MCP Server Development**: TypeScript MCP server specific guidelines
+- **Development Notes**: Package management, environment setup, and workflow details
+
+**Refer to [CLAUDE.md](./CLAUDE.md) for comprehensive project guidelines and instructions.**
+
+This AGENTS.md file provides Codex-specific guidance while CLAUDE.md contains the complete development reference for this meal planning application.
 
