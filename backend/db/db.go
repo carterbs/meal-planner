@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fatih/color"
 	_ "github.com/lib/pq"
 )
 
@@ -44,17 +45,47 @@ func DefaultConfig() Config {
 
 // Validate checks if the required config fields are provided
 func (c *Config) Validate() error {
+	var missingFields []string
+	
 	if c.Host == "" {
-		return errors.New("database host is required")
+		missingFields = append(missingFields, "DB_HOST")
 	}
 	if c.Port == "" {
-		return errors.New("database port is required")
+		missingFields = append(missingFields, "DB_PORT")
 	}
 	if c.User == "" {
-		return errors.New("database user is required")
+		missingFields = append(missingFields, "DB_USER")
 	}
 	if c.DBName == "" {
-		return errors.New("database name is required")
+		missingFields = append(missingFields, "DB_NAME")
+	}
+	
+	if len(missingFields) > 0 {
+		fmt.Println()
+		color.Red("═══════════════════════════════════════════════════════════════")
+		color.Red("💥 DATABASE CONFIGURATION ERROR")
+		color.Red("═══════════════════════════════════════════════════════════════")
+		color.White("Missing required environment variables:")
+		for _, field := range missingFields {
+			color.Red("  ❌ %s", field)
+		}
+		fmt.Println()
+		color.Cyan("🔧 TO FIX THIS:")
+		color.White("1. Make sure you have a .env file in your backend directory")
+		color.White("2. Add the missing variables to your .env file:")
+		for _, field := range missingFields {
+			color.Green("   %s=your_value_here", field)
+		}
+		color.White("3. Example .env file:")
+		color.Green("   DB_HOST=localhost")
+		color.Green("   DB_PORT=5432")
+		color.Green("   DB_USER=postgres")
+		color.Green("   DB_PASSWORD=password")
+		color.Green("   DB_NAME=mealplanner")
+		color.Red("═══════════════════════════════════════════════════════════════")
+		fmt.Println()
+		
+		return fmt.Errorf("missing required database configuration: %s", strings.Join(missingFields, ", "))
 	}
 	return nil
 }
