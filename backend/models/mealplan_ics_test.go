@@ -7,9 +7,13 @@ import (
 )
 
 func TestMealPlanToICS(t *testing.T) {
-	plan := map[string]*Meal{
-		"Monday":  {ID: 1, MealName: "Test Meal", URL: "https://example.com"},
-		"Tuesday": {ID: 2, MealName: "Another Meal"},
+	plan := &WeeklyMealPlan{
+		Monday: DayMealPlan{
+			Dinner: &Meal{ID: 1, MealName: "Test Meal", URL: "https://example.com"},
+		},
+		Tuesday: DayMealPlan{
+			Dinner: &Meal{ID: 2, MealName: "Another Meal"},
+		},
 	}
 	monday := time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)
 	ics := MealPlanToICS(plan, monday)
@@ -23,7 +27,7 @@ func TestMealPlanToICS(t *testing.T) {
 	if !strings.Contains(ics, "URL:https://example.com") {
 		t.Errorf("ics missing meal url")
 	}
-	if !strings.Contains(ics, "DTSTART;VALUE=DATE:20240401") {
+	if !strings.Contains(ics, "DTSTART:20240401T183000Z") {
 		t.Errorf("ics missing start date")
 	}
 }

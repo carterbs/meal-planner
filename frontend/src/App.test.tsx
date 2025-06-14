@@ -6,44 +6,109 @@ import { mockMealPlan, mockAvailableMeals, mockShoppingList } from "./test-utils
 
 // Helper to setup mocks for all the API endpoints needed by App
 const setupMocks = () => {
-    // Create a Jest mock for fetch
-    global.fetch = jest.fn();
+    // Mock the clipboard API for tests
+    Object.assign(navigator, {
+        clipboard: {
+            writeText: jest.fn(() => Promise.resolve()),
+        },
+    });
 
-    // Default implementation for successful requests
-    (global.fetch as jest.Mock).mockImplementation((url) => {
-        if (url.toString().includes("/api/mealplan")) {
+    global.fetch = jest.fn((url) => {
+        if (url === '/api/mealplan') {
             return Promise.resolve({
                 ok: true,
-                json: () => Promise.resolve(mockMealPlan)
-            });
+                json: () => Promise.resolve({
+                    Monday: {
+                        Breakfast: {
+                            id: 1,
+                            mealName: "Test Meal 1",
+                            relativeEffort: 2,
+                            lastPlanned: "2024-02-15T00:00:00Z",
+                            redMeat: false,
+                            mealType: "breakfast",
+                            ingredients: [
+                                { ID: 1, Name: "Ingredient 1", Quantity: 2, Unit: "cups" }
+                            ]
+                        },
+                        Lunch: null,
+                        Dinner: {
+                            id: 2,
+                            mealName: "Test Meal 2",
+                            relativeEffort: 3,
+                            lastPlanned: "2024-02-15T00:00:00Z",
+                            redMeat: true,
+                            mealType: "dinner",
+                            ingredients: [
+                                { ID: 2, Name: "Ingredient 2", Quantity: 1, Unit: "tbsp" }
+                            ]
+                        }
+                    },
+                    Tuesday: {
+                        Breakfast: null,
+                        Lunch: null,
+                        Dinner: null
+                    },
+                    Wednesday: {
+                        Breakfast: null,
+                        Lunch: null,
+                        Dinner: null
+                    },
+                    Thursday: {
+                        Breakfast: null,
+                        Lunch: null,
+                        Dinner: null
+                    },
+                    Friday: {
+                        Breakfast: null,
+                        Lunch: null,
+                        Dinner: null
+                    },
+                    Saturday: {
+                        Breakfast: null,
+                        Lunch: null,
+                        Dinner: null
+                    },
+                    Sunday: {
+                        Breakfast: null,
+                        Lunch: null,
+                        Dinner: null
+                    }
+                })
+            } as Response);
         }
 
-        if (url.toString().includes("/api/meals")) {
+        if (url === '/api/meals') {
             return Promise.resolve({
                 ok: true,
-                json: () => Promise.resolve(mockAvailableMeals)
-            });
+                json: () => Promise.resolve([
+                    { id: 3, mealName: 'Available Meal 1', relativeEffort: 2 },
+                    { id: 4, mealName: 'Available Meal 2', relativeEffort: 1 }
+                ])
+            } as Response);
         }
 
-        if (url.toString().includes("/api/shoppinglist")) {
+        if (url === '/api/shoppinglist') {
             return Promise.resolve({
                 ok: true,
-                json: () => Promise.resolve(mockShoppingList)
-            });
+                json: () => Promise.resolve([
+                    { ID: 1, Name: "Ingredient 1", Quantity: 2, Unit: "cups" },
+                    { ID: 2, Name: "Ingredient 2", Quantity: 1, Unit: "tbsp" }
+                ])
+            } as Response);
         }
 
-        if (url.toString().includes("/api/health")) {
+        if (url === '/api/health') {
             return Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve({ status: "ok" })
-            });
+            } as Response);
         }
 
         return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({})
-        });
-    });
+        } as Response);
+    }) as jest.Mock;
 
     return global.fetch;
 };
@@ -120,11 +185,11 @@ describe("App", () => {
             expect(screen.getByText(/Test Meal 1/i)).toBeInTheDocument();
         });
 
-        // Find and click the Get Shopping List button
-        const shoppingListButton = screen.getByText(/Get Shopping List/i);
+        // Find and click the Copy Shopping List button (new functionality)
+        const shoppingListButton = screen.getByText(/Copy Shopping List/i);
         fireEvent.click(shoppingListButton);
 
-        // Verify shopping list items appear
+        // Verify ingredients are displayed within meal cards (new structure)
         await waitFor(() => {
             expect(screen.getByText(/Ingredient 1/i)).toBeInTheDocument();
             expect(screen.getByText(/Ingredient 2/i)).toBeInTheDocument();

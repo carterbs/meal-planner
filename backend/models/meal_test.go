@@ -295,11 +295,11 @@ func TestSwapMeal(t *testing.T) {
 	// Setup mock rows and expectations
 	rows := setupMealRows(testMeals)
 	mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).
-		WithArgs(currentMealID).
+		WithArgs(currentMealID, "dinner").
 		WillReturnRows(rows)
 
 	// Call SwapMeal
-	newMeal, err := SwapMeal(currentMealID, db)
+	newMeal, err := SwapMeal(currentMealID, "dinner", db)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

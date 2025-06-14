@@ -14,13 +14,93 @@ import (
 // DB is a global database connection (set in main.go)
 var DB *sql.DB
 
+func populateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
+	mealIDs := make([]int, 0)
+	days := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	dayPlans := map[string]models.DayMealPlan{
+		"Monday":    plan.Monday,
+		"Tuesday":   plan.Tuesday,
+		"Wednesday": plan.Wednesday,
+		"Thursday":  plan.Thursday,
+		"Friday":    plan.Friday,
+		"Saturday":  plan.Saturday,
+		"Sunday":    plan.Sunday,
+	}
+
+	for _, day := range days {
+		dayPlan := dayPlans[day]
+		if dayPlan.Breakfast != nil && dayPlan.Breakfast.ID != 0 {
+			mealIDs = append(mealIDs, dayPlan.Breakfast.ID)
+		}
+		if dayPlan.Lunch != nil && dayPlan.Lunch.ID != 0 {
+			mealIDs = append(mealIDs, dayPlan.Lunch.ID)
+		}
+		if dayPlan.Dinner != nil && dayPlan.Dinner.ID != 0 {
+			mealIDs = append(mealIDs, dayPlan.Dinner.ID)
+		}
+	}
+
+	if len(mealIDs) == 0 {
+		return plan, nil // No meals to populate
+	}
+
+	var mealsWithIngredients []*models.Meal
+	var err error
+	if UseDummy {
+		mealsWithIngredients, err = dummy.GetMealsByIDs(mealIDs)
+	} else {
+		mealsWithIngredients, err = models.GetMealsByIDs(DB, mealIDs)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	mealMap := make(map[int]*models.Meal)
+	for _, meal := range mealsWithIngredients {
+		mealMap[meal.ID] = meal
+	}
+
+	// Create a new plan to hold the populated meal details
+	populatedPlan := *plan
+
+	updateDayMealPlan := func(dayPlan *models.DayMealPlan) {
+		if dayPlan.Breakfast != nil {
+			if fullMeal, ok := mealMap[dayPlan.Breakfast.ID]; ok {
+				dayPlan.Breakfast = fullMeal
+			}
+		}
+		if dayPlan.Lunch != nil {
+			if fullMeal, ok := mealMap[dayPlan.Lunch.ID]; ok {
+				dayPlan.Lunch = fullMeal
+			}
+		}
+		if dayPlan.Dinner != nil {
+			if fullMeal, ok := mealMap[dayPlan.Dinner.ID]; ok {
+				dayPlan.Dinner = fullMeal
+			}
+		}
+	}
+
+	updateDayMealPlan(&populatedPlan.Monday)
+	updateDayMealPlan(&populatedPlan.Tuesday)
+	updateDayMealPlan(&populatedPlan.Wednesday)
+	updateDayMealPlan(&populatedPlan.Thursday)
+	// Friday's meals might be nil or "Eating out"
+	updateDayMealPlan(&populatedPlan.Friday)
+	updateDayMealPlan(&populatedPlan.Saturday)
+	updateDayMealPlan(&populatedPlan.Sunday)
+
+	return &populatedPlan, nil
+}
+
 // GetMealPlan retrieves a meal plan - either the last saved one or generates a new one if none exists.
 func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	// First try to get the last planned meals
-	var plan map[string]*models.Meal
+	var plan *models.WeeklyMealPlan
 	var err error
 	if UseDummy {
-		plan, err = dummy.GenerateWeeklyMealPlan()
+		// Use dummy data generation
+		plan, err = dummy.GenerateWeeklyMealPlanStruct()
 	} else {
 		plan, err = models.GetLastPlannedMeals(DB)
 		if err != nil {
@@ -33,24 +113,15 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Create an output map from day to a simplified meal object including effort.
-	type OutputMeal struct {
-		ID             int    `json:"id"`
-		MealName       string `json:"mealName"`
-		RelativeEffort int    `json:"relativeEffort"`
-		URL            string `json:"url,omitempty"`
+	detailedPlan, err := populateMealDetails(plan)
+	if err != nil {
+		log.Printf("Error fetching meals with ingredients: %v", err)
+		http.Error(w, "Error fetching meal details: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
-	output := make(map[string]OutputMeal)
-	for day, meal := range plan {
-		output[day] = OutputMeal{
-			ID:             meal.ID,
-			MealName:       meal.MealName,
-			RelativeEffort: meal.RelativeEffort,
-			URL:            meal.URL,
-		}
-	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(output)
+	json.NewEncoder(w).Encode(detailedPlan)
 }
 
 // GenerateMealPlan generates a new weekly meal plan regardless of whether a recent one exists.
@@ -60,10 +131,11 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = json.NewDecoder(r.Body).Decode(&input)
 
-	var plan map[string]*models.Meal
+	var plan *models.WeeklyMealPlan
 	var err error
 	if UseDummy {
-		plan, err = dummy.GenerateWeeklyMealPlan()
+		// Use dummy data generation
+		plan, err = dummy.GenerateWeeklyMealPlanStruct()
 	} else {
 		plan, err = models.GenerateWeeklyMealPlan(DB)
 	}
@@ -72,57 +144,51 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, day := range input.SkipDays {
-		delete(plan, day)
-	}
-
-	// Create an output map from day to a simplified meal object including effort.
-	type OutputMeal struct {
-		ID             int    `json:"id"`
-		MealName       string `json:"mealName"`
-		RelativeEffort int    `json:"relativeEffort"`
-		URL            string `json:"url,omitempty"`
-	}
-	output := make(map[string]OutputMeal)
-	for day, meal := range plan {
-		output[day] = OutputMeal{
-			ID:             meal.ID,
-			MealName:       meal.MealName,
-			RelativeEffort: meal.RelativeEffort,
-			URL:            meal.URL,
-		}
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(output)
-}
-
-// SwapMeal handles swapping a meal in the current meal plan.
-// It decodes the incoming payload, calls the real backend swap logic,
-// and returns the new meal as JSON.
-func SwapMeal(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		Day    string `json:"day"`     // day of the meal plan (if needed)
-		MealID int    `json:"meal_id"` // current meal ID
-	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
-	}
-
-	var newMeal *models.Meal
-	var err error
-	if UseDummy {
-		newMeal, err = dummy.SwapMeal(payload.MealID)
-	} else {
-		newMeal, err = models.SwapMeal(payload.MealID, DB)
-	}
+	detailedPlan, err := populateMealDetails(plan)
 	if err != nil {
-		http.Error(w, "Error swapping meal: "+err.Error(), http.StatusInternalServerError)
+		log.Printf("Error fetching meals with ingredients: %v", err)
+		http.Error(w, "Error fetching meal details: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newMeal)
+	// Handle skip_days by converting to a map and excluding skipped days
+	if len(input.SkipDays) > 0 {
+		skipSet := make(map[string]bool)
+		for _, day := range input.SkipDays {
+			skipSet[day] = true
+		}
+
+		// Convert to map format and exclude skipped days
+		result := make(map[string]interface{})
+
+		if !skipSet["Monday"] && detailedPlan.Monday.Dinner != nil {
+			result["Monday"] = detailedPlan.Monday.Dinner
+		}
+		if !skipSet["Tuesday"] && detailedPlan.Tuesday.Dinner != nil {
+			result["Tuesday"] = detailedPlan.Tuesday.Dinner
+		}
+		if !skipSet["Wednesday"] && detailedPlan.Wednesday.Dinner != nil {
+			result["Wednesday"] = detailedPlan.Wednesday.Dinner
+		}
+		if !skipSet["Thursday"] && detailedPlan.Thursday.Dinner != nil {
+			result["Thursday"] = detailedPlan.Thursday.Dinner
+		}
+		if !skipSet["Friday"] && detailedPlan.Friday.Dinner != nil {
+			result["Friday"] = detailedPlan.Friday.Dinner
+		}
+		if !skipSet["Saturday"] && detailedPlan.Saturday.Dinner != nil {
+			result["Saturday"] = detailedPlan.Saturday.Dinner
+		}
+		if !skipSet["Sunday"] && detailedPlan.Sunday.Dinner != nil {
+			result["Sunday"] = detailedPlan.Sunday.Dinner
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(detailedPlan)
+	}
 }
 
 // GetShoppingList returns all ingredients for the planned meals (no aggregation yet, per MVP).
@@ -165,10 +231,10 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 
 // MealPlanICSHandler returns the current meal plan as an iCalendar file.
 func MealPlanICSHandler(w http.ResponseWriter, r *http.Request) {
-	var plan map[string]*models.Meal
+	var plan *models.WeeklyMealPlan
 	var err error
 	if UseDummy {
-		plan, err = dummy.GenerateWeeklyMealPlan()
+		plan, err = dummy.GenerateWeeklyMealPlanStruct()
 	} else {
 		plan, err = models.GetLastPlannedMeals(DB)
 		if err != nil {
