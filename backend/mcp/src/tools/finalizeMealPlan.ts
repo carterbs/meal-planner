@@ -7,12 +7,12 @@ export async function finalizePlan() {
   if (!resp.ok) {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   }
-  return resp.json();
+  return resp.text();
 }
 
 export function registerFinalizeMealPlan(server: McpServer) {
   server.tool('finalizeMealPlan', null, async () => {
-    const json = await finalizePlan();
-    return { content: [{ type: 'json', json }] };
+    const text = await finalizePlan();
+    return { content: [{ type: 'text', text }] };
   });
 }

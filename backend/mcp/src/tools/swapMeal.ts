@@ -7,7 +7,7 @@ import type { WeeklyMealPlan } from '../resources/weeklyMealPlan.js';
 export const swapArgs = z.object({ dayIndex: z.number().int().min(0).max(6) });
 
 export async function doSwapMeal(dayIndex: number): Promise<WeeklyMealPlan> {
-  const resp = await fetch(`${API}/api/mealplan/swap`, {
+  const resp = await fetch(`${API}/api/meals/swap`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ dayIndex })
