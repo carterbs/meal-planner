@@ -89,3 +89,11 @@ Tests must cover:
 - API integration tests
 - Edge cases and error conditions
 - Database operations with proper mocking
+
+
+# Claude Development Procedures
+
+## Custom Slash Commands
+
+### /commit-push-pr
+If on main, create a new branch. Once on a feature branch, commit code with a descriptive message. Then push the branch and create the PR using the `gh` cli. 
