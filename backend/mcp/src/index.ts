@@ -1,8 +1,5 @@
-import express from 'express';
-import cors from 'cors';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { MCP_PORT } from './utils.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerWeeklyMealPlan } from './resources/weeklyMealPlan.js';
 import { registerRecipes } from './resources/recipes.js';
 import { registerRecipeSteps } from './resources/recipeSteps.js';
@@ -14,9 +11,6 @@ import { registerGenerateShoppingList } from './tools/generateShoppingList.js';
 import { registerCreateRecipe } from './tools/createRecipe.js';
 import { registerDeleteRecipe } from './tools/deleteRecipe.js';
 
-const app = express();
-app.use(cors());
-app.use(express.json());
 
 const server = new McpServer({ name: 'mealplanner-mcp', version: '1.0.0' });
 
@@ -32,29 +26,13 @@ registerGenerateShoppingList(server);
 registerCreateRecipe(server);
 registerDeleteRecipe(server);
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
-
-const transports: Record<string, SSEServerTransport> = {};
-
-app.get('/sse', async (req, res) => {
-  const transport = new SSEServerTransport('/messages', res);
-  transports[transport.sessionId] = transport;
-  transport.onclose = () => { delete transports[transport.sessionId]; };
+async function main() {
+  const transport = new StdioServerTransport();
   await server.connect(transport);
-});
+  console.error('MealPlanner MCP server running on stdio');
+}
 
-app.post('/messages', async (req, res) => {
-  const sessionId = req.query.sessionId as string;
-  const transport = transports[sessionId];
-  if (!transport) {
-    res.status(404).send('Session not found');
-    return;
-  }
-  await transport.handlePostMessage(req, res, req.body);
-});
-
-app.listen(MCP_PORT, () => {
-  console.error(`MealPlanner MCP server running on http://localhost:${MCP_PORT}`);
+main().catch((err) => {
+  console.error('Server error:', err);
+  process.exit(1);
 });
