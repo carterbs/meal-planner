@@ -18,5 +18,22 @@ export async function fetchRecipes(): Promise<RecipeSummary[]> {
 }
 
 export function registerRecipes(server: McpServer) {
-  server.resource<RecipeSummary[]>('Recipes', fetchRecipes);
+  server.resource(
+    'Recipes',
+    'meal://recipes/all',
+    {
+      description: 'Get a comprehensive list of all available recipes with their basic information including unique ID, name, effort level (LOW/MED/HIGH), and whether they contain red meat',
+      mimeType: 'application/json'
+    },
+    async () => {
+      const data = await fetchRecipes();
+      return {
+        contents: [{
+          uri: 'meal://recipes/all',
+          text: JSON.stringify(data, null, 2),
+          mimeType: 'application/json'
+        }]
+      };
+    }
+  );
 }

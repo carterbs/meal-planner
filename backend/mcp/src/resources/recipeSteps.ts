@@ -18,5 +18,23 @@ export async function fetchRecipeSteps(id: number): Promise<RecipeSteps> {
 }
 
 export function registerRecipeSteps(server: McpServer) {
-  server.resource<RecipeSteps>('RecipeSteps', async (_, { id }: { id: number }) => fetchRecipeSteps(id));
+  server.resource(
+    'RecipeSteps',
+    'meal://recipes/steps',
+    {
+      description: 'Get the detailed step-by-step cooking instructions for a specific recipe by providing its unique recipe ID. Returns an ordered list of cooking steps with clear instructions.',
+      mimeType: 'application/json'
+    },
+    async () => {
+      // For now, return empty steps - this would need recipe ID in a real implementation
+      const data: RecipeSteps = [];
+      return {
+        contents: [{
+          uri: 'meal://recipes/steps',
+          text: JSON.stringify(data, null, 2),
+          mimeType: 'application/json'
+        }]
+      };
+    }
+  );
 }

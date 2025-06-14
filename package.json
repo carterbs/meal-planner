@@ -8,6 +8,7 @@
     ],
     "scripts": {
         "start": "node scripts/start.js",
+        "start:mcp": "node scripts/start-mcp.js",
         "test:backend": "cd backend && go test -v ./...",
         "test:frontend": "cd frontend && yarn test",
         "test": "node scripts/test-summary.js",

@@ -20,5 +20,22 @@ export async function fetchWeeklyMealPlan(): Promise<WeeklyMealPlan> {
 }
 
 export function registerWeeklyMealPlan(server: McpServer) {
-  server.resource<WeeklyMealPlan>('WeeklyMealPlan', fetchWeeklyMealPlan);
+  server.resource(
+    'WeeklyMealPlan',
+    'meal://plan/weekly',
+    {
+      description: 'Get the current weekly meal plan showing planned meals for each day of the week with dates, meal names, and effort levels (LOW/MED/HIGH)',
+      mimeType: 'application/json'
+    },
+    async () => {
+      const data = await fetchWeeklyMealPlan();
+      return {
+        contents: [{
+          uri: 'meal://plan/weekly',
+          text: JSON.stringify(data, null, 2),
+          mimeType: 'application/json'
+        }]
+      };
+    }
+  );
 }
