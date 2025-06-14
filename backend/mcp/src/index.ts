@@ -1,105 +1,60 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
 import express from 'express';
 import cors from 'cors';
-import { z } from 'zod';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { MCP_PORT } from './utils.js';
+import { registerWeeklyMealPlan } from './resources/weeklyMealPlan.js';
+import { registerRecipes } from './resources/recipes.js';
+import { registerRecipeSteps } from './resources/recipeSteps.js';
+import { registerGenerateMealPlan } from './tools/generateMealPlan.js';
+import { registerFinalizeMealPlan } from './tools/finalizeMealPlan.js';
+import { registerSwapMeal } from './tools/swapMeal.js';
+import { registerReplaceMeal } from './tools/replaceMeal.js';
+import { registerGenerateShoppingList } from './tools/generateShoppingList.js';
+import { registerCreateRecipe } from './tools/createRecipe.js';
+import { registerDeleteRecipe } from './tools/deleteRecipe.js';
 
 const app = express();
-const PORT = 3001;
-
 app.use(cors());
 app.use(express.json());
 
-// Zod schema for hello tool validation
-const HelloToolArgsSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-});
+const server = new McpServer({ name: 'mealplanner-mcp', version: '1.0.0' });
 
-// Health check endpoint
+registerWeeklyMealPlan(server);
+registerRecipes(server);
+registerRecipeSteps(server);
+
+registerGenerateMealPlan(server);
+registerFinalizeMealPlan(server);
+registerSwapMeal(server);
+registerReplaceMeal(server);
+registerGenerateShoppingList(server);
+registerCreateRecipe(server);
+registerDeleteRecipe(server);
+
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Create MCP server
-const server = new Server(
-  {
-    name: 'mealplanner-mcp',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
+const transports: Record<string, SSEServerTransport> = {};
 
-// Define tools
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: 'hello',
-        description: 'A simple hello world tool',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            name: {
-              type: 'string',
-              description: 'Optional name to greet',
-            },
-          },
-        },
-      },
-    ],
-  };
-});
-
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-  
-  switch (name) {
-    case 'hello':
-      try {
-        // Validate arguments using Zod
-        const validatedArgs = HelloToolArgsSchema.parse(args);
-        
-        const greeting = validatedArgs.name 
-          ? `Hi ${validatedArgs.name} from MealPlanner MCP!`
-          : 'Hi from MealPlanner MCP!';
-        
-        return {
-          content: [
-            {
-              type: 'text',
-              text: greeting,
-            },
-          ],
-        };
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          throw new Error(`Invalid arguments: ${error.errors.map(e => e.message).join(', ')}`);
-        }
-        throw error;
-      }
-    
-    default:
-      throw new Error(`Unknown tool: ${name}`);
-  }
-});
-
-// MCP SSE endpoint
 app.get('/sse', async (req, res) => {
-  console.error('New SSE connection');
-  const transport = new SSEServerTransport('/sse', res);
+  const transport = new SSEServerTransport('/messages', res);
+  transports[transport.sessionId] = transport;
+  transport.onclose = () => { delete transports[transport.sessionId]; };
   await server.connect(transport);
 });
 
-// Start HTTP server
-app.listen(PORT, () => {
-  console.error(`MealPlanner MCP server running on http://localhost:${PORT}`);
-  console.error(`SSE endpoint available at http://localhost:${PORT}/sse`);
+app.post('/messages', async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  const transport = transports[sessionId];
+  if (!transport) {
+    res.status(404).send('Session not found');
+    return;
+  }
+  await transport.handlePostMessage(req, res, req.body);
+});
+
+app.listen(MCP_PORT, () => {
+  console.error(`MealPlanner MCP server running on http://localhost:${MCP_PORT}`);
 });
