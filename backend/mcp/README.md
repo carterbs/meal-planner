@@ -9,15 +9,13 @@ cd backend/mcp
 yarn build
 NODE_ENV=production BACKEND_BASE_URL=http://localhost:8080 node dist/index.js
 ```
-
-The server listens on `MCP_PORT` (default `3001`).
+The server communicates via standard input/output.
 
 ## Environment variables
 
 | Name | Default | Purpose |
 |------|---------|---------|
 | `BACKEND_BASE_URL` | `http://localhost:8080` | Go API root |
-| `MCP_PORT` | `3001` | HTTP/SSE listen port |
 
 ## Resources
 - **WeeklyMealPlan** – `GET /api/mealplan`

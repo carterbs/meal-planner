@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### MCP Server Development
 - `cd backend/mcp && yarn build` - Build MCP TypeScript server
-- `cd backend/mcp && yarn start` - Run built MCP server (port 3001)
+- `cd backend/mcp && yarn start` - Run built MCP server (stdio)
 - `cd backend/mcp && yarn dev` - Run MCP server in development mode with nodemon
 - `cd backend/mcp && yarn test` - Run MCP server tests
 
@@ -52,14 +52,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### MCP Server (TypeScript)
 - **Location**: `backend/mcp/` - TypeScript MCP server implementation
-- **Port**: 3001 (separate from main Go backend)
-- **Framework**: Express.js with CORS enabled
-- **Protocol**: Model Context Protocol with SSE transport
+- **Transport**: Standard input/output (stdio)
+- **Framework**: none (uses MCP SDK directly)
+- **Protocol**: Model Context Protocol
 - **Tools**: Currently implements basic "hello" tool as scaffold
 - **Validation**: Uses Zod for input validation
-- **Endpoints**: 
-  - `/health` - Health check
-  - `/sse` - Server-Sent Events for MCP communication
 - **Testing**: Jest with comprehensive tool logic tests
 
 ### Key Features
