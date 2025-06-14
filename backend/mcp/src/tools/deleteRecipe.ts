@@ -3,7 +3,9 @@ import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { API } from '../utils.js';
 
-export const deleteRecipeArgs = z.object({ id: z.number().int().positive() });
+export const deleteRecipeArgs = z.object({ 
+  id: z.number().int().positive().describe("The unique ID of the recipe to permanently delete from the database")
+});
 
 export async function deleteRecipe(id: number) {
   const resp = await fetch(`${API}/api/meals/${id}`, { method: 'DELETE' });
@@ -12,8 +14,16 @@ export async function deleteRecipe(id: number) {
 }
 
 export function registerDeleteRecipe(server: McpServer) {
-  server.tool('deleteRecipe', deleteRecipeArgs, async ({ id }) => {
-    const json = await deleteRecipe(id);
-    return { content: [{ type: 'json', json }] };
-  });
+  server.tool(
+    'deleteRecipe',
+    {
+      id: deleteRecipeArgs.shape.id
+    },
+    async ({ id }) => {
+      const json = await deleteRecipe(id);
+      return {
+        content: [{ type: 'text', text: JSON.stringify(json, null, 2) }]
+      };
+    }
+  );
 }

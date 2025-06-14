@@ -14,8 +14,14 @@ export async function generateList(): Promise<ShoppingList> {
 }
 
 export function registerGenerateShoppingList(server: McpServer) {
-  server.tool('generateShoppingList', null, async () => {
-    const json = await generateList();
-    return { content: [{ type: 'json', json }] };
-  });
+  server.tool(
+    'generateShoppingList',
+    'Generate a comprehensive shopping list based on the current meal plan. This analyzes all planned meals and creates a consolidated list of ingredients with quantities needed for the week.',
+    async () => {
+      const json = await generateList();
+      return {
+        content: [{ type: 'text', text: JSON.stringify(json, null, 2) }]
+      };
+    }
+  );
 }

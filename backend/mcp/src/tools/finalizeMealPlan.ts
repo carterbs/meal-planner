@@ -11,8 +11,14 @@ export async function finalizePlan() {
 }
 
 export function registerFinalizeMealPlan(server: McpServer) {
-  server.tool('finalizeMealPlan', null, async () => {
-    const text = await finalizePlan();
-    return { content: [{ type: 'text', text }] };
-  });
+  server.tool(
+    'finalizeMealPlan',
+    'Finalize the current meal plan and make it the active meal plan. This commits the planned meals and makes them permanent until a new plan is generated.',
+    async () => {
+      const text = await finalizePlan();
+      return {
+        content: [{ type: 'text', text }]
+      };
+    }
+  );
 }

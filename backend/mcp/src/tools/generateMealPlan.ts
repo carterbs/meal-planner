@@ -12,10 +12,12 @@ export async function generateMealPlan() {
 export function registerGenerateMealPlan(server: McpServer) {
   server.tool(
     'generateMealPlan',
-    null,
+    'Generate a new weekly meal plan with automatically selected recipes based on effort preferences and red meat consumption limits. This creates a complete 7-day meal plan.',
     async () => {
       const json = await generateMealPlan();
-      return { content: [{ type: "json", json }] };
+      return {
+        content: [{ type: "text", text: JSON.stringify(json, null, 2) }]
+      };
     }
   );
 }

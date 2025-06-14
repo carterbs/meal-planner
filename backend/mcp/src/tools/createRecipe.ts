@@ -3,15 +3,21 @@ import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { API } from '../utils.js';
 
-const ingredientSchema = z.object({ name: z.string(), quantity: z.string() });
-const stepSchema = z.object({ order: z.number(), text: z.string() });
+const ingredientSchema = z.object({ 
+  name: z.string().describe("Name of the ingredient"), 
+  quantity: z.string().describe("Quantity needed (e.g., '2 cups', '1 lb', '3 cloves')") 
+});
+const stepSchema = z.object({ 
+  order: z.number().describe("Step number in the cooking sequence"), 
+  text: z.string().describe("Detailed instruction text for this cooking step") 
+});
 
 export const createRecipeArgs = z.object({
-  name: z.string(),
-  redMeat: z.boolean(),
-  effort: z.enum(['LOW', 'MED', 'HIGH']),
-  steps: z.array(stepSchema),
-  ingredients: z.array(ingredientSchema).optional(),
+  name: z.string().describe("The name of the new recipe"),
+  redMeat: z.boolean().describe("Whether this recipe contains red meat (affects weekly red meat consumption tracking)"),
+  effort: z.enum(['LOW', 'MED', 'HIGH']).describe("Cooking effort level required (LOW for simple, MED for moderate, HIGH for complex recipes)"),
+  steps: z.array(stepSchema).describe("Array of cooking steps in order with step number and instruction text"),
+  ingredients: z.array(ingredientSchema).optional().describe("Optional list of ingredients with names and quantities")
 });
 
 export async function createRecipe(data: z.infer<typeof createRecipeArgs>) {
@@ -43,8 +49,20 @@ export async function createRecipe(data: z.infer<typeof createRecipeArgs>) {
 }
 
 export function registerCreateRecipe(server: McpServer) {
-  server.tool('createRecipe', createRecipeArgs, async (args) => {
-    const json = await createRecipe(args);
-    return { content: [{ type: 'json', json }] };
-  });
+  server.tool(
+    'createRecipe',
+    {
+      name: createRecipeArgs.shape.name,
+      redMeat: createRecipeArgs.shape.redMeat,
+      effort: createRecipeArgs.shape.effort,
+      steps: createRecipeArgs.shape.steps,
+      ingredients: createRecipeArgs.shape.ingredients
+    },
+    async (args) => {
+      const json = await createRecipe(args);
+      return {
+        content: [{ type: 'text', text: JSON.stringify(json, null, 2) }]
+      };
+    }
+  );
 }
