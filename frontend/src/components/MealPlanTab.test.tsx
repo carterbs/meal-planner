@@ -51,12 +51,12 @@ describe("MealPlanTab", () => {
 
         await waitForLoadingToComplete();
 
-        // Check that meal plan data is displayed - now looking for meals in the new structure
-        expect(screen.getByText("Test Meal 1")).toBeInTheDocument(); // Breakfast on Monday
-        expect(screen.getByText("Test Meal 2")).toBeInTheDocument(); // Dinner on Monday
-        expect(screen.getByText("Test Lunch Meal")).toBeInTheDocument(); // Lunch on Tuesday
-        expect(screen.getByText("Test Dinner Meal")).toBeInTheDocument(); // Dinner on Tuesday
-        expect(screen.getByText("Eating out")).toBeInTheDocument(); // Dinner on Friday
+        // Check that meal plan data is displayed - now looking for meals in autocomplete inputs
+        expect(screen.getByDisplayValue("Test Meal 1")).toBeInTheDocument(); // Breakfast on Monday
+        expect(screen.getByDisplayValue("Test Meal 2")).toBeInTheDocument(); // Dinner on Monday
+        expect(screen.getByDisplayValue("Test Lunch Meal")).toBeInTheDocument(); // Lunch on Tuesday
+        expect(screen.getByDisplayValue("Test Dinner Meal")).toBeInTheDocument(); // Dinner on Tuesday
+        expect(screen.getByDisplayValue("Eating out")).toBeInTheDocument(); // Dinner on Friday
     });
 
     test("displays day headers correctly", async () => {
