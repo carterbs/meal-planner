@@ -148,8 +148,29 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 	pick := func(min, max int, mealType string) *models.Meal {
 		filtered := make([]*models.Meal, 0)
 		for _, m := range meals {
+			// For dummy data, we'll assign meal types based on effort level and meal type requested
+			// This allows us to simulate proper meal type separation
+			var validForMealType bool
+			switch mealType {
+			case "breakfast":
+				// Breakfast should be low effort meals
+				validForMealType = m.RelativeEffort <= 2
+			case "lunch":
+				// Lunch should be low to medium effort meals
+				validForMealType = m.RelativeEffort <= 3
+			case "dinner":
+				// Dinner can be any effort level
+				validForMealType = true
+			default:
+				validForMealType = true
+			}
+			
+			if !validForMealType {
+				continue
+			}
+			
 			if m.RelativeEffort >= min && m.RelativeEffort <= max {
-				if redUsed && m.RedMeat {
+				if mealType == "dinner" && redUsed && m.RedMeat {
 					continue
 				}
 				filtered = append(filtered, m)
@@ -159,7 +180,7 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 			return nil
 		}
 		m := filtered[rand.Intn(len(filtered))]
-		if m.RedMeat {
+		if mealType == "dinner" && m.RedMeat {
 			redUsed = true
 		}
 		// Create a copy with the meal type set
