@@ -130,20 +130,20 @@ export const mockMealPlanLegacy: MealPlan = {
 export const mockAvailableMeals: Meal[] = [
     {
         id: 6,
-        mealName: "Available Meal 1",
+        mealName: "Available Test Meal",
         relativeEffort: 2,
         lastPlanned: "2024-02-15T00:00:00Z",
         redMeat: false,
-        mealType: "dinner",
+        mealType: "breakfast",
         ingredients: []
     },
     {
         id: 7,
-        mealName: "Available Meal 2",
+        mealName: "Another Available Meal",
         relativeEffort: 1,
         lastPlanned: "2024-02-15T00:00:00Z",
         redMeat: true,
-        mealType: "dinner",
+        mealType: "breakfast",
         ingredients: []
     }
 ];

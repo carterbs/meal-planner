@@ -77,12 +77,12 @@ const setupMocks = () => {
             } as Response);
         }
 
-        if (url === '/api/meals') {
+        if (url.toString().includes('/api/meals')) {
             return Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve([
-                    { id: 3, mealName: 'Available Meal 1', relativeEffort: 2 },
-                    { id: 4, mealName: 'Available Meal 2', relativeEffort: 1 }
+                    { id: 3, mealName: 'Available Meal 1', relativeEffort: 2, mealType: 'breakfast' },
+                    { id: 4, mealName: 'Available Meal 2', relativeEffort: 1, mealType: 'breakfast' }
                 ])
             } as Response);
         }
@@ -129,30 +129,23 @@ describe("App", () => {
         // Verify initial loading state
         expect(screen.getByText(/Weekly Meal Plan/i)).toBeInTheDocument();
 
-        // Verify meal data appears after API calls resolve
+        // Verify meal data appears after API calls resolve (now in autocomplete inputs)
         await waitFor(() => {
-            expect(screen.getByText(/Test Meal 1/i)).toBeInTheDocument();
+            expect(screen.getByDisplayValue(/Test Meal 1/i)).toBeInTheDocument();
         });
 
-        expect(screen.getByText(/Test Meal 2/i)).toBeInTheDocument();
+        expect(screen.getByDisplayValue(/Test Meal 2/i)).toBeInTheDocument();
     });
 
-    test("allows swapping meals", async () => {
-        // Setup mock for swap endpoint with a specific response
-        const swappedMeal = {
-            id: 999,
-            mealName: "Swapped Test Meal",
-            relativeEffort: 1,
-            lastPlanned: "2023-01-01",
-            redMeat: false,
-            ingredients: []
-        };
-
+    test("allows changing meals through autocomplete", async () => {
+        // Setup mock for meals endpoint to return available meals
         (global.fetch as jest.Mock).mockImplementation((url, options) => {
-            if (url.toString().includes("/api/meals/swap")) {
+            if (url.toString().includes("/api/meals?type=")) {
                 return Promise.resolve({
                     ok: true,
-                    json: () => Promise.resolve(swappedMeal)
+                    json: () => Promise.resolve([
+                        { id: 999, mealName: "New Test Meal", relativeEffort: 1, mealType: "breakfast" }
+                    ])
                 });
             }
             return setupMocks()(url, options);
@@ -162,38 +155,39 @@ describe("App", () => {
 
         // Wait for meal plan to load
         await waitFor(() => {
-            expect(screen.getByText(/Test Meal 1/i)).toBeInTheDocument();
+            expect(screen.getByDisplayValue(/Test Meal 1/i)).toBeInTheDocument();
         });
 
-        // Find any Swap Meal button (without relying on table rows)
-        const swapButton = screen.getAllByText(/Swap Meal/i)[0];
-        expect(swapButton).toBeInTheDocument();
-        fireEvent.click(swapButton);
+        // Find autocomplete inputs (should be multiple for different meal slots)
+        const autocompleteInputs = screen.getAllByRole("combobox");
+        expect(autocompleteInputs.length).toBeGreaterThan(0);
 
-        // Verify the API call was made
+        // Click on the first autocomplete to open it
+        fireEvent.click(autocompleteInputs[0]);
+
+        // Verify that meals can be loaded for autocomplete
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining("/api/meals/swap"),
+            expect.stringContaining("/api/meals?type="),
             expect.any(Object)
         );
     });
 
-    test("shows shopping list when requested", async () => {
+    test("shows ingredients automatically within meal cards", async () => {
         render(<App />);
 
         // Wait for meal plan to load
         await waitFor(() => {
-            expect(screen.getByText(/Test Meal 1/i)).toBeInTheDocument();
+            expect(screen.getByDisplayValue(/Test Meal 1/i)).toBeInTheDocument();
         });
 
-        // Find and click the Copy Shopping List button (new functionality)
-        const shoppingListButton = screen.getByText(/Copy Shopping List/i);
-        fireEvent.click(shoppingListButton);
-
-        // Verify ingredients are displayed within meal cards (new structure)
+        // Verify ingredients are displayed within meal cards automatically
         await waitFor(() => {
             expect(screen.getByText(/Ingredient 1/i)).toBeInTheDocument();
             expect(screen.getByText(/Ingredient 2/i)).toBeInTheDocument();
         });
+
+        // Verify the Copy Shopping List button exists
+        expect(screen.getByText(/Copy Shopping List/i)).toBeInTheDocument();
     });
 
     test("can navigate between tabs", async () => {
