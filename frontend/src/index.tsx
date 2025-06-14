@@ -18,6 +18,7 @@ try {
     }
 
     const root = ReactDOM.createRoot(rootElement);
+    const path = window.location.pathname;
     root.render(
         <React.StrictMode>
             <ThemeProvider theme={theme}>

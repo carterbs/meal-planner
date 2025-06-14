@@ -53,7 +53,7 @@ const GetAllMealsQuery = MealsQueryFragment + `;`
 
 // GetRandomMealExcludingQuery is used to retrieve a random meal excluding the provided meal id.
 const GetRandomMealExcludingQuery = MealsQueryFragment + `
-	WHERE m.id != $1
+	WHERE m.id != $1 AND m.meal_type = $2
 	ORDER BY RANDOM()
 	LIMIT 1;
 `
@@ -191,8 +191,8 @@ func GetAllMeals(db *sql.DB) ([]*Meal, error) {
 }
 
 // SwapMeal returns a random meal that is not the current meal.
-func SwapMeal(currentMealID int, db *sql.DB) (*Meal, error) {
-	rows, err := db.Query(GetRandomMealExcludingQuery, currentMealID)
+func SwapMeal(currentMealID int, mealType string, db *sql.DB) (*Meal, error) {
+	rows, err := db.Query(GetRandomMealExcludingQuery, currentMealID, mealType)
 	if err != nil {
 		return nil, err
 	}

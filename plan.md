@@ -1,76 +1,206 @@
-# Meal Type Categorization Implementation Plan
-
-## Overview
-Add support for categorizing meals by type (breakfast, lunch, dinner) to enable future breakfast menu functionality. All existing meals will be categorized as "dinner" meals during the transition.
+# Plan: Replace Dummy Breakfast/Lunch Data with Real Database Meals
 
 ## Current State Analysis
-- **Backend**: Meal struct in `backend/models/meal.go:12-21` has no meal type field
-- **Frontend**: Meal interface in `frontend/src/types.ts:18-27` has no meal type field  
-- **Database**: Current meals table schema doesn't include meal type
 
-## Implementation Phases
+### Backend Current State:
+- **Meal Planning Logic** (`models/mealplan.go`): Only generates dinner meals for the weekly plan
+- **Meal Plan API** (`handlers/mealplan.go`): Returns single meal per day (dinner only)
+- **Database**: Now contains 16 breakfast + 14 lunch + 49 dinner meals = 79 total meals
+- **Meal Types**: Backend fully supports `meal_type` field (`breakfast`, `lunch`, `dinner`)
 
-### Phase 1: Database Schema Changes
-1. **Add meal_type column** to meals table with default value 'dinner'
-2. **Update existing meals** to have meal_type = 'dinner'
-3. **Create migration** to handle this change safely
+### Frontend Current State:
+- **MealPlanTab Component**: Uses dummy breakfast/lunch data with fake IDs (+1000 for breakfast, +2000 for lunch)
+- **Extended Meal Plan Structure**: Already supports `{day: {Breakfast: meal, Lunch: meal, Dinner: meal}}`
+- **Shopping List**: Correctly aggregates ingredients from all three meal types
+- **Swapping**: Works for all meal types but breakfast/lunch use fake data
 
-**Files to modify:**
-- `backend/migrations/add_meal_type.sql` (new file)
+## Goal State
+- Backend generates real breakfast and lunch meals from database
+- Frontend displays real breakfast and lunch meals with ingredients
+- All meal operations (swap, skip, finalize) work for all three meal types
+- Shopping list includes ingredients from all real meals
 
-### Phase 2: Backend Updates
-1. **Update Meal struct** (`backend/models/meal.go:12`) to include MealType field
-2. **Update MealColumns** (`backend/models/meal.go:24`) to include meal_type
-3. **Update SQL queries** (`backend/models/meal.go:27-41`) to select meal_type
-4. **Update processMealRows** function to handle meal_type scanning
-5. **Update CreateMeal** function to support meal_type parameter
+---
 
-**Files to modify:**
-- `backend/models/meal.go`
+## Implementation Plan
 
-### Phase 3: API Handler Updates
-1. **Update meal handlers** in `backend/handlers/meals.go` to support meal_type filtering
-2. **Add endpoint** for getting meals by type (breakfast/lunch/dinner)
-3. **Update meal creation** to accept meal_type parameter
+### Phase 1: Backend API Updates
 
-**Files to modify:**
-- `backend/handlers/meals.go`
+#### 1.1 Update Meal Plan Generation (`backend/models/mealplan.go`)
+**Current**: `GenerateWeeklyMealPlan()` returns `map[string]*Meal` (one meal per day)
+**New**: Return `map[string]map[string]*Meal` (day -> mealType -> meal)
 
-### Phase 4: Frontend Updates
-1. **Update Meal interface** (`frontend/src/types.ts:18`) to include mealType field
-2. **Update components** to display and filter by meal type
-3. **Update meal creation forms** to include meal type selection
+**Changes Needed**:
+```go
+// New structure
+type WeeklyMealPlan struct {
+    Monday    DayMealPlan `json:"Monday"`
+    Tuesday   DayMealPlan `json:"Tuesday"`
+    // ... etc
+}
 
-**Files to modify:**
-- `frontend/src/types.ts`
-- `frontend/src/components/MealManagementTab.tsx`
-- `frontend/src/AddRecipeForm.tsx`
+type DayMealPlan struct {
+    Breakfast *Meal `json:"Breakfast"`
+    Lunch     *Meal `json:"Lunch"`  
+    Dinner    *Meal `json:"Dinner"`
+}
+```
 
-### Phase 5: Testing & Validation
-1. **Database migration testing**
-2. **Backend API testing** with meal types
-3. **Frontend component testing** with meal type support
-4. **End-to-end testing** of meal type functionality
+**New Logic**:
+- Generate breakfast meals: Low effort (1-2), no red meat restrictions
+- Generate lunch meals: Low effort (1-2), no red meat restrictions  
+- Generate dinner meals: Keep existing logic (effort varies by day, red meat restrictions)
+- Respect last_planned dates across all meal types
+- Add meal type filtering to `pickMeal()` function
 
-**Files to modify:**
-- `backend/models/meal_test.go`
-- `backend/handlers/meals_test.go`
-- `frontend/src/components/MealManagementTab.test.tsx`
-- `frontend/src/AddRecipeForm.test.tsx`
+#### 1.2 Update `pickMeal()` Function
+**Add Parameter**: `mealType string` to filter by meal type
+**Update Query**: Add `AND meal_type = $4` condition
+**Update Calls**: Pass appropriate meal type ('breakfast', 'lunch', 'dinner')
 
-## Key Benefits
-- All existing meals automatically categorized as "dinner"
-- Foundation for breakfast/lunch support
-- Backwards compatible migration
-- Clean separation of meal types for future features
+#### 1.3 Update API Endpoints (`backend/handlers/mealplan.go`)
 
-## Testing Strategy
-- Run backend tests: `cd backend && go test ./...`
-- Run frontend tests: `npm test -- --watchAll=false`
-- Test migration rollback capability
-- Verify API endpoints work with meal type filtering
+**`GetMealPlan()` & `GenerateMealPlan()`**:
+- Change return type from `map[string]*Meal` to new extended structure
+- Update ingredient fetching to handle multiple meals per day
+- Maintain backward compatibility for now (optional)
 
-## Commit Strategy
-- Commit after each phase completion
-- Include tests in same commit as implementation
-- Use descriptive commit messages explaining the "why"
+**`GetLastPlannedMeals()`**:
+- Update to retrieve last planned for each meal type separately
+- Return structured format with breakfast/lunch/dinner per day
+
+#### 1.4 Update Swap Functionality
+**New Parameter**: `meal_type` in swap payload
+**Update Logic**: Filter available meals by meal type when swapping
+**API**: Add meal type to swap endpoints
+
+---
+
+### Phase 2: Frontend Updates
+
+#### 2.1 Remove Dummy Data Logic (`frontend/src/components/MealPlanTab.tsx`)
+**Current Lines 84-107**: Remove fake breakfast/lunch meal generation
+**Replace With**: Direct consumption of new API format
+
+**Before**:
+```typescript
+// Transform the old meal plan format to new extended format
+const extendedMealPlan: ExtendedMealPlan = {};
+WEEK_DAYS.forEach(day => {
+    extendedMealPlan[day] = {
+        Breakfast: /* fake data */,
+        Lunch: /* fake data */,
+        Dinner: mealPlanData[day] || null,
+    };
+});
+```
+
+**After**:
+```typescript
+// API now returns extended format directly
+setMealPlan(mealPlanData);
+```
+
+#### 2.2 Update Swap Functionality
+**Current**: Only works properly for dinner (real meals)
+**Update**: Pass `mealType` parameter in swap requests for all meal types
+
+**Before**:
+```typescript
+fetch("/api/meals/swap", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ meal_id: currentMeal.id }),
+})
+```
+
+**After**:
+```typescript
+fetch("/api/meals/swap", {
+    method: "POST", 
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+        meal_id: currentMeal.id,
+        meal_type: mealType.toLowerCase()
+    }),
+})
+```
+
+#### 2.3 Update Finalize Logic
+**Current**: Only finalizes dinner meals
+**Update**: Finalize all meal types
+
+**Before**:
+```typescript
+WEEK_DAYS.forEach(day => {
+    if (mealPlan[day]?.Dinner) {
+        oldFormat[day] = mealPlan[day].Dinner!;
+    }
+});
+```
+
+**After**: 
+```typescript
+const allMeals: Meal[] = [];
+WEEK_DAYS.forEach(day => {
+    MEAL_TYPES.forEach(mealType => {
+        const meal = mealPlan[day][mealType];
+        if (meal) allMeals.push(meal);
+    });
+});
+```
+
+---
+
+### Phase 3: Data Structure Updates
+
+#### 3.1 Update Backend Types
+**Add**: New structured meal plan types
+**Ensure**: Consistent JSON serialization tags
+**Update**: All handlers to use new types
+
+#### 3.2 Update Frontend Types
+**Verify**: `ExtendedMealPlan` interface matches new API
+**Add**: Type safety for meal type parameters
+**Update**: All components using meal plan data
+
+---
+
+### Phase 4: Testing & Validation
+
+#### 4.1 Backend Testing
+- [ ] Verify meal plan generation includes all three meal types
+- [ ] Test meal type filtering in `pickMeal()`
+- [ ] Validate `last_planned` tracking across meal types
+- [ ] Test swap functionality with meal type parameter
+- [ ] Ensure red meat logic only applies to dinner
+
+#### 4.2 Frontend Testing  
+- [ ] Verify real meals display for breakfast and lunch
+- [ ] Test swapping works for all meal types
+- [ ] Validate shopping list includes all real ingredients
+- [ ] Test finalize updates all meal types
+- [ ] Verify no more fake IDs (+1000, +2000)
+
+#### 4.3 Integration Testing
+- [ ] Full meal plan generation and display
+- [ ] Complete workflow: generate → swap → finalize
+- [ ] Shopping list accuracy with real breakfast/lunch ingredients
+- [ ] Calendar export includes all meal types
+
+## Success Criteria
+- ✅ Breakfast meals are real meals from database (not dummy data)
+- ✅ Lunch meals are real meals from database (not dummy data)  
+- ✅ All meal types can be swapped with appropriate meal type filtering
+- ✅ Shopping list includes real ingredients from breakfast and lunch
+- ✅ Finalize functionality updates last_planned for all meal types
+- ✅ No fake IDs or dummy data in the system
+- ✅ Calendar export includes all three meal types
+- ✅ User experience is seamless and consistent across meal types
+
+---
+
+## Risk Mitigation
+- **Database backup**: Already completed ✅
+- **Fallback plan**: Keep dummy data logic as fallback during transition
+- **Testing**: Comprehensive testing at each phase

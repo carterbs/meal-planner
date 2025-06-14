@@ -1,9 +1,99 @@
 import React from 'react';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
-import { Meal, MealPlan, Ingredient } from './types';
+import { Meal, MealPlan, Ingredient, MealType } from './types';
 
-// Shared mock data for tests
-export const mockMealPlan: MealPlan = {
+// Extended meal plan interface for the new structure
+interface ExtendedMealPlan {
+    [day: string]: {
+        [mealType: string]: Meal | null;
+    };
+}
+
+// Shared mock data for tests - updated to new structure
+export const mockMealPlan: ExtendedMealPlan = {
+    Monday: {
+        Breakfast: {
+            id: 1,
+            mealName: "Test Meal 1",
+            relativeEffort: 2,
+            lastPlanned: "2024-02-15T00:00:00Z",
+            redMeat: false,
+            mealType: "breakfast" as MealType,
+            ingredients: [
+                { ID: 1, Name: "Ingredient 1", Quantity: 2, Unit: "cups" }
+            ]
+        },
+        Lunch: null,
+        Dinner: {
+            id: 2,
+            mealName: "Test Meal 2",
+            relativeEffort: 3,
+            lastPlanned: "2024-02-15T00:00:00Z",
+            redMeat: true,
+            mealType: "dinner" as MealType,
+            ingredients: [
+                { ID: 2, Name: "Ingredient 2", Quantity: 1, Unit: "tbsp" }
+            ]
+        }
+    },
+    Tuesday: {
+        Breakfast: null,
+        Lunch: {
+            id: 3,
+            mealName: "Test Lunch Meal",
+            relativeEffort: 1,
+            lastPlanned: "2024-02-15T00:00:00Z",
+            redMeat: false,
+            mealType: "lunch" as MealType,
+            ingredients: []
+        },
+        Dinner: {
+            id: 4,
+            mealName: "Test Dinner Meal",
+            relativeEffort: 2,
+            lastPlanned: "2024-02-15T00:00:00Z",
+            redMeat: false,
+            mealType: "dinner" as MealType,
+            ingredients: []
+        }
+    },
+    Wednesday: {
+        Breakfast: null,
+        Lunch: null,
+        Dinner: null
+    },
+    Thursday: {
+        Breakfast: null,
+        Lunch: null,
+        Dinner: null
+    },
+    Friday: {
+        Breakfast: null,
+        Lunch: null,
+        Dinner: {
+            id: 5,
+            mealName: "Eating out",
+            relativeEffort: 1,
+            lastPlanned: "2024-02-15T00:00:00Z",
+            redMeat: false,
+            mealType: "dinner" as MealType,
+            ingredients: []
+        }
+    },
+    Saturday: {
+        Breakfast: null,
+        Lunch: null,
+        Dinner: null
+    },
+    Sunday: {
+        Breakfast: null,
+        Lunch: null,
+        Dinner: null
+    }
+};
+
+// Keep the old mockMealPlan for backward compatibility with tests that still expect the old format
+export const mockMealPlanLegacy: MealPlan = {
     Monday: {
         id: 1,
         mealName: "Test Meal 1",
@@ -39,7 +129,7 @@ export const mockMealPlan: MealPlan = {
 
 export const mockAvailableMeals: Meal[] = [
     {
-        id: 4,
+        id: 6,
         mealName: "Available Meal 1",
         relativeEffort: 2,
         lastPlanned: "2024-02-15T00:00:00Z",
@@ -48,7 +138,7 @@ export const mockAvailableMeals: Meal[] = [
         ingredients: []
     },
     {
-        id: 5,
+        id: 7,
         mealName: "Available Meal 2",
         relativeEffort: 1,
         lastPlanned: "2024-02-15T00:00:00Z",
@@ -65,7 +155,7 @@ export const mockShoppingList: Ingredient[] = [
 
 // Helper function to setup common fetch mocks
 export const setupFetchMocks = (options?: {
-    mealPlan?: MealPlan,
+    mealPlan?: ExtendedMealPlan,
     availableMeals?: Meal[],
     shoppingList?: Ingredient[],
     customMocks?: Record<string, any>
@@ -81,6 +171,15 @@ export const setupFetchMocks = (options?: {
         const urlStr = url.toString();
 
         if (urlStr.includes("/api/mealplan") && !urlStr.includes("replace") && !urlStr.includes("generate") && !urlStr.includes("finalize")) {
+            // Always return the ExtendedMealPlan structure
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mocks.mealPlan),
+            } as Response);
+        }
+
+        if (urlStr.includes("/api/mealplan/generate")) {
+            // Return the ExtendedMealPlan structure for generate endpoint
             return Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve(mocks.mealPlan),
@@ -98,6 +197,30 @@ export const setupFetchMocks = (options?: {
             return Promise.resolve({
                 ok: true,
                 json: () => Promise.resolve(mocks.shoppingList),
+            } as Response);
+        }
+
+        if (urlStr.includes("/api/meals/swap")) {
+            // Return a new meal for swap operations
+            const newMeal = {
+                id: 999,
+                mealName: "Swapped Test Meal",
+                relativeEffort: 1,
+                lastPlanned: "2024-02-15T00:00:00Z",
+                redMeat: false,
+                mealType: "dinner",
+                ingredients: []
+            };
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(newMeal),
+            } as Response);
+        }
+
+        if (urlStr.includes("/api/health") || urlStr.includes("/api/reconnect")) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: "ok" }),
             } as Response);
         }
 
