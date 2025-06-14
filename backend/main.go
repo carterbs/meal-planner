@@ -87,6 +87,8 @@ func main() {
 
 	var connection *sql.DB
 	var err error
+
+
 	if !*dummyFlag {
 		// Try to connect to database, but don't block server startup
 		connection, err = db.ConnectDB(config)
@@ -119,7 +121,7 @@ func main() {
 
 	// Set database connection in handlers (might be nil if connection failed)
 	handlers.DB = connection
-	if connection == nil || *dummyFlag {
+	if *dummyFlag {
 		handlers.UseDummy = true
 		if err := dummy.Load("Meal_db.csv"); err != nil {
 			log.Fatalf("Failed to load dummy data: %v", err)
