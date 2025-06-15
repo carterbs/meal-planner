@@ -5,6 +5,7 @@ import { ConversationHandler, ConversationMessage, ConversationResponse } from '
 import { FeedbackHandler, FeedbackInput } from './workflows/feedback-handler.js';
 import { workflowFactories } from './workflows/factories.js';
 import { WorkflowType } from './shared/types.js';
+import { CLIHandler } from './io/cliHandler.js';
 
 export interface LangGraphAgentConfig {
   database: PostgresCheckpointConfig;
@@ -211,28 +212,35 @@ async function main() {
   };
 
   const agent = new LangGraphAgent(config);
-  
+  const io = new CLIHandler();
+  const participants = config.defaultParticipants || ['brad'];
+  const user = participants[0];
+  let threadId: string | undefined;
+
   try {
     await agent.initialize();
-    
-    // Example: Start a meal planning conversation
-    const response = await agent.handleMessage({
-      from: 'brad',
-      message: 'Create a meal plan for this week',
-      timestamp: new Date()
-    });
-    
-    console.log('🤖 Agent Response:', response);
-    
-    if (response.threadId) {
-      // Example: Check status
-      const status = await agent.getWorkflowStatus(response.threadId);
-      console.log('📊 Workflow Status:', status);
+    await io.sendMessage('Welcome to the Meal Planner! Type your messages below.', 'System');
+
+    while (true) {
+      const input = await io.receiveInput('Your message', user);
+      const response = await agent.handleMessage({
+        from: user,
+        message: input,
+        timestamp: new Date(),
+        threadId
+      });
+      threadId = response.threadId;
+      await io.sendMessage(response.message, 'Agent');
+
+      if (response.currentStep === 'complete' || !response.success) {
+        await io.sendMessage('Session ended.', 'System');
+        break;
+      }
     }
-    
   } catch (error) {
     console.error('❌ Agent Error:', error);
   } finally {
+    io.close();
     await agent.shutdown();
   }
 }
