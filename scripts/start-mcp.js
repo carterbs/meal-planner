@@ -48,11 +48,15 @@ function buildMCP() {
 
 // Function to start backend
 function startBackend() {
-  return spawn('go', ['run', 'main.go'], {
-    cwd: path.join(PROJECT_ROOT, 'backend'),
-    stdio: 'ignore',
-    env: process.env
-  });
+  let goArgs = ['run', 'main.go'];
+  if (process.argv.includes("--codex")) {
+    goArgs.push('--dummy');
+  }
+  return spawn('go', goArgs, {
+      cwd: path.join(PROJECT_ROOT, 'backend'),
+      stdio: 'ignore',
+      env: process.env
+    });
 }
 
 // Step 1: Kill any existing processes on ports 8080 and 3001

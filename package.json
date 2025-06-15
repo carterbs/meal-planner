@@ -4,7 +4,8 @@
     "private": true,
     "workspaces": [
         "frontend",
-        "backend/mcp"
+        "backend/mcp",
+        "agent"
     ],
     "scripts": {
         "start": "node scripts/start.js",
