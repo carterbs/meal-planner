@@ -1,7 +1,6 @@
 Overview
 
-Create Go backend routes that interface with the Node.js CLI agent to enable web-based agent interactions. The backend will serve as a proxy between the frontend and the CLI agent, managing workflow state and providing real-time
-communication.
+Create Go backend routes that interface with the Node.js CLI agent to enable web-based agent interactions. The backend will serve as a thin proxy between the frontend and the CLI agent, leveraging the agent's existing workflow state persistence and providing real-time communication.
 
 Phase 1: Core Agent Handler Infrastructure
 
@@ -12,6 +11,7 @@ File: backend/handlers/agent.go
 - Handle CLI invocation with proper argument passing
 - Implement response parsing and error handling
 - Add timeout and cancellation support
+- Ensure agent process doesn't kill backend parent process
 
 1.2 Agent Response Types
 
@@ -25,13 +25,12 @@ File: backend/models/agent.go
 - Add JSON serialization tags
 - Include validation methods
 
-1.3 Database Integration
+1.3 Agent Integration
 
-File: backend/models/workflow.go
-- Create workflow state persistence models
-- Add database migrations for workflow tracking
-- Implement CRUD operations for workflow state
-- Add thread ID to meal plan relationship
+- Leverage existing agent persistence (PostgresCheckpointSaver)
+- No additional database models needed - agent handles its own state
+- Backend acts as thin proxy to agent's existing workflow management
+- Add thread ID to meal plan relationship for linking web UI to agent workflows
 
 Phase 2: API Endpoints
 
@@ -53,7 +52,23 @@ Route: POST /api/agent/resume
 // Request body: { "thread_id": "uuid", "interactive": false }
 // Response: { "success": true, "current_step": "...", "message": "...", "meal_plan": {...} }
 
-2.4 Workflow Status Endpoint
+2.4 Get Checkpoint Data Endpoint
+
+Route: GET /api/agent/checkpoint/:thread_id
+// Response: { 
+//   "success": true, 
+//   "status": "retrieved", 
+//   "meal_plan": {
+//     "days": [
+//       { "meal": { "name": "Meal Name", "effort": 1, "hasRedMeat": false } },
+//       ...
+//     ]
+//   },
+//   "current_step": "step_name",
+//   "last_updated": "2025-06-15T18:44:19.643Z"
+// }
+
+2.5 Workflow Status Endpoint
 
 Route: GET /api/agent/status/{thread_id}
 // Response: { "thread_id": "uuid", "workflow_type": "meal_planning", "current_step": "...", "participants": [...] }
@@ -84,11 +99,11 @@ Phase 3: Integration & Error Handling
 - Add timeout handling for long-running operations
 - Include CLI stderr capture and parsing
 
-3.3 State Management
-- Implement workflow state caching in memory
-- Add periodic state synchronization with database
-- Handle concurrent request management
-- Add cleanup for abandoned workflows (last updated > 24 hours)
+3.3 Process Management
+- Handle concurrent agent process spawning
+- Implement proper process cleanup and resource management
+- Add process timeout handling for long-running operations
+- Monitor agent process health and restart if needed
 
 Implementation Details
 
@@ -96,12 +111,19 @@ File Structure
 
 backend/
 ├── handlers/
-│   ├── agent.go          # Main agent handler
+│   ├── agent.go          # Main agent handler (process proxy)
 │   └── agent_test.go     # Handler tests
+│   ├── workflow.go       # Workflow handler (read only access to workflow status)
+│   └── workflow_test.go  # Handler tests
+│   ├── checkpoint.go     # Checkpoint handler (read only access to checkpoint state)
+│   └── checkpoint_test.go  # Handler tests
 ├── models/
 │   ├── agent.go          # Agent request/response types
-│   ├── workflow.go       # Workflow persistence
+│   └── agent_test.go     # Model tests
+│   ├── workflow.go       # Workflow types
 │   └── workflow_test.go  # Model tests
+│   ├── checkpoint.go     # Checkpoint types
+│   └── checkpoint_test.go  # Model tests
 └── main.go              # Route registration
 
 Route Registration (main.go)
