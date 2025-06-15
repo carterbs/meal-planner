@@ -12,6 +12,7 @@
         "start:mcp": "node scripts/start-mcp.js",
         "test:backend": "cd backend && go test -v ./...",
         "test:frontend": "cd frontend && yarn test",
+        "test:agent": "cd agent && yarn test",
         "test": "node scripts/test-summary.js",
         "db:backup": "node scripts/backup-db.js",
         "db:restore": "node scripts/restore-db.js",

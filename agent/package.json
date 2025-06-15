@@ -6,7 +6,8 @@
     "dev": "tsx watch --env-file=.env agent.ts",
     "dev:codex": "tsx watch --env-file=.env agent.ts --codex",
     "build": "tsc",
-    "start": "node --env-file=.env dist/agent.js"
+    "start": "node --env-file=.env dist/agent.js",
+    "test": "jest"
   },
   "dependencies": {
     "@langchain/core": "^0.2.0",
@@ -17,6 +18,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/jest": "^29.5.4",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.1.1",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   }
