@@ -1,0 +1,422 @@
+#!/usr/bin/env node
+
+import { Command } from 'commander';
+import { LangGraphAgent, LangGraphAgentConfig } from './langgraph-agent.js';
+import { WorkflowType } from './shared/types.js';
+import { CLIHandler } from './io/cliHandler.js';
+import { formatMealPlan } from './utils/formatMealPlan.js';
+import { spawnSync } from 'child_process';
+
+const program = new Command();
+
+// Global configuration
+const config: LangGraphAgentConfig = {
+  database: {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME || 'meal_planner_dev',
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'password'
+  },
+  defaultParticipants: ['brad', 'shannon']
+};
+
+let agent: LangGraphAgent;
+
+// Helper function to initialize agent
+async function initializeAgent(): Promise<LangGraphAgent> {
+  if (!agent) {
+    agent = new LangGraphAgent(config);
+    await agent.initialize();
+  }
+  return agent;
+}
+
+// Helper function to validate thread ID format
+function validateThreadId(threadId: string): boolean {
+  return /^[a-f0-9-]{36}$/.test(threadId);
+}
+
+// Helper function to format workflow list
+function formatWorkflowList(workflows: any[]): string {
+  if (workflows.length === 0) {
+    return 'No workflows found.';
+  }
+
+  const headers = ['Thread ID', 'Type', 'Status', 'Created', 'Participants'];
+  const maxWidths = headers.map(h => h.length);
+  
+  // Calculate column widths
+  workflows.forEach(w => {
+    const row = [
+      w.threadId || 'N/A',
+      w.workflowType || 'N/A',
+      w.currentStep || 'N/A',
+      w.createdAt ? new Date(w.createdAt).toLocaleDateString() : 'N/A',
+      (w.participants || []).join(', ') || 'N/A'
+    ];
+    row.forEach((cell, i) => {
+      maxWidths[i] = Math.max(maxWidths[i], cell.length);
+    });
+  });
+
+  // Build table
+  const separator = '┼' + maxWidths.map(w => '─'.repeat(w + 2)).join('┼') + '┼';
+  const headerRow = '│ ' + headers.map((h, i) => h.padEnd(maxWidths[i])).join(' │ ') + ' │';
+  
+  let result = '┌' + maxWidths.map(w => '─'.repeat(w + 2)).join('┬') + '┐\n';
+  result += headerRow + '\n';
+  result += separator + '\n';
+  
+  workflows.forEach(w => {
+    const row = [
+      (w.threadId || 'N/A').substring(0, 8) + '...',
+      w.workflowType || 'N/A',
+      w.currentStep || 'N/A',
+      w.createdAt ? new Date(w.createdAt).toLocaleDateString() : 'N/A',
+      (w.participants || []).join(', ') || 'N/A'
+    ];
+    const rowStr = '│ ' + row.map((cell, i) => cell.padEnd(maxWidths[i])).join(' │ ') + ' │';
+    result += rowStr + '\n';
+  });
+  
+  result += '└' + maxWidths.map(w => '─'.repeat(w + 2)).join('┴') + '┘';
+  return result;
+}
+
+// Main program configuration
+program
+  .name('meal-agent')
+  .description('Meal planning agent with multi-workflow support')
+  .version('1.0.0');
+
+// Plan command group
+const planCommand = program
+  .command('plan')
+  .description('Meal planning workflow commands');
+
+planCommand
+  .command('start')
+  .description('Start a new meal planning session')
+  .option('-p, --participants <participants>', 'Comma-separated list of participants', 'brad,shannon')
+  .action(async (options) => {
+    try {
+      const agent = await initializeAgent();
+      const participants = options.participants.split(',').map((p: string) => p.trim());
+      
+      console.log(`🚀 Starting new meal planning session with participants: ${participants.join(', ')}`);
+      
+      const threadId = await agent.startWorkflow(WorkflowType.MEAL_PLANNING, participants);
+      console.log(`✅ Meal planning session started`);
+      console.log(`   Thread ID: ${threadId}`);
+      console.log(`   Use: meal-agent plan feedback "${threadId}" "your feedback here"`);
+      console.log(`   Or:  meal-agent resume ${threadId}`);
+      
+    } catch (error) {
+      console.error('❌ Error starting meal planning session:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+planCommand
+  .command('feedback')
+  .description('Provide feedback to an active meal planning session')
+  .argument('<thread-id>', 'Thread ID of the meal planning session')
+  .argument('<message>', 'Your feedback message')
+  .option('-f, --from <participant>', 'Who is providing the feedback', 'brad')
+  .action(async (threadId, message, options) => {
+    try {
+      if (!validateThreadId(threadId)) {
+        console.error('❌ Invalid thread ID format. Expected UUID format.');
+        process.exit(1);
+      }
+
+      const agent = await initializeAgent();
+      
+      // Check if workflow is awaiting feedback
+      const isAwaiting = await agent.isAwaitingFeedback(threadId);
+      if (!isAwaiting) {
+        console.error('❌ This workflow is not currently awaiting feedback.');
+        process.exit(1);
+      }
+
+      const success = await agent.addFeedback({
+        threadId,
+        from: options.from,
+        message
+      });
+
+      if (success) {
+        console.log(`✅ Feedback added successfully from ${options.from}`);
+        console.log(`   Use: meal-agent resume ${threadId} to continue the workflow`);
+      } else {
+        console.error('❌ Failed to add feedback. Check thread ID and try again.');
+        process.exit(1);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error adding feedback:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+planCommand
+  .command('finalize')
+  .description('Finalize the current meal plan and generate shopping list')
+  .argument('<thread-id>', 'Thread ID of the meal planning session')
+  .action(async (threadId) => {
+    try {
+      if (!validateThreadId(threadId)) {
+        console.error('❌ Invalid thread ID format. Expected UUID format.');
+        process.exit(1);
+      }
+
+      const agent = await initializeAgent();
+      
+      console.log('🔄 Finalizing meal plan and generating shopping list...');
+      
+      const result = await agent.resumeWorkflow(threadId, { action: 'finalize' });
+      
+      if (result.success) {
+        console.log('✅ Meal plan finalized successfully!');
+        
+        // Get and display the final meal plan
+        try {
+          const state = await agent.getWorkflowState(threadId);
+          if (state.meal_plan) {
+            const { text, html } = formatMealPlan(state.meal_plan);
+            console.log('\n📋 Final Meal Plan:');
+            console.log(text);
+            
+            // Copy HTML to clipboard
+            try {
+              spawnSync('pbcopy', ['-Prefer', 'html'], { input: html });
+              console.log('✅ HTML table copied to clipboard');
+            } catch (err) {
+              console.error('⚠️ Failed to copy HTML to clipboard:', err);
+            }
+          }
+          
+          if (state.shopping_list && state.shopping_list.length > 0) {
+            console.log('\n🛒 Shopping List:');
+            state.shopping_list.forEach(item => {
+              console.log(`  • ${item.quantity} ${item.ingredient}${item.category ? ` (${item.category})` : ''}`);
+            });
+          }
+        } catch (stateError) {
+          console.warn('⚠️ Could not retrieve final state details');
+        }
+      } else {
+        console.error('❌ Failed to finalize meal plan:', result.message);
+        process.exit(1);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error finalizing meal plan:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// General workflow management commands
+program
+  .command('status')
+  .description('Show system status and statistics')
+  .action(async () => {
+    try {
+      const agent = await initializeAgent();
+      const health = await agent.healthCheck();
+      const stats = await agent.getStats();
+      
+      console.log('🏥 System Health:', health.status);
+      console.log('📊 Statistics:');
+      console.log(`   Active Sessions: ${stats.activeSessionCount}`);
+      console.log(`   Total Workflows: ${stats.totalWorkflows}`);
+      console.log('   Workflows by Type:');
+      Object.entries(stats.workflowsByType).forEach(([type, count]) => {
+        console.log(`     ${type}: ${count}`);
+      });
+      console.log(`   Supported Types: ${stats.supportedWorkflowTypes.join(', ')}`);
+      
+    } catch (error) {
+      console.error('❌ Error getting status:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('list')
+  .description('List all workflows')
+  .option('-t, --type <type>', 'Filter by workflow type (meal_planning, recipe_management, ingredient_management)')
+  .action(async (options) => {
+    try {
+      const workflowType = options.type as WorkflowType | undefined;
+      
+      if (workflowType && !Object.values(WorkflowType).includes(workflowType)) {
+        console.error(`❌ Invalid workflow type. Supported types: ${Object.values(WorkflowType).join(', ')}`);
+        process.exit(1);
+      }
+      
+      const agent = await initializeAgent();
+      
+      const workflows = await agent.listWorkflows(workflowType);
+      
+      if (workflowType) {
+        console.log(`📋 ${workflowType} workflows:`);
+      } else {
+        console.log('📋 All workflows:');
+      }
+      
+      console.log(formatWorkflowList(workflows));
+      
+    } catch (error) {
+      console.error('❌ Error listing workflows:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('resume')
+  .description('Resume a paused workflow')
+  .argument('<thread-id>', 'Thread ID of the workflow to resume')
+  .option('-i, --interactive', 'Resume in interactive mode', false)
+  .action(async (threadId, options) => {
+    try {
+      if (!validateThreadId(threadId)) {
+        console.error('❌ Invalid thread ID format. Expected UUID format.');
+        process.exit(1);
+      }
+
+      const agent = await initializeAgent();
+      
+      // Get workflow status first
+      const status = await agent.getWorkflowStatus(threadId);
+      if (!status) {
+        console.error('❌ Workflow not found.');
+        process.exit(1);
+      }
+      
+      console.log(`🔄 Resuming ${status.workflowType} workflow (${status.currentStep})`);
+      
+      if (options.interactive) {
+        // Interactive mode - start conversation loop
+        const io = new CLIHandler();
+        const participants = status.participants || ['brad'];
+        const user = participants[0];
+        
+        try {
+          await io.sendMessage(`Resuming workflow ${threadId}`, 'System');
+          
+          while (true) {
+            const input = await io.receiveInput('Your message', user);
+            const response = await agent.handleMessage({
+              from: user,
+              message: input,
+              timestamp: new Date(),
+              threadId
+            });
+            
+            await io.sendMessage(response.message, 'Agent');
+            
+            if (response.currentStep === 'complete' || !response.success) {
+              await io.sendMessage('Session ended.', 'System');
+              break;
+            }
+          }
+        } finally {
+          io.close();
+        }
+      } else {
+        // Non-interactive mode - just resume
+        const result = await agent.resumeWorkflow(threadId);
+        
+        if (result.success) {
+          console.log('✅ Workflow resumed successfully');
+          console.log(`   Current step: ${result.currentStep}`);
+          if (result.message) {
+            console.log(`   Message: ${result.message}`);
+          }
+        } else {
+          console.error(`❌ Failed to resume workflow: ${result.message}`);
+          process.exit(1);
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Error resuming workflow:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('cancel')
+  .description('Cancel a workflow')
+  .argument('<thread-id>', 'Thread ID of the workflow to cancel')
+  .option('-f, --force', 'Force cancellation without confirmation', false)
+  .action(async (threadId, options) => {
+    try {
+      if (!validateThreadId(threadId)) {
+        console.error('❌ Invalid thread ID format. Expected UUID format.');
+        process.exit(1);
+      }
+
+      const agent = await initializeAgent();
+      
+      // Get workflow info for confirmation
+      const status = await agent.getWorkflowStatus(threadId);
+      if (!status) {
+        console.error('❌ Workflow not found.');
+        process.exit(1);
+      }
+      
+      if (!options.force) {
+        const io = new CLIHandler();
+        try {
+          const confirm = await io.receiveInput(
+            `Are you sure you want to cancel ${status.workflowType} workflow ${threadId.substring(0, 8)}...? (y/N)`,
+            'user'
+          );
+          
+          if (confirm.toLowerCase() !== 'y' && confirm.toLowerCase() !== 'yes') {
+            console.log('❌ Cancellation aborted.');
+            return;
+          }
+        } finally {
+          io.close();
+        }
+      }
+      
+      const success = await agent.cancelWorkflow(threadId);
+      
+      if (success) {
+        console.log('✅ Workflow cancelled successfully');
+      } else {
+        console.error('❌ Failed to cancel workflow');
+        process.exit(1);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error cancelling workflow:', error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// Global error handler and cleanup
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Shutting down...');
+  if (agent) {
+    try {
+      await agent.shutdown();
+    } catch (error) {
+      console.error('Error during shutdown:', error);
+    }
+  }
+  process.exit(0);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// Parse command line arguments
+program.parse();

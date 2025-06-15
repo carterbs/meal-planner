@@ -277,6 +277,7 @@ async function main() {
 }
 
 // Run CLI example if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Only run in non-test environments
+if (process.env.NODE_ENV !== 'test') {
   main().catch(console.error);
 }
