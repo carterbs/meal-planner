@@ -4,10 +4,10 @@ import { ChatOpenAI } from '@langchain/openai';
 import { FakeChatModel } from '@langchain/core/utils/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { 
-  MealPlanningState, 
-  MealPlanningStep, 
-  WorkflowType, 
+import {
+  MealPlanningState,
+  MealPlanningStep,
+  WorkflowType,
   VALIDATION_CRITERIA,
   InternalMeal,
   WeeklyMealPlan,
@@ -17,12 +17,12 @@ import {
 import { BaseWorkflow } from '../registry.js';
 import { PostgresCheckpointSaver } from '../shared/checkpointer.js';
 import { FeedbackHandler } from './feedback-handler.js';
-import { 
+import {
   ShoppingListResponse,
   ShoppingListItem,
   MCPToolResult as MCPToolResultType
 } from '../shared/mcp-types.js';
-
+const DEBUG_LOGS = false;
 interface MCPTextContent {
   type: 'text';
   text: string;
@@ -55,7 +55,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   async initialize(): Promise<void> {
     const isCodex = process.argv.includes("--codex");
-    
+
     // Connect to MCP server
     const transport = new StdioClientTransport({
       command: "node",
@@ -65,12 +65,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     await this.client.connect(transport);
 
     // Initialize LLM
-    this.llm = isCodex 
+    this.llm = isCodex
       ? new FakeChatModel({})
-      : new ChatOpenAI({ 
-          temperature: 0,
-          modelName: "gpt-4o-mini"
-        });
+      : new ChatOpenAI({
+        temperature: 0,
+        modelName: "gpt-4o-mini"
+      });
 
     console.log(`🍽️ [MEAL-WORKFLOW] Initialized meal planning workflow`);
   }
@@ -93,7 +93,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       invoke: async (input: any, config: any) => {
         // Simple linear execution for Phase 2
         console.log(`🍽️ [MEAL-WORKFLOW] Executing workflow with input:`, input);
-        
+
         // Execute workflow steps in sequence
         let state: Partial<MealPlanningState> = {
           thread_id: config?.configurable?.thread_id || 'default',
@@ -126,7 +126,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   // Node implementations
   private async initiateNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Initiating meal planning for thread ${state.thread_id}`);
-    
+
     return {
       current_step: MealPlanningStep.GENERATE_PLAN,
       meal_plan: null,
@@ -140,7 +140,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private async generatePlanNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Generating initial meal plan`);
-    
+
     try {
       // Generate meal plan using MCP tool
       const planResult = await this.client.callTool({
@@ -164,7 +164,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private async optimizePlanNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Optimizing meal plan (iteration ${state.iteration_count + 1})`);
-    
+
     if (!state.meal_plan) {
       throw new Error("No meal plan to optimize");
     }
@@ -189,7 +189,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private async presentPlanNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Presenting meal plan to participants`);
-    
+
     if (!state.meal_plan) {
       throw new Error("No meal plan to present");
     }
@@ -197,7 +197,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     // Format plan for presentation
     const planPresentation = this.formatPlanForPresentation(state.meal_plan);
     console.log(`📋 [MEAL-PLAN]\n${planPresentation}`);
-    
+
     // Check if we have recent feedback that requires processing
     const recentFeedback = state.feedback_history.filter(
       f => f.meal_plan_version === state.iteration_count
@@ -211,11 +211,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private async awaitFeedbackNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Awaiting feedback from participants`);
-    
+
     // This is a human-in-the-loop node
     // In a real implementation, this would wait for actual user input
     // For now, we'll simulate with a timeout or check for existing feedback
-    
+
     return {
       current_step: MealPlanningStep.AWAIT_FEEDBACK,
       updated_at: new Date()
@@ -224,9 +224,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private async processFeedbackNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Processing feedback`);
-    
+
     const feedbackAnalysis = await this.feedbackHandler.processFeedback(
-      state.thread_id, 
+      state.thread_id,
       state.iteration_count
     );
 
@@ -239,7 +239,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     }
 
     console.log(`📋 [MEAL-WORKFLOW] Feedback requires changes: ${feedbackAnalysis.suggestions.join(', ')}`);
-    
+
     return {
       current_step: MealPlanningStep.OPTIMIZE_PLAN,
       updated_at: new Date()
@@ -248,7 +248,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private async finalizePlanNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Finalizing meal plan`);
-    
+
     if (!state.meal_plan) {
       throw new Error("No meal plan to finalize");
     }
@@ -275,7 +275,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private async generateShoppingListNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Generating shopping list`);
-    
+
     if (!state.meal_plan) {
       throw new Error("No meal plan for shopping list generation");
     }
@@ -295,8 +295,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       }) as MCPToolResultType;
 
       if (result.isError) {
-        const errorContent = Array.isArray(result.content) && result.content[0]?.type === 'text' 
-          ? result.content[0].text 
+        const errorContent = Array.isArray(result.content) && result.content[0]?.type === 'text'
+          ? result.content[0].text
           : 'Unknown error';
         throw new Error(`MCP tool error: ${errorContent}`);
       }
@@ -305,17 +305,21 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       const responseText = Array.isArray(result.content) && result.content[0]?.type === 'text'
         ? result.content[0].text
         : '[]';
-      
-      console.log('🛒 [DEBUG] Raw shopping list response:', responseText);
+
+      if (DEBUG_LOGS) {
+        console.log('🛒 [DEBUG] Raw shopping list response:', responseText);
+      }
       const shoppingList = JSON.parse(responseText) as ShoppingListResponse;
-      console.log('🛒 [DEBUG] Parsed shopping list:', JSON.stringify(shoppingList, null, 2));
-      
+      if (DEBUG_LOGS) {
+        console.log('🛒 [DEBUG] Parsed shopping list:', JSON.stringify(shoppingList, null, 2));
+      }
+
       console.log(`✅ [MEAL-WORKFLOW] Generated shopping list with ${shoppingList.length} items`);
-      
+
       // Display the shopping list in a nice format
       console.log('\n🛍️  SHOPPING LIST 🛒');
       console.log('===================');
-      
+
       if (!Array.isArray(shoppingList) || shoppingList.length === 0) {
         console.log('\nNo items in shopping list');
         return {
@@ -324,7 +328,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           updated_at: new Date()
         };
       }
-      
+      let shoppingListFormatted = '';
       try {
         // Group items by category if available
         const groupedItems = shoppingList.reduce((acc: Record<string, ShoppingListItem[]>, item) => {
@@ -332,32 +336,47 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             console.warn('Skipping invalid shopping list item:', item);
             return acc;
           }
-          
+
           const category = (item.category && typeof item.category === 'string') ? item.category : 'Other';
           const ingredient = (item.ingredient && typeof item.ingredient === 'string') ? item.ingredient : 'Unknown ingredient';
-          const quantity = (item.quantity && typeof item.quantity === 'string') ? item.quantity : 'Some';
-          
+          const quantity = (item.quantity && typeof item.quantity === 'string') ? item.quantity : '';
+
           if (!acc[category]) {
             acc[category] = [];
           }
-          
+
           acc[category].push({
             ingredient,
             quantity,
             category
           });
-          
+
           return acc;
         }, {});
-        
-        // Display items by category
+
+        // Format shopping list as a bulleted string (grouped by category)
+        let bulletedList = '';
         for (const [category, items] of Object.entries(groupedItems)) {
-          console.log(`\n${category.toUpperCase()}:`);
+          bulletedList += `\n${category.toUpperCase()}:\n`.trimStart();
           (items as ShoppingListItem[]).forEach(item => {
-            console.log(`- ${item.quantity} ${item.ingredient}`);
+            bulletedList += `- ${[item.quantity, item.ingredient].join(' ').trimStart()}\n`;
           });
         }
-        
+        bulletedList = bulletedList.trim();
+
+        // Pantry staples prompt
+        const PANTRY_STAPLES_CATEGORIZATION_PROMPT = `I will provide a bulleted shopping list to you. You should return a bulleted list with two sections: Pantry Staples and Groceries. Identify which items in the bulleted shopping list below are pantry staples (e.g., oil, salt, flour, sugar, rice, canned beans, spices, herbs), and put them in their own section. Do not remove items from the list, and ensure wording is unchanged. Return ONLY the list.\n\n${bulletedList}`;
+
+        try {
+          console.log(`\n🛒 [LLM FORMATTED SHOPPING LIST]: Asking LLM to categorize our list: ${bulletedList}...\n`);
+          const llmResult = await this.llm.invoke([{ role: "user", content: PANTRY_STAPLES_CATEGORIZATION_PROMPT }]);
+          shoppingListFormatted = typeof llmResult.content === 'string' ? llmResult.content : JSON.stringify(llmResult.content);
+          console.log('\n🛒 [LLM FORMATTED SHOPPING LIST]:\n', shoppingListFormatted);
+        } catch (llmError) {
+          console.error('❌ Error calling LLM for pantry staples formatting:', llmError);
+          shoppingListFormatted = bulletedList; // fallback
+        }
+
         console.log('\nHappy shopping! 🛒');
         console.log('===================\n');
       } catch (error) {
@@ -370,8 +389,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       return {
         current_step: MealPlanningStep.COMPLETE,
         shopping_list: shoppingList,
+        shopping_list_formatted: shoppingListFormatted,
         updated_at: new Date()
       };
+
     } catch (error) {
       console.error(`❌ [MEAL-WORKFLOW] Error generating shopping list:`, error);
       // Continue with empty shopping list on error
@@ -386,7 +407,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private async completeNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Meal planning workflow completed`);
-    
+
     // Final validation
     const finalIssues = state.meal_plan ? this.validatePlan(state.meal_plan) : [];
     if (finalIssues.length > 0) {
@@ -415,7 +436,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private validatePlan(plan: WeeklyMealPlan): string[] {
     const issues: string[] = [];
-    
+
     // Check consecutive high-effort meals
     let consecutiveHighEffort = 0;
     for (const day of plan.days) {
@@ -449,11 +470,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const days = [];
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const mealTypes = ['Breakfast', 'Lunch', 'Dinner'] as const;
-    
+
     for (let i = 0; i < dayNames.length; i++) {
       const dayName = dayNames[i];
       const dayData = backendPlan[dayName];
-      
+
       if (dayData) {
         for (const mealType of mealTypes) {
           const meal = dayData[mealType];
@@ -472,7 +493,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
     }
-    
+
     return { days };
   }
 
@@ -485,12 +506,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const availableMeals: any[] = JSON.parse((mealsResp as MCPToolResult).content[0].text);
 
     // Create concise meal options for the prompt
-    const mealOptions = availableMeals.map(m => 
+    const mealOptions = availableMeals.map(m =>
       `${m.id}: ${m.mealName} (${m.mealType}, effort: ${m.relativeEffort}, red meat: ${m.redMeat})`
     ).join('\n');
 
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const planDescription = plan.days.map(day => 
+    const planDescription = plan.days.map(day =>
       `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal.name} (ID: ${day.meal.id}, effort: ${day.meal.effort}, red meat: ${day.meal.hasRedMeat})`
     ).join('\n');
 
@@ -522,26 +543,28 @@ Please analyze the issues and respond with ONLY a JSON object containing your re
     }
   ]
 }
-If no replacements are needed, return: {"replacements": []}`;
+If no replacements are needed, return: {"replacements": []}.
+
+<important> Your response should be parseable as JSON.</important>`;
 
     const result = await this.llm.invoke([{ role: "user", content: prompt }]);
     const llmResponse = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
-    
+
     // Parse and apply recommendations
     let optimizedPlan = { ...plan, days: [...plan.days] };
-    
+
     try {
       const recommendations = JSON.parse(llmResponse);
-      
+
       if (recommendations.replacements && Array.isArray(recommendations.replacements)) {
         for (const replacement of recommendations.replacements) {
           const { day, mealType, oldMealId, newMealId, reason } = replacement;
           const dayIndex = dayNames.indexOf(day);
           const newMeal = availableMeals.find(m => m.id === newMealId);
-          
+
           if (dayIndex >= 0 && newMeal && newMeal.mealType === mealType) {
             console.log(`🤖 [MEAL-WORKFLOW] Applying optimization: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.mealName} (ID ${newMealId}) - ${reason}`);
-            
+
             optimizedPlan.days = optimizedPlan.days.map(planDay => {
               if (planDay.dayIndex === dayIndex && planDay.mealType === mealType) {
                 return {
@@ -569,10 +592,10 @@ If no replacements are needed, return: {"replacements": []}`;
   private formatPlanForPresentation(plan: WeeklyMealPlan): string {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const lines: string[] = [];
-    
+
     lines.push("📅 Weekly Meal Plan:");
-    lines.push("=" .repeat(50));
-    
+    lines.push("=".repeat(50));
+
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
       const dayMeals = plan.days.filter(d => d.dayIndex === dayIndex);
       if (dayMeals.length > 0) {
@@ -584,7 +607,7 @@ If no replacements are needed, return: {"replacements": []}`;
         }
       }
     }
-    
+
     return lines.join('\n');
   }
 }

@@ -112,6 +112,7 @@ export interface MealPlanningState extends BaseWorkflowState {
   shopping_list: ShoppingItem[] | null;
   is_finalized: boolean;
   current_step: MealPlanningStep;
+  shopping_list_formatted?: string;
   _error?: string; // For tracking errors during workflow execution
 }
 
@@ -174,6 +175,7 @@ export const MealPlanningStateSchema = BaseWorkflowStateSchema.extend({
   })).nullable(),
   is_finalized: z.boolean(),
   current_step: z.nativeEnum(MealPlanningStep),
+  shopping_list_formatted: z.string().optional(),
   _error: z.string().optional()
 });
 

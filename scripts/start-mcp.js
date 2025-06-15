@@ -72,17 +72,49 @@ buildMCP();
 // Step 4: Start backend server
 const backendProcess = startBackend();
 
+// Ensure logs directory exists
+const logsDir = path.join(PROJECT_ROOT, 'backend/mcp/logs');
+if (!require('fs').existsSync(logsDir)) {
+  require('fs').mkdirSync(logsDir, { recursive: true });
+}
+
 // Step 5: Wait a moment for backend to start, then start MCP server
 setTimeout(() => {
   try {
-    const mcpProcess = spawn('yarn', [ 'start' ], {
+    const logFile = path.join(logsDir, 'mcp-console.log');
+    const logStream = require('fs').createWriteStream(logFile, { flags: 'a' });
+    
+    console.log(`📝 MCP server logs will be written to: ${logFile}`);
+    
+    // Create a PassThrough stream to duplicate the output
+    const { PassThrough } = require('stream');
+    const stdoutPass = new PassThrough();
+    const stderrPass = new PassThrough();
+    
+    // Log function for captured output
+    const logOutput = (source, data) => {
+      const timestamp = new Date().toISOString();
+      const logLine = `[${timestamp}] [${source}] ${data}`;
+      logStream.write(logLine);
+    };
+    
+    // Create the process with inherit for console output
+    const mcpProcess = spawn('node', ['dist/index.js'], {
       cwd: path.join(PROJECT_ROOT, 'backend/mcp'),
-      stdio: 'inherit',
+      stdio: ['inherit', 'pipe', 'pipe'],
       env: {
         ...process.env,
         BACKEND_BASE_URL: 'http://localhost:8080',
       }
     });
+    
+    // Pipe stdout/stderr to both the console and our log file
+    mcpProcess.stdout.pipe(process.stdout);
+    mcpProcess.stderr.pipe(process.stderr);
+    
+    // Also capture the output for logging
+    mcpProcess.stdout.on('data', (data) => logOutput('stdout', data));
+    mcpProcess.stderr.on('data', (data) => logOutput('stderr', data));
 
     mcpProcess.on('error', (error) => {
       console.error('Failed to start MCP server:', error.message);
@@ -91,8 +123,18 @@ setTimeout(() => {
     });
 
     mcpProcess.on('close', (code) => {
+      console.log(`MCP process exited with code ${code}`);
+      logStream.end();
       backendProcess.kill('SIGINT');
       process.exit(code);
+    });
+    
+    process.on('SIGINT', () => {
+      console.log('Shutting down MCP server...');
+      mcpProcess.kill('SIGINT');
+      logStream.end();
+      backendProcess.kill('SIGINT');
+      process.exit(0);
     });
 
     process.on('SIGINT', () => {
@@ -102,7 +144,8 @@ setTimeout(() => {
     });
 
   } catch (error) {
-    console.error('Failed to start MCP server:', error.message);
+    console.error('Failed to start MCP server:', error);
+    if (logStream) logStream.end();
     backendProcess.kill('SIGINT');
     process.exit(1);
   }
