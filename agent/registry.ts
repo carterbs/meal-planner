@@ -1,5 +1,5 @@
-import { StateGraph } from '@langchain/langgraph';
-import { WorkflowType, WorkflowState } from './shared/types.js';
+
+import { WorkflowType } from './shared/types.js';
 import { PostgresCheckpointSaver } from './shared/checkpointer.js';
 
 // Base workflow interface
@@ -11,7 +11,7 @@ export interface BaseWorkflow {
 }
 
 // Workflow factory interface
-export interface WorkflowFactory<T extends WorkflowState = WorkflowState> {
+export interface WorkflowFactory {
   create(checkpointer: PostgresCheckpointSaver): Promise<BaseWorkflow>;
   getType(): WorkflowType;
 }
@@ -70,7 +70,7 @@ export class WorkflowRegistry {
 
   async cleanupAll(): Promise<void> {
     const cleanupPromises = Array.from(this.instances.entries()).map(
-      async ([key, workflow]) => {
+      async ([, workflow]) => {
         if (workflow.cleanup) {
           await workflow.cleanup();
         }

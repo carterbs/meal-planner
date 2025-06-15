@@ -160,7 +160,7 @@ class MealPlannerAgent {
 
   // Transform backend format to internal format
   private transformBackendPlan(backendPlan: any): WeeklyMealPlan {
-    const days = [];
+    const days: WeeklyMealPlan['days'] = [];
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const mealTypes = ['Breakfast', 'Lunch', 'Dinner'] as const;
     

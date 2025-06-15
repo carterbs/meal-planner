@@ -1,5 +1,5 @@
-import { StateGraph, END, START } from '@langchain/langgraph';
-import { RunnableConfig } from '@langchain/core/runnables';
+
+
 import { ChatOpenAI } from '@langchain/openai';
 import { FakeChatModel } from '@langchain/core/utils/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -9,10 +9,8 @@ import {
   MealPlanningStep,
   WorkflowType,
   VALIDATION_CRITERIA,
-  InternalMeal,
   WeeklyMealPlan,
-  FeedbackEntry,
-  ShoppingItem
+  FeedbackEntry
 } from '../shared/types.js';
 import { BaseWorkflow } from '../registry.js';
 import { PostgresCheckpointSaver } from '../shared/checkpointer.js';
@@ -202,7 +200,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     };
   }
 
-  private async generatePlanNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+  private async generatePlanNode(_state: MealPlanningState): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Generating initial meal plan`);
 
     try {
@@ -347,50 +345,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     console.log(`📋 [MEAL-PLAN]\n${planPresentation}`);
 
     // Check if we have recent feedback that requires processing
-    const recentFeedback = state.feedback_history.filter(
-      f => f.meal_plan_version === state.iteration_count
-    );
-
+    
     return {
       current_step: MealPlanningStep.AWAIT_FEEDBACK,
-      updated_at: new Date()
-    };
-  }
-
-  private async awaitFeedbackNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
-    console.log(`🍽️ [MEAL-WORKFLOW] Awaiting feedback from participants`);
-
-    // This is a human-in-the-loop node
-    // In a real implementation, this would wait for actual user input
-    // For now, we'll simulate with a timeout or check for existing feedback
-
-    return {
-      current_step: MealPlanningStep.AWAIT_FEEDBACK,
-      updated_at: new Date()
-    };
-  }
-
-  private async processFeedbackNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
-    console.log(`🍽️ [MEAL-WORKFLOW] Processing feedback`);
-
-    const feedbackAnalysis = await this.feedbackHandler.processFeedback(
-      state.thread_id,
-      state.iteration_count
-    );
-
-    if (!feedbackAnalysis.requiresChanges) {
-      console.log(`✅ [MEAL-WORKFLOW] Feedback is positive, finalizing plan`);
-      return {
-        current_step: MealPlanningStep.FINALIZE_PLAN,
-        updated_at: new Date()
-      };
-    }
-
-    console.log(`📋 [MEAL-WORKFLOW] Feedback requires changes: ${feedbackAnalysis.suggestions.join(', ')}`);
-
-    // If feedback requires changes, move to APPLY_FEEDBACK step
-    return {
-      current_step: MealPlanningStep.APPLY_FEEDBACK,
       updated_at: new Date()
     };
   }
@@ -567,20 +524,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       current_step: MealPlanningStep.COMPLETE,
       updated_at: new Date()
     };
-  }
-
-  // Helper methods
-  private shouldProcessFeedback(state: MealPlanningState): string {
-    const recentFeedback = state.feedback_history.filter(
-      f => f.meal_plan_version === state.iteration_count
-    );
-
-    // If we have feedback or haven't reached max iterations, process it
-    if (recentFeedback.length > 0 && state.iteration_count < 3) {
-      return "process_feedback";
-    }
-
-    return "finalize_plan";
   }
 
   private validatePlan(plan: WeeklyMealPlan): string[] {
