@@ -34,10 +34,20 @@ interface MCPToolResult {
 }
 
 export class MealPlanningWorkflow implements BaseWorkflow {
+  /**
+   * Helper to extract JSON from LLM responses (removes markdown code fences, whitespace, etc)
+   */
+  private extractJsonFromResponse(response: string): string {
+    return response
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+  }
   readonly type = WorkflowType.MEAL_PLANNING;
   readonly graph: any;
   private client: Client;
   private llm: any;
+  private nanoLlm: any;
   private checkpointer: PostgresCheckpointSaver;
   private feedbackHandler: FeedbackHandler;
 
@@ -71,6 +81,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         temperature: 0,
         modelName: "gpt-4o-mini"
       });
+    // Initialize nano LLM for feedback analysis
+    this.nanoLlm = new ChatOpenAI({
+      temperature: 0,
+      modelName: "gpt-4.1-nano"
+    });
 
     console.log(`🍽️ [MEAL-WORKFLOW] Initialized meal planning workflow`);
   }
@@ -87,38 +102,87 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private createGraph() {
-    // Create a simple graph representation for now
-    // This will be properly implemented when LangGraph types are compatible
     return {
       invoke: async (input: any, config: any) => {
-        // Simple linear execution for Phase 2
-        console.log(`🍽️ [MEAL-WORKFLOW] Executing workflow with input:`, input);
+        console.log(`🍽️ [MEAL-WORKFLOW] Invoking workflow; input:`, input);
+        // Load checkpoint
+        const tuple = await this.checkpointer.getTuple(config);
+        let state: MealPlanningState;
+        if (!tuple) {
+          // Initial run
+          state = {
+            thread_id: config.configurable.thread_id,
+            workflow_type: WorkflowType.MEAL_PLANNING,
+            participants: ['brad'],
+            created_at: new Date(),
+            updated_at: new Date(),
+            current_step: MealPlanningStep.INITIATE,
+            meal_plan: null,
+            feedback_history: [],
+            iteration_count: 0,
+            shopping_list: null,
+            is_finalized: false
+          };
+          // Generate, optimize, present, pause for feedback
+          state = { ...state, ...(await this.initiateNode(state)) };
+          state = { ...state, ...(await this.generatePlanNode(state)) };
+          state = { ...state, ...(await this.optimizePlanNode(state)) };
+          state = { ...state, ...(await this.presentPlanNode(state)) };
+          // Pause: checkpoint state
+          await this.checkpointer.put(config, { channel_values: state, next: [], step: 0 }, { source: 'workflow', step: 0, writes: {} });
+          return state;
+        } else {
+          // Resume run: feedback loop
+          const [checkpoint] = tuple;
+          state = checkpoint.channel_values as MealPlanningState;
+          console.log(`🔄 [MEAL-WORKFLOW] Resuming workflow at step ${state.current_step}`);
+          // On resume, always: apply feedback (if any), re-optimize, present, and pause for feedback again until user is happy
+          let feedbackSatisfied = false;
+          while (!feedbackSatisfied) {
+            // 1. Gather all feedback newer than last_feedback_applied_at
+            const allFeedback = state.feedback_history || [];
+            const lastApplied = state.last_feedback_applied_at ? new Date(state.last_feedback_applied_at) : new Date(0);
+            const newFeedback = allFeedback.filter(f => new Date(f.timestamp) > lastApplied);
 
-        // Execute workflow steps in sequence
-        let state: Partial<MealPlanningState> = {
-          thread_id: config?.configurable?.thread_id || 'default',
-          workflow_type: WorkflowType.MEAL_PLANNING,
-          participants: ['brad'],
-          created_at: new Date(),
-          updated_at: new Date(),
-          current_step: MealPlanningStep.INITIATE,
-          meal_plan: null,
-          feedback_history: [],
-          iteration_count: 0,
-          shopping_list: null,
-          is_finalized: false
-        };
+            // 2. Analyze feedback to determine user satisfaction
+            let analyzeResult = { satisfied: false, reasoning: "" };
+            if (newFeedback.length > 0) {
+              analyzeResult = await this.analyzeFeedbackNode(newFeedback);
+            }
 
-        // Execute each step
-        state = { ...state, ...(await this.initiateNode(state as MealPlanningState)) };
-        state = { ...state, ...(await this.generatePlanNode(state as MealPlanningState)) };
-        state = { ...state, ...(await this.optimizePlanNode(state as MealPlanningState)) };
-        state = { ...state, ...(await this.presentPlanNode(state as MealPlanningState)) };
-        state = { ...state, ...(await this.finalizePlanNode(state as MealPlanningState)) };
-        state = { ...state, ...(await this.generateShoppingListNode(state as MealPlanningState)) };
-        state = { ...state, ...(await this.completeNode(state as MealPlanningState)) };
+            // 3. If satisfied, finalize plan and break loop
+            if (analyzeResult.satisfied) {
+              state.current_step = MealPlanningStep.FINALIZE_PLAN;
+              feedbackSatisfied = true;
+              break;
+            }
 
-        return state;
+            // 4. If there is new feedback and not satisfied, apply it
+            if (newFeedback.length > 0) {
+              // Apply feedback via LLM
+              state = { ...state, ...(await this.applyFeedbackNode({ ...state, feedback_to_apply: newFeedback })) };
+              state.last_feedback_applied_at = new Date(newFeedback[newFeedback.length - 1].timestamp).toISOString();
+              state = { ...state, ...(await this.optimizePlanNode(state)) };
+            }
+
+            // 5. Present the plan after feedback is processed/applied
+            state = { ...state, ...(await this.presentPlanNode(state)) };
+            // 6. Pause for feedback after presenting the plan
+            if (state.current_step === MealPlanningStep.AWAIT_FEEDBACK) {
+              await this.checkpointer.put(config, { channel_values: state, next: [], step: 0 }, { source: 'workflow', step: 0, writes: {} });
+              return state;
+            }
+            // 7. If feedback is positive, break loop and finalize
+            if (state.current_step === MealPlanningStep.FINALIZE_PLAN) {
+              feedbackSatisfied = true;
+            }
+          }
+          // Finalize, generate shopping list, complete
+          state = { ...state, ...(await this.finalizePlanNode(state)) };
+          state = { ...state, ...(await this.generateShoppingListNode(state)) };
+          state = { ...state, ...(await this.completeNode(state)) };
+          return state;
+        }
       }
     };
   }
@@ -148,7 +212,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         arguments: {}
       });
 
-      const backendPlan = JSON.parse((planResult as MCPToolResult).content[0].text);
+      const backendPlan = JSON.parse(this.extractJsonFromResponse((planResult as MCPToolResult).content[0].text));
       const mealPlan = this.transformBackendPlan(backendPlan);
 
       return {
@@ -185,6 +249,90 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       iteration_count: state.iteration_count + 1,
       updated_at: new Date()
     };
+  }
+
+  // New: apply feedback using LLM with feedback context
+  private async applyFeedbackNode(state: MealPlanningState & { feedback_to_apply?: FeedbackEntry[] }): Promise<Partial<MealPlanningState>> {
+    console.log(`🍽️ [MEAL-WORKFLOW] Applying user feedback via LLM`);
+    if (!state.meal_plan) {
+      throw new Error("No meal plan to apply feedback to");
+    }
+    // Gather feedback for this version or use provided feedback_to_apply
+    const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedbackForVersion(state.thread_id, state.iteration_count);
+    const feedbackMessages = feedbackEntries.map(f => f.message);
+    // Call LLM to pick alternatives based on feedback
+    const updatedPlan = await this.applyFeedbackWithLLM(state.meal_plan, feedbackMessages);
+    return {
+      meal_plan: updatedPlan,
+      updated_at: new Date()
+    };
+  }
+
+  // Analyze feedback using nano LLM. Returns { satisfied: boolean, reasoning: string }
+  private async analyzeFeedbackNode(feedbackEntries: FeedbackEntry[]): Promise<{ satisfied: boolean; reasoning: string }> {
+    const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
+    const prompt = `Given the following user feedback on a meal plan, does the user want changes or are they satisfied? Respond with a JSON object: { "satisfied": true/false, "reasoning": "..." }\n\nFeedback: ${latestFeedback.message}`;
+    const result = await this.nanoLlm.invoke([{ role: "user", content: prompt }]);
+    let analysis = { satisfied: false, reasoning: "Could not parse LLM response." };
+    try {
+      analysis = JSON.parse(this.extractJsonFromResponse(typeof result.content === 'string' ? result.content : JSON.stringify(result.content)));
+    } catch (err) {
+      console.error("❌ [MEAL-WORKFLOW] Failed to parse feedback analysis response:", err);
+    }
+    return analysis;
+  }
+
+  private async applyFeedbackWithLLM(plan: WeeklyMealPlan, feedback: string[]): Promise<WeeklyMealPlan> {
+    // Fetch available meals
+    const mealsResp = await this.client.callTool({ name: 'getMeals', arguments: {} });
+    const availableMeals: any[] = JSON.parse(this.extractJsonFromResponse((mealsResp as MCPToolResult).content[0].text));
+    const mealOptions = availableMeals.map(m => `${m.id}: ${m.mealName} (${m.mealType}, effort: ${m.relativeEffort}, red meat: ${m.redMeat})`).join('\n');
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const planDescription = plan.days.map(day => `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal.name} (ID: ${day.meal.id}, effort: ${day.meal.effort}, red meat: ${day.meal.hasRedMeat})`).join('\n');
+    const feedbackText = feedback.length > 0 ? `User feedback for this revision:\n${feedback.join('\n')}\n` : '';
+    const prompt = `You are updating a weekly meal plan based on user feedback.\n${feedbackText}\n
+    Current meal plan:\n${planDescription}\n\n
+    Available meals to choose from:\n${mealOptions}\n\n
+    Rules:\n
+    - Only replace meals with the same meal type (breakfast/lunch/dinner)\n
+    - Prefer lower effort meals (1-2) for replacements\n
+    - Avoid duplicate meals\n
+    - Try to honor the user's feedback as much as possible\n\n
+    Please respond with ONLY a JSON object containing your recommended replacements:\n\n
+    {\n  "replacements": [\n    {\n      "day": "Sunday",\n      "mealType": "dinner",\n      "oldMealId": 9,\n      "newMealId": 50,\n      "reason": "Replace as requested in feedback"\n    }\n  ]\n}\nIf no replacements are needed, return: {"replacements": []}.\n\n<important> Your response should be parseable as JSON.</important>`;
+    const result = await this.llm.invoke([{ role: "user", content: prompt }]);
+    const llmResponse = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
+    let updatedPlan = { ...plan, days: [...plan.days] };
+    try {
+      const recommendations = JSON.parse(this.extractJsonFromResponse(llmResponse));
+      if (recommendations.replacements && Array.isArray(recommendations.replacements)) {
+        for (const replacement of recommendations.replacements) {
+          const { day, mealType, oldMealId, newMealId, reason } = replacement;
+          const dayIndex = dayNames.indexOf(day);
+          const newMeal = availableMeals.find(m => m.id === newMealId);
+          if (dayIndex >= 0 && newMeal && newMeal.mealType === mealType) {
+            console.log(`🤖 [MEAL-WORKFLOW] Applying feedback from the LLM: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.mealName} (ID ${newMealId}) - ${reason}`);
+            updatedPlan.days = updatedPlan.days.map(planDay => {
+              if (planDay.dayIndex === dayIndex && planDay.mealType === mealType) {
+                return {
+                  ...planDay,
+                  meal: {
+                    id: newMeal.id,
+                    name: newMeal.mealName,
+                    effort: newMeal.relativeEffort,
+                    hasRedMeat: newMeal.redMeat
+                  }
+                };
+              }
+              return planDay;
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("❌ [MEAL-WORKFLOW] Failed to parse LLM feedback response:", error);
+    }
+    return updatedPlan;
   }
 
   private async presentPlanNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
@@ -240,8 +388,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
     console.log(`📋 [MEAL-WORKFLOW] Feedback requires changes: ${feedbackAnalysis.suggestions.join(', ')}`);
 
+    // If feedback requires changes, move to APPLY_FEEDBACK step
     return {
-      current_step: MealPlanningStep.OPTIMIZE_PLAN,
+      current_step: MealPlanningStep.APPLY_FEEDBACK,
       updated_at: new Date()
     };
   }
@@ -516,36 +665,36 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     ).join('\n');
 
     const prompt = `You are optimizing a weekly meal plan. Here are the current issues:
-${issues.join('\n')}
+        ${issues.join('\n')}
 
-Current meal plan:
-${planDescription}
+        Current meal plan:
+        ${planDescription}
 
-Available meals to choose from:
-${mealOptions}
+        Available meals to choose from:
+        ${mealOptions}
 
-Optimization rules:
-- Max ${VALIDATION_CRITERIA.maxConsecutiveHighEffort} consecutive high-effort meals (effort > 3)
-- Max ${VALIDATION_CRITERIA.maxRedMeatPerWeek} red meat meals per week
-- No duplicate meals
-- Only replace meals with same meal type (breakfast/lunch/dinner)
-- Prefer lower effort meals (1-2) for replacements
+        Optimization rules:
+        - Max ${VALIDATION_CRITERIA.maxConsecutiveHighEffort} consecutive high-effort meals (effort > 3)
+        - Max ${VALIDATION_CRITERIA.maxRedMeatPerWeek} red meat meals per week
+        - No duplicate meals
+        - Only replace meals with same meal type (breakfast/lunch/dinner)
+        - Prefer lower effort meals (1-2) for replacements
 
-Please analyze the issues and respond with ONLY a JSON object containing your recommended replacements:
-{
-  "replacements": [
-    {
-      "day": "Sunday",
-      "mealType": "dinner",
-      "oldMealId": 9,
-      "newMealId": 50,
-      "reason": "Replace high-effort meal"
-    }
-  ]
-}
-If no replacements are needed, return: {"replacements": []}.
+        Please analyze the issues and respond with ONLY a JSON object containing your recommended replacements:
+        {
+          "replacements": [
+            {
+              "day": "Sunday",
+              "mealType": "dinner",
+              "oldMealId": 9,
+              "newMealId": 50,
+              "reason": "Replace high-effort meal"
+            }
+          ]
+        }
+        If no replacements are needed, return: {"replacements": []}.
 
-<important> Your response should be parseable as JSON.</important>`;
+        <important> Your response should be parseable as JSON.</important>`;
 
     const result = await this.llm.invoke([{ role: "user", content: prompt }]);
     const llmResponse = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
@@ -554,7 +703,7 @@ If no replacements are needed, return: {"replacements": []}.
     let optimizedPlan = { ...plan, days: [...plan.days] };
 
     try {
-      const recommendations = JSON.parse(llmResponse);
+      const recommendations = JSON.parse(this.extractJsonFromResponse(llmResponse));
 
       if (recommendations.replacements && Array.isArray(recommendations.replacements)) {
         for (const replacement of recommendations.replacements) {
