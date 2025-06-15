@@ -5,15 +5,16 @@ import { API } from '../utils.js';
 import type { WeeklyMealPlan } from '../resources/weeklyMealPlan.js';
 
 export const replaceArgs = z.object({
-  dayIndex: z.number().int().min(0).max(6).describe("Day of the week to replace meal for (0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday)"),
-  newMealId: z.number().int().positive().describe("The unique ID of the new recipe to use for this day")
+  day: z.string().describe("Day to replace (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)"),
+  mealType: z.enum(['breakfast', 'lunch', 'dinner']).describe("Which meal type to replace"),
+  newMealId: z.number().int().positive().describe("ID of the replacement meal")
 });
 
-export async function doReplaceMeal(dayIndex: number, newMealId: number): Promise<WeeklyMealPlan> {
+export async function doReplaceMeal(day: string, mealType: string, newMealId: number): Promise<WeeklyMealPlan> {
   const resp = await fetch(`${API}/api/mealplan/replace`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ dayIndex, newMealId })
+    body: JSON.stringify({ day, mealType, newMealId })
   });
   if (!resp.ok) {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
@@ -24,12 +25,14 @@ export async function doReplaceMeal(dayIndex: number, newMealId: number): Promis
 export function registerReplaceMeal(server: McpServer) {
   server.tool(
     'replaceMeal',
+    'Replace a specific meal in the weekly meal plan. Use this after analyzing available meals and current plan to make an intelligent substitution. Consider effort levels (Monday: 0-2, Tue-Thu/Sat: 3-5, Sunday: 6-100), red meat limits (max 1 per week), and meal type compatibility.',
     {
-      dayIndex: replaceArgs.shape.dayIndex,
+      day: replaceArgs.shape.day,
+      mealType: replaceArgs.shape.mealType,
       newMealId: replaceArgs.shape.newMealId
     },
-    async ({ dayIndex, newMealId }) => {
-      const json = await doReplaceMeal(dayIndex, newMealId);
+    async ({ day, mealType, newMealId }) => {
+      const json = await doReplaceMeal(day, mealType, newMealId);
       return {
         content: [{ type: 'text', text: JSON.stringify(json, null, 2) }]
       };
