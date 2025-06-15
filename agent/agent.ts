@@ -15,6 +15,32 @@ const VALIDATION_CRITERIA = {
 // Data structures
 const MealSchema = z.object({
   id: z.number(),
+  mealName: z.string(),
+  relativeEffort: z.number(),
+  redMeat: z.boolean(),
+});
+
+// MCP tool result types
+interface MCPTextContent {
+  type: 'text';
+  text: string;
+}
+
+interface MCPToolResult {
+  content: MCPTextContent[];
+  isError?: boolean;
+}
+
+// Backend format from /api/mealplan/generate
+const BackendMealPlanSchema = z.record(z.string(), z.object({
+  Breakfast: MealSchema.nullable(),
+  Lunch: MealSchema.nullable(), 
+  Dinner: MealSchema.nullable()
+}));
+
+// Internal schema used by agent
+const InternalMealSchema = z.object({
+  id: z.number(),
   name: z.string(),
   effort: z.number(),
   hasRedMeat: z.boolean(),
@@ -24,7 +50,8 @@ const WeeklyMealPlanSchema = z.object({
   id: z.number().optional(),
   days: z.array(z.object({
     dayIndex: z.number(),
-    meal: MealSchema
+    mealType: z.string(),
+    meal: InternalMealSchema
   }))
 });
 
@@ -86,7 +113,7 @@ class MealPlannerAgent {
       ? new FakeChatModel({})
       : new ChatOpenAI({ 
           temperature: 0,
-          modelName: "gpt-4o"
+          modelName: "gpt-4.1-mini"
         });
 
     // Create ReACT agent
@@ -131,6 +158,38 @@ class MealPlannerAgent {
     return issues;
   }
 
+  // Transform backend format to internal format
+  private transformBackendPlan(backendPlan: any): WeeklyMealPlan {
+    const days = [];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const mealTypes = ['Breakfast', 'Lunch', 'Dinner'] as const;
+    
+    for (let i = 0; i < dayNames.length; i++) {
+      const dayName = dayNames[i];
+      const dayData = backendPlan[dayName];
+      
+      if (dayData) {
+        for (const mealType of mealTypes) {
+          const meal = dayData[mealType];
+          if (meal && meal.id) {
+            days.push({
+              dayIndex: i,
+              mealType: mealType.toLowerCase(),
+              meal: {
+                id: meal.id,
+                name: meal.mealName,
+                effort: meal.relativeEffort,
+                hasRedMeat: meal.redMeat
+              }
+            });
+          }
+        }
+      }
+    }
+    
+    return { days };
+  }
+
   async generateOptimalMealPlan(): Promise<WeeklyMealPlan> {
     // Generate an initial meal plan using the MCP tool
     const planResult = await this.client.callTool({
@@ -138,58 +197,140 @@ class MealPlannerAgent {
       arguments: {}
     });
 
-    let plan = WeeklyMealPlanSchema.parse(
-      JSON.parse(planResult.content[0].text)
+    const backendPlan = BackendMealPlanSchema.parse(
+      JSON.parse((planResult as MCPToolResult).content[0].text)
     );
 
+    let plan = this.transformBackendPlan(backendPlan);
+
+    // Use LLM to optimize the meal plan
     let issues = this.validatePlan(plan);
-    let attempts = 0;
-
-    while (issues.length > 0 && attempts < 3) {
-      // Fetch available meals and pick a kid-friendly option not already used
-      const mealsResp = await this.client.callTool({
-        name: 'getMeals',
-        arguments: {}
-      });
-      const meals: any[] = JSON.parse(mealsResp.content[0].text);
-      const used = new Set(plan.days.map(d => d.meal.id));
-      const candidate = meals.find(
-        m => m.relativeEffort <= 2 && !m.redMeat && !used.has(m.id)
-      );
-      if (!candidate) {
-        break;
+    if (issues.length > 0) {
+      console.log("Initial validation issues:", issues);
+      
+      const optimizedPlan = await this.optimizePlanWithLLM(plan, issues);
+      plan = optimizedPlan;
+      
+      const finalIssues = this.validatePlan(plan);
+      if (finalIssues.length > 0) {
+        console.log("Remaining validation issues after LLM optimization:", finalIssues);
+        console.log("Trying once more");
+        plan = await this.optimizePlanWithLLM(plan, finalIssues);
+      } else {
+        console.log("Plan successfully optimized by LLM!");
       }
-
-      // Pick the first day with a reported issue
-      const targetDay = plan.days.find(
-        d =>
-          d.meal.effort > 3 ||
-          d.meal.hasRedMeat && issues.some(i => i.includes('red meat')) ||
-          issues.some(i => i.includes(`${d.meal.id}`))
-      );
-      if (!targetDay) {
-        break;
-      }
-
-      const dayName = DAY_NAMES[targetDay.dayIndex];
-      const replaceResp = await this.client.callTool({
-        name: 'replaceMeal',
-        arguments: {
-          day: dayName,
-          mealType: 'dinner',
-          newMealId: candidate.id
-        }
-      });
-
-      plan = WeeklyMealPlanSchema.parse(
-        JSON.parse(replaceResp.content[0].text)
-      );
-
-      issues = this.validatePlan(plan);
-      attempts++;
     }
 
     return plan;
+  }
+
+  private async optimizePlanWithLLM(plan: WeeklyMealPlan, issues: string[]): Promise<WeeklyMealPlan> {
+    // Fetch available meals
+    const mealsResp = await this.client.callTool({
+      name: 'getMeals',
+      arguments: {}
+    });
+    const availableMeals: any[] = JSON.parse((mealsResp as MCPToolResult).content[0].text);
+
+    // Create concise meal options for the prompt
+    const mealOptions = availableMeals.map(m => 
+      `${m.id}: ${m.mealName} (${m.mealType}, effort: ${m.relativeEffort}, red meat: ${m.redMeat})`
+    ).join('\n');
+
+    const planDescription = plan.days.map(day => 
+      `${DAY_NAMES[day.dayIndex]} ${day.mealType}: ${day.meal.name} (ID: ${day.meal.id}, effort: ${day.meal.effort}, red meat: ${day.meal.hasRedMeat})`
+    ).join('\n');
+
+    const prompt = `You are optimizing a weekly meal plan. Here are the current issues:
+${issues.join('\n')}
+
+Current meal plan:
+${planDescription}
+
+Available meals to choose from:
+${mealOptions}
+
+Optimization rules:
+- Max ${VALIDATION_CRITERIA.maxConsecutiveHighEffort} consecutive high-effort meals (effort > 3)
+- Max ${VALIDATION_CRITERIA.maxRedMeatPerWeek} red meat meals per week
+- No duplicate meals
+- Only replace meals with same meal type (breakfast/lunch/dinner)
+- Prefer lower effort meals (1-2) for replacements
+
+Please analyze the issues and respond with ONLY a JSON object containing your recommended replacements:
+<example_output>
+{
+  "replacements": [
+    {
+      "day": "Sunday",
+      "mealType": "dinner",
+      "oldMealId": 9,
+      "newMealId": 50,
+      "reason": "Replace high-effort meal"
+    }
+  ]
+}
+</example_output>
+If no replacements are needed, return: {"replacements": []}`;
+
+    // Use direct LLM call without tools for optimization recommendations
+    const isCodex = process.argv.includes("--codex");
+    const llm = isCodex 
+      ? new FakeChatModel({})
+      : new ChatOpenAI({ 
+          temperature: 0,
+          modelName: "gpt-4o-mini"
+        });
+
+    const result = await llm.invoke([{ role: "user", content: prompt }]);
+
+    const llmResponse = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
+    console.log("LLM optimization result:", llmResponse);
+
+    // Parse the LLM's JSON recommendations and apply them
+    let optimizedPlan = { ...plan, days: [...plan.days] };
+    
+    try {
+      const recommendations = JSON.parse(llmResponse);
+      
+      if (recommendations.replacements && Array.isArray(recommendations.replacements)) {
+        for (const replacement of recommendations.replacements) {
+          const { day, mealType, oldMealId, newMealId, reason } = replacement;
+          const dayIndex = DAY_NAMES.indexOf(day as typeof DAY_NAMES[number]);
+          const newMeal = availableMeals.find(m => m.id === newMealId);
+          
+          if (dayIndex >= 0 && newMeal && newMeal.mealType === mealType) {
+            console.log(`Applying LLM recommendation: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.mealName} (ID ${newMealId}) - ${reason}`);
+            
+            optimizedPlan.days = optimizedPlan.days.map(planDay => {
+              if (planDay.dayIndex === dayIndex && planDay.mealType === mealType) {
+                return {
+                  ...planDay,
+                  meal: {
+                    id: newMeal.id,
+                    name: newMeal.mealName,
+                    effort: newMeal.relativeEffort,
+                    hasRedMeat: newMeal.redMeat
+                  }
+                };
+              }
+              return planDay;
+            });
+          } else {
+            console.log(`Invalid replacement recommendation: ${JSON.stringify(replacement)}`);
+          }
+        }
+        
+        console.log(`Applied ${recommendations.replacements.length} meal replacements`);
+      } else {
+        console.log("No replacements recommended by LLM");
+      }
+    } catch (error) {
+      console.error("Failed to parse LLM response as JSON:", error);
+      console.log("Raw response:", llmResponse);
+    }
+
+    return optimizedPlan;
   }
 
   async cleanup() {
