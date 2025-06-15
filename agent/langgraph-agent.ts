@@ -6,6 +6,9 @@ import { FeedbackHandler, FeedbackInput } from './workflows/feedback-handler.js'
 import { workflowFactories } from './workflows/factories.js';
 import { WorkflowType } from './shared/types.js';
 import { CLIHandler } from './io/cliHandler.js';
+import { formatMealPlan } from './utils/formatMealPlan.js';
+import type { MealPlanningState } from './shared/types.js';
+import { spawnSync } from 'child_process';
 
 export interface LangGraphAgentConfig {
   database: PostgresCheckpointConfig;
@@ -189,6 +192,18 @@ export class LangGraphAgent {
       throw new Error('Agent must be initialized before use. Call initialize() first.');
     }
   }
+
+  /**
+   * Retrieve raw workflow state from checkpoint
+   */
+  async getWorkflowState(threadId: string): Promise<MealPlanningState> {
+    this.ensureInitialized();
+    // @ts-ignore
+    const tuple = await this.workflowManager['checkpointer'].getTuple({ configurable: { thread_id: threadId } });
+    if (!tuple) throw new Error(`No state found for thread ${threadId}`);
+    const [checkpoint] = tuple;
+    return checkpoint.channel_values as MealPlanningState;
+  }
 }
 
 // Example usage and backward compatibility
@@ -234,6 +249,22 @@ async function main() {
 
       if (response.currentStep === 'complete' || !response.success) {
         await io.sendMessage('Session ended.', 'System');
+        if (threadId) {
+          const state = await agent.getWorkflowState(threadId);
+          if (state.meal_plan) {
+            const { text, html } = formatMealPlan(state.meal_plan);
+            await io.sendMessage(text, 'System');
+            console.log('\nHTML version:\n', html);
+
+      // Auto copy HTML table to clipboard as HTML
+      try {
+        spawnSync('pbcopy', ['-Prefer', 'html'], { input: html });
+        console.log('✅ HTML table copied to clipboard (as HTML)');
+      } catch (err) {
+        console.error('⚠️ Failed to copy HTML to clipboard:', err);
+      }
+          }
+        }
         break;
       }
     }

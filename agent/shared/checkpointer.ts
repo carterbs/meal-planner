@@ -74,13 +74,13 @@ export class PostgresCheckpointSaver {
   }
 
   async *list(
-    config: RunnableConfig,
+    _config: RunnableConfig,
     limit?: number,
-    before?: RunnableConfig
+    _before?: RunnableConfig
   ): AsyncGenerator<[RunnableConfig, SimpleCheckpoint, SimpleCheckpointMetadata]> {
     await this.connect();
 
-    const { configurable } = config;
+    const { configurable } = _config;
     if (!configurable?.thread_id) {
       return;
     }
@@ -156,7 +156,7 @@ export class PostgresCheckpointSaver {
   }
 
   async putWrites(
-    config: RunnableConfig,
+    _config: RunnableConfig,
     writes: Array<[string, any]>,
     taskId: string
   ): Promise<void> {

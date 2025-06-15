@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
-import { WorkflowType, WorkflowState } from './shared/types.js';
+import { WorkflowType } from './shared/types.js';
 import { PostgresCheckpointSaver, PostgresCheckpointConfig } from './shared/checkpointer.js';
-import { WorkflowRegistry, BaseWorkflow } from './registry.js';
+import { WorkflowRegistry } from './registry.js';
 
 export interface WorkflowSession {
   threadId: string;

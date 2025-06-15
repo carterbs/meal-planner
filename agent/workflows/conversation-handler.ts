@@ -115,7 +115,7 @@ export class ConversationHandler {
         return await this.handleCompletedWorkflow(threadId, from, message);
       
       default:
-        return await this.handleActiveWorkflow(threadId, from, message);
+        return await this.handleActiveWorkflow(threadId, message);
     }
   }
 
@@ -198,7 +198,7 @@ export class ConversationHandler {
   /**
    * Handle messages during active workflow execution
    */
-  private async handleActiveWorkflow(threadId: string, from: string, message: string): Promise<ConversationResponse> {
+  private async handleActiveWorkflow(threadId: string, message: string): Promise<ConversationResponse> {
     console.log(`💬 [CONVERSATION] Workflow ${threadId} is active, continuing execution`);
 
     try {
