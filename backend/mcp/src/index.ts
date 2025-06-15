@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import './utils/logger.js'; // Import logger to override console methods
 import { registerWeeklyMealPlan } from './resources/weeklyMealPlan.js';
 import { registerRecipes } from './resources/recipes.js';
 import { registerRecipeSteps } from './resources/recipeSteps.js';
@@ -36,7 +37,11 @@ async function main() {
   console.error('MealPlanner MCP server running on stdio');
 }
 
-main().catch((err) => {
-  console.error('Server error:', err);
+main().catch((error) => {
+  console.error('Fatal error in MCP server:', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name
+  });
   process.exit(1);
 });
