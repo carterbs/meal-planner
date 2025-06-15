@@ -167,8 +167,7 @@ describe("App", () => {
 
         // Verify that meals can be loaded for autocomplete
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining("/api/meals?type="),
-            expect.any(Object)
+            expect.stringContaining("/api/meals?type=")
         );
     });
 
@@ -262,7 +261,27 @@ describe("App", () => {
                 } as Response);
             } else if (url === '/api/mealplan') {
                 return Promise.resolve({
-                    json: () => Promise.resolve({ Monday: { id: 1, mealName: 'Test Meal 1', relativeEffort: 'Easy' } })
+                    json: () => Promise.resolve({
+                        Monday: {
+                            Breakfast: {
+                                id: 1,
+                                mealName: 'Test Meal 1',
+                                relativeEffort: 2,
+                                lastPlanned: '2024-02-15T00:00:00Z',
+                                redMeat: false,
+                                mealType: 'breakfast',
+                                ingredients: []
+                            },
+                            Lunch: null,
+                            Dinner: null
+                        },
+                        Tuesday: { Breakfast: null, Lunch: null, Dinner: null },
+                        Wednesday: { Breakfast: null, Lunch: null, Dinner: null },
+                        Thursday: { Breakfast: null, Lunch: null, Dinner: null },
+                        Friday: { Breakfast: null, Lunch: null, Dinner: null },
+                        Saturday: { Breakfast: null, Lunch: null, Dinner: null },
+                        Sunday: { Breakfast: null, Lunch: null, Dinner: null }
+                    })
                 } as Response);
             } else if (url === '/api/meals') {
                 return Promise.resolve({

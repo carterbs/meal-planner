@@ -183,12 +183,12 @@ DB_NAME=mealplanner
 #### Issue: Database container exists but won't connect
 Check container logs:
 ```bash
-docker logs meal-planner_db_1
+docker logs meal-planner-db-1
 ```
 
 Test direct database connection:
 ```bash
-PGPASSWORD=mealpass docker exec meal-planner_db_1 psql -U mealuser -d mealplanner -c "SELECT 1;"
+PGPASSWORD=mealpass docker exec meal-planner-db-1 psql -U mealuser -d mealplanner -c "SELECT 1;"
 ```
 
 #### Verify Everything Works
