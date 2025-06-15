@@ -86,16 +86,16 @@ Convert the current CLI-based meal planning agent into an asynchronous, multi-wo
 - [x] Create multi-turn conversation handling for meal planning
 
 ### Phase 3: Generic I/O Layer
-1. Design `IOHandler` interface for pluggable communication
-2. Implement `CLIHandler` for terminal-based interaction
-3. Add message formatting and participant management
-4. Create session management for resumable conversations
+- [x] Design `IOHandler` interface for pluggable communication
+- [x] Implement `CLIHandler` for terminal-based interaction
+- [x] Add message formatting and participant management
+- [x] Create session management for resumable conversations
 
 ### Phase 4: CLI Interface & Testing
-1. Build multi-workflow CLI commands
-2. Add comprehensive tests for meal planning workflow
-3. Test multi-turn conversations and state persistence
-4. Integration testing with existing MCP server
+- [ ] Build multi-workflow CLI commands
+- [ ] Add comprehensive unit tests for meal planning workflow
+- [ ] Unit test multi-turn conversations and state persistence
+- [x] Integration testing with existing MCP server
 
 ### Phase 5: Future Workflow Foundation (Post-v0)
 1. Create recipe management workflow structure
