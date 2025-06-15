@@ -30,15 +30,25 @@ const WeeklyMealPlanSchema = z.object({
 
 type WeeklyMealPlan = z.infer<typeof WeeklyMealPlanSchema>;
 
+const DAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const;
+
 class MealPlannerAgent {
   private client: Client;
   private agent: any = null;
 
-  constructor() {
-    // Initialize MCP client with stdio transport
-    this.client = new Client({
+  constructor(client?: Client) {
+    // Allow injecting a custom MCP client for testing
+    this.client = client ?? new Client({
       name: "meal-planner-agent",
-      version: "1.0.0"
+      version: "1.0.0",
     });
   }
 
@@ -122,14 +132,64 @@ class MealPlannerAgent {
   }
 
   async generateOptimalMealPlan(): Promise<WeeklyMealPlan> {
-    // TODO: Implement the ReACT loop from plan.md
-    // 1. Generate initial plan
-    // 2. Validate against criteria
-    // 3. Replace problematic meals
-    // 4. Repeat until satisfied
-    // 5. Return final plan
-    
-    throw new Error("Implementation needed: generateOptimalMealPlan");
+    // Generate an initial meal plan using the MCP tool
+    const planResult = await this.client.callTool({
+      name: 'generateMealPlan',
+      arguments: {}
+    });
+
+    let plan = WeeklyMealPlanSchema.parse(
+      JSON.parse(planResult.content[0].text)
+    );
+
+    let issues = this.validatePlan(plan);
+    let attempts = 0;
+
+    while (issues.length > 0 && attempts < 3) {
+      // Fetch available meals and pick a kid-friendly option not already used
+      const mealsResp = await this.client.callTool({
+        name: 'getMeals',
+        arguments: {}
+      });
+      const meals: any[] = JSON.parse(mealsResp.content[0].text);
+      const used = new Set(plan.days.map(d => d.meal.id));
+      const candidate = meals.find(
+        m => m.relativeEffort <= 2 && !m.redMeat && !used.has(m.id)
+      );
+      if (!candidate) {
+        break;
+      }
+
+      // Pick the first day with a reported issue
+      const targetDay = plan.days.find(
+        d =>
+          d.meal.effort > 3 ||
+          d.meal.hasRedMeat && issues.some(i => i.includes('red meat')) ||
+          issues.some(i => i.includes(`${d.meal.id}`))
+      );
+      if (!targetDay) {
+        break;
+      }
+
+      const dayName = DAY_NAMES[targetDay.dayIndex];
+      const replaceResp = await this.client.callTool({
+        name: 'replaceMeal',
+        arguments: {
+          day: dayName,
+          mealType: 'dinner',
+          newMealId: candidate.id
+        }
+      });
+
+      plan = WeeklyMealPlanSchema.parse(
+        JSON.parse(replaceResp.content[0].text)
+      );
+
+      issues = this.validatePlan(plan);
+      attempts++;
+    }
+
+    return plan;
   }
 
   async cleanup() {
