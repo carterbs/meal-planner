@@ -90,7 +90,22 @@ Tests must cover:
 
 # Claude Development Procedures
 
+## Git & GitHub Permissions
+
+Claude has full permission to use the following commands without asking:
+- `git status` - Check repository status
+- `git add` - Stage files for commit
+- `git commit` - Create commits with descriptive messages
+- `git push` - Push commits to remote repository
+- `gh` CLI commands - Create pull requests, manage issues, etc.
+
+Claude should proactively use these commands when working on tasks that benefit from version control.
+
 ## Custom Slash Commands
 
+### /commit
+If on main, create a new branch. Once on a feature branch, commit code with a descriptive message. 
+
 ### /commit-push-pr
-If on main, create a new branch. Once on a feature branch, commit code with a descriptive message. Then push the branch and create the PR using the `gh` cli. 
+Run /commit, then push the branch and create the PR using the `gh` cli. 
+
