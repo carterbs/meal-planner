@@ -6,7 +6,7 @@
     "dev": "tsx watch --env-file=.env agent.ts",
     "dev:codex": "tsx watch --env-file=.env agent.ts --codex",
     "build": "tsc",
-    "start": "node --env-file=.env dist/agent.js",
+    "start": "node --env-file=.env dist/langgraph-agent.js",
     "test": "jest"
   },
   "dependencies": {

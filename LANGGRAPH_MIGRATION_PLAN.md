@@ -81,9 +81,9 @@ Convert the current CLI-based meal planning agent into an asynchronous, multi-wo
 
 ### Phase 2: Meal Planning Workflow (v0 Focus)
 - [x] Convert existing agent logic to meal planning LangGraph nodes
-- [ ] Implement feedback collection and processing nodes
+- [x] Implement feedback collection and processing nodes
 - [x] Add shopping list generation node using existing MCP tools
-- [ ] Create multi-turn conversation handling for meal planning
+- [x] Create multi-turn conversation handling for meal planning
 
 ### Phase 3: Generic I/O Layer
 1. Design `IOHandler` interface for pluggable communication
