@@ -81,7 +81,7 @@ class MealPlannerAgent {
 
   async initialize() {
     const isCodex = process.argv.includes("--codex");
-    // Connect to MCP server via stdio
+    // Connect to MCP server via stdio with logging
     const transport = new StdioClientTransport({
       command: "node",
       args: ["/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js", isCodex ? "--codex" : ""]
@@ -338,18 +338,70 @@ If no replacements are needed, return: {"replacements": []}`;
   }
 }
 
-// Usage example
-async function main() {
+// Usage example - Legacy agent
+async function runLegacyAgent() {
   const agent = new MealPlannerAgent();
   
   try {
     await agent.initialize();
     const plan = await agent.generateOptimalMealPlan();
-    console.log("✅ [RESULT] Generated meal plan:", JSON.stringify(plan, null, 2));
+    console.log("✅ [LEGACY-AGENT] Generated meal plan:", JSON.stringify(plan, null, 2));
   } catch (error) {
-    console.error("❌ [AGENT ERROR] Agent failed:", error);
+    console.error("❌ [LEGACY-AGENT] Agent failed:", error);
   } finally {
     await agent.cleanup();
+  }
+}
+
+// Usage example - LangGraph agent
+async function runLangGraphAgent() {
+  const { LangGraphAgent } = await import('./langgraph-agent.js');
+  
+  const config = {
+    database: {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      database: process.env.DB_NAME || 'meal_planner_dev',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'password'
+    }
+  };
+
+  const agent = new LangGraphAgent(config);
+  
+  try {
+    await agent.initialize();
+    
+    // Start a meal planning conversation
+    const response = await agent.handleMessage({
+      from: 'brad',
+      message: 'Create a meal plan for this week',
+      timestamp: new Date()
+    });
+    
+    console.log('🤖 [LANGGRAPH-AGENT] Response:', response);
+    
+    if (response.threadId) {
+      const status = await agent.getWorkflowStatus(response.threadId);
+      console.log('📊 [LANGGRAPH-AGENT] Final Status:', status);
+    }
+    
+  } catch (error) {
+    console.error('❌ [LANGGRAPH-AGENT] Error:', error);
+  } finally {
+    await agent.shutdown();
+  }
+}
+
+async function main() {
+  const useLangGraph = process.argv.includes('--langgraph');
+  
+  if (useLangGraph) {
+    console.log('🚀 Running LangGraph Agent...');
+    await runLangGraphAgent();
+  } else {
+    console.log('🚀 Running Legacy Agent...');
+    await runLegacyAgent();
   }
 }
 
