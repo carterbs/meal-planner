@@ -14,7 +14,7 @@ export async function doReplaceMeal(day: string, mealType: string, newMealId: nu
   const resp = await fetch(`${API}/api/mealplan/replace`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ day, mealType, newMealId })
+    body: JSON.stringify({ day, new_meal_id: newMealId })
   });
   if (!resp.ok) {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
