@@ -1,0 +1,2 @@
+## Development
+You can run the entire app by running `yarn dev:codex`. This is crucial for validating that your agent at least works. Its responses will be poor because it's not actually using a real LLM. But do not submit code that does not at least run.
