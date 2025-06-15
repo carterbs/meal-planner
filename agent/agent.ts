@@ -113,7 +113,7 @@ class MealPlannerAgent {
       ? new FakeChatModel({})
       : new ChatOpenAI({ 
           temperature: 0,
-          modelName: "gpt-4.1-mini"
+          modelName: "gpt-4.1"
         });
 
     // Create ReACT agent
@@ -354,8 +354,11 @@ async function runLegacyAgent() {
 }
 
 // Usage example - LangGraph agent
+import { WorkflowType } from './shared/types.js';
+
 async function runLangGraphAgent() {
   const { LangGraphAgent } = await import('./langgraph-agent.js');
+  const args = process.argv;
   
   const config = {
     database: {
@@ -371,21 +374,44 @@ async function runLangGraphAgent() {
   
   try {
     await agent.initialize();
-    
-    // Start a meal planning conversation
-    const response = await agent.handleMessage({
-      from: 'brad',
-      message: 'Create a meal plan for this week',
-      timestamp: new Date()
-    });
-    
-    console.log('🤖 [LANGGRAPH-AGENT] Response:', response);
-    
-    if (response.threadId) {
-      const status = await agent.getWorkflowStatus(response.threadId);
-      console.log('📊 [LANGGRAPH-AGENT] Final Status:', status);
+
+    if (args.includes('--start')) {
+      const threadId = await agent.startWorkflow(WorkflowType.MEAL_PLANNING);
+      console.log(`🆕 Started workflow: ${threadId}`);
+      const status = await agent.getWorkflowStatus(threadId);
+      console.log('📊 Status:', status);
+    } else if (args.includes('--resume')) {
+      const idx = args.indexOf('--resume');
+      const threadId = args[idx + 1];
+      if (!threadId || threadId.startsWith('--')) {
+        console.error('❌ Missing or invalid threadId for --resume');
+        console.log('Usage: --resume <threadId>');
+        process.exit(1);
+      }
+      console.log(`[DEBUG] --resume threadId:`, threadId);
+      const result = await agent.resumeWorkflow(threadId);
+      console.log(`🔄 Resumed ${threadId}, result:`, result);
+    } else if (args.includes('--feedback')) {
+      const idx = args.indexOf('--feedback');
+      const threadId = args[idx + 1];
+      const message = args[idx + 2];
+      if (!threadId || threadId.startsWith('--')) {
+        console.error('❌ Missing or invalid threadId for --feedback');
+        console.log('Usage: --feedback <threadId> "message"');
+        process.exit(1);
+      }
+      if (!message || message.startsWith('--')) {
+        console.error('❌ Missing or invalid message for --feedback');
+        console.log('Usage: --feedback <threadId> "message"');
+        process.exit(1);
+      }
+      console.log(`[DEBUG] --feedback threadId:`, threadId);
+      console.log(`[DEBUG] --feedback message:`, message);
+      await agent.addFeedback({ threadId, from: 'brad', message });
+      console.log(`💬 Feedback added to ${threadId}`);
+    } else {
+      console.log('Usage: --start | --resume <threadId> | --feedback <threadId> "message"');
     }
-    
   } catch (error) {
     console.error('❌ [LANGGRAPH-AGENT] Error:', error);
   } finally {

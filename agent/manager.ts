@@ -76,6 +76,14 @@ export class WorkflowManager {
       this.checkpointer
     );
 
+    // Actually invoke the workflow up to feedback pause
+    await workflow.graph.invoke({}, {
+      configurable: {
+        thread_id: threadId,
+        workflow_type: type
+      }
+    });
+
     console.log(`🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`);
     return threadId;
   }

@@ -24,6 +24,7 @@ export enum MealPlanningStep {
   OPTIMIZE_PLAN = 'optimize_plan',
   PRESENT_PLAN = 'present_plan',
   AWAIT_FEEDBACK = 'await_feedback',
+  APPLY_FEEDBACK = 'apply_feedback', // NEW: for LLM-driven feedback application
   PROCESS_FEEDBACK = 'process_feedback',
   FINALIZE_PLAN = 'finalize_plan',
   GENERATE_SHOPPING_LIST = 'generate_shopping_list',
@@ -50,6 +51,16 @@ export enum IngredientManagementStep {
 }
 
 // Data structures
+
+export interface MealPlanningState extends BaseWorkflowState {
+  meal_plan: WeeklyMealPlan | null;
+  feedback_history: FeedbackEntry[];
+  iteration_count: number;
+  shopping_list: ShoppingItem[] | null;
+  is_finalized: boolean;
+  last_feedback_applied_at?: string;
+  feedback_to_apply?: FeedbackEntry[];
+}
 export interface FeedbackEntry {
   from: string; // 'brad' or 'shannon'
   message: string;

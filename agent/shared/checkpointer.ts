@@ -47,28 +47,30 @@ export class PostgresCheckpointSaver {
     }
   }
 
+  parseMaybeJSON(val: any) {
+    if (typeof val === 'string') {
+      return JSON.parse(val);
+    }
+    return val;
+  }
+
   async getTuple(config: RunnableConfig): Promise<[SimpleCheckpoint, SimpleCheckpointMetadata] | undefined> {
     await this.connect();
-    
     const { configurable } = config;
     if (!configurable?.thread_id) {
       return undefined;
     }
-
     const result = await this.client.query(
       'SELECT checkpoint_data, metadata FROM workflow_checkpoints WHERE thread_id = $1 ORDER BY updated_at DESC LIMIT 1',
       [configurable.thread_id]
     );
-
     if (result.rows.length === 0) {
       return undefined;
     }
-
     const row = result.rows[0];
-    return [
-      JSON.parse(row.checkpoint_data),
-      row.metadata ? JSON.parse(row.metadata) : {}
-    ];
+    const checkpoint = this.parseMaybeJSON(row.checkpoint_data);
+    const meta = row.metadata ? this.parseMaybeJSON(row.metadata) : {};
+    return [checkpoint, meta];
   }
 
   async *list(
@@ -204,19 +206,15 @@ export class PostgresCheckpointSaver {
     updated_at: Date;
   } | null> {
     await this.connect();
-
     const result = await this.client.query(
       'SELECT workflow_type, checkpoint_data, created_at, updated_at FROM workflow_checkpoints WHERE thread_id = $1',
       [threadId]
     );
-
     if (result.rows.length === 0) {
       return null;
     }
-
     const row = result.rows[0];
-    const checkpointData = JSON.parse(row.checkpoint_data);
-    
+    const checkpointData = this.parseMaybeJSON(row.checkpoint_data);
     return {
       workflow_type: row.workflow_type,
       current_step: checkpointData.channel_values?.current_step || 'unknown',
