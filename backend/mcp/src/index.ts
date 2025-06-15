@@ -1,105 +1,42 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
-import express from 'express';
-import cors from 'cors';
-import { z } from 'zod';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { registerWeeklyMealPlan } from './resources/weeklyMealPlan.js';
+import { registerRecipes } from './resources/recipes.js';
+import { registerRecipeSteps } from './resources/recipeSteps.js';
+import { registerGenerateMealPlan } from './tools/generateMealPlan.js';
+import { registerFinalizeMealPlan } from './tools/finalizeMealPlan.js';
+import { registerSwapMeal } from './tools/swapMeal.js';
+import { registerReplaceMeal } from './tools/replaceMeal.js';
+import { registerGenerateShoppingList } from './tools/generateShoppingList.js';
+import { registerCreateRecipe } from './tools/createRecipe.js';
+import { registerDeleteRecipe } from './tools/deleteRecipe.js';
+import { registerGetMeals } from './tools/getMeals.js';
+import { registerGetCurrentMealPlan } from './tools/getCurrentMealPlan.js';
 
-const app = express();
-const PORT = 3001;
 
-app.use(cors());
-app.use(express.json());
+const server = new McpServer({ name: 'mealplanner-mcp', version: '1.0.0' });
 
-// Zod schema for hello tool validation
-const HelloToolArgsSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-});
+registerWeeklyMealPlan(server);
+registerRecipes(server);
+registerRecipeSteps(server);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
+registerGenerateMealPlan(server);
+registerFinalizeMealPlan(server);
+registerSwapMeal(server);
+registerReplaceMeal(server);
+registerGenerateShoppingList(server);
+registerCreateRecipe(server);
+registerDeleteRecipe(server);
+registerGetMeals(server);
+registerGetCurrentMealPlan(server);
 
-// Create MCP server
-const server = new Server(
-  {
-    name: 'mealplanner-mcp',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-
-// Define tools
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: 'hello',
-        description: 'A simple hello world tool',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            name: {
-              type: 'string',
-              description: 'Optional name to greet',
-            },
-          },
-        },
-      },
-    ],
-  };
-});
-
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-  
-  switch (name) {
-    case 'hello':
-      try {
-        // Validate arguments using Zod
-        const validatedArgs = HelloToolArgsSchema.parse(args);
-        
-        const greeting = validatedArgs.name 
-          ? `Hi ${validatedArgs.name} from MealPlanner MCP!`
-          : 'Hi from MealPlanner MCP!';
-        
-        return {
-          content: [
-            {
-              type: 'text',
-              text: greeting,
-            },
-          ],
-        };
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          throw new Error(`Invalid arguments: ${error.errors.map(e => e.message).join(', ')}`);
-        }
-        throw error;
-      }
-    
-    default:
-      throw new Error(`Unknown tool: ${name}`);
-  }
-});
-
-// MCP SSE endpoint
-app.get('/sse', async (req, res) => {
-  console.error('New SSE connection');
-  const transport = new SSEServerTransport('/sse', res);
+async function main() {
+  const transport = new StdioServerTransport();
   await server.connect(transport);
-});
+  console.error('MealPlanner MCP server running on stdio');
+}
 
-// Start HTTP server
-app.listen(PORT, () => {
-  console.error(`MealPlanner MCP server running on http://localhost:${PORT}`);
-  console.error(`SSE endpoint available at http://localhost:${PORT}/sse`);
+main().catch((err) => {
+  console.error('Server error:', err);
+  process.exit(1);
 });

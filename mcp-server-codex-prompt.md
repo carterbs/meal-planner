@@ -44,7 +44,6 @@ backend/
 
 ENV var	Default	Purpose
 BACKEND_BASE_URL	http://localhost:8080	Go API root
-MCP_PORT	3001	HTTP/SSE listen port
 
 No other configuration exists.
 If the Go API port changes, only update BACKEND_BASE_URL.
@@ -112,7 +111,6 @@ new MCPServer({
   resources: [WeeklyMealPlan, Recipes, RecipeSteps],
   tools: [generateMealPlan, finalizeMealPlan, swapMeal, replaceMeal,
           generateShoppingList, createRecipe, deleteRecipe],
-}).listen(MCP_PORT);
 ```
 
 	5.	Unit tests (tests/)
@@ -149,14 +147,13 @@ The foundational MCP server infrastructure has been implemented:
 
 - ✅ **MCP Directory Structure**: Created `backend/mcp/` with proper workspace integration
 - ✅ **Package Configuration**: Initialized with "mealplanner-mcp" v1.0.0, ES modules, TypeScript
-- ✅ **Dependencies Installed**: Official MCP SDK, Express, CORS, TypeScript tooling, Jest
+- ✅ **Dependencies Installed**: Official MCP SDK, TypeScript tooling, Jest
 - ✅ **TypeScript Setup**: Configured with ES2022 target and proper module resolution
-- ✅ **HTTP+SSE Transport**: Implemented MCP server with Express on port 3001 (not stdio)
+- ✅ **Stdio Transport**: MCP server connects via standard input/output (no HTTP server)
 - ✅ **Hello World Tool**: Basic "hello" tool for testing MCP functionality
-- ✅ **Test Suite**: Jest-based tests for HTTP server and MCP tool logic
-- ✅ **Health Check**: HTTP endpoint at `/health` for monitoring
+- ✅ **Test Suite**: Jest-based tests for MCP tool logic
 
-**Current Status**: The MCP server runs at `http://localhost:3001` with SSE endpoint at `/sse`. The hello world tool is functional and tested. Ready for meal planner integration.
+**Current Status**: The MCP server runs over stdio. The hello world tool is functional and tested. Ready for meal planner integration.
 
 ### Example MCP Tool Definitions
 Below are six high-quality, example tool implementations.
