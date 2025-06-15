@@ -51,6 +51,7 @@ export async function createRecipe(data: z.infer<typeof createRecipeArgs>) {
 export function registerCreateRecipe(server: McpServer) {
   server.tool(
     'createRecipe',
+    'Create a new recipe with ingredients, cooking steps, and metadata. Specify effort level (LOW/MED/HIGH), red meat status for tracking, and detailed cooking instructions. The recipe will be added to the database and available for meal planning.',
     {
       name: createRecipeArgs.shape.name,
       redMeat: createRecipeArgs.shape.redMeat,

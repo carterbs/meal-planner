@@ -23,6 +23,7 @@ export async function doSwapMeal(dayIndex: number): Promise<WeeklyMealPlan> {
 export function registerSwapMeal(server: McpServer) {
   server.tool(
     'swapMeal',
+    'Randomly swap a meal on a specific day with an alternative meal of the same type. Uses the backend\'s random meal selection to provide variety while maintaining meal type compatibility.',
     {
       dayIndex: swapArgs.shape.dayIndex
     },

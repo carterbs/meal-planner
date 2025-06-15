@@ -16,6 +16,7 @@ export async function deleteRecipe(id: number) {
 export function registerDeleteRecipe(server: McpServer) {
   server.tool(
     'deleteRecipe',
+    'Permanently delete a recipe from the database by its unique ID. This action cannot be undone and will remove the recipe from all future meal planning. Use with caution.',
     {
       id: deleteRecipeArgs.shape.id
     },
