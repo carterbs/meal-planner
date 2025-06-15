@@ -7,6 +7,7 @@ Convert the current CLI-based meal planning agent into an asynchronous, multi-wo
 - Persistent state management with PostgreSQL checkpoints
 - Generic I/O interfaces (CLI now, email later)
 - Complete meal planning workflow ending with shopping list generation
+- There are instructions in this file for after v0. They are for the human, not you.
 
 ## Architecture Changes
 
@@ -18,12 +19,12 @@ Convert the current CLI-based meal planning agent into an asynchronous, multi-wo
 - **State**: Persistent conversation state including meal plans, all feedback history, iteration count
 - **Interrupts**: Pause at each feedback step for human input from brad/shannon
 
-#### Recipe Management Workflow (Future)
+#### Recipe Management Workflow (Post-V0)
 - **Nodes**: `initiate` → `validate_recipe` → `save_recipe` → `confirm` → `complete`
 - **State**: Recipe data, validation errors, ingredient mappings
 - **Interrupts**: Pause for recipe validation and confirmation
 
-#### Ingredient Management Workflow (Future)
+#### Ingredient Management Workflow (Post-v0)
 - **Nodes**: `initiate` → `process_ingredient_action` → `validate_changes` → `confirm` → `complete`  
 - **State**: Ingredient data, substitution mappings, validation results
 - **Interrupts**: Pause for change confirmation
@@ -70,7 +71,7 @@ Convert the current CLI-based meal planning agent into an asynchronous, multi-wo
 
 ## Implementation Steps
 
-<important>At each step (NOTE: not phase. Each step.), commit your work using the `/commit` slash command.</important>
+<important>At each step (NOTE: not phase. Each step.), commit your work following the guidance for the /commit slash command.</important>
 
 ### Phase 1: Multi-Workflow Foundation
 1. Create PostgreSQL checkpoint table with workflow type support
@@ -259,14 +260,11 @@ meal-agent cancel <thread_id>                   # Cancel a workflow
 ```bash
 # Recipe management workflow
 meal-agent recipe add "Chicken Parmesan"       # Start workflow to add new recipe
-meal-agent recipe edit <recipe_id>              # Start workflow to edit recipe
-meal-agent recipe delete <recipe_id>            # Start workflow to delete recipe
+meal-agent recipe edit <recipe_name>              # Start workflow to edit recipe. Agent searches for the closest recipe and then
+meal-agent recipe delete <recipe_name>            # Start workflow to delete recipe
 
 # Ingredient management workflow  
-meal-agent ingredient add "Organic Tomatoes"   # Add new ingredient
-meal-agent ingredient edit <ingredient_id>      # Edit ingredient properties
-meal-agent ingredient substitute "butter" "olive oil"  # Create substitution mapping
-meal-agent ingredient delete <ingredient_id>    # Delete ingredient (with dependency check)
+meal-agent ingredients edit "Chicken Parmesan" # drop into chat session to edit ingredients
 ```
 
 ## Database Changes
@@ -376,36 +374,7 @@ CREATE INDEX idx_workflow_checkpoints_type_created ON workflow_checkpoints(workf
 }
 ```
 
-## Migration Strategy
-
-1. **Parallel Development**: Build LangGraph multi-workflow system alongside existing agent
-2. **v0 Focus**: Implement meal planning workflow first with full feature parity
-3. **Gradual Expansion**: Add recipe and ingredient workflows post-v0
-4. **Interface Evolution**: Start with CLI, add email later
-5. **Backward Compatibility**: Keep existing agent working during transition
-6. **Testing**: Comprehensive testing before replacing current agent
-7. **Clean Cutover**: Replace existing agent only when new system is fully validated
-
 ## Future Enhancements (Post-v0)
 
-**Communication:**
 - Email-based communication with structured templates
-- SMS notifications for meal plan completion
-- Slack/Discord integration for family meal planning
-
-**Advanced Features:**
 - Calendar export integration
-- Mobile app integration
-- Web dashboard for workflow monitoring
-- Multi-family meal planning support
-- Advanced meal preference learning
-- Recipe recommendation engine
-- Nutritional analysis integration
-
-**Workflow Extensions:**
-- Meal prep planning workflow
-- Grocery shopping optimization workflow
-- Menu planning for events/parties workflow
-- Dietary restriction management workflow
-
-This plan provides a comprehensive multi-workflow architecture that starts with meal planning (v0) and scales to support recipe management, ingredient management, and future workflow types while maintaining clean separation of concerns and extensible design patterns.
