@@ -122,7 +122,7 @@ class MealPlannerAgent {
       tools
     });
 
-    console.log(`Initialized agent with ${tools.length} tools:`, tools.map(t => t.name));
+    console.log(`🤖 [AGENT] Initialized agent with ${tools.length} tools:`, tools.map(t => t.name));
   }
 
   // Validate meal plan against criteria
@@ -206,18 +206,18 @@ class MealPlannerAgent {
     // Use LLM to optimize the meal plan
     let issues = this.validatePlan(plan);
     if (issues.length > 0) {
-      console.log("Initial validation issues:", issues);
+      console.log("📋 [LOG] Initial validation issues:", issues);
       
       const optimizedPlan = await this.optimizePlanWithLLM(plan, issues);
       plan = optimizedPlan;
       
       const finalIssues = this.validatePlan(plan);
       if (finalIssues.length > 0) {
-        console.log("Remaining validation issues after LLM optimization:", finalIssues);
-        console.log("Trying once more");
+        console.log("📋 [LOG] Remaining validation issues after LLM optimization:", finalIssues);
+        console.log("🤖 [AGENT DECISION] Trying once more");
         plan = await this.optimizePlanWithLLM(plan, finalIssues);
       } else {
-        console.log("Plan successfully optimized by LLM!");
+        console.log("✅ [AGENT SUCCESS] Plan successfully optimized by LLM!");
       }
     }
 
@@ -285,7 +285,7 @@ If no replacements are needed, return: {"replacements": []}`;
     const result = await llm.invoke([{ role: "user", content: prompt }]);
 
     const llmResponse = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
-    console.log("LLM optimization result:", llmResponse);
+    console.log("📋 [LOG] LLM optimization result:", llmResponse);
 
     // Parse the LLM's JSON recommendations and apply them
     let optimizedPlan = { ...plan, days: [...plan.days] };
@@ -300,7 +300,7 @@ If no replacements are needed, return: {"replacements": []}`;
           const newMeal = availableMeals.find(m => m.id === newMealId);
           
           if (dayIndex >= 0 && newMeal && newMeal.mealType === mealType) {
-            console.log(`Applying LLM recommendation: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.mealName} (ID ${newMealId}) - ${reason}`);
+            console.log(`🤖 [AGENT ACTION] Applying LLM recommendation: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.mealName} (ID ${newMealId}) - ${reason}`);
             
             optimizedPlan.days = optimizedPlan.days.map(planDay => {
               if (planDay.dayIndex === dayIndex && planDay.mealType === mealType) {
@@ -317,17 +317,17 @@ If no replacements are needed, return: {"replacements": []}`;
               return planDay;
             });
           } else {
-            console.log(`Invalid replacement recommendation: ${JSON.stringify(replacement)}`);
+            console.log(`⚠️ [LOG] Invalid replacement recommendation: ${JSON.stringify(replacement)}`);
           }
         }
         
-        console.log(`Applied ${recommendations.replacements.length} meal replacements`);
+        console.log(`🤖 [AGENT ACTION] Applied ${recommendations.replacements.length} meal replacements`);
       } else {
-        console.log("No replacements recommended by LLM");
+        console.log("📋 [LOG] No replacements recommended by LLM");
       }
     } catch (error) {
-      console.error("Failed to parse LLM response as JSON:", error);
-      console.log("Raw response:", llmResponse);
+      console.error("❌ [ERROR] Failed to parse LLM response as JSON:", error);
+      console.log("📋 [LOG] Raw response:", llmResponse);
     }
 
     return optimizedPlan;
@@ -345,9 +345,9 @@ async function main() {
   try {
     await agent.initialize();
     const plan = await agent.generateOptimalMealPlan();
-    console.log("Generated meal plan:", JSON.stringify(plan, null, 2));
+    console.log("✅ [RESULT] Generated meal plan:", JSON.stringify(plan, null, 2));
   } catch (error) {
-    console.error("Agent failed:", error);
+    console.error("❌ [AGENT ERROR] Agent failed:", error);
   } finally {
     await agent.cleanup();
   }
