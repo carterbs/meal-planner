@@ -6330,6 +6330,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"commander@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "commander@npm:14.0.0"
+  checksum: 10c0/73c4babfa558077868d84522b11ef56834165d472b9e86a634cd4c3ae7fc72d59af6377d8878e06bd570fe8f3161eced3cbe383c38f7093272bb65bd242b595b
+  languageName: node
+  linkType: hard
+
 "commander@npm:^2.20.0":
   version: 2.20.3
   resolution: "commander@npm:2.20.3"
@@ -12148,6 +12155,7 @@ __metadata:
     "@types/node": "npm:^20.0.0"
     "@types/pg": "npm:^8.10.0"
     "@types/uuid": "npm:^9.0.0"
+    commander: "npm:^14.0.0"
     jest: "npm:^30.0.0"
     pg: "npm:^8.11.0"
     ts-jest: "npm:^29.1.1"
