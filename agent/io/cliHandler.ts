@@ -2,11 +2,20 @@ import { IOHandler } from './ioHandler';
 import * as readline from 'readline';
 
 export class CLIHandler implements IOHandler {
-  private rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    terminal: true,
-  });
+  private rl: readline.Interface | null = null;
+  private isClosed = false;
+
+  private ensureInterface(): readline.Interface {
+    if (this.isClosed || !this.rl) {
+      this.rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: true,
+      });
+      this.isClosed = false;
+    }
+    return this.rl;
+  }
 
   async sendMessage(message: string, from: string): Promise<void> {
     const formatted = this.formatMessage(message, from);
@@ -15,8 +24,15 @@ export class CLIHandler implements IOHandler {
 
   async receiveInput(prompt: string, from: string): Promise<string> {
     const formattedPrompt = this.formatMessage(prompt, from);
-    return new Promise<string>((resolve) => {
-      this.rl.question(formattedPrompt + ' ', (answer) => {
+    const rl = this.ensureInterface();
+    
+    return new Promise<string>((resolve, reject) => {
+      if (this.isClosed) {
+        reject(new Error('CLI handler has been closed'));
+        return;
+      }
+      
+      rl.question(formattedPrompt + ' ', (answer) => {
         resolve(answer);
       });
     });
@@ -28,6 +44,10 @@ export class CLIHandler implements IOHandler {
   }
 
   close(): void {
-    this.rl.close();
+    this.isClosed = true;
+    if (this.rl) {
+      this.rl.close();
+      this.rl = null;
+    }
   }
 }

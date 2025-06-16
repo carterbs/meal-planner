@@ -18,7 +18,9 @@ var agentCommandContext = exec.CommandContext
 
 // runAgentCLI executes the agent CLI with given args and unmarshals JSON output into resp
 func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, error) {
-	cmd := agentCommandContext(ctx, "node", append([]string{"agent/dist/cli.js"}, args...)...)
+	// Always add --json flag for API integration
+	allArgs := append([]string{"../agent/dist/cli.js", "--json"}, args...)
+	cmd := agentCommandContext(ctx, "node", allArgs...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
