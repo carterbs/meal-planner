@@ -88,7 +88,6 @@ func main() {
 	var connection *sql.DB
 	var err error
 
-
 	if !*dummyFlag {
 		// Try to connect to database, but don't block server startup
 		connection, err = db.ConnectDB(config)
@@ -221,18 +220,18 @@ func main() {
 		var err error
 		maxRetries := 5
 		retryDelay := time.Duration(500) * time.Millisecond
-		
+
 		for i := 0; i < maxRetries; i++ {
 			connection, err = db.ConnectDB(config)
 			if err == nil {
 				break // Success!
 			}
-			
+
 			if !db.IsConnectionError(err) {
 				// Non-connection error, don't retry
 				break
 			}
-			
+
 			if i < maxRetries-1 {
 				// Wait before retrying (except on last attempt)
 				time.Sleep(retryDelay)
@@ -282,6 +281,14 @@ func main() {
 	r.Get("/api/meals/{mealId}/steps", handlers.GetStepsHandler)
 	r.Post("/api/meals/{mealId}/steps", handlers.AddStepHandler)
 	r.Post("/api/meals/{mealId}/steps/bulk", handlers.AddBulkStepsHandler)
+	r.Route("/api/agent", func(r chi.Router) {
+		r.Post("/start", handlers.StartAgentWorkflow)
+		r.Post("/feedback", handlers.AddAgentFeedback)
+		r.Post("/resume", handlers.ResumeAgentWorkflow)
+		r.Get("/status/{threadId}", handlers.GetWorkflowStatus)
+		r.Get("/workflows", handlers.ListWorkflows)
+		r.Delete("/workflows/{threadId}", handlers.CancelWorkflow)
+	})
 	r.Put("/api/meals/{mealId}/steps/{stepId}", handlers.UpdateStepHandler)
 	r.Delete("/api/meals/{mealId}/steps/{stepId}", handlers.DeleteStepHandler)
 	r.Put("/api/meals/{mealId}/steps/reorder", handlers.ReorderStepsHandler)
