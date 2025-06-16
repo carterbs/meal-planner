@@ -93,6 +93,18 @@ describe('index.tsx', () => {
         expect(app.type.name).toBe('App');
     });
 
+    it('renders agent page when path starts with /agent', () => {
+        mockGetElementById.mockReturnValue(document.createElement('div'));
+        Object.defineProperty(window, 'location', { value: new URL('http://localhost/agent'), writable: true });
+
+        require('./index');
+
+        const renderCall = mockRender.mock.calls[0][0];
+        const themeProvider = renderCall.props.children;
+        const page = themeProvider.props.children[1];
+        expect(page.type.name).toBe('AgentPage');
+    });
+
     it('handles missing root element gracefully', () => {
         // Mock getElementById to return null
         mockGetElementById.mockReturnValue(null);

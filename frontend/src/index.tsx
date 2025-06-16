@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import AgentPage from "./AgentPage";
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
@@ -19,11 +20,12 @@ try {
 
     const root = ReactDOM.createRoot(rootElement);
     const path = window.location.pathname;
+    const PageComponent = path.startsWith('/agent') ? AgentPage : App;
     root.render(
         <React.StrictMode>
             <ThemeProvider theme={theme}>
                 <CssBaseline />
-                <App />
+                <PageComponent />
             </ThemeProvider>
         </React.StrictMode>
     );
