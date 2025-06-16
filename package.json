@@ -17,7 +17,8 @@
         "db:backup": "node scripts/backup-db.js",
         "db:restore": "node scripts/restore-db.js",
         "dev": "node scripts/dev-start.js",
-        "meal-agent": "./scripts/meal-agent.sh"
+        "meal-agent": "./scripts/meal-agent.sh",
+        "kill:servers": "node scripts/kill-servers.js"
     },
     "devDependencies": {
         "chalk": "^4.1.2",
