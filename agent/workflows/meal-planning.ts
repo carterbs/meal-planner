@@ -63,11 +63,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   async initialize(): Promise<void> {
     const isCodex = process.argv.includes("--codex");
+    const isJsonMode = process.argv.includes("--json");
 
     // Connect to MCP server
+    // In JSON mode (API calls), assume MCP server is already running and connect to it directly
+    // Otherwise, start the full server stack
     const transport = new StdioClientTransport({
       command: "node",
-      args: ["/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js", isCodex ? "--codex" : ""]
+      args: isJsonMode 
+        ? ["/Users/bradcarter/Documents/Dev/meal-planner/backend/mcp/dist/index.js"]
+        : ["/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js", isCodex ? "--codex" : ""]
     });
 
     await this.client.connect(transport);

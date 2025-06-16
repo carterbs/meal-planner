@@ -7377,6 +7377,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv@npm:^16.5.0":
+  version: 16.5.0
+  resolution: "dotenv@npm:16.5.0"
+  checksum: 10c0/5bc94c919fbd955bf0ba44d33922a1e93d1078e64a1db5c30faeded1d996e7a83c55332cb8ea4fae5a9ca4d0be44cbceb95c5811e70f9f095298df09d1997dd9
+  languageName: node
+  linkType: hard
+
 "dunder-proto@npm:^1.0.0, dunder-proto@npm:^1.0.1":
   version: 1.0.1
   resolution: "dunder-proto@npm:1.0.1"
@@ -12156,6 +12163,7 @@ __metadata:
     "@types/pg": "npm:^8.10.0"
     "@types/uuid": "npm:^9.0.0"
     commander: "npm:^14.0.0"
+    dotenv: "npm:^16.5.0"
     jest: "npm:^30.0.0"
     pg: "npm:^8.11.0"
     ts-jest: "npm:^29.1.1"

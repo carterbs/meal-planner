@@ -1,5 +1,24 @@
 #!/usr/bin/env node
 
+// Load environment variables FIRST before any other imports
+import { config as dotenvConfig } from 'dotenv';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+// In built version, we're in dist/ so go up one level to agent/
+const envPath = join(__dirname, '..', '.env');
+const result = dotenvConfig({ path: envPath });
+
+// Debug environment loading (only in non-JSON mode)
+if (!process.argv.includes('--json')) {
+  console.log(`📧 [ENV] Loading from: ${envPath}`);
+  console.log(`📧 [ENV] Result:`, result.error ? `Error: ${result.error}` : 'Success');
+  console.log(`📧 [ENV] OPENAI_API_KEY present:`, !!process.env.OPENAI_API_KEY);
+}
+
+// Now import everything else
 import { Command } from 'commander';
 import { LangGraphAgent, LangGraphAgentConfig } from './langgraph-agent.js';
 import { WorkflowType } from './shared/types.js';
@@ -35,6 +54,45 @@ async function initializeAgent(): Promise<LangGraphAgent> {
 // Helper function to validate thread ID format
 function validateThreadId(threadId: string): boolean {
   return /^[a-f0-9-]{36}$/.test(threadId);
+}
+
+// Helper function to output results in JSON or console format
+function outputResult(result: {
+  success: boolean;
+  message?: string;
+  threadId?: string;
+  currentStep?: string;
+  raw?: any;
+}, isJsonMode: boolean = false) {
+  if (isJsonMode) {
+    console.log(JSON.stringify(result));
+  } else {
+    // Handle console output based on result type
+    if (result.success) {
+      if (result.message) {
+        console.log(`✅ ${result.message}`);
+      }
+      if (result.threadId) {
+        console.log(`   Thread ID: ${result.threadId}`);
+      }
+      if (result.currentStep) {
+        console.log(`   Current step: ${result.currentStep}`);
+      }
+    } else {
+      console.error(`❌ ${result.message || 'Operation failed'}`);
+      process.exit(1);
+    }
+  }
+}
+
+// Helper function to output errors in JSON or console format
+function outputError(message: string, isJsonMode: boolean = false) {
+  if (isJsonMode) {
+    console.log(JSON.stringify({ success: false, message }));
+  } else {
+    console.error(`❌ ${message}`);
+  }
+  process.exit(1);
 }
 
 // Helper function to format workflow list
@@ -88,7 +146,8 @@ function formatWorkflowList(workflows: any[]): string {
 program
   .name('meal-agent')
   .description('Meal planning agent with multi-workflow support')
-  .version('1.0.0');
+  .version('1.0.0')
+  .option('--json', 'Output results in JSON format for API integration', false);
 
 // Plan command group
 const planCommand = program
@@ -100,21 +159,32 @@ planCommand
   .description('Start a new meal planning session')
   .option('-p, --participants <participants>', 'Comma-separated list of participants', 'brad,shannon')
   .action(async (options) => {
+    const isJsonMode = program.getOptionValue('json');
+    
     try {
       const agent = await initializeAgent();
       const participants = options.participants.split(',').map((p: string) => p.trim());
       
-      console.log(`🚀 Starting new meal planning session with participants: ${participants.join(', ')}`);
+      if (!isJsonMode) {
+        console.log(`🚀 Starting new meal planning session with participants: ${participants.join(', ')}`);
+      }
       
       const threadId = await agent.startWorkflow(WorkflowType.MEAL_PLANNING, participants);
-      console.log(`✅ Meal planning session started`);
-      console.log(`   Thread ID: ${threadId}`);
-      console.log(`   Use: meal-agent plan feedback "${threadId}" "your feedback here"`);
-      console.log(`   Or:  meal-agent resume ${threadId}`);
+      
+      outputResult({
+        success: true,
+        message: 'Meal planning session started',
+        threadId: threadId,
+        currentStep: 'started'
+      }, isJsonMode);
+      
+      if (!isJsonMode) {
+        console.log(`   Use: meal-agent plan feedback "${threadId}" "your feedback here"`);
+        console.log(`   Or:  meal-agent resume ${threadId}`);
+      }
       
     } catch (error) {
-      console.error('❌ Error starting meal planning session:', error instanceof Error ? error.message : error);
-      process.exit(1);
+      outputError(`Error starting meal planning session: ${error instanceof Error ? error.message : error}`, isJsonMode);
     }
   });
 
@@ -125,10 +195,12 @@ planCommand
   .argument('<message>', 'Your feedback message')
   .option('-f, --from <participant>', 'Who is providing the feedback', 'brad')
   .action(async (threadId, message, options) => {
+    const isJsonMode = program.getOptionValue('json');
+    
     try {
       if (!validateThreadId(threadId)) {
-        console.error('❌ Invalid thread ID format. Expected UUID format.');
-        process.exit(1);
+        outputError('Invalid thread ID format. Expected UUID format.', isJsonMode);
+        return;
       }
 
       const agent = await initializeAgent();
@@ -136,8 +208,8 @@ planCommand
       // Check if workflow is awaiting feedback
       const isAwaiting = await agent.isAwaitingFeedback(threadId);
       if (!isAwaiting) {
-        console.error('❌ This workflow is not currently awaiting feedback.');
-        process.exit(1);
+        outputError('This workflow is not currently awaiting feedback.', isJsonMode);
+        return;
       }
 
       const success = await agent.addFeedback({
@@ -147,16 +219,20 @@ planCommand
       });
 
       if (success) {
-        console.log(`✅ Feedback added successfully from ${options.from}`);
-        console.log(`   Use: meal-agent resume ${threadId} to continue the workflow`);
+        outputResult({
+          success: true,
+          message: `Feedback added successfully from ${options.from}`
+        }, isJsonMode);
+        
+        if (!isJsonMode) {
+          console.log(`   Use: meal-agent resume ${threadId} to continue the workflow`);
+        }
       } else {
-        console.error('❌ Failed to add feedback. Check thread ID and try again.');
-        process.exit(1);
+        outputError('Failed to add feedback. Check thread ID and try again.', isJsonMode);
       }
       
     } catch (error) {
-      console.error('❌ Error adding feedback:', error instanceof Error ? error.message : error);
-      process.exit(1);
+      outputError(`Error adding feedback: ${error instanceof Error ? error.message : error}`, isJsonMode);
     }
   });
 
@@ -220,26 +296,61 @@ planCommand
 // General workflow management commands
 program
   .command('status')
-  .description('Show system status and statistics')
-  .action(async () => {
+  .description('Show system status and statistics, or specific workflow status if thread ID provided')
+  .argument('[thread-id]', 'Optional thread ID to get specific workflow status')
+  .action(async (threadId) => {
+    const isJsonMode = program.getOptionValue('json');
+    
     try {
       const agent = await initializeAgent();
-      const health = await agent.healthCheck();
-      const stats = await agent.getStats();
       
-      console.log('🏥 System Health:', health.status);
-      console.log('📊 Statistics:');
-      console.log(`   Active Sessions: ${stats.activeSessionCount}`);
-      console.log(`   Total Workflows: ${stats.totalWorkflows}`);
-      console.log('   Workflows by Type:');
-      Object.entries(stats.workflowsByType).forEach(([type, count]) => {
-        console.log(`     ${type}: ${count}`);
-      });
-      console.log(`   Supported Types: ${stats.supportedWorkflowTypes.join(', ')}`);
+      if (threadId) {
+        // Get specific workflow status
+        if (!validateThreadId(threadId)) {
+          outputError('Invalid thread ID format. Expected UUID format.', isJsonMode);
+          return;
+        }
+        
+        const status = await agent.getWorkflowStatus(threadId);
+        if (!status) {
+          outputError('Workflow not found.', isJsonMode);
+          return;
+        }
+        
+        outputResult({
+          success: true,
+          threadId: status.threadId,
+          currentStep: status.currentStep,
+          message: `Workflow status: ${status.currentStep}`,
+          raw: status
+        }, isJsonMode);
+        
+      } else {
+        // Get system status
+        const health = await agent.healthCheck();
+        const stats = await agent.getStats();
+        
+        if (isJsonMode) {
+          outputResult({
+            success: true,
+            message: 'System status retrieved',
+            raw: { health, stats }
+          }, isJsonMode);
+        } else {
+          console.log('🏥 System Health:', health.status);
+          console.log('📊 Statistics:');
+          console.log(`   Active Sessions: ${stats.activeSessionCount}`);
+          console.log(`   Total Workflows: ${stats.totalWorkflows}`);
+          console.log('   Workflows by Type:');
+          Object.entries(stats.workflowsByType).forEach(([type, count]) => {
+            console.log(`     ${type}: ${count}`);
+          });
+          console.log(`   Supported Types: ${stats.supportedWorkflowTypes.join(', ')}`);
+        }
+      }
       
     } catch (error) {
-      console.error('❌ Error getting status:', error instanceof Error ? error.message : error);
-      process.exit(1);
+      outputError(`Error getting status: ${error instanceof Error ? error.message : error}`, isJsonMode);
     }
   });
 
@@ -248,29 +359,37 @@ program
   .description('List all workflows')
   .option('-t, --type <type>', 'Filter by workflow type (meal_planning, recipe_management, ingredient_management)')
   .action(async (options) => {
+    const isJsonMode = program.getOptionValue('json');
+    
     try {
       const workflowType = options.type as WorkflowType | undefined;
       
       if (workflowType && !Object.values(WorkflowType).includes(workflowType)) {
-        console.error(`❌ Invalid workflow type. Supported types: ${Object.values(WorkflowType).join(', ')}`);
-        process.exit(1);
+        outputError(`Invalid workflow type. Supported types: ${Object.values(WorkflowType).join(', ')}`, isJsonMode);
+        return;
       }
       
       const agent = await initializeAgent();
-      
       const workflows = await agent.listWorkflows(workflowType);
       
-      if (workflowType) {
-        console.log(`📋 ${workflowType} workflows:`);
+      if (isJsonMode) {
+        outputResult({
+          success: true,
+          message: workflowType ? `${workflowType} workflows retrieved` : 'All workflows retrieved',
+          raw: workflows
+        }, isJsonMode);
       } else {
-        console.log('📋 All workflows:');
+        if (workflowType) {
+          console.log(`📋 ${workflowType} workflows:`);
+        } else {
+          console.log('📋 All workflows:');
+        }
+        
+        console.log(formatWorkflowList(workflows));
       }
       
-      console.log(formatWorkflowList(workflows));
-      
     } catch (error) {
-      console.error('❌ Error listing workflows:', error instanceof Error ? error.message : error);
-      process.exit(1);
+      outputError(`Error listing workflows: ${error instanceof Error ? error.message : error}`, isJsonMode);
     }
   });
 
@@ -280,10 +399,12 @@ program
   .argument('<thread-id>', 'Thread ID of the workflow to resume')
   .option('-i, --interactive', 'Resume in interactive mode', false)
   .action(async (threadId, options) => {
+    const isJsonMode = program.getOptionValue('json');
+    
     try {
       if (!validateThreadId(threadId)) {
-        console.error('❌ Invalid thread ID format. Expected UUID format.');
-        process.exit(1);
+        outputError('Invalid thread ID format. Expected UUID format.', isJsonMode);
+        return;
       }
 
       const agent = await initializeAgent();
@@ -291,14 +412,21 @@ program
       // Get workflow status first
       const status = await agent.getWorkflowStatus(threadId);
       if (!status) {
-        console.error('❌ Workflow not found.');
-        process.exit(1);
+        outputError('Workflow not found.', isJsonMode);
+        return;
       }
       
-      console.log(`🔄 Resuming ${status.workflowType} workflow (${status.currentStep})`);
+      if (!isJsonMode) {
+        console.log(`🔄 Resuming ${status.workflowType} workflow (${status.currentStep})`);
+      }
       
       if (options.interactive) {
-        // Interactive mode - start conversation loop
+        // Interactive mode - start conversation loop (JSON mode not supported for interactive)
+        if (isJsonMode) {
+          outputError('Interactive mode not supported in JSON output mode', isJsonMode);
+          return;
+        }
+        
         const io = new CLIHandler();
         const participants = status.participants || ['brad'];
         const user = participants[0];
@@ -329,21 +457,20 @@ program
         // Non-interactive mode - just resume
         const result = await agent.resumeWorkflow(threadId);
         
-        if (result.success) {
-          console.log('✅ Workflow resumed successfully');
-          console.log(`   Current step: ${result.currentStep}`);
-          if (result.message) {
-            console.log(`   Message: ${result.message}`);
-          }
-        } else {
-          console.error(`❌ Failed to resume workflow: ${result.message}`);
+        outputResult({
+          success: result.success,
+          message: result.success ? 'Workflow resumed successfully' : `Failed to resume workflow: ${result.message}`,
+          currentStep: result.currentStep,
+          raw: result
+        }, isJsonMode);
+        
+        if (!result.success) {
           process.exit(1);
         }
       }
       
     } catch (error) {
-      console.error('❌ Error resuming workflow:', error instanceof Error ? error.message : error);
-      process.exit(1);
+      outputError(`Error resuming workflow: ${error instanceof Error ? error.message : error}`, isJsonMode);
     }
   });
 
@@ -353,10 +480,12 @@ program
   .argument('<thread-id>', 'Thread ID of the workflow to cancel')
   .option('-f, --force', 'Force cancellation without confirmation', false)
   .action(async (threadId, options) => {
+    const isJsonMode = program.getOptionValue('json');
+    
     try {
       if (!validateThreadId(threadId)) {
-        console.error('❌ Invalid thread ID format. Expected UUID format.');
-        process.exit(1);
+        outputError('Invalid thread ID format. Expected UUID format.', isJsonMode);
+        return;
       }
 
       const agent = await initializeAgent();
@@ -364,11 +493,17 @@ program
       // Get workflow info for confirmation
       const status = await agent.getWorkflowStatus(threadId);
       if (!status) {
-        console.error('❌ Workflow not found.');
-        process.exit(1);
+        outputError('Workflow not found.', isJsonMode);
+        return;
       }
       
       if (!options.force) {
+        if (isJsonMode) {
+          // In JSON mode, force must be used - no interactive confirmation
+          outputError('Interactive confirmation not supported in JSON mode. Use --force flag.', isJsonMode);
+          return;
+        }
+        
         const io = new CLIHandler();
         try {
           const confirm = await io.receiveInput(
@@ -387,16 +522,17 @@ program
       
       const success = await agent.cancelWorkflow(threadId);
       
-      if (success) {
-        console.log('✅ Workflow cancelled successfully');
-      } else {
-        console.error('❌ Failed to cancel workflow');
+      outputResult({
+        success: success,
+        message: success ? 'Workflow cancelled successfully' : 'Failed to cancel workflow'
+      }, isJsonMode);
+      
+      if (!success) {
         process.exit(1);
       }
       
     } catch (error) {
-      console.error('❌ Error cancelling workflow:', error instanceof Error ? error.message : error);
-      process.exit(1);
+      outputError(`Error cancelling workflow: ${error instanceof Error ? error.message : error}`, isJsonMode);
     }
   });
 
