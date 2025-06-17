@@ -81,7 +81,7 @@ export class WorkflowManager {
       // Actually invoke the workflow up to feedback pause
       await workflow.graph.invoke({}, {
         configurable: {
-          thread_id: threadId,
+          threadId: threadId,
           workflow_type: type
         }
       });
@@ -124,7 +124,7 @@ export class WorkflowManager {
 
     const config: RunnableConfig = {
       configurable: {
-        thread_id: threadId,
+        threadId: threadId,
         workflow_type: session.workflowType
       }
     };
@@ -277,15 +277,15 @@ export class WorkflowManager {
     const sessions: WorkflowSession[] = [];
 
     for (const dbWorkflow of dbWorkflows) {
-      const session = this.activeSessions.get(dbWorkflow.thread_id);
+      const session = this.activeSessions.get(dbWorkflow.threadId);
       if (session) {
         sessions.push({ ...session });
       } else {
         // Create session from database data
-        const status = await this.checkpointer.getWorkflowStatus(dbWorkflow.thread_id);
+        const status = await this.checkpointer.getWorkflowStatus(dbWorkflow.threadId);
         if (status) {
           sessions.push({
-            threadId: dbWorkflow.thread_id,
+            threadId: dbWorkflow.threadId,
             workflowType: dbWorkflow.workflow_type,
             participants: ['brad'], // Default, could be enhanced
             createdAt: dbWorkflow.created_at,
@@ -315,10 +315,10 @@ export class WorkflowManager {
     try {
       const workflows = await this.checkpointer.listWorkflows();
       for (const workflow of workflows) {
-        const status = await this.checkpointer.getWorkflowStatus(workflow.thread_id);
+        const status = await this.checkpointer.getWorkflowStatus(workflow.threadId);
         if (status && status.current_step !== 'complete') {
           const session: WorkflowSession = {
-            threadId: workflow.thread_id,
+            threadId: workflow.threadId,
             workflowType: workflow.workflow_type,
             participants: ['brad'], // Default, could be enhanced
             createdAt: workflow.created_at,
@@ -326,7 +326,7 @@ export class WorkflowManager {
             currentStep: status.current_step,
             isActive: true
           };
-          this.activeSessions.set(workflow.thread_id, session);
+          this.activeSessions.set(workflow.threadId, session);
         }
       }
       console.log(`📚 [WORKFLOW] Loaded ${this.activeSessions.size} active sessions from database`);

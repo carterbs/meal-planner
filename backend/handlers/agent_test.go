@@ -24,7 +24,7 @@ func TestStartAgentWorkflow(t *testing.T) {
 	defer func() { agentCommandContext = originalCmd }()
 	UseDummy = false
 	var got []string
-	agentCommandContext = fakeCommand(`{"success":true,"thread_id":"id"}`, t, &got)
+	agentCommandContext = fakeCommand(`{"success":true,"threadId":"id"}`, t, &got)
 
 	reqBody := models.AgentStartRequest{Participants: []string{"brad"}, WorkflowType: "meal_planning"}
 	b, _ := json.Marshal(reqBody)

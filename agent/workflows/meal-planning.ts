@@ -114,7 +114,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         if (!tuple) {
           // Initial run
           state = {
-            thread_id: config.configurable.thread_id,
+            threadId: config.configurable.threadId,
             workflow_type: WorkflowType.MEAL_PLANNING,
             participants: ['brad'],
             created_at: new Date(),
@@ -192,7 +192,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   // Node implementations
   private async initiateNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
-    console.log(`🍽️ [MEAL-WORKFLOW] Initiating meal planning for thread ${state.thread_id}`);
+    console.log(`🍽️ [MEAL-WORKFLOW] Initiating meal planning for thread ${state.threadId}`);
 
     return {
       current_step: MealPlanningStep.GENERATE_PLAN,
@@ -261,7 +261,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       throw new Error("No meal plan to apply feedback to");
     }
     // Gather feedback for this version or use provided feedback_to_apply
-    const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedbackForVersion(state.thread_id, state.iteration_count);
+    const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedbackForVersion(state.threadId, state.iteration_count);
     const feedbackMessages = feedbackEntries.map(f => f.message);
     // Call LLM to pick alternatives based on feedback
     const updatedPlan = await this.applyFeedbackWithLLM(state.meal_plan, feedbackMessages);

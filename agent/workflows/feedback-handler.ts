@@ -23,7 +23,7 @@ export class FeedbackHandler {
       // Get current workflow state
       const config = {
         configurable: {
-          thread_id: input.threadId,
+          threadId: input.threadId,
           workflow_type: WorkflowType.MEAL_PLANNING
         }
       };
@@ -83,7 +83,7 @@ export class FeedbackHandler {
     try {
       const config = {
         configurable: {
-          thread_id: threadId,
+          threadId: threadId,
           workflow_type: WorkflowType.MEAL_PLANNING
         }
       };
@@ -118,7 +118,7 @@ export class FeedbackHandler {
     try {
       const config = {
         configurable: {
-          thread_id: threadId,
+          threadId: threadId,
           workflow_type: WorkflowType.MEAL_PLANNING
         }
       };

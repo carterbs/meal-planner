@@ -21,10 +21,10 @@ START_RESPONSE=$(curl -s -f -X POST http://localhost:8080/api/agent/start \
 echo "Response:"
 echo "$START_RESPONSE" | jq '.'
 
-THREAD_ID=$(echo "$START_RESPONSE" | jq -r '.thread_id')
+THREAD_ID=$(echo "$START_RESPONSE" | jq -r '.threadId')
 
 if [ -z "$THREAD_ID" ] || [ "$THREAD_ID" == "null" ]; then
-  echo "Error: Failed to get thread_id from start response."
+  echo "Error: Failed to get threadId from start response."
   echo "Full response: $START_RESPONSE"
   exit 1
 fi
@@ -39,7 +39,7 @@ curl -s -f -X GET "http://localhost:8080/api/agent/status/$THREAD_ID" | jq '.'
 echo -e "\n=== Adding feedback 1 ==="
 FEEDBACK_JSON_1=$(cat <<EOF
 {
-  "thread_id": "$THREAD_ID",
+  "threadId": "$THREAD_ID",
   "message": "I like this meal plan, but can we have more vegetarian options?",
   "from": "brad"
 }
@@ -54,7 +54,7 @@ curl -s -f -X POST http://localhost:8080/api/agent/feedback \
 echo -e "\n=== Adding feedback 2 ==="
 FEEDBACK_JSON_2=$(cat <<EOF
 {
-  "thread_id": "$THREAD_ID",
+  "threadId": "$THREAD_ID",
   "message": "Can you reduce the amount of dairy in the plan?",
   "from": "shannon"
 }
@@ -69,7 +69,7 @@ curl -s -f -X POST http://localhost:8080/api/agent/feedback \
 echo -e "\n=== Adding feedback 3 ==="
 FEEDBACK_JSON_3=$(cat <<EOF
 {
-  "thread_id": "$THREAD_ID",
+  "threadId": "$THREAD_ID",
   "message": "Please add more high-protein dinner options.",
   "from": "brad"
 }
@@ -84,7 +84,7 @@ curl -s -f -X POST http://localhost:8080/api/agent/feedback \
 echo -e "\n=== Resuming workflow ==="
 RESUME_JSON=$(cat <<EOF
 {
-  "thread_id": "$THREAD_ID",
+  "threadId": "$THREAD_ID",
   "interactive": false
 }
 EOF

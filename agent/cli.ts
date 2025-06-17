@@ -334,11 +334,11 @@ planCommand
       }
       
       const threadId = await agent.startWorkflow(WorkflowType.MEAL_PLANNING, participants);
-      process.stderr.write(`[DEBUG CLI plan start] Raw thread_id from agent.startWorkflow: ${threadId}\n`); // Logged as thread_id for clarity here, testing process.stderr.write
+      process.stderr.write(`[DEBUG CLI plan start] Raw threadId from agent.startWorkflow: ${threadId}\n`); // Logged as threadId for clarity here, testing process.stderr.write
       const resultToOutput = {
         success: true,
         message: 'Meal planning session started',
-        thread_id: threadId,     // Changed to snake_case
+        threadId: threadId,
         current_step: 'started'  // Changed to snake_case
       };
       console.error(`[DEBUG CLI plan start] Object being passed to outputResult: ${JSON.stringify(resultToOutput)}`);

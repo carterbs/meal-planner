@@ -9,7 +9,7 @@ export enum WorkflowType {
 
 // Base workflow state interface
 export interface BaseWorkflowState {
-  thread_id: string;
+  threadId: string;
   workflow_type: WorkflowType;
   participants: string[];
   created_at: Date;
@@ -149,7 +149,7 @@ export type WorkflowState = MealPlanningState | RecipeManagementState | Ingredie
 
 // Zod schemas for validation
 export const BaseWorkflowStateSchema = z.object({
-  thread_id: z.string(),
+  threadId: z.string(),
   workflow_type: z.nativeEnum(WorkflowType),
   participants: z.array(z.string()),
   created_at: z.date(),

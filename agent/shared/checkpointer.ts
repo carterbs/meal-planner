@@ -77,7 +77,7 @@ export class PostgresCheckpointSaver {
   async getTuple(config: RunnableConfig): Promise<[SimpleCheckpoint, SimpleCheckpointMetadata] | undefined> {
     const client = await this.getClient();
     try {
-      const threadId = config.configurable?.thread_id;
+      const threadId = config.configurable?.threadId;
       const checkpointNs = config.configurable?.checkpoint_ns; // renamed to match DB column
       
       if (!threadId || !checkpointNs) {
@@ -124,7 +124,7 @@ export class PostgresCheckpointSaver {
     try {
       const result = await client.query(
         `SELECT 
-          thread_id, 
+          threadId, 
           checkpoint_ns, 
           checkpoint_data, 
           metadata 
@@ -138,7 +138,7 @@ export class PostgresCheckpointSaver {
         yield [
           { 
             configurable: { 
-              thread_id: row.thread_id, 
+              threadId: row.threadId, 
               checkpoint_ns: row.checkpoint_ns 
             } 
           },
@@ -163,7 +163,7 @@ export class PostgresCheckpointSaver {
   ): Promise<RunnableConfig> {
     const client = await this.getClient();
     try {
-      const threadId = config.configurable?.thread_id || uuidv4();
+      const threadId = config.configurable?.threadId || uuidv4();
       const checkpointNs = config.configurable?.checkpoint_ns || uuidv4();
       const workflowType = metadata.workflow_type || checkpoint.channel_values?.workflow_type || WorkflowType.MEAL_PLANNING;
 
@@ -190,7 +190,7 @@ export class PostgresCheckpointSaver {
       return { 
         configurable: { 
           ...config.configurable, 
-          thread_id: threadId,
+          threadId: threadId,
           checkpoint_ns: checkpointNs 
         } 
       };
@@ -224,7 +224,7 @@ export class PostgresCheckpointSaver {
 
   // Utility methods for workflow management
   async listWorkflows(workflowType?: WorkflowType): Promise<Array<{
-    thread_id: string;
+    threadId: string;
     workflow_type: WorkflowType;
     created_at: Date;
     updated_at: Date;
