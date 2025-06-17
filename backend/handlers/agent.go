@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"os/exec"
 	"time"
@@ -21,15 +22,31 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 	// Always add --json flag for API integration
 	allArgs := append([]string{"../agent/dist/cli.js", "--json"}, args...)
 	cmd := agentCommandContext(ctx, "node", allArgs...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &out
+	var stdoutBuffer, stderrBuffer bytes.Buffer
+	cmd.Stdout = &stdoutBuffer
+	cmd.Stderr = &stderrBuffer
+
 	if err := cmd.Run(); err != nil {
-		return models.AgentResponse{}, errors.New(out.String())
+		// Combine stderr and stdout in the error message for comprehensive debugging info
+		errMsg := "agent CLI execution failed: " + err.Error()
+		if stderrBuffer.Len() > 0 {
+			errMsg += "\nStderr: " + stderrBuffer.String()
+		}
+		if stdoutBuffer.Len() > 0 {
+			errMsg += "\nStdout: " + stdoutBuffer.String()
+		}
+		return models.AgentResponse{}, errors.New(errMsg)
 	}
+
+	// Log the buffers before attempting to unmarshal stdout
+	log.Printf("[DEBUG runAgentCLI] Stderr from agent: %s", stderrBuffer.String())
+	log.Printf("[DEBUG runAgentCLI] Stdout from agent: %s", stdoutBuffer.String())
+
+	// Attempt to unmarshal stdout only
 	var resp models.AgentResponse
-	if err := json.Unmarshal(out.Bytes(), &resp); err != nil {
-		return models.AgentResponse{}, err
+	if err := json.Unmarshal(stdoutBuffer.Bytes(), &resp); err != nil {
+		// If unmarshal fails, return an error including the stdout that failed to parse
+		return models.AgentResponse{}, errors.New("failed to unmarshal agent response: " + err.Error() + "\nStdout: " + stdoutBuffer.String()) // Include stdoutBuffer for context
 	}
 	return resp, nil
 }

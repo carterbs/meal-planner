@@ -35,12 +35,13 @@ export class WorkflowManager {
   }
 
   async initialize(): Promise<void> {
-    await this.checkpointer.connect();
+    // No need to explicitly connect anymore as we're using connection pooling
     await this.loadActiveSessions();
   }
 
   async shutdown(): Promise<void> {
     await this.registry.cleanupAll();
+    // This will close the connection pool
     await this.checkpointer.disconnect();
   }
 
@@ -56,43 +57,56 @@ export class WorkflowManager {
     const threadId = options.threadId || uuidv4();
     const participants = options.participants || ['brad'];
 
-    // Create workflow session
-    const session: WorkflowSession = {
-      threadId,
-      workflowType: type,
-      participants,
-      createdAt: new Date(),
-      lastUpdated: new Date(),
-      currentStep: 'initiate',
-      isActive: true
-    };
+    try {
+      // Create workflow session
+      const session: WorkflowSession = {
+        threadId,
+        workflowType: type,
+        participants,
+        createdAt: new Date(),
+        lastUpdated: new Date(),
+        currentStep: 'initiate',
+        isActive: true
+      };
 
-    this.activeSessions.set(threadId, session);
+      this.activeSessions.set(threadId, session);
 
-    // Get or create workflow instance
-    const workflow = await this.registry.getOrCreateWorkflow(
-      type,
-      threadId,
-      this.checkpointer
-    );
+      // Get or create workflow instance
+      const workflow = await this.registry.getOrCreateWorkflow(
+        type,
+        threadId,
+        this.checkpointer
+      );
 
-    // Actually invoke the workflow up to feedback pause
-    await workflow.graph.invoke({}, {
-      configurable: {
-        thread_id: threadId,
-        workflow_type: type
-      }
-    });
+      // Actually invoke the workflow up to feedback pause
+      await workflow.graph.invoke({}, {
+        configurable: {
+          thread_id: threadId,
+          workflow_type: type
+        }
+      });
 
-    console.log(`🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`);
-    return threadId;
+      console.log(`🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`);
+      return threadId;
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`❌ [WORKFLOW] Error starting workflow ${type}:`, error);
+      throw new Error(`Failed to start workflow: ${errorMessage}`);
+    }
   }
 
   // Execute a step in a workflow
   async executeWorkflowStep(
     threadId: string,
     input: Record<string, any> = {}
-  ): Promise<any> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+    currentStep?: string;
+    threadId: string;
+    [key: string]: any;
+  }> {
     const session = this.activeSessions.get(threadId);
     if (!session) {
       throw new Error(`No active session found for thread ID: ${threadId}`);
@@ -124,15 +138,31 @@ export class WorkflowManager {
       session.currentStep = result.current_step || session.currentStep;
       
       // Check if workflow is complete
-      if (result.current_step === 'complete') {
+      const isComplete = result.current_step === 'complete';
+      if (isComplete) {
         session.isActive = false;
         console.log(`✅ [WORKFLOW] Completed ${session.workflowType} workflow: ${threadId}`);
       }
 
-      return result;
+      // Format the response
+      return {
+        success: true,
+        message: isComplete ? 'Workflow completed successfully' : 'Workflow step executed successfully',
+        currentStep: session.currentStep,
+        threadId,
+        ...result
+      };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`❌ [WORKFLOW] Error executing step for ${threadId}:`, error);
-      throw error;
+      
+      return {
+        success: false,
+        message: `Error executing workflow step: ${errorMessage}`,
+        currentStep: session.currentStep,
+        threadId,
+        error: errorMessage
+      };
     }
   }
 
@@ -140,37 +170,65 @@ export class WorkflowManager {
   async resumeWorkflow(
     threadId: string,
     input: Record<string, any> = {}
-  ): Promise<any> {
-    // Check if session exists in memory
-    let session = this.activeSessions.get(threadId);
-    
-    // If not in memory, try to load from database
-    if (!session) {
-      const status = await this.checkpointer.getWorkflowStatus(threadId);
-      if (status) {
-        session = {
-          threadId,
-          workflowType: status.workflow_type,
-          participants: ['brad'], // Default participant, could be enhanced
-          createdAt: status.created_at,
-          lastUpdated: status.updated_at,
-          currentStep: status.current_step,
-          isActive: status.current_step !== 'complete'
-        };
-        this.activeSessions.set(threadId, session);
+  ): Promise<{
+    success: boolean;
+    message: string;
+    currentStep?: string;
+    threadId: string;
+    [key: string]: any;
+  }> {
+    try {
+      // Check if session exists in memory
+      let session = this.activeSessions.get(threadId);
+      
+      // If not in memory, try to load from database
+      if (!session) {
+        const status = await this.checkpointer.getWorkflowStatus(threadId);
+        if (status) {
+          session = {
+            threadId,
+            workflowType: status.workflow_type,
+            participants: ['brad'], // Default participant, could be enhanced
+            createdAt: status.created_at,
+            lastUpdated: status.updated_at,
+            currentStep: status.current_step,
+            isActive: status.current_step !== 'complete'
+          };
+          this.activeSessions.set(threadId, session);
+        }
       }
-    }
 
-    if (!session) {
-      throw new Error(`No workflow found for thread ID: ${threadId}`);
-    }
 
-    if (!session.isActive) {
-      throw new Error(`Workflow ${threadId} is already complete`);
-    }
+      if (!session) {
+        return {
+          success: false,
+          message: `No workflow found for thread ID: ${threadId}`,
+          threadId
+        };
+      }
 
-    console.log(`🔄 [WORKFLOW] Resuming ${session.workflowType} workflow: ${threadId}`);
-    return await this.executeWorkflowStep(threadId, input);
+      if (!session.isActive) {
+        return {
+          success: false,
+          message: `Workflow ${threadId} is already complete`,
+          currentStep: session.currentStep,
+          threadId
+        };
+      }
+
+      console.log(`🔄 [WORKFLOW] Resuming ${session.workflowType} workflow: ${threadId}`);
+      return await this.executeWorkflowStep(threadId, input);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`❌ [WORKFLOW] Error resuming workflow ${threadId}:`, error);
+      
+      return {
+        success: false,
+        message: `Error resuming workflow: ${errorMessage}`,
+        threadId,
+        error: errorMessage
+      };
+    }
   }
 
   // Cancel a workflow

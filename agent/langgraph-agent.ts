@@ -90,7 +90,7 @@ export class LangGraphAgent {
    */
   async startWorkflow(type: WorkflowType, participants: string[] = ['brad']): Promise<string> {
     this.ensureInitialized();
-    return await this.workflowManager.startWorkflow(type, { participants });
+    return await this.workflowManager.startWorkflow(type, { participants: participants });
   }
 
   /**
