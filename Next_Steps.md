@@ -32,7 +32,7 @@ Successfully implemented and tested the agent backend API endpoints. The agent c
 **Request:**
 ```json
 {
-  "thread_id": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
+  "threadID": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
   "message": "We shouldn't have baked spaghetti and spaghetti in the same week - too much pasta. Can you replace one with something different?",
   "from": "brad"
 }
@@ -52,7 +52,7 @@ Successfully implemented and tested the agent backend API endpoints. The agent c
 **Request:**
 ```json
 {
-  "thread_id": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
+  "threadID": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
   "interactive": false
 }
 ```
@@ -77,7 +77,7 @@ Successfully implemented and tested the agent backend API endpoints. The agent c
         // ... more meals
       ]
     },
-    "thread_id": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
+    "threadID": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
     "created_at": "2025-06-16T00:33:22.003Z",
     "updated_at": "2025-06-16T00:35:53.639Z",
     "current_step": "await_feedback",

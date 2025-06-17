@@ -199,7 +199,7 @@ export class LangGraphAgent {
   async getWorkflowState(threadId: string): Promise<MealPlanningState> {
     this.ensureInitialized();
     // @ts-ignore
-    const tuple = await this.workflowManager['checkpointer'].getTuple({ configurable: { thread_id: threadId } });
+    const tuple = await this.workflowManager['checkpointer'].getTuple({ configurable: { threadId: threadId } });
     if (!tuple) throw new Error(`No state found for thread ${threadId}`);
     const [checkpoint] = tuple;
     return checkpoint.channel_values as MealPlanningState;

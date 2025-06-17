@@ -22,16 +22,16 @@ func (r *AgentStartRequest) Validate() error {
 }
 
 // AgentFeedbackRequest represents feedback for a workflow
-// Example JSON: {"thread_id":"uuid","message":"text","from":"brad"}
+// Example JSON: {"threadId":"uuid","message":"text","from":"brad"}
 type AgentFeedbackRequest struct {
-	ThreadID string `json:"thread_id"`
+	ThreadID string `json:"threadId"`
 	Message  string `json:"message"`
 	From     string `json:"from"`
 }
 
 func (r *AgentFeedbackRequest) Validate() error {
 	if r.ThreadID == "" {
-		return errors.New("thread_id required")
+		return errors.New("threadId required")
 	}
 	if r.Message == "" {
 		return errors.New("message required")
@@ -43,15 +43,15 @@ func (r *AgentFeedbackRequest) Validate() error {
 }
 
 // AgentResumeRequest represents a resume request
-// Example JSON: {"thread_id":"uuid","interactive":false}
+// Example JSON: {"threadId":"uuid","interactive":false}
 type AgentResumeRequest struct {
-	ThreadID    string `json:"thread_id"`
+	ThreadID    string `json:"threadId"`
 	Interactive bool   `json:"interactive"`
 }
 
 func (r *AgentResumeRequest) Validate() error {
 	if r.ThreadID == "" {
-		return errors.New("thread_id required")
+		return errors.New("threadId required")
 	}
 	return nil
 }
@@ -65,15 +65,15 @@ func (r *AgentResumeRequest) Validate() error {
 type AgentResponse struct {
 	Success     bool        `json:"success"`
 	Message     string      `json:"message,omitempty"`
-	ThreadID    string      `json:"thread_id,omitempty"`
+	ThreadID    string      `json:"threadId,omitempty"`
 	CurrentStep string      `json:"current_step,omitempty"`
 	Raw         interface{} `json:"raw,omitempty"`
 }
 
 // WorkflowStatus represents high level workflow info
-// {"thread_id":"uuid","workflow_type":"meal_planning","current_step":"step","participants":["brad"]}
+// {"threadId":"uuid","workflow_type":"meal_planning","current_step":"step","participants":["brad"]}
 type WorkflowStatus struct {
-	ThreadID     string   `json:"thread_id"`
+	ThreadID     string   `json:"threadId"`
 	WorkflowType string   `json:"workflow_type"`
 	CurrentStep  string   `json:"current_step"`
 	Participants []string `json:"participants"`
