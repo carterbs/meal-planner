@@ -4,11 +4,167 @@
 import { config as dotenvConfig } from 'dotenv';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { writeFileSync, appendFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // In built version, we're in dist/ so go up one level to agent/
 const envPath = join(__dirname, '..', '.env');
+const debugLogPath = join(__dirname, '..', 'cli-debug.log');
+
+// Debug logger that works in JSON mode
+function debugLog(message: string) {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] ${message}\n`;
+  try {
+    appendFileSync(debugLogPath, logEntry);
+  } catch (err) {
+    // If file doesn't exist, create it
+    try {
+      writeFileSync(debugLogPath, logEntry);
+    } catch (createErr) {
+      // Ignore logging errors to prevent blocking execution
+    }
+  }
+}
+
+debugLog('CLI starting...');
+
+// Smart output filtering for JSON mode
+let outputBuffer: string[] = [];
+let errorBuffer: string[] = [];
+let originalStdoutWrite: typeof process.stdout.write;
+let originalStderrWrite: typeof process.stderr.write;
+// Flag to track if a valid JSON response has already been emitted
+let jsonOutputSent = false;
+
+function extractValidJSON(buffer: string[]): string | null {
+  // Join all buffered chunks for robust multiline search
+  const full = buffer.join('');
+  // Find all substrings that look like JSON objects
+  const potentialMatches = full.match(/\{[\s\S]*?\}/g);
+  if (!potentialMatches) {
+    debugLog('No brace-enclosed segments found when extracting JSON');
+    return null;
+  }
+  // Iterate from last to first to get the FINAL response
+  for (let i = potentialMatches.length - 1; i >= 0; i--) {
+    const candidate = potentialMatches[i];
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === 'object' && 'success' in parsed) {
+        debugLog(`Valid JSON extracted (size ${candidate.length})`);
+        return candidate;
+      }
+    } catch {
+      // Not valid JSON, keep searching
+    }
+  }
+  return null;
+}
+
+
+// Real-time JSON detection helper – attempts to emit a clean JSON line to the original stdout
+function tryOutputJSON(str: string): boolean {
+  const trimmed = str.trim();
+  if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return false;
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed && typeof parsed === 'object' && 'success' in parsed) {
+      originalStdoutWrite.call(process.stdout, trimmed + '\n');
+      debugLog('Real-time JSON emitted');
+      jsonOutputSent = true;
+      return true;
+    }
+  } catch {
+    // ignore JSON parse errors – not a valid JSON payload
+  }
+  return false;
+}
+
+function flushFilteredOutput() {
+  if (!process.argv.includes('--json')) {
+    return;
+  }
+  // Skip flushing if we already emitted a valid JSON response in real time
+  if (jsonOutputSent) {
+    debugLog('Filtered JSON already emitted, skipping final flush');
+    return;
+  }
+  const validJSON = extractValidJSON(outputBuffer);
+  if (validJSON) {
+    originalStdoutWrite.call(process.stdout, validJSON + '\n');
+    debugLog('Successfully output filtered JSON response (flush)');
+  } else {
+    const errorMsg = 'No valid JSON response found in output';
+    // Send entire captured output to stderr for diagnostics
+    originalStderrWrite.call(process.stderr, errorMsg + '\n' + outputBuffer.join(''));
+    debugLog(`Error: ${errorMsg}`);
+    debugLog(`Full output buffer logged to stderr (${outputBuffer.length} chunks)`);
+  }
+
+}
+
+// Setup output capture in JSON mode
+if (process.argv.includes('--json')) {
+  // Preserve original write functions
+  originalStdoutWrite = process.stdout.write.bind(process.stdout);
+  originalStderrWrite = process.stderr.write.bind(process.stderr);
+  
+  // Override stdout to capture all output
+  process.stdout.write = function(chunk: any): boolean {
+    const str = chunk.toString();
+    outputBuffer.push(str);
+    debugLog(`[STDOUT] ${str.replace(/\n/g, '\\n')}`);
+    // Attempt real-time JSON detection/output
+    tryOutputJSON(str);
+    return true;
+  } as any;
+  
+  // Override stderr to capture errors
+  process.stderr.write = function(chunk: any): boolean {
+    const str = chunk.toString();
+    errorBuffer.push(str);
+    debugLog(`[STDERR] ${str.replace(/\n/g, '\\n')}`);
+    // Forward to original stderr so that errors are visible immediately
+    originalStderrWrite.call(process.stderr, str);
+    return true;
+  } as any;
+  
+  // Override console methods to also use capture
+  console.log = (message: any) => {
+    const str = String(message) + '\n';
+    outputBuffer.push(str);
+    debugLog(`[CONSOLE.LOG] ${str.replace(/\n/g, '\\n')}`);
+    // Attempt real-time JSON detection/output
+    tryOutputJSON(str);
+  };
+  console.error = debugLog;
+  console.warn = debugLog;
+  console.info = debugLog;
+  console.debug = debugLog;
+  
+  // Setup cleanup on process exit
+  process.on('exit', flushFilteredOutput);
+  process.on('SIGINT', () => {
+    debugLog('SIGINT received, flushing output...');
+    flushFilteredOutput();
+    process.exit(0);
+  });
+  process.on('SIGTERM', () => {
+    debugLog('SIGTERM received, flushing output...');
+    flushFilteredOutput();
+    process.exit(0);
+  });
+} else {
+  // Non-JSON mode: override console methods to use file logging
+  console.log = debugLog;
+  console.error = debugLog;
+  console.warn = debugLog;
+  console.info = debugLog;
+  console.debug = debugLog;
+}
+
 const result = dotenvConfig({ path: envPath });
 
 // Debug environment loading (only in non-JSON mode)
@@ -17,6 +173,10 @@ if (!process.argv.includes('--json')) {
   console.log(`📧 [ENV] Result:`, result.error ? `Error: ${result.error}` : 'Success');
   console.log(`📧 [ENV] OPENAI_API_KEY present:`, !!process.env.OPENAI_API_KEY);
 }
+
+debugLog(`Environment loaded from: ${envPath}`);
+debugLog(`Environment result: ${result.error ? `Error: ${result.error}` : 'Success'}`);
+debugLog(`OPENAI_API_KEY present: ${!!process.env.OPENAI_API_KEY}`);
 
 // Now import everything else
 import { Command } from 'commander';
@@ -65,6 +225,7 @@ function outputResult(result: {
   raw?: any;
 }, isJsonMode: boolean = false) {
   if (isJsonMode) {
+    // In JSON mode, this will be captured and filtered
     console.log(JSON.stringify(result));
   } else {
     // Handle console output based on result type
@@ -88,7 +249,10 @@ function outputResult(result: {
 // Helper function to output errors in JSON or console format
 function outputError(message: string, isJsonMode: boolean = false) {
   if (isJsonMode) {
+    // In JSON mode, this will be captured and filtered
     console.log(JSON.stringify({ success: false, message }));
+    // Force flush and exit in JSON mode
+    flushFilteredOutput();
   } else {
     console.error(`❌ ${message}`);
   }
@@ -170,17 +334,33 @@ planCommand
       }
       
       const threadId = await agent.startWorkflow(WorkflowType.MEAL_PLANNING, participants);
-      
-      outputResult({
+      process.stderr.write(`[DEBUG CLI plan start] Raw thread_id from agent.startWorkflow: ${threadId}\n`); // Logged as thread_id for clarity here, testing process.stderr.write
+      const resultToOutput = {
         success: true,
         message: 'Meal planning session started',
-        threadId: threadId,
-        currentStep: 'started'
-      }, isJsonMode);
+        thread_id: threadId,     // Changed to snake_case
+        current_step: 'started'  // Changed to snake_case
+      };
+      console.error(`[DEBUG CLI plan start] Object being passed to outputResult: ${JSON.stringify(resultToOutput)}`);
+      outputResult(resultToOutput, isJsonMode);
       
       if (!isJsonMode) {
         console.log(`   Use: meal-agent plan feedback "${threadId}" "your feedback here"`);
         console.log(`   Or:  meal-agent resume ${threadId}`);
+      } else {
+        // In JSON mode, clean up and exit to prevent hanging
+        debugLog('Shutting down agent and cleaning up connections...');
+        if (agent) {
+          try {
+            await agent.shutdown();
+            debugLog('Agent shutdown complete');
+          } catch (shutdownError) {
+            debugLog(`Error during agent shutdown: ${shutdownError}`);
+          }
+        }
+        debugLog('Flushing filtered output and exiting process');
+        flushFilteredOutput();
+        process.exit(0);
       }
       
     } catch (error) {
@@ -324,6 +504,7 @@ program
           message: `Workflow status: ${status.currentStep}`,
           raw: status
         }, isJsonMode);
+        if (isJsonMode) process.exit(0);
         
       } else {
         // Get system status
@@ -336,6 +517,7 @@ program
             message: 'System status retrieved',
             raw: { health, stats }
           }, isJsonMode);
+          process.exit(0);
         } else {
           console.log('🏥 System Health:', health.status);
           console.log('📊 Statistics:');
@@ -456,14 +638,20 @@ program
       } else {
         // Non-interactive mode - just resume
         const result = await agent.resumeWorkflow(threadId);
-        
+
         outputResult({
           success: result.success,
           message: result.success ? 'Workflow resumed successfully' : `Failed to resume workflow: ${result.message}`,
           currentStep: result.currentStep,
           raw: result
         }, isJsonMode);
-        
+
+        if (isJsonMode) {
+          debugLog('Shutting down agent after resume...');
+          flushFilteredOutput();
+          process.exit(result.success ? 0 : 1);
+        }
+
         if (!result.success) {
           process.exit(1);
         }
