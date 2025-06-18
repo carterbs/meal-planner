@@ -13,6 +13,7 @@ import {
   FeedbackEntry
 } from '../shared/types.js';
 import { BaseWorkflow } from '../registry.js';
+import { debugLog } from '../cli.js';
 import { PostgresCheckpointSaver } from '../shared/checkpointer.js';
 import { FeedbackHandler } from './feedback-handler.js';
 import {
@@ -77,12 +78,13 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
     await this.client.connect(transport);
 
-    // Initialize LLM
+        // Initialize LLM
+    const isTestMode = process.env.NODE_ENV === 'test';
     this.llm = isCodex
       ? new FakeChatModel({})
       : new ChatOpenAI({
         temperature: 0,
-        modelName: "gpt-4o-mini"
+        modelName: isTestMode ? "gpt-4.1-nano" : "gpt-4.1"
       });
     // Initialize nano LLM for feedback analysis
     this.nanoLlm = new ChatOpenAI({
@@ -286,6 +288,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async applyFeedbackWithLLM(plan: WeeklyMealPlan, feedback: string[]): Promise<WeeklyMealPlan> {
+    const t0 = Date.now();
+    debugLog(`[FEEDBACK] applyFeedbackWithLLM start (feedbackCount=${feedback.length})`);
     // Fetch available meals
     const mealsResp = await this.client.callTool({ name: 'getMeals', arguments: {} });
     const availableMeals: any[] = JSON.parse(this.extractJsonFromResponse((mealsResp as MCPToolResult).content[0].text));
@@ -335,6 +339,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     } catch (error) {
       console.error("❌ [MEAL-WORKFLOW] Failed to parse LLM feedback response:", error);
     }
+    debugLog(`[FEEDBACK] applyFeedbackWithLLM finished in ${Date.now() - t0}ms`);
     return updatedPlan;
   }
 

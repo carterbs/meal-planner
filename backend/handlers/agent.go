@@ -21,12 +21,20 @@ var agentCommandContext = exec.CommandContext
 func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, error) {
 	// Always add --json flag for API integration
 	allArgs := append([]string{"../agent/dist/cli.js", "--json"}, args...)
+	// Record the start time for profiling
+	startTime := time.Now()
+	log.Printf("[DEBUG runAgentCLI] Executing command: node %v", allArgs)
+
 	cmd := agentCommandContext(ctx, "node", allArgs...)
 	var stdoutBuffer, stderrBuffer bytes.Buffer
 	cmd.Stdout = &stdoutBuffer
 	cmd.Stderr = &stderrBuffer
 
-	if err := cmd.Run(); err != nil {
+	err := cmd.Run()
+	duration := time.Since(startTime)
+	log.Printf("[DEBUG runAgentCLI] Command completed in %s", duration)
+
+	if err != nil {
 		// Combine stderr and stdout in the error message for comprehensive debugging info
 		errMsg := "agent CLI execution failed: " + err.Error()
 		if stderrBuffer.Len() > 0 {
@@ -35,6 +43,7 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 		if stdoutBuffer.Len() > 0 {
 			errMsg += "\nStdout: " + stdoutBuffer.String()
 		}
+		log.Printf("[ERROR runAgentCLI] %s", errMsg)
 		return models.AgentResponse{}, errors.New(errMsg)
 	}
 
