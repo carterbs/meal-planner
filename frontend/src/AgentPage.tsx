@@ -39,7 +39,7 @@ const AgentPage: React.FC = () => {
 
   const sendMessage = async () => {
     if (!session || !input.trim()) return;
-    const userMsg = { sender: 'user', text: input };
+    const userMsg: ChatMessage = { sender: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsWorking(true);
