@@ -3,6 +3,7 @@ import { RunnableConfig } from '@langchain/core/runnables';
 import { WorkflowType } from './shared/types.js';
 import { PostgresCheckpointSaver, PostgresCheckpointConfig } from './shared/checkpointer.js';
 import { WorkflowRegistry } from './registry.js';
+import { debugLog } from './cli.js';
 
 export interface WorkflowSession {
   threadId: string;
@@ -88,7 +89,7 @@ export class WorkflowManager {
 
       console.log(`🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`);
       return threadId;
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`❌ [WORKFLOW] Error starting workflow ${type}:`, error);
@@ -132,11 +133,11 @@ export class WorkflowManager {
     try {
       // Execute the workflow step
       const result = await workflow.graph.invoke(input, config);
-      
+
       // Update session
       session.lastUpdated = new Date();
       session.currentStep = result.current_step || session.currentStep;
-      
+
       // Check if workflow is complete
       const isComplete = result.current_step === 'complete';
       if (isComplete) {
@@ -155,7 +156,7 @@ export class WorkflowManager {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`❌ [WORKFLOW] Error executing step for ${threadId}:`, error);
-      
+
       return {
         success: false,
         message: `Error executing workflow step: ${errorMessage}`,
@@ -178,12 +179,15 @@ export class WorkflowManager {
     [key: string]: any;
   }> {
     try {
+      const resumeWorkflowStart = Date.now();
       // Check if session exists in memory
       let session = this.activeSessions.get(threadId);
-      
+
       // If not in memory, try to load from database
       if (!session) {
+        const getWorkflowStatusStart = Date.now();
         const status = await this.checkpointer.getWorkflowStatus(threadId);
+        debugLog(`[WORKFLOW] getWorkflowStatus took ${Date.now() - getWorkflowStatusStart}ms`);
         if (status) {
           session = {
             threadId,
@@ -217,11 +221,16 @@ export class WorkflowManager {
       }
 
       console.log(`🔄 [WORKFLOW] Resuming ${session.workflowType} workflow: ${threadId}`);
-      return await this.executeWorkflowStep(threadId, input);
+      const executeWorkflowStepStart = Date.now();
+      const result = await this.executeWorkflowStep(threadId, input);
+      const executeWorkflowStepEnd = Date.now();
+      debugLog(`[WORKFLOW] executeWorkflowStep took ${executeWorkflowStepEnd - executeWorkflowStepStart}ms`);
+      debugLog(`[WORKFLOW] resumeWorkflow took ${Date.now() - resumeWorkflowStart}ms`);
+      return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error(`❌ [WORKFLOW] Error resuming workflow ${threadId}:`, error);
-      
+
       return {
         success: false,
         message: `Error resuming workflow: ${errorMessage}`,

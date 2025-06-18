@@ -13,7 +13,7 @@ const envPath = join(__dirname, '..', '.env');
 const debugLogPath = join(__dirname, '..', 'cli-debug.log');
 
 // Debug logger that works in JSON mode
-function debugLog(message: string) {
+export function debugLog(message: string) {
   const timestamp = new Date().toISOString();
   const logEntry = `[${timestamp}] ${message}\n`;
   try {
@@ -659,8 +659,11 @@ program
         }
       } else {
         // Non-interactive mode - just resume
+        const resumeStart = Date.now();
+        debugLog('resume: resumeWorkflow start');
         const result = await agent.resumeWorkflow(threadId);
-
+        debugLog(`resume: resumeWorkflow done (${Date.now() - resumeStart}ms)`);
+        debugLog(`resume command total ${(Date.now() - resumeStart)}ms`);
         outputResult({
           success: result.success,
           message: result.success ? 'Workflow resumed successfully' : `Failed to resume workflow: ${result.message}`,
