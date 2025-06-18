@@ -78,16 +78,31 @@ export class PostgresCheckpointSaver {
     const client = await this.getClient();
     try {
       const threadId = config.configurable?.threadId;
-      const checkpointNs = config.configurable?.checkpoint_ns; // renamed to match DB column
+      const checkpointNs = config.configurable?.checkpoint_ns; // optional – when absent, fetch latest
       
-      if (!threadId || !checkpointNs) {
+      if (!threadId) {
+        // Without a thread ID there is no way to look up a checkpoint
         return undefined;
       }
-      
-      const result = await client.query(
-        'SELECT checkpoint_data, metadata FROM workflow_checkpoints WHERE thread_id = $1 AND checkpoint_ns = $2',
-        [threadId, checkpointNs]
-      );
+
+      let result;
+      if (checkpointNs) {
+        // Fetch the specific checkpoint requested
+        result = await client.query(
+          'SELECT checkpoint_data, metadata FROM workflow_checkpoints WHERE thread_id = $1 AND checkpoint_ns = $2',
+          [threadId, checkpointNs]
+        );
+      } else {
+        // Fallback: fetch the MOST RECENT checkpoint for the thread
+        result = await client.query(
+          `SELECT checkpoint_data, metadata
+           FROM workflow_checkpoints
+           WHERE thread_id = $1
+           ORDER BY updated_at DESC
+           LIMIT 1`,
+          [threadId]
+        );
+      }
       
       if (result.rows.length === 0) {
         return undefined;
@@ -186,6 +201,9 @@ export class PostgresCheckpointSaver {
           JSON.stringify(metadata)
         ]
       );
+      // Debug logging for checkpoint persistence
+      const step = checkpoint?.channel_values?.current_step || checkpoint?.channel_values?.currentStep || 'unknown';
+      console.log(`[CHECKPOINTER] Saved checkpoint: threadId=${threadId}, checkpointNs=${checkpointNs}, workflowType=${workflowType}, current_step=${step}`);
       
       return { 
         configurable: { 
