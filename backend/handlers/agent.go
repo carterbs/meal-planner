@@ -104,11 +104,14 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
+	log.Printf("[DEBUG AddAgentFeedback] Running agent CLI: plan feedback %s %s --from %s", req.ThreadID, req.Message, req.From)
 	resp, err := runAgentCLI(ctx, "plan", "feedback", req.ThreadID, req.Message, "--from", req.From)
 	if err != nil {
+		log.Printf("[ERROR AddAgentFeedback] agent CLI error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	log.Printf("[DEBUG AddAgentFeedback] agent CLI response: %+v", resp)
 	writeJSON(w, resp)
 }
 

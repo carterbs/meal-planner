@@ -334,12 +334,21 @@ planCommand
       }
       
       const threadId = await agent.startWorkflow(WorkflowType.MEAL_PLANNING, participants);
-      process.stderr.write(`[DEBUG CLI plan start] Raw threadId from agent.startWorkflow: ${threadId}\n`); // Logged as threadId for clarity here, testing process.stderr.write
+      process.stderr.write(`[DEBUG CLI plan start] Raw threadId from agent.startWorkflow: ${threadId}\n`);
+
+      let initialState = undefined;
+      try {
+        initialState = await agent.getWorkflowState(threadId);
+      } catch (e) {
+        process.stderr.write(`[DEBUG CLI plan start] Failed to fetch initial workflow state: ${e}\n`);
+      }
+
       const resultToOutput = {
         success: true,
         message: 'Meal planning session started',
         threadId: threadId,
-        current_step: 'started'  // Changed to snake_case
+        current_step: 'started',
+        initialState
       };
       console.error(`[DEBUG CLI plan start] Object being passed to outputResult: ${JSON.stringify(resultToOutput)}`);
       outputResult(resultToOutput, isJsonMode);
@@ -403,8 +412,21 @@ planCommand
           success: true,
           message: `Feedback added successfully from ${options.from}`
         }, isJsonMode);
-        
-        if (!isJsonMode) {
+
+        if (isJsonMode) {
+          debugLog('Shutting down agent and cleaning up connections...');
+          if (agent) {
+            try {
+              await agent.shutdown();
+              debugLog('Agent shutdown complete');
+            } catch (shutdownError) {
+              debugLog(`Error during agent shutdown: ${shutdownError}`);
+            }
+          }
+          debugLog('Flushing filtered output and exiting process');
+          flushFilteredOutput();
+          process.exit(0);
+        } else {
           console.log(`   Use: meal-agent resume ${threadId} to continue the workflow`);
         }
       } else {
