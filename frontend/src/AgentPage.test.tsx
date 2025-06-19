@@ -82,7 +82,7 @@ test('sends a message in an existing session', async () => {
   });
   render(<AgentPage />);
   fireEvent.click(screen.getByTestId('start-session'));
-  await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+  await waitFor(() => expect(screen.getByTestId('message-input')).toBeInTheDocument());
 
   // feedback response
   (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({}) });
@@ -103,6 +103,44 @@ test('sends a message in an existing session', async () => {
     if (resumeCall) {
       expect(JSON.parse(resumeCall[1].body).threadId).toBe('123');
     }
-    expect(screen.getByText('agent: ok')).toBeInTheDocument();
+    expect(screen.getByText('ok')).toBeInTheDocument();
   });
+});
+
+test('pressing Enter sends the message', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({ threadId: '123', currentStep: 'started' }) });
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+  await waitFor(() => expect(screen.getByTestId('message-input')).toBeInTheDocument());
+
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({}) });
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({ message: 'ok', raw: { meal_plan: { days: [] } } }) });
+
+  fireEvent.change(screen.getByTestId('message-input'), { target: { value: 'hello' } });
+  fireEvent.keyPress(screen.getByTestId('message-input'), { key: 'Enter', code: 'Enter', charCode: 13 });
+
+  await waitFor(() => expect(screen.getByText('ok')).toBeInTheDocument());
+});
+
+test('highlights changed meal plan entries', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    json: () => Promise.resolve({
+      threadId: '123',
+      currentStep: 'started',
+      initialState: { meal_plan: { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 1, name: 'Eggs', effort: 1 } } ] } }
+    })
+  });
+
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+
+  await waitFor(() => expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument());
+
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({}) });
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({ message: 'ok', raw: { meal_plan: { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 2, name: 'Pancakes', effort: 1 } } ] } } }) });
+
+  fireEvent.change(screen.getByTestId('message-input'), { target: { value: 'change' } });
+  fireEvent.click(screen.getByTestId('send-button'));
+
+  await waitFor(() => expect(screen.getByTestId('meal-0-breakfast').style.animation).not.toBe('')); 
 });
