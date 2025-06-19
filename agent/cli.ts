@@ -691,10 +691,14 @@ program
         debugLog(`resume: resumeWorkflow done (${Date.now() - resumeStart}ms)`);
         debugLog(`resume command total ${(Date.now() - resumeStart)}ms`);
         
-        // Generate contextual message if there's recent feedback
+        // Use LLM-generated message from workflow if available, otherwise fall back to generic message
         let message = result.success ? 'Workflow resumed successfully' : `Failed to resume workflow: ${result.message}`;
         
-        if (result.success && hasRecentFeedbackInResult(result)) {
+        if (result.success && (result.user_message || result.raw?.user_message)) {
+          message = result.user_message || result.raw?.user_message;
+          debugLog(`[RESUME] Using workflow-generated message: ${message}`);
+        } else if (result.success && hasRecentFeedbackInResult(result)) {
+          // Fallback to separate message generation if workflow didn't provide a message
           try {
             const messageGenerator = new MessageGenerator();
             const feedbackHistory = result.feedback_history || result.raw?.feedback_history || [];
@@ -710,7 +714,7 @@ program
               iteration: result.iteration_count || result.raw?.iteration_count
             });
             message = contextualMessage;
-            debugLog(`[RESUME] Generated contextual message: ${contextualMessage}`);
+            debugLog(`[RESUME] Generated fallback contextual message: ${contextualMessage}`);
           } catch (error) {
             debugLog(`[RESUME] Error generating contextual message: ${error}`);
             // Fall back to default message
