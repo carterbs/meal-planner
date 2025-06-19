@@ -95,13 +95,21 @@ const AgentPage: React.FC = () => {
       const res = await fetch('/api/agent/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participants: ['user'], workflow_type: 'meal_planning' })
+        body: JSON.stringify({ participants: ['user'], workflowType: 'meal_planning' })
       });
       const data = await res.json();
       setSession({ threadId: data.threadId, currentStep: data.currentStep });
-      const plan = data.raw?.meal_plan || data.initialState?.meal_plan || data.meal_plan;
-      if (plan) setMealPlan(plan);
-      if (data.raw?.shopping_list_formatted) setShoppingList(data.raw.shopping_list_formatted);
+      
+      // Extract meal plan from various possible locations in response
+      const plan = data.initialState?.meal_plan || data.raw?.meal_plan || data.meal_plan;
+      if (plan) {
+        console.log('Setting meal plan from session start:', plan);
+        setMealPlan(plan);
+      }
+      
+      if (data.raw?.shopping_list_formatted || data.initialState?.shopping_list) {
+        setShoppingList(data.raw?.shopping_list_formatted || data.initialState?.shopping_list);
+      }
       if (data.message) setMessages([{ sender: 'agent', text: data.message }]);
     } catch (err) {
       console.error('Failed to start session', err);
