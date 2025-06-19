@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Box, Button, TextField, List, ListItem, Typography } from '@mui/material';
+import React, { useState, useRef, useEffect } from 'react';
+import { Box, Button, TextField, Typography, Paper, Avatar, IconButton } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
 import MealPlanDisplay, { WeeklyMealPlan } from './components/MealPlanDisplay';
 
 // Utility to format a WeeklyMealPlan for clipboard copying
@@ -53,6 +54,40 @@ const AgentPage: React.FC = () => {
   const [isWorking, setIsWorking] = useState(false);
   const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(null);
   const [shoppingList, setShoppingList] = useState<string | null>(null);
+  const [highlights, setHighlights] = useState<Set<string>>(new Set());
+  const chatRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = chatRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [messages]);
+
+  const applyHighlights = (newPlan: WeeklyMealPlan) => {
+    setHighlights(prev => {
+      const changed = new Set<string>();
+      if (mealPlan) {
+        newPlan.days.forEach(d => {
+          const prevEntry = mealPlan.days.find(p => p.dayIndex === d.dayIndex && p.mealType === d.mealType);
+          if (!prevEntry || prevEntry.meal.id !== d.meal.id) {
+            changed.add(`${d.dayIndex}-${d.mealType}`);
+          }
+        });
+      }
+      if (changed.size > 0) {
+        setTimeout(() => {
+          setHighlights(h => {
+            const copy = new Set(h);
+            changed.forEach(k => copy.delete(k));
+            return copy;
+          });
+        }, 5000);
+      }
+      return new Set([...prev, ...changed]);
+    });
+    setMealPlan(newPlan);
+  };
 
   const startSession = async () => {
     setIsWorking(true);
@@ -94,7 +129,7 @@ const AgentPage: React.FC = () => {
       });
       const data = await res.json();
       if (data.message) setMessages(prev => [...prev, { sender: 'agent', text: data.message }]);
-      if (data.raw && data.raw.meal_plan) setMealPlan(data.raw.meal_plan);
+      if (data.raw && data.raw.meal_plan) applyHighlights(data.raw.meal_plan);
       if (data.raw && data.raw.shopping_list_formatted) setShoppingList(data.raw.shopping_list_formatted);
     } catch (err) {
       console.error('Failed to send message', err);
@@ -122,32 +157,58 @@ const AgentPage: React.FC = () => {
     navigator.clipboard.writeText(shoppingList);
   };
 
+  const handleKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      sendMessage();
+    }
+  };
+
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Button onClick={startSession} variant="contained" data-testid="start-session">Start New Session</Button>
       {session && (
-        <Typography sx={{ mt: 2 }} data-testid="session-id">Session: {session.threadId}</Typography>
+        <Typography data-testid="session-id">Session: {session.threadId}</Typography>
       )}
-      <List data-testid="chat-history">
+      <Box ref={chatRef} data-testid="chat-history" sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: 300, display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
         {messages.map((m, i) => (
-          <ListItem key={i}>{m.sender}: {m.text}</ListItem>
+          <Box key={i} sx={{ display: 'flex', justifyContent: m.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+            <Paper sx={{ p: 1, maxWidth: '70%', backgroundColor: m.sender === 'user' ? '#eef4ea' : '#fff' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {m.sender === 'agent' && <Avatar sx={{ width: 24, height: 24 }}>A</Avatar>}
+                <Typography variant="body2">{m.text}</Typography>
+                {m.sender === 'user' && <Avatar sx={{ width: 24, height: 24 }}>U</Avatar>}
+              </Box>
+            </Paper>
+          </Box>
         ))}
-      </List>
+      </Box>
       {mealPlan && (
         <>
-          <MealPlanDisplay plan={mealPlan} />
+          <MealPlanDisplay plan={mealPlan} highlights={highlights} />
           <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
             <Button variant="outlined" onClick={copyMealPlan} data-testid="copy-meal-plan">Copy Meal Plan</Button>
             {shoppingList && <Button variant="outlined" onClick={copyShoppingList} data-testid="copy-shopping-list">Copy Shopping List</Button>}
           </Box>
         </>
       )}
-      <TextField 
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        inputProps={{ 'data-testid': 'message-input' }}
-      />
-      <Button onClick={sendMessage} disabled={!session || !input} data-testid="send-button">Send</Button>
+      {session && (
+        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
+          <TextField
+            fullWidth
+            multiline
+            minRows={1}
+            maxRows={4}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            inputProps={{ 'data-testid': 'message-input' }}
+          />
+          <IconButton color="primary" onClick={sendMessage} disabled={!input.trim()} data-testid="send-button">
+            <SendIcon />
+          </IconButton>
+        </Box>
+      )}
       {isWorking && <Typography data-testid="working">Working...</Typography>}
     </Box>
   );
