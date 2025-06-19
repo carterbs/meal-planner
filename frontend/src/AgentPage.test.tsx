@@ -137,10 +137,18 @@ test('highlights changed meal plan entries', async () => {
   await waitFor(() => expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument());
 
   (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({}) });
-  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({ message: 'ok', raw: { meal_plan: { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 2, name: 'Pancakes', effort: 1 } } ] } } }) });
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({ 
+    message: 'ok', 
+    meal_plan: { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 2, name: 'Pancakes', effort: 1 } } ] }
+  }) });
 
   fireEvent.change(screen.getByTestId('message-input'), { target: { value: 'change' } });
   fireEvent.click(screen.getByTestId('send-button'));
 
-  await waitFor(() => expect(screen.getByTestId('meal-0-breakfast').style.animation).not.toBe('')); 
+  await waitFor(() => {
+    const mealElement = screen.getByTestId('meal-0-breakfast');
+    // Check that the meal name span has the highlight style
+    const mealNameSpan = mealElement.querySelector('span');
+    expect(mealNameSpan).toHaveStyle({ backgroundColor: '#81c784' });
+  }); 
 });
