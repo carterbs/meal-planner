@@ -152,3 +152,34 @@ test('highlights changed meal plan entries', async () => {
     expect(mealNameSpan).toHaveStyle({ backgroundColor: '#81c784' });
   }); 
 });
+
+test('shows typing indicator when agent is working', async () => {
+  let resolvePromise: (value: any) => void;
+  const promise = new Promise(resolve => {
+    resolvePromise = resolve;
+  });
+  
+  (global.fetch as jest.Mock).mockReturnValueOnce({
+    json: () => promise
+  });
+
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+
+  // Check that typing indicator appears when working
+  await waitFor(() => {
+    expect(screen.getByTestId('typing-indicator')).toBeInTheDocument();
+  });
+
+  // Resolve the promise to complete the request
+  resolvePromise!({
+    threadId: '123',
+    currentStep: 'started',
+    message: 'Ready'
+  });
+
+  // Wait for typing indicator to disappear
+  await waitFor(() => {
+    expect(screen.queryByTestId('typing-indicator')).not.toBeInTheDocument();
+  });
+});

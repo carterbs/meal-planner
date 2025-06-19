@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Box, Button, TextField, Typography, Paper, Avatar, IconButton } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import MealPlanDisplay, { WeeklyMealPlan } from './components/MealPlanDisplay';
+import TypingIndicator from './components/TypingIndicator';
 
 // Utility to format a WeeklyMealPlan for clipboard copying
 const WEEK_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -200,6 +201,7 @@ const AgentPage: React.FC = () => {
             </Paper>
           </Box>
         ))}
+        {isWorking && <TypingIndicator />}
       </Box>
       {mealPlan && (
         <>
@@ -227,7 +229,6 @@ const AgentPage: React.FC = () => {
           </IconButton>
         </Box>
       )}
-      {isWorking && <Typography data-testid="working">Working...</Typography>}
     </Box>
   );
 };
