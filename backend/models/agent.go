@@ -5,10 +5,10 @@ import (
 )
 
 // AgentStartRequest represents a request to start a workflow
-// Example JSON: {"participants":["brad","shannon"],"workflow_type":"meal_planning"}
+// Example JSON: {"participants":["brad","shannon"],"workflowType":"meal_planning"}
 type AgentStartRequest struct {
 	Participants []string `json:"participants"`
-	WorkflowType string   `json:"workflow_type"`
+	WorkflowType string   `json:"workflowType"`
 }
 
 func (r *AgentStartRequest) Validate() error {
@@ -63,18 +63,19 @@ func (r *AgentResumeRequest) Validate() error {
 // MealPlan or other data may be embedded in Raw
 
 type AgentResponse struct {
-	Success     bool        `json:"success"`
-	Message     string      `json:"message,omitempty"`
-	ThreadID    string      `json:"threadId,omitempty"`
-	CurrentStep string      `json:"current_step,omitempty"`
-	Raw         interface{} `json:"raw,omitempty"`
+	Success      bool        `json:"success"`
+	Message      string      `json:"message,omitempty"`
+	ThreadID     string      `json:"threadId,omitempty"`
+	CurrentStep  string      `json:"currentStep,omitempty"`
+	InitialState interface{} `json:"initialState,omitempty"`
+	Raw          interface{} `json:"raw,omitempty"`
 }
 
 // WorkflowStatus represents high level workflow info
-// {"threadId":"uuid","workflow_type":"meal_planning","current_step":"step","participants":["brad"]}
+// {"threadId":"uuid","workflowType":"meal_planning","currentStep":"step","participants":["brad"]}
 type WorkflowStatus struct {
 	ThreadID     string   `json:"threadId"`
-	WorkflowType string   `json:"workflow_type"`
-	CurrentStep  string   `json:"current_step"`
+	WorkflowType string   `json:"workflowType"`
+	CurrentStep  string   `json:"currentStep"`
 	Participants []string `json:"participants"`
 }
