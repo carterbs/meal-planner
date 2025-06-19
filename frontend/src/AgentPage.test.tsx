@@ -11,15 +11,67 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
+test('copies meal plan to clipboard', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    json: () => Promise.resolve({
+      threadId: '123',
+      currentStep: 'started',
+      message: 'hi',
+      initialState: { meal_plan: { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 1, name: 'Eggs', effort: 1 } } ] } }
+    })
+  });
+
+  const write = jest.fn();
+  Object.assign(navigator, { clipboard: { write, writeText: write } });
+  // Mock ClipboardItem constructor
+  (global as any).ClipboardItem = jest.fn().mockImplementation(data => ({ data }));
+
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+
+  await waitFor(() => expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByTestId('copy-meal-plan'));
+  expect(write).toHaveBeenCalled();
+});
+
+test('copies shopping list to clipboard', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    json: () => Promise.resolve({
+      threadId: '123',
+      currentStep: 'started',
+      message: 'hi',
+      raw: { meal_plan: { days: [] }, shopping_list_formatted: '- eggs\n' }
+    })
+  });
+
+  const writeText = jest.fn();
+  Object.assign(navigator, { clipboard: { writeText } });
+
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+
+  await waitFor(() => expect(screen.getByTestId('copy-shopping-list')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByTestId('copy-shopping-list'));
+  expect(writeText).toHaveBeenCalledWith('- eggs\n');
+});
+
 test('starts a new session', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
-    json: () => Promise.resolve({ threadId: '123', currentStep: 'started', message: 'hi' })
+    json: () => Promise.resolve({
+      threadId: '123',
+      currentStep: 'started',
+      message: 'hi',
+      initialState: { meal_plan: { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 1, name: 'Eggs', effort: 1 } } ] } }
+    })
   });
   render(<AgentPage />);
   fireEvent.click(screen.getByTestId('start-session'));
   await waitFor(() => {
     expect(global.fetch).toHaveBeenCalledWith('/api/agent/start', expect.any(Object));
     expect(screen.getByTestId('session-id')).toHaveTextContent('123');
+    expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument();
   });
 });
 
@@ -35,14 +87,22 @@ test('sends a message in an existing session', async () => {
   // feedback response
   (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({}) });
   // resume response
-  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({ message: 'ok' }) });
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({ message: 'ok', raw: { meal_plan: { days: [] } } }) });
 
   fireEvent.change(screen.getByTestId('message-input'), { target: { value: 'hello' } });
   fireEvent.click(screen.getByTestId('send-button'));
 
   await waitFor(() => {
-    expect(global.fetch).toHaveBeenCalledWith('/api/agent/feedback', expect.any(Object));
-    expect(global.fetch).toHaveBeenCalledWith('/api/agent/resume', expect.any(Object));
+    const feedbackCall = (global.fetch as jest.Mock).mock.calls.find(c => c[0] === '/api/agent/feedback');
+    const resumeCall = (global.fetch as jest.Mock).mock.calls.find(c => c[0] === '/api/agent/resume');
+    expect(feedbackCall).toBeTruthy();
+    expect(resumeCall).toBeTruthy();
+    if (feedbackCall) {
+      expect(JSON.parse(feedbackCall[1].body).threadId).toBe('123');
+    }
+    if (resumeCall) {
+      expect(JSON.parse(resumeCall[1].body).threadId).toBe('123');
+    }
     expect(screen.getByText('agent: ok')).toBeInTheDocument();
   });
 });
