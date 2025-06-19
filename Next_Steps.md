@@ -1,258 +1,118 @@
-# Next Steps: Agent Frontend Integration
+# UI Enhancement Plan for Agent Chat Interface
 
-## Summary
-Successfully implemented and tested the agent backend API endpoints. The agent can now generate meal plans, process user feedback, and maintain workflow state. Next step is to build a frontend chat interface to interact with these endpoints.
+## Overview
+Transform the current basic chat interface into a professional, modern chat experience with improved UX/UI patterns and visual feedback for meal plan changes.
 
-## API Endpoints & Examples
+## Key Improvements
 
-### 1. Start New Meal Planning Session
-**POST** `/api/agent/start`
+### 1. Chat Interface Overhaul
+- **Replace basic List with proper chat UI**
+  - Individual message bubbles with proper styling
+  - User messages aligned right, agent messages aligned left
+  - Avatar/icons for user vs agent identification
+  - Professional spacing and typography
 
-**Request:**
-```json
-{
-  "participants": ["brad", "shannon"],
-  "workflow_type": "meal_planning"
-}
-```
+- **Enhanced Input Area**
+  - Replace TextField with multiline TextField
+  - Enter to send, Shift+Enter for new line
+  - Send button integrated into input field
+  - Hide input area until session starts
+  - Auto-focus and auto-resize behavior
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Meal planning session started",
-  "threadId": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
-  "currentStep": "started"
-}
-```
+- **Scrolling Chat History**
+  - Proper scrollable container with fixed height
+  - Auto-scroll to bottom on new messages
+  - Smooth scrolling behavior
 
-### 2. Add Feedback to Session
-**POST** `/api/agent/feedback`
+### 2. Session Management UX
+- **Conditional Input Display**
+  - Only show message input after session starts
+  - Better visual hierarchy for session state
+  - Improved "Start New Session" button placement
 
-**Request:**
-```json
-{
-  "threadID": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
-  "message": "We shouldn't have baked spaghetti and spaghetti in the same week - too much pasta. Can you replace one with something different?",
-  "from": "brad"
-}
-```
+- **Immediate Meal Plan Display**
+  - Show meal plan immediately after session starts
+  - Don't wait for resume to display initial data
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Feedback added successfully from brad"
-}
-```
+### 3. Visual Change Indicators
+- **Meal Plan Change Highlighting**
+  - Sage green highlight animation for changed meals
+  - 5-second fade-out effect using CSS transitions
+  - Track meal plan changes between updates
+  - Highlight specific changed entries in the table
 
-### 3. Resume/Process Workflow
-**POST** `/api/agent/resume`
+### 4. Layout Improvements
+- **Chat vs Meal Plan Separation**
+  - Keep meal plan at bottom for now (easy to move later)
+  - Clear visual separation between chat and meal plan
+  - Responsive layout considerations
+  - Better spacing and visual hierarchy
 
-**Request:**
-```json
-{
-  "threadID": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
-  "interactive": false
-}
-```
+### 5. Material UI Component Upgrades
+- **Enhanced Components**
+  - Use Paper for message containers
+  - Avatar components for user/agent identification
+  - Better button styling and placement
+  - Typography improvements for readability
+  - Loading states with CircularProgress
 
-**Response:**
-```json
-{
-  "message": "Failed to resume workflow: undefined",
-  "raw": {
-    "meal_plan": {
-      "days": [
-        {
-          "meal": {
-            "id": 57,
-            "name": "Eggs, Toast, and Fruit",
-            "effort": 2,
-            "hasRedMeat": false
-          },
-          "dayIndex": 0,
-          "mealType": "breakfast"
-        },
-        // ... more meals
-      ]
-    },
-    "threadID": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
-    "created_at": "2025-06-16T00:33:22.003Z",
-    "updated_at": "2025-06-16T00:35:53.639Z",
-    "current_step": "await_feedback",
-    "is_finalized": false,
-    "participants": ["brad"],
-    "shopping_list": null,
-    "workflow_type": "meal_planning",
-    "iteration_count": 2,
-    "feedback_history": [
-      {
-        "from": "brad",
-        "message": "We shouldn't have baked spaghetti and spaghetti in the same week - too much pasta. Can you replace one with something different?",
-        "timestamp": "2025-06-16T00:35:08.746Z",
-        "meal_plan_version": 1
-      }
-    ],
-    "last_feedback_applied_at": "2025-06-16T00:35:08.746Z"
-  }
-}
-```
+## Technical Implementation
 
-### 4. Get Workflow Status
-**GET** `/api/agent/status/{threadId}`
+### Files to Modify
+- `frontend/src/AgentPage.tsx` - Main interface overhaul
+- `frontend/src/components/MealPlanDisplay.tsx` - Add change highlighting
+- New CSS animations for highlighting effects
 
-**Response:**
-```json
-{
-  "success": true,
-  "threadId": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
-  "currentStep": "await_feedback",
-  "message": "Workflow status: await_feedback",
-  "raw": {
-    "threadId": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
-    "workflowType": "meal_planning",
-    "participants": ["brad"],
-    "createdAt": "2025-06-16T04:33:24.109Z",
-    "lastUpdated": "2025-06-16T04:35:53.641Z",
-    "currentStep": "await_feedback",
-    "isActive": true
-  }
-}
-```
+### Key Features
+- Change detection logic for meal plan updates
+- Keyboard event handling for Enter/Shift+Enter
+- Scroll management for chat history
+- State management for highlighted changes
+- Responsive design considerations
 
-### 5. List All Workflows
-**GET** `/api/agent/workflows`
+### Testing Updates
+- Update existing tests for new UI components
+- Add tests for keyboard interactions
+- Test change highlighting functionality
+- Ensure accessibility compliance
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "All workflows retrieved",
-  "raw": [
-    {
-      "threadId": "aa9caab4-ff07-428a-82da-2b4e0e1c3824",
-      "workflowType": "meal_planning",
-      "participants": ["brad"],
-      "createdAt": "2025-06-16T04:33:24.109Z",
-      "lastUpdated": "2025-06-16T04:35:53.641Z",
-      "currentStep": "await_feedback",
-      "isActive": true
-    }
-    // ... more workflows
-  ]
-}
-```
+## Priority Order
+1. Chat interface overhaul (message bubbles, input handling)
+2. Session management UX (conditional input, immediate meal plan)
+3. Change highlighting system
+4. Layout and visual polish
+5. Testing updates
 
-### 6. Cancel Workflow
-**DELETE** `/api/agent/workflows/{threadId}`
+## Implementation Details
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Workflow cancelled successfully"
-}
-```
-
-## Frontend Implementation Plan
-
-### New `/agent` Route
-Create a new page at `/agent` with the following features:
-
-#### 1. Chat Interface Components
-- **Chat History** - Display conversation history with the agent
-- **Message Input** - Text input for user feedback/requests
-- **Send Button** - Submit messages to the agent
-- **Working Indicator** - Show when agent is processing (spinning loader, etc.)
-
-#### 2. Meal Plan Display
-- **Formatted Meal Plan** - Nice table/card layout showing:
-  - Days of the week (Sunday-Saturday)
-  - Breakfast, Lunch, Dinner for each day  
-  - Effort indicators (🔥 symbols)
-  - Red meat indicators (🥩 symbol)
-- **Plan Updates** - Animate/highlight changes when agent modifies the plan
-
-#### 3. Session Management
-- **New Session Button** - Start a fresh meal planning session
-- **Session List** - Dropdown/sidebar to switch between active sessions
-- **Session Status** - Display current workflow step and last updated time
-
-#### 4. Key Features
-- **Auto-refresh** - Poll for updates when agent is working
-- **Error Handling** - Display user-friendly error messages
-- **Loading States** - Show appropriate loading indicators
-- **Responsive Design** - Works well on mobile and desktop
-- **Copy Functionality** - Integration with existing copy features from main app
-
-#### 5. Copy Integration
-Incorporate the existing copy functionality from the main meal planner view:
-
-- **Copy Meal Plan Button** - Copy formatted meal plan to clipboard (HTML table format)
-- **Copy Shopping List Button** - Copy generated shopping list to clipboard
-- **Export Options** - Same export capabilities as main view (calendar .ics files, etc.)
-- **Format Consistency** - Use same formatting logic as existing views for consistency
-
-The agent workflow provides `meal_plan` and `shopping_list` data in the response, which can be processed using the existing utility functions:
-- Leverage existing `formatMealPlan()` utilities
-- Reuse shopping list formatting logic
-- Maintain consistent styling and emoji indicators (🔥 for effort, 🥩 for red meat)
-
-### Technical Implementation
-
-#### API Integration
+### Chat Message Components
 ```typescript
-// Create API service functions
-const agentAPI = {
-  startSession: (participants: string[]) => POST('/api/agent/start', ...),
-  addFeedback: (threadId: string, message: string, from: string) => POST('/api/agent/feedback', ...),
-  resumeWorkflow: (threadId: string) => POST('/api/agent/resume', ...),
-  getStatus: (threadId: string) => GET(`/api/agent/status/${threadId}`),
-  listWorkflows: () => GET('/api/agent/workflows'),
-  cancelWorkflow: (threadId: string) => DELETE(`/api/agent/workflows/${threadId}`)
+interface ChatMessage {
+  sender: 'user' | 'agent';
+  text: string;
+  timestamp?: Date;
 }
 ```
 
-#### State Management
+### Change Highlighting Logic
+- Compare previous and current meal plans
+- Identify changed/added/removed meals
+- Apply CSS classes for highlighting
+- Use setTimeout for fade-out effect
+
+### Keyboard Handling
 ```typescript
-interface AgentState {
-  currentThreadId: string | null;
-  chatHistory: ChatMessage[];
-  currentMealPlan: MealPlan | null;
-  isWorking: boolean;
-  sessions: WorkflowSession[];
-  error: string | null;
-}
+const handleKeyPress = (event: React.KeyboardEvent) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+};
 ```
 
-#### Meal Plan Component
-- Parse the meal plan data structure from API responses
-- Format into a weekly calendar view
-- Highlight recent changes/updates
-- Make it visually appealing with proper spacing and colors
+### Scroll Management
+- useRef for chat container
+- useEffect to scroll on message updates
+- Smooth scroll behavior
 
-### User Experience Flow
-1. User visits `/agent`
-2. Click "Start New Meal Plan" to begin
-3. Agent generates initial plan and displays it
-4. User can provide feedback via chat
-5. Agent processes feedback and updates plan
-6. Repeat until user is satisfied
-7. Option to finalize plan and generate shopping list
-
-### Priority Features
-1. ✅ Basic chat interface
-2. ✅ Meal plan display component  
-3. ✅ Session management
-4. ✅ Loading/working indicators
-5. ✅ Copy meal plan & shopping list functionality
-6. ⭐ Polish and responsive design
-
-### Integration Notes
-- Reuse existing copy/export utilities from the main meal planner
-- Maintain consistent UI patterns and styling
-- Agent-generated plans should have same visual format as manually created ones
-- Shopping lists from agent should be copyable in same format as manual shopping lists
-
-This will provide a much more user-friendly way to interact with the meal planning agent compared to CLI commands, while maintaining consistency with the existing application's functionality.
+This plan will transform the basic chat interface into a professional, user-friendly experience while maintaining all existing functionality.

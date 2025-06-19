@@ -51,19 +51,16 @@ ${mealPlanSummary ? `- Meal plan: ${mealPlanSummary}` : ''}
 ${shoppingListSummary ? `- Shopping list: ${shoppingListSummary}` : ''}
 
 Generate a message that:
-1. Acknowledges the user's input if there was recent feedback
-2. References specific meals or details from the current plan when relevant
-3. Indicates what the assistant is working on or has completed
-4. Sounds natural and conversational
-5. Avoids technical jargon like "workflow resumed"
+1. References specific meals or details from the current plan when relevant
+2. Indicates what the assistant is working on or has completed
+3. Sounds natural and conversational
 
 Examples:
-- "Thanks for your feedback! I'm updating your meal plan with more variety - I see you had Chicken Salad and Steak planned."
-- "Got it! Let me swap out those high-effort meals for something easier to prepare."
-- "I've updated your meal plan - you now have great options like Honey Nut Cheerios and BBQ Pulled Chicken across the week."
-- "Perfect! I'm adjusting your shopping list to include the ingredients for those pasta dishes you requested."
+- "I've swapped out the Frozen Pizza on Thursday for Sushi instead. Let me know if there's any other changes that you'd like to make."
+- "Got it! I swapped out Marry Me Chicken for a much simpler Potato Chip Fritata."
+- "I've updated the plan - you now have Honey Nut Cheerios on Tuesday and Bagels with Cream cheese on Wednesday."
 
-Response (just the message, no quotes or formatting):`;
+Your Response (just the message, no quotes or formatting):`;
 
       const result = await this.llm.invoke([{ role: "user", content: prompt }]);
       const message = typeof result.content === 'string' ? result.content : String(result.content);

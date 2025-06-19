@@ -262,8 +262,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     if (!state.meal_plan) {
       throw new Error("No meal plan to apply feedback to");
     }
-    // Gather feedback for this version or use provided feedback_to_apply
-    const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedbackForVersion(state.threadId, state.iteration_count);
+    // Gather ALL feedback from the entire session or use provided feedback_to_apply
+    const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedback(state.threadId);
     const feedbackMessages = feedbackEntries.map(f => f.message);
     // Call LLM to pick alternatives based on feedback
     const result = await this.applyFeedbackWithLLM(state.meal_plan, feedbackMessages);
@@ -297,16 +297,19 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const mealOptions = availableMeals.map(m => `${m.id}: ${m.mealName} (${m.mealType}, effort: ${m.relativeEffort}, red meat: ${m.redMeat})`).join('\n');
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const planDescription = plan.days.map(day => `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal.name} (ID: ${day.meal.id}, effort: ${day.meal.effort}, red meat: ${day.meal.hasRedMeat})`).join('\n');
-    const feedbackText = feedback.length > 0 ? `User feedback for this revision:\n${feedback.join('\n')}\n` : '';
-    const prompt = `You are updating a weekly meal plan based on user feedback.\n${feedbackText}\n
+    const feedbackText = feedback.length > 0 ? `ALL USER FEEDBACK FROM THIS SESSION (in chronological order):\n${feedback.map((msg, idx) => `${idx + 1}. ${msg}`).join('\n')}\n` : '';
+    const prompt = `You are updating a weekly meal plan based on ALL user feedback from the entire session.\n
+    ${feedbackText}\n
     Current meal plan:\n${planDescription}\n\n
     Available meals to choose from:\n${mealOptions}\n\n
-    Rules:\n
+    IMPORTANT GUIDELINES:\n
+    - Consider ALL feedback messages above when making decisions\n
+    - If feedback is contradictory or impossible to satisfy (e.g., "no eggs, no cereal, no bagels" for breakfast), do your best and explain the constraints in your message\n
     - Only replace meals with the same meal type (breakfast/lunch/dinner)\n
-    - Prefer lower effort meals (1-2) for replacements\n
     - Avoid duplicate meals\n
-    - Try to honor the user's feedback as much as possible\n\n
-    Please respond with ONLY a JSON object containing your recommended replacements AND a friendly message to the user:\n\n
+    - Avoid suggesting meals that have been explicitly rejected in ANY previous feedback\n
+    - When constraints are impossible to meet, choose the best available options and explain why in your message\n\n
+    - Respond with ONLY a JSON object containing your recommended replacements AND a friendly message to the user:\n\n
     {
       "replacements": [
         {
@@ -322,8 +325,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     
     For the userMessage:
     - Be conversational and friendly (1-2 sentences)
-    - Acknowledge their feedback specifically
     - Mention what meals were changed and why
+    - If constraints are impossible to meet, acknowledge this: "I know you asked to avoid both X and Y, but those are the main breakfast options available, so I picked the best alternative..."
     - If no changes were needed, explain why the current plan already meets their needs
     
     If no replacements are needed, return: {"replacements": [], "userMessage": "Your current meal plan already looks great and addresses your preferences!"}\n\n<important> Your response should be parseable as JSON.</important>`;
