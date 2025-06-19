@@ -1,5 +1,5 @@
 import React from 'react';
-import { keyframes } from '@mui/system';
+import { Box } from '@mui/material';
 
 interface MealInfo {
   id: number;
@@ -26,11 +26,6 @@ interface MealPlanDisplayProps {
   plan: WeeklyMealPlan;
   highlights?: Set<string>;
 }
-
-const fade = keyframes`
-  from { background-color: #e6f4ea; }
-  to { background-color: transparent; }
-`;
 
 export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ plan, highlights }) => {
   const grouped = WEEK_DAYS.map((day, idx) => {
@@ -59,9 +54,40 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ plan, highligh
                     <div
                       key={e.mealType}
                       data-testid={`meal-${key}`}
-                      style={isHighlighted ? { animation: `${fade} 5s forwards` } : {}}
+                      style={{ padding: '4px', margin: '2px 0' }}
                     >
-                      <strong>{e.mealType.charAt(0).toUpperCase()+e.mealType.slice(1)}:</strong> {e.meal.name}
+                      <strong>{e.mealType.charAt(0).toUpperCase()+e.mealType.slice(1)}:</strong>{' '}
+                      <Box
+                        component="span"
+                        sx={{
+                          ...(isHighlighted && {
+                            backgroundColor: '#81c784',
+                            borderLeft: '4px solid #4caf50',
+                            padding: '2px 4px',
+                            borderRadius: '4px',
+                            transition: 'all 2s ease-out',
+                            '&': {
+                              animation: 'highlightFade 5s forwards',
+                            },
+                            '@keyframes highlightFade': {
+                              '0%': { 
+                                backgroundColor: '#81c784', 
+                                borderLeft: '4px solid #4caf50' 
+                              },
+                              '50%': { 
+                                backgroundColor: '#c8e6c9', 
+                                borderLeft: '4px solid #4caf50' 
+                              },
+                              '100%': { 
+                                backgroundColor: 'transparent', 
+                                borderLeft: '4px solid transparent' 
+                              }
+                            }
+                          })
+                        }}
+                      >
+                        {e.meal.name}
+                      </Box>
                       {' '}{effortIcons[e.meal.effort]}
                       {e.meal.hasRedMeat && ' 🥩'}
                     </div>

@@ -75,6 +75,7 @@ const AgentPage: React.FC = () => {
           }
         });
       }
+      
       if (changed.size > 0) {
         setTimeout(() => {
           setHighlights(h => {
@@ -137,8 +138,17 @@ const AgentPage: React.FC = () => {
       });
       const data = await res.json();
       if (data.message) setMessages(prev => [...prev, { sender: 'agent', text: data.message }]);
-      if (data.raw && data.raw.meal_plan) applyHighlights(data.raw.meal_plan);
-      if (data.raw && data.raw.shopping_list_formatted) setShoppingList(data.raw.shopping_list_formatted);
+      
+      // Check for meal plan in both top level and raw
+      const newMealPlan = data.meal_plan || data.raw?.meal_plan;
+      if (newMealPlan) {
+        console.log('Applying highlights for new meal plan:', newMealPlan);
+        applyHighlights(newMealPlan);
+      }
+      
+      // Check for shopping list in both locations
+      const newShoppingList = data.shopping_list_formatted || data.raw?.shopping_list_formatted;
+      if (newShoppingList) setShoppingList(newShoppingList);
     } catch (err) {
       console.error('Failed to send message', err);
     } finally {
