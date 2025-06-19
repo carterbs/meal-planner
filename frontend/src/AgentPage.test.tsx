@@ -137,10 +137,49 @@ test('highlights changed meal plan entries', async () => {
   await waitFor(() => expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument());
 
   (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({}) });
-  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({ message: 'ok', raw: { meal_plan: { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 2, name: 'Pancakes', effort: 1 } } ] } } }) });
+  (global.fetch as jest.Mock).mockResolvedValueOnce({ json: () => Promise.resolve({ 
+    message: 'ok', 
+    meal_plan: { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 2, name: 'Pancakes', effort: 1 } } ] }
+  }) });
 
   fireEvent.change(screen.getByTestId('message-input'), { target: { value: 'change' } });
   fireEvent.click(screen.getByTestId('send-button'));
 
-  await waitFor(() => expect(screen.getByTestId('meal-0-breakfast').style.animation).not.toBe('')); 
+  await waitFor(() => {
+    const mealElement = screen.getByTestId('meal-0-breakfast');
+    // Check that the meal name span has the highlight style
+    const mealNameSpan = mealElement.querySelector('span');
+    expect(mealNameSpan).toHaveStyle({ backgroundColor: '#81c784' });
+  }); 
+});
+
+test('shows typing indicator when agent is working', async () => {
+  let resolvePromise: (value: any) => void;
+  const promise = new Promise(resolve => {
+    resolvePromise = resolve;
+  });
+  
+  (global.fetch as jest.Mock).mockReturnValueOnce({
+    json: () => promise
+  });
+
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+
+  // Check that typing indicator appears when working
+  await waitFor(() => {
+    expect(screen.getByTestId('typing-indicator')).toBeInTheDocument();
+  });
+
+  // Resolve the promise to complete the request
+  resolvePromise!({
+    threadId: '123',
+    currentStep: 'started',
+    message: 'Ready'
+  });
+
+  // Wait for typing indicator to disappear
+  await waitFor(() => {
+    expect(screen.queryByTestId('typing-indicator')).not.toBeInTheDocument();
+  });
 });
