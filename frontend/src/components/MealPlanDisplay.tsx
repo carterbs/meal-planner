@@ -1,4 +1,5 @@
 import React from 'react';
+import { keyframes } from '@mui/system';
 
 interface MealInfo {
   id: number;
@@ -21,7 +22,17 @@ const WEEK_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','
 
 const effortIcons = ['','🔥','🔥🔥','🔥🔥🔥'];
 
-export const MealPlanDisplay: React.FC<{ plan: WeeklyMealPlan }> = ({ plan }) => {
+interface MealPlanDisplayProps {
+  plan: WeeklyMealPlan;
+  highlights?: Set<string>;
+}
+
+const fade = keyframes`
+  from { background-color: #e6f4ea; }
+  to { background-color: transparent; }
+`;
+
+export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ plan, highlights }) => {
   const grouped = WEEK_DAYS.map((day, idx) => {
     const entries = plan.days.filter(d => d.dayIndex === idx);
     return { day, entries };
@@ -41,13 +52,21 @@ export const MealPlanDisplay: React.FC<{ plan: WeeklyMealPlan }> = ({ plan }) =>
             <tr key={day}>
               <td style={{ border: '1px solid #ddd', padding: 4 }}>{day}</td>
               <td style={{ border: '1px solid #ddd', padding: 4 }}>
-                {entries.map(e => (
-                  <div key={e.mealType}>
-                    <strong>{e.mealType.charAt(0).toUpperCase()+e.mealType.slice(1)}:</strong> {e.meal.name}
-                    {' '}{effortIcons[e.meal.effort]}
-                    {e.meal.hasRedMeat && ' 🥩'}
-                  </div>
-                ))}
+                {entries.map(e => {
+                  const key = `${e.dayIndex}-${e.mealType}`;
+                  const isHighlighted = highlights?.has(key);
+                  return (
+                    <div
+                      key={e.mealType}
+                      data-testid={`meal-${key}`}
+                      style={isHighlighted ? { animation: `${fade} 5s forwards` } : {}}
+                    >
+                      <strong>{e.mealType.charAt(0).toUpperCase()+e.mealType.slice(1)}:</strong> {e.meal.name}
+                      {' '}{effortIcons[e.meal.effort]}
+                      {e.meal.hasRedMeat && ' 🥩'}
+                    </div>
+                  );
+                })}
               </td>
             </tr>
           ) : null
