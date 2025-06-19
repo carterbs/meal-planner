@@ -185,6 +185,7 @@ import { WorkflowType } from './shared/types.js';
 import { CLIHandler } from './io/cliHandler.js';
 import { formatMealPlan } from './utils/formatMealPlan.js';
 import { spawnSync } from 'child_process';
+import { MessageGenerator } from './utils/messageGenerator.js';
 
 const program = new Command();
 
@@ -304,6 +305,31 @@ function formatWorkflowList(workflows: any[]): string {
   
   result += '└' + maxWidths.map(w => '─'.repeat(w + 2)).join('┴') + '┘';
   return result;
+}
+
+// Helper function to check if there's recent feedback in the workflow result
+function hasRecentFeedbackInResult(result: any): boolean {
+  try {
+    // Check both top level and raw for feedback_history
+    const feedbackHistory = result.feedback_history || result.raw?.feedback_history;
+    if (!feedbackHistory || !Array.isArray(feedbackHistory) || feedbackHistory.length === 0) {
+      debugLog(`[FEEDBACK_CHECK] No feedback history in result`);
+      return false;
+    }
+    
+    // Check if there's feedback within the last 30 seconds
+    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
+    const hasRecent = feedbackHistory.some((feedback: any) => {
+      const feedbackTime = new Date(feedback.timestamp);
+      return feedbackTime > thirtySecondsAgo;
+    });
+    
+    debugLog(`[FEEDBACK_CHECK] Found ${feedbackHistory.length} feedback entries, ${hasRecent ? 'has' : 'no'} recent feedback`);
+    return hasRecent;
+  } catch (error) {
+    debugLog(`[FEEDBACK_CHECK] Error checking for recent feedback: ${error}`);
+    return false;
+  }
 }
 
 // Main program configuration
@@ -664,9 +690,36 @@ program
         const result = await agent.resumeWorkflow(threadId);
         debugLog(`resume: resumeWorkflow done (${Date.now() - resumeStart}ms)`);
         debugLog(`resume command total ${(Date.now() - resumeStart)}ms`);
+        
+        // Generate contextual message if there's recent feedback
+        let message = result.success ? 'Workflow resumed successfully' : `Failed to resume workflow: ${result.message}`;
+        
+        if (result.success && hasRecentFeedbackInResult(result)) {
+          try {
+            const messageGenerator = new MessageGenerator();
+            const feedbackHistory = result.feedback_history || result.raw?.feedback_history || [];
+            const latestFeedback = feedbackHistory[feedbackHistory.length - 1];
+            
+            const contextualMessage = await messageGenerator.generateResumeMessage({
+              currentStep: result.currentStep,
+              workflowType: status.workflowType,
+              hasRecentFeedback: true,
+              feedbackSummary: latestFeedback?.message,
+              mealPlan: result.meal_plan || result.raw?.meal_plan,
+              shoppingList: result.shopping_list || result.raw?.shopping_list,
+              iteration: result.iteration_count || result.raw?.iteration_count
+            });
+            message = contextualMessage;
+            debugLog(`[RESUME] Generated contextual message: ${contextualMessage}`);
+          } catch (error) {
+            debugLog(`[RESUME] Error generating contextual message: ${error}`);
+            // Fall back to default message
+          }
+        }
+        
         outputResult({
           success: result.success,
-          message: result.success ? 'Workflow resumed successfully' : `Failed to resume workflow: ${result.message}`,
+          message: message,
           currentStep: result.currentStep,
           raw: result
         }, isJsonMode);

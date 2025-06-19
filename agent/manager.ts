@@ -35,6 +35,11 @@ export class WorkflowManager {
     this.registry = registry;
   }
 
+  // Public getter for checkpointer
+  getCheckpointer(): PostgresCheckpointSaver {
+    return this.checkpointer;
+  }
+
   async initialize(): Promise<void> {
     // No need to explicitly connect anymore as we're using connection pooling
     await this.loadActiveSessions();
