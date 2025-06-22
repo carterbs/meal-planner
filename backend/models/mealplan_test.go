@@ -104,6 +104,7 @@ func TestGenerateWeeklyMealPlan(t *testing.T) {
 		{"Tuesday", 3, 5},
 		{"Wednesday", 3, 5},
 		{"Thursday", 3, 5},
+		{"Friday", 3, 5},
 		{"Saturday", 3, 5},
 		{"Sunday", 6, 100},
 	}
@@ -173,6 +174,13 @@ func TestGenerateWeeklyMealPlan(t *testing.T) {
 	if plan.Friday.Dinner == nil || plan.Friday.Dinner.MealName != "Eating out" {
 		t.Errorf("expected Friday dinner to be 'Eating out', got %v", plan.Friday.Dinner)
 	}
+	// Verify Friday breakfast and lunch are present
+	if plan.Friday.Breakfast == nil {
+		t.Errorf("expected a breakfast meal for Friday, got nil")
+	}
+	if plan.Friday.Lunch == nil {
+		t.Errorf("expected a lunch meal for Friday, got nil")
+	}
 
 	// Verify breakfast and lunch are set for Monday (as an example)
 	if plan.Monday.Breakfast == nil {
@@ -204,36 +212,38 @@ func TestGetLastPlannedMeals(t *testing.T) {
 			now.AddDate(0, 0, -4), // 4 days ago
 			now.AddDate(0, 0, -5), // 5 days ago
 			now.AddDate(0, 0, -6), // 6 days ago
+			now.AddDate(0, 0, -7), // 7 days ago
 		}
 
 		// Mock breakfast query
 		breakfastRows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"})
-		for i := 0; i < 6; i++ {
+		for i := 0; i < 7; i++ {
 			breakfastRows.AddRow(i+100, fmt.Sprintf("Breakfast %d", i+1), 1, lastPlannedDates[i], false, "https://example.com/breakfast", "breakfast")
 		}
 		mock.ExpectQuery("SELECT (.+) FROM meals WHERE meal_type = \\$1 AND last_planned IS NOT NULL ORDER BY last_planned DESC LIMIT \\$2").
-			WithArgs("breakfast", 6).
+			WithArgs("breakfast", 7).
 			WillReturnRows(breakfastRows)
 
 		// Mock lunch query
 		lunchRows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"})
-		for i := 0; i < 6; i++ {
+		for i := 0; i < 7; i++ {
 			lunchRows.AddRow(i+200, fmt.Sprintf("Lunch %d", i+1), 2, lastPlannedDates[i], false, "https://example.com/lunch", "lunch")
 		}
 		mock.ExpectQuery("SELECT (.+) FROM meals WHERE meal_type = \\$1 AND last_planned IS NOT NULL ORDER BY last_planned DESC LIMIT \\$2").
-			WithArgs("lunch", 6).
+			WithArgs("lunch", 7).
 			WillReturnRows(lunchRows)
 
 		// Mock dinner query - note that the function reverses the order, so we need to add them in reverse
 		dinnerRows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"})
-		dinnerRows.AddRow(6, "Sunday Dinner", 7, lastPlannedDates[5], false, "https://example.com/sunday", "dinner")
-		dinnerRows.AddRow(5, "Saturday Dinner", 5, lastPlannedDates[4], true, "https://example.com/saturday", "dinner")
+		dinnerRows.AddRow(7, "Sunday Dinner", 7, lastPlannedDates[6], false, "https://example.com/sunday", "dinner")
+		dinnerRows.AddRow(6, "Saturday Dinner", 5, lastPlannedDates[5], true, "https://example.com/saturday", "dinner")
+		dinnerRows.AddRow(5, "Friday Dinner", 3, lastPlannedDates[4], false, "https://example.com/friday", "dinner")
 		dinnerRows.AddRow(4, "Thursday Dinner", 3, lastPlannedDates[3], false, "https://example.com/thursday", "dinner")
 		dinnerRows.AddRow(3, "Wednesday Dinner", 4, lastPlannedDates[2], true, "https://example.com/wednesday", "dinner")
 		dinnerRows.AddRow(2, "Tuesday Dinner", 3, lastPlannedDates[1], false, "https://example.com/tuesday", "dinner")
 		dinnerRows.AddRow(1, "Monday Dinner", 2, lastPlannedDates[0], false, "https://example.com/monday", "dinner")
 		mock.ExpectQuery("SELECT (.+) FROM meals WHERE meal_type = \\$1 AND last_planned IS NOT NULL ORDER BY last_planned DESC LIMIT \\$2").
-			WithArgs("dinner", 6).
+			WithArgs("dinner", 7).
 			WillReturnRows(dinnerRows)
 
 		// Call the function
@@ -267,6 +277,13 @@ func TestGetLastPlannedMeals(t *testing.T) {
 		if mealPlan.Friday.Dinner == nil || mealPlan.Friday.Dinner.MealName != "Eating out" {
 			t.Errorf("expected Friday dinner to be 'Eating out', got: %+v", mealPlan.Friday.Dinner)
 		}
+		// Friday breakfast and lunch should be present
+		if mealPlan.Friday.Breakfast == nil {
+			t.Errorf("expected a breakfast meal for Friday, got nil")
+		}
+		if mealPlan.Friday.Lunch == nil {
+			t.Errorf("expected a lunch meal for Friday, got nil")
+		}
 	})
 
 	t.Run("not enough meals found", func(t *testing.T) {
@@ -275,7 +292,7 @@ func TestGetLastPlannedMeals(t *testing.T) {
 		breakfastRows.AddRow(1, "Breakfast 1", 1, time.Now(), false, "https://example.com/breakfast", "breakfast")
 		breakfastRows.AddRow(2, "Breakfast 2", 1, time.Now().AddDate(0, 0, -1), false, "https://example.com/breakfast", "breakfast")
 		mock.ExpectQuery("SELECT (.+) FROM meals WHERE meal_type = \\$1 AND last_planned IS NOT NULL ORDER BY last_planned DESC LIMIT \\$2").
-			WithArgs("breakfast", 6).
+			WithArgs("breakfast", 7).
 			WillReturnRows(breakfastRows)
 
 		// Call the function
@@ -291,7 +308,7 @@ func TestGetLastPlannedMeals(t *testing.T) {
 		// Mock breakfast query with no rows
 		breakfastRows := sqlmock.NewRows([]string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"})
 		mock.ExpectQuery("SELECT (.+) FROM meals WHERE meal_type = \\$1 AND last_planned IS NOT NULL ORDER BY last_planned DESC LIMIT \\$2").
-			WithArgs("breakfast", 6).
+			WithArgs("breakfast", 7).
 			WillReturnRows(breakfastRows)
 
 		// Call the function
@@ -305,7 +322,7 @@ func TestGetLastPlannedMeals(t *testing.T) {
 
 	t.Run("database error", func(t *testing.T) {
 		mock.ExpectQuery("SELECT (.+) FROM meals WHERE meal_type = \\$1 AND last_planned IS NOT NULL ORDER BY last_planned DESC LIMIT \\$2").
-			WithArgs("breakfast", 6).
+			WithArgs("breakfast", 7).
 			WillReturnError(sql.ErrConnDone)
 
 		// Call the function
