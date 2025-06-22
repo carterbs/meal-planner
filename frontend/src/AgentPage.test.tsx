@@ -31,7 +31,8 @@ test("auto resumes from localStorage", async () => {
   await waitFor(() =>
     expect(screen.getByTestId("session-id")).toHaveTextContent("abc"),
   );
-  expect(screen.queryByTestId("start-session")).not.toBeInTheDocument();
+  expect(screen.getByTestId("start-session")).toBeInTheDocument();
+  expect(screen.getByTestId("start-session")).toHaveTextContent("Start New Session");
 });
 
 test("clears completed session from storage", async () => {

@@ -20,7 +20,7 @@ jest.mock('react', () => {
     const originalModule = jest.requireActual('react');
     return {
         ...originalModule,
-        StrictMode: ({ children }: { children: React.ReactNode }) => children
+        StrictMode: ({ children }: { children: React.ReactNode }) => children,
     };
 });
 
