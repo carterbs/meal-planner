@@ -256,16 +256,14 @@ const AgentPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-      {!session && (
-        <Button
-          size="small"
-          variant="contained"
-          onClick={startNewSession}
-          data-testid="start-session"
-        >
-          Start&nbsp;New&nbsp;Session
-        </Button>
-      )}
+      <Button
+        size="small"
+        variant="contained"
+        onClick={startNewSession}
+        data-testid="start-session"
+      >
+        {session ? "Start New Session" : "Start&nbsp;New&nbsp;Session"}
+      </Button>
       {session && (
         <Typography data-testid="session-id">
           Session: {session.threadId}
