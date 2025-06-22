@@ -124,6 +124,7 @@ export interface MealPlanningState extends BaseWorkflowState {
   is_finalized: boolean;
   current_step: MealPlanningStep;
   shopping_list_formatted?: string;
+  user_message?: string; // LLM-generated message about changes made
   _error?: string; // For tracking errors during workflow execution
 }
 

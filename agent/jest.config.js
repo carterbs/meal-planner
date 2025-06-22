@@ -1,5 +1,12 @@
 export default {
   preset: 'ts-jest/presets/default-esm',
+  globals: {
+    'ts-jest': {
+      useESM: true,
+      tsconfig: 'tsconfig.json',
+      diagnostics: false
+    }
+  },
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
   roots: ['<rootDir>'],
@@ -12,13 +19,14 @@ export default {
       useESM: true,
       tsconfig: {
         target: 'ES2022',
-        module: 'ESNext',
+        module: 'ES2022',
         moduleResolution: 'node'
       }
     }],
     '^.+\\.js$': ['ts-jest', { useESM: true }]
   },
   moduleNameMapper: {
+    '^\.\./cli\.js$': '<rootDir>/tests/__mocks__/cli.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1'
   }
 };

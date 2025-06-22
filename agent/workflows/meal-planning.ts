@@ -262,13 +262,14 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     if (!state.meal_plan) {
       throw new Error("No meal plan to apply feedback to");
     }
-    // Gather feedback for this version or use provided feedback_to_apply
-    const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedbackForVersion(state.threadId, state.iteration_count);
+    // Gather ALL feedback from the entire session or use provided feedback_to_apply
+    const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedback(state.threadId);
     const feedbackMessages = feedbackEntries.map(f => f.message);
     // Call LLM to pick alternatives based on feedback
-    const updatedPlan = await this.applyFeedbackWithLLM(state.meal_plan, feedbackMessages);
+    const result = await this.applyFeedbackWithLLM(state.meal_plan, feedbackMessages);
     return {
-      meal_plan: updatedPlan,
+      meal_plan: result.mealPlan,
+      user_message: result.userMessage,
       updated_at: new Date()
     };
   }
@@ -287,7 +288,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return analysis;
   }
 
-  private async applyFeedbackWithLLM(plan: WeeklyMealPlan, feedback: string[]): Promise<WeeklyMealPlan> {
+  private async applyFeedbackWithLLM(plan: WeeklyMealPlan, feedback: string[]): Promise<{mealPlan: WeeklyMealPlan, userMessage: string}> {
     const t0 = Date.now();
     debugLog(`[FEEDBACK] applyFeedbackWithLLM start (feedbackCount=${feedback.length})`);
     // Fetch available meals
@@ -296,22 +297,52 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const mealOptions = availableMeals.map(m => `${m.id}: ${m.mealName} (${m.mealType}, effort: ${m.relativeEffort}, red meat: ${m.redMeat})`).join('\n');
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const planDescription = plan.days.map(day => `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal.name} (ID: ${day.meal.id}, effort: ${day.meal.effort}, red meat: ${day.meal.hasRedMeat})`).join('\n');
-    const feedbackText = feedback.length > 0 ? `User feedback for this revision:\n${feedback.join('\n')}\n` : '';
-    const prompt = `You are updating a weekly meal plan based on user feedback.\n${feedbackText}\n
+    const feedbackText = feedback.length > 0 ? `ALL USER FEEDBACK FROM THIS SESSION (in chronological order):\n${feedback.map((msg, idx) => `${idx + 1}. ${msg}`).join('\n')}\n` : '';
+    const prompt = `You are updating a weekly meal plan based on ALL user feedback from the entire session.\n
+    ${feedbackText}\n
     Current meal plan:\n${planDescription}\n\n
     Available meals to choose from:\n${mealOptions}\n\n
-    Rules:\n
+    IMPORTANT GUIDELINES:\n
+    - Consider ALL feedback messages above when making decisions\n
+    - If feedback is contradictory or impossible to satisfy (e.g., "no eggs, no cereal, no bagels" for breakfast), do your best and explain the constraints in your message\n
     - Only replace meals with the same meal type (breakfast/lunch/dinner)\n
-    - Prefer lower effort meals (1-2) for replacements\n
     - Avoid duplicate meals\n
-    - Try to honor the user's feedback as much as possible\n\n
-    Please respond with ONLY a JSON object containing your recommended replacements:\n\n
-    {\n  "replacements": [\n    {\n      "day": "Sunday",\n      "mealType": "dinner",\n      "oldMealId": 9,\n      "newMealId": 50,\n      "reason": "Replace as requested in feedback"\n    }\n  ]\n}\nIf no replacements are needed, return: {"replacements": []}.\n\n<important> Your response should be parseable as JSON.</important>`;
+    - Avoid suggesting meals that have been explicitly rejected in ANY previous feedback\n
+    - When constraints are impossible to meet, choose the best available options and explain why in your message\n\n
+    - Respond with ONLY a JSON object containing your recommended replacements AND a friendly message to the user:\n\n
+    {
+      "replacements": [
+        {
+          "day": "Sunday",
+          "mealType": "dinner",
+          "oldMealId": 9,
+          "newMealId": 50,
+          "reason": "Replace as requested in feedback"
+        }
+      ],
+      "userMessage": "Thanks for your feedback! I've swapped out the Steak dinner for Chicken nuggets - a much easier option that should work better for your needs."
+    }
+    
+    For the userMessage:
+    - Be conversational and friendly (1-2 sentences)
+    - Mention what meals were changed and why
+    - If constraints are impossible to meet, acknowledge this: "I know you asked to avoid both X and Y, but those are the main breakfast options available, so I picked the best alternative..."
+    - If no changes were needed, explain why the current plan already meets their needs
+    
+    If no replacements are needed, return: {"replacements": [], "userMessage": "Your current meal plan already looks great and addresses your preferences!"}\n\n<important> Your response should be parseable as JSON.</important>`;
     const result = await this.llm.invoke([{ role: "user", content: prompt }]);
     const llmResponse = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
     let updatedPlan = { ...plan, days: [...plan.days] };
+    let userMessage = "I've updated your meal plan based on your feedback!"; // Default fallback message
+    
     try {
       const recommendations = JSON.parse(this.extractJsonFromResponse(llmResponse));
+      
+      // Extract user message from LLM response
+      if (recommendations.userMessage && typeof recommendations.userMessage === 'string') {
+        userMessage = recommendations.userMessage;
+      }
+      
       if (recommendations.replacements && Array.isArray(recommendations.replacements)) {
         for (const replacement of recommendations.replacements) {
           const { day, mealType, oldMealId, newMealId, reason } = replacement;
@@ -338,9 +369,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       }
     } catch (error) {
       console.error("❌ [MEAL-WORKFLOW] Failed to parse LLM feedback response:", error);
+      userMessage = "I've made some adjustments to your meal plan based on your feedback."; // Fallback on error
     }
     debugLog(`[FEEDBACK] applyFeedbackWithLLM finished in ${Date.now() - t0}ms`);
-    return updatedPlan;
+    return { mealPlan: updatedPlan, userMessage };
   }
 
   private async presentPlanNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {

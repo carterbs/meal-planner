@@ -30,7 +30,7 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 	redMeatUsed := false
 	threeWeeksAgo := time.Now().AddDate(0, 0, -21)
 
-	days := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"}
+	days := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
 
 	for _, day := range days {
 		var dayPlan DayMealPlan
@@ -75,6 +75,8 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 			plan.Wednesday = dayPlan
 		case "Thursday":
 			plan.Thursday = dayPlan
+		case "Friday":
+			plan.Friday = dayPlan
 		case "Saturday":
 			plan.Saturday = dayPlan
 		case "Sunday":
@@ -82,7 +84,7 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 		}
 	}
 
-	// Friday: Fixed "Eating out" value for dinner
+	// Overwrite Friday dinner to "Eating out"
 	plan.Friday.Dinner = &Meal{
 		MealName: "Eating out",
 	}
@@ -136,8 +138,8 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 // GetLastPlannedMeals retrieves the most recently planned meals to reconstruct the last meal plan
 func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
 	plan := &WeeklyMealPlan{}
-	// Friday is handled separately as "Eating out" for dinner
-	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"}
+	// Friday is now included for breakfast and lunch, but dinner is always "Eating out"
+	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
 	numMealsNeeded := len(weekdays)
 
 	lastBreakfasts, err := getLastPlannedMealsByType(db, "breakfast", numMealsNeeded)
@@ -165,6 +167,7 @@ func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
 		"Tuesday":   &plan.Tuesday,
 		"Wednesday": &plan.Wednesday,
 		"Thursday":  &plan.Thursday,
+		"Friday":    &plan.Friday,
 		"Saturday":  &plan.Saturday,
 		"Sunday":    &plan.Sunday,
 	}
@@ -176,7 +179,7 @@ func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
 		dayPlan.Dinner = lastDinners[i]
 	}
 
-	// Handle Friday "Eating out"
+	// Overwrite Friday dinner to "Eating out"
 	plan.Friday.Dinner = &Meal{MealName: "Eating out"}
 
 	return plan, nil
