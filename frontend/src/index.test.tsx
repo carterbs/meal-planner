@@ -90,7 +90,7 @@ describe('index.tsx', () => {
         const cssBaseline = themeProvider.props.children[0];
         const app = themeProvider.props.children[1];
         expect(cssBaseline.type.name).toBe('CssBaseline');
-        expect(app.type.name).toBe('App');
+        expect(app.type.name).toBe('AgentPage');
     });
 
     it('renders agent page when path starts with /agent', () => {
