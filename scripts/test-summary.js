@@ -32,7 +32,13 @@ function formatTime(timeInMs) {
 
 // Track execution time
 const startTime = Date.now();
-let backendStartTime, backendEndTime, frontendStartTime, frontendEndTime;
+let backendStartTime, backendEndTime, frontendStartTime, frontendEndTime, agentStartTime, agentEndTime;
+
+// Tracks agent test results
+const agentResults = {
+    suites: { pass: 0, fail: 0, total: 0 },
+    tests: { pass: 0, fail: 0, total: 0 },
+};
 
 // Run the tests and capture output
 console.log(chalk.blue('🧪 Running tests and analyzing results...\n'));
@@ -167,65 +173,131 @@ backendTestProcess.on('close', (backendCode) => {
     // Print summary when frontend tests are done
     frontendTestProcess.on('close', (frontendCode) => {
         frontendEndTime = Date.now();
-        const endTime = Date.now();
-        const executionTime = endTime - startTime;
-        const backendExecutionTime = backendEndTime - backendStartTime;
-        const frontendExecutionTime = frontendEndTime - frontendStartTime;
 
-        console.log(chalk.yellow('\n============================================'));
-        console.log(chalk.yellow('             TEST SUMMARY'));
-        console.log(chalk.yellow('============================================\n'));
+        // Now run agent tests
+        console.log(chalk.blue('\nRunning agent tests...'));
+        agentStartTime = Date.now();
+        const agentTestProcess = spawn('yarn', ['test:agent'], {
+            stdio: ['ignore', 'pipe', 'pipe'],
+            shell: true,
+        });
 
-        // Backend summary
-        const backendFailed = backendResults.fail > 0 || backendCode !== 0;
-        console.log(chalk.cyan('🔹 BACKEND TESTS ') + chalk.gray(`(${formatTime(backendExecutionTime)})`));
-        console.log(chalk.cyan('----------------'));
-
-        const backendPackages = Object.keys(backendResults.packages);
-        if (backendPackages.length > 0) {
-            backendPackages.forEach(pkg => {
-                const result = backendResults.packages[pkg];
-                const statusColor = result.status === 'pass' ? chalk.green : chalk.red;
-                console.log(`${statusColor('■')} ${pkg.padEnd(30)} ${formatTime(result.time * 1000)}`);
+        agentTestProcess.stdout.on('data', (data) => {
+            const output = data.toString();
+            const lines = output.split('\n');
+            lines.forEach(line => {
+                // Parse Jest-like output for agent
+                const suitesMatch = line.match(/Test Suites:\s+(\d+)\s+passed,(?:\s+(\d+)\s+failed,)?\s+(\d+)\s+total/);
+                if (suitesMatch) {
+                    const [, pass, fail = '0', total] = suitesMatch;
+                    agentResults.suites = {
+                        pass: parseInt(pass, 10),
+                        fail: parseInt(fail, 10),
+                        total: parseInt(total, 10)
+                    };
+                }
+                const testsMatch = line.match(/Tests:\s+(\d+)\s+passed,(?:\s+(\d+)\s+failed,)?\s+(\d+)\s+total/);
+                if (testsMatch) {
+                    const [, pass, fail = '0', total] = testsMatch;
+                    agentResults.tests = {
+                        pass: parseInt(pass, 10),
+                        fail: parseInt(fail, 10),
+                        total: parseInt(total, 10)
+                    };
+                }
             });
-        }
+        });
+        agentTestProcess.stderr.on('data', (data) => {
+            const output = data.toString();
+            const lines = output.split('\n');
+            lines.forEach(line => {
+                const suitesMatch = line.match(/Test Suites:\s+(\d+)\s+passed,(?:\s+(\d+)\s+failed,)?\s+(\d+)\s+total/);
+                if (suitesMatch) {
+                    const [, pass, fail = '0', total] = suitesMatch;
+                    agentResults.suites = {
+                        pass: parseInt(pass, 10),
+                        fail: parseInt(fail, 10),
+                        total: parseInt(total, 10)
+                    };
+                }
+                const testsMatch = line.match(/Tests:\s+(\d+)\s+passed,(?:\s+(\d+)\s+failed,)?\s+(\d+)\s+total/);
+                if (testsMatch) {
+                    const [, pass, fail = '0', total] = testsMatch;
+                    agentResults.tests = {
+                        pass: parseInt(pass, 10),
+                        fail: parseInt(fail, 10),
+                        total: parseInt(total, 10)
+                    };
+                }
+            });
+        });
+        agentTestProcess.on('close', (agentCode) => {
+            agentEndTime = Date.now();
+            const endTime = Date.now();
+            const executionTime = endTime - startTime;
+            const backendExecutionTime = backendEndTime - backendStartTime;
+            const frontendExecutionTime = frontendEndTime - frontendStartTime;
+            const agentExecutionTime = agentEndTime - agentStartTime;
 
-        // Also show test counts for backend
-        const backendTotal = backendResults.pass + backendResults.fail;
-        const statusColor = backendResults.fail === 0 ? chalk.green : chalk.red;
-        console.log(`${statusColor('■')} Total Tests: ${backendTotal} (${backendResults.pass} passed, ${backendResults.fail} failed)`);
+            console.log(chalk.yellow('\n============================================'));
+            console.log(chalk.yellow('             TEST SUMMARY'));
+            console.log(chalk.yellow('============================================\n'));
 
-        // Print command to run backend tests if they failed
-        if (backendFailed) {
-            console.log(chalk.red('\n❗ Backend tests failed. Run the following command to see details:'));
-            console.log(chalk.yellow('   yarn test:backend'));
-        }
+            // Backend summary
+            const backendFailed = backendResults.fail > 0 || backendCode !== 0;
+            console.log(chalk.cyan('🔹 BACKEND TESTS ') + chalk.gray(`(${formatTime(backendExecutionTime)})`));
+            console.log(chalk.cyan('----------------'));
+            const backendPackages = Object.keys(backendResults.packages);
+            if (backendPackages.length > 0) {
+                backendPackages.forEach(pkg => {
+                    const result = backendResults.packages[pkg];
+                    const statusColor = result.status === 'pass' ? chalk.green : chalk.red;
+                    console.log(`${statusColor('■')} ${pkg.padEnd(30)} ${formatTime(result.time * 1000)}`);
+                });
+            }
+            const backendTotal = backendResults.pass + backendResults.fail;
+            const backendStatusColor = backendResults.fail === 0 ? chalk.green : chalk.red;
+            console.log(`${backendStatusColor('■')} Total Tests: ${backendTotal} (${backendResults.pass} passed, ${backendResults.fail} failed)`);
+            if (backendFailed) {
+                console.log(chalk.red('\n❗ Backend tests failed. Run the following command to see details:'));
+                console.log(chalk.yellow('   yarn test:backend'));
+            }
 
-        // Frontend summary
-        const frontendFailed = frontendResults.tests.fail > 0 || frontendCode !== 0;
-        console.log(chalk.cyan('\n🔹 FRONTEND TESTS ') + chalk.gray(`(${formatTime(frontendExecutionTime)})`));
-        console.log(chalk.cyan('----------------'));
-        const frontendStatus = frontendFailed ? 'FAIL' : 'PASS';
-        const frontendColor = frontendFailed ? chalk.red : chalk.green;
+            // Frontend summary
+            const frontendFailed = frontendResults.tests.fail > 0 || frontendCode !== 0;
+            console.log(chalk.cyan('\n🔹 FRONTEND TESTS ') + chalk.gray(`(${formatTime(frontendExecutionTime)})`));
+            console.log(chalk.cyan('----------------'));
+            const frontendStatus = frontendFailed ? 'FAIL' : 'PASS';
+            const frontendColor = frontendFailed ? chalk.red : chalk.green;
+            console.log(`${frontendColor('■')} Test Suites: ${frontendResults.suites.pass} passed, ${frontendResults.suites.fail} failed, ${frontendResults.suites.total} total`);
+            console.log(`${frontendColor('■')} Tests:       ${frontendResults.tests.pass} passed, ${frontendResults.tests.fail} failed, ${frontendResults.tests.total} total`);
+            if (frontendFailed) {
+                console.log(chalk.red('\n❗ Frontend tests failed. Run the following command to see details:'));
+                console.log(chalk.yellow('   yarn test:frontend'));
+            }
 
-        console.log(`${frontendColor('■')} Test Suites: ${frontendResults.suites.pass} passed, ${frontendResults.suites.fail} failed, ${frontendResults.suites.total} total`);
-        console.log(`${frontendColor('■')} Tests:       ${frontendResults.tests.pass} passed, ${frontendResults.tests.fail} failed, ${frontendResults.tests.total} total`);
+            // Agent summary
+            const agentFailed = agentResults.tests.fail > 0 || agentCode !== 0;
+            console.log(chalk.cyan('\n🔹 AGENT TESTS ') + chalk.gray(`(${formatTime(agentExecutionTime)})`));
+            console.log(chalk.cyan('----------------'));
+            const agentStatus = agentFailed ? 'FAIL' : 'PASS';
+            const agentColor = agentFailed ? chalk.red : chalk.green;
+            console.log(`${agentColor('■')} Test Suites: ${agentResults.suites.pass} passed, ${agentResults.suites.fail} failed, ${agentResults.suites.total} total`);
+            console.log(`${agentColor('■')} Tests:       ${agentResults.tests.pass} passed, ${agentResults.tests.fail} failed, ${agentResults.tests.total} total`);
+            if (agentFailed) {
+                console.log(chalk.red('\n❗ Agent tests failed. Run the following command to see details:'));
+                console.log(chalk.yellow('   yarn test:agent'));
+            }
 
-        // Print command to run frontend tests if they failed
-        if (frontendFailed) {
-            console.log(chalk.red('\n❗ Frontend tests failed. Run the following command to see details:'));
-            console.log(chalk.yellow('   yarn test:frontend'));
-        }
+            // Overall summary
+            const totalFailed = backendResults.fail + frontendResults.tests.fail + agentResults.tests.fail;
+            const overallStatus = totalFailed === 0 && backendCode === 0 && frontendCode === 0 && agentCode === 0 ? 'PASS' : 'FAIL';
+            const overallColor = totalFailed === 0 && backendCode === 0 && frontendCode === 0 && agentCode === 0 ? chalk.green : chalk.red;
+            console.log(chalk.yellow('\n============================================'));
+            console.log(`${overallColor('OVERALL: ' + overallStatus)} (${formatTime(executionTime)})`);
+            console.log(chalk.yellow('============================================\n'));
 
-        // Overall summary
-        const totalFailed = backendResults.fail + frontendResults.tests.fail;
-        const overallStatus = totalFailed === 0 && backendCode === 0 && frontendCode === 0 ? 'PASS' : 'FAIL';
-        const overallColor = totalFailed === 0 && backendCode === 0 && frontendCode === 0 ? chalk.green : chalk.red;
-
-        console.log(chalk.yellow('\n============================================'));
-        console.log(`${overallColor('OVERALL: ' + overallStatus)} (${formatTime(executionTime)})`);
-        console.log(chalk.yellow('============================================\n'));
-
-        process.exit(frontendCode || backendCode);
+            process.exit(agentCode || frontendCode || backendCode);
+        });
     });
 }); 
