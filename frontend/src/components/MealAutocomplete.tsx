@@ -36,11 +36,13 @@ export const MealAutocomplete: React.FC<MealAutocompleteProps> = ({
                 const response = await fetch(`/api/meals?type=${mealType.toLowerCase()}`);
                 if (response.ok) {
                     const meals: Meal[] = await response.json();
-                    setAvailableMeals(meals);
+                    setAvailableMeals(Array.isArray(meals) ? meals : []);
                 } else {
+                    setAvailableMeals([]);
                     console.error('Failed to fetch meals');
                 }
             } catch (error) {
+                setAvailableMeals([]);
                 console.error('Error fetching meals:', error);
             } finally {
                 setLoading(false);
@@ -110,51 +112,54 @@ export const MealAutocomplete: React.FC<MealAutocompleteProps> = ({
                     }}
                 />
             )}
-            renderOption={(props, option) => (
-                <Box component="li" {...props}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {option.mealName}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
-                            <Chip
-                                label={`Effort: ${option.relativeEffort}`}
-                                size="small"
-                                sx={{
-                                    height: '20px',
-                                    fontSize: '0.7rem',
-                                    backgroundColor: '#f0f8ed',
-                                    color: '#7fb069',
-                                }}
-                            />
-                            {option.redMeat && (
-                                <Chip
-                                    label="Red Meat"
-                                    size="small"
-                                    sx={{
-                                        height: '20px',
-                                        fontSize: '0.7rem',
-                                        backgroundColor: '#fef6f0',
-                                        color: '#e09e60',
-                                    }}
-                                />
-                            )}
-                            {option.url && (
-                                <Chip
-                                    label="Has Recipe"
-                                    size="small"
-                                    sx={{
-                                        height: '20px',
-                                        fontSize: '0.7rem',
-                                        backgroundColor: '#f0f8ff',
-                                        color: '#6b7280',
-                                    }}
-                                />
-                            )}
-                        </Box>
-                    </Box>
+            renderOption={(props, option) => {
+    const { key, ...rest } = props;
+    return (
+        <Box component="li" key={key} {...rest}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {option.mealName}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                    <Chip
+                        label={`Effort: ${option.relativeEffort}`}
+                        size="small"
+                        sx={{
+                            height: '20px',
+                            fontSize: '0.7rem',
+                            backgroundColor: '#f0f8ed',
+                            color: '#7fb069',
+                        }}
+                    />
+                    {option.redMeat && (
+                        <Chip
+                            label="Red Meat"
+                            size="small"
+                            sx={{
+                                height: '20px',
+                                fontSize: '0.7rem',
+                                backgroundColor: '#fef6f0',
+                                color: '#e09e60',
+                            }}
+                        />
+                    )}
+                    {option.url && (
+                        <Chip
+                            label="Has Recipe"
+                            size="small"
+                            sx={{
+                                height: '20px',
+                                fontSize: '0.7rem',
+                                backgroundColor: '#f0f8ff',
+                                color: '#6b7280',
+                            }}
+                        />
+                    )}
                 </Box>
-            )}
+            </Box>
+        </Box>
+    );
+} }
             sx={{
                 minWidth: 200,
                 '& .MuiAutocomplete-listbox': {

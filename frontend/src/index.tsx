@@ -19,16 +19,14 @@ try {
     }
 
     const root = ReactDOM.createRoot(rootElement);
-    const path = window.location.pathname;
-    const PageComponent = path.startsWith('/agent') ? AgentPage : App;
     root.render(
-        <React.StrictMode>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <PageComponent />
-            </ThemeProvider>
-        </React.StrictMode>
-    );
+    <React.StrictMode>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <AgentPage />
+        </ThemeProvider>
+    </React.StrictMode>
+);
 } catch (error) {
     console.error(error instanceof Error ? error.message : "Failed to initialize app");
 } 
