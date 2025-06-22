@@ -3,6 +3,7 @@ import { Box, Button, TextField, Typography, Paper, Avatar, IconButton } from '@
 import SendIcon from '@mui/icons-material/Send';
 import MealPlanDisplay, { WeeklyMealPlan } from './components/MealPlanDisplay';
 import TypingIndicator from './components/TypingIndicator';
+import useSession from './hooks/useSession';
 
 // Utility to format a WeeklyMealPlan for clipboard copying
 const WEEK_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -49,6 +50,8 @@ interface SessionInfo {
 }
 
 const AgentPage: React.FC = () => {
+  const { isResuming, resumeData, startNewSession: startNewSessionHook } = useSession();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -64,6 +67,15 @@ const AgentPage: React.FC = () => {
       el.scrollTop = el.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (!resumeData) return;
+    setSession({ threadId: resumeData.threadId, currentStep: resumeData.current_step });
+    const plan = (resumeData as any).meal_plan;
+    if (plan) setMealPlan(plan);
+    const list = (resumeData as any).shopping_list_formatted || (resumeData as any).shopping_list;
+    if (list) setShoppingList(list);
+  }, [resumeData]);
 
   const applyHighlights = (newPlan: WeeklyMealPlan) => {
     setHighlights(prev => {
@@ -91,15 +103,10 @@ const AgentPage: React.FC = () => {
     setMealPlan(newPlan);
   };
 
-  const startSession = async () => {
+  const startNewSession = async () => {
     setIsWorking(true);
     try {
-      const res = await fetch('/api/agent/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participants: ['user'], workflowType: 'meal_planning' })
-      });
-      const data = await res.json();
+      const data = await startNewSessionHook();
       setSession({ threadId: data.threadId, currentStep: data.currentStep });
       
       // Extract meal plan from various possible locations in response
@@ -185,7 +192,7 @@ const AgentPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Button onClick={startSession} variant="contained" data-testid="start-session">Start New Session</Button>
+      {!session && <Button size="small" variant="contained" onClick={startNewSession} data-testid="start-session">Start&nbsp;New&nbsp;Session</Button>}
       {session && (
         <Typography data-testid="session-id">Session: {session.threadId}</Typography>
       )}

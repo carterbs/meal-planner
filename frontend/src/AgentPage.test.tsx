@@ -9,6 +9,7 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.resetAllMocks();
+  localStorage.clear();
 });
 
 test('copies meal plan to clipboard', async () => {
@@ -181,5 +182,43 @@ test('shows typing indicator when agent is working', async () => {
   // Wait for typing indicator to disappear
   await waitFor(() => {
     expect(screen.queryByTestId('typing-indicator')).not.toBeInTheDocument();
+  });
+});
+
+test('auto resumes session from localStorage', async () => {
+  localStorage.setItem('sessionId', 'abc');
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({ threadId: 'abc', workflow_type: 'meal_planning', current_step: 'started', meal_plan: { days: [] } })
+  });
+  render(<AgentPage />);
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/workflows/abc'));
+  await waitFor(() => expect(screen.queryByTestId('start-session')).not.toBeInTheDocument());
+  localStorage.removeItem('sessionId');
+});
+
+test('clears completed session from localStorage', async () => {
+  localStorage.setItem('sessionId', 'def');
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({ threadId: 'def', workflow_type: 'meal_planning', current_step: 'complete' })
+  });
+  render(<AgentPage />);
+  await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+  expect(localStorage.getItem('sessionId')).toBeNull();
+  expect(screen.getByTestId('start-session')).toBeInTheDocument();
+});
+
+test('abandon called when starting new session', async () => {
+  localStorage.setItem('sessionId', 'old');
+  (global.fetch as jest.Mock)
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ threadId: 'old', workflow_type: 'meal_planning', current_step: 'started' }) })
+    .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ status: 'ABANDONED' }) })
+    .mockResolvedValueOnce({ json: () => Promise.resolve({ threadId: 'new', currentStep: 'started' }) });
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+  await waitFor(() => {
+    expect(global.fetch).toHaveBeenCalledWith('/api/workflows/old/abandon', expect.any(Object));
+    expect(global.fetch).toHaveBeenCalledWith('/api/agent/start', expect.any(Object));
   });
 });

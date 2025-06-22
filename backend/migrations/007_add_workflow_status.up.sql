@@ -1,0 +1,1 @@
+ALTER TABLE workflow_checkpoints ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ACTIVE';

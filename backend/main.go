@@ -289,6 +289,10 @@ func main() {
 		r.Get("/workflows", handlers.ListWorkflows)
 		r.Delete("/workflows/{threadId}", handlers.CancelWorkflow)
 	})
+	r.Route("/api/workflows", func(r chi.Router) {
+		r.Get("/{threadId}", handlers.GetWorkflow)
+		r.Post("/{threadId}/abandon", handlers.AbandonWorkflow)
+	})
 	r.Put("/api/meals/{mealId}/steps/{stepId}", handlers.UpdateStepHandler)
 	r.Delete("/api/meals/{mealId}/steps/{stepId}", handlers.DeleteStepHandler)
 	r.Put("/api/meals/{mealId}/steps/reorder", handlers.ReorderStepsHandler)

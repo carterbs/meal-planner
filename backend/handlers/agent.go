@@ -82,6 +82,12 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	workflowStore[resp.ThreadID] = &models.WorkflowState{
+		ThreadID:     resp.ThreadID,
+		WorkflowType: req.WorkflowType,
+		CurrentStep:  resp.CurrentStep,
+		Status:       models.WorkflowStatusActive,
+	}
 	writeJSON(w, resp)
 }
 
@@ -149,6 +155,9 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	if wf, ok := workflowStore[req.ThreadID]; ok {
+		wf.CurrentStep = resp.CurrentStep
 	}
 	writeJSON(w, resp)
 }
