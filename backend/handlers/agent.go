@@ -82,6 +82,36 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Create session in database
+	if resp.ThreadID != "" {
+		session, err := models.CreateAgentSession(DB, resp.ThreadID, req.WorkflowType)
+		if err != nil {
+			log.Printf("[ERROR StartAgentWorkflow] Failed to create session in database: %v", err)
+			// Don't fail the request, just log the error
+		} else {
+			// Store initial meal plan and shopping list if present
+			if resp.Raw != nil {
+				if rawMap, ok := resp.Raw.(map[string]interface{}); ok {
+					if mealPlan, ok := rawMap["meal_plan"]; ok {
+						if mealPlanBytes, err := json.Marshal(mealPlan); err == nil {
+							session.MealPlan = mealPlanBytes
+						}
+					}
+					if shoppingList, ok := rawMap["shopping_list_formatted"].(string); ok {
+						session.ShoppingList = shoppingList
+					}
+				}
+				models.UpdateAgentSession(DB, session)
+			}
+
+			// Add initial agent message if present
+			if resp.Message != "" {
+				models.AddMessage(DB, resp.ThreadID, "agent", resp.Message)
+			}
+		}
+	}
+
 	writeJSON(w, resp)
 }
 
@@ -111,6 +141,15 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	// Store user message in database
+	if req.From == "user" && req.Message != "" {
+		_, err := models.AddMessage(DB, req.ThreadID, "user", req.Message)
+		if err != nil {
+			log.Printf("[ERROR AddAgentFeedback] Failed to store user message: %v", err)
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	log.Printf("[DEBUG AddAgentFeedback] Running agent CLI: plan feedback %s %s --from %s", req.ThreadID, req.Message, req.From)
@@ -150,6 +189,35 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Update session state with new data from response
+	if resp.ThreadID != "" {
+		session, err := models.GetAgentSession(DB, resp.ThreadID)
+		if err == nil {
+			// Update meal plan and shopping list if present
+			if resp.Raw != nil {
+				if rawMap, ok := resp.Raw.(map[string]interface{}); ok {
+					if mealPlan, ok := rawMap["meal_plan"]; ok {
+						if mealPlanBytes, err := json.Marshal(mealPlan); err == nil {
+							session.MealPlan = mealPlanBytes
+						}
+					}
+					if shoppingList, ok := rawMap["shopping_list_formatted"].(string); ok {
+						session.ShoppingList = shoppingList
+					}
+				}
+			}
+
+
+			models.UpdateAgentSession(DB, session)
+
+			// Add agent message if present
+			if resp.Message != "" {
+				models.AddMessage(DB, resp.ThreadID, "agent", resp.Message)
+			}
+		}
+	}
+
 	writeJSON(w, resp)
 }
 

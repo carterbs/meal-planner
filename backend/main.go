@@ -292,6 +292,8 @@ func main() {
 	// Workflow management endpoints
 	r.Get("/api/workflows/{threadId}", handlers.GetWorkflowState)
 	r.Post("/api/workflows/{threadId}/abandon", handlers.AbandonWorkflow)
+	r.Post("/api/workflows/{threadId}/messages", handlers.AddMessage)
+	r.Put("/api/workflows/{threadId}/state", handlers.UpdateSessionState)
 	r.Put("/api/meals/{mealId}/steps/{stepId}", handlers.UpdateStepHandler)
 	r.Delete("/api/meals/{mealId}/steps/{stepId}", handlers.DeleteStepHandler)
 	r.Put("/api/meals/{mealId}/steps/reorder", handlers.ReorderStepsHandler)
