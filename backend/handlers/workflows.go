@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -10,10 +12,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// in-memory map to track workflow status like ABANDONED
+// in-memory map to track workflow status like ABANDONED (kept for backwards compatibility)
 var workflowStatus = make(map[string]string)
 
+// parseJSON parses JSON from request body into target struct
+func parseJSON(r *http.Request, target interface{}) error {
+	return json.NewDecoder(r.Body).Decode(target)
+}
+
 // GetWorkflowState handles GET /api/workflows/{threadId}
+// Returns complete session data from database
 func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 	threadID := chi.URLParam(r, "threadId")
 	if threadID == "" {
@@ -21,18 +29,58 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state := models.WorkflowState{ThreadID: threadID, Status: "ACTIVE"}
-	if s, ok := workflowStatus[threadID]; ok {
-		state.Status = s
+	// Try to get session from database first
+	session, err := models.GetAgentSession(DB, threadID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Session not found in database, check in-memory status for backwards compatibility
+			state := models.WorkflowState{ThreadID: threadID, Status: "ACTIVE"}
+			if s, ok := workflowStatus[threadID]; ok {
+				state.Status = s
+			}
+
+			if !UseDummy {
+				ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+				defer cancel()
+				resp, err := runAgentCLI(ctx, "status", threadID)
+				if err == nil {
+					state.CurrentStep = resp.CurrentStep
+				}
+			}
+
+			writeJSON(w, state)
+			return
+		}
+		http.Error(w, "failed to get session: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	if !UseDummy {
-		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-		defer cancel()
-		resp, err := runAgentCLI(ctx, "status", threadID)
-		if err == nil {
-			state.CurrentStep = resp.CurrentStep
-		}
+	// Get messages for the session
+	messages, err := models.GetMessages(DB, threadID)
+	if err != nil {
+		http.Error(w, "failed to get messages: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Try to get workflow data from checkpoints table (where the real data is)
+	mealPlan, currentStep, err := models.GetWorkflowCheckpoint(DB, threadID)
+	if err != nil {
+		// Fallback to session data if checkpoint not found
+		mealPlan = session.MealPlan
+		currentStep = session.CurrentStep
+	}
+
+	// Build complete workflow state
+	state := models.WorkflowState{
+		ThreadID:     session.ThreadID,
+		WorkflowType: session.WorkflowType,
+		CurrentStep:  currentStep,
+		Status:       session.Status,
+		Messages:     messages,
+		MealPlan:     mealPlan,
+		ShoppingList: session.ShoppingList,
+		CreatedAt:    session.CreatedAt,
+		UpdatedAt:    session.UpdatedAt,
 	}
 
 	writeJSON(w, state)
@@ -46,6 +94,26 @@ func AbandonWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Update database session status to ABANDONED
+	session, err := models.GetAgentSession(DB, threadID)
+	if err != nil && err != sql.ErrNoRows {
+		http.Error(w, "failed to get session: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err == sql.ErrNoRows {
+		// Session not in database, use in-memory status for backwards compatibility
+		workflowStatus[threadID] = "ABANDONED"
+	} else {
+		// Update database
+		session.Status = "ABANDONED"
+		err = models.UpdateAgentSession(DB, session)
+		if err != nil {
+			http.Error(w, "failed to update session: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	if !UseDummy {
 		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 		defer cancel()
@@ -53,6 +121,91 @@ func AbandonWorkflow(w http.ResponseWriter, r *http.Request) {
 		runAgentCLI(ctx, "cancel", threadID, "--force")
 	}
 
-	workflowStatus[threadID] = "ABANDONED"
 	writeJSON(w, map[string]string{"status": "ABANDONED"})
+}
+
+// AddMessage handles POST /api/workflows/{threadId}/messages
+func AddMessage(w http.ResponseWriter, r *http.Request) {
+	threadID := chi.URLParam(r, "threadId")
+	if threadID == "" {
+		http.Error(w, "missing thread id", http.StatusBadRequest)
+		return
+	}
+
+	var req struct {
+		Sender  string `json:"sender"`
+		Message string `json:"message"`
+	}
+
+	if err := parseJSON(r, &req); err != nil {
+		http.Error(w, "invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.Sender != "user" && req.Sender != "agent" {
+		http.Error(w, "sender must be 'user' or 'agent'", http.StatusBadRequest)
+		return
+	}
+
+	if req.Message == "" {
+		http.Error(w, "message cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	message, err := models.AddMessage(DB, threadID, req.Sender, req.Message)
+	if err != nil {
+		http.Error(w, "failed to add message: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, message)
+}
+
+// UpdateSessionState handles PUT /api/workflows/{threadId}/state
+func UpdateSessionState(w http.ResponseWriter, r *http.Request) {
+	threadID := chi.URLParam(r, "threadId")
+	if threadID == "" {
+		http.Error(w, "missing thread id", http.StatusBadRequest)
+		return
+	}
+
+	var req struct {
+		MealPlan     *json.RawMessage `json:"meal_plan,omitempty"`
+		ShoppingList *string          `json:"shopping_list,omitempty"`
+		CurrentStep  *string          `json:"current_step,omitempty"`
+		Status       *string          `json:"status,omitempty"`
+	}
+
+	if err := parseJSON(r, &req); err != nil {
+		http.Error(w, "invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	session, err := models.GetAgentSession(DB, threadID)
+	if err != nil {
+		http.Error(w, "failed to get session: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Update fields that were provided
+	if req.MealPlan != nil {
+		session.MealPlan = *req.MealPlan
+	}
+	if req.ShoppingList != nil {
+		session.ShoppingList = *req.ShoppingList
+	}
+	if req.CurrentStep != nil {
+		session.CurrentStep = *req.CurrentStep
+	}
+	if req.Status != nil {
+		session.Status = *req.Status
+	}
+
+	err = models.UpdateAgentSession(DB, session)
+	if err != nil {
+		http.Error(w, "failed to update session: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, map[string]string{"status": "updated"})
 }
