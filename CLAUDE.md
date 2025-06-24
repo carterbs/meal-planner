@@ -1,6 +1,7 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+For an overview of the project structure and data flow see [README.md](./README.md).
 
 ## Essential Commands
 

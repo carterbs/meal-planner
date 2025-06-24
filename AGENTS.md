@@ -90,6 +90,7 @@ For complete project information including:
 - **Development Notes**: Package management, environment setup, and workflow details
 
 **Refer to [CLAUDE.md](./CLAUDE.md) for comprehensive project guidelines and instructions.**
+For a quick overview of the repository layout, technology stack and data flow, see [README.md](./README.md).
 
-This AGENTS.md file provides Codex-specific guidance while CLAUDE.md contains the complete development reference for this meal planning application.
+This AGENTS.md file provides Codex-specific guidance while CLAUDE.md and README.md contain the complete development reference for this meal planning application.
 

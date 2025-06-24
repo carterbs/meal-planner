@@ -1,80 +1,41 @@
 # Claude Development Procedures
 
+This guide explains how Claude should modify the frontend. The rest of the project is described in the repository [README](../README.md).
+
 ## Fix-Test-Commit Flow
-
-When working on bug fixes or new features, always follow this procedure:
-
-### 1. Fix
-- Identify and implement the solution to the problem
-- Make minimal, focused changes that address the specific issue
-- Follow existing code conventions and patterns
-
-### 2. Test
-- Write comprehensive tests for the fix
-- Test both positive cases (expected behavior) and edge cases
-- Run the full test suite to ensure no regressions
-- Frontend tests: `npm test -- --watchAll=false`
-- Backend tests: `cd backend && go test ./...`
-
-### 3. Commit
-- Commit changes immediately after tests pass
-- Use descriptive commit messages that explain the "why" not just the "what"
-- Include test files in the same commit as the fix
+1. **Fix** – implement the change following existing patterns
+2. **Test** – run the full test suite
+3. **Commit** – commit code and tests together with a clear message
 
 ## Test Requirements
+- Unit, integration and regression coverage for new code
 
-For every fix, ensure:
-- **Unit tests** cover the specific functionality changed
-- **Integration tests** verify the fix works end-to-end
-- **Edge case tests** handle boundary conditions
-- **Regression tests** prevent the bug from reoccurring
-
-## Example Test Categories
-
-### Frontend (React/TypeScript)
-- Component rendering tests
-- User interaction tests
-- API integration tests
-- State management tests
-
-### Backend (Go)
-- Handler function tests
-- Model method tests
-- Database operation tests
-- API endpoint tests
-
-## Commands to Remember
-
+## Useful Commands
 ### Frontend Testing
 ```bash
-npm test -- --watchAll=false                    # Run all tests
-npm test -- --testNamePattern="pattern"         # Run specific tests
-npm test -- --watchAll=false --coverage=false   # Skip coverage
+yarn test --watchAll=false   # Run all tests
+yarn test                    # Also runs all tests
+yarn coverage                # Generate coverage
 ```
 
 ### Backend Testing
 ```bash
-cd backend && go test ./...                      # Run all backend tests
-go test ./handlers                               # Test specific package
-go test -v ./models                              # Verbose output
+cd backend && go test ./...
 ```
 
 ### Linting & Type Checking
 ```bash
-npm run lint                                     # Frontend linting
-npm run typecheck                               # TypeScript checking
+yarn lint
+yarn typecheck
 ```
 
 ## Git Workflow
-
 1. Make changes
 2. Run tests
-3. Commit with meaningful message
-4. Only push when explicitly requested
+3. Commit once tests pass
+4. Push only when requested
 
 ## Notes
-
 - Never commit without passing tests
-- Write tests that would have caught the original bug
-- Test edge cases and error conditions
+- Edge cases and error conditions should have tests
 - Keep commits focused and atomic
