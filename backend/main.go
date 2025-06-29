@@ -283,8 +283,8 @@ func main() {
 	r.Post("/api/meals/{mealId}/steps/bulk", handlers.AddBulkStepsHandler)
 	r.Route("/api/agent", func(r chi.Router) {
 		r.Post("/start", handlers.StartAgentWorkflow)
-		r.Post("/feedback", handlers.AddAgentFeedback)
-		r.Post("/resume", handlers.ResumeAgentWorkflow)
+		r.Post("/message", handlers.MessageAgentHandler)
+
 		r.Get("/status/{threadId}", handlers.GetWorkflowStatus)
 		r.Get("/workflows", handlers.ListWorkflows)
 		r.Delete("/workflows/{threadId}", handlers.CancelWorkflow)

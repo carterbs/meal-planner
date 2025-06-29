@@ -39,40 +39,4 @@ func TestStartAgentWorkflow(t *testing.T) {
 	}
 }
 
-func TestAddAgentFeedback(t *testing.T) {
-	originalCmd := agentCommandContext
-	defer func() { agentCommandContext = originalCmd }()
-	originalDummy := UseDummy
-	defer func() { UseDummy = originalDummy }()
-	
-	UseDummy = true // Use dummy mode to skip database operations
-	var got []string
-	agentCommandContext = fakeCommand(`{"success":true}`, t, &got)
-	reqBody := models.AgentFeedbackRequest{ThreadID: "id", Message: "hi", From: "brad"}
-	b, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/agent/feedback", bytes.NewReader(b))
-	rr := httptest.NewRecorder()
-	AddAgentFeedback(rr, req)
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501 got %d", rr.Code)
-	}
-}
 
-func TestResumeAgentWorkflow(t *testing.T) {
-	originalCmd := agentCommandContext
-	defer func() { agentCommandContext = originalCmd }()
-	originalDummy := UseDummy
-	defer func() { UseDummy = originalDummy }()
-	
-	UseDummy = true // Use dummy mode to skip database operations
-	var got []string
-	agentCommandContext = fakeCommand(`{"success":true}`, t, &got)
-	reqBody := models.AgentResumeRequest{ThreadID: "id"}
-	b, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/agent/resume", bytes.NewReader(b))
-	rr := httptest.NewRecorder()
-	ResumeAgentWorkflow(rr, req)
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501 got %d", rr.Code)
-	}
-}

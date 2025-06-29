@@ -56,6 +56,29 @@ func (r *AgentResumeRequest) Validate() error {
 	return nil
 }
 
+// AgentMessageRequest represents a combined feedback and resume request
+// Example JSON: {"threadId":"uuid","message":"text","from":"user","interactive":false}
+type AgentMessageRequest struct {
+	ThreadID    string `json:"threadId"`
+	Message     string `json:"message"`
+	From        string `json:"from"`
+	Interactive bool   `json:"interactive"`
+}
+
+// Validate ensures AgentMessageRequest has required fields
+func (r *AgentMessageRequest) Validate() error {
+	if r.ThreadID == "" {
+		return errors.New("threadId required")
+	}
+	if r.Message == "" {
+		return errors.New("message required")
+	}
+	if r.From == "" {
+		return errors.New("from required")
+	}
+	return nil
+}
+
 // AgentResponse is a generic response from the agent CLI
 // Success indicates whether the command succeeded
 // Message may contain a human readable message
