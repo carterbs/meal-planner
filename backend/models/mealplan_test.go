@@ -336,3 +336,37 @@ func TestGetLastPlannedMeals(t *testing.T) {
 		t.Errorf("there were unmet expectations: %s", err)
 	}
 }
+
+func TestRemoveMealFromPlan(t *testing.T) {
+	plan := &WeeklyMealPlan{
+		Monday:    DayMealPlan{Breakfast: &Meal{ID: 1, MealName: "A"}},
+		Tuesday:   DayMealPlan{Lunch: &Meal{ID: 2, MealName: "B"}},
+		Wednesday: DayMealPlan{Dinner: &Meal{ID: 3, MealName: "C"}},
+	}
+
+	err := RemoveMealFromPlan(plan, 0, "breakfast")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if plan.Monday.Breakfast != nil {
+		t.Errorf("expected Monday breakfast to be nil")
+	}
+
+	err = RemoveMealFromPlan(plan, 1, "lunch")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if plan.Tuesday.Lunch != nil {
+		t.Errorf("expected Tuesday lunch to be nil")
+	}
+
+	err = RemoveMealFromPlan(plan, 6, "dinner")
+	if err == nil {
+		t.Fatalf("expected error for invalid day index")
+	}
+
+	err = RemoveMealFromPlan(plan, 2, "snack")
+	if err == nil {
+		t.Fatalf("expected error for invalid meal type")
+	}
+}

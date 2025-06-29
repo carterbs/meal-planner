@@ -57,9 +57,9 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse payload
 	var payload struct {
-		ThreadID  string `json:"threadId"`
-		DayIndex  int    `json:"dayIndex"`
-		MealType  string `json:"mealType"`
+		ThreadID string `json:"threadId"`
+		DayIndex int    `json:"dayIndex"`
+		MealType string `json:"mealType"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
@@ -88,35 +88,9 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Map dayIndex to day name
-	dayNames := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
-	if payload.DayIndex < 0 || payload.DayIndex >= len(dayNames) {
-		http.Error(w, "Invalid dayIndex", http.StatusBadRequest)
-		return
-	}
-	dayName := dayNames[payload.DayIndex]
-
-	// Remove the meal from the plan
-	removed := false
-	switch dayName {
-	case "Monday":
-		removed = removeMealFromDay(&plan.Monday, payload.MealType)
-	case "Tuesday":
-		removed = removeMealFromDay(&plan.Tuesday, payload.MealType)
-	case "Wednesday":
-		removed = removeMealFromDay(&plan.Wednesday, payload.MealType)
-	case "Thursday":
-		removed = removeMealFromDay(&plan.Thursday, payload.MealType)
-	case "Friday":
-		removed = removeMealFromDay(&plan.Friday, payload.MealType)
-	case "Saturday":
-		removed = removeMealFromDay(&plan.Saturday, payload.MealType)
-	case "Sunday":
-		removed = removeMealFromDay(&plan.Sunday, payload.MealType)
-	}
-
-	if !removed {
-		http.Error(w, "Invalid mealType or nothing to remove", http.StatusBadRequest)
+	// Validate and remove the meal from the plan
+	if err := models.RemoveMealFromPlan(&plan, payload.DayIndex, payload.MealType); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -138,26 +112,6 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // removeMealFromDay sets the specified meal type to nil for a DayMealPlan
-func removeMealFromDay(day *models.DayMealPlan, mealType string) bool {
-	switch strings.ToLower(mealType) {
-	case "breakfast":
-		if day.Breakfast != nil {
-			day.Breakfast = nil
-			return true
-		}
-	case "lunch":
-		if day.Lunch != nil {
-			day.Lunch = nil
-			return true
-		}
-	case "dinner":
-		if day.Dinner != nil {
-			day.Dinner = nil
-			return true
-		}
-	}
-	return false
-}
 
 // SwapMealHandler handles POST /api/meals/swap and returns a new meal to replace the current one.
 func SwapMealHandler(w http.ResponseWriter, r *http.Request) {

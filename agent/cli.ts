@@ -827,4 +827,6 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Parse command line arguments
-program.parse();
+if (!process.env.JEST_WORKER_ID) {
+  program.parse();
+}

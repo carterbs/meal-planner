@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   preset: 'ts-jest/presets/default-esm',
   globals: {
     'ts-jest': {
@@ -9,8 +9,9 @@ export default {
   },
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
-  roots: ['<rootDir>'],
-  testMatch: ['**/tests/**/*.test.ts'],
+  roots: ['<rootDir>/tests'],
+  testMatch: ['**/?(*.)+(test).[tj]s?(x)'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   transformIgnorePatterns: [
     'node_modules/(?!(@modelcontextprotocol|@langchain)/)'
   ],

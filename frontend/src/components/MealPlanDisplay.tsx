@@ -11,7 +11,7 @@ interface MealInfo {
 interface DayEntry {
   dayIndex: number;
   mealType: string;
-  meal: MealInfo;
+  meal: MealInfo | null;
 }
 
 export interface WeeklyMealPlan {
@@ -50,6 +50,7 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ plan, highligh
                 {entries.map(e => {
                   const key = `${e.dayIndex}-${e.mealType}`;
                   const isHighlighted = highlights?.has(key);
+                  const isEmpty = !e.meal;
                   return (
                     <div
                       key={e.mealType}
@@ -70,26 +71,34 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ plan, highligh
                               animation: 'highlightFade 5s forwards',
                             },
                             '@keyframes highlightFade': {
-                              '0%': { 
-                                backgroundColor: '#81c784', 
-                                borderLeft: '4px solid #4caf50' 
+                              '0%': {
+                                backgroundColor: '#81c784',
+                                borderLeft: '4px solid #4caf50'
                               },
-                              '50%': { 
-                                backgroundColor: '#c8e6c9', 
-                                borderLeft: '4px solid #4caf50' 
+                              '50%': {
+                                backgroundColor: '#c8e6c9',
+                                borderLeft: '4px solid #4caf50'
                               },
-                              '100%': { 
-                                backgroundColor: 'transparent', 
-                                borderLeft: '4px solid transparent' 
+                              '100%': {
+                                backgroundColor: 'transparent',
+                                borderLeft: '4px solid transparent'
                               }
                             }
+                          }),
+                          ...(isEmpty && {
+                            fontStyle: 'italic',
+                            color: '#757575'
                           })
                         }}
                       >
-                        {e.meal.name}
+                        {e.meal ? e.meal.name : '---'}
                       </Box>
-                      {' '}{effortIcons[e.meal.effort]}
-                      {e.meal.hasRedMeat && ' 🥩'}
+                      {e.meal && (
+                        <>
+                          {' '}{effortIcons[e.meal.effort]}
+                          {e.meal.hasRedMeat && ' 🥩'}
+                        </>
+                      )}
                     </div>
                   );
                 })}

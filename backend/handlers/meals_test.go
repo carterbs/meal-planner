@@ -858,3 +858,43 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 		t.Errorf("unfulfilled expectations: %s", err)
 	}
 }
+
+func TestRemoveMealHandler(t *testing.T) {
+	helper := setupTest(t)
+
+	plan := models.WeeklyMealPlan{
+		Monday: models.DayMealPlan{Breakfast: &models.Meal{ID: 1, MealName: "Egg"}},
+	}
+	planBytes, _ := json.Marshal(plan)
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{"id", "thread_id", "status", "workflow_type", "current_step", "meal_plan", "shopping_list", "created_at", "updated_at"}).
+		AddRow(1, "thread1", "ACTIVE", "meal_planning", nil, string(planBytes), nil, now, now)
+	helper.mock.ExpectQuery("SELECT id, thread_id").WithArgs("thread1").WillReturnRows(rows)
+
+	helper.mock.ExpectExec("UPDATE agent_sessions").WillReturnResult(sqlmock.NewResult(0, 1))
+
+	reqBody := map[string]interface{}{"threadId": "thread1", "dayIndex": 0, "mealType": "breakfast"}
+	bodyBytes, _ := json.Marshal(reqBody)
+	req, err := http.NewRequest("POST", "/api/meals/remove", bytes.NewReader(bodyBytes))
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(RemoveMealHandler)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rr.Code)
+	}
+	var out models.WeeklyMealPlan
+	if err := json.NewDecoder(rr.Body).Decode(&out); err != nil {
+		t.Fatalf("failed decoding response: %v", err)
+	}
+	if out.Monday.Breakfast != nil {
+		t.Errorf("expected meal removed")
+	}
+	if err := helper.mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unmet expectations: %v", err)
+	}
+}
