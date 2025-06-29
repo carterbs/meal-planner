@@ -221,6 +221,52 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, resp)
 }
 
+// MessageAgentHandler handles POST /api/agent/message
+func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
+	if UseDummy {
+		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
+		return
+	}
+	var req models.AgentMessageRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	if err := req.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	// Store user message in database
+	if req.From == "user" && req.Message != "" {
+		if _, err := models.AddMessage(DB, req.ThreadID, "user", req.Message); err != nil {
+			log.Printf("[ERROR MessageAgentHandler] Failed to store user message: %v", err)
+		}
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	// Run feedback
+	log.Printf("[DEBUG MessageAgentHandler] Running agent CLI: plan feedback %s %s --from %s", req.ThreadID, req.Message, req.From)
+	if _, err := runAgentCLI(ctx, "plan", "feedback", req.ThreadID, req.Message, "--from", req.From); err != nil {
+		log.Printf("[ERROR MessageAgentHandler] agent CLI feedback error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Run resume
+	resumeArgs := []string{"resume", req.ThreadID}
+	if req.Interactive {
+		resumeArgs = append(resumeArgs, "--interactive")
+	}
+	log.Printf("[DEBUG MessageAgentHandler] Running agent CLI resume: %v", resumeArgs)
+	resp, err := runAgentCLI(ctx, resumeArgs...)
+	if err != nil {
+		log.Printf("[ERROR MessageAgentHandler] agent CLI resume error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Printf("[DEBUG MessageAgentHandler] agent CLI resume response: %+v", resp)
+	writeJSON(w, resp)
+}
+
 // GetWorkflowStatus handles GET /api/agent/status/{threadId}
 func GetWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 	if UseDummy {
