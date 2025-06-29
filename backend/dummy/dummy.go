@@ -135,7 +135,7 @@ func GenerateWeeklyMealPlan() (map[string]*models.Meal, error) {
 	plan["Thursday"] = pick(3, 5)
 	plan["Friday"] = &models.Meal{MealName: "Eating out"}
 	plan["Saturday"] = pick(3, 5)
-	plan["Sunday"] = pick(6, 100)
+	plan["Sunday"] = pick(4, 10)
 
 	return plan, nil
 }
@@ -164,11 +164,11 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 			default:
 				validForMealType = true
 			}
-			
+
 			if !validForMealType {
 				continue
 			}
-			
+
 			if m.RelativeEffort >= min && m.RelativeEffort <= max {
 				if mealType == "dinner" && redUsed && m.RedMeat {
 					continue
@@ -223,7 +223,7 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 		Sunday: models.DayMealPlan{
 			Breakfast: pick(0, 2, "breakfast"),
 			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(6, 100, "dinner"),
+			Dinner:    pick(4, 10, "dinner"),
 		},
 	}
 
