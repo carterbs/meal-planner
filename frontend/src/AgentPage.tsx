@@ -186,20 +186,13 @@ const AgentPage: React.FC = () => {
     setInput("");
     setIsWorking(true);
     try {
-      await fetch("/api/agent/feedback", {
+      const res = await fetch("/api/agent/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           threadId: session.threadId,
           message: userMsg.text,
           from: "user",
-        }),
-      });
-      const res = await fetch("/api/agent/resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          threadId: session.threadId,
           interactive: false,
         }),
       });
