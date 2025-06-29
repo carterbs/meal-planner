@@ -1,6 +1,6 @@
-import { WorkflowManager } from '../manager.js';
-import { FeedbackHandler } from './feedback-handler.js';
-import { WorkflowType, MealPlanningStep } from '../shared/types.js';
+import { WorkflowManager } from '../manager';
+import { FeedbackHandler } from './feedback-handler';
+import { WorkflowType, MealPlanningStep } from '../shared/types';
 
 export interface ConversationMessage {
   from: string;

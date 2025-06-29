@@ -1,5 +1,5 @@
-import { FeedbackEntry, MealPlanningState, WorkflowType } from '../shared/types.js';
-import { PostgresCheckpointSaver } from '../shared/checkpointer.js';
+import { FeedbackEntry, MealPlanningState, WorkflowType } from '../shared/types';
+import { PostgresCheckpointSaver } from '../shared/checkpointer';
 
 export interface FeedbackInput {
   threadId: string;

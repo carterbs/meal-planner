@@ -1,6 +1,6 @@
 
-import { WorkflowType } from './shared/types.js';
-import { PostgresCheckpointSaver } from './shared/checkpointer.js';
+import { WorkflowType } from './shared/types';
+import { PostgresCheckpointSaver } from './shared/checkpointer';
 
 // Base workflow interface
 export interface BaseWorkflow {
