@@ -267,7 +267,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedback(state.threadId);
     const feedbackMessages = feedbackEntries.map(f => f.message);
     // Call LLM to pick alternatives based on feedback
-    const result = await this.applyFeedbackWithLLM(state.threadId, state.meal_plan, feedbackMessages);
+    const result = await this.applyFeedbackWithLLM(state.meal_plan, feedbackMessages);
     return {
       meal_plan: result.mealPlan,
       user_message: result.userMessage,
@@ -289,7 +289,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return analysis;
   }
 
-  private async applyFeedbackWithLLM(threadId: string, plan: WeeklyMealPlan, feedback: string[]): Promise<{mealPlan: WeeklyMealPlan, userMessage: string}> {
+  private async applyFeedbackWithLLM(plan: WeeklyMealPlan, feedback: string[]): Promise<{mealPlan: WeeklyMealPlan, userMessage: string}> {
     const t0 = Date.now();
     debugLog(`[FEEDBACK] applyFeedbackWithLLM start (feedbackCount=${feedback.length})`);
     // Fetch available meals
@@ -643,7 +643,18 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 hasRedMeat: meal.redMeat
               }
             });
+          } else {
+            days.push({
+              dayIndex: i,
+              mealType: mealType.toLowerCase(),
+              meal: null
+            });
           }
+        }
+      } else {
+        // if no dayData still push empty entries
+        for (const mealType of mealTypes) {
+          days.push({ dayIndex: i, mealType: mealType.toLowerCase(), meal: null });
         }
       }
     }
