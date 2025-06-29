@@ -13,6 +13,7 @@ import { registerCreateRecipe } from './tools/createRecipe.js';
 import { registerDeleteRecipe } from './tools/deleteRecipe.js';
 import { registerGetMeals } from './tools/getMeals.js';
 import { registerGetCurrentMealPlan } from './tools/getCurrentMealPlan.js';
+import { registerRemoveMeal } from './tools/removeMeal.js';
 
 
 const server = new McpServer({ name: 'mealplanner-mcp', version: '1.0.0' });
@@ -30,6 +31,7 @@ registerCreateRecipe(server);
 registerDeleteRecipe(server);
 registerGetMeals(server);
 registerGetCurrentMealPlan(server);
+registerRemoveMeal(server);
 
 async function main() {
   const transport = new StdioServerTransport();
