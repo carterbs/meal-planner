@@ -21,18 +21,24 @@ export function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: stri
     if (entries.length === 0) return;
 
     // HTML cell
-    const mealsHtml = entries.map(e => {
-      const meal = e.meal;
-      return `<strong>${e.mealType.charAt(0).toUpperCase()+e.mealType.slice(1)}</strong>: ${meal.name} (${meal.effort})`;
-    }).join('<br>');
+    const mealsHtml = entries
+      .filter(e => e.meal)
+      .map(e => {
+        const meal = e.meal!;
+        return `<strong>${e.mealType.charAt(0).toUpperCase()+e.mealType.slice(1)}</strong>: ${meal.name} (${meal.effort})`;
+      })
+      .join('<br>');
     html += `<tr><td style="border:1px solid #ddd;padding:8px;">${day}</td>` +
             `<td style="border:1px solid #ddd;padding:8px;">${mealsHtml}</td></tr>`;
 
     // Text cell
-    const mealsText = entries.map(e => {
-      const meal = e.meal;
-      return `${e.mealType}: ${meal.name} (${meal.effort})`;
-    }).join('; ');
+    const mealsText = entries
+      .filter(e => e.meal)
+      .map(e => {
+        const meal = e.meal!;
+        return `${e.mealType}: ${meal.name} (${meal.effort})`;
+      })
+      .join('; ');
     text += `${day} | ${mealsText}\n`;
   });
 

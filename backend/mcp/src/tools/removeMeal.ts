@@ -5,7 +5,7 @@ import { API } from '../utils.js';
 
 export const removeMealArgs = z.object({
   threadId: z.string().describe('Agent session thread ID'),
-  dayIndex: z.number().describe('Index of the day to remove meal from (0=Monday)'),
+  dayIndex: z.number().describe('Index of the day to remove meal from (0=Monday, 1=Tuesday, ..., 5=Saturday, 6=Sunday)'),
   mealType: z.enum(['breakfast', 'lunch', 'dinner']).describe('Type of meal to remove')
 });
 

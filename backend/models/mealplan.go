@@ -94,7 +94,7 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 
 // buildPickMealQuery returns the SQL query for selecting a meal.
 // It appends an extra condition if excludeRedMeat is true.
-func buildPickMealQuery(excludeRedMeat bool, mealType string) string {
+func buildPickMealQuery(excludeRedMeat bool, _ string) string {
 	columns := strings.Join(MealColumns, ", ")
 	query := "SELECT " + columns + " FROM meals WHERE relative_effort BETWEEN $1 AND $2 AND (last_planned IS NULL OR last_planned < $3) AND meal_type = $4"
 	if excludeRedMeat {

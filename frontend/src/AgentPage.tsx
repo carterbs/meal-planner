@@ -39,8 +39,9 @@ function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
     if (entries.length === 0) return;
 
     const mealsHtml = entries
+      .filter(e => e.meal)
       .map((e) => {
-        const meal = e.meal;
+        const meal = e.meal!;
         return `<strong>${e.mealType.charAt(0).toUpperCase() + e.mealType.slice(1)}</strong>: ${meal.name} (${meal.effort})`;
       })
       .join("<br>");
@@ -49,8 +50,9 @@ function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
       `<td style="border:1px solid #ddd;padding:8px;">${mealsHtml}</td></tr>`;
 
     const mealsText = entries
+      .filter(e => e.meal)
       .map((e) => {
-        const meal = e.meal;
+        const meal = e.meal!;
         return `${e.mealType}: ${meal.name} (${meal.effort})`;
       })
       .join("; ");

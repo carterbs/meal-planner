@@ -12,7 +12,7 @@ import (
 	"mealplanner/models"
 )
 
-func fakeCommand(output string, t *testing.T, gotArgs *[]string) func(ctx context.Context, name string, args ...string) *exec.Cmd {
+func fakeCommand(output string, _ *testing.T, gotArgs *[]string) func(ctx context.Context, name string, args ...string) *exec.Cmd {
 	return func(ctx context.Context, name string, args ...string) *exec.Cmd {
 		*gotArgs = append([]string{name}, args...)
 		return exec.CommandContext(ctx, "echo", output)

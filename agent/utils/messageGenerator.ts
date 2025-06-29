@@ -30,7 +30,10 @@ export class MessageGenerator {
       if (context.mealPlan?.days) {
         const mealCount = context.mealPlan.days.length;
         const uniqueDays = new Set(context.mealPlan.days.map(d => d.dayIndex)).size;
-        const sampleMeals = context.mealPlan.days.slice(0, 3).map(d => d.meal.name);
+        const sampleMeals = context.mealPlan.days
+  .map(d => d.meal?.name)
+  .filter((name): name is string => Boolean(name))
+  .slice(0, 3);
         mealPlanSummary = `Current meal plan has ${mealCount} meals across ${uniqueDays} days. Sample meals: ${sampleMeals.join(', ')}`;
       }
 
@@ -88,9 +91,9 @@ Your Response (just the message, no quotes or formatting):`;
         const mealCount = context.mealPlan.days.length;
         const uniqueDays = new Set(context.mealPlan.days.map(d => d.dayIndex)).size;
         const featuredMeals = context.mealPlan.days
-          .filter(d => d.meal.effort >= 3)
-          .slice(0, 2)
-          .map(d => d.meal.name);
+  .map(d => (d.meal && d.meal.effort >= 3 ? d.meal.name : undefined))
+  .filter((name): name is string => Boolean(name))
+  .slice(0, 2);
         mealPlanDetails = `${mealCount} meals across ${uniqueDays} days${featuredMeals.length > 0 ? `, featuring ${featuredMeals.join(' and ')}` : ''}`;
       }
 

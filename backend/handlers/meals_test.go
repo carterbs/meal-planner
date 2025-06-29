@@ -46,10 +46,6 @@ func setupTest(t *testing.T) *testHelper {
 	return &testHelper{db, mock}
 }
 
-// setupMealRows creates mock rows for meal queries
-func setupMealRows(fields []string) *sqlmock.Rows {
-	return sqlmock.NewRows(fields)
-}
 
 // expectMealQuery sets up expectations for a meal query
 func (h *testHelper) expectMealQuery(queryRegex string, args ...interface{}) *sqlmock.Rows {
@@ -67,15 +63,6 @@ func (h *testHelper) expectMealQuery(queryRegex string, args ...interface{}) *sq
 	return rows
 }
 
-// expectTransaction sets up expectations for a transaction
-func (h *testHelper) expectTransaction(success bool) {
-	h.mock.ExpectBegin()
-	if !success {
-		h.mock.ExpectRollback()
-	} else {
-		h.mock.ExpectCommit()
-	}
-}
 
 // createRequest creates an HTTP request with optional body
 func createRequest(method, path string, body interface{}) (*http.Request, error) {
