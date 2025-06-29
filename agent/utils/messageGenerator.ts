@@ -1,6 +1,6 @@
 import { ChatOpenAI } from '@langchain/openai';
-import { debugLog } from '../cli.js';
-import { WeeklyMealPlan } from '../shared/types.js';
+import { debugLog } from '../cli';
+import { WeeklyMealPlan } from '../shared/types';
 
 export class MessageGenerator {
   private llm: ChatOpenAI;

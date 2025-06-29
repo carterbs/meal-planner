@@ -2,15 +2,17 @@
 
 // Load environment variables FIRST before any other imports
 import { config as dotenvConfig } from 'dotenv';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { writeFileSync, appendFileSync } from 'fs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// In CommonJS builds __dirname is available globally. Fallback to process.cwd() when it isn't (e.g. during tests).
+const CURRENT_DIR = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+
+const envPath = join(CURRENT_DIR, '..', '.env');
+const debugLogPath = join(CURRENT_DIR, '..', 'cli-debug.log');
 // In built version, we're in dist/ so go up one level to agent/
-const envPath = join(__dirname, '..', '.env');
-const debugLogPath = join(__dirname, '..', 'cli-debug.log');
+// (moved above into CURRENT_DIR block)
+// (moved above into CURRENT_DIR block)
 
 // Debug logger that works in JSON mode
 export function debugLog(message: string) {
@@ -180,12 +182,12 @@ debugLog(`OPENAI_API_KEY present: ${!!process.env.OPENAI_API_KEY}`);
 
 // Now import everything else
 import { Command } from 'commander';
-import { LangGraphAgent, LangGraphAgentConfig } from './langgraph-agent.js';
-import { WorkflowType } from './shared/types.js';
-import { CLIHandler } from './io/cliHandler.js';
-import { formatMealPlan } from './utils/formatMealPlan.js';
+import { LangGraphAgent, LangGraphAgentConfig } from './langgraph-agent';
+import { WorkflowType } from './shared/types';
+import { CLIHandler } from './io/cliHandler';
+import { formatMealPlan } from './utils/formatMealPlan';
 import { spawnSync } from 'child_process';
-import { MessageGenerator } from './utils/messageGenerator.js';
+import { MessageGenerator } from './utils/messageGenerator';
 
 const program = new Command();
 

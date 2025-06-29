@@ -1,7 +1,7 @@
 import { Pool, PoolClient } from 'pg';
 import { RunnableConfig } from '@langchain/core/runnables';
 import { v4 as uuidv4 } from 'uuid';
-import { WorkflowType } from './types.js';
+import { WorkflowType } from './types';
 
 export interface PostgresCheckpointConfig {
   host: string;

@@ -1,7 +1,7 @@
-import { WorkflowType } from '../shared/types.js';
-import { WorkflowFactory, BaseWorkflow } from '../registry.js';
-import { PostgresCheckpointSaver } from '../shared/checkpointer.js';
-import { MealPlanningWorkflow } from './meal-planning.js';
+import { WorkflowType } from '../shared/types';
+import { WorkflowFactory, BaseWorkflow } from '../registry';
+import { PostgresCheckpointSaver } from '../shared/checkpointer';
+import { MealPlanningWorkflow } from './meal-planning';
 
 export class MealPlanningWorkflowFactory implements WorkflowFactory {
   async create(checkpointer: PostgresCheckpointSaver): Promise<BaseWorkflow> {

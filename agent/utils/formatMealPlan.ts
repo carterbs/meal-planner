@@ -1,4 +1,4 @@
-import { WeeklyMealPlan } from '../shared/types.js';
+import { WeeklyMealPlan } from '../shared/types';
 
 const WEEK_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 

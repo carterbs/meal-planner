@@ -1,13 +1,13 @@
-import { WorkflowManager } from './manager.js';
-import { WorkflowRegistry } from './registry.js';
-import { PostgresCheckpointConfig } from './shared/checkpointer.js';
-import { ConversationHandler, ConversationMessage, ConversationResponse } from './workflows/conversation-handler.js';
-import { FeedbackHandler, FeedbackInput } from './workflows/feedback-handler.js';
-import { workflowFactories } from './workflows/factories.js';
-import { WorkflowType } from './shared/types.js';
-import { CLIHandler } from './io/cliHandler.js';
-import { formatMealPlan } from './utils/formatMealPlan.js';
-import type { MealPlanningState } from './shared/types.js';
+import { WorkflowManager } from './manager';
+import { WorkflowRegistry } from './registry';
+import { PostgresCheckpointConfig } from './shared/checkpointer';
+import { ConversationHandler, ConversationMessage, ConversationResponse } from './workflows/conversation-handler';
+import { FeedbackHandler, FeedbackInput } from './workflows/feedback-handler';
+import { workflowFactories } from './workflows/factories';
+import { WorkflowType } from './shared/types';
+import { CLIHandler } from './io/cliHandler';
+import { formatMealPlan } from './utils/formatMealPlan';
+import type { MealPlanningState } from './shared/types';
 import { spawnSync } from 'child_process';
 
 export interface LangGraphAgentConfig {
