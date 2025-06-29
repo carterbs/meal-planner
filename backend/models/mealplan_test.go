@@ -106,7 +106,7 @@ func TestGenerateWeeklyMealPlan(t *testing.T) {
 		{"Thursday", 3, 5},
 		{"Friday", 3, 5},
 		{"Saturday", 3, 5},
-		{"Sunday", 6, 100},
+		{"Sunday", 4, 10},
 	}
 
 	// Use a more flexible query pattern that matches any meal type

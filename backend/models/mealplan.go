@@ -53,7 +53,7 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 		if day == "Monday" {
 			minEffort, maxEffort = 0, 2
 		} else if day == "Sunday" {
-			minEffort, maxEffort = 6, 100
+			minEffort, maxEffort = 4, 10
 		}
 
 		dayPlan.Dinner, err = pickMeal(db, minEffort, maxEffort, redMeatUsed, threeWeeksAgo, "dinner")
