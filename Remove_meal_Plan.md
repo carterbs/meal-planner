@@ -2,6 +2,18 @@ User Stories:
 As a user, I want to be able to type into the chat "I want to skip all of saturday" and have the agent remove all of saturdays meals, and the UI update.
 As a user, I want to be able to type into the chat "I want to skip Saturday breakfast/lunch/dinner" and have the agent remove saturday's breakfast, lunch, or dinner, and the UI update.
 
+## Implementation Status
+
+- [x] LLM prompt enhancement in MealPlanningWorkflow (`agent/workflows/meal-planning.ts`)
+- [x] Backend API endpoint (Go) for POST `/api/meals/remove`
+- [x] Agent handler update for removal in `/api/agent/message`
+- [x] MCP server: implement `removeMeal` tool in `backend/mcp/src/tools/removeMeal.ts`
+- [x] MCP server: register `removeMeal` in tool registry (`backend/mcp/src/index.ts`)
+- [ ] Backend model layer: `RemoveMealFromPlan(dayIndex int, mealType string)` in Go
+- [x] Update `MealPlanDay` struct to allow null/removed meals
+- [ ] Frontend UI: display empty slot design and highlight removals
+- [ ] Backend tests for `/api/meals/remove` endpoint and database ops
+
 1. Backend API Endpoints (Go)
 
 New HTTP Endpoint
@@ -20,10 +32,8 @@ Updated Agent Handler
 2. Agent Workflow Processing (Node.js)
 
 Enhanced MealPlanningWorkflow
-
-- New Method: processRemovalRequest(message: string)
-- LLM Integration: Parse natural language removal requests
-- Tool Invocation: Call removeMeal MCP tool when needed
+- LLM Integration: Update prompt to return removals and replacements in the same response.
+- Tool Invocation: Call removeMeal MCP tool when the LLM dictates a removal.
 
 LLM Prompt Enhancement
 

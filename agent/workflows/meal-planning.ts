@@ -331,7 +331,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     - If constraints are impossible to meet, acknowledge this: "I know you asked to avoid both X and Y, but those are the main breakfast options available, so I picked the best alternative..."
     - If no changes were needed, explain why the current plan already meets their needs
     
-    If no replacements are needed, return: {"replacements": [], "userMessage": "Your current meal plan already looks great and addresses your preferences!"}\n\n<important> Your response should be parseable as JSON.</important>`;
+    If no removals or replacements are needed, return: {"removals": [], "replacements": [], "userMessage": "Your current meal plan already looks great and addresses your preferences!"}\n\n<important> Your response should be parseable as JSON.</important>`;
     const result = await this.llm.invoke([{ role: "user", content: prompt }]);
     const llmResponse = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
     let updatedPlan = { ...plan, days: [...plan.days] };
