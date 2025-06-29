@@ -267,7 +267,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedback(state.threadId);
     const feedbackMessages = feedbackEntries.map(f => f.message);
     // Call LLM to pick alternatives based on feedback
-    const result = await this.applyFeedbackWithLLM(state.meal_plan, feedbackMessages);
+    const result = await this.applyFeedbackWithLLM(state.threadId, state.meal_plan, feedbackMessages);
     return {
       meal_plan: result.mealPlan,
       user_message: result.userMessage,
@@ -289,7 +289,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return analysis;
   }
 
-  private async applyFeedbackWithLLM(plan: WeeklyMealPlan, feedback: string[]): Promise<{mealPlan: WeeklyMealPlan, userMessage: string}> {
+  private async applyFeedbackWithLLM(threadId: string, plan: WeeklyMealPlan, feedback: string[]): Promise<{mealPlan: WeeklyMealPlan, userMessage: string}> {
     const t0 = Date.now();
     debugLog(`[FEEDBACK] applyFeedbackWithLLM start (feedbackCount=${feedback.length})`);
     // Fetch available meals
@@ -310,8 +310,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     - Avoid duplicate meals\n
     - Avoid suggesting meals that have been explicitly rejected in ANY previous feedback\n
     - When constraints are impossible to meet, choose the best available options and explain why in your message\n\n
-    - Respond with ONLY a JSON object containing your recommended replacements AND a friendly message to the user:\n\n
+    - Respond with ONLY a JSON object containing your recommended removals and/or replacements AND a friendly message to the user:\n\n
     {
+      "removals": [],
       "replacements": [
         {
           "day": "Sunday",
@@ -338,12 +339,30 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     
     try {
       const recommendations = JSON.parse(this.extractJsonFromResponse(llmResponse));
-      
+
       // Extract user message from LLM response
       if (recommendations.userMessage && typeof recommendations.userMessage === 'string') {
         userMessage = recommendations.userMessage;
       }
-      
+
+      // Handle removals first
+      if (recommendations.removals && Array.isArray(recommendations.removals)) {
+        for (const removal of recommendations.removals) {
+          const { day, mealType, reason } = removal;
+          const dayIndex = dayNames.indexOf(day);
+          if (dayIndex >= 0) {
+            console.log(`🤖 [MEAL-WORKFLOW] Applying removal from the LLM: Remove ${day} ${mealType} - ${reason}`);
+            const removalResult = await this.client.callTool({
+              name: 'removeMeal',
+              arguments: { threadId, dayIndex, mealType }
+            }) as MCPToolResult;
+            const backendPlan = JSON.parse(this.extractJsonFromResponse(removalResult.content[0].text));
+            updatedPlan = this.transformBackendPlan(backendPlan);
+          }
+        }
+      }
+
+      // Handle replacements
       if (recommendations.replacements && Array.isArray(recommendations.replacements)) {
         for (const replacement of recommendations.replacements) {
           const { day, mealType, oldMealId, newMealId, reason } = replacement;
