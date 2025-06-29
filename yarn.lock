@@ -3124,18 +3124,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "@modelcontextprotocol/sdk@npm:0.4.0"
-  dependencies:
-    content-type: "npm:^1.0.5"
-    raw-body: "npm:^3.0.0"
-    zod: "npm:^3.23.8"
-  checksum: 10c0/6f311afccf1f809ed6035f8ff38e3d3234f39365b165b420c48c3844047b8b39afdcdbe948cba6826fee05fa43658139d1abd5b92e7ef2cd5a477645b8b12358
-  languageName: node
-  linkType: hard
-
-"@modelcontextprotocol/sdk@npm:^1.12.3":
+"@modelcontextprotocol/sdk@npm:1.12.3, @modelcontextprotocol/sdk@npm:^1.12.3":
   version: 1.12.3
   resolution: "@modelcontextprotocol/sdk@npm:1.12.3"
   dependencies:
@@ -12157,7 +12146,7 @@ __metadata:
     "@langchain/core": "npm:^0.2.0"
     "@langchain/langgraph": "npm:^0.0.20"
     "@langchain/openai": "npm:^0.1.0"
-    "@modelcontextprotocol/sdk": "npm:^0.4.0"
+    "@modelcontextprotocol/sdk": "npm:1.12.3"
     "@types/jest": "npm:^29.5.4"
     "@types/node": "npm:^20.0.0"
     "@types/pg": "npm:^8.10.0"
