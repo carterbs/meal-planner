@@ -267,7 +267,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const feedbackEntries = state.feedback_to_apply ?? await this.feedbackHandler.getFeedback(state.threadId);
     const feedbackMessages = feedbackEntries.map(f => f.message);
     // Call LLM to pick alternatives based on feedback
-    const result = await this.applyFeedbackWithLLM(state.meal_plan, feedbackMessages);
+    const result = await this.applyFeedbackWithLLM(state.meal_plan, feedbackMessages, state.threadId);
     return {
       meal_plan: result.mealPlan,
       user_message: result.userMessage,
@@ -289,15 +289,18 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return analysis;
   }
 
-  private async applyFeedbackWithLLM(plan: WeeklyMealPlan, feedback: string[]): Promise<{mealPlan: WeeklyMealPlan, userMessage: string}> {
+  private async applyFeedbackWithLLM(plan: WeeklyMealPlan, feedback: string[], threadId: string): Promise<{mealPlan: WeeklyMealPlan, userMessage: string}> {
     const t0 = Date.now();
     debugLog(`[FEEDBACK] applyFeedbackWithLLM start (feedbackCount=${feedback.length})`);
     // Fetch available meals
     const mealsResp = await this.client.callTool({ name: 'getMeals', arguments: {} });
     const availableMeals: any[] = JSON.parse(this.extractJsonFromResponse((mealsResp as MCPToolResult).content[0].text));
     const mealOptions = availableMeals.map(m => `${m.id}: ${m.mealName} (${m.mealType}, effort: ${m.relativeEffort}, red meat: ${m.redMeat})`).join('\n');
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const planDescription = plan.days.map(day => `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal.name} (ID: ${day.meal.id}, effort: ${day.meal.effort}, red meat: ${day.meal.hasRedMeat})`).join('\n');
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const planDescription = plan.days
+        .filter(day => day.meal)
+        .map(day => `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal!.name} (ID: ${day.meal!.id}, effort: ${day.meal!.effort}, red meat: ${day.meal!.hasRedMeat})`)
+        .join('\n');
     const feedbackText = feedback.length > 0 ? `ALL USER FEEDBACK FROM THIS SESSION (in chronological order):\n${feedback.map((msg, idx) => `${idx + 1}. ${msg}`).join('\n')}\n` : '';
     const prompt = `You are updating a weekly meal plan based on ALL user feedback from the entire session.\n
     ${feedbackText}\n
@@ -334,11 +337,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     If no removals or replacements are needed, return: {"removals": [], "replacements": [], "userMessage": "Your current meal plan already looks great and addresses your preferences!"}\n\n<important> Your response should be parseable as JSON.</important>`;
     const result = await this.llm.invoke([{ role: "user", content: prompt }]);
     const llmResponse = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
+    console.log(`🤖 [MEAL-WORKFLOW] Raw LLM response:`);
+    console.log(llmResponse);
     let updatedPlan = { ...plan, days: [...plan.days] };
     let userMessage = "I've updated your meal plan based on your feedback!"; // Default fallback message
     
     try {
-      const recommendations = JSON.parse(this.extractJsonFromResponse(llmResponse));
+      const cleanedResponse = this.extractJsonFromResponse(llmResponse);
+      console.log(`🤖 [MEAL-WORKFLOW] Cleaned JSON response:`);
+      console.log(cleanedResponse);
+      const recommendations = JSON.parse(cleanedResponse);
 
       // Extract user message from LLM response
       if (recommendations.userMessage && typeof recommendations.userMessage === 'string') {
@@ -352,12 +360,44 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           const dayIndex = dayNames.indexOf(day);
           if (dayIndex >= 0) {
             console.log(`🤖 [MEAL-WORKFLOW] Applying removal from the LLM: Remove ${day} ${mealType} - ${reason}`);
-            const removalResult = await this.client.callTool({
-              name: 'removeMeal',
-              arguments: { threadId, dayIndex, mealType }
-            }) as MCPToolResult;
-            const backendPlan = JSON.parse(this.extractJsonFromResponse(removalResult.content[0].text));
-            updatedPlan = this.transformBackendPlan(backendPlan);
+            console.log(`🤖 [MEAL-WORKFLOW] Calling removeMeal with threadId=${threadId}, dayIndex=${dayIndex}, mealType=${mealType}`);
+            try {
+              const removalResult = await this.client.callTool({
+                name: 'removeMeal',
+                arguments: { threadId, dayIndex, mealType }
+              }) as MCPToolResult;
+              console.log(`🤖 [MEAL-WORKFLOW] MCP removeMeal result:`, JSON.stringify(removalResult, null, 2));
+              console.log(`🤖 [MEAL-WORKFLOW] removalResult.isError:`, removalResult.isError);
+              console.log(`🤖 [MEAL-WORKFLOW] removalResult.content:`, removalResult.content);
+              console.log(`🤖 [MEAL-WORKFLOW] typeof removalResult:`, typeof removalResult);
+              console.log(`🤖 [MEAL-WORKFLOW] removalResult keys:`, Object.keys(removalResult || {}));
+              
+              if (removalResult.isError) {
+                const errorContent = Array.isArray(removalResult.content) && removalResult.content[0]?.type === 'text'
+                  ? removalResult.content[0].text
+                  : 'Unknown MCP error';
+                throw new Error(`MCP removeMeal failed: ${errorContent}`);
+              }
+              
+              if (!removalResult.content || !Array.isArray(removalResult.content) || !removalResult.content[0]) {
+                console.error(`🤖 [MEAL-WORKFLOW] Invalid MCP response structure:`, removalResult);
+                throw new Error(`Invalid MCP response structure`);
+              }
+              
+              const responseText = removalResult.content[0].text;
+              console.log(`🤖 [MEAL-WORKFLOW] Raw response text:`, responseText);
+              const backendPlan = JSON.parse(this.extractJsonFromResponse(responseText));
+              console.log(`🤖 [MEAL-WORKFLOW] Parsed backend plan:`, JSON.stringify(backendPlan, null, 2));
+              updatedPlan = this.transformBackendPlan(backendPlan);
+            } catch (mcpError) {
+              console.error(`❌ [MEAL-WORKFLOW] MCP tool call failed:`);
+              console.error(`Error message:`, (mcpError as any)?.message || 'No message');
+              console.error(`Error stack:`, (mcpError as any)?.stack || 'No stack');
+              console.error(`Error name:`, (mcpError as any)?.name || 'No name');
+              console.error(`Error type:`, typeof mcpError);
+              console.error(`Full error object:`, JSON.stringify(mcpError, Object.getOwnPropertyNames(mcpError), 2));
+              throw mcpError;
+            }
           }
         }
       }
@@ -451,8 +491,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     try {
       // Extract meal IDs from the meal plan
       const mealIds = state.meal_plan.days
-        .map(day => day.meal.id)
-        .filter((id, index, self) => self.indexOf(id) === index); // Deduplicate
+          .map(day => day.meal?.id)
+          .filter((id): id is number => id !== undefined)
+          .filter((id, index, self) => self.indexOf(id) === index); // Deduplicate
 
       console.log(`🛒 [MEAL-WORKFLOW] Generating shopping list for meal IDs:`, mealIds);
 
@@ -594,7 +635,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     // Check consecutive high-effort meals
     let consecutiveHighEffort = 0;
     for (const day of plan.days) {
-      if (day.meal.effort > 3) {
+      if (day.meal && day.meal.effort > 3) {
         consecutiveHighEffort++;
         if (consecutiveHighEffort > VALIDATION_CRITERIA.maxConsecutiveHighEffort) {
           issues.push(`Too many consecutive high-effort meals (day ${day.dayIndex})`);
@@ -605,13 +646,13 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     }
 
     // Check red meat count
-    const redMeatCount = plan.days.filter(d => d.meal.hasRedMeat).length;
+    const redMeatCount = plan.days.filter(d => d.meal?.hasRedMeat).length;
     if (redMeatCount > VALIDATION_CRITERIA.maxRedMeatPerWeek) {
       issues.push(`Too many red meat meals: ${redMeatCount} (max ${VALIDATION_CRITERIA.maxRedMeatPerWeek})`);
     }
 
     // Check for duplicates
-    const mealIds = plan.days.map(d => d.meal.id);
+    const mealIds = plan.days.map(d => d.meal?.id).filter((id): id is number => id !== undefined);
     const duplicates = mealIds.filter((id, index) => mealIds.indexOf(id) !== index);
     if (duplicates.length > 0) {
       issues.push(`Duplicate meals found: ${duplicates.join(', ')}`);
@@ -622,7 +663,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private transformBackendPlan(backendPlan: any): WeeklyMealPlan {
     const days = [];
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const mealTypes = ['Breakfast', 'Lunch', 'Dinner'] as const;
 
     for (let i = 0; i < dayNames.length; i++) {
@@ -675,10 +716,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       `${m.id}: ${m.mealName} (${m.mealType}, effort: ${m.relativeEffort}, red meat: ${m.redMeat})`
     ).join('\n');
 
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const planDescription = plan.days.map(day =>
-      `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal.name} (ID: ${day.meal.id}, effort: ${day.meal.effort}, red meat: ${day.meal.hasRedMeat})`
-    ).join('\n');
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const planDescription = plan.days
+      .filter(day => day.meal)
+      .map(day => `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal!.name} (ID: ${day.meal!.id}, effort: ${day.meal!.effort}, red meat: ${day.meal!.hasRedMeat})`)
+      .join('\n');
 
     const prompt = `You are optimizing a weekly meal plan. Here are the current issues:
         ${issues.join('\n')}
@@ -755,7 +797,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private formatPlanForPresentation(plan: WeeklyMealPlan): string {
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const lines: string[] = [];
 
     lines.push("📅 Weekly Meal Plan:");
@@ -766,6 +808,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       if (dayMeals.length > 0) {
         lines.push(`\n${dayNames[dayIndex]}:`);
         for (const dayMeal of dayMeals) {
+          if (!dayMeal.meal) {
+            lines.push(`  ${dayMeal.mealType}: (no meal)`);
+            continue;
+          }
           const effort = "🔥".repeat(dayMeal.meal.effort);
           const redMeat = dayMeal.meal.hasRedMeat ? "🥩" : "";
           lines.push(`  ${dayMeal.mealType}: ${dayMeal.meal.name} ${effort} ${redMeat}`);

@@ -52,15 +52,6 @@ export enum IngredientManagementStep {
 
 // Data structures
 
-export interface MealPlanningState extends BaseWorkflowState {
-  meal_plan: WeeklyMealPlan | null;
-  feedback_history: FeedbackEntry[];
-  iteration_count: number;
-  shopping_list: ShoppingItem[] | null;
-  is_finalized: boolean;
-  last_feedback_applied_at?: string;
-  feedback_to_apply?: FeedbackEntry[];
-}
 export interface FeedbackEntry {
   from: string; // 'brad' or 'shannon'
   message: string;
@@ -125,6 +116,8 @@ export interface MealPlanningState extends BaseWorkflowState {
   current_step: MealPlanningStep;
   shopping_list_formatted?: string;
   user_message?: string; // LLM-generated message about changes made
+  last_feedback_applied_at?: string;
+  feedback_to_apply?: FeedbackEntry[];
   _error?: string; // For tracking errors during workflow execution
 }
 
@@ -170,7 +163,7 @@ export const MealPlanningStateSchema = BaseWorkflowStateSchema.extend({
         name: z.string(),
         effort: z.number(),
         hasRedMeat: z.boolean()
-      })
+      }).nullable()
     }))
   }).nullable(),
   feedback_history: z.array(z.object({
