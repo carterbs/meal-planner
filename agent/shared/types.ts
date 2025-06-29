@@ -110,7 +110,7 @@ export interface WeeklyMealPlan {
   days: Array<{
     dayIndex: number;
     mealType: string;
-    meal: InternalMeal;
+    meal: InternalMeal | null;
   }>;
 }
 

@@ -96,7 +96,9 @@ const AgentPage: React.FC = () => {
           const prevEntry = mealPlan.days.find(
             (p) => p.dayIndex === d.dayIndex && p.mealType === d.mealType,
           );
-          if (!prevEntry || prevEntry.meal.id !== d.meal.id) {
+          const prevId = prevEntry?.meal ? prevEntry.meal.id : null;
+          const newId = d.meal ? d.meal.id : null;
+          if (prevId !== newId) {
             changed.add(`${d.dayIndex}-${d.mealType}`);
           }
         });

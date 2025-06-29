@@ -643,7 +643,18 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 hasRedMeat: meal.redMeat
               }
             });
+          } else {
+            days.push({
+              dayIndex: i,
+              mealType: mealType.toLowerCase(),
+              meal: null
+            });
           }
+        }
+      } else {
+        // if no dayData still push empty entries
+        for (const mealType of mealTypes) {
+          days.push({ dayIndex: i, mealType: mealType.toLowerCase(), meal: null });
         }
       }
     }

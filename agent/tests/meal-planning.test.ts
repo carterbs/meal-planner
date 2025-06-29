@@ -74,24 +74,27 @@ describe('MealPlanningWorkflow logic', () => {
   });
 
   describe('transformBackendPlan', () => {
-    it('maps backend JSON to WeeklyMealPlan days array', () => {
+    it('maps backend JSON to WeeklyMealPlan days array including empty slots', () => {
       const backendPlan = {
         Sunday: { Breakfast: { id: 10, mealName: 'eggs', relativeEffort: 2, redMeat: false } },
         Monday: { Dinner: { id: 20, mealName: 'steak', relativeEffort: 5, redMeat: true } },
       };
       const plan: WeeklyMealPlan = workflow.transformBackendPlan(backendPlan);
-      expect(plan.days).toEqual([
-        { dayIndex: 0, mealType: 'breakfast', meal: { id: 10, name: 'eggs', effort: 2, hasRedMeat: false } },
-        { dayIndex: 1, mealType: 'dinner', meal: { id: 20, name: 'steak', effort: 5, hasRedMeat: true } },
-      ]);
+      const sundayBreakfast = plan.days.find(d => d.dayIndex === 0 && d.mealType === 'breakfast');
+      expect(sundayBreakfast?.meal).toEqual({ id: 10, name: 'eggs', effort: 2, hasRedMeat: false });
+      const mondayDinner = plan.days.find(d => d.dayIndex === 1 && d.mealType === 'dinner');
+      expect(mondayDinner?.meal).toEqual({ id: 20, name: 'steak', effort: 5, hasRedMeat: true });
+      const emptyCount = plan.days.filter(d => d.meal === null).length;
+      expect(emptyCount).toBe(21 - 2);
     });
 
-    it('ignores days without data or missing meals', () => {
+    it('creates empty entries for days without data', () => {
       const backendPlan = { Wednesday: {}, Friday: { Lunch: { id: 5, mealName: 'salad', relativeEffort: 1, redMeat: false } } };
       const plan: WeeklyMealPlan = workflow.transformBackendPlan(backendPlan);
-      expect(plan.days).toEqual([
-        { dayIndex: 5, mealType: 'lunch', meal: { id: 5, name: 'salad', effort: 1, hasRedMeat: false } },
-      ]);
+      const fridayLunch = plan.days.find(d => d.dayIndex === 5 && d.mealType === 'lunch');
+      expect(fridayLunch?.meal).toEqual({ id: 5, name: 'salad', effort: 1, hasRedMeat: false });
+      const wednesdayDinner = plan.days.find(d => d.dayIndex === 3 && d.mealType === 'dinner');
+      expect(wednesdayDinner?.meal).toBeNull();
     });
   });
 });

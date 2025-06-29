@@ -297,3 +297,55 @@ func escapeICSString(s string) string {
 	replacer := strings.NewReplacer(",", "\\,", ";", "\\;", "\n", "\\n")
 	return replacer.Replace(s)
 }
+
+// RemoveMealFromPlan sets the specified meal slot to nil in the weekly plan.
+// dayIndex should be 0=Monday .. 6=Sunday. mealType should be breakfast, lunch, or dinner.
+func RemoveMealFromPlan(plan *WeeklyMealPlan, dayIndex int, mealType string) error {
+	if plan == nil {
+		return errors.New("plan is nil")
+	}
+	if dayIndex < 0 || dayIndex > 6 {
+		return fmt.Errorf("invalid dayIndex %d", dayIndex)
+	}
+	mealType = strings.ToLower(mealType)
+	if mealType != "breakfast" && mealType != "lunch" && mealType != "dinner" {
+		return fmt.Errorf("invalid mealType %s", mealType)
+	}
+
+	var day *DayMealPlan
+	switch dayIndex {
+	case 0:
+		day = &plan.Monday
+	case 1:
+		day = &plan.Tuesday
+	case 2:
+		day = &plan.Wednesday
+	case 3:
+		day = &plan.Thursday
+	case 4:
+		day = &plan.Friday
+	case 5:
+		day = &plan.Saturday
+	case 6:
+		day = &plan.Sunday
+	}
+
+	switch mealType {
+	case "breakfast":
+		if day.Breakfast == nil {
+			return errors.New("meal already empty")
+		}
+		day.Breakfast = nil
+	case "lunch":
+		if day.Lunch == nil {
+			return errors.New("meal already empty")
+		}
+		day.Lunch = nil
+	case "dinner":
+		if day.Dinner == nil {
+			return errors.New("meal already empty")
+		}
+		day.Dinner = nil
+	}
+	return nil
+}
