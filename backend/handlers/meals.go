@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"mealplanner/dummy"
 	"mealplanner/models"
@@ -50,6 +51,112 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(meals)
+}
+
+// RemoveMealHandler handles POST /api/meals/remove and removes a meal from the user's meal plan.
+func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse payload
+	var payload struct {
+		ThreadID  string `json:"threadId"`
+		DayIndex  int    `json:"dayIndex"`
+		MealType  string `json:"mealType"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+	if payload.ThreadID == "" {
+		http.Error(w, "Missing threadId", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch agent session
+	session, err := models.GetAgentSession(DB, payload.ThreadID)
+	if err != nil {
+		http.Error(w, "Session not found: "+err.Error(), http.StatusNotFound)
+		return
+	}
+	if session.MealPlan == nil {
+		http.Error(w, "No meal plan found for session", http.StatusNotFound)
+		return
+	}
+
+	// Parse meal plan JSON
+	var plan models.WeeklyMealPlan
+	if err := json.Unmarshal(session.MealPlan, &plan); err != nil {
+		http.Error(w, "Failed to parse meal plan: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Map dayIndex to day name
+	dayNames := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	if payload.DayIndex < 0 || payload.DayIndex >= len(dayNames) {
+		http.Error(w, "Invalid dayIndex", http.StatusBadRequest)
+		return
+	}
+	dayName := dayNames[payload.DayIndex]
+
+	// Remove the meal from the plan
+	removed := false
+	switch dayName {
+	case "Monday":
+		removed = removeMealFromDay(&plan.Monday, payload.MealType)
+	case "Tuesday":
+		removed = removeMealFromDay(&plan.Tuesday, payload.MealType)
+	case "Wednesday":
+		removed = removeMealFromDay(&plan.Wednesday, payload.MealType)
+	case "Thursday":
+		removed = removeMealFromDay(&plan.Thursday, payload.MealType)
+	case "Friday":
+		removed = removeMealFromDay(&plan.Friday, payload.MealType)
+	case "Saturday":
+		removed = removeMealFromDay(&plan.Saturday, payload.MealType)
+	case "Sunday":
+		removed = removeMealFromDay(&plan.Sunday, payload.MealType)
+	}
+
+	if !removed {
+		http.Error(w, "Invalid mealType or nothing to remove", http.StatusBadRequest)
+		return
+	}
+
+	// Save updated plan to session
+	planBytes, err := json.Marshal(plan)
+	if err != nil {
+		http.Error(w, "Failed to serialize updated plan: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	session.MealPlan = planBytes
+	session.UpdatedAt = time.Now()
+	if err := models.UpdateAgentSession(DB, session); err != nil {
+		http.Error(w, "Failed to update session: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(plan)
+}
+
+// removeMealFromDay sets the specified meal type to nil for a DayMealPlan
+func removeMealFromDay(day *models.DayMealPlan, mealType string) bool {
+	switch strings.ToLower(mealType) {
+	case "breakfast":
+		if day.Breakfast != nil {
+			day.Breakfast = nil
+			return true
+		}
+	case "lunch":
+		if day.Lunch != nil {
+			day.Lunch = nil
+			return true
+		}
+	case "dinner":
+		if day.Dinner != nil {
+			day.Dinner = nil
+			return true
+		}
+	}
+	return false
 }
 
 // SwapMealHandler handles POST /api/meals/swap and returns a new meal to replace the current one.
