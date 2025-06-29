@@ -9,9 +9,9 @@ module.exports = {
   },
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
-  roots: ['<rootDir>'],
-  testMatch: [],
-  testPathIgnorePatterns: [],
+  roots: ['<rootDir>/tests'],
+  testMatch: ['**/?(*.)+(test).[tj]s?(x)'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   transformIgnorePatterns: [
     'node_modules/(?!(@modelcontextprotocol|@langchain)/)'
   ],
