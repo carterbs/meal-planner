@@ -25,3 +25,5 @@ dist/
 Thumbs.db
 .idea/
 .vscode/ 
+# Yarn install state
+.yarn/install-state.gz
