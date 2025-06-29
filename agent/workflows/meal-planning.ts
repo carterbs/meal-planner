@@ -4,6 +4,7 @@ import { ChatOpenAI } from '@langchain/openai';
 import { FakeChatModel } from '@langchain/core/utils/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+
 import {
   MealPlanningState,
   MealPlanningStep,
@@ -11,16 +12,16 @@ import {
   VALIDATION_CRITERIA,
   WeeklyMealPlan,
   FeedbackEntry
-} from '../shared/types.js';
-import { BaseWorkflow } from '../registry.js';
-import { debugLog } from '../cli.js';
-import { PostgresCheckpointSaver } from '../shared/checkpointer.js';
-import { FeedbackHandler } from './feedback-handler.js';
+} from '../shared/types';
+import { BaseWorkflow } from '../registry';
+import { debugLog } from '../cli';
+import { PostgresCheckpointSaver } from '../shared/checkpointer';
+import { FeedbackHandler } from './feedback-handler';
 import {
   ShoppingListResponse,
   ShoppingListItem,
   MCPToolResult as MCPToolResultType
-} from '../shared/mcp-types.js';
+} from '../shared/mcp-types';
 const DEBUG_LOGS = false;
 interface MCPTextContent {
   type: 'text';
