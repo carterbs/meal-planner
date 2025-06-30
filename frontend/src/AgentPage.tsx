@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import MealPlanDisplay, { WeeklyMealPlan } from "./components/MealPlanDisplay";
+import { ShoppingListItem } from "./types";
 import TypingIndicator from "./components/TypingIndicator";
 import useSession from "./hooks/useSession";
 
@@ -39,7 +40,7 @@ function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
     if (entries.length === 0) return;
 
     const mealsHtml = entries
-      .filter(e => e.meal)
+      .filter((e) => e.meal)
       .map((e) => {
         const meal = e.meal!;
         return `<strong>${e.mealType.charAt(0).toUpperCase() + e.mealType.slice(1)}</strong>: ${meal.name} (${meal.effort})`;
@@ -50,7 +51,7 @@ function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
       `<td style="border:1px solid #ddd;padding:8px;">${mealsHtml}</td></tr>`;
 
     const mealsText = entries
-      .filter(e => e.meal)
+      .filter((e) => e.meal)
       .map((e) => {
         const meal = e.meal!;
         return `${e.mealType}: ${meal.name} (${meal.effort})`;
@@ -79,7 +80,9 @@ const AgentPage: React.FC = () => {
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(null);
-  const [shoppingList, setShoppingList] = useState<string | null>(null);
+  const [shoppingList, setShoppingList] = useState<ShoppingListItem[] | null>(
+    null,
+  );
   const [highlights, setHighlights] = useState<Set<string>>(new Set());
   const chatRef = useRef<HTMLDivElement | null>(null);
 
@@ -143,13 +146,12 @@ const AgentPage: React.FC = () => {
         setMealPlan(plan);
       }
 
-      if (
-        data.raw?.shopping_list_formatted ||
-        data.initialState?.shopping_list
-      ) {
-        setShoppingList(
-          data.raw?.shopping_list_formatted || data.initialState?.shopping_list,
-        );
+      const list =
+        data.shopping_list ||
+        data.raw?.shopping_list ||
+        data.initialState?.shopping_list;
+      if (list) {
+        setShoppingList(list);
       }
       if (data.message) setMessages([{ sender: "agent", text: data.message }]);
     } catch (err) {
@@ -175,9 +177,10 @@ const AgentPage: React.FC = () => {
         setMealPlan(plan);
       }
       const list =
-        resumeData.raw?.shopping_list_formatted ||
+        resumeData.shopping_list ||
+        resumeData.raw?.shopping_list ||
         resumeData.initialState?.shopping_list;
-      if (list) setShoppingList(list);
+      if (list) setShoppingList(list as ShoppingListItem[]);
       if (resumeData.message)
         setMessages([{ sender: "agent", text: resumeData.message }]);
     }
@@ -215,8 +218,7 @@ const AgentPage: React.FC = () => {
       }
 
       // Check for shopping list in both locations
-      const newShoppingList =
-        data.shopping_list_formatted || data.raw?.shopping_list_formatted;
+      const newShoppingList = data.shopping_list || data.raw?.shopping_list;
       if (newShoppingList) setShoppingList(newShoppingList);
     } catch (err) {
       console.error("Failed to send message", err);
@@ -241,7 +243,10 @@ const AgentPage: React.FC = () => {
 
   const copyShoppingList = () => {
     if (!shoppingList) return;
-    navigator.clipboard.writeText(shoppingList);
+    const text = shoppingList
+      .map((i) => `- ${[i.quantity, i.ingredient].join(" ").trim()}`)
+      .join("\n");
+    navigator.clipboard.writeText(text);
   };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
@@ -252,24 +257,34 @@ const AgentPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      height: 'calc(100vh - 64px)', // Adjust based on your header height
-      width: '100%',
-      overflow: 'hidden'
-    }}>
+    <Box
+      sx={{
+        display: "flex",
+        height: "calc(100vh - 64px)", // Adjust based on your header height
+        width: "100%",
+        overflow: "hidden",
+      }}
+    >
       {/* Left Side - Chat (1/3) */}
-      <Box sx={{ 
-        width: '33.33%',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRight: '1px solid #e0e0e0',
-        p: 2,
-        gap: 2,
-        height: '100%',
-        overflow: 'hidden'
-      }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box
+        sx={{
+          width: "33.33%",
+          display: "flex",
+          flexDirection: "column",
+          borderRight: "1px solid #e0e0e0",
+          p: 2,
+          gap: 2,
+          height: "100%",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Button
             size="small"
             variant="contained"
@@ -279,13 +294,17 @@ const AgentPage: React.FC = () => {
             {session ? "New Session" : "Start"}
           </Button>
           {session && (
-            <Typography variant="caption" data-testid="session-id" sx={{ 
-              fontFamily: 'monospace',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: '70%'
-            }}>
+            <Typography
+              variant="caption"
+              data-testid="session-id"
+              sx={{
+                fontFamily: "monospace",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "70%",
+              }}
+            >
               {session.threadId}
             </Typography>
           )}
@@ -300,60 +319,62 @@ const AgentPage: React.FC = () => {
             flexDirection: "column",
             gap: 1,
             pr: 1,
-            '&::-webkit-scrollbar': {
-              width: '6px',
+            "&::-webkit-scrollbar": {
+              width: "6px",
             },
-            '&::-webkit-scrollbar-track': {
-              background: '#f1f1f1',
-              borderRadius: '3px',
+            "&::-webkit-scrollbar-track": {
+              background: "#f1f1f1",
+              borderRadius: "3px",
             },
-            '&::-webkit-scrollbar-thumb': {
-              background: '#888',
-              borderRadius: '3px',
+            "&::-webkit-scrollbar-thumb": {
+              background: "#888",
+              borderRadius: "3px",
             },
-            '&::-webkit-scrollbar-thumb:hover': {
-              background: '#555',
+            "&::-webkit-scrollbar-thumb:hover": {
+              background: "#555",
             },
           }}
         >
-        {messages.map((m, i) => (
-          <Box
-            key={i}
-            sx={{
-              display: "flex",
-              justifyContent: m.sender === "user" ? "flex-end" : "flex-start",
-            }}
-          >
-            <Paper
+          {messages.map((m, i) => (
+            <Box
+              key={i}
               sx={{
-                p: 1,
-                maxWidth: "70%",
-                backgroundColor: m.sender === "user" ? "#eef4ea" : "#fff",
+                display: "flex",
+                justifyContent: m.sender === "user" ? "flex-end" : "flex-start",
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                {m.sender === "agent" && (
-                  <Avatar sx={{ width: 24, height: 24 }}>A</Avatar>
-                )}
-                <Typography variant="body2">{m.text}</Typography>
-                {m.sender === "user" && (
-                  <Avatar sx={{ width: 24, height: 24 }}>U</Avatar>
-                )}
-              </Box>
-            </Paper>
-          </Box>
-        ))}
-        {isWorking && <TypingIndicator />}
-      </Box>
+              <Paper
+                sx={{
+                  p: 1,
+                  maxWidth: "70%",
+                  backgroundColor: m.sender === "user" ? "#eef4ea" : "#fff",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {m.sender === "agent" && (
+                    <Avatar sx={{ width: 24, height: 24 }}>A</Avatar>
+                  )}
+                  <Typography variant="body2">{m.text}</Typography>
+                  {m.sender === "user" && (
+                    <Avatar sx={{ width: 24, height: 24 }}>U</Avatar>
+                  )}
+                </Box>
+              </Paper>
+            </Box>
+          ))}
+          {isWorking && <TypingIndicator />}
+        </Box>
 
         {session && (
-          <Box sx={{ 
-            display: "flex", 
-            alignItems: "center", 
-            gap: 1,
-            pt: 1,
-            borderTop: '1px solid #f0f0f0'
-          }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              pt: 1,
+              borderTop: "1px solid #f0f0f0",
+            }}
+          >
             <TextField
               fullWidth
               multiline
@@ -367,15 +388,15 @@ const AgentPage: React.FC = () => {
               placeholder="Type your message..."
               variant="outlined"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '20px',
-                  backgroundColor: '#f5f5f5',
-                  '&:hover': {
-                    backgroundColor: '#eeeeee',
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "20px",
+                  backgroundColor: "#f5f5f5",
+                  "&:hover": {
+                    backgroundColor: "#eeeeee",
                   },
-                  '&.Mui-focused': {
-                    backgroundColor: '#fff',
-                    boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+                  "&.Mui-focused": {
+                    backgroundColor: "#fff",
+                    boxShadow: "0 0 0 2px rgba(25, 118, 210, 0.2)",
                   },
                 },
               }}
@@ -386,14 +407,14 @@ const AgentPage: React.FC = () => {
               disabled={!input.trim() || isWorking}
               data-testid="send-button"
               sx={{
-                backgroundColor: 'primary.main',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
+                backgroundColor: "primary.main",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "primary.dark",
                 },
-                '&:disabled': {
-                  backgroundColor: '#e0e0e0',
-                  color: '#9e9e9e',
+                "&:disabled": {
+                  backgroundColor: "#e0e0e0",
+                  color: "#9e9e9e",
                 },
               }}
             >
@@ -404,39 +425,55 @@ const AgentPage: React.FC = () => {
       </Box>
 
       {/* Right Side - Meal Plan (2/3) */}
-      <Box sx={{ 
-        flex: 1, 
-        p: 3, 
-        overflowY: 'auto',
-        backgroundColor: '#fafafa',
-        '&::-webkit-scrollbar': {
-          width: '6px',
-        },
-        '&::-webkit-scrollbar-track': {
-          background: '#f1f1f1',
-          borderRadius: '3px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          background: '#888',
-          borderRadius: '3px',
-        },
-        '&::-webkit-scrollbar-thumb:hover': {
-          background: '#555',
-        },
-      }}>
-        <Box sx={{ 
-          backgroundColor: 'white', 
-          borderRadius: 2, 
-          p: 3, 
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          maxWidth: '100%',
-          overflowX: 'auto'
-        }}>
+      <Box
+        sx={{
+          flex: 1,
+          p: 3,
+          overflowY: "auto",
+          backgroundColor: "#fafafa",
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "#f1f1f1",
+            borderRadius: "3px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "#888",
+            borderRadius: "3px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "#555",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            backgroundColor: "white",
+            borderRadius: 2,
+            p: 3,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            maxWidth: "100%",
+            overflowX: "auto",
+          }}
+        >
           {mealPlan ? (
             <>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#333' }}>Weekly Meal Plan</Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 3,
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 600, color: "#333" }}
+                >
+                  Weekly Meal Plan
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1 }}>
                   <Button
                     variant="outlined"
                     size="small"
@@ -458,20 +495,40 @@ const AgentPage: React.FC = () => {
                 </Box>
               </Box>
               <MealPlanDisplay plan={mealPlan} highlights={highlights} />
+              {shoppingList && shoppingList.length > 0 && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6">Shopping List</Typography>
+                  <ul>
+                    {shoppingList.map((i, idx) => (
+                      <li key={idx}>
+                        {`${i.quantity} ${i.ingredient}`.trim()}
+                      </li>
+                    ))}
+                  </ul>
+                </Box>
+              )}
             </>
           ) : (
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              height: '100%',
-              py: 8,
-              color: '#757575'
-            }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>No meal plan yet</Typography>
-              <Typography variant="body2" sx={{ textAlign: 'center', maxWidth: '80%' }}>
-                Start a conversation with the assistant to generate your personalized meal plan.
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                py: 8,
+                color: "#757575",
+              }}
+            >
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                No meal plan yet
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ textAlign: "center", maxWidth: "80%" }}
+              >
+                Start a conversation with the assistant to generate your
+                personalized meal plan.
               </Typography>
             </Box>
           )}
