@@ -16,13 +16,13 @@ import useSession from "./hooks/useSession";
 
 // Utility to format a WeeklyMealPlan for clipboard copying
 const WEEK_DAYS = [
-  "Sunday",
   "Monday",
   "Tuesday",
   "Wednesday",
   "Thursday",
   "Friday",
   "Saturday",
+  "Sunday"
 ];
 function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
   let html = '<table style="border-collapse: collapse; width: 100%;">';
@@ -244,7 +244,7 @@ const AgentPage: React.FC = () => {
   const copyShoppingList = () => {
     if (!shoppingList) return;
     const text = shoppingList
-      .map((i) => `- ${[i.quantity, i.ingredient].join(" ").trim()}`)
+      .map((i) => `- ${Number(i.quantity) > 0 ? `${i.quantity} ` : ''}${i.ingredient}`.trim())
       .join("\n");
     navigator.clipboard.writeText(text);
   };
@@ -501,7 +501,7 @@ const AgentPage: React.FC = () => {
                   <ul>
                     {shoppingList.map((i, idx) => (
                       <li key={idx}>
-                        {`${i.quantity} ${i.ingredient}`.trim()}
+                        {Number(i.quantity) > 0 ? `${i.quantity} ` : ''}{i.ingredient}
                       </li>
                     ))}
                   </ul>
