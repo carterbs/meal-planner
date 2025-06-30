@@ -160,6 +160,20 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("[DEBUG AddAgentFeedback] agent CLI response: %+v", resp)
+
+	// Store agent response message in database and update workflow checkpoint
+	if resp.Message != "" {
+		// Store in messages table
+		if _, err := models.AddMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
+			log.Printf("[ERROR AddAgentFeedback] Failed to store agent message: %v", err)
+		}
+
+		// Update workflow checkpoint with full message history
+		if err := models.UpdateWorkflowCheckpointWithMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
+			log.Printf("[ERROR AddAgentFeedback] Failed to update workflow checkpoint: %v", err)
+		}
+	}
+
 	writeJSON(w, resp)
 }
 
@@ -236,10 +250,16 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	// Store user message in database
+	// Store user message in database and workflow checkpoint
 	if req.From == "user" && req.Message != "" {
+		// Store in messages table
 		if _, err := models.AddMessage(DB, req.ThreadID, "user", req.Message); err != nil {
 			log.Printf("[ERROR MessageAgentHandler] Failed to store user message: %v", err)
+		}
+
+		// Update workflow checkpoint with full message history
+		if err := models.UpdateWorkflowCheckpointWithMessage(DB, req.ThreadID, "user", req.Message); err != nil {
+			log.Printf("[ERROR MessageAgentHandler] Failed to update workflow checkpoint: %v", err)
 		}
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
@@ -264,6 +284,19 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("[DEBUG MessageAgentHandler] agent CLI resume response: %+v", resp)
+
+	// Store agent response message in database if present
+	if resp.Message != "" {
+		if _, err := models.AddMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
+			log.Printf("[ERROR MessageAgentHandler] Failed to store agent message: %v", err)
+		}
+
+		// Update workflow checkpoint with full message history
+		if err := models.UpdateWorkflowCheckpointWithMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
+			log.Printf("[ERROR MessageAgentHandler] Failed to update workflow checkpoint: %v", err)
+		}
+	}
+
 	writeJSON(w, resp)
 }
 
