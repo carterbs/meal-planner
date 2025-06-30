@@ -28,25 +28,26 @@ interface MealPlanDisplayProps {
 }
 
 export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ plan, highlights }) => {
-  const grouped = WEEK_DAYS.map((day, idx) => {
-    const entries = plan.days.filter(d => d.dayIndex === idx);
-    return { day, entries };
-  });
+  const grouped = WEEK_DAYS.map((day, idx) => ({
+    day,
+    entries: plan.days.filter(d => d.dayIndex === idx)
+  }));
 
   return (
-    <table data-testid="meal-plan-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
+    <table data-testid="meal-plan-table" style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.9em' }}>
       <thead>
         <tr>
-          <th style={{ border: '1px solid #ddd', padding: 4, textAlign: 'left' }}>Day</th>
-          <th style={{ border: '1px solid #ddd', padding: 4, textAlign: 'left' }}>Meals</th>
+          <th style={{ border: '1px solid #ddd', padding: '4px 8px', textAlign: 'left', fontSize: '0.9em' }}>Day</th>
+          <th style={{ border: '1px solid #ddd', padding: '4px 8px', textAlign: 'left', fontSize: '0.9em' }}>Meals</th>
         </tr>
       </thead>
       <tbody>
         {grouped.map(({ day, entries }) => (
           entries.length > 0 ? (
             <tr key={day}>
-              <td style={{ border: '1px solid #ddd', padding: 4 }}>{day}</td>
-              <td style={{ border: '1px solid #ddd', padding: 4 }}>
+              <td style={{ border: '1px solid #ddd', padding: '4px 8px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{day}</td>
+              <td style={{ border: '1px solid #ddd', padding: '4px 8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {entries.map(e => {
                   const key = `${e.dayIndex}-${e.mealType}`;
                   const isHighlighted = highlights?.has(key);
@@ -55,7 +56,7 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ plan, highligh
                     <div
                       key={e.mealType}
                       data-testid={`meal-${key}`}
-                      style={{ padding: '4px', margin: '2px 0' }}
+                      style={{ margin: '1px 0', lineHeight: '1.3' }}
                     >
                       <strong>{e.mealType.charAt(0).toUpperCase()+e.mealType.slice(1)}:</strong>{' '}
                       <Box
@@ -94,14 +95,15 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ plan, highligh
                         {e.meal ? e.meal.name : '---'}
                       </Box>
                       {e.meal && (
-                        <>
+                        <span style={{ whiteSpace: 'nowrap' }}>
                           {' '}{effortIcons[e.meal.effort]}
                           {e.meal.hasRedMeat && ' 🥩'}
-                        </>
+                        </span>
                       )}
                     </div>
                   );
                 })}
+                </div>
               </td>
             </tr>
           ) : null
