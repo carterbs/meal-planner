@@ -252,33 +252,70 @@ const AgentPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Button
-        size="small"
-        variant="contained"
-        onClick={startNewSession}
-        data-testid="start-session"
-      >
-        {session ? "Start New Session" : "Start&nbsp;New&nbsp;Session"}
-      </Button>
-      {session && (
-        <Typography data-testid="session-id">
-          Session: {session.threadId}
-        </Typography>
-      )}
-      <Box
-        ref={chatRef}
-        data-testid="chat-history"
-        sx={{
-          flexGrow: 1,
-          overflowY: "auto",
-          maxHeight: 300,
-          display: "flex",
-          flexDirection: "column",
-          gap: 1,
-          mt: 1,
-        }}
-      >
+    <Box sx={{ 
+      display: 'flex', 
+      height: 'calc(100vh - 64px)', // Adjust based on your header height
+      width: '100%',
+      overflow: 'hidden'
+    }}>
+      {/* Left Side - Chat (1/3) */}
+      <Box sx={{ 
+        width: '33.33%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRight: '1px solid #e0e0e0',
+        p: 2,
+        gap: 2,
+        height: '100%',
+        overflow: 'hidden'
+      }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={startNewSession}
+            data-testid="start-session"
+          >
+            {session ? "New Session" : "Start"}
+          </Button>
+          {session && (
+            <Typography variant="caption" data-testid="session-id" sx={{ 
+              fontFamily: 'monospace',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: '70%'
+            }}>
+              {session.threadId}
+            </Typography>
+          )}
+        </Box>
+        <Box
+          ref={chatRef}
+          data-testid="chat-history"
+          sx={{
+            flexGrow: 1,
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            pr: 1,
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: '#f1f1f1',
+              borderRadius: '3px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: '#888',
+              borderRadius: '3px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: '#555',
+            },
+          }}
+        >
         {messages.map((m, i) => (
           <Box
             key={i}
@@ -308,51 +345,138 @@ const AgentPage: React.FC = () => {
         ))}
         {isWorking && <TypingIndicator />}
       </Box>
-      {mealPlan && (
-        <>
-          <MealPlanDisplay plan={mealPlan} highlights={highlights} />
-          <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
-            <Button
+
+        {session && (
+          <Box sx={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: 1,
+            pt: 1,
+            borderTop: '1px solid #f0f0f0'
+          }}>
+            <TextField
+              fullWidth
+              multiline
+              minRows={1}
+              maxRows={4}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              inputProps={{ "data-testid": "message-input" }}
+              size="small"
+              placeholder="Type your message..."
               variant="outlined"
-              onClick={copyMealPlan}
-              data-testid="copy-meal-plan"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '20px',
+                  backgroundColor: '#f5f5f5',
+                  '&:hover': {
+                    backgroundColor: '#eeeeee',
+                  },
+                  '&.Mui-focused': {
+                    backgroundColor: '#fff',
+                    boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+                  },
+                },
+              }}
+            />
+            <IconButton
+              color="primary"
+              onClick={sendMessage}
+              disabled={!input.trim() || isWorking}
+              data-testid="send-button"
+              sx={{
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+                '&:disabled': {
+                  backgroundColor: '#e0e0e0',
+                  color: '#9e9e9e',
+                },
+              }}
             >
-              Copy Meal Plan
-            </Button>
-            {shoppingList && (
-              <Button
-                variant="outlined"
-                onClick={copyShoppingList}
-                data-testid="copy-shopping-list"
-              >
-                Copy Shopping List
-              </Button>
-            )}
+              <SendIcon fontSize="small" />
+            </IconButton>
           </Box>
-        </>
-      )}
-      {session && (
-        <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
-          <TextField
-            fullWidth
-            multiline
-            minRows={1}
-            maxRows={4}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            inputProps={{ "data-testid": "message-input" }}
-          />
-          <IconButton
-            color="primary"
-            onClick={sendMessage}
-            disabled={!input.trim()}
-            data-testid="send-button"
-          >
-            <SendIcon />
-          </IconButton>
+        )}
+      </Box>
+
+      {/* Right Side - Meal Plan (2/3) */}
+      <Box sx={{ 
+        flex: 1, 
+        p: 3, 
+        overflowY: 'auto',
+        backgroundColor: '#fafafa',
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: '#f1f1f1',
+          borderRadius: '3px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#888',
+          borderRadius: '3px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          background: '#555',
+        },
+      }}>
+        <Box sx={{ 
+          backgroundColor: 'white', 
+          borderRadius: 2, 
+          p: 3, 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          maxWidth: '100%',
+          overflowX: 'auto'
+        }}>
+          {mealPlan ? (
+            <>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#333' }}>Weekly Meal Plan</Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={copyMealPlan}
+                    data-testid="copy-meal-plan"
+                  >
+                    Copy Plan
+                  </Button>
+                  {shoppingList && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={copyShoppingList}
+                      data-testid="copy-shopping-list"
+                    >
+                      Shopping List
+                    </Button>
+                  )}
+                </Box>
+              </Box>
+              <MealPlanDisplay plan={mealPlan} highlights={highlights} />
+            </>
+          ) : (
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              height: '100%',
+              py: 8,
+              color: '#757575'
+            }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>No meal plan yet</Typography>
+              <Typography variant="body2" sx={{ textAlign: 'center', maxWidth: '80%' }}>
+                Start a conversation with the assistant to generate your personalized meal plan.
+              </Typography>
+            </Box>
+          )}
         </Box>
-      )}
+      </Box>
     </Box>
   );
 };

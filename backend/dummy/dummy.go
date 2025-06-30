@@ -189,42 +189,31 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 		return &mealCopy
 	}
 
-	plan := &models.WeeklyMealPlan{
-		Monday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(0, 2, "dinner"),
-		},
-		Tuesday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(3, 5, "dinner"),
-		},
-		Wednesday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(3, 5, "dinner"),
-		},
-		Thursday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(3, 5, "dinner"),
-		},
-		Friday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    &models.Meal{MealName: "Eating out"},
-		},
-		Saturday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(3, 5, "dinner"),
-		},
-		Sunday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(4, 10, "dinner"),
-		},
+	dayNames := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	mealTypes := []string{"breakfast", "lunch", "dinner"}
+
+	plan := &models.WeeklyMealPlan{Days: make([]models.PlanDay, 0, 21)}
+	for i, day := range dayNames {
+		for _, mt := range mealTypes {
+			minEffort, maxEffort := 0, 2
+			if mt == "dinner" {
+				minEffort, maxEffort = 3, 5
+				if day == "Monday" {
+					minEffort, maxEffort = 0, 2
+				} else if day == "Sunday" {
+					minEffort, maxEffort = 4, 10
+				}
+			}
+			meal := pick(minEffort, maxEffort, mt)
+			plan.Days = append(plan.Days, models.PlanDay{DayIndex: i, MealType: mt, Meal: meal})
+		}
+	}
+
+	for idx := range plan.Days {
+		if plan.Days[idx].DayIndex == 4 && plan.Days[idx].MealType == "dinner" {
+			plan.Days[idx].Meal = &models.Meal{MealName: "Eating out"}
+			break
+		}
 	}
 
 	return plan, nil
