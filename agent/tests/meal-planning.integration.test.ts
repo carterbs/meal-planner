@@ -31,7 +31,7 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
   describe('applyFeedbackWithLLM', () => {
     beforeEach(() => {
       // Mocks for availableMeals and newPlan
-      const availableMeals = [{ id: 2, mealName: 'x', mealType: 'breakfast', relativeEffort: 1, redMeat: false }];
+      const availableMeals = [{ id: 2, name: 'x', mealType: 'breakfast', effort: 1, hasRedMeat: false }];
       const newPlan = { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 2, name: 'x', effort: 1, hasRedMeat: false } } ] };
       workflow.client = { callTool: jest.fn().mockResolvedValue({ content: [{ text: JSON.stringify(availableMeals) }] }) } as any;
       workflow.llm = { invoke: jest.fn().mockResolvedValue(JSON.stringify(newPlan)) } as any;
@@ -40,8 +40,8 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
 
     it('applies feedback and returns new plan', async () => {
       // Setup: plan has Sunday breakfast with id 1, availableMeals has id 2
-      const plan = { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 1, name: 'old', effort: 1, hasRedMeat: false } } ] };
-      const availableMeals = [{ id: 2, mealName: 'x', mealType: 'breakfast', relativeEffort: 1, redMeat: false }];
+      const plan = { days: [ { dayIndex: 6, mealType: 'breakfast', meal: { id: 1, name: 'old', effort: 1, hasRedMeat: false } } ] };
+      const availableMeals = [{ id: 2, name: 'x', mealType: 'breakfast', effort: 1, hasRedMeat: false }];
       workflow.client.callTool.mockResolvedValue({ content: [{ text: JSON.stringify(availableMeals) }] });
       workflow.llm.invoke.mockResolvedValue({ content: JSON.stringify({
         replacements: [
@@ -53,7 +53,7 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
       workflow.extractJsonFromResponse = jest.fn((s: any) => (typeof s === 'string' ? s : JSON.stringify(s)) );
       const res = await workflow.applyFeedbackWithLLM(plan, ['replace Sunday breakfast']);
       // Expect the plan to be updated with meal id 2
-      const expectedPlan = { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 2, name: 'x', effort: 1, hasRedMeat: false } } ] };
+      const expectedPlan = { days: [ { dayIndex: 6, mealType: 'breakfast', meal: { id: 2, name: 'x', effort: 1, hasRedMeat: false } } ] };
       expect(workflow.client.callTool).toHaveBeenCalledWith({ name: 'getMeals', arguments: {} });
       expect(workflow.llm.invoke).toHaveBeenCalled();
       expect(res).toEqual({ mealPlan: expectedPlan, userMessage: 'done' });
