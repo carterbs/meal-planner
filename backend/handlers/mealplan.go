@@ -16,27 +16,9 @@ var DB *sql.DB
 
 func populateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
 	mealIDs := make([]int, 0)
-	days := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
-	dayPlans := map[string]models.DayMealPlan{
-		"Monday":    plan.Monday,
-		"Tuesday":   plan.Tuesday,
-		"Wednesday": plan.Wednesday,
-		"Thursday":  plan.Thursday,
-		"Friday":    plan.Friday,
-		"Saturday":  plan.Saturday,
-		"Sunday":    plan.Sunday,
-	}
-
-	for _, day := range days {
-		dayPlan := dayPlans[day]
-		if dayPlan.Breakfast != nil && dayPlan.Breakfast.ID != 0 {
-			mealIDs = append(mealIDs, dayPlan.Breakfast.ID)
-		}
-		if dayPlan.Lunch != nil && dayPlan.Lunch.ID != 0 {
-			mealIDs = append(mealIDs, dayPlan.Lunch.ID)
-		}
-		if dayPlan.Dinner != nil && dayPlan.Dinner.ID != 0 {
-			mealIDs = append(mealIDs, dayPlan.Dinner.ID)
+	for _, d := range plan.Days {
+		if d.Meal != nil && d.Meal.ID != 0 {
+			mealIDs = append(mealIDs, d.Meal.ID)
 		}
 	}
 
@@ -60,35 +42,15 @@ func populateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, e
 		mealMap[meal.ID] = meal
 	}
 
-	// Create a new plan to hold the populated meal details
 	populatedPlan := *plan
-
-	updateDayMealPlan := func(dayPlan *models.DayMealPlan) {
-		if dayPlan.Breakfast != nil {
-			if fullMeal, ok := mealMap[dayPlan.Breakfast.ID]; ok {
-				dayPlan.Breakfast = fullMeal
-			}
-		}
-		if dayPlan.Lunch != nil {
-			if fullMeal, ok := mealMap[dayPlan.Lunch.ID]; ok {
-				dayPlan.Lunch = fullMeal
-			}
-		}
-		if dayPlan.Dinner != nil {
-			if fullMeal, ok := mealMap[dayPlan.Dinner.ID]; ok {
-				dayPlan.Dinner = fullMeal
+	for i := range populatedPlan.Days {
+		d := &populatedPlan.Days[i]
+		if d.Meal != nil {
+			if fullMeal, ok := mealMap[d.Meal.ID]; ok {
+				d.Meal = fullMeal
 			}
 		}
 	}
-
-	updateDayMealPlan(&populatedPlan.Monday)
-	updateDayMealPlan(&populatedPlan.Tuesday)
-	updateDayMealPlan(&populatedPlan.Wednesday)
-	updateDayMealPlan(&populatedPlan.Thursday)
-	// Friday's meals might be nil or "Eating out"
-	updateDayMealPlan(&populatedPlan.Friday)
-	updateDayMealPlan(&populatedPlan.Saturday)
-	updateDayMealPlan(&populatedPlan.Sunday)
 
 	return &populatedPlan, nil
 }
@@ -160,27 +122,15 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 
 		// Convert to map format and exclude skipped days
 		result := make(map[string]interface{})
-
-		if !skipSet["Monday"] && detailedPlan.Monday.Dinner != nil {
-			result["Monday"] = detailedPlan.Monday.Dinner
-		}
-		if !skipSet["Tuesday"] && detailedPlan.Tuesday.Dinner != nil {
-			result["Tuesday"] = detailedPlan.Tuesday.Dinner
-		}
-		if !skipSet["Wednesday"] && detailedPlan.Wednesday.Dinner != nil {
-			result["Wednesday"] = detailedPlan.Wednesday.Dinner
-		}
-		if !skipSet["Thursday"] && detailedPlan.Thursday.Dinner != nil {
-			result["Thursday"] = detailedPlan.Thursday.Dinner
-		}
-		if !skipSet["Friday"] && detailedPlan.Friday.Dinner != nil {
-			result["Friday"] = detailedPlan.Friday.Dinner
-		}
-		if !skipSet["Saturday"] && detailedPlan.Saturday.Dinner != nil {
-			result["Saturday"] = detailedPlan.Saturday.Dinner
-		}
-		if !skipSet["Sunday"] && detailedPlan.Sunday.Dinner != nil {
-			result["Sunday"] = detailedPlan.Sunday.Dinner
+		dayNames := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+		for _, pd := range detailedPlan.Days {
+			if pd.MealType != "dinner" || pd.Meal == nil {
+				continue
+			}
+			dayName := dayNames[pd.DayIndex]
+			if !skipSet[dayName] {
+				result[dayName] = pd.Meal
+			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")

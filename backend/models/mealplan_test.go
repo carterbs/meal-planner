@@ -338,27 +338,29 @@ func TestGetLastPlannedMeals(t *testing.T) {
 }
 
 func TestRemoveMealFromPlan(t *testing.T) {
-	plan := &WeeklyMealPlan{
-		Monday:    DayMealPlan{Breakfast: &Meal{ID: 1, MealName: "A"}},
-		Tuesday:   DayMealPlan{Lunch: &Meal{ID: 2, MealName: "B"}},
-		Wednesday: DayMealPlan{Dinner: &Meal{ID: 3, MealName: "C"}},
-	}
+        plan := &WeeklyMealPlan{
+                Days: []PlanDay{
+                        {DayIndex: 0, MealType: "breakfast", Meal: &Meal{ID: 1, MealName: "A"}},
+                        {DayIndex: 1, MealType: "lunch", Meal: &Meal{ID: 2, MealName: "B"}},
+                        {DayIndex: 2, MealType: "dinner", Meal: &Meal{ID: 3, MealName: "C"}},
+                },
+        }
 
 	err := RemoveMealFromPlan(plan, 0, "breakfast")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if plan.Monday.Breakfast != nil {
-		t.Errorf("expected Monday breakfast to be nil")
-	}
+        if plan.Days[0].Meal != nil {
+                t.Errorf("expected Monday breakfast to be nil")
+        }
 
 	err = RemoveMealFromPlan(plan, 1, "lunch")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if plan.Tuesday.Lunch != nil {
-		t.Errorf("expected Tuesday lunch to be nil")
-	}
+        if plan.Days[1].Meal != nil {
+                t.Errorf("expected Tuesday lunch to be nil")
+        }
 
 	err = RemoveMealFromPlan(plan, 6, "dinner")
 	if err == nil {

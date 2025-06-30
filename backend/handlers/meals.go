@@ -298,16 +298,9 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Extract meal IDs from the plan
 	var mealIDs []int
-	days := []models.DayMealPlan{plan.Monday, plan.Tuesday, plan.Wednesday, plan.Thursday, plan.Friday, plan.Saturday, plan.Sunday}
-	for _, dayPlan := range days {
-		if dayPlan.Breakfast != nil && dayPlan.Breakfast.ID != 0 {
-			mealIDs = append(mealIDs, dayPlan.Breakfast.ID)
-		}
-		if dayPlan.Lunch != nil && dayPlan.Lunch.ID != 0 {
-			mealIDs = append(mealIDs, dayPlan.Lunch.ID)
-		}
-		if dayPlan.Dinner != nil && dayPlan.Dinner.ID != 0 {
-			mealIDs = append(mealIDs, dayPlan.Dinner.ID)
+	for _, d := range plan.Days {
+		if d.Meal != nil && d.Meal.ID != 0 {
+			mealIDs = append(mealIDs, d.Meal.ID)
 		}
 	}
 

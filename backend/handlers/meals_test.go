@@ -46,7 +46,6 @@ func setupTest(t *testing.T) *testHelper {
 	return &testHelper{db, mock}
 }
 
-
 // expectMealQuery sets up expectations for a meal query
 func (h *testHelper) expectMealQuery(queryRegex string, args ...interface{}) *sqlmock.Rows {
 	rows := sqlmock.NewRows([]string{
@@ -62,7 +61,6 @@ func (h *testHelper) expectMealQuery(queryRegex string, args ...interface{}) *sq
 
 	return rows
 }
-
 
 // createRequest creates an HTTP request with optional body
 func createRequest(method, path string, body interface{}) (*http.Request, error) {
@@ -445,7 +443,7 @@ func TestFinalizeMealPlanHandler(t *testing.T) {
 	}{
 		{
 			name:    "successful finalization",
-			payload: `{"Monday": {"Dinner": {"id": 1}}, "Tuesday": {"Dinner": {"id": 2}}}`,
+			payload: `{"days":[{"dayIndex":0,"mealType":"dinner","meal":{"id":1}},{"dayIndex":1,"mealType":"dinner","meal":{"id":2}}]}`,
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(regexp.QuoteMeta(`
@@ -468,7 +466,7 @@ func TestFinalizeMealPlanHandler(t *testing.T) {
 		},
 		{
 			name:    "database error",
-			payload: `{"Monday": {"Dinner": {"id": 1}}}`,
+			payload: `{"days":[{"dayIndex":0,"mealType":"dinner","meal":{"id":1}}]}`,
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.ExpectExec(regexp.QuoteMeta(`
@@ -850,7 +848,7 @@ func TestRemoveMealHandler(t *testing.T) {
 	helper := setupTest(t)
 
 	plan := models.WeeklyMealPlan{
-		Monday: models.DayMealPlan{Breakfast: &models.Meal{ID: 1, MealName: "Egg"}},
+		Days: []models.PlanDay{{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{ID: 1, MealName: "Egg"}}},
 	}
 	planBytes, _ := json.Marshal(plan)
 	now := time.Now()
@@ -878,7 +876,7 @@ func TestRemoveMealHandler(t *testing.T) {
 	if err := json.NewDecoder(rr.Body).Decode(&out); err != nil {
 		t.Fatalf("failed decoding response: %v", err)
 	}
-	if out.Monday.Breakfast != nil {
+	if len(out.Days) == 0 || out.Days[0].Meal != nil {
 		t.Errorf("expected meal removed")
 	}
 	if err := helper.mock.ExpectationsWereMet(); err != nil {
