@@ -260,6 +260,76 @@ func UpdateWorkflowCheckpoint(db *sql.DB, threadID string, mealPlan json.RawMess
 	return err
 }
 
+// UpdateWorkflowCheckpointWithMessage updates the workflow checkpoint with a new message
+func UpdateWorkflowCheckpointWithMessage(db *sql.DB, threadID, sender, message string) error {
+	// Get all messages for the thread
+	messages, err := GetMessages(db, threadID)
+	if err != nil {
+		return err
+	}
+
+	// Add the new message to the list
+	messages = append(messages, ChatMessage{
+		ThreadID: threadID,
+		Sender:   sender,
+		Message:  message,
+	})
+
+	// Get the current checkpoint data
+	query := `
+		SELECT checkpoint_data
+		FROM workflow_checkpoints 
+		WHERE thread_id = $1 
+		ORDER BY updated_at DESC 
+		LIMIT 1`
+
+	var currentCheckpointData json.RawMessage
+	err = db.QueryRow(query, threadID).Scan(&currentCheckpointData)
+	if err != nil {
+		return err
+	}
+
+	// Parse current checkpoint data
+	var checkpointData map[string]interface{}
+	if err := json.Unmarshal(currentCheckpointData, &checkpointData); err != nil {
+		return err
+	}
+
+	// Update the messages in the checkpoint
+	if channelValues, ok := checkpointData["channel_values"].(map[string]interface{}); ok {
+		// Convert messages to the format expected by the workflow
+		var formattedMessages []map[string]interface{}
+		for _, msg := range messages {
+			formattedMessages = append(formattedMessages, map[string]interface{}{
+				"role":    msg.Sender,
+				"content": msg.Message,
+			})
+		}
+		channelValues["messages"] = formattedMessages
+	}
+
+	// Serialize back to JSON
+	updatedCheckpointData, err := json.Marshal(checkpointData)
+	if err != nil {
+		return err
+	}
+
+	// Update the checkpoint
+	updateQuery := `
+		UPDATE workflow_checkpoints 
+		SET checkpoint_data = $1, updated_at = CURRENT_TIMESTAMP
+		WHERE thread_id = $2 AND checkpoint_ns = (
+			SELECT checkpoint_ns 
+			FROM workflow_checkpoints 
+			WHERE thread_id = $2 
+			ORDER BY updated_at DESC 
+			LIMIT 1
+		)`
+
+	_, err = db.Exec(updateQuery, updatedCheckpointData, threadID)
+	return err
+}
+
 // DeleteSessionData removes all data for a session (for cleanup)
 func DeleteSessionData(db *sql.DB, threadID string) error {
 	// Delete messages first (foreign key constraint)
