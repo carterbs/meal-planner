@@ -32,7 +32,8 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
     beforeEach(() => {
       // Mocks for availableMeals and newPlan
       const availableMeals = [{ id: 2, name: 'x', mealType: 'breakfast', effort: 1, hasRedMeat: false }];
-      const newPlan = { days: [ { dayIndex: 0, mealType: 'breakfast', meal: { id: 2, name: 'x', effort: 1, hasRedMeat: false } } ] };
+      const newPlan = { days: [ { dayIndex: 6, mealType: 'breakfast', meal: { id: 2, name: 'x', effort: 1, hasRedMeat: false } } ] };
+
       workflow.client = { callTool: jest.fn().mockResolvedValue({ content: [{ text: JSON.stringify(availableMeals) }] }) } as any;
       workflow.llm = { invoke: jest.fn().mockResolvedValue(JSON.stringify(newPlan)) } as any;
       workflow.extractJsonFromResponse = jest.fn((s: any) => (typeof s === 'string' ? s : JSON.stringify(s)) );
