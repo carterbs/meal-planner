@@ -181,8 +181,18 @@ const AgentPage: React.FC = () => {
         resumeData.raw?.shopping_list ||
         resumeData.initialState?.shopping_list;
       if (list) setShoppingList(list as ShoppingListItem[]);
-      if (resumeData.message)
-        setMessages([{ sender: "agent", text: resumeData.message }]);
+      
+      // Set all previous messages from the session
+      if (resumeData.messages && Array.isArray(resumeData.messages)) {
+        const formattedMessages: ChatMessage[] = resumeData.messages.map(msg => ({
+          sender: msg.sender === 'user' ? 'user' as const : 'agent' as const,
+          text: msg.message
+        }));
+        setMessages(formattedMessages);
+      } else if (resumeData.message) {
+        // Fallback to single message if messages array is not available
+        setMessages([{ sender: "agent" as const, text: resumeData.message }]);
+      }
     }
   }, [resumeData]);
 
