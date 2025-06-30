@@ -352,29 +352,29 @@ func TestGetLastPlannedMeals(t *testing.T) {
 }
 
 func TestRemoveMealFromPlan(t *testing.T) {
-        plan := &WeeklyMealPlan{
-                Days: []PlanDay{
-                        {DayIndex: 0, MealType: "breakfast", Meal: &Meal{ID: 1, MealName: "A"}},
-                        {DayIndex: 1, MealType: "lunch", Meal: &Meal{ID: 2, MealName: "B"}},
-                        {DayIndex: 2, MealType: "dinner", Meal: &Meal{ID: 3, MealName: "C"}},
-                },
-        }
+	plan := &WeeklyMealPlan{
+		Days: []PlanDay{
+			{DayIndex: 0, MealType: "breakfast", Meal: &Meal{ID: 1, MealName: "A"}},
+			{DayIndex: 1, MealType: "lunch", Meal: &Meal{ID: 2, MealName: "B"}},
+			{DayIndex: 2, MealType: "dinner", Meal: &Meal{ID: 3, MealName: "C"}},
+		},
+	}
 
 	err := RemoveMealFromPlan(plan, 0, "breakfast")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-        if plan.Days[0].Meal != nil {
-                t.Errorf("expected Monday breakfast to be nil")
-        }
+	if plan.Days[0].Meal != nil {
+		t.Errorf("expected Monday breakfast to be nil")
+	}
 
 	err = RemoveMealFromPlan(plan, 1, "lunch")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-        if plan.Days[1].Meal != nil {
-                t.Errorf("expected Tuesday lunch to be nil")
-        }
+	if plan.Days[1].Meal != nil {
+		t.Errorf("expected Tuesday lunch to be nil")
+	}
 
 	err = RemoveMealFromPlan(plan, 6, "dinner")
 	if err == nil {
@@ -384,5 +384,22 @@ func TestRemoveMealFromPlan(t *testing.T) {
 	err = RemoveMealFromPlan(plan, 2, "snack")
 	if err == nil {
 		t.Fatalf("expected error for invalid meal type")
+	}
+}
+
+func TestBuildShoppingListFromPlan(t *testing.T) {
+	plan := &WeeklyMealPlan{
+		Days: []PlanDay{
+			{DayIndex: 0, MealType: "dinner", Meal: &Meal{ID: 1, Ingredients: []Ingredient{{Name: "Eggs", Quantity: 1, Unit: ""}}}},
+			{DayIndex: 1, MealType: "dinner", Meal: &Meal{ID: 2, Ingredients: []Ingredient{{Name: "Milk", Quantity: 2, Unit: "cups"}}}},
+		},
+	}
+
+	items := BuildShoppingListFromPlan(plan)
+	if len(items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(items))
+	}
+	if items[0].Ingredient == "" || items[1].Ingredient == "" {
+		t.Fatalf("shopping list items missing ingredient")
 	}
 }

@@ -55,6 +55,29 @@ func populateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, e
 	return &populatedPlan, nil
 }
 
+// generateShoppingListForPlan populates plan.ShoppingList using meal IDs found
+// in the plan. It fetches full meal details if needed and aggregates the
+// ingredients.
+func generateShoppingListForPlan(plan *models.WeeklyMealPlan) error {
+	mealIDs := make([]int, 0)
+	for _, d := range plan.Days {
+		if d.Meal != nil {
+			mealIDs = append(mealIDs, d.Meal.ID)
+		}
+	}
+	if len(mealIDs) == 0 {
+		plan.ShoppingList = nil
+		return nil
+	}
+
+	items, err := buildShoppingList(mealIDs)
+	if err != nil {
+		return err
+	}
+	plan.ShoppingList = items
+	return nil
+}
+
 // GetMealPlan retrieves a meal plan - either the last saved one or generates a new one if none exists.
 func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	// First try to get the last planned meals
@@ -80,6 +103,12 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error fetching meals with ingredients: %v", err)
 		http.Error(w, "Error fetching meal details: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+	if err := generateShoppingListForPlan(detailedPlan); err != nil {
+		log.Printf("Error generating shopping list: %v", err)
+	}
+	if err := generateShoppingListForPlan(detailedPlan); err != nil {
+		log.Printf("Error generating shopping list: %v", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -153,30 +182,32 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Retrieve the meals for the provided IDs.
-	var meals []*models.Meal
-	var err error
-	if UseDummy {
-		meals, err = dummy.GetMealsByIDs(payload.Plan)
-	} else {
-		meals, err = models.GetMealsByIDs(DB, payload.Plan)
-	}
+	items, err := buildShoppingList(payload.Plan)
 	if err != nil {
 		http.Error(w, "Error retrieving meals: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Log the retrieved meals.
-	log.Printf("Retrieved meals for shopping list: %+v", meals)
-
-	// Generate the shopping list from the retrieved meals.
-	shoppingList := models.GenerateShoppingListFromMeals(meals)
-
-	// Log the generated shopping list.
-	log.Printf("Generated shopping list: %+v", shoppingList)
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(shoppingList)
+	json.NewEncoder(w).Encode(items)
+}
+
+// buildShoppingList retrieves meals for the given IDs and returns the aggregated
+// shopping list items.
+func buildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
+	var meals []*models.Meal
+	var err error
+	if UseDummy {
+		meals, err = dummy.GetMealsByIDs(mealIDs)
+	} else {
+		meals, err = models.GetMealsByIDs(DB, mealIDs)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	ing := models.GenerateShoppingListFromMeals(meals)
+	return models.ConvertIngredientsToShoppingItems(ing), nil
 }
 
 // MealPlanICSHandler returns the current meal plan as an iCalendar file.

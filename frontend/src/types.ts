@@ -1,44 +1,50 @@
 // frontend/src/types.ts
 
 // Define valid meal types
-export type MealType = 'breakfast' | 'lunch' | 'dinner';
+export type MealType = "breakfast" | "lunch" | "dinner";
 
 // Define the overall MealPlan type (mapping day to meal description)
 export interface Ingredient {
-    Name: string;
-    Quantity: number;
-    Unit: string;
-    ID: number;
+  Name: string;
+  Quantity: number;
+  Unit: string;
+  ID: number;
 }
 
 export interface Step {
-    id: number;
-    mealId: number;
-    stepNumber: number;
-    instruction: string;
+  id: number;
+  mealId: number;
+  stepNumber: number;
+  instruction: string;
 }
 
 export interface Meal {
-    id: number;
-    mealName: string;
-    relativeEffort: number;
-    lastPlanned: string;
-    redMeat: boolean;
-    url?: string;
-    mealType: MealType;
-    ingredients: Ingredient[];
-    steps?: Step[];
+  id: number;
+  mealName: string;
+  relativeEffort: number;
+  lastPlanned: string;
+  redMeat: boolean;
+  url?: string;
+  mealType: MealType;
+  ingredients: Ingredient[];
+  steps?: Step[];
+}
+
+export interface ShoppingListItem {
+  ingredient: string;
+  quantity: string;
+  category?: string;
 }
 
 export interface MealPlan {
-    [day: string]: Meal;
+  [day: string]: Meal;
 }
 
 // Define the response type when swapping a meal
 export interface SwapMealResponse {
-    day: string;
-    new_meal_id: number;
-    meal_name: string;
+  day: string;
+  new_meal_id: number;
+  meal_name: string;
 }
 
 // If needed, you can add more types for your API endpoints (e.g., for finalize, shopping list, etc.)
