@@ -71,6 +71,33 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build complete workflow state
+	// Prepare shopping list JSON
+	var shoppingListRaw json.RawMessage
+	if session.ShoppingList != "" {
+		shoppingListRaw = json.RawMessage(session.ShoppingList)
+	} else {
+		// Derive from mealPlan
+		var plan struct {
+			Days []struct { Meal *struct { ID int `json:"id"` } `json:"meal"` } `json:"days"`
+		}
+		if err2 := json.Unmarshal(mealPlan, &plan); err2 == nil {
+			ids := []int{}
+			for _, d := range plan.Days {
+				if d.Meal != nil {
+					ids = append(ids, d.Meal.ID)
+				}
+			}
+			if items, err2 := buildShoppingList(ids); err2 == nil {
+				if b, err3 := json.Marshal(items); err3 == nil {
+					shoppingListRaw = json.RawMessage(b)
+				}
+			}
+		}
+		if shoppingListRaw == nil {
+			shoppingListRaw = json.RawMessage("[]")
+		}
+	}
+
 	state := models.WorkflowState{
 		ThreadID:     session.ThreadID,
 		WorkflowType: session.WorkflowType,
@@ -78,7 +105,7 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		Status:       session.Status,
 		Messages:     messages,
 		MealPlan:     mealPlan,
-		ShoppingList: session.ShoppingList,
+		ShoppingList: shoppingListRaw,
 		CreatedAt:    session.CreatedAt,
 		UpdatedAt:    session.UpdatedAt,
 	}

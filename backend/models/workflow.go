@@ -14,7 +14,7 @@ type WorkflowState struct {
 	Status       string          `json:"status,omitempty"`
 	Messages     []ChatMessage   `json:"messages,omitempty"`
 	MealPlan     json.RawMessage `json:"meal_plan,omitempty"`
-	ShoppingList string          `json:"shopping_list,omitempty"`
+	ShoppingList json.RawMessage `json:"shopping_list,omitempty"`
 	CreatedAt    time.Time       `json:"created_at,omitempty"`
 	UpdatedAt    time.Time       `json:"updated_at,omitempty"`
 }
