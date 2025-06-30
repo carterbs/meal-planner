@@ -7,12 +7,87 @@ import {
   Paper,
   Avatar,
   IconButton,
+  AppBar,
+  Toolbar,
+  Container,
+  CssBaseline,
+  createTheme,
+  ThemeProvider,
+  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SendIcon from "@mui/icons-material/Send";
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import MealPlanDisplay, { WeeklyMealPlan } from "./components/MealPlanDisplay";
 import { ShoppingListItem } from "./types";
 import TypingIndicator from "./components/TypingIndicator";
 import useSession from "./hooks/useSession";
+
+// Custom theme with earthy colors
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#6b8c5d',  // Sage green
+      light: '#8baa7d',
+      dark: '#4a5e40',
+      contrastText: '#ffffff',
+    },
+    secondary: {
+      main: '#8b7355',  // Warm brown
+      light: '#b39f86',
+      dark: '#5f4a2f',
+      contrastText: '#ffffff',
+    },
+    background: {
+      default: '#f8f5ed',  // Warm off-white
+      paper: '#ffffff',
+    },
+  },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h5: {
+      fontWeight: 600,
+      letterSpacing: '0.5px',
+    },
+    body1: {
+      lineHeight: 1.6,
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          borderRadius: '8px',
+          padding: '8px 16px',
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+        },
+      },
+    },
+  },
+});
 
 // Utility to format a WeeklyMealPlan for clipboard copying
 const WEEK_DAYS = [
@@ -267,284 +342,404 @@ const AgentPage: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        height: "calc(100vh - 64px)", // Adjust based on your header height
-        width: "100%",
-        overflow: "hidden",
-      }}
-    >
-      {/* Left Side - Chat (1/3) */}
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
       <Box
         sx={{
-          width: "33.33%",
           display: "flex",
           flexDirection: "column",
-          borderRight: "1px solid #e0e0e0",
-          p: 2,
-          gap: 2,
-          height: "100%",
-          overflow: "hidden",
+          height: "100vh",
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Button
-            size="small"
-            variant="contained"
-            onClick={startNewSession}
-            data-testid="start-session"
-          >
-            {session ? "New Session" : "Start"}
-          </Button>
-          {session && (
-            <Typography
-              variant="caption"
-              data-testid="session-id"
-              sx={{
-                fontFamily: "monospace",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                maxWidth: "70%",
-              }}
-            >
-              {session.threadId}
+        <AppBar position="static" elevation={0} sx={{ backgroundColor: '#9caf88' }}>
+          <Toolbar disableGutters sx={{ px: 3 }}>
+            <RestaurantMenuIcon sx={{ mr: 2 }} />
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
+              Meal Planning Assistant
             </Typography>
-          )}
-        </Box>
-        <Box
-          ref={chatRef}
-          data-testid="chat-history"
-          sx={{
-            flexGrow: 1,
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            pr: 1,
-            "&::-webkit-scrollbar": {
-              width: "6px",
-            },
-            "&::-webkit-scrollbar-track": {
-              background: "#f1f1f1",
-              borderRadius: "3px",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              background: "#888",
-              borderRadius: "3px",
-            },
-            "&::-webkit-scrollbar-thumb:hover": {
-              background: "#555",
-            },
-          }}
-        >
-          {messages.map((m, i) => (
-            <Box
-              key={i}
-              sx={{
-                display: "flex",
-                justifyContent: m.sender === "user" ? "flex-end" : "flex-start",
-              }}
-            >
-              <Paper
-                sx={{
-                  p: 1,
-                  maxWidth: "70%",
-                  backgroundColor: m.sender === "user" ? "#eef4ea" : "#fff",
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  {m.sender === "agent" && (
-                    <Avatar sx={{ width: 24, height: 24 }}>A</Avatar>
-                  )}
-                  <Typography variant="body2">{m.text}</Typography>
-                  {m.sender === "user" && (
-                    <Avatar sx={{ width: 24, height: 24 }}>U</Avatar>
-                  )}
-                </Box>
-              </Paper>
-            </Box>
-          ))}
-          {isWorking && <TypingIndicator />}
-        </Box>
-
-        {session && (
+            {session && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography
+                  variant="caption"
+                  data-testid="session-id"
+                  sx={{
+                    fontFamily: 'monospace',
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 0,
+                    color: '#2c3e22',
+                    fontSize: '0.7rem',
+                    maxWidth: '200px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    borderBottom: '1px solid rgba(44, 62, 34, 0.3)',
+                  }}
+                  title={session.threadId}
+                >
+                  Session: {session.threadId.substring(0, 8)}...
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={startNewSession}
+                  data-testid="start-session"
+                  startIcon={<ExitToAppIcon />}
+                  sx={{
+                    color: '#2c3e22',
+                    borderColor: 'rgba(44, 62, 34, 0.5)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(44, 62, 34, 0.1)',
+                      borderColor: '#2c3e22',
+                    },
+                  }}
+                >
+                  New Session
+                </Button>
+              </Box>
+            )}
+          </Toolbar>
+        </AppBar>
+        
+        <Container maxWidth="lg" sx={{ py: 3, flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box
             sx={{
               display: "flex",
-              alignItems: "center",
-              gap: 1,
-              pt: 1,
-              borderTop: "1px solid #f0f0f0",
+              flexDirection: "row",
+              flex: 1,
+              gap: 2,
+              height: 'calc(100vh - 150px)',
             }}
           >
-            <TextField
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={4}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              inputProps={{ "data-testid": "message-input" }}
-              size="small"
-              placeholder="Type your message..."
-              variant="outlined"
+            {/* Left Side - Chat (1/3) */}
+            <Paper
+              elevation={0}
               sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "20px",
-                  backgroundColor: "#f5f5f5",
-                  "&:hover": {
-                    backgroundColor: "#eeeeee",
-                  },
-                  "&.Mui-focused": {
-                    backgroundColor: "#fff",
-                    boxShadow: "0 0 0 2px rgba(25, 118, 210, 0.2)",
-                  },
-                },
-              }}
-            />
-            <IconButton
-              color="primary"
-              onClick={sendMessage}
-              disabled={!input.trim() || isWorking}
-              data-testid="send-button"
-              sx={{
-                backgroundColor: "primary.main",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "primary.dark",
-                },
-                "&:disabled": {
-                  backgroundColor: "#e0e0e0",
-                  color: "#9e9e9e",
-                },
+                width: '35%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: 2,
+                overflow: 'hidden',
+                backgroundColor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
               }}
             >
-              <SendIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        )}
-      </Box>
-
-      {/* Right Side - Meal Plan (2/3) */}
-      <Box
-        sx={{
-          flex: 1,
-          p: 3,
-          overflowY: "auto",
-          backgroundColor: "#fafafa",
-          "&::-webkit-scrollbar": {
-            width: "6px",
-          },
-          "&::-webkit-scrollbar-track": {
-            background: "#f1f1f1",
-            borderRadius: "3px",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: "#888",
-            borderRadius: "3px",
-          },
-          "&::-webkit-scrollbar-thumb:hover": {
-            background: "#555",
-          },
-        }}
-      >
-        <Box
-          sx={{
-            backgroundColor: "white",
-            borderRadius: 2,
-            p: 3,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            maxWidth: "100%",
-            overflowX: "auto",
-          }}
-        >
-          {mealPlan ? (
-            <>
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  mb: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  flexGrow: 1,
                 }}
               >
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: "#333" }}
+                <Box
+                  ref={chatRef}
+                  data-testid="chat-history"
+                  sx={{
+                    flexGrow: 1,
+                    overflowY: 'auto',
+                    p: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    '&::-webkit-scrollbar': {
+                      width: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      background: 'transparent',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: theme.palette.grey[300],
+                      borderRadius: '3px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                      background: theme.palette.grey[400],
+                    },
+                  }}
                 >
-                  Weekly Meal Plan
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={copyMealPlan}
-                    data-testid="copy-meal-plan"
+                  {messages.length === 0 && !isWorking ? (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      color: 'text.secondary',
+                      textAlign: 'center',
+                      p: 4,
+                    }}
                   >
-                    Copy Plan
-                  </Button>
-                  {shoppingList && (
-                    <Button
+                    <RestaurantMenuIcon sx={{ fontSize: 64, mb: 2, opacity: 0.3 }} />
+                    <Typography variant="h6" color="text.secondary">Welcome to Meal Planning Assistant</Typography>
+                    <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
+                      Start by telling me about your dietary preferences, and I'll help you create a personalized meal plan.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <>
+                    {messages.map((m, i) => (
+                      <Box
+                        key={i}
+                        sx={{
+                          display: "flex",
+                          justifyContent: m.sender === "user" ? "flex-end" : "flex-start",
+                          animation: 'fadeIn 0.3s ease-out',
+                          '@keyframes fadeIn': {
+                            '0%': { opacity: 0, transform: 'translateY(10px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                          },
+                        }}
+                      >
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            maxWidth: '90%',
+                            backgroundColor: m.sender === "user" ? '#6b8c5d' : '#f8f5ed',
+                            color: m.sender === "user" ? 'white' : '#2c3e22',
+                            borderRadius: m.sender === "user" ? '18px 18px 0 18px' : '18px 18px 18px 0',
+                            border: m.sender === "user" ? 'none' : '1px solid #e0d6b5',
+                            boxShadow: m.sender === "user" ? '0 1px 2px rgba(0,0,0,0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                            {m.sender === "agent" && (
+                              <Avatar 
+                                sx={{ 
+                                  width: 32, 
+                                  height: 32, 
+                                  bgcolor: '#8b7355',
+                                  color: '#fff',
+                                  fontSize: '0.875rem',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                                }}
+                              >
+                                AI
+                              </Avatar>
+                            )}
+                            <Typography variant="body2" sx={{ lineHeight: 1.5, display: 'flex', alignItems: 'center', minHeight: '32px' }}>
+                              {m.text}
+                            </Typography>
+                            {m.sender === "user" && (
+                              <Avatar 
+                                sx={{ 
+                                  width: 32, 
+                                  height: 32, 
+                                  bgcolor: 'white',
+                                  color: theme.palette.primary.main,
+                                  fontSize: '0.875rem',
+                                }}
+                              >
+                                You
+                              </Avatar>
+                            )}
+                          </Box>
+                        </Paper>
+                      </Box>
+                    ))}
+                    {isWorking && <TypingIndicator />}
+                  </>
+                )}
+                {/* Chat Input */}
+                <Box
+                  sx={{
+                    p: 2,
+                    backgroundColor: 'background.paper',
+                    borderTop: `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <TextField
                       variant="outlined"
                       size="small"
-                      onClick={copyShoppingList}
-                      data-testid="copy-shopping-list"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Type a message..."
+                      sx={{ width: "100%" }}
+                    />
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={sendMessage}
+                      data-testid="send-message"
+                      startIcon={<SendIcon />}
+                      sx={{
+                        backgroundColor: '#6b8c5d',
+                        '&:hover': {
+                          backgroundColor: '#5a7850',
+                        },
+                      }}
                     >
-                      Shopping List
+                      Send
                     </Button>
-                  )}
+                  </Box>
                 </Box>
               </Box>
-              <MealPlanDisplay plan={mealPlan} highlights={highlights} />
-              {shoppingList && shoppingList.length > 0 && (
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="h6">Shopping List</Typography>
-                  <ul>
-                    {shoppingList.map((i, idx) => (
-                      <li key={idx}>
-                        {Number(i.quantity) > 0 ? `${i.quantity} ` : ''}{i.ingredient}
-                      </li>
-                    ))}
-                  </ul>
-                </Box>
-              )}
-            </>
-          ) : (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                py: 8,
-                color: "#757575",
-              }}
-            >
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                No meal plan yet
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ textAlign: "center", maxWidth: "80%" }}
-              >
-                Start a conversation with the assistant to generate your
-                personalized meal plan.
-              </Typography>
             </Box>
-          )}
-        </Box>
+          </Paper>
+          {/* Right Side - Meal Plan */}
+          <Box
+            sx={{
+              width: "65%",
+              display: "flex",
+              flexDirection: "column",
+              borderLeft: "1px solid #e0e0e0",
+              p: 2,
+              gap: 2,
+              height: "100%",
+              overflow: "hidden",
+            }}
+          >
+              <Box
+                sx={{
+                  backgroundColor: "white",
+                  borderRadius: 2,
+                  p: 3,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  maxWidth: "100%",
+                  overflowX: "auto",
+                }}
+              >
+                {mealPlan ? (
+                  <>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 3,
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        sx={{ fontWeight: 600, color: "#333" }}
+                      >
+                        Weekly Meal Plan
+                      </Typography>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={copyMealPlan}
+                          data-testid="copy-meal-plan"
+                        >
+                          Copy Plan
+                        </Button>
+                        {shoppingList && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={copyShoppingList}
+                            data-testid="copy-shopping-list"
+                          >
+                            Shopping List
+                          </Button>
+                        )}
+                      </Box>
+                    </Box>
+                    <MealPlanDisplay plan={mealPlan} highlights={highlights} />
+                    {shoppingList && shoppingList.length > 0 && (
+                      <Accordion 
+                        elevation={0}
+                        sx={{ 
+                          mt: 2,
+                          backgroundColor: 'transparent',
+                          '&:before': {
+                            display: 'none',
+                          },
+                        }}
+                      >
+                        <AccordionSummary
+                          expandIcon={<ExpandMoreIcon />}
+                          aria-controls="shopping-list-content"
+                          id="shopping-list-header"
+                          sx={{
+                            minHeight: '48px',
+                            '& .MuiAccordionSummary-content': {
+                              margin: '8px 0',
+                            },
+                          }}
+                        >
+                          <Typography variant="h6" sx={{ color: 'text.primary' }}>Shopping List</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ pt: 0, pb: 2 }}>
+                          <Box 
+                            component="ul" 
+                            sx={{
+                              listStyle: 'none',
+                              p: 0,
+                              m: 0,
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                              gap: 1,
+                            }}
+                          >
+                            {shoppingList.map((i, idx) => (
+                              <Box 
+                                key={idx} 
+                                component="li"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  p: 1,
+                                  borderRadius: 1,
+                                  backgroundColor: 'rgba(0,0,0,0.02)',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(0,0,0,0.04)',
+                                  },
+                                }}
+                              >
+                                <Typography variant="body2">
+                                  {Number(i.quantity) > 0 ? `${i.quantity} ` : ''}{i.ingredient}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        </AccordionDetails>
+                      </Accordion>
+                    )}
+                  </>
+                ) : (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "100%",
+                      py: 8,
+                      color: "#757575",
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      No meal plan yet
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ textAlign: "center", maxWidth: "80%" }}
+                    >
+                      Start a conversation with the assistant to generate your
+                      personalized meal plan.
+                    </Typography>
+                  </Box>
+                )}
+
+              </Box>
+            </Box>
+          </Box>
+        </Container>
       </Box>
-    </Box>
+    </ThemeProvider>
   );
 };
 
