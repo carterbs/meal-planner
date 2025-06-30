@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"mealplanner/dummy"
 	"mealplanner/models"
@@ -15,6 +16,29 @@ import (
 
 // UseDummy indicates whether the server is running with in-memory data
 var UseDummy bool
+
+// attachShoppingList populates plan.ShoppingList by querying ingredients for all
+// meals referenced in the plan.
+func attachShoppingList(plan *models.WeeklyMealPlan) {
+	if UseDummy {
+		plan.ShoppingList = nil
+		return
+	}
+	mealIDs := []int{}
+	for _, d := range plan.Days {
+		if d.Meal != nil {
+			mealIDs = append(mealIDs, d.Meal.ID)
+		}
+	}
+	if len(mealIDs) == 0 {
+		plan.ShoppingList = nil
+		return
+	}
+	items, err := buildShoppingList(mealIDs)
+	if err == nil {
+		plan.ShoppingList = items
+	}
+}
 
 // GetAllMealsHandler handles GET /api/meals and returns all meals with their ingredients.
 // Supports optional query parameter "type" to filter by meal type (breakfast, lunch, dinner).
@@ -69,20 +93,20 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get meal plan from workflow checkpoints
-	mealPlanData, _, err := models.GetWorkflowCheckpoint(DB, payload.ThreadID)
+	// Fetch agent session
+	session, err := models.GetAgentSession(DB, payload.ThreadID)
 	if err != nil {
-		http.Error(w, "Workflow checkpoint not found: "+err.Error(), http.StatusNotFound)
+		http.Error(w, "Session not found: "+err.Error(), http.StatusNotFound)
 		return
 	}
-	if mealPlanData == nil {
-		http.Error(w, "No meal plan found in workflow checkpoint", http.StatusNotFound)
+	if session.MealPlan == nil {
+		http.Error(w, "No meal plan found for session", http.StatusNotFound)
 		return
 	}
 
 	// Parse meal plan JSON
 	var plan models.WeeklyMealPlan
-	if err := json.Unmarshal(mealPlanData, &plan); err != nil {
+	if err := json.Unmarshal(session.MealPlan, &plan); err != nil {
 		http.Error(w, "Failed to parse meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -93,16 +117,20 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save updated plan to workflow checkpoint
+	// Save updated plan to session
 	planBytes, err := json.Marshal(plan)
 	if err != nil {
 		http.Error(w, "Failed to serialize updated plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := models.UpdateWorkflowCheckpoint(DB, payload.ThreadID, planBytes); err != nil {
-		http.Error(w, "Failed to update workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
+	session.MealPlan = planBytes
+	session.UpdatedAt = time.Now()
+	if err := models.UpdateAgentSession(DB, session); err != nil {
+		http.Error(w, "Failed to update session: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	attachShoppingList(&plan)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(plan)

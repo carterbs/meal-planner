@@ -19,7 +19,8 @@ type PlanDay struct {
 // WeeklyMealPlan represents a week's worth of meals as a flat array of PlanDay
 // entries.  This mirrors the structure produced and consumed by the agent.
 type WeeklyMealPlan struct {
-	Days []PlanDay `json:"days"`
+	Days         []PlanDay          `json:"days"`
+	ShoppingList []ShoppingListItem `json:"shoppingList,omitempty"`
 }
 
 // GenerateWeeklyMealPlan generates a weekly plan with breakfast, lunch, and dinner.
@@ -292,4 +293,21 @@ func RemoveMealFromPlan(plan *WeeklyMealPlan, dayIndex int, mealType string) err
 		}
 	}
 	return fmt.Errorf("meal not found for dayIndex %d and mealType %s", dayIndex, mealType)
+}
+
+// BuildShoppingListFromPlan aggregates all ingredients referenced in the plan's
+// meals and returns them as ShoppingListItem entries.
+// The plan's Meal objects must include ingredient details.
+func BuildShoppingListFromPlan(plan *WeeklyMealPlan) []ShoppingListItem {
+	if plan == nil {
+		return nil
+	}
+	meals := []*Meal{}
+	for _, d := range plan.Days {
+		if d.Meal != nil {
+			meals = append(meals, d.Meal)
+		}
+	}
+	ingredients := GenerateShoppingListFromMeals(meals)
+	return ConvertIngredientsToShoppingItems(ingredients)
 }

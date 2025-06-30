@@ -32,7 +32,7 @@ test("auto resumes from localStorage", async () => {
     expect(screen.getByTestId("session-id")).toHaveTextContent("abc"),
   );
   expect(screen.getByTestId("start-session")).toBeInTheDocument();
-  expect(screen.getByTestId("start-session")).toHaveTextContent("Start New Session");
+  expect(screen.getByTestId("start-session")).toHaveTextContent("New Session");
 });
 
 test("clears completed session from storage", async () => {
@@ -101,7 +101,10 @@ test("copies shopping list to clipboard", async () => {
         threadId: "123",
         currentStep: "started",
         message: "hi",
-        raw: { meal_plan: { days: [] }, shopping_list_formatted: "- eggs\n" },
+        raw: {
+          meal_plan: { days: [] },
+          shopping_list: [{ ingredient: "eggs", quantity: "1" }],
+        },
       }),
   });
 
@@ -116,7 +119,7 @@ test("copies shopping list to clipboard", async () => {
   );
 
   fireEvent.click(screen.getByTestId("copy-shopping-list"));
-  expect(writeText).toHaveBeenCalledWith("- eggs\n");
+  expect(writeText).toHaveBeenCalledWith("- 1 eggs");
 });
 
 test("starts a new session", async () => {
