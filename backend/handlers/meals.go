@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"mealplanner/dummy"
 	"mealplanner/models"
@@ -70,20 +69,20 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch agent session
-	session, err := models.GetAgentSession(DB, payload.ThreadID)
+	// Get meal plan from workflow checkpoints
+	mealPlanData, _, err := models.GetWorkflowCheckpoint(DB, payload.ThreadID)
 	if err != nil {
-		http.Error(w, "Session not found: "+err.Error(), http.StatusNotFound)
+		http.Error(w, "Workflow checkpoint not found: "+err.Error(), http.StatusNotFound)
 		return
 	}
-	if session.MealPlan == nil {
-		http.Error(w, "No meal plan found for session", http.StatusNotFound)
+	if mealPlanData == nil {
+		http.Error(w, "No meal plan found in workflow checkpoint", http.StatusNotFound)
 		return
 	}
 
 	// Parse meal plan JSON
 	var plan models.WeeklyMealPlan
-	if err := json.Unmarshal(session.MealPlan, &plan); err != nil {
+	if err := json.Unmarshal(mealPlanData, &plan); err != nil {
 		http.Error(w, "Failed to parse meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -94,16 +93,14 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save updated plan to session
+	// Save updated plan to workflow checkpoint
 	planBytes, err := json.Marshal(plan)
 	if err != nil {
 		http.Error(w, "Failed to serialize updated plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	session.MealPlan = planBytes
-	session.UpdatedAt = time.Now()
-	if err := models.UpdateAgentSession(DB, session); err != nil {
-		http.Error(w, "Failed to update session: "+err.Error(), http.StatusInternalServerError)
+	if err := models.UpdateWorkflowCheckpoint(DB, payload.ThreadID, planBytes); err != nil {
+		http.Error(w, "Failed to update workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -298,16 +295,9 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Extract meal IDs from the plan
 	var mealIDs []int
-	days := []models.DayMealPlan{plan.Monday, plan.Tuesday, plan.Wednesday, plan.Thursday, plan.Friday, plan.Saturday, plan.Sunday}
-	for _, dayPlan := range days {
-		if dayPlan.Breakfast != nil && dayPlan.Breakfast.ID != 0 {
-			mealIDs = append(mealIDs, dayPlan.Breakfast.ID)
-		}
-		if dayPlan.Lunch != nil && dayPlan.Lunch.ID != 0 {
-			mealIDs = append(mealIDs, dayPlan.Lunch.ID)
-		}
-		if dayPlan.Dinner != nil && dayPlan.Dinner.ID != 0 {
-			mealIDs = append(mealIDs, dayPlan.Dinner.ID)
+	for _, d := range plan.Days {
+		if d.Meal != nil && d.Meal.ID != 0 {
+			mealIDs = append(mealIDs, d.Meal.ID)
 		}
 	}
 

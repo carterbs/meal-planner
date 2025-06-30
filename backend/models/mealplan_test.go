@@ -87,6 +87,17 @@ func TestPickMeal(t *testing.T) {
 	}
 }
 
+// findMeal is a helper to find a specific meal in the plan.
+// It returns the meal or nil if not found.
+func findMeal(plan *WeeklyMealPlan, dayIndex int, mealType string) *Meal {
+	for _, d := range plan.Days {
+		if d.DayIndex == dayIndex && d.MealType == mealType {
+			return d.Meal
+		}
+	}
+	return nil
+}
+
 func TestGenerateWeeklyMealPlan(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -151,42 +162,43 @@ func TestGenerateWeeklyMealPlan(t *testing.T) {
 	}
 
 	// Check that meals exist for each day (using struct fields)
-	if plan.Monday.Dinner == nil {
+	if findMeal(plan, 0, "dinner") == nil {
 		t.Errorf("expected a dinner meal for Monday, got nil")
 	}
-	if plan.Tuesday.Dinner == nil {
+	if findMeal(plan, 1, "dinner") == nil {
 		t.Errorf("expected a dinner meal for Tuesday, got nil")
 	}
-	if plan.Wednesday.Dinner == nil {
+	if findMeal(plan, 2, "dinner") == nil {
 		t.Errorf("expected a dinner meal for Wednesday, got nil")
 	}
-	if plan.Thursday.Dinner == nil {
+	if findMeal(plan, 3, "dinner") == nil {
 		t.Errorf("expected a dinner meal for Thursday, got nil")
 	}
-	if plan.Saturday.Dinner == nil {
+	if findMeal(plan, 5, "dinner") == nil {
 		t.Errorf("expected a dinner meal for Saturday, got nil")
 	}
-	if plan.Sunday.Dinner == nil {
+	if findMeal(plan, 6, "dinner") == nil {
 		t.Errorf("expected a dinner meal for Sunday, got nil")
 	}
 
 	// Verify Friday is set to "Eating out"
-	if plan.Friday.Dinner == nil || plan.Friday.Dinner.MealName != "Eating out" {
-		t.Errorf("expected Friday dinner to be 'Eating out', got %v", plan.Friday.Dinner)
+	fridayDinner := findMeal(plan, 4, "dinner")
+	if fridayDinner == nil || fridayDinner.MealName != "Eating out" {
+		t.Errorf("expected Friday dinner to be 'Eating out', got %v", fridayDinner)
 	}
 	// Verify Friday breakfast and lunch are present
-	if plan.Friday.Breakfast == nil {
+	if findMeal(plan, 4, "breakfast") == nil {
 		t.Errorf("expected a breakfast meal for Friday, got nil")
 	}
-	if plan.Friday.Lunch == nil {
+	if findMeal(plan, 4, "lunch") == nil {
 		t.Errorf("expected a lunch meal for Friday, got nil")
 	}
 
 	// Verify breakfast and lunch are set for Monday (as an example)
-	if plan.Monday.Breakfast == nil {
+	if findMeal(plan, 0, "breakfast") == nil {
 		t.Errorf("expected a breakfast meal for Monday, got nil")
 	}
-	if plan.Monday.Lunch == nil {
+	if findMeal(plan, 0, "lunch") == nil {
 		t.Errorf("expected a lunch meal for Monday, got nil")
 	}
 
@@ -258,30 +270,32 @@ func TestGetLastPlannedMeals(t *testing.T) {
 		}
 
 		// Check that meals exist for each day (using struct fields)
-		if mealPlan.Monday.Breakfast == nil {
+		if findMeal(mealPlan, 0, "breakfast") == nil {
 			t.Errorf("expected a breakfast meal for Monday, got nil")
 		}
-		if mealPlan.Monday.Lunch == nil {
+		if findMeal(mealPlan, 0, "lunch") == nil {
 			t.Errorf("expected a lunch meal for Monday, got nil")
 		}
-		if mealPlan.Monday.Dinner == nil {
+		mondayDinner := findMeal(mealPlan, 0, "dinner")
+		if mondayDinner == nil {
 			t.Errorf("expected a dinner meal for Monday, got nil")
 		}
 
 		// Check specific meal data
-		if mealPlan.Monday.Dinner != nil && (mealPlan.Monday.Dinner.ID != 1 || mealPlan.Monday.Dinner.MealName != "Monday Dinner") {
-			t.Errorf("unexpected dinner for Monday: %+v", mealPlan.Monday.Dinner)
+		if mondayDinner != nil && (mondayDinner.ID != 1 || mondayDinner.MealName != "Monday Dinner") {
+			t.Errorf("unexpected dinner for Monday: %+v", mondayDinner)
 		}
 
 		// Friday should always be "Eating out"
-		if mealPlan.Friday.Dinner == nil || mealPlan.Friday.Dinner.MealName != "Eating out" {
-			t.Errorf("expected Friday dinner to be 'Eating out', got: %+v", mealPlan.Friday.Dinner)
+		fridayDinner := findMeal(mealPlan, 4, "dinner")
+		if fridayDinner == nil || fridayDinner.MealName != "Eating out" {
+			t.Errorf("expected Friday dinner to be 'Eating out', got: %+v", fridayDinner)
 		}
 		// Friday breakfast and lunch should be present
-		if mealPlan.Friday.Breakfast == nil {
+		if findMeal(mealPlan, 4, "breakfast") == nil {
 			t.Errorf("expected a breakfast meal for Friday, got nil")
 		}
-		if mealPlan.Friday.Lunch == nil {
+		if findMeal(mealPlan, 4, "lunch") == nil {
 			t.Errorf("expected a lunch meal for Friday, got nil")
 		}
 	})
@@ -338,27 +352,29 @@ func TestGetLastPlannedMeals(t *testing.T) {
 }
 
 func TestRemoveMealFromPlan(t *testing.T) {
-	plan := &WeeklyMealPlan{
-		Monday:    DayMealPlan{Breakfast: &Meal{ID: 1, MealName: "A"}},
-		Tuesday:   DayMealPlan{Lunch: &Meal{ID: 2, MealName: "B"}},
-		Wednesday: DayMealPlan{Dinner: &Meal{ID: 3, MealName: "C"}},
-	}
+        plan := &WeeklyMealPlan{
+                Days: []PlanDay{
+                        {DayIndex: 0, MealType: "breakfast", Meal: &Meal{ID: 1, MealName: "A"}},
+                        {DayIndex: 1, MealType: "lunch", Meal: &Meal{ID: 2, MealName: "B"}},
+                        {DayIndex: 2, MealType: "dinner", Meal: &Meal{ID: 3, MealName: "C"}},
+                },
+        }
 
 	err := RemoveMealFromPlan(plan, 0, "breakfast")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if plan.Monday.Breakfast != nil {
-		t.Errorf("expected Monday breakfast to be nil")
-	}
+        if plan.Days[0].Meal != nil {
+                t.Errorf("expected Monday breakfast to be nil")
+        }
 
 	err = RemoveMealFromPlan(plan, 1, "lunch")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if plan.Tuesday.Lunch != nil {
-		t.Errorf("expected Tuesday lunch to be nil")
-	}
+        if plan.Days[1].Meal != nil {
+                t.Errorf("expected Tuesday lunch to be nil")
+        }
 
 	err = RemoveMealFromPlan(plan, 6, "dinner")
 	if err == nil {
