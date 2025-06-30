@@ -207,6 +207,59 @@ func GetWorkflowCheckpoint(db *sql.DB, threadID string) (json.RawMessage, string
 	return checkpoint.ChannelValues.MealPlan, checkpoint.ChannelValues.CurrentStep, nil
 }
 
+// UpdateWorkflowCheckpoint updates the meal plan in the latest workflow checkpoint
+func UpdateWorkflowCheckpoint(db *sql.DB, threadID string, mealPlan json.RawMessage) error {
+	// First get the current checkpoint data
+	query := `
+		SELECT checkpoint_data
+		FROM workflow_checkpoints 
+		WHERE thread_id = $1 
+		ORDER BY updated_at DESC 
+		LIMIT 1`
+
+	var currentCheckpointData json.RawMessage
+	err := db.QueryRow(query, threadID).Scan(&currentCheckpointData)
+	if err != nil {
+		return err
+	}
+
+	// Parse current checkpoint data
+	var checkpoint struct {
+		ChannelValues struct {
+			CurrentStep string          `json:"current_step"`
+			MealPlan    json.RawMessage `json:"meal_plan"`
+		} `json:"channel_values"`
+	}
+
+	if err := json.Unmarshal(currentCheckpointData, &checkpoint); err != nil {
+		return err
+	}
+
+	// Update meal plan
+	checkpoint.ChannelValues.MealPlan = mealPlan
+
+	// Serialize back
+	updatedCheckpointData, err := json.Marshal(checkpoint)
+	if err != nil {
+		return err
+	}
+
+	// Update the checkpoint
+	updateQuery := `
+		UPDATE workflow_checkpoints 
+		SET checkpoint_data = $1, updated_at = CURRENT_TIMESTAMP
+		WHERE thread_id = $2 AND checkpoint_ns = (
+			SELECT checkpoint_ns 
+			FROM workflow_checkpoints 
+			WHERE thread_id = $2 
+			ORDER BY updated_at DESC 
+			LIMIT 1
+		)`
+
+	_, err = db.Exec(updateQuery, updatedCheckpointData, threadID)
+	return err
+}
+
 // DeleteSessionData removes all data for a session (for cleanup)
 func DeleteSessionData(db *sql.DB, threadID string) error {
 	// Delete messages first (foreign key constraint)
