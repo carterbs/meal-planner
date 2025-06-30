@@ -18,7 +18,7 @@ export interface WeeklyMealPlan {
   days: DayEntry[];
 }
 
-const WEEK_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const WEEK_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 const effortIcons = ['','🔥','🔥🔥','🔥🔥🔥'];
 

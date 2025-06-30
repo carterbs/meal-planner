@@ -11,10 +11,10 @@ import (
 
 type Meal struct {
 	ID             int          `json:"id"`
-	MealName       string       `json:"mealName"`
-	RelativeEffort int          `json:"relativeEffort"`
+	MealName       string       `json:"name"`
+	RelativeEffort int          `json:"effort"`
 	LastPlanned    time.Time    `json:"lastPlanned"`
-	RedMeat        bool         `json:"redMeat"`
+	RedMeat        bool         `json:"hasRedMeat"`
 	URL            string       `json:"url"`
 	MealType       string       `json:"mealType"`
 	Ingredients    []Ingredient `json:"ingredients"`

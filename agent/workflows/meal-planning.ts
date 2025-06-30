@@ -10,6 +10,7 @@ import {
   VALIDATION_CRITERIA,
   WeeklyMealPlan,
   FeedbackEntry,
+  InternalMeal,
 } from "../shared/types";
 import { BaseWorkflow } from "../registry";
 import { debugLog } from "../cli";
@@ -374,7 +375,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const mealOptions = availableMeals
       .map(
         (m) =>
-          `${m.id}: ${m.mealName} (${m.mealType}, effort: ${m.relativeEffort}, red meat: ${m.redMeat})`,
+          `${m.id}: ${m.name} (${m.mealType}, effort: ${m.effort}, red meat: ${m.hasRedMeat})`,
       )
       .join("\n");
     const dayNames = [
@@ -566,7 +567,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           const newMeal = availableMeals.find((m) => m.id === newMealId);
           if (dayIndex >= 0 && newMeal && newMeal.mealType === mealType) {
             console.log(
-              `🤖 [MEAL-WORKFLOW] Applying feedback from the LLM: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.mealName} (ID ${newMealId}) - ${reason}`,
+              `🤖 [MEAL-WORKFLOW] Applying feedback from the LLM: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.name} (ID ${newMealId}) - ${reason}`,
             );
             updatedPlan.days = updatedPlan.days.map((planDay) => {
               if (
@@ -575,12 +576,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               ) {
                 return {
                   ...planDay,
-                  meal: {
-                    id: newMeal.id,
-                    name: newMeal.mealName,
-                    effort: newMeal.relativeEffort,
-                    hasRedMeat: newMeal.redMeat,
-                  },
+                  meal: this.transformMeal(newMeal),
                 };
               }
               return planDay;
@@ -888,9 +884,25 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return issues;
   }
 
+  private transformMeal(backendMeal: any): InternalMeal {
+    // Since backend now returns correct field names, just pass through
+    return {
+      id: backendMeal.id,
+      name: backendMeal.name,
+      effort: backendMeal.effort,
+      hasRedMeat: backendMeal.hasRedMeat,
+    };
+  }
+
   private transformBackendPlan(backendPlan: any): WeeklyMealPlan {
     if (Array.isArray(backendPlan?.days)) {
-      return backendPlan as WeeklyMealPlan;
+      // If it's already in the correct format, transform any meals that might be in backend format
+      const plan = backendPlan as WeeklyMealPlan;
+      plan.days = plan.days.map(day => ({
+        ...day,
+        meal: day.meal ? this.transformMeal(day.meal) : null
+      }));
+      return plan;
     }
 
     const days = [];
@@ -916,12 +928,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             days.push({
               dayIndex: i,
               mealType: mealType.toLowerCase(),
-              meal: {
-                id: meal.id,
-                name: meal.mealName,
-                effort: meal.relativeEffort,
-                hasRedMeat: meal.redMeat,
-              },
+              meal: this.transformMeal(meal),
             });
           } else {
             days.push({
@@ -963,7 +970,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const mealOptions = availableMeals
       .map(
         (m) =>
-          `${m.id}: ${m.mealName} (${m.mealType}, effort: ${m.relativeEffort}, red meat: ${m.redMeat})`,
+          `${m.id}: ${m.name} (${m.mealType}, effort: ${m.effort}, red meat: ${m.hasRedMeat})`,
       )
       .join("\n");
 
@@ -1041,7 +1048,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
           if (dayIndex >= 0 && newMeal && newMeal.mealType === mealType) {
             console.log(
-              `🤖 [MEAL-WORKFLOW] Applying optimization: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.mealName} (ID ${newMealId}) - ${reason}`,
+              `🤖 [MEAL-WORKFLOW] Applying optimization: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.name} (ID ${newMealId}) - ${reason}`,
             );
 
             optimizedPlan.days = optimizedPlan.days.map((planDay) => {
@@ -1051,12 +1058,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               ) {
                 return {
                   ...planDay,
-                  meal: {
-                    id: newMeal.id,
-                    name: newMeal.mealName,
-                    effort: newMeal.relativeEffort,
-                    hasRedMeat: newMeal.redMeat,
-                  },
+                  meal: this.transformMeal(newMeal),
                 };
               }
               return planDay;
