@@ -1,0 +1,51 @@
+#!/bin/bash
+set -x
+
+echo "--- Killing existing backend processes ---"
+lsof -ti:8080 | xargs -r kill -9
+
+echo "--- Starting backend ---"
+echo "Starting backend..."
+pushd backend > /dev/null
+go run . &
+popd > /dev/null
+
+BACKEND_PID=$!
+trap "kill $BACKEND_PID" EXIT
+
+echo "--- Waiting for backend to be ready ---"
+for i in {1..30}; do
+  curl -fs http://localhost:8080/api/health >/dev/null && break
+  sleep 1
+done
+
+echo "--- Creating session ---"
+SESSION_JSON=$(curl -s -X POST -H 'Content-Type: application/json' \
+  -d '{"workflowType":"MEAL_PLANNING","participants":["user"]}' \
+  http://localhost:8080/api/agent/start)
+THREAD_ID=$(echo "$SESSION_JSON" | jq -r '.threadId')
+
+echo "--- Sending message to remove Friday ---"
+curl -s -X POST -H 'Content-Type: application/json' \
+  -d "{\"threadId\":\"$THREAD_ID\",\"message\":\"remove friday's meals\",\"from\":\"user\"}" \
+  http://localhost:8080/api/agent/message >/dev/null
+
+echo "--- Fetching state and checking results ---"
+STATE=$(curl -s http://localhost:8080/api/workflows/$THREAD_ID)
+
+echo "=== FRIDAY MEALS (dayIndex 4) ==="
+echo "$STATE" | jq '.meal_plan.days[] | select(.dayIndex == 4)' | jq -s '.'
+
+echo "=== SATURDAY MEALS (dayIndex 5) ==="
+echo "$STATE" | jq '.meal_plan.days[] | select(.dayIndex == 5)' | jq -s '.'
+
+echo "=== DAY NAMES MAPPING ==="
+echo "0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday"
+
+# Check if Friday (dayIndex 4) meals are removed
+FRIDAY_MEALS_REMOVED=$(echo "$STATE" | jq '[.meal_plan.days[] | select(.dayIndex == 4 and .meal != null)] | length == 0')
+echo "Friday meals removed: $FRIDAY_MEALS_REMOVED"
+
+# Check if Saturday (dayIndex 5) meals are removed  
+SATURDAY_MEALS_REMOVED=$(echo "$STATE" | jq '[.meal_plan.days[] | select(.dayIndex == 5 and .meal != null)] | length == 0')
+echo "Saturday meals removed: $SATURDAY_MEALS_REMOVED"
