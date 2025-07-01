@@ -122,9 +122,11 @@ func main() {
 	// Set database connection in handlers (might be nil if connection failed)
 	handlers.DB = connection
 	
-	// Initialize workflow service if we have a database connection
+	// Initialize service container if we have a database connection
 	if connection != nil && !*dummyFlag {
-		handlers.WorkflowService = services.NewWorkflowService(connection)
+		handlers.Services = services.NewServiceContainer(connection)
+		// Maintain backward compatibility for existing workflow service usage
+		handlers.WorkflowService = handlers.Services.WorkflowService
 	}
 	
 	if *dummyFlag {
@@ -260,8 +262,10 @@ func main() {
 		handlers.DB = connection
 		handlers.UseDummy = false
 		
-		// Initialize workflow service with new connection
-		handlers.WorkflowService = services.NewWorkflowService(connection)
+		// Initialize service container with new connection
+		handlers.Services = services.NewServiceContainer(connection)
+		// Maintain backward compatibility for existing workflow service usage
+		handlers.WorkflowService = handlers.Services.WorkflowService
 
 		// Ensure migrations are up to date
 		if err := models.Migrate(connection); err != nil {

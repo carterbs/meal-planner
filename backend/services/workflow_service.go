@@ -4,18 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"mealplanner/models"
 )
 
-// WorkflowService provides high-level operations for workflow state management
-type WorkflowService interface {
-	GetMealPlan(threadID string) (*models.WeeklyMealPlan, error)
-	UpdateMealPlan(threadID string, plan *models.WeeklyMealPlan) error
-	GetWorkflowState(threadID string) (*models.InternalWorkflowState, error)
-	UpdateWorkflowState(threadID string, state *models.InternalWorkflowState) error
-}
 
 type workflowService struct {
 	db *sql.DB
@@ -102,5 +96,29 @@ func (s *workflowService) UpdateWorkflowState(threadID string, state *models.Int
 		return fmt.Errorf("failed to update checkpoint: %w", err)
 	}
 	
+	return nil
+}
+
+// GetWorkflowCheckpoint retrieves the raw checkpoint data for a thread
+func (s *workflowService) GetWorkflowCheckpoint(threadID string) ([]byte, string, error) {
+	log.Printf("Getting workflow checkpoint for thread ID: %s", threadID)
+	data, ns, err := models.GetWorkflowCheckpoint(s.db, threadID)
+	if err != nil {
+		log.Printf("Failed to get workflow checkpoint for thread ID %s: %v", threadID, err)
+		return nil, "", fmt.Errorf("failed to get workflow checkpoint for thread ID %s: %w", threadID, err)
+	}
+	log.Printf("Successfully retrieved workflow checkpoint for thread ID %s", threadID)
+	return data, ns, nil
+}
+
+// UpdateWorkflowCheckpoint updates the raw checkpoint data for a thread
+func (s *workflowService) UpdateWorkflowCheckpoint(threadID string, data []byte) error {
+	log.Printf("Updating workflow checkpoint for thread ID: %s", threadID)
+	err := models.UpdateWorkflowCheckpoint(s.db, threadID, data)
+	if err != nil {
+		log.Printf("Failed to update workflow checkpoint for thread ID %s: %v", threadID, err)
+		return fmt.Errorf("failed to update workflow checkpoint for thread ID %s: %w", threadID, err)
+	}
+	log.Printf("Successfully updated workflow checkpoint for thread ID %s", threadID)
 	return nil
 }
