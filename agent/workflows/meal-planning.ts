@@ -885,12 +885,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private transformMeal(backendMeal: any): InternalMeal {
-    // Since backend now returns correct field names, just pass through
     return {
       id: backendMeal.id,
-      name: backendMeal.name,
-      effort: backendMeal.effort,
-      hasRedMeat: backendMeal.hasRedMeat,
+      name: backendMeal.mealName ?? backendMeal.name,
+      effort: backendMeal.relativeEffort ?? backendMeal.effort,
+      hasRedMeat: backendMeal.redMeat ?? backendMeal.hasRedMeat,
     };
   }
 

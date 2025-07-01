@@ -43,6 +43,7 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
       // Setup: plan has Sunday breakfast with id 1, availableMeals has id 2
       const plan = { days: [ { dayIndex: 6, mealType: 'breakfast', meal: { id: 1, name: 'old', effort: 1, hasRedMeat: false } } ] };
       const availableMeals = [{ id: 2, name: 'x', mealType: 'breakfast', effort: 1, hasRedMeat: false }];
+
       workflow.client.callTool.mockResolvedValue({ content: [{ text: JSON.stringify(availableMeals) }] });
       workflow.llm.invoke.mockResolvedValue({ content: JSON.stringify({
         replacements: [
