@@ -50,7 +50,11 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if UseDummy {
 		meals, err = dummy.GetAllMeals()
+	} else if Services != nil && Services.MealService != nil {
+		// Use service layer for real database operations
+		meals, err = Services.MealService.GetAllMeals()
 	} else {
+		// Fallback to direct DB access for backward compatibility
 		meals, err = models.GetAllMeals(DB)
 	}
 	if err != nil {
@@ -144,8 +148,13 @@ func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
 	var newMeal *models.Meal
 	var err error
 	if UseDummy {
+		// Note: dummy implementation doesn't support meal type filtering
 		newMeal, err = models.SwapMeal(payload.MealID, payload.MealType, DB)
+	} else if Services != nil && Services.MealService != nil {
+		// Use service layer for real database operations
+		newMeal, err = Services.MealService.SwapMeal(payload.MealID, payload.MealType)
 	} else {
+		// Fallback to direct DB access for backward compatibility
 		newMeal, err = models.SwapMeal(payload.MealID, payload.MealType, DB)
 	}
 	if err != nil {

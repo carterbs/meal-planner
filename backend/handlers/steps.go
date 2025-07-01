@@ -31,7 +31,14 @@ func GetStepsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	steps, err := models.GetStepsForMeal(DB, mealID)
+	var steps []models.Step
+	if Services != nil && Services.RecipeStepService != nil {
+		// Use service layer for database operations
+		steps, err = Services.RecipeStepService.GetStepsForMeal(mealID)
+	} else {
+		// Fallback to direct DB access for backward compatibility
+		steps, err = models.GetStepsForMeal(DB, mealID)
+	}
 	if err != nil {
 		http.Error(w, "Error retrieving steps: "+err.Error(), http.StatusInternalServerError)
 		return
