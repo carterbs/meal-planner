@@ -1,38 +1,11 @@
-// Define valid meal types
-export type MealType = 'breakfast' | 'lunch' | 'dinner';
-
-// Define the overall MealPlan type (mapping day to meal description)
-export interface Ingredient {
-  Name: string;
-  Quantity: number;
-  Unit: string;
-  ID: number;
-}
-
-export interface Step {
-  id: number;
-  mealId: number;
-  stepNumber: number;
-  instruction: string;
-}
-
-export interface Meal {
-  id: number;
-  mealName: string;
-  relativeEffort: number;
-  lastPlanned: string;
-  redMeat: boolean;
-  url?: string;
-  mealType: MealType;
-  ingredients: Ingredient[];
-  steps?: Step[];
-}
-
-export interface ShoppingListItem {
-  ingredient: string;
-  quantity: string;
-  category?: string;
-}
+// Re-export common types from the shared package
+export type {
+  MealType,
+  Ingredient,
+  Step,
+  Meal,
+  ShoppingListItem,
+} from '@meal-planner/shared/dist/types';
 
 export interface MealPlan {
   [day: string]: Meal;

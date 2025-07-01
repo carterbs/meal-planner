@@ -1,3 +1,5 @@
+import type { ShoppingListItem } from '@meal-planner/shared/dist/types';
+
 // Types for MCP tool calls and responses
 export type MCPToolResult = {
   content: Array<{
@@ -8,32 +10,11 @@ export type MCPToolResult = {
 };
 
 // Shopping List Types
-export interface ShoppingListItem {
-  ingredient: string;
-  quantity: string;
-  category?: string; // Optional category for grouping items
-}
-
 export interface ShoppingListRequest {
   plan: number[]; // Array of meal IDs
 }
 
 export interface ShoppingListResponse extends Array<ShoppingListItem> {}
-
-// Meal Plan Types
-export interface WeeklyMealPlan {
-  id?: number;
-  days: Array<{
-    dayIndex: number;
-    mealType: string;
-    meal: {
-      id: number;
-      name: string;
-      effort: number;
-      hasRedMeat: boolean;
-    };
-  }>;
-}
 
 // MCP Tool Names
 export type MCPToolName =
