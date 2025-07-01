@@ -3,7 +3,7 @@
     "outDir": "dist",
     "declaration": true,
     "declarationDir": "dist",
-    "module": "esnext",
+    "module": "commonjs",
     "target": "es6",
     "moduleResolution": "node",
     "esModuleInterop": true,

@@ -13,11 +13,9 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
   describe('analyzeFeedbackNode', () => {
     it('parses satisfied JSON response', async () => {
       workflow.nanoLlm = {
-        invoke: jest
-          .fn()
-          .mockResolvedValue({
-            content: '```json\n{"satisfied":true,"reasoning":"Great"}\n```',
-          }),
+        invoke: jest.fn().mockResolvedValue({
+          content: '```json\n{"satisfied":true,"reasoning":"Great"}\n```',
+        }),
       };
       const feedback = [
         { message: 'looks good', timestamp: new Date().toISOString() },
@@ -63,11 +61,9 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
       };
 
       workflow.client = {
-        callTool: jest
-          .fn()
-          .mockResolvedValue({
-            content: [{ text: JSON.stringify(availableMeals) }],
-          }),
+        callTool: jest.fn().mockResolvedValue({
+          content: [{ text: JSON.stringify(availableMeals) }],
+        }),
       } as any;
       workflow.llm = {
         invoke: jest.fn().mockResolvedValue(JSON.stringify(newPlan)),
