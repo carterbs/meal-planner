@@ -1,7 +1,7 @@
-import { ChatOpenAI } from "@langchain/openai";
-import { FakeChatModel } from "@langchain/core/utils/testing";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { ChatOpenAI } from '@langchain/openai';
+import { FakeChatModel } from '@langchain/core/utils/testing';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
 import {
   MealPlanningState,
@@ -11,21 +11,26 @@ import {
   WeeklyMealPlan,
   FeedbackEntry,
   InternalMeal,
-} from "../shared/types";
-import { BaseWorkflow } from "../registry";
-import { debugLog } from "../cli";
-import { PostgresCheckpointSaver } from "../shared/checkpointer";
-import { FeedbackHandler } from "./feedback-handler";
+} from '../shared/types';
+import { BaseWorkflow } from '../registry';
+import { debugLog } from '../cli';
+import { PostgresCheckpointSaver } from '../shared/checkpointer';
+import { FeedbackHandler } from './feedback-handler';
 import {
   ShoppingListResponse,
   ShoppingListItem,
   MCPToolResult as MCPToolResultType,
-} from "../shared/mcp-types";
+} from '../shared/mcp-types';
 import { DAYS_OF_THE_WEEK } from '../../shared/ts/days';
-import { getAnalyzeFeedbackPrompt, getUpdateMealPlanPrompt, getOptimizeMealPlanPrompt, getPantryStaplesCategorizationPrompt } from './meal-planning-prompts';
+import {
+  getAnalyzeFeedbackPrompt,
+  getUpdateMealPlanPrompt,
+  getOptimizeMealPlanPrompt,
+  getPantryStaplesCategorizationPrompt,
+} from './meal-planning-prompts';
 const DEBUG_LOGS = false;
 interface MCPTextContent {
-  type: "text";
+  type: 'text';
   text: string;
 }
 
@@ -40,8 +45,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
    */
   private extractJsonFromResponse(response: string): string {
     return response
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
       .trim();
   }
   readonly type = WorkflowType.MEAL_PLANNING;
@@ -56,8 +61,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     this.checkpointer = checkpointer;
     this.feedbackHandler = new FeedbackHandler(checkpointer);
     this.client = new Client({
-      name: "meal-planner-workflow",
-      version: "1.0.0",
+      name: 'meal-planner-workflow',
+      version: '1.0.0',
     });
 
     // Create workflow graph
@@ -65,38 +70,38 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   async initialize(): Promise<void> {
-    const isCodex = process.argv.includes("--codex");
-    const isJsonMode = process.argv.includes("--json");
+    const isCodex = process.argv.includes('--codex');
+    const isJsonMode = process.argv.includes('--json');
 
     // Connect to MCP server
     // In JSON mode (API calls), assume MCP server is already running and connect to it directly
     // Otherwise, start the full server stack
     const transport = new StdioClientTransport({
-      command: "node",
+      command: 'node',
       args: isJsonMode
         ? [
-            "/Users/bradcarter/Documents/Dev/meal-planner/backend/mcp/dist/index.js",
+            '/Users/bradcarter/Documents/Dev/meal-planner/backend/mcp/dist/index.js',
           ]
         : [
-            "/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js",
-            isCodex ? "--codex" : "",
+            '/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js',
+            isCodex ? '--codex' : '',
           ],
     });
 
     await this.client.connect(transport);
 
     // Initialize LLM
-    const isTestMode = process.env.NODE_ENV === "test";
+    const isTestMode = process.env.NODE_ENV === 'test';
     this.llm = isCodex
       ? new FakeChatModel({})
       : new ChatOpenAI({
           temperature: 0,
-          modelName: isTestMode ? "gpt-4.1-nano" : "gpt-4.1",
+          modelName: isTestMode ? 'gpt-4.1-nano' : 'gpt-4.1',
         });
     // Initialize nano LLM for feedback analysis
     this.nanoLlm = new ChatOpenAI({
       temperature: 0,
-      modelName: "gpt-4.1-nano",
+      modelName: 'gpt-4.1-nano',
     });
 
     console.log(`🍽️ [MEAL-WORKFLOW] Initialized meal planning workflow`);
@@ -125,7 +130,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           state = {
             threadId: config.configurable.threadId,
             workflow_type: WorkflowType.MEAL_PLANNING,
-            participants: ["brad"],
+            participants: ['brad'],
             created_at: new Date(),
             updated_at: new Date(),
             current_step: MealPlanningStep.INITIATE,
@@ -144,7 +149,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await this.checkpointer.put(
             config,
             { channel_values: state, next: [], step: 0 },
-            { source: "workflow", step: 0, writes: {} },
+            { source: 'workflow', step: 0, writes: {} },
           );
           return state;
         } else {
@@ -167,7 +172,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             );
 
             // 2. Analyze feedback to determine user satisfaction
-            let analyzeResult = { satisfied: false, reasoning: "" };
+            let analyzeResult = { satisfied: false, reasoning: '' };
             if (newFeedback.length > 0) {
               analyzeResult = await this.analyzeFeedbackNode(newFeedback);
             }
@@ -202,7 +207,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               await this.checkpointer.put(
                 config,
                 { channel_values: state, next: [], step: 0 },
-                { source: "workflow", step: 0, writes: {} },
+                { source: 'workflow', step: 0, writes: {} },
               );
               return state;
             }
@@ -248,7 +253,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     try {
       // Generate meal plan using MCP tool
       const planResult = await this.client.callTool({
-        name: "generateMealPlan",
+        name: 'generateMealPlan',
         arguments: {},
       });
 
@@ -278,7 +283,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     );
 
     if (!state.meal_plan) {
-      throw new Error("No meal plan to optimize");
+      throw new Error('No meal plan to optimize');
     }
 
     const issues = this.validatePlan(state.meal_plan);
@@ -305,7 +310,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   ): Promise<Partial<MealPlanningState>> {
     console.log(`🍽️ [MEAL-WORKFLOW] Applying user feedback via LLM`);
     if (!state.meal_plan) {
-      throw new Error("No meal plan to apply feedback to");
+      throw new Error('No meal plan to apply feedback to');
     }
     // Gather ALL feedback from the entire session or use provided feedback_to_apply
     const feedbackEntries =
@@ -332,23 +337,23 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
     const prompt = getAnalyzeFeedbackPrompt(latestFeedback.message);
     const result = await this.nanoLlm.invoke([
-      { role: "user", content: prompt },
+      { role: 'user', content: prompt },
     ]);
     let analysis = {
       satisfied: false,
-      reasoning: "Could not parse LLM response.",
+      reasoning: 'Could not parse LLM response.',
     };
     try {
       analysis = JSON.parse(
         this.extractJsonFromResponse(
-          typeof result.content === "string"
+          typeof result.content === 'string'
             ? result.content
             : JSON.stringify(result.content),
         ),
       );
     } catch (err) {
       console.error(
-        "❌ [MEAL-WORKFLOW] Failed to parse feedback analysis response:",
+        '❌ [MEAL-WORKFLOW] Failed to parse feedback analysis response:',
         err,
       );
     }
@@ -366,7 +371,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     );
     // Fetch available meals
     const mealsResp = await this.client.callTool({
-      name: "getMeals",
+      name: 'getMeals',
       arguments: {},
     });
     const availableMeals: any[] = JSON.parse(
@@ -379,7 +384,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         (m) =>
           `${m.id}: ${m.name} (${m.mealType}, effort: ${m.effort}, red meat: ${m.hasRedMeat})`,
       )
-      .join("\n");
+      .join('\n');
     const dayNames = DAYS_OF_THE_WEEK;
     const planDescription = plan.days
       .filter((day) => day.meal)
@@ -387,20 +392,20 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         (day) =>
           `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal!.name} (ID: ${day.meal!.id}, effort: ${day.meal!.effort}, red meat: ${day.meal!.hasRedMeat})`,
       )
-      .join("\n");
+      .join('\n');
 
     const feedbackText =
       feedback.length > 0
-        ? `ALL USER FEEDBACK FROM THIS SESSION (in chronological order):\n${feedback.map((msg, idx) => `${idx + 1}. ${msg}`).join("\n")}\n`
-        : "";
+        ? `ALL USER FEEDBACK FROM THIS SESSION (in chronological order):\n${feedback.map((msg, idx) => `${idx + 1}. ${msg}`).join('\n')}\n`
+        : '';
     const prompt = getUpdateMealPlanPrompt(
       feedbackText,
       planDescription,
       mealOptions,
     );
-    const result = await this.llm.invoke([{ role: "user", content: prompt }]);
+    const result = await this.llm.invoke([{ role: 'user', content: prompt }]);
     const llmResponse =
-      typeof result.content === "string"
+      typeof result.content === 'string'
         ? result.content
         : JSON.stringify(result.content);
 
@@ -418,7 +423,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       // Extract user message from LLM response
       if (
         recommendations.userMessage &&
-        typeof recommendations.userMessage === "string"
+        typeof recommendations.userMessage === 'string'
       ) {
         userMessage = recommendations.userMessage;
       }
@@ -437,7 +442,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             );
             try {
               const removalResult = (await this.client.callTool({
-                name: "removeMeal",
+                name: 'removeMeal',
                 arguments: { threadId, dayIndex, mealType },
               })) as MCPToolResult;
               console.log(
@@ -464,9 +469,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               if (removalResult.isError) {
                 const errorContent =
                   Array.isArray(removalResult.content) &&
-                  removalResult.content[0]?.type === "text"
+                  removalResult.content[0]?.type === 'text'
                     ? removalResult.content[0].text
-                    : "Unknown MCP error";
+                    : 'Unknown MCP error';
                 throw new Error(`MCP removeMeal failed: ${errorContent}`);
               }
 
@@ -499,15 +504,15 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               console.error(`❌ [MEAL-WORKFLOW] MCP tool call failed:`);
               console.error(
                 `Error message:`,
-                (mcpError as any)?.message || "No message",
+                (mcpError as any)?.message || 'No message',
               );
               console.error(
                 `Error stack:`,
-                (mcpError as any)?.stack || "No stack",
+                (mcpError as any)?.stack || 'No stack',
               );
               console.error(
                 `Error name:`,
-                (mcpError as any)?.name || "No name",
+                (mcpError as any)?.name || 'No name',
               );
               console.error(`Error type:`, typeof mcpError);
               console.error(
@@ -554,7 +559,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       }
     } catch (error) {
       console.error(
-        "❌ [MEAL-WORKFLOW] Failed to parse LLM feedback response:",
+        '❌ [MEAL-WORKFLOW] Failed to parse LLM feedback response:',
         error,
       );
       userMessage =
@@ -572,7 +577,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     console.log(`🍽️ [MEAL-WORKFLOW] Presenting meal plan to participants`);
 
     if (!state.meal_plan) {
-      throw new Error("No meal plan to present");
+      throw new Error('No meal plan to present');
     }
 
     // Format plan for presentation
@@ -593,13 +598,13 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     console.log(`🍽️ [MEAL-WORKFLOW] Finalizing meal plan`);
 
     if (!state.meal_plan) {
-      throw new Error("No meal plan to finalize");
+      throw new Error('No meal plan to finalize');
     }
 
     // Save the meal plan using MCP tool
     try {
       await this.client.callTool({
-        name: "finalizeMealPlan",
+        name: 'finalizeMealPlan',
         arguments: { mealPlan: state.meal_plan },
       });
 
@@ -622,7 +627,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     console.log(`🍽️ [MEAL-WORKFLOW] Generating shopping list`);
 
     if (!state.meal_plan) {
-      throw new Error("No meal plan for shopping list generation");
+      throw new Error('No meal plan for shopping list generation');
     }
 
     try {
@@ -639,31 +644,31 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
       // Call the MCP tool directly with proper typing
       const result = (await this.client.callTool({
-        name: "generateShoppingList",
+        name: 'generateShoppingList',
         arguments: { plan: mealIds },
       })) as MCPToolResultType;
 
       if (result.isError) {
         const errorContent =
-          Array.isArray(result.content) && result.content[0]?.type === "text"
+          Array.isArray(result.content) && result.content[0]?.type === 'text'
             ? result.content[0].text
-            : "Unknown error";
+            : 'Unknown error';
         throw new Error(`MCP tool error: ${errorContent}`);
       }
 
       // Parse the response with proper type checking
       const responseText =
-        Array.isArray(result.content) && result.content[0]?.type === "text"
+        Array.isArray(result.content) && result.content[0]?.type === 'text'
           ? result.content[0].text
-          : "[]";
+          : '[]';
 
       if (DEBUG_LOGS) {
-        console.log("🛒 [DEBUG] Raw shopping list response:", responseText);
+        console.log('🛒 [DEBUG] Raw shopping list response:', responseText);
       }
       const shoppingList = JSON.parse(responseText) as ShoppingListResponse;
       if (DEBUG_LOGS) {
         console.log(
-          "🛒 [DEBUG] Parsed shopping list:",
+          '🛒 [DEBUG] Parsed shopping list:',
           JSON.stringify(shoppingList, null, 2),
         );
       }
@@ -673,39 +678,39 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       );
 
       // Display the shopping list in a nice format
-      console.log("\n🛍️  SHOPPING LIST 🛒");
-      console.log("===================");
+      console.log('\n🛍️  SHOPPING LIST 🛒');
+      console.log('===================');
 
       if (!Array.isArray(shoppingList) || shoppingList.length === 0) {
-        console.log("\nNo items in shopping list");
+        console.log('\nNo items in shopping list');
         return {
           current_step: MealPlanningStep.COMPLETE,
           shopping_list: [],
           updated_at: new Date(),
         };
       }
-      let shoppingListFormatted = "";
+      let shoppingListFormatted = '';
       try {
         // Group items by category if available
         const groupedItems = shoppingList.reduce(
           (acc: Record<string, ShoppingListItem[]>, item) => {
-            if (!item || typeof item !== "object") {
-              console.warn("Skipping invalid shopping list item:", item);
+            if (!item || typeof item !== 'object') {
+              console.warn('Skipping invalid shopping list item:', item);
               return acc;
             }
 
             const category =
-              item.category && typeof item.category === "string"
+              item.category && typeof item.category === 'string'
                 ? item.category
-                : "Other";
+                : 'Other';
             const ingredient =
-              item.ingredient && typeof item.ingredient === "string"
+              item.ingredient && typeof item.ingredient === 'string'
                 ? item.ingredient
-                : "Unknown ingredient";
+                : 'Unknown ingredient';
             const quantity =
-              item.quantity && typeof item.quantity === "string"
+              item.quantity && typeof item.quantity === 'string'
                 ? item.quantity
-                : "";
+                : '';
 
             if (!acc[category]) {
               acc[category] = [];
@@ -723,47 +728,48 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         );
 
         // Format shopping list as a bulleted string (grouped by category)
-        let bulletedList = "";
+        let bulletedList = '';
         for (const [category, items] of Object.entries(groupedItems)) {
           bulletedList += `\n${category.toUpperCase()}:\n`.trimStart();
           (items as ShoppingListItem[]).forEach((item) => {
-            bulletedList += `- ${[item.quantity, item.ingredient].join(" ").trimStart()}\n`;
+            bulletedList += `- ${[item.quantity, item.ingredient].join(' ').trimStart()}\n`;
           });
         }
         bulletedList = bulletedList.trim();
 
         // Pantry staples prompt
-        const PANTRY_STAPLES_CATEGORIZATION_PROMPT = getPantryStaplesCategorizationPrompt(bulletedList);
+        const PANTRY_STAPLES_CATEGORIZATION_PROMPT =
+          getPantryStaplesCategorizationPrompt(bulletedList);
 
         try {
           console.log(
             `\n🛒 [LLM FORMATTED SHOPPING LIST]: Asking LLM to categorize our list: ${bulletedList}...\n`,
           );
           const llmResult = await this.llm.invoke([
-            { role: "user", content: PANTRY_STAPLES_CATEGORIZATION_PROMPT },
+            { role: 'user', content: PANTRY_STAPLES_CATEGORIZATION_PROMPT },
           ]);
           shoppingListFormatted =
-            typeof llmResult.content === "string"
+            typeof llmResult.content === 'string'
               ? llmResult.content
               : JSON.stringify(llmResult.content);
           console.log(
-            "\n🛒 [LLM FORMATTED SHOPPING LIST]:\n",
+            '\n🛒 [LLM FORMATTED SHOPPING LIST]:\n',
             shoppingListFormatted,
           );
         } catch (llmError) {
           console.error(
-            "❌ Error calling LLM for pantry staples formatting:",
+            '❌ Error calling LLM for pantry staples formatting:',
             llmError,
           );
           shoppingListFormatted = bulletedList; // fallback
         }
 
-        console.log("\nHappy shopping! 🛒");
-        console.log("===================\n");
+        console.log('\nHappy shopping! 🛒');
+        console.log('===================\n');
       } catch (error) {
-        console.error("❌ Error formatting shopping list:", error);
+        console.error('❌ Error formatting shopping list:', error);
         // Fallback: display raw data if formatting fails
-        console.log("\nRaw shopping list data:");
+        console.log('\nRaw shopping list data:');
         console.log(JSON.stringify(shoppingList, null, 2));
       }
 
@@ -785,7 +791,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         _error:
           error instanceof Error
             ? error.message
-            : "Failed to generate shopping list",
+            : 'Failed to generate shopping list',
         updated_at: new Date(),
       };
     }
@@ -846,7 +852,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       (id, index) => mealIds.indexOf(id) !== index,
     );
     if (duplicates.length > 0) {
-      issues.push(`Duplicate meals found: ${duplicates.join(", ")}`);
+      issues.push(`Duplicate meals found: ${duplicates.join(', ')}`);
     }
 
     return issues;
@@ -865,16 +871,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     if (Array.isArray(backendPlan?.days)) {
       // If it's already in the correct format, transform any meals that might be in backend format
       const plan = backendPlan as WeeklyMealPlan;
-      plan.days = plan.days.map(day => ({
+      plan.days = plan.days.map((day) => ({
         ...day,
-        meal: day.meal ? this.transformMeal(day.meal) : null
+        meal: day.meal ? this.transformMeal(day.meal) : null,
       }));
       return plan;
     }
 
     const days = [];
     const dayNames = DAYS_OF_THE_WEEK;
-    const mealTypes = ["Breakfast", "Lunch", "Dinner"] as const;
+    const mealTypes = ['Breakfast', 'Lunch', 'Dinner'] as const;
 
     for (let i = 0; i < dayNames.length; i++) {
       const dayName = dayNames[i];
@@ -918,7 +924,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   ): Promise<WeeklyMealPlan> {
     // Fetch available meals
     const mealsResp = await this.client.callTool({
-      name: "getMeals",
+      name: 'getMeals',
       arguments: {},
     });
     const availableMeals: any[] = JSON.parse(
@@ -931,7 +937,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         (m) =>
           `${m.id}: ${m.name} (${m.mealType}, effort: ${m.effort}, red meat: ${m.hasRedMeat})`,
       )
-      .join("\n");
+      .join('\n');
 
     const dayNames = DAYS_OF_THE_WEEK;
     const planDescription = plan.days
@@ -940,13 +946,17 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         (day) =>
           `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal!.name} (ID: ${day.meal!.id}, effort: ${day.meal!.effort}, red meat: ${day.meal!.hasRedMeat})`,
       )
-      .join("\n");
+      .join('\n');
 
-    const prompt = getOptimizeMealPlanPrompt(issues, planDescription, mealOptions);
+    const prompt = getOptimizeMealPlanPrompt(
+      issues,
+      planDescription,
+      mealOptions,
+    );
 
-    const result = await this.llm.invoke([{ role: "user", content: prompt }]);
+    const result = await this.llm.invoke([{ role: 'user', content: prompt }]);
     const llmResponse =
-      typeof result.content === "string"
+      typeof result.content === 'string'
         ? result.content
         : JSON.stringify(result.content);
 
@@ -988,7 +998,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
     } catch (error) {
-      console.error("❌ [MEAL-WORKFLOW] Failed to parse LLM response:", error);
+      console.error('❌ [MEAL-WORKFLOW] Failed to parse LLM response:', error);
     }
 
     return optimizedPlan;
@@ -998,8 +1008,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const dayNames = DAYS_OF_THE_WEEK;
     const lines: string[] = [];
 
-    lines.push("📅 Weekly Meal Plan:");
-    lines.push("=".repeat(50));
+    lines.push('📅 Weekly Meal Plan:');
+    lines.push('='.repeat(50));
 
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
       const dayMeals = plan.days.filter((d) => d.dayIndex === dayIndex);
@@ -1010,8 +1020,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             lines.push(`  ${dayMeal.mealType}: (no meal)`);
             continue;
           }
-          const effort = "🔥".repeat(dayMeal.meal.effort);
-          const redMeat = dayMeal.meal.hasRedMeat ? "🥩" : "";
+          const effort = '🔥'.repeat(dayMeal.meal.effort);
+          const redMeat = dayMeal.meal.hasRedMeat ? '🥩' : '';
           lines.push(
             `  ${dayMeal.mealType}: ${dayMeal.meal.name} ${effort} ${redMeat}`,
           );
@@ -1019,6 +1029,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       }
     }
 
-    return lines.join("\n");
+    return lines.join('\n');
   }
 }

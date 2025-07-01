@@ -33,31 +33,51 @@ describe('MealPlanningWorkflow logic', () => {
 
     it('flags too many consecutive high-effort meals', () => {
       const { maxConsecutiveHighEffort } = VALIDATION_CRITERIA;
-      const days = Array(maxConsecutiveHighEffort + 2).fill(null).map((_, i) => ({
-        dayIndex: i,
-        mealType: 'dinner',
-        meal: { id: i, name: 'm', effort: 4, hasRedMeat: false }
-      }));
+      const days = Array(maxConsecutiveHighEffort + 2)
+        .fill(null)
+        .map((_, i) => ({
+          dayIndex: i,
+          mealType: 'dinner',
+          meal: { id: i, name: 'm', effort: 4, hasRedMeat: false },
+        }));
       const issues = workflow.validatePlan(makePlan(days));
-      expect(issues).toContain(`Too many consecutive high-effort meals (day ${maxConsecutiveHighEffort + 1})`);
+      expect(issues).toContain(
+        `Too many consecutive high-effort meals (day ${maxConsecutiveHighEffort + 1})`,
+      );
     });
 
     it('flags too many red meat meals', () => {
       const { maxRedMeatPerWeek } = VALIDATION_CRITERIA;
-      const days = Array(maxRedMeatPerWeek + 1).fill(null).map((_, i) => ({
-        dayIndex: i,
-        mealType: 'lunch',
-        meal: { id: i, name: 'm', effort: 1, hasRedMeat: true }
-      }));
+      const days = Array(maxRedMeatPerWeek + 1)
+        .fill(null)
+        .map((_, i) => ({
+          dayIndex: i,
+          mealType: 'lunch',
+          meal: { id: i, name: 'm', effort: 1, hasRedMeat: true },
+        }));
       const issues = workflow.validatePlan(makePlan(days));
-      expect(issues).toContain(`Too many red meat meals: ${maxRedMeatPerWeek + 1} (max ${maxRedMeatPerWeek})`);
+      expect(issues).toContain(
+        `Too many red meat meals: ${maxRedMeatPerWeek + 1} (max ${maxRedMeatPerWeek})`,
+      );
     });
 
     it('flags duplicate meals', () => {
       const days = [
-        { dayIndex: 0, mealType: 'breakfast', meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false } },
-        { dayIndex: 1, mealType: 'lunch', meal: { id: 2, name: 'b', effort: 1, hasRedMeat: false } },
-        { dayIndex: 2, mealType: 'dinner', meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false } },
+        {
+          dayIndex: 0,
+          mealType: 'breakfast',
+          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false },
+        },
+        {
+          dayIndex: 1,
+          mealType: 'lunch',
+          meal: { id: 2, name: 'b', effort: 1, hasRedMeat: false },
+        },
+        {
+          dayIndex: 2,
+          mealType: 'dinner',
+          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false },
+        },
       ];
       const issues = workflow.validatePlan(makePlan(days));
       expect(issues).toContain('Duplicate meals found: 1');
@@ -65,9 +85,21 @@ describe('MealPlanningWorkflow logic', () => {
 
     it('returns no issues for valid plan', () => {
       const days = [
-        { dayIndex: 0, mealType: 'breakfast', meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false } },
-        { dayIndex: 1, mealType: 'lunch', meal: { id: 2, name: 'b', effort: 2, hasRedMeat: false } },
-        { dayIndex: 2, mealType: 'dinner', meal: { id: 3, name: 'c', effort: 1, hasRedMeat: false } },
+        {
+          dayIndex: 0,
+          mealType: 'breakfast',
+          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false },
+        },
+        {
+          dayIndex: 1,
+          mealType: 'lunch',
+          meal: { id: 2, name: 'b', effort: 2, hasRedMeat: false },
+        },
+        {
+          dayIndex: 2,
+          mealType: 'dinner',
+          meal: { id: 3, name: 'c', effort: 1, hasRedMeat: false },
+        },
       ];
       expect(workflow.validatePlan(makePlan(days))).toEqual([]);
     });
@@ -76,24 +108,56 @@ describe('MealPlanningWorkflow logic', () => {
   describe('transformBackendPlan', () => {
     it('maps backend JSON to WeeklyMealPlan days array including empty slots', () => {
       const backendPlan = {
-        Sunday: { Breakfast: { id: 10, name: 'eggs', effort: 2, hasRedMeat: false } },
-        Monday: { Dinner: { id: 20, name: 'steak', effort: 5, hasRedMeat: true } },
+        Sunday: {
+          Breakfast: { id: 10, name: 'eggs', effort: 2, hasRedMeat: false },
+        },
+        Monday: {
+          Dinner: { id: 20, name: 'steak', effort: 5, hasRedMeat: true },
+        },
       };
       const plan: WeeklyMealPlan = workflow.transformBackendPlan(backendPlan);
-      const sundayBreakfast = plan.days.find(d => d.dayIndex === 6 && d.mealType === 'breakfast');
-      expect(sundayBreakfast?.meal).toEqual({ id: 10, name: 'eggs', effort: 2, hasRedMeat: false });
-      const mondayDinner = plan.days.find(d => d.dayIndex === 0 && d.mealType === 'dinner');
-      expect(mondayDinner?.meal).toEqual({ id: 20, name: 'steak', effort: 5, hasRedMeat: true });
-      const emptyCount = plan.days.filter(d => d.meal === null).length;
+      const sundayBreakfast = plan.days.find(
+        (d) => d.dayIndex === 6 && d.mealType === 'breakfast',
+      );
+      expect(sundayBreakfast?.meal).toEqual({
+        id: 10,
+        name: 'eggs',
+        effort: 2,
+        hasRedMeat: false,
+      });
+      const mondayDinner = plan.days.find(
+        (d) => d.dayIndex === 0 && d.mealType === 'dinner',
+      );
+      expect(mondayDinner?.meal).toEqual({
+        id: 20,
+        name: 'steak',
+        effort: 5,
+        hasRedMeat: true,
+      });
+      const emptyCount = plan.days.filter((d) => d.meal === null).length;
       expect(emptyCount).toBe(21 - 2);
     });
 
     it('creates empty entries for days without data', () => {
-      const backendPlan = { Wednesday: {}, Friday: { Lunch: { id: 5, name: 'salad', effort: 1, hasRedMeat: false } } };
+      const backendPlan = {
+        Wednesday: {},
+        Friday: {
+          Lunch: { id: 5, name: 'salad', effort: 1, hasRedMeat: false },
+        },
+      };
       const plan: WeeklyMealPlan = workflow.transformBackendPlan(backendPlan);
-      const fridayLunch = plan.days.find(d => d.dayIndex === 4 && d.mealType === 'lunch');
-      expect(fridayLunch?.meal).toEqual({ id: 5, name: 'salad', effort: 1, hasRedMeat: false });
-      const wednesdayDinner = plan.days.find(d => d.dayIndex === 2 && d.mealType === 'dinner');
+      const fridayLunch = plan.days.find(
+        (d) => d.dayIndex === 4 && d.mealType === 'lunch',
+      );
+      expect(fridayLunch?.meal).toEqual({
+        id: 5,
+        name: 'salad',
+        effort: 1,
+        hasRedMeat: false,
+      });
+      const wednesdayDinner = plan.days.find(
+        (d) => d.dayIndex === 2 && d.mealType === 'dinner',
+      );
       expect(wednesdayDinner?.meal).toBeNull();
     });
   });

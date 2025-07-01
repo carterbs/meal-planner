@@ -1,4 +1,8 @@
-import { FeedbackEntry, MealPlanningState, WorkflowType } from '../shared/types';
+import {
+  FeedbackEntry,
+  MealPlanningState,
+  WorkflowType,
+} from '../shared/types';
 import { PostgresCheckpointSaver } from '../shared/checkpointer';
 
 export interface FeedbackInput {
@@ -24,13 +28,15 @@ export class FeedbackHandler {
       const config = {
         configurable: {
           threadId: input.threadId,
-          workflow_type: WorkflowType.MEAL_PLANNING
-        }
+          workflow_type: WorkflowType.MEAL_PLANNING,
+        },
       };
 
       const tuple = await this.checkpointer.getTuple(config);
       if (!tuple) {
-        console.error(`❌ [FEEDBACK] No workflow found for thread ${input.threadId}`);
+        console.error(
+          `❌ [FEEDBACK] No workflow found for thread ${input.threadId}`,
+        );
         return false;
       }
 
@@ -42,13 +48,13 @@ export class FeedbackHandler {
         from: input.from,
         message: input.message,
         timestamp: new Date(),
-        meal_plan_version: input.mealPlanVersion ?? state.iteration_count
+        meal_plan_version: input.mealPlanVersion ?? state.iteration_count,
       };
 
       // Add feedback to state
       const updatedState: Partial<MealPlanningState> = {
         feedback_history: [...(state.feedback_history || []), feedback],
-        updated_at: new Date()
+        updated_at: new Date(),
       };
 
       // Update checkpoint
@@ -56,19 +62,21 @@ export class FeedbackHandler {
         ...checkpoint,
         channel_values: {
           ...state,
-          ...updatedState
-        }
+          ...updatedState,
+        },
       };
 
       const updatedMetadata = {
         ...metadata,
         step: metadata.step + 1,
-        writes: { feedback_added: feedback }
+        writes: { feedback_added: feedback },
       };
 
       await this.checkpointer.put(config, updatedCheckpoint, updatedMetadata);
 
-      console.log(`💬 [FEEDBACK] Added feedback from ${input.from} to workflow ${input.threadId}`);
+      console.log(
+        `💬 [FEEDBACK] Added feedback from ${input.from} to workflow ${input.threadId}`,
+      );
       return true;
     } catch (error) {
       console.error(`❌ [FEEDBACK] Error adding feedback:`, error);
@@ -84,8 +92,8 @@ export class FeedbackHandler {
       const config = {
         configurable: {
           threadId: threadId,
-          workflow_type: WorkflowType.MEAL_PLANNING
-        }
+          workflow_type: WorkflowType.MEAL_PLANNING,
+        },
       };
 
       const tuple = await this.checkpointer.getTuple(config);
@@ -95,7 +103,7 @@ export class FeedbackHandler {
 
       const [checkpoint] = tuple;
       const state = checkpoint.channel_values as MealPlanningState;
-      
+
       return state.feedback_history || [];
     } catch (error) {
       console.error(`❌ [FEEDBACK] Error getting feedback:`, error);
@@ -106,9 +114,12 @@ export class FeedbackHandler {
   /**
    * Get feedback for a specific meal plan version
    */
-  async getFeedbackForVersion(threadId: string, version: number): Promise<FeedbackEntry[]> {
+  async getFeedbackForVersion(
+    threadId: string,
+    version: number,
+  ): Promise<FeedbackEntry[]> {
     const allFeedback = await this.getFeedback(threadId);
-    return allFeedback.filter(f => f.meal_plan_version === version);
+    return allFeedback.filter((f) => f.meal_plan_version === version);
   }
 
   /**
@@ -119,8 +130,8 @@ export class FeedbackHandler {
       const config = {
         configurable: {
           threadId: threadId,
-          workflow_type: WorkflowType.MEAL_PLANNING
-        }
+          workflow_type: WorkflowType.MEAL_PLANNING,
+        },
       };
 
       const tuple = await this.checkpointer.getTuple(config);
@@ -130,7 +141,7 @@ export class FeedbackHandler {
 
       const [checkpoint] = tuple;
       const state = checkpoint.channel_values as MealPlanningState;
-      
+
       return state.current_step === 'await_feedback';
     } catch (error) {
       console.error(`❌ [FEEDBACK] Error checking feedback status:`, error);
@@ -141,48 +152,79 @@ export class FeedbackHandler {
   /**
    * Process feedback and determine required actions
    */
-  async processFeedback(threadId: string, version: number): Promise<{
+  async processFeedback(
+    threadId: string,
+    version: number,
+  ): Promise<{
     requiresChanges: boolean;
     suggestions: string[];
     sentiment: 'positive' | 'negative' | 'neutral';
   }> {
     const feedback = await this.getFeedbackForVersion(threadId, version);
-    
+
     if (feedback.length === 0) {
       return {
         requiresChanges: false,
         suggestions: [],
-        sentiment: 'neutral'
+        sentiment: 'neutral',
       };
     }
 
     // Simple feedback analysis
-    const messages = feedback.map(f => f.message.toLowerCase());
-    const negativeKeywords = ['don\'t like', 'change', 'different', 'no', 'not', 'replace', 'swap'];
-    const positiveKeywords = ['good', 'great', 'like', 'love', 'perfect', 'yes', 'approve'];
+    const messages = feedback.map((f) => f.message.toLowerCase());
+    const negativeKeywords = [
+      "don't like",
+      'change',
+      'different',
+      'no',
+      'not',
+      'replace',
+      'swap',
+    ];
+    const positiveKeywords = [
+      'good',
+      'great',
+      'like',
+      'love',
+      'perfect',
+      'yes',
+      'approve',
+    ];
 
     let negativeCount = 0;
     let positiveCount = 0;
     const suggestions: string[] = [];
 
     for (const message of messages) {
-      negativeCount += negativeKeywords.filter(keyword => message.includes(keyword)).length;
-      positiveCount += positiveKeywords.filter(keyword => message.includes(keyword)).length;
+      negativeCount += negativeKeywords.filter((keyword) =>
+        message.includes(keyword),
+      ).length;
+      positiveCount += positiveKeywords.filter((keyword) =>
+        message.includes(keyword),
+      ).length;
 
       // Extract specific change requests
-      if (message.includes('change') || message.includes('replace') || message.includes('swap')) {
+      if (
+        message.includes('change') ||
+        message.includes('replace') ||
+        message.includes('swap')
+      ) {
         suggestions.push(`Consider addressing: "${message}"`);
       }
     }
 
     const requiresChanges = negativeCount > positiveCount;
-    const sentiment = negativeCount > positiveCount ? 'negative' : 
-                     positiveCount > negativeCount ? 'positive' : 'neutral';
+    const sentiment =
+      negativeCount > positiveCount
+        ? 'negative'
+        : positiveCount > negativeCount
+          ? 'positive'
+          : 'neutral';
 
     return {
       requiresChanges,
       suggestions,
-      sentiment
+      sentiment,
     };
   }
 
@@ -191,16 +233,18 @@ export class FeedbackHandler {
    */
   formatFeedback(feedback: FeedbackEntry[]): string {
     if (feedback.length === 0) {
-      return "No feedback received yet.";
+      return 'No feedback received yet.';
     }
 
     const lines: string[] = [];
-    lines.push("💬 Feedback History:");
-    lines.push("=" .repeat(40));
+    lines.push('💬 Feedback History:');
+    lines.push('='.repeat(40));
 
     for (const entry of feedback) {
       const timestamp = entry.timestamp.toLocaleString();
-      lines.push(`\n👤 ${entry.from} (v${entry.meal_plan_version}) - ${timestamp}:`);
+      lines.push(
+        `\n👤 ${entry.from} (v${entry.meal_plan_version}) - ${timestamp}:`,
+      );
       lines.push(`   ${entry.message}`);
     }
 

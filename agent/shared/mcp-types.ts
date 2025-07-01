@@ -11,7 +11,7 @@ export type MCPToolResult = {
 export interface ShoppingListItem {
   ingredient: string;
   quantity: string;
-  category?: string;  // Optional category for grouping items
+  category?: string; // Optional category for grouping items
 }
 
 export interface ShoppingListRequest {
@@ -36,7 +36,7 @@ export interface WeeklyMealPlan {
 }
 
 // MCP Tool Names
-export type MCPToolName = 
+export type MCPToolName =
   | 'generateMealPlan'
   | 'finalizeMealPlan'
   | 'generateShoppingList'
@@ -47,7 +47,7 @@ export type MCPToolName =
 export async function callMCPTool<TArgs, TResponse>(
   client: any, // TODO: Replace with proper MCP client type
   toolName: MCPToolName,
-  args: TArgs
+  args: TArgs,
 ): Promise<TResponse> {
   const result = await client.callTool({
     name: toolName,
@@ -55,7 +55,9 @@ export async function callMCPTool<TArgs, TResponse>(
   });
 
   if (result.isError) {
-    throw new Error(`MCP tool error: ${result.content[0]?.text || 'Unknown error'}`);
+    throw new Error(
+      `MCP tool error: ${result.content[0]?.text || 'Unknown error'}`,
+    );
   }
 
   try {

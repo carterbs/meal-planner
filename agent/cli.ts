@@ -6,7 +6,8 @@ import { join } from 'path';
 import { writeFileSync, appendFileSync } from 'fs';
 
 // In CommonJS builds __dirname is available globally. Fallback to process.cwd() when it isn't (e.g. during tests).
-const CURRENT_DIR = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+const CURRENT_DIR =
+  typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
 const envPath = join(CURRENT_DIR, '..', '.env');
 const debugLogPath = join(CURRENT_DIR, '..', 'cli-debug.log');
@@ -65,7 +66,6 @@ function extractValidJSON(buffer: string[]): string | null {
   return null;
 }
 
-
 // Real-time JSON detection helper – attempts to emit a clean JSON line to the original stdout
 function tryOutputJSON(str: string): boolean {
   const trimmed = str.trim();
@@ -100,11 +100,15 @@ function flushFilteredOutput() {
   } else {
     const errorMsg = 'No valid JSON response found in output';
     // Send entire captured output to stderr for diagnostics
-    originalStderrWrite.call(process.stderr, errorMsg + '\n' + outputBuffer.join(''));
+    originalStderrWrite.call(
+      process.stderr,
+      errorMsg + '\n' + outputBuffer.join(''),
+    );
     debugLog(`Error: ${errorMsg}`);
-    debugLog(`Full output buffer logged to stderr (${outputBuffer.length} chunks)`);
+    debugLog(
+      `Full output buffer logged to stderr (${outputBuffer.length} chunks)`,
+    );
   }
-
 }
 
 // Setup output capture in JSON mode
@@ -112,9 +116,9 @@ if (process.argv.includes('--json')) {
   // Preserve original write functions
   originalStdoutWrite = process.stdout.write.bind(process.stdout);
   originalStderrWrite = process.stderr.write.bind(process.stderr);
-  
+
   // Override stdout to capture all output
-  process.stdout.write = function(chunk: any): boolean {
+  process.stdout.write = function (chunk: any): boolean {
     const str = chunk.toString();
     outputBuffer.push(str);
     debugLog(`[STDOUT] ${str.replace(/\n/g, '\\n')}`);
@@ -122,9 +126,9 @@ if (process.argv.includes('--json')) {
     tryOutputJSON(str);
     return true;
   } as any;
-  
+
   // Override stderr to capture errors
-  process.stderr.write = function(chunk: any): boolean {
+  process.stderr.write = function (chunk: any): boolean {
     const str = chunk.toString();
     errorBuffer.push(str);
     debugLog(`[STDERR] ${str.replace(/\n/g, '\\n')}`);
@@ -132,7 +136,7 @@ if (process.argv.includes('--json')) {
     originalStderrWrite.call(process.stderr, str);
     return true;
   } as any;
-  
+
   // Override console methods to also use capture
   console.log = (message: any) => {
     const str = String(message) + '\n';
@@ -145,7 +149,7 @@ if (process.argv.includes('--json')) {
   console.warn = debugLog;
   console.info = debugLog;
   console.debug = debugLog;
-  
+
   // Setup cleanup on process exit
   process.on('exit', flushFilteredOutput);
   process.on('SIGINT', () => {
@@ -172,12 +176,17 @@ const result = dotenvConfig({ path: envPath });
 // Debug environment loading (only in non-JSON mode)
 if (!process.argv.includes('--json')) {
   console.log(`📧 [ENV] Loading from: ${envPath}`);
-  console.log(`📧 [ENV] Result:`, result.error ? `Error: ${result.error}` : 'Success');
+  console.log(
+    `📧 [ENV] Result:`,
+    result.error ? `Error: ${result.error}` : 'Success',
+  );
   console.log(`📧 [ENV] OPENAI_API_KEY present:`, !!process.env.OPENAI_API_KEY);
 }
 
 debugLog(`Environment loaded from: ${envPath}`);
-debugLog(`Environment result: ${result.error ? `Error: ${result.error}` : 'Success'}`);
+debugLog(
+  `Environment result: ${result.error ? `Error: ${result.error}` : 'Success'}`,
+);
 debugLog(`OPENAI_API_KEY present: ${!!process.env.OPENAI_API_KEY}`);
 
 // Now import everything else
@@ -198,9 +207,9 @@ const config: LangGraphAgentConfig = {
     port: parseInt(process.env.DB_PORT || '5432'),
     database: process.env.DB_NAME || 'meal_planner_dev',
     user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'password'
+    password: process.env.DB_PASSWORD || 'password',
   },
-  defaultParticipants: ['brad', 'shannon']
+  defaultParticipants: ['brad', 'shannon'],
 };
 
 let agent: LangGraphAgent;
@@ -220,13 +229,16 @@ function validateThreadId(threadId: string): boolean {
 }
 
 // Helper function to output results in JSON or console format
-function outputResult(result: {
-  success: boolean;
-  message?: string;
-  threadId?: string;
-  currentStep?: string;
-  raw?: any;
-}, isJsonMode: boolean = false) {
+function outputResult(
+  result: {
+    success: boolean;
+    message?: string;
+    threadId?: string;
+    currentStep?: string;
+    raw?: any;
+  },
+  isJsonMode: boolean = false,
+) {
   if (isJsonMode) {
     // In JSON mode, this will be captured and filtered
     console.log(JSON.stringify(result));
@@ -269,16 +281,16 @@ function formatWorkflowList(workflows: any[]): string {
   }
 
   const headers = ['Thread ID', 'Type', 'Status', 'Created', 'Participants'];
-  const maxWidths = headers.map(h => h.length);
-  
+  const maxWidths = headers.map((h) => h.length);
+
   // Calculate column widths
-  workflows.forEach(w => {
+  workflows.forEach((w) => {
     const row = [
       w.threadId || 'N/A',
       w.workflowType || 'N/A',
       w.currentStep || 'N/A',
       w.createdAt ? new Date(w.createdAt).toLocaleDateString() : 'N/A',
-      (w.participants || []).join(', ') || 'N/A'
+      (w.participants || []).join(', ') || 'N/A',
     ];
     row.forEach((cell, i) => {
       maxWidths[i] = Math.max(maxWidths[i], cell.length);
@@ -286,26 +298,29 @@ function formatWorkflowList(workflows: any[]): string {
   });
 
   // Build table
-  const separator = '┼' + maxWidths.map(w => '─'.repeat(w + 2)).join('┼') + '┼';
-  const headerRow = '│ ' + headers.map((h, i) => h.padEnd(maxWidths[i])).join(' │ ') + ' │';
-  
-  let result = '┌' + maxWidths.map(w => '─'.repeat(w + 2)).join('┬') + '┐\n';
+  const separator =
+    '┼' + maxWidths.map((w) => '─'.repeat(w + 2)).join('┼') + '┼';
+  const headerRow =
+    '│ ' + headers.map((h, i) => h.padEnd(maxWidths[i])).join(' │ ') + ' │';
+
+  let result = '┌' + maxWidths.map((w) => '─'.repeat(w + 2)).join('┬') + '┐\n';
   result += headerRow + '\n';
   result += separator + '\n';
-  
-  workflows.forEach(w => {
+
+  workflows.forEach((w) => {
     const row = [
       (w.threadId || 'N/A').substring(0, 8) + '...',
       w.workflowType || 'N/A',
       w.currentStep || 'N/A',
       w.createdAt ? new Date(w.createdAt).toLocaleDateString() : 'N/A',
-      (w.participants || []).join(', ') || 'N/A'
+      (w.participants || []).join(', ') || 'N/A',
     ];
-    const rowStr = '│ ' + row.map((cell, i) => cell.padEnd(maxWidths[i])).join(' │ ') + ' │';
+    const rowStr =
+      '│ ' + row.map((cell, i) => cell.padEnd(maxWidths[i])).join(' │ ') + ' │';
     result += rowStr + '\n';
   });
-  
-  result += '└' + maxWidths.map(w => '─'.repeat(w + 2)).join('┴') + '┘';
+
+  result += '└' + maxWidths.map((w) => '─'.repeat(w + 2)).join('┴') + '┘';
   return result;
 }
 
@@ -313,20 +328,27 @@ function formatWorkflowList(workflows: any[]): string {
 function hasRecentFeedbackInResult(result: any): boolean {
   try {
     // Check both top level and raw for feedback_history
-    const feedbackHistory = result.feedback_history || result.raw?.feedback_history;
-    if (!feedbackHistory || !Array.isArray(feedbackHistory) || feedbackHistory.length === 0) {
+    const feedbackHistory =
+      result.feedback_history || result.raw?.feedback_history;
+    if (
+      !feedbackHistory ||
+      !Array.isArray(feedbackHistory) ||
+      feedbackHistory.length === 0
+    ) {
       debugLog(`[FEEDBACK_CHECK] No feedback history in result`);
       return false;
     }
-    
+
     // Check if there's feedback within the last 30 seconds
     const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
     const hasRecent = feedbackHistory.some((feedback: any) => {
       const feedbackTime = new Date(feedback.timestamp);
       return feedbackTime > thirtySecondsAgo;
     });
-    
-    debugLog(`[FEEDBACK_CHECK] Found ${feedbackHistory.length} feedback entries, ${hasRecent ? 'has' : 'no'} recent feedback`);
+
+    debugLog(
+      `[FEEDBACK_CHECK] Found ${feedbackHistory.length} feedback entries, ${hasRecent ? 'has' : 'no'} recent feedback`,
+    );
     return hasRecent;
   } catch (error) {
     debugLog(`[FEEDBACK_CHECK] Error checking for recent feedback: ${error}`);
@@ -349,26 +371,41 @@ const planCommand = program
 planCommand
   .command('start')
   .description('Start a new meal planning session')
-  .option('-p, --participants <participants>', 'Comma-separated list of participants', 'brad,shannon')
+  .option(
+    '-p, --participants <participants>',
+    'Comma-separated list of participants',
+    'brad,shannon',
+  )
   .action(async (options) => {
     const isJsonMode = program.getOptionValue('json');
-    
+
     try {
       const agent = await initializeAgent();
-      const participants = options.participants.split(',').map((p: string) => p.trim());
-      
+      const participants = options.participants
+        .split(',')
+        .map((p: string) => p.trim());
+
       if (!isJsonMode) {
-        console.log(`🚀 Starting new meal planning session with participants: ${participants.join(', ')}`);
+        console.log(
+          `🚀 Starting new meal planning session with participants: ${participants.join(', ')}`,
+        );
       }
-      
-      const threadId = await agent.startWorkflow(WorkflowType.MEAL_PLANNING, participants);
-      process.stderr.write(`[DEBUG CLI plan start] Raw threadId from agent.startWorkflow: ${threadId}\n`);
+
+      const threadId = await agent.startWorkflow(
+        WorkflowType.MEAL_PLANNING,
+        participants,
+      );
+      process.stderr.write(
+        `[DEBUG CLI plan start] Raw threadId from agent.startWorkflow: ${threadId}\n`,
+      );
 
       let initialState = undefined;
       try {
         initialState = await agent.getWorkflowState(threadId);
       } catch (e) {
-        process.stderr.write(`[DEBUG CLI plan start] Failed to fetch initial workflow state: ${e}\n`);
+        process.stderr.write(
+          `[DEBUG CLI plan start] Failed to fetch initial workflow state: ${e}\n`,
+        );
       }
 
       const resultToOutput = {
@@ -376,13 +413,17 @@ planCommand
         message: 'Meal planning session started',
         threadId: threadId,
         current_step: 'started',
-        initialState
+        initialState,
       };
-      console.error(`[DEBUG CLI plan start] Object being passed to outputResult: ${JSON.stringify(resultToOutput)}`);
+      console.error(
+        `[DEBUG CLI plan start] Object being passed to outputResult: ${JSON.stringify(resultToOutput)}`,
+      );
       outputResult(resultToOutput, isJsonMode);
-      
+
       if (!isJsonMode) {
-        console.log(`   Use: meal-agent plan feedback "${threadId}" "your feedback here"`);
+        console.log(
+          `   Use: meal-agent plan feedback "${threadId}" "your feedback here"`,
+        );
         console.log(`   Or:  meal-agent resume ${threadId}`);
       } else {
         // In JSON mode, clean up and exit to prevent hanging
@@ -399,9 +440,11 @@ planCommand
         flushFilteredOutput();
         process.exit(0);
       }
-      
     } catch (error) {
-      outputError(`Error starting meal planning session: ${error instanceof Error ? error.message : error}`, isJsonMode);
+      outputError(
+        `Error starting meal planning session: ${error instanceof Error ? error.message : error}`,
+        isJsonMode,
+      );
     }
   });
 
@@ -413,33 +456,42 @@ planCommand
   .option('-f, --from <participant>', 'Who is providing the feedback', 'brad')
   .action(async (threadId, message, options) => {
     const isJsonMode = program.getOptionValue('json');
-    
+
     try {
       if (!validateThreadId(threadId)) {
-        outputError('Invalid thread ID format. Expected UUID format.', isJsonMode);
+        outputError(
+          'Invalid thread ID format. Expected UUID format.',
+          isJsonMode,
+        );
         return;
       }
 
       const agent = await initializeAgent();
-      
+
       // Check if workflow is awaiting feedback
       const isAwaiting = await agent.isAwaitingFeedback(threadId);
       if (!isAwaiting) {
-        outputError('This workflow is not currently awaiting feedback.', isJsonMode);
+        outputError(
+          'This workflow is not currently awaiting feedback.',
+          isJsonMode,
+        );
         return;
       }
 
       const success = await agent.addFeedback({
         threadId,
         from: options.from,
-        message
+        message,
       });
 
       if (success) {
-        outputResult({
-          success: true,
-          message: `Feedback added successfully from ${options.from}`
-        }, isJsonMode);
+        outputResult(
+          {
+            success: true,
+            message: `Feedback added successfully from ${options.from}`,
+          },
+          isJsonMode,
+        );
 
         if (isJsonMode) {
           debugLog('Shutting down agent and cleaning up connections...');
@@ -455,14 +507,21 @@ planCommand
           flushFilteredOutput();
           process.exit(0);
         } else {
-          console.log(`   Use: meal-agent resume ${threadId} to continue the workflow`);
+          console.log(
+            `   Use: meal-agent resume ${threadId} to continue the workflow`,
+          );
         }
       } else {
-        outputError('Failed to add feedback. Check thread ID and try again.', isJsonMode);
+        outputError(
+          'Failed to add feedback. Check thread ID and try again.',
+          isJsonMode,
+        );
       }
-      
     } catch (error) {
-      outputError(`Error adding feedback: ${error instanceof Error ? error.message : error}`, isJsonMode);
+      outputError(
+        `Error adding feedback: ${error instanceof Error ? error.message : error}`,
+        isJsonMode,
+      );
     }
   });
 
@@ -478,14 +537,16 @@ planCommand
       }
 
       const agent = await initializeAgent();
-      
+
       console.log('🔄 Finalizing meal plan and generating shopping list...');
-      
-      const result = await agent.resumeWorkflow(threadId, { action: 'finalize' });
-      
+
+      const result = await agent.resumeWorkflow(threadId, {
+        action: 'finalize',
+      });
+
       if (result.success) {
         console.log('✅ Meal plan finalized successfully!');
-        
+
         // Get and display the final meal plan
         try {
           const state = await agent.getWorkflowState(threadId);
@@ -493,7 +554,7 @@ planCommand
             const { text, html } = formatMealPlan(state.meal_plan);
             console.log('\n📋 Final Meal Plan:');
             console.log(text);
-            
+
             // Copy HTML to clipboard
             try {
               spawnSync('pbcopy', ['-Prefer', 'html'], { input: html });
@@ -502,11 +563,13 @@ planCommand
               console.error('⚠️ Failed to copy HTML to clipboard:', err);
             }
           }
-          
+
           if (state.shopping_list && state.shopping_list.length > 0) {
             console.log('\n🛒 Shopping List:');
-            state.shopping_list.forEach(item => {
-              console.log(`  • ${item.quantity} ${item.ingredient}${item.category ? ` (${item.category})` : ''}`);
+            state.shopping_list.forEach((item) => {
+              console.log(
+                `  • ${item.quantity} ${item.ingredient}${item.category ? ` (${item.category})` : ''}`,
+              );
             });
           }
         } catch (stateError) {
@@ -516,9 +579,11 @@ planCommand
         console.error('❌ Failed to finalize meal plan:', result.message);
         process.exit(1);
       }
-      
     } catch (error) {
-      console.error('❌ Error finalizing meal plan:', error instanceof Error ? error.message : error);
+      console.error(
+        '❌ Error finalizing meal plan:',
+        error instanceof Error ? error.message : error,
+      );
       process.exit(1);
     }
   });
@@ -526,47 +591,57 @@ planCommand
 // General workflow management commands
 program
   .command('status')
-  .description('Show system status and statistics, or specific workflow status if thread ID provided')
+  .description(
+    'Show system status and statistics, or specific workflow status if thread ID provided',
+  )
   .argument('[thread-id]', 'Optional thread ID to get specific workflow status')
   .action(async (threadId) => {
     const isJsonMode = program.getOptionValue('json');
-    
+
     try {
       const agent = await initializeAgent();
-      
+
       if (threadId) {
         // Get specific workflow status
         if (!validateThreadId(threadId)) {
-          outputError('Invalid thread ID format. Expected UUID format.', isJsonMode);
+          outputError(
+            'Invalid thread ID format. Expected UUID format.',
+            isJsonMode,
+          );
           return;
         }
-        
+
         const status = await agent.getWorkflowStatus(threadId);
         if (!status) {
           outputError('Workflow not found.', isJsonMode);
           return;
         }
-        
-        outputResult({
-          success: true,
-          threadId: status.threadId,
-          currentStep: status.currentStep,
-          message: `Workflow status: ${status.currentStep}`,
-          raw: status
-        }, isJsonMode);
+
+        outputResult(
+          {
+            success: true,
+            threadId: status.threadId,
+            currentStep: status.currentStep,
+            message: `Workflow status: ${status.currentStep}`,
+            raw: status,
+          },
+          isJsonMode,
+        );
         if (isJsonMode) process.exit(0);
-        
       } else {
         // Get system status
         const health = await agent.healthCheck();
         const stats = await agent.getStats();
-        
+
         if (isJsonMode) {
-          outputResult({
-            success: true,
-            message: 'System status retrieved',
-            raw: { health, stats }
-          }, isJsonMode);
+          outputResult(
+            {
+              success: true,
+              message: 'System status retrieved',
+              raw: { health, stats },
+            },
+            isJsonMode,
+          );
           process.exit(0);
         } else {
           console.log('🏥 System Health:', health.status);
@@ -577,51 +652,68 @@ program
           Object.entries(stats.workflowsByType).forEach(([type, count]) => {
             console.log(`     ${type}: ${count}`);
           });
-          console.log(`   Supported Types: ${stats.supportedWorkflowTypes.join(', ')}`);
+          console.log(
+            `   Supported Types: ${stats.supportedWorkflowTypes.join(', ')}`,
+          );
         }
       }
-      
     } catch (error) {
-      outputError(`Error getting status: ${error instanceof Error ? error.message : error}`, isJsonMode);
+      outputError(
+        `Error getting status: ${error instanceof Error ? error.message : error}`,
+        isJsonMode,
+      );
     }
   });
 
 program
   .command('list')
   .description('List all workflows')
-  .option('-t, --type <type>', 'Filter by workflow type (meal_planning, recipe_management, ingredient_management)')
+  .option(
+    '-t, --type <type>',
+    'Filter by workflow type (meal_planning, recipe_management, ingredient_management)',
+  )
   .action(async (options) => {
     const isJsonMode = program.getOptionValue('json');
-    
+
     try {
       const workflowType = options.type as WorkflowType | undefined;
-      
+
       if (workflowType && !Object.values(WorkflowType).includes(workflowType)) {
-        outputError(`Invalid workflow type. Supported types: ${Object.values(WorkflowType).join(', ')}`, isJsonMode);
+        outputError(
+          `Invalid workflow type. Supported types: ${Object.values(WorkflowType).join(', ')}`,
+          isJsonMode,
+        );
         return;
       }
-      
+
       const agent = await initializeAgent();
       const workflows = await agent.listWorkflows(workflowType);
-      
+
       if (isJsonMode) {
-        outputResult({
-          success: true,
-          message: workflowType ? `${workflowType} workflows retrieved` : 'All workflows retrieved',
-          raw: workflows
-        }, isJsonMode);
+        outputResult(
+          {
+            success: true,
+            message: workflowType
+              ? `${workflowType} workflows retrieved`
+              : 'All workflows retrieved',
+            raw: workflows,
+          },
+          isJsonMode,
+        );
       } else {
         if (workflowType) {
           console.log(`📋 ${workflowType} workflows:`);
         } else {
           console.log('📋 All workflows:');
         }
-        
+
         console.log(formatWorkflowList(workflows));
       }
-      
     } catch (error) {
-      outputError(`Error listing workflows: ${error instanceof Error ? error.message : error}`, isJsonMode);
+      outputError(
+        `Error listing workflows: ${error instanceof Error ? error.message : error}`,
+        isJsonMode,
+      );
     }
   });
 
@@ -632,51 +724,59 @@ program
   .option('-i, --interactive', 'Resume in interactive mode', false)
   .action(async (threadId, options) => {
     const isJsonMode = program.getOptionValue('json');
-    
+
     try {
       if (!validateThreadId(threadId)) {
-        outputError('Invalid thread ID format. Expected UUID format.', isJsonMode);
+        outputError(
+          'Invalid thread ID format. Expected UUID format.',
+          isJsonMode,
+        );
         return;
       }
 
       const agent = await initializeAgent();
-      
+
       // Get workflow status first
       const status = await agent.getWorkflowStatus(threadId);
       if (!status) {
         outputError('Workflow not found.', isJsonMode);
         return;
       }
-      
+
       if (!isJsonMode) {
-        console.log(`🔄 Resuming ${status.workflowType} workflow (${status.currentStep})`);
+        console.log(
+          `🔄 Resuming ${status.workflowType} workflow (${status.currentStep})`,
+        );
       }
-      
+
       if (options.interactive) {
         // Interactive mode - start conversation loop (JSON mode not supported for interactive)
         if (isJsonMode) {
-          outputError('Interactive mode not supported in JSON output mode', isJsonMode);
+          outputError(
+            'Interactive mode not supported in JSON output mode',
+            isJsonMode,
+          );
           return;
         }
-        
+
         const io = new CLIHandler();
         const participants = status.participants || ['brad'];
         const user = participants[0];
-        
+
         try {
           await io.sendMessage(`Resuming workflow ${threadId}`, 'System');
-          
+
           while (true) {
             const input = await io.receiveInput('Your message', user);
             const response = await agent.handleMessage({
               from: user,
               message: input,
               timestamp: new Date(),
-              threadId
+              threadId,
             });
-            
+
             await io.sendMessage(response.message, 'Agent');
-            
+
             if (response.currentStep === 'complete' || !response.success) {
               await io.sendMessage('Session ended.', 'System');
               break;
@@ -691,44 +791,57 @@ program
         debugLog('resume: resumeWorkflow start');
         const result = await agent.resumeWorkflow(threadId);
         debugLog(`resume: resumeWorkflow done (${Date.now() - resumeStart}ms)`);
-        debugLog(`resume command total ${(Date.now() - resumeStart)}ms`);
-        
+        debugLog(`resume command total ${Date.now() - resumeStart}ms`);
+
         // Use LLM-generated message from workflow if available, otherwise fall back to generic message
-        let message = result.success ? 'Workflow resumed successfully' : `Failed to resume workflow: ${result.message}`;
-        
-        if (result.success && (result.user_message || result.raw?.user_message)) {
+        let message = result.success
+          ? 'Workflow resumed successfully'
+          : `Failed to resume workflow: ${result.message}`;
+
+        if (
+          result.success &&
+          (result.user_message || result.raw?.user_message)
+        ) {
           message = result.user_message || result.raw?.user_message;
           debugLog(`[RESUME] Using workflow-generated message: ${message}`);
         } else if (result.success && hasRecentFeedbackInResult(result)) {
           // Fallback to separate message generation if workflow didn't provide a message
           try {
             const messageGenerator = new MessageGenerator();
-            const feedbackHistory = result.feedback_history || result.raw?.feedback_history || [];
+            const feedbackHistory =
+              result.feedback_history || result.raw?.feedback_history || [];
             const latestFeedback = feedbackHistory[feedbackHistory.length - 1];
-            
-            const contextualMessage = await messageGenerator.generateResumeMessage({
-              currentStep: result.currentStep,
-              workflowType: status.workflowType,
-              hasRecentFeedback: true,
-              feedbackSummary: latestFeedback?.message,
-              mealPlan: result.meal_plan || result.raw?.meal_plan,
-              shoppingList: result.shopping_list || result.raw?.shopping_list,
-              iteration: result.iteration_count || result.raw?.iteration_count
-            });
+
+            const contextualMessage =
+              await messageGenerator.generateResumeMessage({
+                currentStep: result.currentStep,
+                workflowType: status.workflowType,
+                hasRecentFeedback: true,
+                feedbackSummary: latestFeedback?.message,
+                mealPlan: result.meal_plan || result.raw?.meal_plan,
+                shoppingList: result.shopping_list || result.raw?.shopping_list,
+                iteration:
+                  result.iteration_count || result.raw?.iteration_count,
+              });
             message = contextualMessage;
-            debugLog(`[RESUME] Generated fallback contextual message: ${contextualMessage}`);
+            debugLog(
+              `[RESUME] Generated fallback contextual message: ${contextualMessage}`,
+            );
           } catch (error) {
             debugLog(`[RESUME] Error generating contextual message: ${error}`);
             // Fall back to default message
           }
         }
-        
-        outputResult({
-          success: result.success,
-          message: message,
-          currentStep: result.currentStep,
-          raw: result
-        }, isJsonMode);
+
+        outputResult(
+          {
+            success: result.success,
+            message: message,
+            currentStep: result.currentStep,
+            raw: result,
+          },
+          isJsonMode,
+        );
 
         if (isJsonMode) {
           debugLog('Shutting down agent after resume...');
@@ -740,9 +853,11 @@ program
           process.exit(1);
         }
       }
-      
     } catch (error) {
-      outputError(`Error resuming workflow: ${error instanceof Error ? error.message : error}`, isJsonMode);
+      outputError(
+        `Error resuming workflow: ${error instanceof Error ? error.message : error}`,
+        isJsonMode,
+      );
     }
   });
 
@@ -753,37 +868,46 @@ program
   .option('-f, --force', 'Force cancellation without confirmation', false)
   .action(async (threadId, options) => {
     const isJsonMode = program.getOptionValue('json');
-    
+
     try {
       if (!validateThreadId(threadId)) {
-        outputError('Invalid thread ID format. Expected UUID format.', isJsonMode);
+        outputError(
+          'Invalid thread ID format. Expected UUID format.',
+          isJsonMode,
+        );
         return;
       }
 
       const agent = await initializeAgent();
-      
+
       // Get workflow info for confirmation
       const status = await agent.getWorkflowStatus(threadId);
       if (!status) {
         outputError('Workflow not found.', isJsonMode);
         return;
       }
-      
+
       if (!options.force) {
         if (isJsonMode) {
           // In JSON mode, force must be used - no interactive confirmation
-          outputError('Interactive confirmation not supported in JSON mode. Use --force flag.', isJsonMode);
+          outputError(
+            'Interactive confirmation not supported in JSON mode. Use --force flag.',
+            isJsonMode,
+          );
           return;
         }
-        
+
         const io = new CLIHandler();
         try {
           const confirm = await io.receiveInput(
             `Are you sure you want to cancel ${status.workflowType} workflow ${threadId.substring(0, 8)}...? (y/N)`,
-            'user'
+            'user',
           );
-          
-          if (confirm.toLowerCase() !== 'y' && confirm.toLowerCase() !== 'yes') {
+
+          if (
+            confirm.toLowerCase() !== 'y' &&
+            confirm.toLowerCase() !== 'yes'
+          ) {
             console.log('❌ Cancellation aborted.');
             return;
           }
@@ -791,20 +915,27 @@ program
           io.close();
         }
       }
-      
+
       const success = await agent.cancelWorkflow(threadId);
-      
-      outputResult({
-        success: success,
-        message: success ? 'Workflow cancelled successfully' : 'Failed to cancel workflow'
-      }, isJsonMode);
-      
+
+      outputResult(
+        {
+          success: success,
+          message: success
+            ? 'Workflow cancelled successfully'
+            : 'Failed to cancel workflow',
+        },
+        isJsonMode,
+      );
+
       if (!success) {
         process.exit(1);
       }
-      
     } catch (error) {
-      outputError(`Error cancelling workflow: ${error instanceof Error ? error.message : error}`, isJsonMode);
+      outputError(
+        `Error cancelling workflow: ${error instanceof Error ? error.message : error}`,
+        isJsonMode,
+      );
     }
   });
 

@@ -1,4 +1,3 @@
-
 import { WorkflowType } from './shared/types';
 import { PostgresCheckpointSaver } from './shared/checkpointer';
 
@@ -27,7 +26,7 @@ export class WorkflowRegistry {
 
   async createWorkflow(
     type: WorkflowType,
-    checkpointer: PostgresCheckpointSaver
+    checkpointer: PostgresCheckpointSaver,
   ): Promise<BaseWorkflow> {
     const factory = this.factories.get(type);
     if (!factory) {
@@ -36,35 +35,35 @@ export class WorkflowRegistry {
 
     const workflow = await factory.create(checkpointer);
     await workflow.initialize();
-    
+
     return workflow;
   }
 
   async getOrCreateWorkflow(
     type: WorkflowType,
     threadId: string,
-    checkpointer: PostgresCheckpointSaver
+    checkpointer: PostgresCheckpointSaver,
   ): Promise<BaseWorkflow> {
     const key = `${type}:${threadId}`;
-    
+
     if (this.instances.has(key)) {
       return this.instances.get(key)!;
     }
 
     const workflow = await this.createWorkflow(type, checkpointer);
     this.instances.set(key, workflow);
-    
+
     return workflow;
   }
 
   async cleanupWorkflow(type: WorkflowType, threadId: string): Promise<void> {
     const key = `${type}:${threadId}`;
     const workflow = this.instances.get(key);
-    
+
     if (workflow && workflow.cleanup) {
       await workflow.cleanup();
     }
-    
+
     this.instances.delete(key);
   }
 
@@ -74,7 +73,7 @@ export class WorkflowRegistry {
         if (workflow.cleanup) {
           await workflow.cleanup();
         }
-      }
+      },
     );
 
     await Promise.all(cleanupPromises);

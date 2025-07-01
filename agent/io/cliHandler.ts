@@ -25,20 +25,24 @@ export class CLIHandler implements IOHandler {
   async receiveInput(prompt: string, from: string): Promise<string> {
     const formattedPrompt = this.formatMessage(prompt, from);
     const rl = this.ensureInterface();
-    
+
     return new Promise<string>((resolve, reject) => {
       if (this.isClosed) {
         reject(new Error('CLI handler has been closed'));
         return;
       }
-      
+
       rl.question(formattedPrompt + ' ', (answer) => {
         resolve(answer);
       });
     });
   }
 
-  formatMessage(message: string, from: string, timestamp: Date = new Date()): string {
+  formatMessage(
+    message: string,
+    from: string,
+    timestamp: Date = new Date(),
+  ): string {
     const time = timestamp.toISOString();
     return `[${time}] ${from}: ${message}`;
   }

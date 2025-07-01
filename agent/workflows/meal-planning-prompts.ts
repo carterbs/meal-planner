@@ -1,9 +1,11 @@
-import { VALIDATION_CRITERIA } from "../shared/types";
+import { VALIDATION_CRITERIA } from '../shared/types';
 
 /**
  * Generates a prompt to analyze user feedback for satisfaction.
  */
-export function getAnalyzeFeedbackPrompt(latestFeedbackMessage: string): string {
+export function getAnalyzeFeedbackPrompt(
+  latestFeedbackMessage: string,
+): string {
   return `Given the following user feedback on a meal plan, does the user want changes or are they satisfied? Respond with a JSON object: { "satisfied": true/false, "reasoning": "..." }\n\nFeedback: ${latestFeedbackMessage}`;
 }
 
@@ -13,7 +15,7 @@ export function getAnalyzeFeedbackPrompt(latestFeedbackMessage: string): string 
 export function getUpdateMealPlanPrompt(
   feedbackText: string,
   planDescription: string,
-  mealOptions: string
+  mealOptions: string,
 ): string {
   return `You are updating a weekly meal plan based on ALL user feedback from the entire session.\n
 ${feedbackText}\n
@@ -40,9 +42,9 @@ Current meal plan:\n${planDescription}\n\nAvailable meals to choose from:\n${mea
 export function getOptimizeMealPlanPrompt(
   issues: string[],
   planDescription: string,
-  mealOptions: string
+  mealOptions: string,
 ): string {
-  return `You are optimizing a weekly meal plan. Here are the current issues:\n${issues.join("\n")}\n\nCurrent meal plan:\n${planDescription}\n\nAvailable meals to choose from:\n${mealOptions}\n\nOptimization rules:\n- Max ${VALIDATION_CRITERIA.maxConsecutiveHighEffort} consecutive high-effort meals (effort > 3)\n- Max ${VALIDATION_CRITERIA.maxRedMeatPerWeek} red meat meals per week\n- No duplicate meals\n- Only replace meals with same meal type (breakfast/lunch/dinner)\n- Prefer lower effort meals (1-2) for replacements\n\nPlease analyze the issues and respond with ONLY a JSON object containing your recommended replacements:\n{
+  return `You are optimizing a weekly meal plan. Here are the current issues:\n${issues.join('\n')}\n\nCurrent meal plan:\n${planDescription}\n\nAvailable meals to choose from:\n${mealOptions}\n\nOptimization rules:\n- Max ${VALIDATION_CRITERIA.maxConsecutiveHighEffort} consecutive high-effort meals (effort > 3)\n- Max ${VALIDATION_CRITERIA.maxRedMeatPerWeek} red meat meals per week\n- No duplicate meals\n- Only replace meals with same meal type (breakfast/lunch/dinner)\n- Prefer lower effort meals (1-2) for replacements\n\nPlease analyze the issues and respond with ONLY a JSON object containing your recommended replacements:\n{
   "replacements": [
     {
       "day": "Sunday",
@@ -58,6 +60,8 @@ export function getOptimizeMealPlanPrompt(
 /**
  * Generates a prompt to categorize pantry staples in a shopping list.
  */
-export function getPantryStaplesCategorizationPrompt(bulletedList: string): string {
+export function getPantryStaplesCategorizationPrompt(
+  bulletedList: string,
+): string {
   return `I will provide a bulleted shopping list to you. You should return a bulleted list with two sections: Pantry Staples and Groceries. Identify which items in the bulleted shopping list below are pantry staples (e.g., oil, salt, flour, sugar, rice, canned beans, spices, herbs), and put them in their own section. Do not remove items from the list, and ensure wording is unchanged. Return ONLY the list.\n\n${bulletedList}`;
 }

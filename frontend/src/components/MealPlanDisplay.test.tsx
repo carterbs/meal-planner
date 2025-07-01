@@ -6,12 +6,12 @@ import '@testing-library/jest-dom';
 function buildPlan(): WeeklyMealPlan {
   const days: WeeklyMealPlan['days'] = [];
   for (let i = 0; i < 7; i++) {
-    ['breakfast','lunch','dinner'].forEach(mt => {
+    ['breakfast', 'lunch', 'dinner'].forEach((mt) => {
       days.push({ dayIndex: i, mealType: mt, meal: null });
     });
   }
   days[0].meal = { id: 1, name: 'Eggs', effort: 1, hasRedMeat: false };
-  days[2*3+2].meal = { id: 2, name: 'Steak', effort: 3, hasRedMeat: true }; // Wednesday dinner
+  days[2 * 3 + 2].meal = { id: 2, name: 'Steak', effort: 3, hasRedMeat: true }; // Wednesday dinner
   return { days };
 }
 

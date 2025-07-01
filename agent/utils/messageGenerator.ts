@@ -4,11 +4,11 @@ import { WeeklyMealPlan } from '../shared/types';
 
 export class MessageGenerator {
   private llm: ChatOpenAI;
-  
+
   constructor() {
     this.llm = new ChatOpenAI({
       temperature: 0.7,
-      modelName: "gpt-4.1-nano"
+      modelName: 'gpt-4.1-nano',
     });
   }
 
@@ -29,11 +29,12 @@ export class MessageGenerator {
       let mealPlanSummary = '';
       if (context.mealPlan?.days) {
         const mealCount = context.mealPlan.days.length;
-        const uniqueDays = new Set(context.mealPlan.days.map(d => d.dayIndex)).size;
+        const uniqueDays = new Set(context.mealPlan.days.map((d) => d.dayIndex))
+          .size;
         const sampleMeals = context.mealPlan.days
-  .map(d => d.meal?.name)
-  .filter((name): name is string => Boolean(name))
-  .slice(0, 3);
+          .map((d) => d.meal?.name)
+          .filter((name): name is string => Boolean(name))
+          .slice(0, 3);
         mealPlanSummary = `Current meal plan has ${mealCount} meals across ${uniqueDays} days. Sample meals: ${sampleMeals.join(', ')}`;
       }
 
@@ -65,9 +66,12 @@ Examples:
 
 Your Response (just the message, no quotes or formatting):`;
 
-      const result = await this.llm.invoke([{ role: "user", content: prompt }]);
-      const message = typeof result.content === 'string' ? result.content : String(result.content);
-      
+      const result = await this.llm.invoke([{ role: 'user', content: prompt }]);
+      const message =
+        typeof result.content === 'string'
+          ? result.content
+          : String(result.content);
+
       debugLog(`[MESSAGE_GENERATOR] Generated message: ${message}`);
       return message.trim();
     } catch (error) {
@@ -89,11 +93,12 @@ Your Response (just the message, no quotes or formatting):`;
       let mealPlanDetails = '';
       if (context.mealPlan?.days) {
         const mealCount = context.mealPlan.days.length;
-        const uniqueDays = new Set(context.mealPlan.days.map(d => d.dayIndex)).size;
+        const uniqueDays = new Set(context.mealPlan.days.map((d) => d.dayIndex))
+          .size;
         const featuredMeals = context.mealPlan.days
-  .map(d => (d.meal && d.meal.effort >= 3 ? d.meal.name : undefined))
-  .filter((name): name is string => Boolean(name))
-  .slice(0, 2);
+          .map((d) => (d.meal && d.meal.effort >= 3 ? d.meal.name : undefined))
+          .filter((name): name is string => Boolean(name))
+          .slice(0, 2);
         mealPlanDetails = `${mealCount} meals across ${uniqueDays} days${featuredMeals.length > 0 ? `, featuring ${featuredMeals.join(' and ')}` : ''}`;
       }
 
@@ -123,15 +128,20 @@ Examples:
 
 Response (just the message, no quotes or formatting):`;
 
-      const result = await this.llm.invoke([{ role: "user", content: prompt }]);
-      const message = typeof result.content === 'string' ? result.content : String(result.content);
-      
+      const result = await this.llm.invoke([{ role: 'user', content: prompt }]);
+      const message =
+        typeof result.content === 'string'
+          ? result.content
+          : String(result.content);
+
       debugLog(`[MESSAGE_GENERATOR] Generated completion message: ${message}`);
       return message.trim();
     } catch (error) {
-      debugLog(`[MESSAGE_GENERATOR] Error generating completion message: ${error}`);
+      debugLog(
+        `[MESSAGE_GENERATOR] Error generating completion message: ${error}`,
+      );
       // Fallback to generic message
-      return "Your meal plan is ready!";
+      return 'Your meal plan is ready!';
     }
   }
 }
