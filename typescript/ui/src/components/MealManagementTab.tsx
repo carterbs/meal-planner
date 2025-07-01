@@ -1123,7 +1123,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                         <StepsEditor
                           steps={[]}
                           readOnly={true}
-                          onChange={() => { }}
+                          onChange={() => {}}
                         />
                       )}
                     </Box>

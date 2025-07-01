@@ -852,12 +852,17 @@ func TestRemoveMealHandler(t *testing.T) {
 	plan := models.WeeklyMealPlan{
 		Days: []models.PlanDay{{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{ID: 1, MealName: "Egg"}}},
 	}
-	planBytes, _ := json.Marshal(plan)
+	checkpointStruct := map[string]interface{}{
+		"channel_values": map[string]interface{}{
+			"meal_plan": plan,
+		},
+	}
+	checkpointBytes, _ := json.Marshal(checkpointStruct)
 	rows := sqlmock.NewRows([]string{"checkpoint_data", "checkpoint_ns"}).
-		AddRow(planBytes, "latest")
+		AddRow(checkpointBytes, "latest")
 	helper.mock.ExpectQuery("SELECT checkpoint_data, checkpoint_ns").WithArgs("thread1").WillReturnRows(rows)
 
-	helper.mock.ExpectExec("INSERT INTO workflow_checkpoints").WithArgs("thread1", planBytes).WillReturnResult(sqlmock.NewResult(0, 1))
+	helper.mock.ExpectExec("INSERT INTO workflow_checkpoints").WithArgs("thread1", checkpointBytes).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	reqBody := map[string]interface{}{"threadId": "thread1", "dayIndex": 0, "mealType": "breakfast"}
 	bodyBytes, _ := json.Marshal(reqBody)

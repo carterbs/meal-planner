@@ -85,23 +85,16 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 
 	// Initialize workflow checkpoint
 	if resp.ThreadID != "" {
-		// Build initial checkpoint data
-		m := map[string]interface{}{}
-		if resp.Raw != nil {
-			if rawMap, ok := resp.Raw.(map[string]interface{}); ok {
-				if mealPlan, ok := rawMap["meal_plan"]; ok {
-					m["meal_plan"] = mealPlan
-				}
-				if shoppingList, ok := rawMap["shopping_list_formatted"].(string); ok {
-					m["shopping_list"] = shoppingList
-				}
+		// Seed full workflow state into checkpoint
+		if resp.InitialState != nil {
+			checkpoint := map[string]interface{}{
+				"channel_values": resp.InitialState,
+				"next":           []interface{}{},
+				"step":           0,
 			}
-		}
-		data, err := json.Marshal(m)
-		if err != nil {
-			log.Printf("[ERROR StartAgentWorkflow] Failed to serialize initial checkpoint: %v", err)
-		} else {
-			if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
+			if data, err := json.Marshal(checkpoint); err != nil {
+				log.Printf("[ERROR StartAgentWorkflow] Failed to serialize initial checkpoint: %v", err)
+			} else if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
 				log.Printf("[ERROR StartAgentWorkflow] Failed to initialize workflow checkpoint: %v", err)
 			}
 		}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { MealPlan, Ingredient, MealType } from './types';
-import {Meal} from '@meal-planner/shared/types';
+import { Meal } from '@meal-planner/shared/types';
 // Extended meal plan interface for the new structure
 interface ExtendedMealPlan {
   [day: string]: {

@@ -33,8 +33,8 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load workflow data from checkpoints table
-	mealPlan, currentStep, err := models.GetWorkflowCheckpoint(DB, threadID)
+	// Load full workflow checkpoint data for messages
+	messagesData, currentStep, err := models.GetWorkflowCheckpoint(DB, threadID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "No workflow found for threadId", http.StatusNotFound)
@@ -42,6 +42,35 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to fetch workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
 		}
 		return
+	}
+	// Retrieve the full checkpoint_data for meal_plan (skip 'latest' namespace messages-only)
+	var fullData []byte
+	row := DB.QueryRow(`SELECT checkpoint_data FROM workflow_checkpoints WHERE thread_id=$1 AND checkpoint_ns!=$2 ORDER BY updated_at DESC LIMIT 1`, threadID, "latest")
+	if scanErr := row.Scan(&fullData); scanErr != nil {
+		fullData = messagesData
+	}
+	// Parse JSON to extract meal_plan
+	var mealPlanRaw json.RawMessage
+	var fullMap map[string]interface{}
+	if err := json.Unmarshal(fullData, &fullMap); err == nil {
+		// Try nested channel_values.meal_plan
+		if cv, ok := fullMap["channel_values"].(map[string]interface{}); ok {
+			if mp, ok := cv["meal_plan"]; ok {
+				mpBytes, _ := json.Marshal(mp)
+				mealPlanRaw = json.RawMessage(mpBytes)
+			}
+		}
+		// Fallback to top-level meal_plan
+		if mealPlanRaw == nil {
+			if mp, ok := fullMap["meal_plan"]; ok {
+				mpBytes, _ := json.Marshal(mp)
+				mealPlanRaw = json.RawMessage(mpBytes)
+			} else {
+				mealPlanRaw = json.RawMessage("null")
+			}
+		}
+	} else {
+		mealPlanRaw = json.RawMessage("null")
 	}
 
 	// Build shopping list JSON
@@ -51,7 +80,7 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 			Meal *struct { ID int `json:"id"` } `json:"meal"`
 		} `json:"days"`
 	}
-	if err2 := json.Unmarshal(mealPlan, &plan); err2 == nil {
+	if err2 := json.Unmarshal(mealPlanRaw, &plan); err2 == nil {
 		ids := []int{}
 		for _, d := range plan.Days {
 			if d.Meal != nil {
@@ -72,7 +101,7 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		ThreadID:     threadID,
 		CurrentStep:  currentStep,
 		Messages:     messages,
-		MealPlan:     mealPlan,
+		MealPlan:     mealPlanRaw,
 		ShoppingList: shoppingListRaw,
 	}
 

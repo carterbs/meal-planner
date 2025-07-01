@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"mealplanner/dummy"
 	"mealplanner/models"
@@ -92,10 +93,7 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var (
-		plan      models.WeeklyMealPlan
-		planBytes []byte
-	)
+	var plan models.WeeklyMealPlan
 
 	// Load plan from workflow checkpoints
 	checkpointData, _, err := models.GetWorkflowCheckpoint(DB, payload.ThreadID)
@@ -107,10 +105,22 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No meal plan found for threadId", http.StatusNotFound)
 		return
 	}
-	if err := json.Unmarshal(checkpointData, &plan); err != nil {
-		http.Error(w, "Failed to parse meal plan: "+err.Error(), http.StatusInternalServerError)
+	
+	// Parse the full checkpoint structure to extract the meal plan
+	var checkpoint struct {
+		ChannelValues struct {
+			MealPlan *models.WeeklyMealPlan `json:"meal_plan"`
+		} `json:"channel_values"`
+	}
+	if err := json.Unmarshal(checkpointData, &checkpoint); err != nil {
+		http.Error(w, "Failed to parse checkpoint structure: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	if checkpoint.ChannelValues.MealPlan == nil {
+		http.Error(w, "No meal plan found in checkpoint", http.StatusNotFound)
+		return
+	}
+	plan = *checkpoint.ChannelValues.MealPlan
 
 	
 
@@ -123,15 +133,32 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 	// Recompute / attach shopping list for response
 	attachShoppingList(&plan)
 
-	// --- Persist updated plan back to whichever storage we loaded from ---
-	planBytes, err = json.Marshal(plan)
+	// --- Persist updated plan back to checkpoint structure ---
+	// We need to preserve the full checkpoint structure, so we'll unmarshal the original checkpoint,
+	// update just the meal_plan field, and marshal it back
+	var fullCheckpoint map[string]interface{}
+	if err := json.Unmarshal(checkpointData, &fullCheckpoint); err != nil {
+		http.Error(w, "Failed to parse original checkpoint: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	// Navigate to channel_values and update the meal_plan field
+	if channelValues, ok := fullCheckpoint["channel_values"].(map[string]interface{}); ok {
+		channelValues["meal_plan"] = plan
+		channelValues["updated_at"] = time.Now()
+	} else {
+		http.Error(w, "Invalid checkpoint structure: missing channel_values", http.StatusInternalServerError)
+		return
+	}
+	
+	finalCheckpointBytes, err := json.Marshal(fullCheckpoint)
 	if err != nil {
-		http.Error(w, "Failed to serialize updated plan: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to serialize final checkpoint: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Persist updated plan via workflow checkpoints
-	if err := models.UpdateWorkflowCheckpoint(DB, payload.ThreadID, planBytes); err != nil {
+	// Persist updated checkpoint
+	if err := models.UpdateWorkflowCheckpoint(DB, payload.ThreadID, finalCheckpointBytes); err != nil {
 		http.Error(w, "Failed to update workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
