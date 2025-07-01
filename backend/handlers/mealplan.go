@@ -151,7 +151,7 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 
 		// Convert to map format and exclude skipped days
 		result := make(map[string]interface{})
-		dayNames := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+		dayNames := models.DaysOfTheWeek
 		for _, pd := range detailedPlan.Days {
 			if pd.MealType != "dinner" || pd.Meal == nil {
 				continue

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
+import { DAYS_OF_THE_WEEK } from '../constants/days';
 
 interface MealInfo {
   id: number;
@@ -18,7 +19,7 @@ export interface WeeklyMealPlan {
   days: DayEntry[];
 }
 
-const WEEK_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
 
 const effortIcons = ['','🔥','🔥🔥','🔥🔥🔥'];
 
@@ -28,7 +29,7 @@ interface MealPlanDisplayProps {
 }
 
 export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({ plan, highlights }) => {
-  const grouped = WEEK_DAYS.map((day, idx) => ({
+  const grouped = DAYS_OF_THE_WEEK.map((day, idx) => ({
     day,
     entries: plan.days.filter(d => d.dayIndex === idx)
   }));

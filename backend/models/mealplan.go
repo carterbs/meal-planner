@@ -29,7 +29,7 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 	redMeatUsed := false
 	threeWeeksAgo := time.Now().AddDate(0, 0, -21)
 
-	dayNames := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	dayNames := DaysOfTheWeek
 	mealTypes := []string{"breakfast", "lunch", "dinner"}
 
 	for i, day := range dayNames {
@@ -118,7 +118,7 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
 	plan := &WeeklyMealPlan{Days: make([]PlanDay, 0, 21)}
 	// Friday is now included for breakfast and lunch, but dinner is always "Eating out"
-	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	weekdays := DaysOfTheWeek
 	numMealsNeeded := len(weekdays)
 
 	lastBreakfasts, err := getLastPlannedMealsByType(db, "breakfast", numMealsNeeded)
@@ -204,7 +204,7 @@ func getLastPlannedMealsByType(db *sql.DB, mealType string, limit int) ([]*Meal,
 // Each meal becomes an all-day event with the meal name as the title.
 func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 	monday = monday.UTC().Truncate(24 * time.Hour)
-	weekDays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	weekDays := DaysOfTheWeek
 	// Build lookup maps for quick access
 	mealsByDay := make(map[int]map[string]*Meal)
 	for _, pd := range plan.Days {

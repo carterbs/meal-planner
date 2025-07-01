@@ -31,6 +31,7 @@ import { ShoppingListItem } from "./types";
 import TypingIndicator from "./components/TypingIndicator";
 import useSession from "./hooks/useSession";
 import type { SxProps, Theme } from '@mui/material';
+import { DAYS_OF_THE_WEEK } from './constants/days';
 
 // Style variables
 const styles = {
@@ -254,15 +255,7 @@ const theme = createTheme({
 });
 
 // Utility to format a WeeklyMealPlan for clipboard copying
-const WEEK_DAYS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday"
-];
+
 function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
   let html = '<table style="border-collapse: collapse; width: 100%;">';
   html +=
@@ -274,7 +267,7 @@ function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
   let text = "Day | Meals\n";
   text += "----|------\n";
 
-  WEEK_DAYS.forEach((day, idx) => {
+  DAYS_OF_THE_WEEK.forEach((day, idx) => {
     const entries = plan.days.filter((d) => d.dayIndex === idx);
     if (entries.length === 0) return;
 

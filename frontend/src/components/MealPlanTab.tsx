@@ -15,6 +15,7 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { Meal, Ingredient } from '../types';
 import { MealAutocomplete } from './MealAutocomplete';
+import { DAYS_OF_THE_WEEK } from '../constants/days';
 
 interface MealPlanTabProps {
     showToast: (message: string) => void;
@@ -22,7 +23,7 @@ interface MealPlanTabProps {
 
 // Define meal types for each day
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner'];
-const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 
 interface ExtendedMealPlan {
     [day: string]: {
@@ -48,7 +49,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
 
         // Get all non-skipped meals
         const mealIDs: number[] = [];
-        WEEK_DAYS.forEach(day => {
+        DAYS_OF_THE_WEEK.forEach(day => {
             MEAL_TYPES.forEach(mealType => {
                 const meal = mealPlan[day][mealType];
                 const mealKey = `${day}-${mealType}`;
@@ -228,7 +229,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
         // Collect all ingredients from visible meal cards
         const allIngredients: { [name: string]: { quantity: number; unit: string; name: string } } = {};
 
-        WEEK_DAYS.forEach(day => {
+        DAYS_OF_THE_WEEK.forEach(day => {
             MEAL_TYPES.forEach(mealType => {
                 const meal = mealPlan[day][mealType];
                 const mealKey = `${day}-${mealType}`;
@@ -287,7 +288,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
         `;
 
         // Add each day's meal information as table rows
-        WEEK_DAYS.forEach(day => {
+        DAYS_OF_THE_WEEK.forEach(day => {
             const dayMeals = MEAL_TYPES
                 .map(mealType => {
                     const meal = mealPlan[day][mealType];
@@ -323,7 +324,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
         let textContent = 'Day | Meals\n';
         textContent += '----|-------\n';
 
-        WEEK_DAYS.forEach(day => {
+        DAYS_OF_THE_WEEK.forEach(day => {
             const dayMeals = MEAL_TYPES
                 .map(mealType => {
                     const meal = mealPlan[day][mealType];
@@ -649,7 +650,7 @@ export const MealPlanTab: React.FC<MealPlanTabProps> = ({ showToast }) => {
                     </Box>
                 ) : (
                     <Box sx={{ display: 'grid', gap: '20px' }}>
-                        {WEEK_DAYS.map(day => (
+                        {DAYS_OF_THE_WEEK.map(day => (
                             <Card
                                 key={day}
                                 sx={{
