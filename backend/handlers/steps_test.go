@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"mealplanner/models"
+	"mealplanner/services"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -53,8 +54,9 @@ func setupStepHandlerTest(t *testing.T) *sql.DB {
 		t.Fatalf("Error creating recipe_steps table: %v", err)
 	}
 
-	// Set the package-level DB variable
+	// Set the package-level DB and Services variables
 	DB = db
+	Services = services.NewServiceContainer(db)
 
 	// Insert a test meal
 	_, err = db.Exec(`

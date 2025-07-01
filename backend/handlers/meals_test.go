@@ -34,14 +34,17 @@ func setupTest(t *testing.T) *testHelper {
 		t.Fatalf("failed to create sqlmock: %v", err)
 	}
 
-	// Store the original DB
+	// Store the original DB and Services
 	originalDB := DB
+	originalServices := Services
 	DB = db
+	Services = services.NewServiceContainer(db)
 
-	// Restore the original DB after the test
+	// Restore the originals after the test
 	t.Cleanup(func() {
 		db.Close()
 		DB = originalDB
+		Services = originalServices
 	})
 
 	return &testHelper{db, mock}
@@ -536,10 +539,15 @@ func TestGetAllMealsHandler_AlphabeticalOrder(t *testing.T) {
 	}
 	defer db.Close()
 
-	// Store the original DB and restore it after the test
+	// Store the original DB and Services and restore them after the test
 	originalDB := DB
+	originalServices := Services
 	DB = db
-	defer func() { DB = originalDB }()
+	Services = services.NewServiceContainer(db)
+	defer func() { 
+		DB = originalDB 
+		Services = originalServices
+	}()
 
 	// Setup rows with meals in non-alphabetical order
 	rows := sqlmock.NewRows([]string{
@@ -606,10 +614,15 @@ func TestCreateMealHandler(t *testing.T) {
 	}
 	defer db.Close()
 
-	// Store the original DB and restore it after the test
+	// Store the original DB and Services and restore them after the test
 	originalDB := DB
+	originalServices := Services
 	DB = db
-	defer func() { DB = originalDB }()
+	Services = services.NewServiceContainer(db)
+	defer func() { 
+		DB = originalDB 
+		Services = originalServices
+	}()
 
 	// Create a test meal with ingredients
 	newMeal := models.Meal{
@@ -734,10 +747,15 @@ func TestCreateMealHandler_ValidationError(t *testing.T) {
 	}
 	defer db.Close()
 
-	// Store the original DB and restore it after the test
+	// Store the original DB and Services and restore them after the test
 	originalDB := DB
+	originalServices := Services
 	DB = db
-	defer func() { DB = originalDB }()
+	Services = services.NewServiceContainer(db)
+	defer func() { 
+		DB = originalDB 
+		Services = originalServices
+	}()
 
 	// Create an invalid meal with no name
 	invalidMeal := models.Meal{
@@ -790,10 +808,15 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 	}
 	defer db.Close()
 
-	// Store the original DB and restore it after the test
+	// Store the original DB and Services and restore them after the test
 	originalDB := DB
+	originalServices := Services
 	DB = db
-	defer func() { DB = originalDB }()
+	Services = services.NewServiceContainer(db)
+	defer func() { 
+		DB = originalDB 
+		Services = originalServices
+	}()
 
 	newMeal := models.Meal{
 		MealName:       "Test Recipe",
