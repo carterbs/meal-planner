@@ -10,6 +10,7 @@ This repository contains a Go backend, React/TypeScript frontend, and TypeScript
 - **Scope**: These instructions apply to the entire directory tree rooted at this folder
 - **Precedence**: Direct system/developer/user instructions take precedence over these guidelines
 - **Compliance**: All code changes must follow these instructions for every file touched
+- **Testing** If you start working on a test, and yarn:test fails, you should abort the task. Do not stop your task until tests are passing.
 
 ### Required Validation Checks
 After making any code changes, you MUST run these validation commands and ensure they pass:
