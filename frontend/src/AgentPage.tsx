@@ -524,13 +524,21 @@ const AgentPage: React.FC = () => {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               Meal Planning Assistant
             </Typography>
-            {session && (
+            {session ? (
               <Button
                 color="inherit"
                 onClick={handleLogout}
                 startIcon={<ExitToAppIcon />}
               >
                 End Session
+              </Button>
+            ) : (
+              <Button
+                color="inherit"
+                onClick={startNewSession}
+                data-testid="start-session"
+              >
+                Start Session
               </Button>
             )}
           </Toolbar>
@@ -594,10 +602,12 @@ const AgentPage: React.FC = () => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isWorking}
+                  inputProps={{ 'data-testid': 'message-input' }}
                 />
                 <Button
                   variant="contained"
                   color="primary"
+                  data-testid="send-button"
                   onClick={sendMessage}
                   disabled={!input.trim() || isWorking}
                   sx={styles.sendButton}

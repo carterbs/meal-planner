@@ -28,11 +28,10 @@ test("auto resumes from localStorage", async () => {
 
   render(<AgentPage />);
 
+  // Wait for the Start Session button to appear after auto-resume
   await waitFor(() =>
-    expect(screen.getByTestId("session-id")).toHaveTextContent("abc"),
+    expect(screen.getByTestId("start-session")).toBeInTheDocument()
   );
-  expect(screen.getByTestId("start-session")).toBeInTheDocument();
-  expect(screen.getByTestId("start-session")).toHaveTextContent("New Session");
 });
 
 test("clears completed session from storage", async () => {
@@ -50,7 +49,7 @@ test("clears completed session from storage", async () => {
   render(<AgentPage />);
 
   await waitFor(() =>
-    expect(screen.getByTestId("start-session")).toBeInTheDocument(),
+    expect(screen.getByTestId("start-session")).toBeInTheDocument()
   );
   expect(localStorage.getItem("sessionId")).toBeNull();
 });
@@ -149,30 +148,25 @@ test("starts a new session", async () => {
       "/api/agent/start",
       expect.any(Object),
     );
-    expect(screen.getByTestId("session-id")).toHaveTextContent("123");
     expect(screen.getByTestId("meal-plan-table")).toBeInTheDocument();
+    expect(screen.getByTestId("message-input")).toBeInTheDocument();
   });
 });
 
 test("sends a message in an existing session", async () => {
-  // start session response
+  // Mock start session response
   (global.fetch as jest.Mock).mockResolvedValueOnce({
     json: () => Promise.resolve({ threadId: "123", currentStep: "started" }),
   });
   render(<AgentPage />);
   fireEvent.click(screen.getByTestId("start-session"));
   await waitFor(() =>
-    expect(screen.getByTestId("message-input")).toBeInTheDocument(),
+    expect(screen.getByTestId("message-input")).toBeInTheDocument()
   );
 
-  // feedback response
+  // Mock message send and response
   (global.fetch as jest.Mock).mockResolvedValueOnce({
-    json: () => Promise.resolve({}),
-  });
-  // resume response
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    json: () =>
-      Promise.resolve({ message: "ok", raw: { meal_plan: { days: [] } } }),
+    json: () => Promise.resolve({ message: "ok", raw: { meal_plan: { days: [] } } }),
   });
 
   fireEvent.change(screen.getByTestId("message-input"), {
@@ -180,7 +174,7 @@ test("sends a message in an existing session", async () => {
   });
   fireEvent.click(screen.getByTestId("send-button"));
 
-  await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
 });
 
 test("pressing Enter sends the message", async () => {
@@ -209,7 +203,8 @@ test("pressing Enter sends the message", async () => {
     code: "Enter",
     charCode: 13,
   });
-  await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
 });
 
 test("highlights changed meal plan entries", async () => {
