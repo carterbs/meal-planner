@@ -72,3 +72,25 @@ func TestGenerateShoppingListFromMeals(t *testing.T) {
 		t.Errorf("expected shopping list %v, got %v", expected, actual)
 	}
 }
+
+func TestConvertIngredientsToShoppingItems(t *testing.T) {
+	ingredients := []Ingredient{
+		{Name: "Sugar", Quantity: 1, Unit: "cup"},
+		{Name: "Flour", Quantity: 2.5, Unit: "cups"},
+		{Name: "Eggs", Quantity: 0, Unit: ""},
+	}
+
+	items := ConvertIngredientsToShoppingItems(ingredients)
+	if len(items) != 3 {
+		t.Fatalf("expected 3 items got %d", len(items))
+	}
+	if items[0].Ingredient != "Sugar" || items[0].Quantity != "1 cup" {
+		t.Errorf("unexpected first item %#v", items[0])
+	}
+	if items[1].Quantity != "2.5 cups" {
+		t.Errorf("unexpected quantity %s", items[1].Quantity)
+	}
+	if items[2].Quantity != "0" {
+		t.Errorf("unexpected quantity for eggs: %s", items[2].Quantity)
+	}
+}
