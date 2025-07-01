@@ -13,6 +13,7 @@ import (
 	"mealplanner/dummy"
 	"mealplanner/handlers"
 	"mealplanner/models"
+	"mealplanner/services"
 
 	"github.com/fatih/color"
 	"github.com/go-chi/chi/v5"
@@ -120,6 +121,12 @@ func main() {
 
 	// Set database connection in handlers (might be nil if connection failed)
 	handlers.DB = connection
+	
+	// Initialize workflow service if we have a database connection
+	if connection != nil && !*dummyFlag {
+		handlers.WorkflowService = services.NewWorkflowService(connection)
+	}
+	
 	if *dummyFlag {
 		handlers.UseDummy = true
 		if err := dummy.Load("Meal_db.csv"); err != nil {
@@ -252,6 +259,9 @@ func main() {
 		// Update the global DB connection
 		handlers.DB = connection
 		handlers.UseDummy = false
+		
+		// Initialize workflow service with new connection
+		handlers.WorkflowService = services.NewWorkflowService(connection)
 
 		// Ensure migrations are up to date
 		if err := models.Migrate(connection); err != nil {
