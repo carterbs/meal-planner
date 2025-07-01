@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { API } from '../utils.js';
-import type { WeeklyMealPlan } from '../resources/weeklyMealPlan.js';
+import type { WeeklyMealPlan } from '@meal-planner/shared/dist/types';
 
 export const swapArgs = z.object({ 
   dayIndex: z.number().int().min(0).max(6).describe("Day of the week to swap meal for (0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday)")

@@ -1,11 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
-
-export interface Step {
-  order: number;
-  text: string;
-}
+import type { Step } from '@meal-planner/shared/dist/types';
 
 export type RecipeSteps = Step[];
 
