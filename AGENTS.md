@@ -29,13 +29,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
 - Follow existing code patterns and architectural conventions
 
 ## Repository layout
-- `backend/` – Go API server and database migrations
-- `backend/mcp/` – TypeScript MCP server (port 3001)
-- `frontend/` – React application
-- `scripts/` – Node scripts for development and database management
-- `docs/` – Project documentation
-- `db-backups/` – PostgreSQL backups
-- `docker-compose.yml` – PostgreSQL and pgAdmin services
+- TBD
 
 ## Development workflow
 1. Start the development environment with:
@@ -44,7 +38,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
    ```
    Start the frontend with
    ```bash
-   cd frontend && yarn start
+   cd typescript/ui && yarn start
    ```
 
 ## Testing

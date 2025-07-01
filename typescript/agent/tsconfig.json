@@ -8,7 +8,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "../",
+    "rootDir": "./",
     "declaration": true,
     "sourceMap": true,
     "noUnusedLocals": true,
