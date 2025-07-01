@@ -1,5 +1,3 @@
-// frontend/src/types.ts
-
 // Define valid meal types
 export type MealType = 'breakfast' | 'lunch' | 'dinner';
 

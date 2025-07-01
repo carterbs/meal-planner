@@ -20,9 +20,5 @@
         "noEmit": true,
         "jsx": "react",
         "baseUrl": "./src"
-    },
-    "include": [
-        "src",
-        "../shared/ts"
-    ]
+    }
 }

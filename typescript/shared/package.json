@@ -1,0 +1,13 @@
+{
+  "name": "@meal-planner/shared",
+  "version": "1.0.0",
+  "main": "dist/days.js",
+  "types": "dist/days.d.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

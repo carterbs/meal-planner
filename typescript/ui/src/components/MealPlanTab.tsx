@@ -15,7 +15,7 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { Meal, Ingredient } from '../types';
 import { MealAutocomplete } from './MealAutocomplete';
-import { DAYS_OF_THE_WEEK } from '../../../shared/ts/days';
+import { DAYS_OF_THE_WEEK } from '../../../shared/days';
 
 interface MealPlanTabProps {
   showToast: (message: string) => void;

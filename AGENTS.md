@@ -70,7 +70,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
 
 ## Documentation
 - High level architecture and features are described in `docs/MealPlannerSummary.md`.
-- The frontend test strategy is documented in `frontend/TEST-IMPROVEMENTS.md`.
+- The frontend test strategy is documented in `typescript/frontend/TEST-IMPROVEMENTS.md`.
 
 ## When making changes
 - Keep Go and TypeScript code well tested. Add unit tests in the appropriate `*_test.go` or `.test.tsx` files.

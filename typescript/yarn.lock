@@ -2585,6 +2585,44 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@meal-planner/shared@workspace:shared":
+  version: 0.0.0-use.local
+  resolution: "@meal-planner/shared@workspace:shared"
+  dependencies:
+    typescript: "npm:^5.8.3"
+  languageName: unknown
+  linkType: soft
+
+"@meal-planner/ui@workspace:ui":
+  version: 0.0.0-use.local
+  resolution: "@meal-planner/ui@workspace:ui"
+  dependencies:
+    "@dnd-kit/core": "npm:^6.3.1"
+    "@dnd-kit/sortable": "npm:^10.0.0"
+    "@dnd-kit/utilities": "npm:^3.2.2"
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.0"
+    "@mui/icons-material": "npm:^6.4.6"
+    "@mui/material": "npm:^6.4.4"
+    "@mui/x-data-grid": "npm:^7.27.0"
+    "@testing-library/dom": "npm:^10.4.0"
+    "@testing-library/jest-dom": "npm:^6.6.3"
+    "@testing-library/react": "npm:^16.2.0"
+    "@testing-library/user-event": "npm:^14.6.1"
+    "@types/jest": "npm:^29.5.14"
+    "@types/node": "npm:^22.13.4"
+    "@types/react": "npm:^19.0.8"
+    "@types/react-beautiful-dnd": "npm:^13.1.8"
+    "@types/react-dom": "npm:^18.2.25"
+    date-fns: "npm:^4.1.0"
+    react: "npm:^18.2.0"
+    react-beautiful-dnd: "npm:^13.1.1"
+    react-dom: "npm:^18.2.0"
+    react-scripts: "npm:^5.0.1"
+    typescript: "npm:^4.9.3"
+  languageName: unknown
+  linkType: soft
+
 "@mui/core-downloads-tracker@npm:^6.4.4":
   version: 6.4.4
   resolution: "@mui/core-downloads-tracker@npm:6.4.4"
@@ -3573,6 +3611,15 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10c0/ccdd4b2aa9e35cba4e51f3c673c2caa5bb67b6dee562d4b07ac3d3547cd68fd1ee9f21b95d55972087bdd4bdb340e256cccedb20f7129c273f24214f334708aa
+  languageName: node
+  linkType: hard
+
+"@types/react-dom@npm:^18.2.25":
+  version: 18.3.7
+  resolution: "@types/react-dom@npm:18.3.7"
+  peerDependencies:
+    "@types/react": ^18.0.0
+  checksum: 10c0/8bd309e2c3d1604a28a736a24f96cbadf6c05d5288cfef8883b74f4054c961b6b3a5e997fd5686e492be903c8f3380dba5ec017eff3906b1256529cd2d39603e
   languageName: node
   linkType: hard
 
@@ -14296,6 +14343,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:^5.8.3":
+  version: 5.8.3
+  resolution: "typescript@npm:5.8.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10c0/5f8bb01196e542e64d44db3d16ee0e4063ce4f3e3966df6005f2588e86d91c03e1fb131c2581baf0fb65ee79669eea6e161cd448178986587e9f6844446dbb48
+  languageName: node
+  linkType: hard
+
 "typescript@patch:typescript@npm%3A^4.9.3#optional!builtin<compat/typescript>":
   version: 4.9.5
   resolution: "typescript@patch:typescript@npm%3A4.9.5#optional!builtin<compat/typescript>::version=4.9.5&hash=289587"
@@ -14303,6 +14360,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10c0/e3333f887c6829dfe0ab6c1dbe0dd1e3e2aeb56c66460cb85c5440c566f900c833d370ca34eb47558c0c69e78ced4bfe09b8f4f98b6de7afed9b84b8d1dd06a1
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A^5.8.3#optional!builtin<compat/typescript>":
+  version: 5.8.3
+  resolution: "typescript@patch:typescript@npm%3A5.8.3#optional!builtin<compat/typescript>::version=5.8.3&hash=5786d5"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10c0/39117e346ff8ebd87ae1510b3a77d5d92dae5a89bde588c747d25da5c146603a99c8ee588c7ef80faaf123d89ed46f6dbd918d534d641083177d5fac38b8a1cb
   languageName: node
   linkType: hard
 

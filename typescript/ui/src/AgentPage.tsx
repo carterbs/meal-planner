@@ -31,8 +31,8 @@ import { ShoppingListItem } from './types';
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
 import type { SxProps, Theme } from '@mui/material';
-import { DAYS_OF_THE_WEEK } from '../../shared/ts/days';
-import type { DayOfTheWeek } from '../../shared/ts/days';
+import { DAYS_OF_THE_WEEK } from '@meal-planner/shared/dist/days';
+import type { DayOfTheWeek } from '@meal-planner/shared/dist/days';
 
 // Style variables
 const styles = {

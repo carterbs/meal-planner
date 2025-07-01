@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "declaration": true,
+    "declarationDir": "dist",
+    "module": "esnext",
+    "target": "es6",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true
+  },
+  "include": ["days.ts"]
+}

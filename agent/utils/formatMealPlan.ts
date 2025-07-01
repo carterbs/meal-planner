@@ -1,5 +1,5 @@
 import { WeeklyMealPlan } from '../shared/types';
-import { DAYS_OF_THE_WEEK as WEEK_DAYS } from '../../shared/ts/days';
+import { DAYS_OF_THE_WEEK as WEEK_DAYS } from '../../typescript/shared/days';
 
 /**
  * Formats a WeeklyMealPlan into HTML and plain-text tables.
