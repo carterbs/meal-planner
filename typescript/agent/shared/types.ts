@@ -1,9 +1,4 @@
 import { z } from 'zod';
-import type {
-  ShoppingListItem,
-  WeeklyMealPlan,
-  MealInfo,
-} from '@meal-planner/shared/dist/types';
 
 // Core workflow types
 export enum WorkflowType {
@@ -63,7 +58,6 @@ export interface FeedbackEntry {
   timestamp: Date;
   meal_plan_version: number;
 }
-
 
 export interface RecipeData {
   id?: number;

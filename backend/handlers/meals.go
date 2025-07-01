@@ -1,14 +1,11 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"mealplanner/dummy"
 	"mealplanner/models"
@@ -96,42 +93,26 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		plan        models.WeeklyMealPlan
-		planBytes   []byte
-		planSource  string // "session" or "checkpoint"
-		session     *models.AgentSession
+		plan      models.WeeklyMealPlan
+		planBytes []byte
 	)
 
-	// --- Try to load plan from session first ---
-	sess, err := models.GetAgentSession(DB, payload.ThreadID)
-	if err == nil && sess.MealPlan != nil {
-		if err := json.Unmarshal(sess.MealPlan, &plan); err == nil {
-			planSource = "session"
-			session = sess
-		}
+	// Load plan from workflow checkpoints
+	checkpointData, _, err := models.GetWorkflowCheckpoint(DB, payload.ThreadID)
+	if err != nil {
+		http.Error(w, "Failed to fetch meal plan: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if checkpointData == nil {
+		http.Error(w, "No meal plan found for threadId", http.StatusNotFound)
+		return
+	}
+	if err := json.Unmarshal(checkpointData, &plan); err != nil {
+		http.Error(w, "Failed to parse meal plan: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	// --- Fallback to workflow checkpoint if needed ---
-	if planSource == "" {
-		checkpointData, _, err2 := models.GetWorkflowCheckpoint(DB, payload.ThreadID)
-		if err2 != nil {
-			if errors.Is(err2, sql.ErrNoRows) {
-				http.Error(w, "No meal plan found for threadId", http.StatusNotFound)
-			} else {
-				http.Error(w, "Failed to fetch meal plan: "+err2.Error(), http.StatusInternalServerError)
-			}
-			return
-		}
-		if checkpointData == nil {
-			http.Error(w, "No meal plan found for threadId", http.StatusNotFound)
-			return
-		}
-		if err := json.Unmarshal(checkpointData, &plan); err != nil {
-			http.Error(w, "Failed to parse meal plan: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		planSource = "checkpoint"
-	}
+	
 
 	// Validate and remove the meal from the plan
 	if err := models.RemoveMealFromPlan(&plan, payload.DayIndex, payload.MealType); err != nil {
@@ -149,20 +130,10 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if planSource == "session" {
-		session.MealPlan = planBytes
-		shoppingJSON, _ := json.Marshal(plan.ShoppingList)
-		session.ShoppingList = string(shoppingJSON)
-		session.UpdatedAt = time.Now()
-		if err := models.UpdateAgentSession(DB, session); err != nil {
-			http.Error(w, "Failed to update session: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-	} else {
-		if err := models.UpdateWorkflowCheckpoint(DB, payload.ThreadID, planBytes); err != nil {
-			http.Error(w, "Failed to update workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
+	// Persist updated plan via workflow checkpoints
+	if err := models.UpdateWorkflowCheckpoint(DB, payload.ThreadID, planBytes); err != nil {
+		http.Error(w, "Failed to update workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

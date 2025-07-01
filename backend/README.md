@@ -35,7 +35,7 @@ The remainder of the API is served under `/api/*` and handled in the `handlers` 
 
 ## Database and Models
 
-PostgreSQL is used for persistence. Migrations live in `backend/migrations` and are executed automatically on startup. The schema contains tables for meals, ingredients, recipe steps and workflow checkpoints. *(The `agent_sessions` table is being removed and is intentionally omitted here.)* Models in `backend/models` implement all data access and business logic.
+PostgreSQL is used for persistence. Migrations live in `backend/migrations` and are executed automatically on startup. The schema contains tables for meals, ingredients, recipe steps and workflow checkpoints. Models in `backend/models` implement all data access and business logic.
 
 Key models include:
 
