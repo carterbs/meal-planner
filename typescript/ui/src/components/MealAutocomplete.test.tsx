@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MealAutocomplete } from './MealAutocomplete';
-import { Meal } from '../types';
+import { Meal } from '@meal-planner/shared/types';
 
 // Mock fetch
 const mockFetch = jest.fn();

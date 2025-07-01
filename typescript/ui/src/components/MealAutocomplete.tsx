@@ -7,7 +7,7 @@ import {
   Chip,
   CircularProgress,
 } from '@mui/material';
-import { Meal } from '../types';
+import { Meal } from '@meal-planner/shared/types';
 
 interface MealAutocompleteProps {
   value: Meal | null;

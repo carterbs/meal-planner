@@ -15,7 +15,8 @@ import {
   Alert,
   Divider,
 } from '@mui/material';
-import { Meal, Ingredient, Step } from './types';
+import { Ingredient, Step } from './types';
+import { Meal } from '@meal-planner/shared/types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import StepsEditor from './components/StepsEditor';
@@ -94,7 +95,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
   const doubleIngredientQuantities = () => {
     // Double quantities in already processed ingredients
-    const doubledIngredients = meal.ingredients.map((ing) => ({
+    const doubledIngredients = meal.ingredients.map((ing: Ingredient) => ({
       ...ing,
       Quantity: ing.Quantity * 2,
     }));

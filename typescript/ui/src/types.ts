@@ -3,10 +3,10 @@ export type {
   MealType,
   Ingredient,
   Step,
-  Meal,
   ShoppingListItem,
-} from '@meal-planner/shared/dist/types';
+} from '@meal-planner/shared/types';
 
+import { Meal } from '@meal-planner/shared/types';
 export interface MealPlan {
   [day: string]: Meal;
 }
