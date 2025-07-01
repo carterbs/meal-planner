@@ -189,7 +189,7 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 		return &mealCopy
 	}
 
-	dayNames := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	dayNames := models.DaysOfTheWeek
 	mealTypes := []string{"breakfast", "lunch", "dinner"}
 
 	plan := &models.WeeklyMealPlan{Days: make([]models.PlanDay, 0, 21)}
