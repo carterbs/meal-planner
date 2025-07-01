@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -17,19 +17,19 @@ import {
   IconButton,
   Container,
   Divider,
-  createTheme
-} from "@mui/material";
-import { 
-  RestaurantMenu as RestaurantMenuIcon, 
+  createTheme,
+} from '@mui/material';
+import {
+  RestaurantMenu as RestaurantMenuIcon,
   ExitToApp as ExitToAppIcon,
   ExpandMore as ExpandMoreIcon,
   ShoppingCart as ShoppingCartIcon,
   Send as SendIcon,
-} from "@mui/icons-material";
-import MealPlanDisplay, { WeeklyMealPlan } from "./components/MealPlanDisplay";
-import { ShoppingListItem } from "./types";
-import TypingIndicator from "./components/TypingIndicator";
-import useSession from "./hooks/useSession";
+} from '@mui/icons-material';
+import MealPlanDisplay, { WeeklyMealPlan } from './components/MealPlanDisplay';
+import { ShoppingListItem } from './types';
+import TypingIndicator from './components/TypingIndicator';
+import useSession from './hooks/useSession';
 import type { SxProps, Theme } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '../../shared/ts/days';
 import type { DayOfTheWeek } from '../../shared/ts/days';
@@ -94,34 +94,37 @@ const styles = {
     textAlign: 'center',
     p: 4,
   } as SxProps<Theme>,
-  messageContainer: (isUser: boolean) => ({
-    display: 'flex',
-    justifyContent: isUser ? 'flex-end' : 'flex-start',
-    mb: 2,
-    animation: 'fadeIn 0.3s ease-out',
-    width: '100%',
-    px: 2,
-  }) as SxProps<Theme>,
-  messageContent: (isUser: boolean) => ({
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '8px',
-    maxWidth: '85%',
-    flexDirection: isUser ? 'row-reverse' : 'row',
-  }) as SxProps<Theme>,
-  messageBubble: (isUser: boolean) => ({
-    p: 2,
-    borderRadius: '18px',
-    borderTopLeftRadius: isUser ? '18px' : '4px',
-    borderTopRightRadius: isUser ? '4px' : '18px',
-    bgcolor: isUser ? 'primary.main' : 'grey.100',
-    color: isUser ? 'primary.contrastText' : 'text.primary',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-    position: 'relative',
-    maxWidth: '100%',
-    marginLeft: isUser ? 0 : '8px',
-    marginRight: isUser ? '8px' : 0,
-  }) as SxProps<Theme>,
+  messageContainer: (isUser: boolean) =>
+    ({
+      display: 'flex',
+      justifyContent: isUser ? 'flex-end' : 'flex-start',
+      mb: 2,
+      animation: 'fadeIn 0.3s ease-out',
+      width: '100%',
+      px: 2,
+    }) as SxProps<Theme>,
+  messageContent: (isUser: boolean) =>
+    ({
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '8px',
+      maxWidth: '85%',
+      flexDirection: isUser ? 'row-reverse' : 'row',
+    }) as SxProps<Theme>,
+  messageBubble: (isUser: boolean) =>
+    ({
+      p: 2,
+      borderRadius: '18px',
+      borderTopLeftRadius: isUser ? '18px' : '4px',
+      borderTopRightRadius: isUser ? '4px' : '18px',
+      bgcolor: isUser ? 'primary.main' : 'grey.100',
+      color: isUser ? 'primary.contrastText' : 'text.primary',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+      position: 'relative',
+      maxWidth: '100%',
+      marginLeft: isUser ? 0 : '8px',
+      marginRight: isUser ? '8px' : 0,
+    }) as SxProps<Theme>,
   avatar: {
     width: 32,
     height: 32,
@@ -197,19 +200,19 @@ const styles = {
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#6b8c5d',  // Sage green
+      main: '#6b8c5d', // Sage green
       light: '#8baa7d',
       dark: '#4a5e40',
       contrastText: '#ffffff',
     },
     secondary: {
-      main: '#8b7355',  // Warm brown
+      main: '#8b7355', // Warm brown
       light: '#b39f86',
       dark: '#5f4a2f',
       contrastText: '#ffffff',
     },
     background: {
-      default: '#f8f5ed',  // Warm off-white
+      default: '#f8f5ed', // Warm off-white
       paper: '#ffffff',
     },
   },
@@ -260,13 +263,13 @@ const theme = createTheme({
 function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
   let html = '<table style="border-collapse: collapse; width: 100%;">';
   html +=
-    "<thead><tr>" +
+    '<thead><tr>' +
     '<th style="border:1px solid #ddd;padding:8px;text-align:left;">Day</th>' +
     '<th style="border:1px solid #ddd;padding:8px;text-align:left;">Meals</th>' +
-    "</tr></thead><tbody>";
+    '</tr></thead><tbody>';
 
-  let text = "Day | Meals\n";
-  text += "----|------\n";
+  let text = 'Day | Meals\n';
+  text += '----|------\n';
 
   DAYS_OF_THE_WEEK.forEach((day: DayOfTheWeek, idx: number) => {
     const entries = plan.days.filter((d) => d.dayIndex === idx);
@@ -278,7 +281,7 @@ function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
         const meal = e.meal!;
         return `<strong>${e.mealType.charAt(0).toUpperCase() + e.mealType.slice(1)}</strong>: ${meal.name} (${meal.effort})`;
       })
-      .join("<br>");
+      .join('<br>');
     html +=
       `<tr><td style="border:1px solid #ddd;padding:8px;">${day}</td>` +
       `<td style="border:1px solid #ddd;padding:8px;">${mealsHtml}</td></tr>`;
@@ -289,16 +292,16 @@ function formatMealPlan(plan: WeeklyMealPlan): { html: string; text: string } {
         const meal = e.meal!;
         return `${e.mealType}: ${meal.name} (${meal.effort})`;
       })
-      .join("; ");
+      .join('; ');
     text += `${day} | ${mealsText}\n`;
   });
 
-  html += "</tbody></table>";
+  html += '</tbody></table>';
   return { html, text };
 }
 
 interface ChatMessage {
-  sender: "user" | "agent";
+  sender: 'user' | 'agent';
   text: string;
 }
 
@@ -309,7 +312,7 @@ interface SessionInfo {
 
 const AgentPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(null);
@@ -359,23 +362,23 @@ const AgentPage: React.FC = () => {
   const startSession = async () => {
     setIsWorking(true);
     try {
-      const res = await fetch("/api/agent/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/agent/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          participants: ["user"],
-          workflowType: "meal_planning",
+          participants: ['user'],
+          workflowType: 'meal_planning',
         }),
       });
       const data = await res.json();
       setSession({ threadId: data.threadId, currentStep: data.currentStep });
-      localStorage.setItem("sessionId", data.threadId);
+      localStorage.setItem('sessionId', data.threadId);
 
       // Extract meal plan from various possible locations in response
       const plan =
         data.initialState?.meal_plan || data.raw?.meal_plan || data.meal_plan;
       if (plan) {
-        console.log("Setting meal plan from session start:", plan);
+        console.log('Setting meal plan from session start:', plan);
         setMealPlan(plan);
       }
 
@@ -386,9 +389,9 @@ const AgentPage: React.FC = () => {
       if (list) {
         setShoppingList(list);
       }
-      if (data.message) setMessages([{ sender: "agent", text: data.message }]);
+      if (data.message) setMessages([{ sender: 'agent', text: data.message }]);
     } catch (err) {
-      console.error("Failed to start session", err);
+      console.error('Failed to start session', err);
     } finally {
       setIsWorking(false);
     }
@@ -422,35 +425,38 @@ const AgentPage: React.FC = () => {
         resumeData.raw?.shopping_list ||
         resumeData.initialState?.shopping_list;
       if (list) setShoppingList(list as ShoppingListItem[]);
-      
+
       // Set all previous messages from the session
       if (resumeData.messages && Array.isArray(resumeData.messages)) {
-        const formattedMessages: ChatMessage[] = resumeData.messages.map(msg => ({
-          sender: msg.sender === 'user' ? 'user' as const : 'agent' as const,
-          text: msg.message
-        }));
+        const formattedMessages: ChatMessage[] = resumeData.messages.map(
+          (msg) => ({
+            sender:
+              msg.sender === 'user' ? ('user' as const) : ('agent' as const),
+            text: msg.message,
+          }),
+        );
         setMessages(formattedMessages);
       } else if (resumeData.message) {
         // Fallback to single message if messages array is not available
-        setMessages([{ sender: "agent" as const, text: resumeData.message }]);
+        setMessages([{ sender: 'agent' as const, text: resumeData.message }]);
       }
     }
   }, [resumeData]);
 
   const sendMessage = async () => {
     if (!session || !input.trim()) return;
-    const userMsg: ChatMessage = { sender: "user", text: input };
+    const userMsg: ChatMessage = { sender: 'user', text: input };
     setMessages((prev) => [...prev, userMsg]);
-    setInput("");
+    setInput('');
     setIsWorking(true);
     try {
-      const res = await fetch("/api/agent/message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/agent/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           threadId: session.threadId,
           message: userMsg.text,
-          from: "user",
+          from: 'user',
           interactive: false,
         }),
       });
@@ -458,13 +464,13 @@ const AgentPage: React.FC = () => {
       if (data.message)
         setMessages((prev) => [
           ...prev,
-          { sender: "agent", text: data.message },
+          { sender: 'agent', text: data.message },
         ]);
 
       // Check for meal plan in both top level and raw
       const newMealPlan = data.meal_plan || data.raw?.meal_plan;
       if (newMealPlan) {
-        console.log("Applying highlights for new meal plan:", newMealPlan);
+        console.log('Applying highlights for new meal plan:', newMealPlan);
         applyHighlights(newMealPlan);
       }
 
@@ -472,7 +478,7 @@ const AgentPage: React.FC = () => {
       const newShoppingList = data.shopping_list || data.raw?.shopping_list;
       if (newShoppingList) setShoppingList(newShoppingList);
     } catch (err) {
-      console.error("Failed to send message", err);
+      console.error('Failed to send message', err);
     } finally {
       setIsWorking(false);
     }
@@ -483,8 +489,8 @@ const AgentPage: React.FC = () => {
     const { html, text } = formatMealPlan(mealPlan);
     try {
       const item = new ClipboardItem({
-        "text/html": new Blob([html], { type: "text/html" }),
-        "text/plain": new Blob([text], { type: "text/plain" }),
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([text], { type: 'text/plain' }),
       });
       navigator.clipboard.write([item]);
     } catch (e) {
@@ -495,13 +501,17 @@ const AgentPage: React.FC = () => {
   const copyShoppingList = () => {
     if (!shoppingList) return;
     const text = shoppingList
-      .map((i) => `- ${Number(i.quantity) > 0 ? `${i.quantity} ` : ''}${i.ingredient}`.trim())
-      .join("\n");
+      .map((i) =>
+        `- ${Number(i.quantity) > 0 ? `${i.quantity} ` : ''}${i.ingredient}`.trim(),
+      )
+      .join('\n');
     navigator.clipboard.writeText(text);
   };
 
-  const handleKeyPress: React.KeyboardEventHandler<HTMLDivElement> = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+  const handleKeyPress: React.KeyboardEventHandler<HTMLDivElement> = (
+    event,
+  ) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       sendMessage();
     }
@@ -541,7 +551,11 @@ const AgentPage: React.FC = () => {
         <Box sx={styles.contentContainer}>
           {/* Left Side - Chat */}
           <Paper elevation={0} sx={styles.chatContainer}>
-            <Box ref={chatRef} data-testid="chat-history" sx={styles.chatMessages}>
+            <Box
+              ref={chatRef}
+              data-testid="chat-history"
+              sx={styles.chatMessages}
+            >
               {messages.length === 0 && !isWorking ? (
                 <Box sx={styles.welcomeMessage}>
                   <RestaurantMenuIcon sx={styles.restaurantIcon} />
@@ -556,17 +570,22 @@ const AgentPage: React.FC = () => {
               ) : (
                 <>
                   {messages.map((message, index) => (
-                    <Box key={index} sx={styles.messageContainer(message.sender === "user")}>
-                      <Box sx={styles.messageContent(message.sender === "user")}>
-                        <Avatar 
-                          sx={styles.avatar}
-                        >
-                          {message.sender === "agent" ? 'AI' : 'You'}
+                    <Box
+                      key={index}
+                      sx={styles.messageContainer(message.sender === 'user')}
+                    >
+                      <Box
+                        sx={styles.messageContent(message.sender === 'user')}
+                      >
+                        <Avatar sx={styles.avatar}>
+                          {message.sender === 'agent' ? 'AI' : 'You'}
                         </Avatar>
-                        <Box sx={styles.messageBubble(message.sender === "user")}>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
+                        <Box
+                          sx={styles.messageBubble(message.sender === 'user')}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
                               lineHeight: 1.5,
                               fontSize: '0.9375rem',
                               wordBreak: 'break-word',
@@ -583,7 +602,7 @@ const AgentPage: React.FC = () => {
                 </>
               )}
             </Box>
-            
+
             {/* Chat Input */}
             <Box sx={styles.chatInputContainer}>
               <Box sx={styles.inputContainer}>
@@ -611,7 +630,7 @@ const AgentPage: React.FC = () => {
               </Box>
             </Box>
           </Paper>
-          
+
           {/* Right Side - Meal Plan */}
           <Box sx={styles.mealPlanContainer}>
             <Paper elevation={0} sx={styles.mealPlanPaper}>
@@ -632,16 +651,13 @@ const AgentPage: React.FC = () => {
                       </Button>
                     </Box>
                   </Box>
-                  <MealPlanDisplay 
-                    plan={mealPlan} 
-                    highlights={highlights}
-                  />
-                  
+                  <MealPlanDisplay plan={mealPlan} highlights={highlights} />
+
                   {/* Shopping List Accordion */}
                   {shoppingList && shoppingList.length > 0 && (
-                    <Accordion 
+                    <Accordion
                       elevation={0}
-                      sx={{ 
+                      sx={{
                         mt: 3,
                         '&:before': { display: 'none' },
                         border: '1px solid',
@@ -668,14 +684,24 @@ const AgentPage: React.FC = () => {
                           },
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        >
                           <ShoppingCartIcon fontSize="small" color="action" />
-                          <Typography variant="subtitle1">Shopping List</Typography>
+                          <Typography variant="subtitle1">
+                            Shopping List
+                          </Typography>
                         </Box>
                       </AccordionSummary>
                       <AccordionDetails sx={{ p: 0 }}>
                         <Box sx={{ p: 2, pt: 1 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'flex-end',
+                              mb: 1,
+                            }}
+                          >
                             <Button
                               size="small"
                               onClick={(e) => {
@@ -689,12 +715,15 @@ const AgentPage: React.FC = () => {
                           </Box>
                           <Box component="div" sx={{ p: 0, m: 0 }}>
                             {shoppingList.map((item, index) => (
-                              <Box 
-                                component="div" 
-                                key={index} 
+                              <Box
+                                component="div"
+                                key={index}
                                 sx={styles.shoppingListItem}
                               >
-                                {Number(item.quantity) > 0 ? `${item.quantity} ` : ''}{item.ingredient}
+                                {Number(item.quantity) > 0
+                                  ? `${item.quantity} `
+                                  : ''}
+                                {item.ingredient}
                                 {item.category && ` (${item.category})`}
                               </Box>
                             ))}
@@ -722,12 +751,13 @@ const AgentPage: React.FC = () => {
                   <Box sx={{ mt: 2 }}>
                     <Box component="div" sx={{ p: 0, m: 0 }}>
                       {shoppingList.map((item, index) => (
-                        <Box 
-                          component="div" 
-                          key={index} 
+                        <Box
+                          component="div"
+                          key={index}
                           sx={styles.shoppingListItem}
                         >
-                          {Number(item.quantity) > 0 ? `${item.quantity} ` : ''}{item.ingredient}
+                          {Number(item.quantity) > 0 ? `${item.quantity} ` : ''}
+                          {item.ingredient}
                           {item.category && ` (${item.category})`}
                         </Box>
                       ))}
@@ -741,7 +771,8 @@ const AgentPage: React.FC = () => {
                     No meal plan generated yet
                   </Typography>
                   <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
-                    Start a conversation with the assistant to generate a personalized meal plan.
+                    Start a conversation with the assistant to generate a
+                    personalized meal plan.
                   </Typography>
                 </Box>
               )}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 export interface WorkflowState {
   threadId: string;
@@ -13,7 +13,7 @@ export default function useSession(startSession: () => Promise<void>) {
   const [resumeData, setResumeData] = useState<WorkflowState | undefined>();
 
   useEffect(() => {
-    const id = localStorage.getItem("sessionId");
+    const id = localStorage.getItem('sessionId');
     if (!id) return;
     setIsResuming(true);
     fetch(`/api/workflows/${id}`)
@@ -21,29 +21,29 @@ export default function useSession(startSession: () => Promise<void>) {
       .then((wf: WorkflowState) => {
         if (
           wf.current_step &&
-          wf.current_step.toLowerCase() !== "complete" &&
-          wf.status !== "ABANDONED"
+          wf.current_step.toLowerCase() !== 'complete' &&
+          wf.status !== 'ABANDONED'
         ) {
           setResumeData(wf);
         } else {
-          localStorage.removeItem("sessionId");
+          localStorage.removeItem('sessionId');
         }
       })
       .catch(() => {
-        localStorage.removeItem("sessionId");
+        localStorage.removeItem('sessionId');
       })
       .finally(() => setIsResuming(false));
   }, []);
 
   const startNewSession = async () => {
-    const existing = localStorage.getItem("sessionId");
+    const existing = localStorage.getItem('sessionId');
     if (existing) {
       try {
-        await fetch(`/api/workflows/${existing}/abandon`, { method: "POST" });
+        await fetch(`/api/workflows/${existing}/abandon`, { method: 'POST' });
       } catch {
         // ignore
       }
-      localStorage.removeItem("sessionId");
+      localStorage.removeItem('sessionId');
     }
     await startSession();
   };

@@ -11,7 +11,7 @@ describe('Toast', () => {
     render(
       <ThemeProvider theme={theme}>
         <Toast message="Saved" />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     expect(screen.getByText('Saved')).toBeInTheDocument();
   });
@@ -20,7 +20,7 @@ describe('Toast', () => {
     const { container } = render(
       <ThemeProvider theme={theme}>
         <Toast message={null} />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     expect(container.firstChild).toBeNull();
   });

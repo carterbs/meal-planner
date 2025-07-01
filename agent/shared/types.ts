@@ -4,7 +4,7 @@ import { z } from 'zod';
 export enum WorkflowType {
   MEAL_PLANNING = 'meal_planning',
   RECIPE_MANAGEMENT = 'recipe_management',
-  INGREDIENT_MANAGEMENT = 'ingredient_management'
+  INGREDIENT_MANAGEMENT = 'ingredient_management',
 }
 
 // Base workflow state interface
@@ -28,16 +28,16 @@ export enum MealPlanningStep {
   PROCESS_FEEDBACK = 'process_feedback',
   FINALIZE_PLAN = 'finalize_plan',
   GENERATE_SHOPPING_LIST = 'generate_shopping_list',
-  COMPLETE = 'complete'
+  COMPLETE = 'complete',
 }
 
 // Recipe management workflow steps
 export enum RecipeManagementStep {
   INITIATE = 'initiate',
   VALIDATE_RECIPE = 'validate_recipe',
-  SAVE_RECIPE = 'save_recipe',  
+  SAVE_RECIPE = 'save_recipe',
   CONFIRM = 'confirm',
-  COMPLETE = 'complete'
+  COMPLETE = 'complete',
 }
 
 // Ingredient management workflow steps
@@ -46,8 +46,8 @@ export enum IngredientManagementStep {
   EXAMINE_INGREDIENTS = 'examine_ingredients',
   PRESENT_CHANGES = 'present_changes',
   AWAIT_FEEDBACK = 'await_feedback',
-  CONFIRM = 'confirm', 
-  COMPLETE = 'complete'
+  CONFIRM = 'confirm',
+  COMPLETE = 'complete',
 }
 
 // Data structures
@@ -139,7 +139,10 @@ export interface IngredientManagementState extends BaseWorkflowState {
 }
 
 // Union type for all workflow states
-export type WorkflowState = MealPlanningState | RecipeManagementState | IngredientManagementState;
+export type WorkflowState =
+  | MealPlanningState
+  | RecipeManagementState
+  | IngredientManagementState;
 
 // Zod schemas for validation
 export const BaseWorkflowStateSchema = z.object({
@@ -148,85 +151,103 @@ export const BaseWorkflowStateSchema = z.object({
   participants: z.array(z.string()),
   created_at: z.date(),
   updated_at: z.date(),
-  current_step: z.string()
+  current_step: z.string(),
 });
 
 export const MealPlanningStateSchema = BaseWorkflowStateSchema.extend({
   workflow_type: z.literal(WorkflowType.MEAL_PLANNING),
-  meal_plan: z.object({
-    id: z.number().optional(),
-    days: z.array(z.object({
-      dayIndex: z.number(),
-      mealType: z.string(),
-      meal: z.object({
-        id: z.number(),
-        name: z.string(),
-        effort: z.number(),
-        hasRedMeat: z.boolean()
-      }).nullable()
-    }))
-  }).nullable(),
-  feedback_history: z.array(z.object({
-    from: z.string(),
-    message: z.string(),
-    timestamp: z.date(),
-    meal_plan_version: z.number()
-  })),
+  meal_plan: z
+    .object({
+      id: z.number().optional(),
+      days: z.array(
+        z.object({
+          dayIndex: z.number(),
+          mealType: z.string(),
+          meal: z
+            .object({
+              id: z.number(),
+              name: z.string(),
+              effort: z.number(),
+              hasRedMeat: z.boolean(),
+            })
+            .nullable(),
+        }),
+      ),
+    })
+    .nullable(),
+  feedback_history: z.array(
+    z.object({
+      from: z.string(),
+      message: z.string(),
+      timestamp: z.date(),
+      meal_plan_version: z.number(),
+    }),
+  ),
   iteration_count: z.number(),
-  shopping_list: z.array(z.object({
-    ingredient: z.string(),
-    quantity: z.string(),
-    category: z.string().optional()
-  })).nullable(),
+  shopping_list: z
+    .array(
+      z.object({
+        ingredient: z.string(),
+        quantity: z.string(),
+        category: z.string().optional(),
+      }),
+    )
+    .nullable(),
   is_finalized: z.boolean(),
   current_step: z.nativeEnum(MealPlanningStep),
   shopping_list_formatted: z.string().optional(),
-  _error: z.string().optional()
+  _error: z.string().optional(),
 });
 
 export const RecipeManagementStateSchema = BaseWorkflowStateSchema.extend({
   workflow_type: z.literal(WorkflowType.RECIPE_MANAGEMENT),
   recipe_action: z.enum(['create', 'update', 'delete']),
-  recipe_data: z.object({
-    id: z.number().optional(),
-    name: z.string(),
-    ingredients: z.array(z.string()),
-    steps: z.array(z.string()),
-    meal_type: z.string(),
-    effort: z.number()
-  }).nullable(),
+  recipe_data: z
+    .object({
+      id: z.number().optional(),
+      name: z.string(),
+      ingredients: z.array(z.string()),
+      steps: z.array(z.string()),
+      meal_type: z.string(),
+      effort: z.number(),
+    })
+    .nullable(),
   validation_errors: z.array(z.string()),
-  current_step: z.nativeEnum(RecipeManagementStep)
+  current_step: z.nativeEnum(RecipeManagementStep),
 });
 
 export const IngredientManagementStateSchema = BaseWorkflowStateSchema.extend({
   workflow_type: z.literal(WorkflowType.INGREDIENT_MANAGEMENT),
   ingredient_action: z.enum(['create', 'update', 'delete', 'substitute']),
-  ingredient_data: z.object({
-    id: z.number().optional(),
-    name: z.string(),
-    category: z.string().optional(),
-    properties: z.record(z.any()).optional()
-  }).nullable(),
-  substitution_data: z.object({
-    from_ingredient: z.string(),
-    to_ingredient: z.string(),
-    ratio: z.number().optional(),
-    notes: z.string().optional()
-  }).nullable(),
+  ingredient_data: z
+    .object({
+      id: z.number().optional(),
+      name: z.string(),
+      category: z.string().optional(),
+      properties: z.record(z.any()).optional(),
+    })
+    .nullable(),
+  substitution_data: z
+    .object({
+      from_ingredient: z.string(),
+      to_ingredient: z.string(),
+      ratio: z.number().optional(),
+      notes: z.string().optional(),
+    })
+    .nullable(),
   validation_errors: z.array(z.string()),
-  current_step: z.nativeEnum(IngredientManagementStep)
+  current_step: z.nativeEnum(IngredientManagementStep),
 });
 
 // Constants
 export const DAY_NAMES = [
   'Sunday',
-  'Monday', 
+  'Monday',
   'Tuesday',
   'Wednesday',
   'Thursday',
   'Friday',
-  'Saturday'
+  'Saturday',
 ] as const;
 
 export const VALIDATION_CRITERIA = {

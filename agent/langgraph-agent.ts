@@ -1,7 +1,11 @@
 import { WorkflowManager } from './manager';
 import { WorkflowRegistry } from './registry';
 import { PostgresCheckpointConfig } from './shared/checkpointer';
-import { ConversationHandler, ConversationMessage, ConversationResponse } from './workflows/conversation-handler';
+import {
+  ConversationHandler,
+  ConversationMessage,
+  ConversationResponse,
+} from './workflows/conversation-handler';
 import { FeedbackHandler, FeedbackInput } from './workflows/feedback-handler';
 import { workflowFactories } from './workflows/factories';
 import { WorkflowType } from './shared/types';
@@ -31,10 +35,15 @@ export class LangGraphAgent {
 
     // Initialize workflow manager
     this.workflowManager = new WorkflowManager(config.database, this.registry);
-    
+
     // Initialize handlers - we'll get the actual feedback handler after initialization
-    this.feedbackHandler = new FeedbackHandler(this.workflowManager['checkpointer']);
-    this.conversationHandler = new ConversationHandler(this.workflowManager, this.feedbackHandler);
+    this.feedbackHandler = new FeedbackHandler(
+      this.workflowManager['checkpointer'],
+    );
+    this.conversationHandler = new ConversationHandler(
+      this.workflowManager,
+      this.feedbackHandler,
+    );
   }
 
   async initialize(): Promise<void> {
@@ -45,9 +54,12 @@ export class LangGraphAgent {
     try {
       await this.workflowManager.initialize();
       this.isInitialized = true;
-      
+
       const supportedTypes = this.workflowManager.getSupportedWorkflowTypes();
-      console.log(`🚀 [LANGGRAPH-AGENT] Initialized with ${supportedTypes.length} workflow types:`, supportedTypes);
+      console.log(
+        `🚀 [LANGGRAPH-AGENT] Initialized with ${supportedTypes.length} workflow types:`,
+        supportedTypes,
+      );
     } catch (error) {
       console.error(`❌ [LANGGRAPH-AGENT] Initialization failed:`, error);
       throw error;
@@ -72,7 +84,9 @@ export class LangGraphAgent {
   /**
    * Handle a conversation message
    */
-  async handleMessage(message: ConversationMessage): Promise<ConversationResponse> {
+  async handleMessage(
+    message: ConversationMessage,
+  ): Promise<ConversationResponse> {
     this.ensureInitialized();
     return await this.conversationHandler.handleMessage(message);
   }
@@ -88,9 +102,14 @@ export class LangGraphAgent {
   /**
    * Start a new workflow
    */
-  async startWorkflow(type: WorkflowType, participants: string[] = ['brad']): Promise<string> {
+  async startWorkflow(
+    type: WorkflowType,
+    participants: string[] = ['brad'],
+  ): Promise<string> {
     this.ensureInitialized();
-    return await this.workflowManager.startWorkflow(type, { participants: participants });
+    return await this.workflowManager.startWorkflow(type, {
+      participants: participants,
+    });
   }
 
   /**
@@ -146,50 +165,65 @@ export class LangGraphAgent {
    */
   async getStats() {
     this.ensureInitialized();
-    
+
     const activeSessionCount = this.workflowManager.getActiveSessionCount();
     const supportedTypes = this.workflowManager.getSupportedWorkflowTypes();
     const allWorkflows = await this.workflowManager.listWorkflows();
-    
+
     return {
       activeSessionCount,
       supportedWorkflowTypes: supportedTypes,
       totalWorkflows: allWorkflows.length,
-      workflowsByType: supportedTypes.reduce((acc, type) => {
-        acc[type] = allWorkflows.filter(w => w.workflowType === type).length;
-        return acc;
-      }, {} as Record<WorkflowType, number>)
+      workflowsByType: supportedTypes.reduce(
+        (acc, type) => {
+          acc[type] = allWorkflows.filter(
+            (w) => w.workflowType === type,
+          ).length;
+          return acc;
+        },
+        {} as Record<WorkflowType, number>,
+      ),
     };
   }
 
   /**
    * Health check
    */
-  async healthCheck(): Promise<{ status: 'healthy' | 'unhealthy', details: any }> {
+  async healthCheck(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    details: any;
+  }> {
     try {
       if (!this.isInitialized) {
-        return { status: 'unhealthy', details: { error: 'Agent not initialized' } };
+        return {
+          status: 'unhealthy',
+          details: { error: 'Agent not initialized' },
+        };
       }
 
       const stats = await this.getStats();
-      return { 
-        status: 'healthy', 
+      return {
+        status: 'healthy',
         details: {
           ...stats,
-          initialized: this.isInitialized
-        }
+          initialized: this.isInitialized,
+        },
       };
     } catch (error) {
-      return { 
-        status: 'unhealthy', 
-        details: { error: error instanceof Error ? error.message : String(error) }
+      return {
+        status: 'unhealthy',
+        details: {
+          error: error instanceof Error ? error.message : String(error),
+        },
       };
     }
   }
 
   private ensureInitialized(): void {
     if (!this.isInitialized) {
-      throw new Error('Agent must be initialized before use. Call initialize() first.');
+      throw new Error(
+        'Agent must be initialized before use. Call initialize() first.',
+      );
     }
   }
 
@@ -199,7 +233,9 @@ export class LangGraphAgent {
   async getWorkflowState(threadId: string): Promise<MealPlanningState> {
     this.ensureInitialized();
     // @ts-ignore
-    const tuple = await this.workflowManager['checkpointer'].getTuple({ configurable: { threadId: threadId } });
+    const tuple = await this.workflowManager['checkpointer'].getTuple({
+      configurable: { threadId: threadId },
+    });
     if (!tuple) throw new Error(`No state found for thread ${threadId}`);
     const [checkpoint] = tuple;
     return checkpoint.channel_values as MealPlanningState;
@@ -207,7 +243,9 @@ export class LangGraphAgent {
 }
 
 // Example usage and backward compatibility
-export async function createLangGraphMealPlannerAgent(config: LangGraphAgentConfig): Promise<LangGraphAgent> {
+export async function createLangGraphMealPlannerAgent(
+  config: LangGraphAgentConfig,
+): Promise<LangGraphAgent> {
   const agent = new LangGraphAgent(config);
   await agent.initialize();
   return agent;
@@ -221,9 +259,9 @@ async function main() {
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_NAME || 'meal_planner_dev',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'password'
+      password: process.env.DB_PASSWORD || 'password',
     },
-    defaultParticipants: ['brad', 'shannon']
+    defaultParticipants: ['brad', 'shannon'],
   };
 
   const agent = new LangGraphAgent(config);
@@ -234,7 +272,10 @@ async function main() {
 
   try {
     await agent.initialize();
-    await io.sendMessage('Welcome to the Meal Planner! Type your messages below.', 'System');
+    await io.sendMessage(
+      'Welcome to the Meal Planner! Type your messages below.',
+      'System',
+    );
 
     while (true) {
       const input = await io.receiveInput('Your message', user);
@@ -242,7 +283,7 @@ async function main() {
         from: user,
         message: input,
         timestamp: new Date(),
-        threadId
+        threadId,
       });
       threadId = response.threadId;
       await io.sendMessage(response.message, 'Agent');
@@ -256,13 +297,13 @@ async function main() {
             await io.sendMessage(text, 'System');
             console.log('\nHTML version:\n', html);
 
-      // Auto copy HTML table to clipboard as HTML
-      try {
-        spawnSync('pbcopy', ['-Prefer', 'html'], { input: html });
-        console.log('✅ HTML table copied to clipboard (as HTML)');
-      } catch (err) {
-        console.error('⚠️ Failed to copy HTML to clipboard:', err);
-      }
+            // Auto copy HTML table to clipboard as HTML
+            try {
+              spawnSync('pbcopy', ['-Prefer', 'html'], { input: html });
+              console.log('✅ HTML table copied to clipboard (as HTML)');
+            } catch (err) {
+              console.error('⚠️ Failed to copy HTML to clipboard:', err);
+            }
           }
         }
         break;

@@ -28,28 +28,32 @@ describe('AddRecipeForm', () => {
     render(<AddRecipeForm onRecipeAdded={mockOnRecipeAdded} />);
 
     // Find the textarea by its placeholder text pattern
-    const rawIngredientsField = screen.getByPlaceholderText(/flour.*sugar.*salt/);
+    const rawIngredientsField =
+      screen.getByPlaceholderText(/flour.*sugar.*salt/);
 
     // Enter some raw ingredients with mixed formats
     fireEvent.change(rawIngredientsField, {
-      target: { value: '1 cup milk\n¼ tsp salt\n2.5 tbsp butter' }
+      target: { value: '1 cup milk\n¼ tsp salt\n2.5 tbsp butter' },
     });
 
     // Click the double quantities button
     fireEvent.click(screen.getByText('Double Quantities'));
 
     // Check that quantities were doubled in the raw ingredients
-    expect(rawIngredientsField).toHaveValue('2 cup milk\n0.5 tsp salt\n5 tbsp butter');
+    expect(rawIngredientsField).toHaveValue(
+      '2 cup milk\n0.5 tsp salt\n5 tbsp butter',
+    );
   });
 
   test('processes and converts fraction characters', () => {
     render(<AddRecipeForm onRecipeAdded={mockOnRecipeAdded} />);
 
-    const rawIngredientsField = screen.getByPlaceholderText(/flour.*sugar.*salt/);
+    const rawIngredientsField =
+      screen.getByPlaceholderText(/flour.*sugar.*salt/);
 
     // Enter ingredients with Unicode fraction characters
     fireEvent.change(rawIngredientsField, {
-      target: { value: '¾ cup sugar' }
+      target: { value: '¾ cup sugar' },
     });
 
     // Click the process button
@@ -66,7 +70,7 @@ describe('AddRecipeForm', () => {
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ id: 1, mealName: 'New Recipe' }),
-      })
+      }),
     );
 
     render(<AddRecipeForm onRecipeAdded={mockOnRecipeAdded} />);
@@ -76,9 +80,10 @@ describe('AddRecipeForm', () => {
     fireEvent.change(nameInput, { target: { value: 'New Recipe' } });
 
     // Fill in raw ingredients and process them
-    const rawIngredientsField = screen.getByPlaceholderText(/flour.*sugar.*salt/);
+    const rawIngredientsField =
+      screen.getByPlaceholderText(/flour.*sugar.*salt/);
     fireEvent.change(rawIngredientsField, {
-      target: { value: '1 cup flour\n2 tbsp sugar' }
+      target: { value: '1 cup flour\n2 tbsp sugar' },
     });
     fireEvent.click(screen.getByText('Process Ingredients'));
 
@@ -86,7 +91,9 @@ describe('AddRecipeForm', () => {
     // We don't use getByLabelText since the Slider doesn't use standard label association
     const effortLevelSection = screen.getByText('Effort Level');
     // The slider is in the same Grid item as the 'Effort Level' text
-    const slider = effortLevelSection.closest('.MuiGrid-item')?.querySelector('.MuiSlider-root');
+    const slider = effortLevelSection
+      .closest('.MuiGrid-item')
+      ?.querySelector('.MuiSlider-root');
     expect(slider).toBeInTheDocument();
 
     // We can't easily set the slider value directly in tests, so we'll skip this step

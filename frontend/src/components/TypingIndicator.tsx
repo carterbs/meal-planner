@@ -29,11 +29,17 @@ const Dot = styled('div')(({ theme }) => ({
 
 const TypingIndicator: React.FC = () => {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1 }} data-testid="typing-indicator">
+    <Box
+      sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1 }}
+      data-testid="typing-indicator"
+    >
       <Paper sx={{ p: 1, maxWidth: '70%', backgroundColor: '#fff' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Avatar sx={{ width: 24, height: 24 }}>A</Avatar>
-          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', py: 0.5 }} data-testid="typing-dots">
+          <Box
+            sx={{ display: 'flex', gap: 0.5, alignItems: 'center', py: 0.5 }}
+            data-testid="typing-dots"
+          >
             <Dot data-testid="dot-1" />
             <Dot data-testid="dot-2" />
             <Dot data-testid="dot-3" />

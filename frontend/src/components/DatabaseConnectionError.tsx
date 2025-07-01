@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Paper, Alert, AlertTitle, useTheme, alpha, Fade, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Alert,
+  AlertTitle,
+  useTheme,
+  alpha,
+  Fade,
+  CircularProgress,
+} from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SyncProblemIcon from '@mui/icons-material/SyncProblem';
@@ -9,7 +20,9 @@ interface DatabaseConnectionErrorProps {
   onRetry: () => Promise<void>;
 }
 
-export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = ({ onRetry }) => {
+export const DatabaseConnectionError: React.FC<
+  DatabaseConnectionErrorProps
+> = ({ onRetry }) => {
   const theme = useTheme();
   const [isRetrying, setIsRetrying] = useState(false);
 
@@ -33,7 +46,9 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
 
       // If the operation was too fast, wait a bit longer to avoid jittery UI
       if (elapsedTime < MIN_LOADING_DURATION) {
-        await new Promise(resolve => setTimeout(resolve, MIN_LOADING_DURATION - elapsedTime));
+        await new Promise((resolve) =>
+          setTimeout(resolve, MIN_LOADING_DURATION - elapsedTime),
+        );
       }
 
       setIsRetrying(false);
@@ -73,7 +88,7 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
               left: 0,
               right: 0,
               height: '6px',
-              bgcolor: theme.palette.error.main
+              bgcolor: theme.palette.error.main,
             }}
           />
 
@@ -82,7 +97,7 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
               sx={{
                 fontSize: 80,
                 color: theme.palette.error.main,
-                filter: 'drop-shadow(0 4px 8px rgba(211, 47, 47, 0.2))'
+                filter: 'drop-shadow(0 4px 8px rgba(211, 47, 47, 0.2))',
               }}
             />
           </Box>
@@ -96,7 +111,7 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
             sx={{
               fontFamily: 'Playfair Display, serif',
               fontWeight: 700,
-              mb: 2
+              mb: 2,
             }}
           >
             Database Connection Error
@@ -109,13 +124,15 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
               my: 3,
               boxShadow: `0 4px 12px ${alpha(theme.palette.error.main, 0.2)}`,
               '& .MuiAlert-icon': {
-                fontSize: '1.5rem'
-              }
+                fontSize: '1.5rem',
+              },
             }}
           >
-            <AlertTitle sx={{ fontWeight: 600, fontSize: '1rem' }}>Unable to connect to the database</AlertTitle>
-            The application is unable to connect to the database. This usually happens when the Docker container
-            for the database is not running.
+            <AlertTitle sx={{ fontWeight: 600, fontSize: '1rem' }}>
+              Unable to connect to the database
+            </AlertTitle>
+            The application is unable to connect to the database. This usually
+            happens when the Docker container for the database is not running.
           </Alert>
 
           <Box
@@ -124,7 +141,7 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
               p: 3,
               borderRadius: 2,
               bgcolor: alpha(theme.palette.primary.main, 0.05),
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
             }}
           >
             <Typography
@@ -149,16 +166,19 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
               <li>
                 <Typography variant="body1" paragraph fontWeight={500}>
                   Check if the PostgreSQL database container is started:
-                  <Box component="pre" sx={{
-                    backgroundColor: theme.palette.background.paper,
-                    p: 2,
-                    borderRadius: 1,
-                    mt: 1,
-                    fontSize: '0.875rem',
-                    overflowX: 'auto',
-                    border: `1px solid ${theme.palette.divider}`,
-                    fontFamily: 'monospace'
-                  }}>
+                  <Box
+                    component="pre"
+                    sx={{
+                      backgroundColor: theme.palette.background.paper,
+                      p: 2,
+                      borderRadius: 1,
+                      mt: 1,
+                      fontSize: '0.875rem',
+                      overflowX: 'auto',
+                      border: `1px solid ${theme.palette.divider}`,
+                      fontFamily: 'monospace',
+                    }}
+                  >
                     $ docker ps | grep postgres
                   </Box>
                 </Typography>
@@ -166,16 +186,19 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
               <li>
                 <Typography variant="body1" paragraph fontWeight={500}>
                   If not running, start it with:
-                  <Box component="pre" sx={{
-                    backgroundColor: theme.palette.background.paper,
-                    p: 2,
-                    borderRadius: 1,
-                    mt: 1,
-                    fontSize: '0.875rem',
-                    overflowX: 'auto',
-                    border: `1px solid ${theme.palette.divider}`,
-                    fontFamily: 'monospace'
-                  }}>
+                  <Box
+                    component="pre"
+                    sx={{
+                      backgroundColor: theme.palette.background.paper,
+                      p: 2,
+                      borderRadius: 1,
+                      mt: 1,
+                      fontSize: '0.875rem',
+                      overflowX: 'auto',
+                      border: `1px solid ${theme.palette.divider}`,
+                      fontFamily: 'monospace',
+                    }}
+                  >
                     $ docker-compose up -d
                   </Box>
                 </Typography>
@@ -190,7 +213,13 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
               onClick={handleRetry}
               size="large"
               disabled={isRetrying}
-              startIcon={isRetrying ? <CircularProgress size={20} color="inherit" /> : <ReplayIcon />}
+              startIcon={
+                isRetrying ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <ReplayIcon />
+                )
+              }
               sx={{
                 px: 4,
                 py: 1.5,
@@ -200,8 +229,8 @@ export const DatabaseConnectionError: React.FC<DatabaseConnectionErrorProps> = (
                 '&:hover': {
                   boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.35)}`,
                   transform: 'translateY(-2px)',
-                  transition: 'all 0.2s'
-                }
+                  transition: 'all 0.2s',
+                },
               }}
             >
               {isRetrying ? 'Attempting to Reconnect...' : 'Retry Connection'}

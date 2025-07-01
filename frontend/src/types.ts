@@ -1,7 +1,7 @@
 // frontend/src/types.ts
 
 // Define valid meal types
-export type MealType = "breakfast" | "lunch" | "dinner";
+export type MealType = 'breakfast' | 'lunch' | 'dinner';
 
 // Define the overall MealPlan type (mapping day to meal description)
 export interface Ingredient {

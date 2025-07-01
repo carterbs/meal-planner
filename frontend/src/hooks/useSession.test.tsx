@@ -24,7 +24,12 @@ describe('useSession', () => {
     localStorage.setItem('sessionId', 'abc');
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ threadId: 'abc', current_step: 'planning', workflow_type: 'meal_planning' })
+      json: () =>
+        Promise.resolve({
+          threadId: 'abc',
+          current_step: 'planning',
+          workflow_type: 'meal_planning',
+        }),
     });
     const startSession = jest.fn();
     const { result } = renderHook(() => useSession(startSession), { wrapper });
@@ -39,7 +44,8 @@ describe('useSession', () => {
     localStorage.setItem('sessionId', 'done');
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ threadId: 'done', current_step: 'complete' })
+      json: () =>
+        Promise.resolve({ threadId: 'done', current_step: 'complete' }),
     });
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
     await act(async () => {
@@ -52,7 +58,11 @@ describe('useSession', () => {
   test('startNewSession abandons existing session', async () => {
     localStorage.setItem('sessionId', 'old');
     (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ threadId: 'old', current_step: 'planning' }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ threadId: 'old', current_step: 'planning' }),
+      })
       .mockResolvedValueOnce({ ok: true });
     const startSession = jest.fn();
     const { result } = renderHook(() => useSession(startSession), { wrapper });
@@ -62,7 +72,9 @@ describe('useSession', () => {
     await act(async () => {
       await result.current.startNewSession();
     });
-    expect(global.fetch).toHaveBeenCalledWith('/api/workflows/old/abandon', { method: 'POST' });
+    expect(global.fetch).toHaveBeenCalledWith('/api/workflows/old/abandon', {
+      method: 'POST',
+    });
     expect(localStorage.getItem('sessionId')).toBeNull();
     expect(startSession).toHaveBeenCalled();
   });

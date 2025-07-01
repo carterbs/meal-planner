@@ -1,7 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
 import { WorkflowType } from './shared/types';
-import { PostgresCheckpointSaver, PostgresCheckpointConfig } from './shared/checkpointer';
+import {
+  PostgresCheckpointSaver,
+  PostgresCheckpointConfig,
+} from './shared/checkpointer';
 import { WorkflowRegistry } from './registry';
 import { debugLog } from './cli';
 
@@ -27,10 +30,7 @@ export class WorkflowManager {
   private registry: WorkflowRegistry;
   private activeSessions = new Map<string, WorkflowSession>();
 
-  constructor(
-    dbConfig: PostgresCheckpointConfig,
-    registry: WorkflowRegistry
-  ) {
+  constructor(dbConfig: PostgresCheckpointConfig, registry: WorkflowRegistry) {
     this.checkpointer = new PostgresCheckpointSaver(dbConfig);
     this.registry = registry;
   }
@@ -54,7 +54,7 @@ export class WorkflowManager {
   // Start a new workflow session
   async startWorkflow(
     type: WorkflowType,
-    options: WorkflowExecutionOptions = {}
+    options: WorkflowExecutionOptions = {},
   ): Promise<string> {
     if (!this.registry.isTypeSupported(type)) {
       throw new Error(`Unsupported workflow type: ${type}`);
@@ -72,7 +72,7 @@ export class WorkflowManager {
         createdAt: new Date(),
         lastUpdated: new Date(),
         currentStep: 'initiate',
-        isActive: true
+        isActive: true,
       };
 
       this.activeSessions.set(threadId, session);
@@ -81,22 +81,27 @@ export class WorkflowManager {
       const workflow = await this.registry.getOrCreateWorkflow(
         type,
         threadId,
-        this.checkpointer
+        this.checkpointer,
       );
 
       // Actually invoke the workflow up to feedback pause
-      await workflow.graph.invoke({}, {
-        configurable: {
-          threadId: threadId,
-          workflow_type: type
-        }
-      });
+      await workflow.graph.invoke(
+        {},
+        {
+          configurable: {
+            threadId: threadId,
+            workflow_type: type,
+          },
+        },
+      );
 
-      console.log(`🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`);
+      console.log(
+        `🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`,
+      );
       return threadId;
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       console.error(`❌ [WORKFLOW] Error starting workflow ${type}:`, error);
       throw new Error(`Failed to start workflow: ${errorMessage}`);
     }
@@ -105,7 +110,7 @@ export class WorkflowManager {
   // Execute a step in a workflow
   async executeWorkflowStep(
     threadId: string,
-    input: Record<string, any> = {}
+    input: Record<string, any> = {},
   ): Promise<{
     success: boolean;
     message: string;
@@ -125,14 +130,14 @@ export class WorkflowManager {
     const workflow = await this.registry.getOrCreateWorkflow(
       session.workflowType,
       threadId,
-      this.checkpointer
+      this.checkpointer,
     );
 
     const config: RunnableConfig = {
       configurable: {
         threadId: threadId,
-        workflow_type: session.workflowType
-      }
+        workflow_type: session.workflowType,
+      },
     };
 
     try {
@@ -147,27 +152,35 @@ export class WorkflowManager {
       const isComplete = result.current_step === 'complete';
       if (isComplete) {
         session.isActive = false;
-        console.log(`✅ [WORKFLOW] Completed ${session.workflowType} workflow: ${threadId}`);
+        console.log(
+          `✅ [WORKFLOW] Completed ${session.workflowType} workflow: ${threadId}`,
+        );
       }
 
       // Format the response
       return {
         success: true,
-        message: isComplete ? 'Workflow completed successfully' : 'Workflow step executed successfully',
+        message: isComplete
+          ? 'Workflow completed successfully'
+          : 'Workflow step executed successfully',
         currentStep: session.currentStep,
         threadId,
-        ...result
+        ...result,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`❌ [WORKFLOW] Error executing step for ${threadId}:`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(
+        `❌ [WORKFLOW] Error executing step for ${threadId}:`,
+        error,
+      );
 
       return {
         success: false,
         message: `Error executing workflow step: ${errorMessage}`,
         currentStep: session.currentStep,
         threadId,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -175,7 +188,7 @@ export class WorkflowManager {
   // Resume a paused workflow
   async resumeWorkflow(
     threadId: string,
-    input: Record<string, any> = {}
+    input: Record<string, any> = {},
   ): Promise<{
     success: boolean;
     message: string;
@@ -192,7 +205,9 @@ export class WorkflowManager {
       if (!session) {
         const getWorkflowStatusStart = Date.now();
         const status = await this.checkpointer.getWorkflowStatus(threadId);
-        debugLog(`[WORKFLOW] getWorkflowStatus took ${Date.now() - getWorkflowStatusStart}ms`);
+        debugLog(
+          `[WORKFLOW] getWorkflowStatus took ${Date.now() - getWorkflowStatusStart}ms`,
+        );
         if (status) {
           session = {
             threadId,
@@ -201,18 +216,17 @@ export class WorkflowManager {
             createdAt: status.created_at,
             lastUpdated: status.updated_at,
             currentStep: status.current_step,
-            isActive: status.current_step !== 'complete'
+            isActive: status.current_step !== 'complete',
           };
           this.activeSessions.set(threadId, session);
         }
       }
 
-
       if (!session) {
         return {
           success: false,
           message: `No workflow found for thread ID: ${threadId}`,
-          threadId
+          threadId,
         };
       }
 
@@ -221,26 +235,36 @@ export class WorkflowManager {
           success: false,
           message: `Workflow ${threadId} is already complete`,
           currentStep: session.currentStep,
-          threadId
+          threadId,
         };
       }
 
-      console.log(`🔄 [WORKFLOW] Resuming ${session.workflowType} workflow: ${threadId}`);
+      console.log(
+        `🔄 [WORKFLOW] Resuming ${session.workflowType} workflow: ${threadId}`,
+      );
       const executeWorkflowStepStart = Date.now();
       const result = await this.executeWorkflowStep(threadId, input);
       const executeWorkflowStepEnd = Date.now();
-      debugLog(`[WORKFLOW] executeWorkflowStep took ${executeWorkflowStepEnd - executeWorkflowStepStart}ms`);
-      debugLog(`[WORKFLOW] resumeWorkflow took ${Date.now() - resumeWorkflowStart}ms`);
+      debugLog(
+        `[WORKFLOW] executeWorkflowStep took ${executeWorkflowStepEnd - executeWorkflowStepStart}ms`,
+      );
+      debugLog(
+        `[WORKFLOW] resumeWorkflow took ${Date.now() - resumeWorkflowStart}ms`,
+      );
       return result;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`❌ [WORKFLOW] Error resuming workflow ${threadId}:`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(
+        `❌ [WORKFLOW] Error resuming workflow ${threadId}:`,
+        error,
+      );
 
       return {
         success: false,
         message: `Error resuming workflow: ${errorMessage}`,
         threadId,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -256,7 +280,9 @@ export class WorkflowManager {
     await this.registry.cleanupWorkflow(session.workflowType, threadId);
     this.activeSessions.delete(threadId);
 
-    console.log(`🛑 [WORKFLOW] Cancelled ${session.workflowType} workflow: ${threadId}`);
+    console.log(
+      `🛑 [WORKFLOW] Cancelled ${session.workflowType} workflow: ${threadId}`,
+    );
     return true;
   }
 
@@ -277,7 +303,7 @@ export class WorkflowManager {
         createdAt: status.created_at,
         lastUpdated: status.updated_at,
         currentStep: status.current_step,
-        isActive: status.current_step !== 'complete'
+        isActive: status.current_step !== 'complete',
       };
       return session;
     }
@@ -296,7 +322,9 @@ export class WorkflowManager {
         sessions.push({ ...session });
       } else {
         // Create session from database data
-        const status = await this.checkpointer.getWorkflowStatus(dbWorkflow.threadId);
+        const status = await this.checkpointer.getWorkflowStatus(
+          dbWorkflow.threadId,
+        );
         if (status) {
           sessions.push({
             threadId: dbWorkflow.threadId,
@@ -305,18 +333,21 @@ export class WorkflowManager {
             createdAt: dbWorkflow.created_at,
             lastUpdated: dbWorkflow.updated_at,
             currentStep: status.current_step,
-            isActive: status.current_step !== 'complete'
+            isActive: status.current_step !== 'complete',
           });
         }
       }
     }
 
-    return sessions.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime());
+    return sessions.sort(
+      (a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime(),
+    );
   }
 
   // Get active sessions count
   getActiveSessionCount(): number {
-    return Array.from(this.activeSessions.values()).filter(s => s.isActive).length;
+    return Array.from(this.activeSessions.values()).filter((s) => s.isActive)
+      .length;
   }
 
   // Get supported workflow types
@@ -329,7 +360,9 @@ export class WorkflowManager {
     try {
       const workflows = await this.checkpointer.listWorkflows();
       for (const workflow of workflows) {
-        const status = await this.checkpointer.getWorkflowStatus(workflow.threadId);
+        const status = await this.checkpointer.getWorkflowStatus(
+          workflow.threadId,
+        );
         if (status && status.current_step !== 'complete') {
           const session: WorkflowSession = {
             threadId: workflow.threadId,
@@ -338,12 +371,14 @@ export class WorkflowManager {
             createdAt: workflow.created_at,
             lastUpdated: workflow.updated_at,
             currentStep: status.current_step,
-            isActive: true
+            isActive: true,
           };
           this.activeSessions.set(workflow.threadId, session);
         }
       }
-      console.log(`📚 [WORKFLOW] Loaded ${this.activeSessions.size} active sessions from database`);
+      console.log(
+        `📚 [WORKFLOW] Loaded ${this.activeSessions.size} active sessions from database`,
+      );
     } catch (error) {
       console.error('❌ [WORKFLOW] Error loading active sessions:', error);
     }

@@ -13,7 +13,7 @@ import {
   IconButton,
   Snackbar,
   Alert,
-  Divider
+  Divider,
 } from '@mui/material';
 import { Meal, Ingredient, Step } from './types';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -31,11 +31,12 @@ const initialMealState: Omit<Meal, 'id' | 'lastPlanned'> = {
   url: '',
   mealType: 'dinner',
   ingredients: [],
-  steps: []
+  steps: [],
 };
 
 const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
-  const [meal, setMeal] = useState<Omit<Meal, 'id' | 'lastPlanned'>>(initialMealState);
+  const [meal, setMeal] =
+    useState<Omit<Meal, 'id' | 'lastPlanned'>>(initialMealState);
   const [rawIngredients, setRawIngredients] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
@@ -58,13 +59,15 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
       '⅛': '0.125',
       '⅜': '0.375',
       '⅝': '0.625',
-      '⅞': '0.875'
+      '⅞': '0.875',
     };
 
     // Handle mixed numbers (e.g., 1½ -> 1.5)
-    return input.replace(/(\d)([¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (match, digit, fraction) => {
-      return `${digit} ${fractionMap[fraction] || fraction}`;
-    }).replace(/[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, match => fractionMap[match] || match);
+    return input
+      .replace(/(\d)([¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (match, digit, fraction) => {
+        return `${digit} ${fractionMap[fraction] || fraction}`;
+      })
+      .replace(/[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, (match) => fractionMap[match] || match);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,15 +86,17 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     setMeal({ ...meal, redMeat: e.target.checked });
   };
 
-  const handleRawIngredientsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRawIngredientsChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRawIngredients(e.target.value);
   };
 
   const doubleIngredientQuantities = () => {
     // Double quantities in already processed ingredients
-    const doubledIngredients = meal.ingredients.map(ing => ({
+    const doubledIngredients = meal.ingredients.map((ing) => ({
       ...ing,
-      Quantity: ing.Quantity * 2
+      Quantity: ing.Quantity * 2,
     }));
 
     setMeal({ ...meal, ingredients: doubledIngredients });
@@ -99,7 +104,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     // Double quantities in raw ingredients text
     if (rawIngredients.trim()) {
       const lines = rawIngredients.split('\n');
-      const doubledLines = lines.map(line => {
+      const doubledLines = lines.map((line) => {
         // Convert any Unicode fractions first
         const processed = convertFractions(line);
 
@@ -123,64 +128,87 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     // Split by new lines
     const ingredientLines = rawIngredients
       .split('\n')
-      .filter(line => line.trim().length > 0);
+      .filter((line) => line.trim().length > 0);
 
     // Transform raw text to ingredients
-    const newIngredients: Omit<Ingredient, 'ID'>[] = ingredientLines.map(line => {
-      // First convert any fraction characters to decimal values
-      const processedLine = convertFractions(line);
+    const newIngredients: Omit<Ingredient, 'ID'>[] = ingredientLines.map(
+      (line) => {
+        // First convert any fraction characters to decimal values
+        const processedLine = convertFractions(line);
 
-      // Try to parse quantity, unit, and name
-      // This is a basic implementation - can be enhanced with more sophisticated parsing
-      const parts = processedLine.trim().split(' ');
+        // Try to parse quantity, unit, and name
+        // This is a basic implementation - can be enhanced with more sophisticated parsing
+        const parts = processedLine.trim().split(' ');
 
-      // Attempt to extract quantity (assume it's the first part if numeric)
-      let quantityStr = parts[0];
-      let quantity = parseFloat(quantityStr);
-      let unit = '';
-      let name = processedLine.trim();
+        // Attempt to extract quantity (assume it's the first part if numeric)
+        let quantityStr = parts[0];
+        let quantity = parseFloat(quantityStr);
+        let unit = '';
+        let name = processedLine.trim();
 
-      // If we have a valid quantity
-      if (!isNaN(quantity)) {
-        // Remove quantity from the beginning
-        name = processedLine.trim().substring(quantityStr.length).trim();
+        // If we have a valid quantity
+        if (!isNaN(quantity)) {
+          // Remove quantity from the beginning
+          name = processedLine.trim().substring(quantityStr.length).trim();
 
-        // Try to extract unit (assume it's the next word after quantity)
-        const unitParts = name.split(' ');
-        if (unitParts.length > 0) {
-          unit = unitParts[0];
-          // Common units - extend this list as needed
-          const commonUnits = [
-            'cup', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'g', 'kg', 'ml', 'l',
-            'pinch', 'dash', 'handful', 'clove', 'cloves', 'bunch', 'can',
-            'slice', 'slices', 'piece', 'pieces'
-          ];
+          // Try to extract unit (assume it's the next word after quantity)
+          const unitParts = name.split(' ');
+          if (unitParts.length > 0) {
+            unit = unitParts[0];
+            // Common units - extend this list as needed
+            const commonUnits = [
+              'cup',
+              'cups',
+              'tbsp',
+              'tsp',
+              'oz',
+              'lb',
+              'g',
+              'kg',
+              'ml',
+              'l',
+              'pinch',
+              'dash',
+              'handful',
+              'clove',
+              'cloves',
+              'bunch',
+              'can',
+              'slice',
+              'slices',
+              'piece',
+              'pieces',
+            ];
 
-          if (commonUnits.includes(unit.toLowerCase())) {
-            name = name.substring(unit.length).trim();
-          } else {
-            // If not a common unit, assume it's part of the name
-            unit = '';
+            if (commonUnits.includes(unit.toLowerCase())) {
+              name = name.substring(unit.length).trim();
+            } else {
+              // If not a common unit, assume it's part of the name
+              unit = '';
+            }
           }
+        } else {
+          // No valid quantity found, treat entire line as name
+          quantity = 0;
         }
-      } else {
-        // No valid quantity found, treat entire line as name
-        quantity = 0;
-      }
 
-      return {
-        Name: name,
-        Quantity: quantity,
-        Unit: unit
-      };
-    });
+        return {
+          Name: name,
+          Quantity: quantity,
+          Unit: unit,
+        };
+      },
+    );
 
     setMeal({
       ...meal,
-      ingredients: [...meal.ingredients, ...newIngredients.map(ing => ({
-        ...ing,
-        ID: -1 // Temporary ID, will be assigned by backend
-      }))]
+      ingredients: [
+        ...meal.ingredients,
+        ...newIngredients.map((ing) => ({
+          ...ing,
+          ID: -1, // Temporary ID, will be assigned by backend
+        })),
+      ],
     });
     setRawIngredients('');
   };
@@ -194,7 +222,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   const handleStepsChange = (newSteps: Step[]) => {
     setMeal({
       ...meal,
-      steps: newSteps
+      steps: newSteps,
     });
   };
 
@@ -224,7 +252,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
           redMeat: meal.redMeat,
           url: meal.url,
           ingredients: meal.ingredients,
-          steps: meal.steps
+          steps: meal.steps,
         }),
       });
 
@@ -237,7 +265,10 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
       setRawIngredients('');
       onRecipeAdded();
     } catch (err) {
-      setError('Error adding recipe: ' + (err instanceof Error ? err.message : String(err)));
+      setError(
+        'Error adding recipe: ' +
+          (err instanceof Error ? err.message : String(err)),
+      );
     } finally {
       setLoading(false);
     }
@@ -253,7 +284,9 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   };
 
   const effortLabelFormat = (value: number) => {
-    return ['Easy', 'Medium', 'Hard'][Math.min(Math.max(Math.floor(value) - 1, 0), 2)];
+    return ['Easy', 'Medium', 'Hard'][
+      Math.min(Math.max(Math.floor(value) - 1, 0), 2)
+    ];
   };
 
   return (
@@ -301,10 +334,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
           <Grid item xs={12}>
             <FormControlLabel
               control={
-                <Switch
-                  checked={meal.redMeat}
-                  onChange={handleRedMeatChange}
-                />
+                <Switch checked={meal.redMeat} onChange={handleRedMeatChange} />
               }
               label="Contains Red Meat"
             />
@@ -339,7 +369,9 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
                 variant="outlined"
                 startIcon={<RepeatIcon />}
                 onClick={doubleIngredientQuantities}
-                disabled={!rawIngredients.trim() && meal.ingredients.length === 0}
+                disabled={
+                  !rawIngredients.trim() && meal.ingredients.length === 0
+                }
                 title="Double all ingredient quantities"
               >
                 Double Quantities
