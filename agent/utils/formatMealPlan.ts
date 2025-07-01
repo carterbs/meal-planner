@@ -1,6 +1,7 @@
 import { WeeklyMealPlan } from '../shared/types';
+import { DAYS_OF_THE_WEEK as WEEK_DAYS } from '../../shared/ts/days';
 
-const WEEK_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
 
 
 /**
