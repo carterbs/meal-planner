@@ -100,8 +100,9 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		}
 		// Add initial agent message if present
 		if resp.Message != "" {
-			if _, err := models.AddMessage(DB, resp.ThreadID, "agent", resp.Message); err != nil {
-				log.Printf("[ERROR StartAgentWorkflow] Failed to add initial agent message: %v", err)
+			t := time.Now().Format(time.RFC3339) // use current local time
+			if err := Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t); err != nil {
+				log.Printf("[ERROR StartAgentWorkflow] Failed to add agent message: %v", err)
 			}
 		}
 	}
@@ -157,7 +158,8 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 
 	// Append agent message to workflow checkpoint
 	if resp.Message != "" {
-		if _, err := models.AddMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
+		t := time.Now().Format(time.RFC3339) // use current local time
+		if err := Services.WorkflowService.AddAgentMessage(req.ThreadID, resp.Message, t); err != nil {
 			log.Printf("[ERROR AddAgentFeedback] Failed to add agent message: %v", err)
 		}
 	}
@@ -218,7 +220,8 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		}
 		// Add agent message if present
 		if resp.Message != "" {
-			if _, err := models.AddMessage(DB, resp.ThreadID, "agent", resp.Message); err != nil {
+			t := time.Now().Format(time.RFC3339) // use current local time
+			if err := Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t); err != nil {
 				log.Printf("[ERROR ResumeAgentWorkflow] Failed to add agent message: %v", err)
 			}
 		}
@@ -244,8 +247,11 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Append user message to workflow checkpoint
 	if req.From == "user" && req.Message != "" {
-		if _, err := models.AddMessage(DB, req.ThreadID, "user", req.Message); err != nil {
-			log.Printf("[ERROR MessageAgentHandler] Failed to add user message: %v", err)
+		t := time.Now().Format(time.RFC3339)
+		if err := Services.WorkflowService.AddUserFeedback(req.ThreadID, req.From, req.Message, t); err != nil {
+			log.Printf("[ERROR MessageAgentHandler] Failed to add user feedback: %v", err)
+		} else {
+			log.Printf("[MessageAgentHandler] Saved user message to FeedbackHistory: %q", req.Message)
 		}
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
@@ -273,8 +279,11 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Append agent response message to workflow checkpoint
 	if resp.Message != "" {
-		if _, err := models.AddMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
+		t := time.Now().Format(time.RFC3339)
+		if err := Services.WorkflowService.AddAgentMessage(req.ThreadID, resp.Message, t); err != nil {
 			log.Printf("[ERROR MessageAgentHandler] Failed to add agent message: %v", err)
+		} else {
+			log.Printf("[MessageAgentHandler] Saved agent message to AgentMessages: %q", resp.Message)
 		}
 	}
 

@@ -21,11 +21,18 @@ type CheckpointData struct {
 }
 
 // InternalWorkflowState represents the workflow state stored in channel_values (internal format)
+type AgentMessage struct {
+	Sender    string `json:"sender"`
+	Text      string `json:"text"`
+	Timestamp string `json:"timestamp"`
+}
+
 type InternalWorkflowState struct {
 	ThreadID                string              `json:"threadId"`
 	WorkflowType           string              `json:"workflow_type"`
 	MealPlan               *WeeklyMealPlan     `json:"meal_plan"`
 	FeedbackHistory        []FeedbackEntry     `json:"feedback_history"`
+	AgentMessages          []AgentMessage      `json:"agent_messages"`
 	CurrentStep            string              `json:"current_step"`
 	IsFinalized            bool                `json:"is_finalized"`
 	Participants           []string            `json:"participants"`

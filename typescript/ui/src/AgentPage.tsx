@@ -427,7 +427,7 @@ const AgentPage: React.FC = () => {
           (msg) => ({
             sender:
               msg.sender === 'user' ? ('user' as const) : ('agent' as const),
-            text: msg.message,
+            text: msg.text,
           }),
         );
         setMessages(formattedMessages);

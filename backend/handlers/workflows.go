@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"sort"
 
 	"mealplanner/models"
 
@@ -26,84 +27,74 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Retrieve messages for the workflow
-	messages, err := models.GetMessages(DB, threadID)
+	state, err := Services.WorkflowService.GetWorkflowState(threadID)
 	if err != nil {
-		http.Error(w, "failed to get messages: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to get workflow state: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Load full workflow checkpoint data for messages
-	messagesData, currentStep, err := models.GetWorkflowCheckpoint(DB, threadID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "No workflow found for threadId", http.StatusNotFound)
-		} else {
-			http.Error(w, "Failed to fetch workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
-		}
-		return
+	// Smash FeedbackHistory and AgentMessages together, sort by timestamp, return as messages
+	type chatMsg struct {
+		Sender string
+		Text   string
+		Time   string
 	}
-	// Retrieve the full checkpoint_data for meal_plan (skip 'latest' namespace messages-only)
-	var fullData []byte
-	row := DB.QueryRow(`SELECT checkpoint_data FROM workflow_checkpoints WHERE thread_id=$1 AND checkpoint_ns!=$2 ORDER BY updated_at DESC LIMIT 1`, threadID, "latest")
-	if scanErr := row.Scan(&fullData); scanErr != nil {
-		fullData = messagesData
+	var combined []chatMsg
+	for _, fb := range state.FeedbackHistory {
+		combined = append(combined, chatMsg{
+			Sender: fb.From,
+			Text:   fb.Message,
+			Time:   fb.Timestamp,
+		})
 	}
-	// Parse JSON to extract meal_plan
-	var mealPlanRaw json.RawMessage
-	var fullMap map[string]interface{}
-	if err := json.Unmarshal(fullData, &fullMap); err == nil {
-		// Try nested channel_values.meal_plan
-		if cv, ok := fullMap["channel_values"].(map[string]interface{}); ok {
-			if mp, ok := cv["meal_plan"]; ok {
-				mpBytes, _ := json.Marshal(mp)
-				mealPlanRaw = json.RawMessage(mpBytes)
-			}
+	for _, am := range state.AgentMessages {
+		combined = append(combined, chatMsg{
+			Sender: am.Sender,
+			Text:   am.Text,
+			Time:   am.Timestamp,
+		})
+	}
+	sort.SliceStable(combined, func(i, j int) bool {
+		if combined[i].Time == "" && combined[j].Time == "" {
+			return false
 		}
-		// Fallback to top-level meal_plan
-		if mealPlanRaw == nil {
-			if mp, ok := fullMap["meal_plan"]; ok {
-				mpBytes, _ := json.Marshal(mp)
-				mealPlanRaw = json.RawMessage(mpBytes)
-			} else {
-				mealPlanRaw = json.RawMessage("null")
-			}
+		if combined[i].Time == "" {
+			return false
 		}
-	} else {
-		mealPlanRaw = json.RawMessage("null")
+		if combined[j].Time == "" {
+			return true
+		}
+		return combined[i].Time < combined[j].Time
+	})
+
+	messages := make([]models.ChatMessage, len(combined))
+	for i, v := range combined {
+		messages[i] = models.ChatMessage{Sender: v.Sender, Text: v.Text}
 	}
 
-	// Build shopping list JSON
-	var shoppingListRaw json.RawMessage
-	var plan struct {
-		Days []struct {
-			Meal *struct { ID int `json:"id"` } `json:"meal"`
-		} `json:"days"`
-	}
-	if err2 := json.Unmarshal(mealPlanRaw, &plan); err2 == nil {
-		ids := []int{}
-		for _, d := range plan.Days {
-			if d.Meal != nil {
-				ids = append(ids, d.Meal.ID)
-			}
-		}
-		if items, err2 := buildShoppingList(ids); err2 == nil {
-			if b, err3 := json.Marshal(items); err3 == nil {
-				shoppingListRaw = json.RawMessage(b)
-			}
+	// Return as before, but with combined chat history
+	mealPlanRaw, shoppingListRaw, currentStep := json.RawMessage([]byte("null")), json.RawMessage([]byte("null")), ""
+	if state.MealPlan != nil {
+		if b, err := json.Marshal(state.MealPlan); err == nil {
+			mealPlanRaw = json.RawMessage(b)
 		}
 	}
-	if shoppingListRaw == nil {
-		shoppingListRaw = json.RawMessage("[]")
+	if state.ShoppingList != nil {
+		if b, err := json.Marshal(state.ShoppingList); err == nil {
+			shoppingListRaw = json.RawMessage(b)
+		}
 	}
+	currentStep = state.CurrentStep
 
-	state := models.WorkflowState{
+	resp := models.WorkflowState{
 		ThreadID:     threadID,
 		CurrentStep:  currentStep,
 		Messages:     messages,
 		MealPlan:     mealPlanRaw,
 		ShoppingList: shoppingListRaw,
 	}
+	writeJSON(w, resp)
+	return
 
 	writeJSON(w, state)
 }
