@@ -1,14 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
+import type { ShoppingListItem } from '@meal-planner/shared/dist/types';
 
-export interface Item { 
-  ingredient: string; 
-  quantity: string; 
-  category?: string;
-}
-
-export type ShoppingList = Item[];
+export type ShoppingList = ShoppingListItem[];
 
 interface ShoppingListRequest {
   plan: number[]; // Array of meal IDs

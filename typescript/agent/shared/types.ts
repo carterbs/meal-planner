@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import type {
+  ShoppingListItem,
+  WeeklyMealPlan,
+  MealInfo,
+} from '@meal-planner/shared/dist/types';
 
 // Core workflow types
 export enum WorkflowType {
@@ -59,11 +64,6 @@ export interface FeedbackEntry {
   meal_plan_version: number;
 }
 
-export interface ShoppingItem {
-  ingredient: string;
-  quantity: string;
-  category?: string;
-}
 
 export interface RecipeData {
   id?: number;
@@ -89,21 +89,7 @@ export interface SubstitutionData {
 }
 
 // Meal structure (reuse from existing agent)
-export interface InternalMeal {
-  id: number;
-  name: string;
-  effort: number;
-  hasRedMeat: boolean;
-}
-
-export interface WeeklyMealPlan {
-  id?: number;
-  days: Array<{
-    dayIndex: number;
-    mealType: string;
-    meal: InternalMeal | null;
-  }>;
-}
+export type InternalMeal = MealInfo;
 
 // Workflow state interfaces
 export interface MealPlanningState extends BaseWorkflowState {
@@ -111,7 +97,7 @@ export interface MealPlanningState extends BaseWorkflowState {
   meal_plan: WeeklyMealPlan | null;
   feedback_history: FeedbackEntry[];
   iteration_count: number;
-  shopping_list: ShoppingItem[] | null;
+  shopping_list: ShoppingListItem[] | null;
   is_finalized: boolean;
   current_step: MealPlanningStep;
   shopping_list_formatted?: string;

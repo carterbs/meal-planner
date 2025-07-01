@@ -9,5 +9,5 @@
     "esModuleInterop": true,
     "strict": true
   },
-  "include": ["days.ts"]
+  "include": ["*.ts"]
 }
