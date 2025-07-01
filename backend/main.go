@@ -122,8 +122,8 @@ func main() {
 	// Set database connection in handlers (might be nil if connection failed)
 	handlers.DB = connection
 	
-	// Initialize service container if we have a database connection
-	if connection != nil && !*dummyFlag {
+	// Always initialize service container when not in dummy mode
+	if !*dummyFlag {
 		handlers.Services = services.NewServiceContainer(connection)
 		// Maintain backward compatibility for existing workflow service usage
 		handlers.WorkflowService = handlers.Services.WorkflowService

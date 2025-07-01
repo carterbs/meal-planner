@@ -55,44 +55,8 @@ func populateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, e
 		return &populatedPlan, nil
 	}
 
-	// Use service layer for real database operations
-	if Services != nil && Services.MealPlanService != nil {
-		return Services.MealPlanService.PopulateMealDetails(plan)
-	}
-
-	// Fallback to direct DB access for backward compatibility
-	mealIDs := make([]int, 0)
-	for _, d := range plan.Days {
-		if d.Meal != nil && d.Meal.ID != 0 {
-			mealIDs = append(mealIDs, d.Meal.ID)
-		}
-	}
-
-	if len(mealIDs) == 0 {
-		return plan, nil // No meals to populate
-	}
-
-	mealsWithIngredients, err := models.GetMealsByIDs(DB, mealIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	mealMap := make(map[int]*models.Meal)
-	for _, meal := range mealsWithIngredients {
-		mealMap[meal.ID] = meal
-	}
-
-	populatedPlan := *plan
-	for i := range populatedPlan.Days {
-		d := &populatedPlan.Days[i]
-		if d.Meal != nil {
-			if fullMeal, ok := mealMap[d.Meal.ID]; ok {
-				d.Meal = fullMeal
-			}
-		}
-	}
-
-	return &populatedPlan, nil
+	// Use service layer for all database operations
+	return Services.MealPlanService.PopulateMealDetails(plan)
 }
 
 // generateShoppingListForPlan populates plan.ShoppingList using meal IDs found
@@ -126,23 +90,12 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	if UseDummy {
 		// Use dummy data generation
 		plan, err = dummy.GenerateWeeklyMealPlanStruct()
-	} else if Services != nil && Services.MealPlanService != nil {
-		// Use service layer for real database operations
+	} else {
+		// Use service layer for all database operations
 		plan, err = Services.MealPlanService.GetLastPlannedMeals()
 		if err != nil {
 			log.Printf("No recent meal plan found, generating new one: %v", err)
 			plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
-			if err != nil {
-				http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-	} else {
-		// Fallback to direct DB access for backward compatibility
-		plan, err = models.GetLastPlannedMeals(DB)
-		if err != nil {
-			log.Printf("No recent meal plan found, generating new one: %v", err)
-			plan, err = models.GenerateWeeklyMealPlan(DB)
 			if err != nil {
 				http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -175,12 +128,9 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	if UseDummy {
 		// Use dummy data generation
 		plan, err = dummy.GenerateWeeklyMealPlanStruct()
-	} else if Services != nil && Services.MealPlanService != nil {
-		// Use service layer for real database operations
-		plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
 	} else {
-		// Fallback to direct DB access for backward compatibility
-		plan, err = models.GenerateWeeklyMealPlan(DB)
+		// Use service layer for all database operations
+		plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
 	}
 	if err != nil {
 		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
@@ -257,19 +207,8 @@ func buildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
 		return models.ConvertIngredientsToShoppingItems(ing), nil
 	}
 
-	// Use service layer for real database operations
-	if Services != nil && Services.ShoppingListService != nil {
-		return Services.ShoppingListService.BuildShoppingList(mealIDs)
-	}
-
-	// Fallback to direct DB access for backward compatibility
-	meals, err := models.GetMealsByIDs(DB, mealIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	ing := models.GenerateShoppingListFromMeals(meals)
-	return models.ConvertIngredientsToShoppingItems(ing), nil
+	// Use service layer for all database operations
+	return Services.ShoppingListService.BuildShoppingList(mealIDs)
 }
 
 // MealPlanICSHandler returns the current meal plan as an iCalendar file.

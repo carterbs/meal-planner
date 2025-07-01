@@ -50,12 +50,9 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if UseDummy {
 		meals, err = dummy.GetAllMeals()
-	} else if Services != nil && Services.MealService != nil {
-		// Use service layer for real database operations
-		meals, err = Services.MealService.GetAllMeals()
 	} else {
-		// Fallback to direct DB access for backward compatibility
-		meals, err = models.GetAllMeals(DB)
+		// Use service layer for all database operations
+		meals, err = Services.MealService.GetAllMeals()
 	}
 	if err != nil {
 		http.Error(w, "Error retrieving meals: "+err.Error(), http.StatusInternalServerError)
@@ -150,12 +147,9 @@ func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
 	if UseDummy {
 		// Note: dummy implementation doesn't support meal type filtering
 		newMeal, err = models.SwapMeal(payload.MealID, payload.MealType, DB)
-	} else if Services != nil && Services.MealService != nil {
-		// Use service layer for real database operations
-		newMeal, err = Services.MealService.SwapMeal(payload.MealID, payload.MealType)
 	} else {
-		// Fallback to direct DB access for backward compatibility
-		newMeal, err = models.SwapMeal(payload.MealID, payload.MealType, DB)
+		// Use service layer for all database operations
+		newMeal, err = Services.MealService.SwapMeal(payload.MealID, payload.MealType)
 	}
 	if err != nil {
 		http.Error(w, "Error swapping meal: "+err.Error(), http.StatusInternalServerError)
