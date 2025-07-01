@@ -18,9 +18,9 @@ import { PostgresCheckpointSaver } from '../shared/checkpointer';
 import { FeedbackHandler } from './feedback-handler';
 import {
   ShoppingListResponse,
-  ShoppingListItem,
   MCPToolResult as MCPToolResultType,
 } from '../shared/mcp-types';
+import { ShoppingListItem } from '../shared/types';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared/dist/days';
 import {
   getAnalyzeFeedbackPrompt,

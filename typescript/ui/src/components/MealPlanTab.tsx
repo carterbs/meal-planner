@@ -13,7 +13,8 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { Meal, Ingredient } from '../types';
+import { Ingredient } from '../types';
+import { Meal } from '@meal-planner/shared/types';
 import { MealAutocomplete } from './MealAutocomplete';
 import { DAYS_OF_THE_WEEK } from '../../../shared/days';
 

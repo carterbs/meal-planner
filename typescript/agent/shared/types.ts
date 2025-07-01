@@ -83,6 +83,32 @@ export interface SubstitutionData {
 }
 
 // Meal structure (reuse from existing agent)
+
+// Types for meal planning domain
+export interface MealInfo {
+  id: number;
+  name: string;
+  effort: number;
+  hasRedMeat: boolean;
+}
+
+export interface DayPlan {
+  dayIndex: number;
+  mealType: string;
+  meal: MealInfo | null;
+}
+
+export interface WeeklyMealPlan {
+  id?: number;
+  days: DayPlan[];
+}
+
+export interface ShoppingListItem {
+  ingredient: string;
+  quantity: string;
+  category?: string;
+}
+
 export type InternalMeal = MealInfo;
 
 // Workflow state interfaces

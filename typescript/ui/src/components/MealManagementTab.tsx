@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Meal, Ingredient, Step } from '../types';
+import { Ingredient, Step } from '../types';
+import { Meal } from '@meal-planner/shared/types';
 import {
   Box,
   Typography,
@@ -1122,7 +1123,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                         <StepsEditor
                           steps={[]}
                           readOnly={true}
-                          onChange={() => {}}
+                          onChange={() => { }}
                         />
                       )}
                     </Box>

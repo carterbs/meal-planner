@@ -1,4 +1,5 @@
-import type { ShoppingListItem } from '@meal-planner/shared/dist/types';
+import type { ShoppingListItem } from './types';
+export type { ShoppingListItem };
 
 // Types for MCP tool calls and responses
 export type MCPToolResult = {
