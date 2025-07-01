@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/lib/pq"
 )
 
 // testMeal represents a test meal with its expected properties
@@ -503,5 +504,34 @@ func TestCreateMeal_Error(t *testing.T) {
 	// Verify all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("unfulfilled expectations: %s", err)
+	}
+}
+
+func TestUpdateLastPlannedDates(t *testing.T) {
+	db, mock := setupTestDB(t)
+	defer db.Close()
+
+	ids := []int{1, 2, 3}
+	mock.ExpectBegin()
+	mock.ExpectExec("UPDATE meals").WithArgs(pq.Array(ids)).WillReturnResult(sqlmock.NewResult(0, 3))
+	mock.ExpectCommit()
+
+	if err := UpdateLastPlannedDates(db, ids); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled expectations: %s", err)
+	}
+}
+
+func TestUpdateLastPlannedDatesEmpty(t *testing.T) {
+	db, mock := setupTestDB(t)
+	defer db.Close()
+
+	if err := UpdateLastPlannedDates(db, []int{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unexpected queries: %s", err)
 	}
 }
