@@ -18,6 +18,7 @@ import (
 	"github.com/lib/pq"
 
 	"mealplanner/models"
+	"mealplanner/services"
 )
 
 // testHelper contains utilities for testing handlers
@@ -858,11 +859,22 @@ func TestRemoveMealHandler(t *testing.T) {
 		},
 	}
 	checkpointBytes, _ := json.Marshal(checkpointStruct)
-	rows := sqlmock.NewRows([]string{"checkpoint_data", "checkpoint_ns"}).
+	rows1 := sqlmock.NewRows([]string{"checkpoint_data", "checkpoint_ns"}).
 		AddRow(checkpointBytes, "latest")
-	helper.mock.ExpectQuery("SELECT checkpoint_data, checkpoint_ns").WithArgs("thread1").WillReturnRows(rows)
+	rows2 := sqlmock.NewRows([]string{"checkpoint_data", "checkpoint_ns"}).
+		AddRow(checkpointBytes, "latest")
+	rows3 := sqlmock.NewRows([]string{"checkpoint_data", "checkpoint_ns"}).
+		AddRow(checkpointBytes, "latest")
+	helper.mock.ExpectQuery("SELECT checkpoint_data, checkpoint_ns").WithArgs("thread1").WillReturnRows(rows1) // GetMealPlan
+	helper.mock.ExpectQuery("SELECT checkpoint_data, checkpoint_ns").WithArgs("thread1").WillReturnRows(rows2) // UpdateMealPlan -> GetWorkflowState
+	helper.mock.ExpectQuery("SELECT checkpoint_data, checkpoint_ns").WithArgs("thread1").WillReturnRows(rows3) // UpdateWorkflowState
 
 	helper.mock.ExpectExec("INSERT INTO workflow_checkpoints").WithArgs("thread1", sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// Initialize workflow service for the test
+	originalService := WorkflowService
+	defer func() { WorkflowService = originalService }()
+	WorkflowService = services.NewWorkflowService(helper.db)
 
 	reqBody := map[string]interface{}{"threadId": "thread1", "dayIndex": 0, "mealType": "breakfast"}
 	bodyBytes, _ := json.Marshal(reqBody)
@@ -876,7 +888,7 @@ func TestRemoveMealHandler(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
-		t.Fatalf("expected status 200, got %d", rr.Code)
+		t.Fatalf("expected status 200, got %d. Response body: %s", rr.Code, rr.Body.String())
 	}
 	var out models.WeeklyMealPlan
 	if err := json.NewDecoder(rr.Body).Decode(&out); err != nil {
