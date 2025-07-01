@@ -22,6 +22,7 @@ import {
   MCPToolResult as MCPToolResultType,
 } from "../shared/mcp-types";
 import { DAYS_OF_THE_WEEK } from '../../shared/ts/days';
+import { getAnalyzeFeedbackPrompt, getUpdateMealPlanPrompt, getOptimizeMealPlanPrompt, getPantryStaplesCategorizationPrompt } from './meal-planning-prompts';
 const DEBUG_LOGS = false;
 interface MCPTextContent {
   type: "text";
@@ -329,7 +330,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     feedbackEntries: FeedbackEntry[],
   ): Promise<{ satisfied: boolean; reasoning: string }> {
     const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
-    const prompt = `Given the following user feedback on a meal plan, does the user want changes or are they satisfied? Respond with a JSON object: { "satisfied": true/false, "reasoning": "..." }\n\nFeedback: ${latestFeedback.message}`;
+    const prompt = getAnalyzeFeedbackPrompt(latestFeedback.message);
     const result = await this.nanoLlm.invoke([
       { role: "user", content: prompt },
     ]);
@@ -387,48 +388,22 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal!.name} (ID: ${day.meal!.id}, effort: ${day.meal!.effort}, red meat: ${day.meal!.hasRedMeat})`,
       )
       .join("\n");
+
     const feedbackText =
       feedback.length > 0
         ? `ALL USER FEEDBACK FROM THIS SESSION (in chronological order):\n${feedback.map((msg, idx) => `${idx + 1}. ${msg}`).join("\n")}\n`
         : "";
-    const prompt = `You are updating a weekly meal plan based on ALL user feedback from the entire session.\n
-    ${feedbackText}\n
-    Current meal plan:\n${planDescription}\n\n
-    Available meals to choose from:\n${mealOptions}\n\n
-    IMPORTANT GUIDELINES:\n
-    - Consider ALL feedback messages above when making decisions\n
-    - If feedback is contradictory or impossible to satisfy (e.g., "no eggs, no cereal, no bagels" for breakfast), do your best and explain the constraints in your message\n
-    - Only replace meals with the same meal type (breakfast/lunch/dinner)\n
-    - Avoid duplicate meals\n
-    - Avoid suggesting meals that have been explicitly rejected in ANY previous feedback\n
-    - When constraints are impossible to meet, choose the best available options and explain why in your message\n\n
-    - Respond with ONLY a JSON object containing your recommended removals and/or replacements AND a friendly message to the user:\n\n
-    {
-      "removals": [],
-      "replacements": [
-        {
-          "day": "Sunday",
-          "mealType": "dinner",
-          "oldMealId": 9,
-          "newMealId": 50,
-          "reason": "Replace as requested in feedback"
-        }
-      ],
-      "userMessage": "Thanks for your feedback! I've swapped out the Steak dinner for Chicken nuggets - a much easier option that should work better for your needs."
-    }
-    
-    For the userMessage:
-    - Be conversational and friendly (1-2 sentences)
-    - Mention what meals were changed and why
-    - If constraints are impossible to meet, acknowledge this: "I know you asked to avoid both X and Y, but those are the main breakfast options available, so I picked the best alternative..."
-    - If no changes were needed, explain why the current plan already meets their needs
-    
-    If no removals or replacements are needed, return: {"removals": [], "replacements": [], "userMessage": "Your current meal plan already looks great and addresses your preferences!"}\n\n<important> Your response should be parseable as JSON.</important>`;
+    const prompt = getUpdateMealPlanPrompt(
+      feedbackText,
+      planDescription,
+      mealOptions,
+    );
     const result = await this.llm.invoke([{ role: "user", content: prompt }]);
     const llmResponse =
       typeof result.content === "string"
         ? result.content
         : JSON.stringify(result.content);
+
     console.log(`🤖 [MEAL-WORKFLOW] Raw LLM response:`);
     console.log(llmResponse);
     let updatedPlan = { ...plan, days: [...plan.days] };
@@ -758,7 +733,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         bulletedList = bulletedList.trim();
 
         // Pantry staples prompt
-        const PANTRY_STAPLES_CATEGORIZATION_PROMPT = `I will provide a bulleted shopping list to you. You should return a bulleted list with two sections: Pantry Staples and Groceries. Identify which items in the bulleted shopping list below are pantry staples (e.g., oil, salt, flour, sugar, rice, canned beans, spices, herbs), and put them in their own section. Do not remove items from the list, and ensure wording is unchanged. Return ONLY the list.\n\n${bulletedList}`;
+        const PANTRY_STAPLES_CATEGORIZATION_PROMPT = getPantryStaplesCategorizationPrompt(bulletedList);
 
         try {
           console.log(
@@ -967,37 +942,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       )
       .join("\n");
 
-    const prompt = `You are optimizing a weekly meal plan. Here are the current issues:
-        ${issues.join("\n")}
-
-        Current meal plan:
-        ${planDescription}
-
-        Available meals to choose from:
-        ${mealOptions}
-
-        Optimization rules:
-        - Max ${VALIDATION_CRITERIA.maxConsecutiveHighEffort} consecutive high-effort meals (effort > 3)
-        - Max ${VALIDATION_CRITERIA.maxRedMeatPerWeek} red meat meals per week
-        - No duplicate meals
-        - Only replace meals with same meal type (breakfast/lunch/dinner)
-        - Prefer lower effort meals (1-2) for replacements
-
-        Please analyze the issues and respond with ONLY a JSON object containing your recommended replacements:
-        {
-          "replacements": [
-            {
-              "day": "Sunday",
-              "mealType": "dinner",
-              "oldMealId": 9,
-              "newMealId": 50,
-              "reason": "Replace high-effort meal"
-            }
-          ]
-        }
-        If no replacements are needed, return: {"replacements": []}.
-
-        <important> Your response should be parseable as JSON.</important>`;
+    const prompt = getOptimizeMealPlanPrompt(issues, planDescription, mealOptions);
 
     const result = await this.llm.invoke([{ role: "user", content: prompt }]);
     const llmResponse =
