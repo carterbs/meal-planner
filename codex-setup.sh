@@ -6,7 +6,7 @@ export CODEX_ENV_NODE_VERSION=22
 export CODEX_ENV_GO_VERSION=22
 # --- Project–specific dependencies ----------------------------
 yarn install
-pushd frontend
+pushd typescript
 yarn install
 popd
 
