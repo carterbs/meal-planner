@@ -107,10 +107,6 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	if err := generateShoppingListForPlan(detailedPlan); err != nil {
 		log.Printf("Error generating shopping list: %v", err)
 	}
-	if err := generateShoppingListForPlan(detailedPlan); err != nil {
-		log.Printf("Error generating shopping list: %v", err)
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(detailedPlan)
 }

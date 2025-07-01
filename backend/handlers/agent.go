@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os/exec"
@@ -44,7 +44,7 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 			errMsg += "\nStdout: " + stdoutBuffer.String()
 		}
 		log.Printf("[ERROR runAgentCLI] %s", errMsg)
-		return models.AgentResponse{}, errors.New(errMsg)
+		return models.AgentResponse{}, fmt.Errorf("%s", errMsg)
 	}
 
 	// Log the buffers before attempting to unmarshal stdout
@@ -55,7 +55,7 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 	var resp models.AgentResponse
 	if err := json.Unmarshal(stdoutBuffer.Bytes(), &resp); err != nil {
 		// If unmarshal fails, return an error including the stdout that failed to parse
-		return models.AgentResponse{}, errors.New("failed to unmarshal agent response: " + err.Error() + "\nStdout: " + stdoutBuffer.String()) // Include stdoutBuffer for context
+		return models.AgentResponse{}, fmt.Errorf("failed to unmarshal agent response: %v\nStdout: %s", err, stdoutBuffer.String()) // Include stdoutBuffer for context
 	}
 	return resp, nil
 }
@@ -83,31 +83,32 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create session in database
+	// Initialize workflow checkpoint
 	if resp.ThreadID != "" {
-		session, err := models.CreateAgentSession(DB, resp.ThreadID, req.WorkflowType)
-		if err != nil {
-			log.Printf("[ERROR StartAgentWorkflow] Failed to create session in database: %v", err)
-			// Don't fail the request, just log the error
-		} else {
-			// Store initial meal plan and shopping list if present
-			if resp.Raw != nil {
-				if rawMap, ok := resp.Raw.(map[string]interface{}); ok {
-					if mealPlan, ok := rawMap["meal_plan"]; ok {
-						if mealPlanBytes, err := json.Marshal(mealPlan); err == nil {
-							session.MealPlan = mealPlanBytes
-						}
-					}
-					if shoppingList, ok := rawMap["shopping_list_formatted"].(string); ok {
-						session.ShoppingList = shoppingList
-					}
+		// Build initial checkpoint data
+		m := map[string]interface{}{}
+		if resp.Raw != nil {
+			if rawMap, ok := resp.Raw.(map[string]interface{}); ok {
+				if mealPlan, ok := rawMap["meal_plan"]; ok {
+					m["meal_plan"] = mealPlan
 				}
-				models.UpdateAgentSession(DB, session)
+				if shoppingList, ok := rawMap["shopping_list_formatted"].(string); ok {
+					m["shopping_list"] = shoppingList
+				}
 			}
-
-			// Add initial agent message if present
-			if resp.Message != "" {
-				models.AddMessage(DB, resp.ThreadID, "agent", resp.Message)
+		}
+		data, err := json.Marshal(m)
+		if err != nil {
+			log.Printf("[ERROR StartAgentWorkflow] Failed to serialize initial checkpoint: %v", err)
+		} else {
+			if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
+				log.Printf("[ERROR StartAgentWorkflow] Failed to initialize workflow checkpoint: %v", err)
+			}
+		}
+		// Add initial agent message if present
+		if resp.Message != "" {
+			if _, err := models.AddMessage(DB, resp.ThreadID, "agent", resp.Message); err != nil {
+				log.Printf("[ERROR StartAgentWorkflow] Failed to add initial agent message: %v", err)
 			}
 		}
 	}
@@ -161,16 +162,10 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("[DEBUG AddAgentFeedback] agent CLI response: %+v", resp)
 
-	// Store agent response message in database and update workflow checkpoint
+	// Append agent message to workflow checkpoint
 	if resp.Message != "" {
-		// Store in messages table
 		if _, err := models.AddMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
-			log.Printf("[ERROR AddAgentFeedback] Failed to store agent message: %v", err)
-		}
-
-		// Update workflow checkpoint with full message history
-		if err := models.UpdateWorkflowCheckpointWithMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
-			log.Printf("[ERROR AddAgentFeedback] Failed to update workflow checkpoint: %v", err)
+			log.Printf("[ERROR AddAgentFeedback] Failed to add agent message: %v", err)
 		}
 	}
 
@@ -204,29 +199,34 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update session state with new data from response
+	// Merge updated data into workflow checkpoint
 	if resp.ThreadID != "" {
-		session, err := models.GetAgentSession(DB, resp.ThreadID)
-		if err == nil {
-			// Update meal plan and shopping list if present
-			if resp.Raw != nil {
-				if rawMap, ok := resp.Raw.(map[string]interface{}); ok {
-					if mealPlan, ok := rawMap["meal_plan"]; ok {
-						if mealPlanBytes, err := json.Marshal(mealPlan); err == nil {
-							session.MealPlan = mealPlanBytes
-						}
-					}
-					if shoppingList, ok := rawMap["shopping_list_formatted"].(string); ok {
-						session.ShoppingList = shoppingList
-					}
+		m := map[string]interface{}{}
+		// load existing checkpoint
+		if raw, _, err := models.GetWorkflowCheckpoint(DB, resp.ThreadID); err == nil {
+			json.Unmarshal(raw, &m)
+		}
+		if resp.Raw != nil {
+			if rawMap, ok := resp.Raw.(map[string]interface{}); ok {
+				if mealPlan, ok := rawMap["meal_plan"]; ok {
+					m["meal_plan"] = mealPlan
+				}
+				if shoppingList, ok := rawMap["shopping_list_formatted"].(string); ok {
+					m["shopping_list"] = shoppingList
 				}
 			}
-
-			models.UpdateAgentSession(DB, session)
-
-			// Add agent message if present
-			if resp.Message != "" {
-				models.AddMessage(DB, resp.ThreadID, "agent", resp.Message)
+		}
+		if data, err := json.Marshal(m); err != nil {
+			log.Printf("[ERROR ResumeAgentWorkflow] Failed to serialize updated checkpoint: %v", err)
+		} else {
+			if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
+				log.Printf("[ERROR ResumeAgentWorkflow] Failed to update workflow checkpoint: %v", err)
+			}
+		}
+		// Add agent message if present
+		if resp.Message != "" {
+			if _, err := models.AddMessage(DB, resp.ThreadID, "agent", resp.Message); err != nil {
+				log.Printf("[ERROR ResumeAgentWorkflow] Failed to add agent message: %v", err)
 			}
 		}
 	}
@@ -249,16 +249,10 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	// Store user message in database and workflow checkpoint
+	// Append user message to workflow checkpoint
 	if req.From == "user" && req.Message != "" {
-		// Store in messages table
 		if _, err := models.AddMessage(DB, req.ThreadID, "user", req.Message); err != nil {
-			log.Printf("[ERROR MessageAgentHandler] Failed to store user message: %v", err)
-		}
-
-		// Update workflow checkpoint with full message history
-		if err := models.UpdateWorkflowCheckpointWithMessage(DB, req.ThreadID, "user", req.Message); err != nil {
-			log.Printf("[ERROR MessageAgentHandler] Failed to update workflow checkpoint: %v", err)
+			log.Printf("[ERROR MessageAgentHandler] Failed to add user message: %v", err)
 		}
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
@@ -284,15 +278,10 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("[DEBUG MessageAgentHandler] agent CLI resume response: %+v", resp)
 
-	// Store agent response message in database if present
+	// Append agent response message to workflow checkpoint
 	if resp.Message != "" {
 		if _, err := models.AddMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
-			log.Printf("[ERROR MessageAgentHandler] Failed to store agent message: %v", err)
-		}
-
-		// Update workflow checkpoint with full message history
-		if err := models.UpdateWorkflowCheckpointWithMessage(DB, req.ThreadID, "agent", resp.Message); err != nil {
-			log.Printf("[ERROR MessageAgentHandler] Failed to update workflow checkpoint: %v", err)
+			log.Printf("[ERROR MessageAgentHandler] Failed to add agent message: %v", err)
 		}
 	}
 

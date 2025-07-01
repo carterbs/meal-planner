@@ -845,18 +845,19 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 }
 
 func TestRemoveMealHandler(t *testing.T) {
+	UseDummy = true
+	defer func() { UseDummy = false }()
 	helper := setupTest(t)
 
 	plan := models.WeeklyMealPlan{
 		Days: []models.PlanDay{{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{ID: 1, MealName: "Egg"}}},
 	}
 	planBytes, _ := json.Marshal(plan)
-	now := time.Now()
-	rows := sqlmock.NewRows([]string{"id", "thread_id", "status", "workflow_type", "current_step", "meal_plan", "shopping_list", "created_at", "updated_at"}).
-		AddRow(1, "thread1", "ACTIVE", "meal_planning", nil, string(planBytes), nil, now, now)
-	helper.mock.ExpectQuery("SELECT id, thread_id").WithArgs("thread1").WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"checkpoint_data", "checkpoint_ns"}).
+		AddRow(planBytes, "latest")
+	helper.mock.ExpectQuery("SELECT checkpoint_data, checkpoint_ns").WithArgs("thread1").WillReturnRows(rows)
 
-	helper.mock.ExpectExec("UPDATE agent_sessions").WillReturnResult(sqlmock.NewResult(0, 1))
+	helper.mock.ExpectExec("INSERT INTO workflow_checkpoints").WithArgs("thread1", planBytes).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	reqBody := map[string]interface{}{"threadId": "thread1", "dayIndex": 0, "mealType": "breakfast"}
 	bodyBytes, _ := json.Marshal(reqBody)

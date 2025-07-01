@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"mealplanner/models"
 
@@ -21,7 +19,6 @@ func parseJSON(r *http.Request, target interface{}) error {
 }
 
 // GetWorkflowState handles GET /api/workflows/{threadId}
-// Returns complete session data from database
 func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 	threadID := chi.URLParam(r, "threadId")
 	if threadID == "" {
@@ -29,85 +26,54 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Try to get session from database first
-	session, err := models.GetAgentSession(DB, threadID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// Session not found in database, check in-memory status for backwards compatibility
-			state := models.WorkflowState{ThreadID: threadID, Status: "ACTIVE"}
-			if s, ok := workflowStatus[threadID]; ok {
-				state.Status = s
-			}
-
-			if !UseDummy {
-				ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-				defer cancel()
-				resp, err := runAgentCLI(ctx, "status", threadID)
-				if err == nil {
-					state.CurrentStep = resp.CurrentStep
-				}
-			}
-
-			writeJSON(w, state)
-			return
-		}
-		http.Error(w, "failed to get session: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Get messages for the session
+	// Retrieve messages for the workflow
 	messages, err := models.GetMessages(DB, threadID)
 	if err != nil {
 		http.Error(w, "failed to get messages: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Try to get workflow data from checkpoints table (where the real data is)
+	// Load workflow data from checkpoints table
 	mealPlan, currentStep, err := models.GetWorkflowCheckpoint(DB, threadID)
 	if err != nil {
-		// Fallback to session data if checkpoint not found
-		mealPlan = session.MealPlan
-		currentStep = session.CurrentStep
+		if err == sql.ErrNoRows {
+			http.Error(w, "No workflow found for threadId", http.StatusNotFound)
+		} else {
+			http.Error(w, "Failed to fetch workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
+		}
+		return
 	}
 
-	// Build complete workflow state
-	// Prepare shopping list JSON
+	// Build shopping list JSON
 	var shoppingListRaw json.RawMessage
-	if session.ShoppingList != "" {
-		shoppingListRaw = json.RawMessage(session.ShoppingList)
-	} else {
-		// Derive from mealPlan
-		var plan struct {
-			Days []struct { Meal *struct { ID int `json:"id"` } `json:"meal"` } `json:"days"`
-		}
-		if err2 := json.Unmarshal(mealPlan, &plan); err2 == nil {
-			ids := []int{}
-			for _, d := range plan.Days {
-				if d.Meal != nil {
-					ids = append(ids, d.Meal.ID)
-				}
-			}
-			if items, err2 := buildShoppingList(ids); err2 == nil {
-				if b, err3 := json.Marshal(items); err3 == nil {
-					shoppingListRaw = json.RawMessage(b)
-				}
+	var plan struct {
+		Days []struct {
+			Meal *struct { ID int `json:"id"` } `json:"meal"`
+		} `json:"days"`
+	}
+	if err2 := json.Unmarshal(mealPlan, &plan); err2 == nil {
+		ids := []int{}
+		for _, d := range plan.Days {
+			if d.Meal != nil {
+				ids = append(ids, d.Meal.ID)
 			}
 		}
-		if shoppingListRaw == nil {
-			shoppingListRaw = json.RawMessage("[]")
+		if items, err2 := buildShoppingList(ids); err2 == nil {
+			if b, err3 := json.Marshal(items); err3 == nil {
+				shoppingListRaw = json.RawMessage(b)
+			}
 		}
+	}
+	if shoppingListRaw == nil {
+		shoppingListRaw = json.RawMessage("[]")
 	}
 
 	state := models.WorkflowState{
-		ThreadID:     session.ThreadID,
-		WorkflowType: session.WorkflowType,
+		ThreadID:     threadID,
 		CurrentStep:  currentStep,
-		Status:       session.Status,
 		Messages:     messages,
 		MealPlan:     mealPlan,
 		ShoppingList: shoppingListRaw,
-		CreatedAt:    session.CreatedAt,
-		UpdatedAt:    session.UpdatedAt,
 	}
 
 	writeJSON(w, state)
@@ -121,31 +87,10 @@ func AbandonWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update database session status to ABANDONED
-	session, err := models.GetAgentSession(DB, threadID)
-	if err != nil && err != sql.ErrNoRows {
-		http.Error(w, "failed to get session: "+err.Error(), http.StatusInternalServerError)
+	// Append abandonment event to workflow checkpoint
+	if err := models.UpdateWorkflowCheckpointWithMessage(DB, threadID, "system", "ABANDONED"); err != nil {
+		http.Error(w, "Failed to abandon workflow: "+err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	if err == sql.ErrNoRows {
-		// Session not in database, use in-memory status for backwards compatibility
-		workflowStatus[threadID] = "ABANDONED"
-	} else {
-		// Update database
-		session.Status = "ABANDONED"
-		err = models.UpdateAgentSession(DB, session)
-		if err != nil {
-			http.Error(w, "failed to update session: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	if !UseDummy {
-		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-		defer cancel()
-		// Attempt to cancel workflow via agent CLI; ignore error
-		runAgentCLI(ctx, "cancel", threadID, "--force")
 	}
 
 	writeJSON(w, map[string]string{"status": "ABANDONED"})
@@ -198,7 +143,7 @@ func UpdateSessionState(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		MealPlan     *json.RawMessage `json:"meal_plan,omitempty"`
-		ShoppingList *string          `json:"shopping_list,omitempty"`
+		ShoppingList *json.RawMessage `json:"shopping_list,omitempty"`
 		CurrentStep  *string          `json:"current_step,omitempty"`
 		Status       *string          `json:"status,omitempty"`
 	}
@@ -208,29 +153,43 @@ func UpdateSessionState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := models.GetAgentSession(DB, threadID)
+	// Load existing checkpoint
+	data, _, err := models.GetWorkflowCheckpoint(DB, threadID)
 	if err != nil {
-		http.Error(w, "failed to get session: "+err.Error(), http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			http.Error(w, "No workflow found for threadId", http.StatusNotFound)
+		} else {
+			http.Error(w, "Failed to fetch workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
-	// Update fields that were provided
+	// Merge updates
+	var m map[string]interface{}
+	if err := json.Unmarshal(data, &m); err != nil {
+		http.Error(w, "failed to parse checkpoint: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	if req.MealPlan != nil {
-		session.MealPlan = *req.MealPlan
+		m["meal_plan"] = *req.MealPlan
 	}
 	if req.ShoppingList != nil {
-		session.ShoppingList = *req.ShoppingList
+		m["shopping_list"] = *req.ShoppingList
 	}
 	if req.CurrentStep != nil {
-		session.CurrentStep = *req.CurrentStep
+		m["current_step"] = *req.CurrentStep
 	}
 	if req.Status != nil {
-		session.Status = *req.Status
+		m["status"] = *req.Status
 	}
 
-	err = models.UpdateAgentSession(DB, session)
+	newData, err := json.Marshal(m)
 	if err != nil {
-		http.Error(w, "failed to update session: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to serialize checkpoint: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err := models.UpdateWorkflowCheckpoint(DB, threadID, newData); err != nil {
+		http.Error(w, "failed to update workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
