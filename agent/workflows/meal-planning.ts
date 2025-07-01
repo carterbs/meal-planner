@@ -21,6 +21,7 @@ import {
   ShoppingListItem,
   MCPToolResult as MCPToolResultType,
 } from "../shared/mcp-types";
+import { DAYS_OF_THE_WEEK } from '../../shared/ts/days';
 const DEBUG_LOGS = false;
 interface MCPTextContent {
   type: "text";
@@ -378,15 +379,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           `${m.id}: ${m.name} (${m.mealType}, effort: ${m.effort}, red meat: ${m.hasRedMeat})`,
       )
       .join("\n");
-    const dayNames = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
-    ];
+    const dayNames = DAYS_OF_THE_WEEK;
     const planDescription = plan.days
       .filter((day) => day.meal)
       .map(
@@ -905,15 +898,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     }
 
     const days = [];
-    const dayNames = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
-    ];
+    const dayNames = DAYS_OF_THE_WEEK;
     const mealTypes = ["Breakfast", "Lunch", "Dinner"] as const;
 
     for (let i = 0; i < dayNames.length; i++) {
@@ -973,15 +958,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       )
       .join("\n");
 
-    const dayNames = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
-    ];
+    const dayNames = DAYS_OF_THE_WEEK;
     const planDescription = plan.days
       .filter((day) => day.meal)
       .map(
@@ -1073,15 +1050,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private formatPlanForPresentation(plan: WeeklyMealPlan): string {
-    const dayNames = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
-    ];
+    const dayNames = DAYS_OF_THE_WEEK;
     const lines: string[] = [];
 
     lines.push("📅 Weekly Meal Plan:");
