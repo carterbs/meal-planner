@@ -3,15 +3,16 @@
     "version": "1.0.0",
     "private": true,
     "workspaces": [
-
         "typescript/ui",
         "typescript/agent",
-        "backend/mcp"
+        "typescript/mcp",
+        "typescript/shared"
     ],
     "scripts": {
         "start": "node scripts/start.js",
         "start:mcp": "node scripts/start-mcp.js",
-        "test:backend": "cd backend && go test -v ./...",
+        "test:backend": "cd backend && make test",
+        "test:mcp": "cd typescript/mcp && go test -v ./...",
         "test:frontend": "cd typescript/ui && yarn test",
         "test:agent": "cd typescript/agent && yarn test",
         "build:agent": "cd typescript/agent && yarn build",
@@ -22,6 +23,10 @@
         "meal-agent": "./scripts/meal-agent.sh",
         "kill:servers": "node scripts/kill-servers.js",
         "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\""
+    },
+    "resolutions": {
+        "react": "18.2.0",
+        "react-dom": "18.2.0"
     },
     "devDependencies": {
         "chalk": "^4.1.2",

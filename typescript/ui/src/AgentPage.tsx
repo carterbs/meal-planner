@@ -10,13 +10,9 @@ import {
   Avatar,
   ThemeProvider,
   CssBaseline,
-  useTheme,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  IconButton,
-  Container,
-  Divider,
   createTheme,
 } from '@mui/material';
 import {
@@ -24,7 +20,6 @@ import {
   ExitToApp as ExitToAppIcon,
   ExpandMore as ExpandMoreIcon,
   ShoppingCart as ShoppingCartIcon,
-  Send as SendIcon,
 } from '@mui/icons-material';
 import MealPlanDisplay, { WeeklyMealPlan } from './components/MealPlanDisplay';
 import { ShoppingListItem } from './types';
@@ -397,7 +392,7 @@ const AgentPage: React.FC = () => {
     }
   };
 
-  const { isResuming, resumeData, startNewSession } = useSession(startSession);
+  const { resumeData, startNewSession } = useSession(startSession);
 
   const handleLogout = () => {
     setSession(null);

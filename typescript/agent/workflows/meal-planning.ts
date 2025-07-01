@@ -80,7 +80,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       command: 'node',
       args: isJsonMode
         ? [
-            '/Users/bradcarter/Documents/Dev/meal-planner/backend/mcp/dist/index.js',
+            '/Users/bradcarter/Documents/Dev/meal-planner/typescript/mcp/dist/index.js',
           ]
         : [
             '/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js',
