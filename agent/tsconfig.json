@@ -14,6 +14,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["**/*.ts", "../shared/ts/**/*.ts"],
+  "include": ["**/*.ts", "../typescript/shared/ts/**/*.ts", "../typescript/shared/days.ts"],
   "exclude": ["node_modules", "dist"]
 }

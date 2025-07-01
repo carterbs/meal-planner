@@ -1,4 +1,3 @@
-// frontend/src/App.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Tabs,

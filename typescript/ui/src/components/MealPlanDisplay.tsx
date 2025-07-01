@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { DAYS_OF_THE_WEEK } from '../../../shared/ts/days';
+import { DAYS_OF_THE_WEEK } from '@meal-planner/shared/dist/days';
 
 interface MealInfo {
   id: number;

@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "outDir": "./build",
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src",
+    "../shared/ts",
+    "src/test-utils.tsx",
+    "src/setupTests.js"
+, "../shared/days.ts"  ]
+}

@@ -3,24 +3,25 @@
     "version": "1.0.0",
     "private": true,
     "workspaces": [
-        "frontend",
-        "backend/mcp",
-        "agent"
+        "agent",
+        "typescript/ui",
+        "typescript/agent",
+        "backend/mcp"
     ],
     "scripts": {
         "start": "node scripts/start.js",
         "start:mcp": "node scripts/start-mcp.js",
         "test:backend": "cd backend && go test -v ./...",
-        "test:frontend": "cd frontend && yarn test",
-        "test:agent": "cd agent && yarn test",
-        "build:agent": "cd agent && yarn build",
+        "test:frontend": "cd typescript/ui && yarn test",
+        "test:agent": "cd typescript/agent && yarn test",
+        "build:agent": "cd typescript/agent && yarn build",
         "test": "node scripts/test-summary.js",
         "db:backup": "node scripts/backup-db.js",
         "db:restore": "node scripts/restore-db.js",
         "dev": "node scripts/dev-start.js",
         "meal-agent": "./scripts/meal-agent.sh",
         "kill:servers": "node scripts/kill-servers.js",
-        "format": "prettier --write \"agent/**/*.{ts,tsx}\" \"frontend/**/*.{ts,tsx}\""
+        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\""
     },
     "devDependencies": {
         "chalk": "^4.1.2",

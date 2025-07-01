@@ -46,7 +46,7 @@ const backendProcess = spawn('go', ['run', 'main.go'], {
 setTimeout(() => {
   // Then start frontend
   const frontendProcess = spawn('yarn', ['start'], {
-    cwd: path.join(PROJECT_ROOT, 'frontend'),
+    cwd: path.join(PROJECT_ROOT, 'typescript/ui'),
     stdio: 'inherit',
     shell: true,
   });

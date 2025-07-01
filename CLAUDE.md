@@ -71,7 +71,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Notes
 
 - **Package Manager**: Always use `yarn`, never npm
-- **Testing**: Follow Fix-Test-Commit workflow (see frontend/CLAUDE.md)
+- **Testing**: Follow Fix-Test-Commit workflow (see typescript/frontend/CLAUDE.md)
 - **Database**: Can run with `--dummy` flag for in-memory data during development
 - **Environment**: Backend requires database credentials via .env file or environment variables
 - **MCP Architecture**: The MCP server runs independently and provides tools for AI integration with the meal planning system
