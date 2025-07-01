@@ -66,10 +66,15 @@ type WorkflowService interface {
 	UpdateMealPlan(threadID string, plan *models.WeeklyMealPlan) error
 	GetWorkflowState(threadID string) (*models.InternalWorkflowState, error)
 	UpdateWorkflowState(threadID string, state *models.InternalWorkflowState) error
-	
+
 	// New methods
 	GetWorkflowCheckpoint(threadID string) ([]byte, string, error)
 	UpdateWorkflowCheckpoint(threadID string, data []byte) error
+
+	// Add agent message to workflow
+	AddAgentMessage(threadID, text, timestamp string) error
+	// Add user feedback to workflow
+	AddUserFeedback(threadID, from, message, timestamp string) error
 }
 
 // ServiceContainer holds all service dependencies
@@ -82,4 +87,5 @@ type ServiceContainer struct {
 	MessageService      MessageService
 	WorkflowService     WorkflowService
 }
+
 

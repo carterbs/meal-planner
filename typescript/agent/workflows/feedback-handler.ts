@@ -40,42 +40,9 @@ export class FeedbackHandler {
         return false;
       }
 
-      const [checkpoint, metadata] = tuple;
-      const state = checkpoint.channel_values as MealPlanningState;
-
-      // Create feedback entry
-      const feedback: FeedbackEntry = {
-        from: input.from,
-        message: input.message,
-        timestamp: new Date(),
-        meal_plan_version: input.mealPlanVersion ?? state.iteration_count,
-      };
-
-      // Add feedback to state
-      const updatedState: Partial<MealPlanningState> = {
-        feedback_history: [...(state.feedback_history || []), feedback],
-        updated_at: new Date(),
-      };
-
-      // Update checkpoint
-      const updatedCheckpoint = {
-        ...checkpoint,
-        channel_values: {
-          ...state,
-          ...updatedState,
-        },
-      };
-
-      const updatedMetadata = {
-        ...metadata,
-        step: metadata.step + 1,
-        writes: { feedback_added: feedback },
-      };
-
-      await this.checkpointer.put(config, updatedCheckpoint, updatedMetadata);
-
+      // Do NOT persist feedback. Only log receipt and return true.
       console.log(
-        `💬 [FEEDBACK] Added feedback from ${input.from} to workflow ${input.threadId}`,
+        `💬 [FEEDBACK] (NO-OP) Received feedback from ${input.from} to workflow ${input.threadId}`,
       );
       return true;
     } catch (error) {

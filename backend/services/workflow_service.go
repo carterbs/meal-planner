@@ -111,6 +111,56 @@ func (s *workflowService) GetWorkflowCheckpoint(threadID string) ([]byte, string
 	return data, ns, nil
 }
 
+// AddUserFeedback appends a user feedback message to the workflow and updates the state
+func (s *workflowService) AddUserFeedback(threadID, from, message, timestamp string) error {
+	log.Printf("[AddUserFeedback] Fetching workflow state for threadID=%s", threadID)
+	state, err := s.GetWorkflowState(threadID)
+	if err != nil {
+		log.Printf("[AddUserFeedback] Failed to get workflow state: %v", err)
+		return err
+	}
+	log.Printf("[AddUserFeedback] Current FeedbackHistory count: %d", len(state.FeedbackHistory))
+	log.Printf("[AddUserFeedback] Appending feedback: from=%s, message=%q, timestamp=%s", from, message, timestamp)
+	state.FeedbackHistory = append(state.FeedbackHistory, models.FeedbackEntry{
+		From:      from,
+		Message:   message,
+		Timestamp: timestamp,
+	})
+	log.Printf("[AddUserFeedback] New FeedbackHistory count: %d", len(state.FeedbackHistory))
+	err = s.UpdateWorkflowState(threadID, state)
+	if err != nil {
+		log.Printf("[AddUserFeedback] Failed to update workflow state: %v", err)
+	} else {
+		log.Printf("[AddUserFeedback] Successfully updated workflow state for threadID=%s", threadID)
+	}
+	return err
+}
+
+// AddAgentMessage appends an agent message to the workflow and updates the state
+func (s *workflowService) AddAgentMessage(threadID, text, timestamp string) error {
+	log.Printf("[AddAgentMessage] Fetching workflow state for threadID=%s", threadID)
+	state, err := s.GetWorkflowState(threadID)
+	if err != nil {
+		log.Printf("[AddAgentMessage] Failed to get workflow state: %v", err)
+		return err
+	}
+	log.Printf("[AddAgentMessage] Current AgentMessages count: %d", len(state.AgentMessages))
+	log.Printf("[AddAgentMessage] Appending agent message: sender=agent, text=%q, timestamp=%s", text, timestamp)
+	state.AgentMessages = append(state.AgentMessages, models.AgentMessage{
+		Sender:    "agent",
+		Text:      text,
+		Timestamp: timestamp,
+	})
+	log.Printf("[AddAgentMessage] New AgentMessages count: %d", len(state.AgentMessages))
+	err = s.UpdateWorkflowState(threadID, state)
+	if err != nil {
+		log.Printf("[AddAgentMessage] Failed to update workflow state: %v", err)
+	} else {
+		log.Printf("[AddAgentMessage] Successfully updated workflow state for threadID=%s", threadID)
+	}
+	return err
+}
+
 // UpdateWorkflowCheckpoint updates the raw checkpoint data for a thread
 func (s *workflowService) UpdateWorkflowCheckpoint(threadID string, data []byte) error {
 	log.Printf("Updating workflow checkpoint for thread ID: %s", threadID)
