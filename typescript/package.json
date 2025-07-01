@@ -2,7 +2,8 @@
     "name": "frontend",
     "workspaces": [
         "ui",
-        "shared"
+        "shared",
+        "agent"
     ],
     "version": "0.1.0",
     "private": true,
@@ -31,7 +32,6 @@
         "coverage": "react-scripts test --coverage --watchAll=false",
         "eject": "react-scripts eject"
     },
-    "proxy": "http://localhost:8080",
     "browserslist": {
         "production": [
             ">0.2%",

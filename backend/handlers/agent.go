@@ -20,7 +20,7 @@ var agentCommandContext = exec.CommandContext
 // runAgentCLI executes the agent CLI with given args and unmarshals JSON output into resp
 func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, error) {
 	// Always add --json flag for API integration
-	allArgs := append([]string{"../agent/dist/cli.js", "--json"}, args...)
+	allArgs := append([]string{"../typescript/agent/dist/cli.js", "--json"}, args...)
 	// Record the start time for profiling
 	startTime := time.Now()
 	log.Printf("[DEBUG runAgentCLI] Executing command: node %v", allArgs)
@@ -221,7 +221,6 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}
-
 
 			models.UpdateAgentSession(DB, session)
 

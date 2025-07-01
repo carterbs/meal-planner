@@ -21,7 +21,7 @@ import {
   ShoppingListItem,
   MCPToolResult as MCPToolResultType,
 } from '../shared/mcp-types';
-import { DAYS_OF_THE_WEEK } from '../../typescript/shared/days';
+import { DAYS_OF_THE_WEEK } from '@meal-planner/shared/dist/days';
 import {
   getAnalyzeFeedbackPrompt,
   getUpdateMealPlanPrompt,
