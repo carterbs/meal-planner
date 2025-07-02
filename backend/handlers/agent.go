@@ -5,17 +5,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os/exec"
 	"time"
 
+	"mealplanner/logging"
 	"mealplanner/models"
 
 	"github.com/go-chi/chi/v5"
 )
 
 var agentCommandContext = exec.CommandContext
+var logger = logging.GetLogger("agent-handler")
 
 // runAgentCLI executes the agent CLI with given args and unmarshals JSON output into resp
 func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, error) {
@@ -23,7 +24,7 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 	allArgs := append([]string{"../typescript/agent/dist/cli.js", "--json"}, args...)
 	// Record the start time for profiling
 	startTime := time.Now()
-	log.Printf("[DEBUG runAgentCLI] Executing command: node %v", allArgs)
+	logger.Debugw("Executing agent CLI command", "args", allArgs)
 
 	cmd := agentCommandContext(ctx, "node", allArgs...)
 	var stdoutBuffer, stderrBuffer bytes.Buffer
@@ -32,7 +33,7 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 
 	err := cmd.Run()
 	duration := time.Since(startTime)
-	log.Printf("[DEBUG runAgentCLI] Command completed in %s", duration)
+	logger.Debugw("Agent CLI command completed", "duration", duration)
 
 	if err != nil {
 		// Combine stderr and stdout in the error message for comprehensive debugging info
@@ -43,13 +44,13 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 		if stdoutBuffer.Len() > 0 {
 			errMsg += "\nStdout: " + stdoutBuffer.String()
 		}
-		log.Printf("[ERROR runAgentCLI] %s", errMsg)
+		logger.Errorw("Agent CLI execution failed", "error", errMsg)
 		return models.AgentResponse{}, fmt.Errorf("%s", errMsg)
 	}
 
 	// Log the buffers before attempting to unmarshal stdout
-	log.Printf("[DEBUG runAgentCLI] Stderr from agent: %s", stderrBuffer.String())
-	log.Printf("[DEBUG runAgentCLI] Stdout from agent: %s", stdoutBuffer.String())
+	logger.Debugw("Agent CLI stderr", "stderr", stderrBuffer.String())
+	logger.Debugw("Agent CLI stdout", "stdout", stdoutBuffer.String())
 
 	// Attempt to unmarshal stdout only
 	var resp models.AgentResponse
@@ -84,26 +85,30 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Initialize workflow checkpoint
-	if resp.ThreadID != "" {
-		// Seed full workflow state into checkpoint
-		if resp.InitialState != nil {
-			checkpoint := map[string]interface{}{
-				"channel_values": resp.InitialState,
-				"next":           []interface{}{},
-				"step":           0,
-			}
-			if data, err := json.Marshal(checkpoint); err != nil {
-				log.Printf("[ERROR StartAgentWorkflow] Failed to serialize initial checkpoint: %v", err)
-			} else if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
-				log.Printf("[ERROR StartAgentWorkflow] Failed to initialize workflow checkpoint: %v", err)
-			}
+	// AGENT-REFACTOR: This is an error condition. return if no thread ID is returned
+	if resp.ThreadID == "" {
+		http.Error(w, "failed to start workflow: missing thread ID", http.StatusInternalServerError)
+		logger.Errorw("No thread ID returned from agent CLI on start", "req", req)
+		return
+	}
+	// Seed full workflow state into checkpoint
+	if resp.InitialState != nil {
+		checkpoint := map[string]interface{}{
+			"channel_values": resp.InitialState,
+			"next":           []interface{}{},
+			"step":           0,
 		}
-		// Add initial agent message if present
-		if resp.Message != "" {
-			t := time.Now().Format(time.RFC3339) // use current local time
-			if err := Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t); err != nil {
-				log.Printf("[ERROR StartAgentWorkflow] Failed to add agent message: %v", err)
-			}
+		if data, err := json.Marshal(checkpoint); err != nil {
+			logger.Errorw("Failed to serialize initial checkpoint", "error", err)
+		} else if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
+			logger.Errorw("Failed to initialize workflow checkpoint", "error", err)
+		}
+	}
+	// Add initial agent message if present
+	if resp.Message != "" {
+		t := time.Now().Format(time.RFC3339) // use current local time
+		if err := Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t); err != nil {
+			logger.Errorw("Failed to add agent message", "error", err)
 		}
 	}
 
@@ -141,26 +146,26 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 	if req.From == "user" && req.Message != "" {
 		_, err := models.AddMessage(DB, req.ThreadID, "user", req.Message)
 		if err != nil {
-			log.Printf("[ERROR AddAgentFeedback] Failed to store user message: %v", err)
+			logger.Infof("[ERROR AddAgentFeedback] Failed to store user message: %v", err)
 		}
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	log.Printf("[DEBUG AddAgentFeedback] Running agent CLI: plan feedback %s %s --from %s", req.ThreadID, req.Message, req.From)
+	logger.Infof("[DEBUG AddAgentFeedback] Running agent CLI: plan feedback %s %s --from %s", req.ThreadID, req.Message, req.From)
 	resp, err := runAgentCLI(ctx, "plan", "feedback", req.ThreadID, req.Message, "--from", req.From)
 	if err != nil {
-		log.Printf("[ERROR AddAgentFeedback] agent CLI error: %v", err)
+		logger.Infof("[ERROR AddAgentFeedback] agent CLI error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Printf("[DEBUG AddAgentFeedback] agent CLI response: %+v", resp)
+	logger.Infof("[DEBUG AddAgentFeedback] agent CLI response: %+v", resp)
 
 	// Append agent message to workflow checkpoint
 	if resp.Message != "" {
 		t := time.Now().Format(time.RFC3339) // use current local time
 		if err := Services.WorkflowService.AddAgentMessage(req.ThreadID, resp.Message, t); err != nil {
-			log.Printf("[ERROR AddAgentFeedback] Failed to add agent message: %v", err)
+			logger.Infof("[ERROR AddAgentFeedback] Failed to add agent message: %v", err)
 		}
 	}
 
@@ -185,6 +190,8 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	args := []string{"resume", req.ThreadID}
+
+	// AGENT-REFACTOR: Is this ever true anywhere in the codebase?
 	if req.Interactive {
 		args = append(args, "--interactive")
 	}
@@ -195,35 +202,39 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Merge updated data into workflow checkpoint
-	if resp.ThreadID != "" {
-		m := map[string]interface{}{}
-		// load existing checkpoint
-		if raw, _, err := models.GetWorkflowCheckpoint(DB, resp.ThreadID); err == nil {
-			json.Unmarshal(raw, &m)
-		}
-		if resp.Raw != nil {
-			if rawMap, ok := resp.Raw.(map[string]interface{}); ok {
-				if mealPlan, ok := rawMap["meal_plan"]; ok {
-					m["meal_plan"] = mealPlan
-				}
-				if shoppingList, ok := rawMap["shopping_list_formatted"].(string); ok {
-					m["shopping_list"] = shoppingList
-				}
+	// AGENT-REFACTOR: this is an error condition, no? If we have no thread ID, what's going on? Early exit preferred.
+	if resp.ThreadID == "" {
+		http.Error(w, "failed to resume workflow: missing thread ID", http.StatusInternalServerError)
+		logger.Errorw("No thread ID returned from agent CLI on resume", "req", req)
+		return
+	}
+	m := map[string]interface{}{}
+	// load existing checkpoint
+	if raw, _, err := models.GetWorkflowCheckpoint(DB, resp.ThreadID); err == nil {
+		json.Unmarshal(raw, &m)
+	}
+	if resp.Raw != nil {
+		if rawMap, ok := resp.Raw.(map[string]interface{}); ok {
+			if mealPlan, ok := rawMap["meal_plan"]; ok {
+				m["meal_plan"] = mealPlan
+			}
+			if shoppingList, ok := rawMap["shopping_list_formatted"].(string); ok {
+				m["shopping_list"] = shoppingList
 			}
 		}
-		if data, err := json.Marshal(m); err != nil {
-			log.Printf("[ERROR ResumeAgentWorkflow] Failed to serialize updated checkpoint: %v", err)
-		} else {
-			if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
-				log.Printf("[ERROR ResumeAgentWorkflow] Failed to update workflow checkpoint: %v", err)
-			}
+	}
+	if data, err := json.Marshal(m); err != nil {
+		logger.Errorw("Failed to serialize updated checkpoint", "error", err)
+	} else {
+		if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
+			logger.Errorw("Failed to update workflow checkpoint", "error", err)
 		}
-		// Add agent message if present
-		if resp.Message != "" {
-			t := time.Now().Format(time.RFC3339) // use current local time
-			if err := Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t); err != nil {
-				log.Printf("[ERROR ResumeAgentWorkflow] Failed to add agent message: %v", err)
-			}
+	}
+	// Add agent message if present
+	if resp.Message != "" {
+		t := time.Now().Format(time.RFC3339) // use current local time
+		if err := Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t); err != nil {
+			logger.Errorw("Failed to add agent message", "error", err)
 		}
 	}
 
@@ -249,17 +260,17 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 	if req.From == "user" && req.Message != "" {
 		t := time.Now().Format(time.RFC3339)
 		if err := Services.WorkflowService.AddUserFeedback(req.ThreadID, req.From, req.Message, t); err != nil {
-			log.Printf("[ERROR MessageAgentHandler] Failed to add user feedback: %v", err)
+			logger.Infof("[ERROR MessageAgentHandler] Failed to add user feedback: %v", err)
 		} else {
-			log.Printf("[MessageAgentHandler] Saved user message to FeedbackHistory: %q", req.Message)
+			logger.Infof("[MessageAgentHandler] Saved user message to FeedbackHistory: %q", req.Message)
 		}
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	// Run feedback
-	log.Printf("[DEBUG MessageAgentHandler] Running agent CLI: plan feedback %s %s --from %s", req.ThreadID, req.Message, req.From)
+	logger.Infof("[DEBUG MessageAgentHandler] Running agent CLI: plan feedback %s %s --from %s", req.ThreadID, req.Message, req.From)
 	if _, err := runAgentCLI(ctx, "plan", "feedback", req.ThreadID, req.Message, "--from", req.From); err != nil {
-		log.Printf("[ERROR MessageAgentHandler] agent CLI feedback error: %v", err)
+		logger.Infof("[ERROR MessageAgentHandler] agent CLI feedback error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -268,22 +279,22 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 	if req.Interactive {
 		resumeArgs = append(resumeArgs, "--interactive")
 	}
-	log.Printf("[DEBUG MessageAgentHandler] Running agent CLI resume: %v", resumeArgs)
+	logger.Infof("[DEBUG MessageAgentHandler] Running agent CLI resume: %v", resumeArgs)
 	resp, err := runAgentCLI(ctx, resumeArgs...)
 	if err != nil {
-		log.Printf("[ERROR MessageAgentHandler] agent CLI resume error: %v", err)
+		logger.Infof("[ERROR MessageAgentHandler] agent CLI resume error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Printf("[DEBUG MessageAgentHandler] agent CLI resume response: %+v", resp)
+	logger.Infof("[DEBUG MessageAgentHandler] agent CLI resume response: %+v", resp)
 
 	// Append agent response message to workflow checkpoint
 	if resp.Message != "" {
 		t := time.Now().Format(time.RFC3339)
 		if err := Services.WorkflowService.AddAgentMessage(req.ThreadID, resp.Message, t); err != nil {
-			log.Printf("[ERROR MessageAgentHandler] Failed to add agent message: %v", err)
+			logger.Infof("[ERROR MessageAgentHandler] Failed to add agent message: %v", err)
 		} else {
-			log.Printf("[MessageAgentHandler] Saved agent message to AgentMessages: %q", resp.Message)
+			logger.Infof("[MessageAgentHandler] Saved agent message to AgentMessages: %q", resp.Message)
 		}
 	}
 
@@ -301,14 +312,13 @@ func GetWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing thread id", http.StatusBadRequest)
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-	defer cancel()
-	resp, err := runAgentCLI(ctx, "status", threadID)
+	state, err := Services.WorkflowService.GetWorkflowState(threadID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to get workflow state: "+err.Error(), http.StatusInternalServerError)
+		logger.Errorw("Failed to get workflow state", "threadID", threadID, "error", err)
 		return
 	}
-	writeJSON(w, resp)
+	writeJSON(w, state)
 }
 
 // ListWorkflows handles GET /api/agent/workflows
@@ -317,19 +327,11 @@ func ListWorkflows(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
 		return
 	}
-	workflowType := r.URL.Query().Get("type")
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-	defer cancel()
-	args := []string{"list"}
-	if workflowType != "" {
-		args = append(args, "--type", workflowType)
-	}
-	resp, err := runAgentCLI(ctx, args...)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	writeJSON(w, resp)
+	// NOTE: This implementation lists all workflow checkpoints in the DB. You may want to filter by type if needed.
+	// For now, just return a list of all thread IDs and their states.
+	// This is a placeholder: in a real implementation, you'd likely have a DB query for all checkpoints.
+	// For now, return not implemented.
+	http.Error(w, "ListWorkflows DB implementation not yet implemented", http.StatusNotImplemented)
 }
 
 // CancelWorkflow handles DELETE /api/agent/workflows/{threadId}
@@ -343,14 +345,13 @@ func CancelWorkflow(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing thread id", http.StatusBadRequest)
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-	defer cancel()
-	resp, err := runAgentCLI(ctx, "cancel", threadID, "--force")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// Mark workflow as ABANDONED in the DB
+	if err := models.UpdateWorkflowCheckpointWithMessage(DB, threadID, "system", "ABANDONED"); err != nil {
+		http.Error(w, "Failed to abandon workflow: "+err.Error(), http.StatusInternalServerError)
+		logger.Errorw("Failed to abandon workflow", "threadID", threadID, "error", err)
 		return
 	}
-	writeJSON(w, resp)
+	writeJSON(w, map[string]string{"status": "ABANDONED"})
 }
 
 func writeJSON(w http.ResponseWriter, v interface{}) {

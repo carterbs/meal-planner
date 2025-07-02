@@ -121,14 +121,14 @@ func main() {
 
 	// Set database connection in handlers (might be nil if connection failed)
 	handlers.DB = connection
-	
+
 	// Always initialize service container when not in dummy mode
 	if !*dummyFlag {
 		handlers.Services = services.NewServiceContainer(connection)
 		// Maintain backward compatibility for existing workflow service usage
 		handlers.WorkflowService = handlers.Services.WorkflowService
 	}
-	
+
 	if *dummyFlag {
 		handlers.UseDummy = true
 		if err := dummy.Load("Meal_db.csv"); err != nil {
@@ -261,7 +261,7 @@ func main() {
 		// Update the global DB connection
 		handlers.DB = connection
 		handlers.UseDummy = false
-		
+
 		// Initialize service container with new connection
 		handlers.Services = services.NewServiceContainer(connection)
 		// Maintain backward compatibility for existing workflow service usage
