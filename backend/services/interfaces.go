@@ -9,11 +9,16 @@ type MealService interface {
 	// Retrieval operations
 	GetAllMeals() ([]*models.Meal, error)
 	GetMealsByIDs(ids []int) ([]*models.Meal, error)
+	GetMealByID(id int) (*models.Meal, error)
 
 	// CRUD operations
 	CreateMeal(meal models.Meal) (*models.Meal, error)
 	UpdateMeal(meal *models.Meal) error
 	DeleteMeal(id int) error
+
+	// Ingredient operations
+	UpdateMealIngredient(mealID int, ingredient models.Ingredient) (*models.Meal, error)
+	DeleteMealIngredient(mealID, ingredientID int) (*models.Meal, error)
 
 	// Business operations
 	SwapMeal(mealID int, mealType string) (*models.Meal, error)
@@ -70,10 +75,11 @@ type WorkflowService interface {
 	// New methods
 	GetWorkflowCheckpoint(threadID string) ([]byte, string, error)
 	UpdateWorkflowCheckpoint(threadID string, data []byte) error
+	UpdateWorkflowCheckpointWithMessage(threadID, sender, message string) error
 
-	// Add agent message to workflow
+	// Message operations
+	AddMessage(threadID, sender, message string) (*models.ChatMessage, error)
 	AddAgentMessage(threadID, text, timestamp string) error
-	// Add user feedback to workflow
 	AddUserFeedback(threadID, from, message, timestamp string) error
 }
 

@@ -80,6 +80,60 @@ func (s *mealService) SwapMeal(mealID int, mealType string) (*models.Meal, error
 	return meal, nil
 }
 
+// GetMealByID retrieves a single meal by its ID
+func (s *mealService) GetMealByID(id int) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Getting meal by ID", "mealID", id)
+	meals, err := models.GetMealsByIDs(s.db, []int{id})
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to get meal by ID", "mealID", id, "error", err)
+		return nil, fmt.Errorf("failed to get meal with ID %d: %w", id, err)
+	}
+	if len(meals) == 0 {
+		mealServiceLogger.Warnw("Meal not found", "mealID", id)
+		return nil, fmt.Errorf("meal with ID %d not found", id)
+	}
+	mealServiceLogger.Debugw("Successfully retrieved meal", "mealID", id, "mealName", meals[0].MealName)
+	return meals[0], nil
+}
+
+// UpdateMealIngredient updates a specific ingredient for a meal
+func (s *mealService) UpdateMealIngredient(mealID int, ingredient models.Ingredient) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Updating meal ingredient", "mealID", mealID, "ingredientID", ingredient.ID)
+	err := models.UpdateMealIngredient(s.db, mealID, ingredient)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to update meal ingredient", "mealID", mealID, "ingredientID", ingredient.ID, "error", err)
+		return nil, fmt.Errorf("failed to update ingredient for meal ID %d: %w", mealID, err)
+	}
+	
+	// Return the updated meal
+	meal, err := s.GetMealByID(mealID)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to get updated meal after ingredient update", "mealID", mealID, "error", err)
+		return nil, fmt.Errorf("failed to get updated meal: %w", err)
+	}
+	mealServiceLogger.Debugw("Successfully updated meal ingredient", "mealID", mealID, "ingredientID", ingredient.ID)
+	return meal, nil
+}
+
+// DeleteMealIngredient deletes a specific ingredient from a meal
+func (s *mealService) DeleteMealIngredient(mealID, ingredientID int) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Deleting meal ingredient", "mealID", mealID, "ingredientID", ingredientID)
+	err := models.DeleteMealIngredient(s.db, ingredientID)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to delete meal ingredient", "mealID", mealID, "ingredientID", ingredientID, "error", err)
+		return nil, fmt.Errorf("failed to delete ingredient %d from meal %d: %w", ingredientID, mealID, err)
+	}
+	
+	// Return the updated meal
+	meal, err := s.GetMealByID(mealID)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to get updated meal after ingredient deletion", "mealID", mealID, "error", err)
+		return nil, fmt.Errorf("failed to get updated meal: %w", err)
+	}
+	mealServiceLogger.Debugw("Successfully deleted meal ingredient", "mealID", mealID, "ingredientID", ingredientID)
+	return meal, nil
+}
+
 // UpdateLastPlannedDates updates the last planned dates for multiple meals
 func (s *mealService) UpdateLastPlannedDates(mealIDs []int) error {
 	mealServiceLogger.Debugw("Updating last planned dates for meals", "mealIDs", mealIDs)

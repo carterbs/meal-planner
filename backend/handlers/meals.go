@@ -70,6 +70,11 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 
 // RemoveMealHandler handles POST /api/meals/remove and removes a meal from the user's meal plan.
 func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
+	// Ensure workflow service is available
+	if WorkflowService == nil {
+		http.Error(w, "Workflow service not initialized", http.StatusInternalServerError)
+		return
+	}
 	// Parse payload
 	var payload struct {
 		ThreadID string `json:"threadId"`
@@ -82,12 +87,6 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if payload.ThreadID == "" {
 		http.Error(w, "Missing threadId", http.StatusBadRequest)
-		return
-	}
-
-	// Ensure workflow service is available
-	if WorkflowService == nil {
-		http.Error(w, "Workflow service not initialized", http.StatusInternalServerError)
 		return
 	}
 
@@ -105,6 +104,7 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Recompute / attach shopping list for response
+	// AGENT-REFACTOR: we shouldn't have to attach shopping lists like this. If you swap a meal, remove a meal, or modify the workflow, it should return the latest data. Here, I'd expect that to come from the removeMealFromPlan function that will be moved to the service layer. I don't like how we're mixing responsibilities between the handler and the service layer. This handler removes a meal. it should just remove meals. delegate other responsibilities to the service layer.
 	attachShoppingList(plan)
 
 	// Save updated plan using service
@@ -116,8 +116,6 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(plan)
 }
-
-// removeMealFromDay sets the specified meal type to nil for a DayMealPlan
 
 // SwapMealHandler handles POST /api/meals/swap and returns a new meal to replace the current one.
 func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
@@ -173,20 +171,13 @@ func UpdateMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updatedIngredient.ID = ingredientID
-
-	err = models.UpdateMealIngredient(DB, mealID, updatedIngredient)
+	meal, err := Services.MealService.UpdateMealIngredient(mealID, updatedIngredient)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	meals, err := models.GetMealsByIDs(DB, []int{mealID})
-	if err != nil || len(meals) == 0 {
-		http.Error(w, "Meal not found", http.StatusInternalServerError)
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(meals[0])
+	json.NewEncoder(w).Encode(meal)
 }
 
 // DeleteMealIngredientHandler handles DELETE /api/meals/{mealId}/ingredients/{ingredientId} and deletes a specific ingredient.
@@ -202,28 +193,21 @@ func DeleteMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ingredient ID", http.StatusBadRequest)
 		return
 	}
-
-	// Delete the ingredient by its ID.
-	err = models.DeleteMealIngredient(DB, ingredientID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Retrieve the meal to return the updated record.
+	// Delete the ingredient and get updated meal
 	mealIdStr := chi.URLParam(r, "mealId")
 	mealID, err := strconv.Atoi(mealIdStr)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	updatedMeals, err := models.GetMealsByIDs(DB, []int{mealID})
-	if err != nil || len(updatedMeals) == 0 {
-		http.Error(w, "Meal not found after deletion", http.StatusInternalServerError)
+	
+	meal, err := Services.MealService.DeleteMealIngredient(mealID, ingredientID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updatedMeals[0])
+	json.NewEncoder(w).Encode(meal)
 }
 
 // DeleteMealHandler handles DELETE /api/meals/{mealId} and deletes a meal and its ingredients.
@@ -239,7 +223,7 @@ func DeleteMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = models.DeleteMeal(DB, mealID)
+	err = Services.MealService.DeleteMeal(mealID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -259,14 +243,14 @@ func ReplaceMealHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	meals, err := models.GetMealsByIDs(DB, []int{payload.NewMealID})
-	if err != nil || len(meals) == 0 {
+	meal, err := Services.MealService.GetMealByID(payload.NewMealID)
+	if err != nil {
 		http.Error(w, "Meal not found", http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(meals[0])
+	json.NewEncoder(w).Encode(meal)
 }
 
 // FinalizeMealPlanHandler handles POST /api/mealplan/finalize and updates the last planned date for all meals in the plan
@@ -289,7 +273,7 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 	sort.Ints(mealIDs)
 
 	// Update last planned date for all meals in the plan
-	err := models.UpdateLastPlannedDates(DB, mealIDs)
+	err := Services.MealService.UpdateLastPlannedDates(mealIDs)
 	if err != nil {
 		http.Error(w, "Failed to finalize meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -314,7 +298,7 @@ func CreateMealHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create the meal in the database
-	createdMeal, err := models.CreateMeal(DB, meal)
+	createdMeal, err := Services.MealService.CreateMeal(meal)
 	if err != nil {
 		http.Error(w, "Error creating meal: "+err.Error(), http.StatusInternalServerError)
 		return
