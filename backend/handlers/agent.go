@@ -85,7 +85,6 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Initialize workflow checkpoint
-	// AGENT-REFACTOR: This is an error condition. return if no thread ID is returned
 	if resp.ThreadID == "" {
 		http.Error(w, "failed to start workflow: missing thread ID", http.StatusInternalServerError)
 		logger.Errorw("No thread ID returned from agent CLI on start", "req", req)
@@ -191,7 +190,6 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	args := []string{"resume", req.ThreadID}
 
-	// AGENT-REFACTOR: Is this ever true anywhere in the codebase?
 	if req.Interactive {
 		args = append(args, "--interactive")
 	}
@@ -201,13 +199,12 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Merge updated data into workflow checkpoint
-	// AGENT-REFACTOR: this is an error condition, no? If we have no thread ID, what's going on? Early exit preferred.
 	if resp.ThreadID == "" {
 		http.Error(w, "failed to resume workflow: missing thread ID", http.StatusInternalServerError)
 		logger.Errorw("No thread ID returned from agent CLI on resume", "req", req)
 		return
 	}
+	// Merge updated data into workflow checkpoint
 	m := map[string]interface{}{}
 	// load existing checkpoint
 	if raw, _, err := models.GetWorkflowCheckpoint(DB, resp.ThreadID); err == nil {
