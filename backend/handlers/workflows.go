@@ -105,7 +105,7 @@ func AbandonWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Append abandonment event to workflow checkpoint
-	if err := models.UpdateWorkflowCheckpointWithMessage(DB, threadID, "system", "ABANDONED"); err != nil {
+	if err := Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(threadID, "system", "ABANDONED"); err != nil {
 		http.Error(w, "Failed to abandon workflow: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -141,7 +141,7 @@ func AddMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message, err := models.AddMessage(DB, threadID, req.Sender, req.Message)
+	message, err := Services.WorkflowService.AddMessage(threadID, req.Sender, req.Message)
 	if err != nil {
 		http.Error(w, "failed to add message: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -171,7 +171,7 @@ func UpdateSessionState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load existing checkpoint
-	data, _, err := models.GetWorkflowCheckpoint(DB, threadID)
+	data, _, err := Services.WorkflowService.GetWorkflowCheckpoint(threadID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "No workflow found for threadId", http.StatusNotFound)
@@ -205,7 +205,7 @@ func UpdateSessionState(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to serialize checkpoint: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := models.UpdateWorkflowCheckpoint(DB, threadID, newData); err != nil {
+	if err := Services.WorkflowService.UpdateWorkflowCheckpoint(threadID, newData); err != nil {
 		http.Error(w, "failed to update workflow checkpoint: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

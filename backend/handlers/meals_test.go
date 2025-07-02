@@ -273,38 +273,30 @@ func TestDeleteMealIngredientHandler(t *testing.T) {
 }
 
 func TestDeleteMealHandler(t *testing.T) {
-	// Create a new sqlmock database connection
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create sqlmock: %v", err)
-	}
-	defer db.Close()
-
-	// Set the DB for handlers
-	DB = db
+	helper := setupTest(t)
 
 	mealID := 1
 
 	// Expect transaction
-	mock.ExpectBegin()
+	helper.mock.ExpectBegin()
 
 	// First expect deletion of recipe steps
-	mock.ExpectExec("DELETE FROM recipe_steps WHERE meal_id = \\$1").
+	helper.mock.ExpectExec("DELETE FROM recipe_steps WHERE meal_id = \\$1").
 		WithArgs(mealID).
 		WillReturnResult(sqlmock.NewResult(0, 2)) // 2 steps deleted
 
 	// Next expect deletion of ingredients
-	mock.ExpectExec("DELETE FROM ingredients WHERE meal_id = \\$1").
+	helper.mock.ExpectExec("DELETE FROM ingredients WHERE meal_id = \\$1").
 		WithArgs(mealID).
 		WillReturnResult(sqlmock.NewResult(0, 2)) // 2 ingredients deleted
 
 	// Finally expect deletion of meal
-	mock.ExpectExec("DELETE FROM meals WHERE id = \\$1").
+	helper.mock.ExpectExec("DELETE FROM meals WHERE id = \\$1").
 		WithArgs(mealID).
 		WillReturnResult(sqlmock.NewResult(0, 1)) // 1 meal deleted
 
 	// Expect commit
-	mock.ExpectCommit()
+	helper.mock.ExpectCommit()
 
 	// Create request
 	req, err := createRequest("DELETE", "/api/meals/1", nil)
@@ -328,7 +320,7 @@ func TestDeleteMealHandler(t *testing.T) {
 	}
 
 	// Verify all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
+	if err := helper.mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
@@ -362,7 +354,7 @@ func TestDeleteMealHandlerErrors(t *testing.T) {
 				// This simulates the behavior in the models.DeleteMeal function
 			},
 			expectedCode: http.StatusInternalServerError,
-			expectedBody: "meal not found\n",
+			expectedBody: "failed to delete meal with ID 999: meal not found\n",
 		},
 		{
 			name:   "database error",
@@ -375,7 +367,7 @@ func TestDeleteMealHandlerErrors(t *testing.T) {
 				mock.ExpectRollback()
 			},
 			expectedCode: http.StatusInternalServerError,
-			expectedBody: "database error\n",
+			expectedBody: "failed to delete meal with ID 1: database error\n",
 		},
 		{
 			name:   "invalid id",
@@ -390,18 +382,10 @@ func TestDeleteMealHandlerErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a new mock for each test case
-			db, mock, err := sqlmock.New()
-			if err != nil {
-				t.Fatalf("failed to create sqlmock: %v", err)
-			}
-			defer db.Close()
-
-			// Set the DB for handlers
-			DB = db
+			helper := setupTest(t)
 
 			// Setup mock expectations
-			tt.setupMock(mock)
+			tt.setupMock(helper.mock)
 
 			// Create request
 			req, err := createRequest("DELETE", fmt.Sprintf("/api/meals/%s", tt.mealID), nil)
@@ -430,7 +414,7 @@ func TestDeleteMealHandlerErrors(t *testing.T) {
 			}
 
 			// Verify all expectations were met
-			if err := mock.ExpectationsWereMet(); err != nil {
+			if err := helper.mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 		})
@@ -482,24 +466,16 @@ func TestFinalizeMealPlanHandler(t *testing.T) {
 				mock.ExpectRollback()
 			},
 			expectedCode: http.StatusInternalServerError,
-			expectedBody: "Failed to finalize meal plan: database error\n",
+			expectedBody: "Failed to finalize meal plan: failed to update last planned dates for meal IDs [1]: database error\n",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a new mock for each test case
-			db, mock, err := sqlmock.New()
-			if err != nil {
-				t.Fatalf("failed to create sqlmock: %v", err)
-			}
-			defer db.Close()
-
-			// Set the DB for handlers
-			DB = db
+			helper := setupTest(t)
 
 			// Setup mock expectations
-			tt.setupMock(mock)
+			tt.setupMock(helper.mock)
 
 			req, err := http.NewRequest("POST", "/api/mealplan/finalize",
 				bytes.NewBufferString(tt.payload))
@@ -524,7 +500,7 @@ func TestFinalizeMealPlanHandler(t *testing.T) {
 					rr.Body.String(), tt.expectedBody)
 			}
 
-			if err := mock.ExpectationsWereMet(); err != nil {
+			if err := helper.mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 		})
@@ -868,7 +844,7 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 	}
 
 	// Check error message
-	expectedPrefix := "Error creating meal: database error\n"
+	expectedPrefix := "Error creating meal: failed to create meal: database error\n"
 	if rr.Body.String() != expectedPrefix {
 		t.Errorf("expected error message to start with %q, got %q", expectedPrefix, rr.Body.String())
 	}

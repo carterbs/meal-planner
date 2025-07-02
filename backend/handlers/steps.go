@@ -62,7 +62,7 @@ func AddStepHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure the step is associated with the correct meal
 	step.MealID = mealID
 
-	createdStep, err := models.AddStepToMeal(DB, step)
+	createdStep, err := Services.RecipeStepService.AddStepToMeal(step)
 	if err != nil {
 		http.Error(w, "Error adding step: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -147,7 +147,7 @@ func AddBulkStepsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	steps, err := models.AddMultipleStepsToMeal(DB, mealID, nonEmptyInstructions)
+	steps, err := Services.RecipeStepService.AddMultipleStepsToMeal(mealID, nonEmptyInstructions)
 	if err != nil {
 		http.Error(w, "Error adding steps: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -282,7 +282,7 @@ func UpdateStepHandler(w http.ResponseWriter, r *http.Request) {
 	step.ID = stepID
 	step.MealID = mealID
 
-	if err := models.UpdateStep(DB, step); err != nil {
+	if err := Services.RecipeStepService.UpdateStep(step); err != nil {
 		http.Error(w, "Error updating step: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -313,7 +313,7 @@ func DeleteStepHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := models.DeleteStep(DB, stepID, mealID); err != nil {
+	if err := Services.RecipeStepService.DeleteStep(stepID, mealID); err != nil {
 		http.Error(w, "Error deleting step: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -350,7 +350,7 @@ func ReorderStepsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := models.ReorderSteps(DB, mealID, payload.StepIDs); err != nil {
+	if err := Services.RecipeStepService.ReorderSteps(mealID, payload.StepIDs); err != nil {
 		http.Error(w, "Error reordering steps: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -373,7 +373,7 @@ func DeleteAllStepsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := models.DeleteAllStepsForMeal(DB, mealID); err != nil {
+	if err := Services.RecipeStepService.DeleteAllStepsForMeal(mealID); err != nil {
 		http.Error(w, "Error deleting steps: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

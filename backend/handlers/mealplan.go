@@ -73,11 +73,6 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 
 // GenerateMealPlan generates a new weekly meal plan regardless of whether a recent one exists.
 func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		SkipDays []string `json:"skip_days"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&input)
-
 	var plan *models.WeeklyMealPlan
 	var err error
 	// Use service layer for all database operations
@@ -95,31 +90,9 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Handle skip_days by converting to a map and excluding skipped days
-	if len(input.SkipDays) > 0 {
-		skipSet := make(map[string]bool)
-		for _, day := range input.SkipDays {
-			skipSet[day] = true
-		}
 
-		// Convert to map format and exclude skipped days
-		result := make(map[string]interface{})
-		dayNames := models.DaysOfTheWeek
-		for _, pd := range detailedPlan.Days {
-			if pd.MealType != "dinner" || pd.Meal == nil {
-				continue
-			}
-			dayName := dayNames[pd.DayIndex]
-			if !skipSet[dayName] {
-				result[dayName] = pd.Meal
-			}
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
-	} else {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(detailedPlan)
-	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(detailedPlan)
 }
 
 // GetShoppingList returns all ingredients for the planned meals (no aggregation yet, per MVP).

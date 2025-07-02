@@ -162,6 +162,30 @@ func (s *workflowService) AddAgentMessage(threadID, text, timestamp string) erro
 	return err
 }
 
+// AddMessage adds a message to the workflow (generic version)
+func (s *workflowService) AddMessage(threadID, sender, message string) (*models.ChatMessage, error) {
+	workflowServiceLogger.Debugw("Adding message to workflow", "threadID", threadID, "sender", sender)
+	msg, err := models.AddMessage(s.db, threadID, sender, message)
+	if err != nil {
+		workflowServiceLogger.Errorw("Failed to add message", "threadID", threadID, "sender", sender, "error", err)
+		return nil, fmt.Errorf("failed to add message for thread ID %s: %w", threadID, err)
+	}
+	workflowServiceLogger.Debugw("Successfully added message", "threadID", threadID, "sender", msg.Sender)
+	return &msg, nil
+}
+
+// UpdateWorkflowCheckpointWithMessage updates the workflow checkpoint with a system message
+func (s *workflowService) UpdateWorkflowCheckpointWithMessage(threadID, sender, message string) error {
+	workflowServiceLogger.Debugw("Updating workflow checkpoint with message", "threadID", threadID, "sender", sender, "message", message)
+	err := models.UpdateWorkflowCheckpointWithMessage(s.db, threadID, sender, message)
+	if err != nil {
+		workflowServiceLogger.Errorw("Failed to update workflow checkpoint with message", "threadID", threadID, "error", err)
+		return fmt.Errorf("failed to update workflow checkpoint with message for thread ID %s: %w", threadID, err)
+	}
+	workflowServiceLogger.Debugw("Successfully updated workflow checkpoint with message", "threadID", threadID)
+	return nil
+}
+
 // UpdateWorkflowCheckpoint updates the raw checkpoint data for a thread
 func (s *workflowService) UpdateWorkflowCheckpoint(threadID string, data []byte) error {
 	workflowServiceLogger.Debugw("Updating workflow checkpoint for thread ID", "threadID", threadID)

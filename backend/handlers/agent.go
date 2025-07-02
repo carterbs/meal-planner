@@ -95,7 +95,7 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		}
 		if data, err := json.Marshal(checkpoint); err != nil {
 			logger.Errorw("Failed to serialize initial checkpoint", "error", err)
-		} else if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
+		} else if err := Services.WorkflowService.UpdateWorkflowCheckpoint(resp.ThreadID, data); err != nil {
 			logger.Errorw("Failed to initialize workflow checkpoint", "error", err)
 		}
 	}
@@ -135,7 +135,7 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 
 	// Store user message in database
 	if req.From == "user" && req.Message != "" {
-		_, err := models.AddMessage(DB, req.ThreadID, "user", req.Message)
+		_, err := Services.WorkflowService.AddMessage(req.ThreadID, "user", req.Message)
 		if err != nil {
 			logger.Infof("[ERROR AddAgentFeedback] Failed to store user message: %v", err)
 		}
@@ -195,7 +195,7 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	// Merge updated data into workflow checkpoint
 	m := map[string]interface{}{}
 	// load existing checkpoint
-	if raw, _, err := models.GetWorkflowCheckpoint(DB, resp.ThreadID); err == nil {
+	if raw, _, err := Services.WorkflowService.GetWorkflowCheckpoint(resp.ThreadID); err == nil {
 		json.Unmarshal(raw, &m)
 	}
 	if resp.Raw != nil {
@@ -211,7 +211,7 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	if data, err := json.Marshal(m); err != nil {
 		logger.Errorw("Failed to serialize updated checkpoint", "error", err)
 	} else {
-		if err := models.UpdateWorkflowCheckpoint(DB, resp.ThreadID, data); err != nil {
+		if err := Services.WorkflowService.UpdateWorkflowCheckpoint(resp.ThreadID, data); err != nil {
 			logger.Errorw("Failed to update workflow checkpoint", "error", err)
 		}
 	}
@@ -315,7 +315,7 @@ func CancelWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Mark workflow as ABANDONED in the DB
-	if err := models.UpdateWorkflowCheckpointWithMessage(DB, threadID, "system", "ABANDONED"); err != nil {
+	if err := Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(threadID, "system", "ABANDONED"); err != nil {
 		http.Error(w, "Failed to abandon workflow: "+err.Error(), http.StatusInternalServerError)
 		logger.Errorw("Failed to abandon workflow", "threadID", threadID, "error", err)
 		return
