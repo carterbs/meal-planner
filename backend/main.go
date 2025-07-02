@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"mealplanner/db"
 	"mealplanner/dummy"
 	"mealplanner/handlers"
+	"mealplanner/logging"
 	"mealplanner/models"
 	"mealplanner/services"
 
@@ -20,6 +20,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 )
+
+var mainLogger = logging.GetLogger("main")
 
 // CustomErrorWriter implements http.ResponseWriter and adds custom error handling
 type CustomErrorWriter struct {
@@ -96,7 +98,7 @@ func main() {
 	if err != nil {
 		if !db.IsConnectionError(err) {
 			// Only show fatal errors for config issues, not connection issues
-			log.Fatalf("Error connecting to the database: %v", err)
+			mainLogger.Fatalw("Error connecting to the database", "error", err)
 		}
 		// For connection errors, just continue silently with nil DB
 	}
@@ -106,15 +108,15 @@ func main() {
 
 		// Run migrations (only if we have a connection)
 		if err := models.Migrate(connection); err != nil {
-			log.Printf("Migration error: %v", err)
+			mainLogger.Errorw("Migration error", "error", err)
 		}
 
 		// Seed the DB only if the flag is provided and we have a connection
 		if *seedFlag {
 			if err := models.SeedDB(connection, "Meal_db.csv"); err != nil {
-				log.Printf("Seeding error: %v", err)
+				mainLogger.Errorw("Seeding error", "error", err)
 			} else {
-				log.Println("Database seeded successfully!")
+				mainLogger.Info("Database seeded successfully!")
 			}
 		}
 	}
@@ -132,12 +134,12 @@ func main() {
 	if *dummyFlag {
 		handlers.UseDummy = true
 		if err := dummy.Load("Meal_db.csv"); err != nil {
-			log.Fatalf("Failed to load dummy data: %v", err)
+			mainLogger.Fatalw("Failed to load dummy data", "error", err)
 		}
 		if connection == nil {
-			log.Println("Running in dummy data mode (database unavailable)")
+			mainLogger.Info("Running in dummy data mode (database unavailable)")
 		} else {
-			log.Println("Running in dummy data mode (forced)")
+			mainLogger.Info("Running in dummy data mode (forced)")
 		}
 	}
 
@@ -269,7 +271,7 @@ func main() {
 
 		// Ensure migrations are up to date
 		if err := models.Migrate(connection); err != nil {
-			log.Printf("Migration error during reconnection: %v", err)
+			mainLogger.Errorw("Migration error during reconnection", "error", err)
 			// We don't fail the reconnect if migrations have issues
 		}
 
@@ -314,8 +316,8 @@ func main() {
 	r.Put("/api/meals/{mealId}/steps/reorder", handlers.ReorderStepsHandler)
 	r.Delete("/api/meals/{mealId}/steps", handlers.DeleteAllStepsHandler)
 
-	log.Println("Backend server starting on :8080")
+	mainLogger.Info("Backend server starting on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
-		log.Fatalf("Error starting server: %v", err)
+		mainLogger.Fatalw("Error starting server", "error", err)
 	}
 }

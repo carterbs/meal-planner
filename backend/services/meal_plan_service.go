@@ -3,14 +3,16 @@ package services
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
+	"mealplanner/logging"
 	"mealplanner/models"
 )
 
 type mealPlanService struct {
 	db *sql.DB
 }
+
+var mealPlanServiceLogger = logging.GetLogger("meal-plan-service")
 
 // NewMealPlanService creates a new meal plan service instance
 func NewMealPlanService(db *sql.DB) MealPlanService {
@@ -19,25 +21,25 @@ func NewMealPlanService(db *sql.DB) MealPlanService {
 
 // GenerateWeeklyMealPlan generates a new weekly meal plan
 func (s *mealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error) {
-	log.Printf("Generating new weekly meal plan")
+	mealPlanServiceLogger.Info("Generating new weekly meal plan")
 	plan, err := models.GenerateWeeklyMealPlan(s.db)
 	if err != nil {
-		log.Printf("Failed to generate weekly meal plan: %v", err)
+		mealPlanServiceLogger.Errorw("Failed to generate weekly meal plan", "error", err)
 		return nil, fmt.Errorf("failed to generate weekly meal plan: %w", err)
 	}
-	log.Printf("Successfully generated weekly meal plan with %d meals", len(plan.Days))
+	mealPlanServiceLogger.Debugw("Successfully generated weekly meal plan", "mealCount", len(plan.Days))
 	return plan, nil
 }
 
 // GetLastPlannedMeals retrieves the most recently planned meals
 func (s *mealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) {
-	log.Printf("Retrieving last planned meals")
+	mealPlanServiceLogger.Info("Retrieving last planned meals")
 	plan, err := models.GetLastPlannedMeals(s.db)
 	if err != nil {
-		log.Printf("Failed to get last planned meals: %v", err)
+		mealPlanServiceLogger.Errorw("Failed to get last planned meals", "error", err)
 		return nil, fmt.Errorf("failed to get last planned meals: %w", err)
 	}
-	log.Printf("Successfully retrieved last planned meals with %d meals", len(plan.Days))
+	mealPlanServiceLogger.Debugw("Successfully retrieved last planned meals", "mealCount", len(plan.Days))
 	return plan, nil
 }
 
@@ -47,7 +49,7 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 		return nil, fmt.Errorf("plan is nil")
 	}
 
-	log.Printf("Populating meal details for plan with %d meal slots", len(plan.Days))
+	mealPlanServiceLogger.Debugw("Populating meal details for plan", "mealSlotCount", len(plan.Days))
 	
 	// Extract meal IDs from the plan
 	mealIDs := make([]int, 0)
@@ -58,14 +60,14 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 	}
 
 	if len(mealIDs) == 0 {
-		log.Printf("No meals to populate, returning original plan")
+		mealPlanServiceLogger.Debug("No meals to populate, returning original plan")
 		return plan, nil
 	}
 
 	// Get meals with full details
 	mealsWithIngredients, err := models.GetMealsByIDs(s.db, mealIDs)
 	if err != nil {
-		log.Printf("Failed to get meals by IDs: %v", err)
+		mealPlanServiceLogger.Errorw("Failed to get meals by IDs", "error", err)
 		return nil, fmt.Errorf("failed to get meals by IDs: %w", err)
 	}
 
@@ -89,18 +91,18 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 		}
 	}
 
-	log.Printf("Successfully populated meal details for %d meals", len(mealIDs))
+	mealPlanServiceLogger.Debugw("Successfully populated meal details", "mealCount", len(mealIDs))
 	return &populatedPlan, nil
 }
 
 // RemoveMealFromPlan removes a meal from a specific day and meal type
 func (s *mealPlanService) RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
-	log.Printf("Removing meal from plan: day %d, meal type %s", dayIndex, mealType)
+	mealPlanServiceLogger.Debugw("Removing meal from plan", "dayIndex", dayIndex, "mealType", mealType)
 	err := models.RemoveMealFromPlan(plan, dayIndex, mealType)
 	if err != nil {
-		log.Printf("Failed to remove meal from plan: %v", err)
+		mealPlanServiceLogger.Errorw("Failed to remove meal from plan", "error", err)
 		return fmt.Errorf("failed to remove meal from plan: %w", err)
 	}
-	log.Printf("Successfully removed meal from plan: day %d, meal type %s", dayIndex, mealType)
+	mealPlanServiceLogger.Debugw("Successfully removed meal from plan", "dayIndex", dayIndex, "mealType", mealType)
 	return nil
 }
