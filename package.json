@@ -9,7 +9,7 @@
         "typescript/shared"
     ],
     "scripts": {
-        "start": "node scripts/start.js",
+        "start": "yarn kill:servers &&node scripts/start.js",
         "start:mcp": "node scripts/start-mcp.js",
         "test:backend": "cd backend && make test",
         "test:mcp": "cd typescript/mcp && go test -v ./...",

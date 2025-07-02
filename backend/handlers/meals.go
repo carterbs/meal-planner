@@ -200,7 +200,7 @@ func DeleteMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	meal, err := Services.MealService.DeleteMealIngredient(mealID, ingredientID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

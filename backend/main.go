@@ -43,11 +43,11 @@ func HTTPLoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		cw := &CustomErrorWriter{ResponseWriter: w, status: http.StatusOK}
-		
+
 		next.ServeHTTP(cw, r)
-		
+
 		duration := time.Since(start)
-		
+
 		// Color the method and status based on HTTP semantics
 		methodColor := color.New(color.FgCyan, color.Bold)
 		var statusColor *color.Color
@@ -60,7 +60,7 @@ func HTTPLoggerMiddleware(next http.Handler) http.Handler {
 		} else {
 			statusColor = color.New(color.FgMagenta, color.Bold)
 		}
-		
+
 		httpLogger.Infow(fmt.Sprintf("HTTP %s %s - %s",
 			methodColor.Sprint(r.Method),
 			color.WhiteString(r.URL.Path),

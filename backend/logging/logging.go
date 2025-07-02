@@ -36,7 +36,7 @@ func InitLogger() {
 		config.EncoderConfig.EncodeCaller = nil // Remove caller info unless error
 		config.EncoderConfig.StacktraceKey = "" // Remove stacktrace unless error
 		config.EncoderConfig.ConsoleSeparator = " "
-		
+
 		l, _ := config.Build()
 		Logger = l.Sugar()
 	})

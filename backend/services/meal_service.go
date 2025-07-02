@@ -104,7 +104,7 @@ func (s *mealService) UpdateMealIngredient(mealID int, ingredient models.Ingredi
 		mealServiceLogger.Errorw("Failed to update meal ingredient", "mealID", mealID, "ingredientID", ingredient.ID, "error", err)
 		return nil, fmt.Errorf("failed to update ingredient for meal ID %d: %w", mealID, err)
 	}
-	
+
 	// Return the updated meal
 	meal, err := s.GetMealByID(mealID)
 	if err != nil {
@@ -123,7 +123,7 @@ func (s *mealService) DeleteMealIngredient(mealID, ingredientID int) (*models.Me
 		mealServiceLogger.Errorw("Failed to delete meal ingredient", "mealID", mealID, "ingredientID", ingredientID, "error", err)
 		return nil, fmt.Errorf("failed to delete ingredient %d from meal %d: %w", ingredientID, mealID, err)
 	}
-	
+
 	// Return the updated meal
 	meal, err := s.GetMealByID(mealID)
 	if err != nil {
