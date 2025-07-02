@@ -63,10 +63,6 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 
 // StartAgentWorkflow handles POST /api/agent/start
 func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
-	if UseDummy {
-		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
-		return
-	}
 	var req models.AgentStartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
@@ -127,10 +123,6 @@ func joinParticipants(p []string) string {
 
 // AddAgentFeedback handles POST /api/agent/feedback
 func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
-	if UseDummy {
-		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
-		return
-	}
 	var req models.AgentFeedbackRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
@@ -173,10 +165,6 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 
 // ResumeAgentWorkflow handles POST /api/agent/resume
 func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
-	if UseDummy {
-		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
-		return
-	}
 	var req models.AgentResumeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
@@ -240,10 +228,6 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 
 // MessageAgentHandler handles POST /api/agent/message
 func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
-	if UseDummy {
-		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
-		return
-	}
 	var req models.AgentMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
@@ -300,10 +284,6 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetWorkflowStatus handles GET /api/agent/status/{threadId}
 func GetWorkflowStatus(w http.ResponseWriter, r *http.Request) {
-	if UseDummy {
-		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
-		return
-	}
 	threadID := chi.URLParam(r, "threadId")
 	if threadID == "" {
 		http.Error(w, "missing thread id", http.StatusBadRequest)
@@ -320,10 +300,6 @@ func GetWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 
 // ListWorkflows handles GET /api/agent/workflows
 func ListWorkflows(w http.ResponseWriter, r *http.Request) {
-	if UseDummy {
-		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
-		return
-	}
 	// NOTE: This implementation lists all workflow checkpoints in the DB. You may want to filter by type if needed.
 	// For now, just return a list of all thread IDs and their states.
 	// This is a placeholder: in a real implementation, you'd likely have a DB query for all checkpoints.
@@ -333,10 +309,6 @@ func ListWorkflows(w http.ResponseWriter, r *http.Request) {
 
 // CancelWorkflow handles DELETE /api/agent/workflows/{threadId}
 func CancelWorkflow(w http.ResponseWriter, r *http.Request) {
-	if UseDummy {
-		http.Error(w, "Not implemented in dummy mode", http.StatusNotImplemented)
-		return
-	}
 	threadID := chi.URLParam(r, "threadId")
 	if threadID == "" {
 		http.Error(w, "missing thread id", http.StatusBadRequest)

@@ -94,9 +94,6 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		ShoppingList: shoppingListRaw,
 	}
 	writeJSON(w, resp)
-	return
-
-	writeJSON(w, state)
 }
 
 // AbandonWorkflow handles POST /api/workflows/{threadId}/abandon

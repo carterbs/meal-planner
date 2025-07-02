@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi/v5"
 	"mealplanner/models"
 )
@@ -25,10 +26,6 @@ func fakeCommand(output string, _ *testing.T, gotArgs *[]string) func(ctx contex
 func TestStartAgentWorkflow(t *testing.T) {
 	originalCmd := agentCommandContext
 	defer func() { agentCommandContext = originalCmd }()
-	originalDummy := UseDummy
-	defer func() { UseDummy = originalDummy }()
-
-	UseDummy = true // Use dummy mode to skip database operations
 	var got []string
 	agentCommandContext = fakeCommand(`{"success":true,"threadId":"id"}`, t, &got)
 
@@ -37,8 +34,8 @@ func TestStartAgentWorkflow(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/agent/start", bytes.NewReader(b))
 	rr := httptest.NewRecorder()
 	StartAgentWorkflow(rr, req)
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501 got %d", rr.Code)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200 got %d", rr.Code)
 	}
 }
 
@@ -97,70 +94,68 @@ func TestJoinParticipants(t *testing.T) {
 }
 
 func TestAddAgentFeedbackDummyMode(t *testing.T) {
-	originalDummy := UseDummy
-	UseDummy = true
-	defer func() { UseDummy = originalDummy }()
-
 	req := httptest.NewRequest("POST", "/api/agent/feedback", bytes.NewBufferString("{}"))
 	rr := httptest.NewRecorder()
 	AddAgentFeedback(rr, req)
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501 got %d", rr.Code)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 got %d", rr.Code)
 	}
 }
 
 func TestResumeAgentWorkflowDummyMode(t *testing.T) {
-	originalDummy := UseDummy
-	UseDummy = true
-	defer func() { UseDummy = originalDummy }()
-
 	req := httptest.NewRequest("POST", "/api/agent/resume", bytes.NewBufferString("{}"))
 	rr := httptest.NewRecorder()
 	ResumeAgentWorkflow(rr, req)
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501 got %d", rr.Code)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 got %d", rr.Code)
 	}
 }
 
 func TestMessageAgentHandlerDummyMode(t *testing.T) {
-	originalDummy := UseDummy
-	UseDummy = true
-	defer func() { UseDummy = originalDummy }()
-
 	req := httptest.NewRequest("POST", "/api/agent/message", bytes.NewBufferString("{}"))
 	rr := httptest.NewRecorder()
 	MessageAgentHandler(rr, req)
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501 got %d", rr.Code)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 got %d", rr.Code)
 	}
 }
 
 func TestGetWorkflowStatusDummyMode(t *testing.T) {
-	originalDummy := UseDummy
-	UseDummy = true
-	defer func() { UseDummy = originalDummy }()
-
+	helper := setupTest(t)
+	
+	// Mock the workflow service call
+	helper.mock.ExpectQuery(".*").WillReturnRows(sqlmock.NewRows([]string{}))
+	
 	req := httptest.NewRequest("GET", "/api/agent/status/1", nil)
 	rr := httptest.NewRecorder()
 	r := chi.NewRouter()
 	r.Get("/api/agent/status/{threadId}", GetWorkflowStatus)
 	r.ServeHTTP(rr, req)
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501 got %d", rr.Code)
+	if rr.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500 got %d", rr.Code)
 	}
 }
 
 func TestCancelWorkflowDummyMode(t *testing.T) {
-	originalDummy := UseDummy
-	UseDummy = true
-	defer func() { UseDummy = originalDummy }()
-
+	helper := setupTest(t)
+	
+	// CancelWorkflow calls models.UpdateWorkflowCheckpointWithMessage which first queries for existing checkpoint
+	helper.mock.ExpectQuery("SELECT checkpoint_data, checkpoint_ns FROM workflow_checkpoints").
+		WithArgs("1").
+		WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data", "checkpoint_ns"}).
+			AddRow(`{"test": "data"}`, "latest"))
+	
+	// Then it updates the checkpoint
+	helper.mock.ExpectExec("INSERT INTO workflow_checkpoints").
+		WithArgs("1", sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	
 	req := httptest.NewRequest("DELETE", "/api/agent/workflows/1", nil)
 	rr := httptest.NewRecorder()
 	r := chi.NewRouter()
 	r.Delete("/api/agent/workflows/{threadId}", CancelWorkflow)
 	r.ServeHTTP(rr, req)
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501 got %d", rr.Code)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200 got %d", rr.Code)
 	}
 }

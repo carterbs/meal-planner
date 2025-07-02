@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"mealplanner/dummy"
 	"mealplanner/logging"
 	"mealplanner/models"
 	"mealplanner/services"
@@ -21,41 +20,6 @@ var Services *services.ServiceContainer
 var mealplanHandlerLogger = logging.GetLogger("mealplan-handler")
 
 func populateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
-	if UseDummy {
-		// Use existing dummy implementation for backward compatibility
-		mealIDs := make([]int, 0)
-		for _, d := range plan.Days {
-			if d.Meal != nil && d.Meal.ID != 0 {
-				mealIDs = append(mealIDs, d.Meal.ID)
-			}
-		}
-
-		if len(mealIDs) == 0 {
-			return plan, nil // No meals to populate
-		}
-
-		mealsWithIngredients, err := dummy.GetMealsByIDs(mealIDs)
-		if err != nil {
-			return nil, err
-		}
-
-		mealMap := make(map[int]*models.Meal)
-		for _, meal := range mealsWithIngredients {
-			mealMap[meal.ID] = meal
-		}
-
-		populatedPlan := *plan
-		for i := range populatedPlan.Days {
-			d := &populatedPlan.Days[i]
-			if d.Meal != nil {
-				if fullMeal, ok := mealMap[d.Meal.ID]; ok {
-					d.Meal = fullMeal
-				}
-			}
-		}
-
-		return &populatedPlan, nil
-	}
 
 	// Use service layer for all database operations
 	return Services.MealPlanService.PopulateMealDetails(plan)
@@ -89,19 +53,14 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	// First try to get the last planned meals
 	var plan *models.WeeklyMealPlan
 	var err error
-	if UseDummy {
-		// Use dummy data generation
-		plan, err = dummy.GenerateWeeklyMealPlanStruct()
-	} else {
-		// Use service layer for all database operations
-		plan, err = Services.MealPlanService.GetLastPlannedMeals()
+	// Use service layer for all database operations
+	plan, err = Services.MealPlanService.GetLastPlannedMeals()
+	if err != nil {
+		mealplanHandlerLogger.Infow("No recent meal plan found, generating new one", "error", err)
+		plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
 		if err != nil {
-			mealplanHandlerLogger.Infow("No recent meal plan found, generating new one", "error", err)
-			plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
-			if err != nil {
-				http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
+			http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
+			return
 		}
 	}
 
@@ -127,13 +86,8 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 
 	var plan *models.WeeklyMealPlan
 	var err error
-	if UseDummy {
-		// Use dummy data generation
-		plan, err = dummy.GenerateWeeklyMealPlanStruct()
-	} else {
-		// Use service layer for all database operations
-		plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
-	}
+	// Use service layer for all database operations
+	plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
 	if err != nil {
 		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -199,15 +153,6 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 // buildShoppingList retrieves meals for the given IDs and returns the aggregated
 // shopping list items.
 func buildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
-	if UseDummy {
-		// Use existing dummy implementation for backward compatibility
-		meals, err := dummy.GetMealsByIDs(mealIDs)
-		if err != nil {
-			return nil, err
-		}
-		ing := models.GenerateShoppingListFromMeals(meals)
-		return models.ConvertIngredientsToShoppingItems(ing), nil
-	}
 
 	// Use service layer for all database operations
 	return Services.ShoppingListService.BuildShoppingList(mealIDs)
@@ -217,16 +162,13 @@ func buildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
 func MealPlanICSHandler(w http.ResponseWriter, r *http.Request) {
 	var plan *models.WeeklyMealPlan
 	var err error
-	if UseDummy {
-		plan, err = dummy.GenerateWeeklyMealPlanStruct()
-	} else {
-		plan, err = models.GetLastPlannedMeals(DB)
+	// Use service layer for all database operations
+	plan, err = Services.MealPlanService.GetLastPlannedMeals()
+	if err != nil {
+		plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
 		if err != nil {
-			plan, err = models.GenerateWeeklyMealPlan(DB)
-			if err != nil {
-				http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
+			http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
+			return
 		}
 	}
 	monday := time.Now()

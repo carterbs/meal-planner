@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"mealplanner/db"
-	"mealplanner/dummy"
 	"mealplanner/handlers"
 	"mealplanner/logging"
 	"mealplanner/models"
@@ -45,7 +44,7 @@ func DBErrorMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(cw, r)
 
 		// If we got an internal server error, check if it might be a DB connection issue
-		if cw.status == http.StatusInternalServerError && !handlers.UseDummy {
+		if cw.status == http.StatusInternalServerError {
 			// This is a bit of a hack, but for demo purposes it's fine.
 			// In a real app, we would need to capture the error from the handler.
 			if handlers.DB == nil || handlers.DB.Ping() != nil {
@@ -131,17 +130,6 @@ func main() {
 		handlers.WorkflowService = handlers.Services.WorkflowService
 	}
 
-	if *dummyFlag {
-		handlers.UseDummy = true
-		if err := dummy.Load("Meal_db.csv"); err != nil {
-			mainLogger.Fatalw("Failed to load dummy data", "error", err)
-		}
-		if connection == nil {
-			mainLogger.Info("Running in dummy data mode (database unavailable)")
-		} else {
-			mainLogger.Info("Running in dummy data mode (forced)")
-		}
-	}
 
 	// Set up HTTP routes with Chi router
 	r := chi.NewRouter()
@@ -169,11 +157,6 @@ func main() {
 	// Special endpoint to check database connectivity
 	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if handlers.UseDummy {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"status":"ok","message":"Running with dummy data"}`))
-			return
-		}
 
 		if handlers.DB == nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -196,8 +179,8 @@ func main() {
 	r.Post("/api/reconnect", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		// If DB is already connected and not in dummy mode, just confirm it's working
-		if handlers.DB != nil && !handlers.UseDummy {
+		// If DB is already connected, just confirm it's working
+		if handlers.DB != nil {
 			if err := handlers.DB.Ping(); err == nil {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(`{"status":"ok","message":"Database connection is already established and healthy"}`))
@@ -262,7 +245,6 @@ func main() {
 
 		// Update the global DB connection
 		handlers.DB = connection
-		handlers.UseDummy = false
 
 		// Initialize service container with new connection
 		handlers.Services = services.NewServiceContainer(connection)

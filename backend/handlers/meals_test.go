@@ -563,6 +563,17 @@ func TestGetAllMealsHandler_AlphabeticalOrder(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(models.GetAllMealsQuery)).
 		WillReturnRows(rows)
 
+	// Mock the step queries for each meal (GetStepsForMeal is called for each meal in the service layer)
+	stepRows := sqlmock.NewRows([]string{"id", "meal_id", "step_number", "instruction"})
+	mock.ExpectQuery("SELECT id, meal_id, step_number, instruction FROM recipe_steps WHERE meal_id = \\$1 ORDER BY step_number").
+		WithArgs(1).WillReturnRows(stepRows)
+	mock.ExpectQuery("SELECT id, meal_id, step_number, instruction FROM recipe_steps WHERE meal_id = \\$1 ORDER BY step_number").
+		WithArgs(2).WillReturnRows(stepRows)
+	mock.ExpectQuery("SELECT id, meal_id, step_number, instruction FROM recipe_steps WHERE meal_id = \\$1 ORDER BY step_number").
+		WithArgs(3).WillReturnRows(stepRows)
+	mock.ExpectQuery("SELECT id, meal_id, step_number, instruction FROM recipe_steps WHERE meal_id = \\$1 ORDER BY step_number").
+		WithArgs(4).WillReturnRows(stepRows)
+
 	// Create a request to pass to our handler
 	req, err := http.NewRequest("GET", "/api/meals", nil)
 	if err != nil {
@@ -869,8 +880,6 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 }
 
 func TestRemoveMealHandler(t *testing.T) {
-	UseDummy = true
-	defer func() { UseDummy = false }()
 	helper := setupTest(t)
 
 	plan := models.WeeklyMealPlan{
