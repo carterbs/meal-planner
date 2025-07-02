@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
+	"mealplanner/logging"
 	"mealplanner/models"
 )
 
@@ -14,6 +14,8 @@ import (
 type workflowService struct {
 	db *sql.DB
 }
+
+var workflowServiceLogger = logging.GetLogger("workflow-service")
 
 // NewWorkflowService creates a new instance of the workflow service
 func NewWorkflowService(db *sql.DB) WorkflowService {
@@ -101,74 +103,74 @@ func (s *workflowService) UpdateWorkflowState(threadID string, state *models.Int
 
 // GetWorkflowCheckpoint retrieves the raw checkpoint data for a thread
 func (s *workflowService) GetWorkflowCheckpoint(threadID string) ([]byte, string, error) {
-	log.Printf("Getting workflow checkpoint for thread ID: %s", threadID)
+	workflowServiceLogger.Debugw("Getting workflow checkpoint for thread ID", "threadID", threadID)
 	data, ns, err := models.GetWorkflowCheckpoint(s.db, threadID)
 	if err != nil {
-		log.Printf("Failed to get workflow checkpoint for thread ID %s: %v", threadID, err)
+		workflowServiceLogger.Errorw("Failed to get workflow checkpoint for thread ID", "threadID", threadID, "error", err)
 		return nil, "", fmt.Errorf("failed to get workflow checkpoint for thread ID %s: %w", threadID, err)
 	}
-	log.Printf("Successfully retrieved workflow checkpoint for thread ID %s", threadID)
+	workflowServiceLogger.Debugw("Successfully retrieved workflow checkpoint for thread ID", "threadID", threadID)
 	return data, ns, nil
 }
 
 // AddUserFeedback appends a user feedback message to the workflow and updates the state
 func (s *workflowService) AddUserFeedback(threadID, from, message, timestamp string) error {
-	log.Printf("[AddUserFeedback] Fetching workflow state for threadID=%s", threadID)
+	workflowServiceLogger.Debugw("AddUserFeedback: Fetching workflow state", "threadID", threadID)
 	state, err := s.GetWorkflowState(threadID)
 	if err != nil {
-		log.Printf("[AddUserFeedback] Failed to get workflow state: %v", err)
+		workflowServiceLogger.Errorw("AddUserFeedback: Failed to get workflow state", "error", err)
 		return err
 	}
-	log.Printf("[AddUserFeedback] Current FeedbackHistory count: %d", len(state.FeedbackHistory))
-	log.Printf("[AddUserFeedback] Appending feedback: from=%s, message=%q, timestamp=%s", from, message, timestamp)
+	workflowServiceLogger.Debugw("AddUserFeedback: Current FeedbackHistory count", "count", len(state.FeedbackHistory))
+	workflowServiceLogger.Debugw("AddUserFeedback: Appending feedback", "from", from, "message", message, "timestamp", timestamp)
 	state.FeedbackHistory = append(state.FeedbackHistory, models.FeedbackEntry{
 		From:      from,
 		Message:   message,
 		Timestamp: timestamp,
 	})
-	log.Printf("[AddUserFeedback] New FeedbackHistory count: %d", len(state.FeedbackHistory))
+	workflowServiceLogger.Debugw("AddUserFeedback: New FeedbackHistory count", "count", len(state.FeedbackHistory))
 	err = s.UpdateWorkflowState(threadID, state)
 	if err != nil {
-		log.Printf("[AddUserFeedback] Failed to update workflow state: %v", err)
+		workflowServiceLogger.Errorw("AddUserFeedback: Failed to update workflow state", "error", err)
 	} else {
-		log.Printf("[AddUserFeedback] Successfully updated workflow state for threadID=%s", threadID)
+		workflowServiceLogger.Debugw("AddUserFeedback: Successfully updated workflow state", "threadID", threadID)
 	}
 	return err
 }
 
 // AddAgentMessage appends an agent message to the workflow and updates the state
 func (s *workflowService) AddAgentMessage(threadID, text, timestamp string) error {
-	log.Printf("[AddAgentMessage] Fetching workflow state for threadID=%s", threadID)
+	workflowServiceLogger.Debugw("AddAgentMessage: Fetching workflow state", "threadID", threadID)
 	state, err := s.GetWorkflowState(threadID)
 	if err != nil {
-		log.Printf("[AddAgentMessage] Failed to get workflow state: %v", err)
+		workflowServiceLogger.Errorw("AddAgentMessage: Failed to get workflow state", "error", err)
 		return err
 	}
-	log.Printf("[AddAgentMessage] Current AgentMessages count: %d", len(state.AgentMessages))
-	log.Printf("[AddAgentMessage] Appending agent message: sender=agent, text=%q, timestamp=%s", text, timestamp)
+	workflowServiceLogger.Debugw("AddAgentMessage: Current AgentMessages count", "count", len(state.AgentMessages))
+	workflowServiceLogger.Debugw("AddAgentMessage: Appending agent message", "sender", "agent", "text", text, "timestamp", timestamp)
 	state.AgentMessages = append(state.AgentMessages, models.AgentMessage{
 		Sender:    "agent",
 		Text:      text,
 		Timestamp: timestamp,
 	})
-	log.Printf("[AddAgentMessage] New AgentMessages count: %d", len(state.AgentMessages))
+	workflowServiceLogger.Debugw("AddAgentMessage: New AgentMessages count", "count", len(state.AgentMessages))
 	err = s.UpdateWorkflowState(threadID, state)
 	if err != nil {
-		log.Printf("[AddAgentMessage] Failed to update workflow state: %v", err)
+		workflowServiceLogger.Errorw("AddAgentMessage: Failed to update workflow state", "error", err)
 	} else {
-		log.Printf("[AddAgentMessage] Successfully updated workflow state for threadID=%s", threadID)
+		workflowServiceLogger.Debugw("AddAgentMessage: Successfully updated workflow state", "threadID", threadID)
 	}
 	return err
 }
 
 // UpdateWorkflowCheckpoint updates the raw checkpoint data for a thread
 func (s *workflowService) UpdateWorkflowCheckpoint(threadID string, data []byte) error {
-	log.Printf("Updating workflow checkpoint for thread ID: %s", threadID)
+	workflowServiceLogger.Debugw("Updating workflow checkpoint for thread ID", "threadID", threadID)
 	err := models.UpdateWorkflowCheckpoint(s.db, threadID, data)
 	if err != nil {
-		log.Printf("Failed to update workflow checkpoint for thread ID %s: %v", threadID, err)
+		workflowServiceLogger.Errorw("Failed to update workflow checkpoint for thread ID", "threadID", threadID, "error", err)
 		return fmt.Errorf("failed to update workflow checkpoint for thread ID %s: %w", threadID, err)
 	}
-	log.Printf("Successfully updated workflow checkpoint for thread ID %s", threadID)
+	workflowServiceLogger.Debugw("Successfully updated workflow checkpoint for thread ID", "threadID", threadID)
 	return nil
 }

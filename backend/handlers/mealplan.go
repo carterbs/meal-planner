@@ -3,11 +3,11 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
 	"mealplanner/dummy"
+	"mealplanner/logging"
 	"mealplanner/models"
 	"mealplanner/services"
 )
@@ -17,6 +17,8 @@ var DB *sql.DB
 
 // Services is a global service container (set in main.go)
 var Services *services.ServiceContainer
+
+var mealplanHandlerLogger = logging.GetLogger("mealplan-handler")
 
 func populateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
 	if UseDummy {
@@ -94,7 +96,7 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 		// Use service layer for all database operations
 		plan, err = Services.MealPlanService.GetLastPlannedMeals()
 		if err != nil {
-			log.Printf("No recent meal plan found, generating new one: %v", err)
+			mealplanHandlerLogger.Infow("No recent meal plan found, generating new one", "error", err)
 			plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
 			if err != nil {
 				http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
@@ -105,12 +107,12 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 
 	detailedPlan, err := populateMealDetails(plan)
 	if err != nil {
-		log.Printf("Error fetching meals with ingredients: %v", err)
+		mealplanHandlerLogger.Errorw("Error fetching meals with ingredients", "error", err)
 		http.Error(w, "Error fetching meal details: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if err := generateShoppingListForPlan(detailedPlan); err != nil {
-		log.Printf("Error generating shopping list: %v", err)
+		mealplanHandlerLogger.Errorw("Error generating shopping list", "error", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(detailedPlan)
@@ -139,7 +141,7 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 
 	detailedPlan, err := populateMealDetails(plan)
 	if err != nil {
-		log.Printf("Error fetching meals with ingredients: %v", err)
+		mealplanHandlerLogger.Errorw("Error fetching meals with ingredients", "error", err)
 		http.Error(w, "Error fetching meal details: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
