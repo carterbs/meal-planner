@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-
 // WorkflowService is the service instance for workflow operations
 var WorkflowService services.WorkflowService
 

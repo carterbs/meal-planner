@@ -122,10 +122,10 @@ func TestMessageAgentHandlerDummyMode(t *testing.T) {
 
 func TestGetWorkflowStatusDummyMode(t *testing.T) {
 	helper := setupTest(t)
-	
+
 	// Mock the workflow service call
 	helper.mock.ExpectQuery(".*").WillReturnRows(sqlmock.NewRows([]string{}))
-	
+
 	req := httptest.NewRequest("GET", "/api/agent/status/1", nil)
 	rr := httptest.NewRecorder()
 	r := chi.NewRouter()
@@ -138,18 +138,18 @@ func TestGetWorkflowStatusDummyMode(t *testing.T) {
 
 func TestCancelWorkflowDummyMode(t *testing.T) {
 	helper := setupTest(t)
-	
+
 	// CancelWorkflow calls models.UpdateWorkflowCheckpointWithMessage which first queries for existing checkpoint
 	helper.mock.ExpectQuery("SELECT checkpoint_data, checkpoint_ns FROM workflow_checkpoints").
 		WithArgs("1").
 		WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data", "checkpoint_ns"}).
 			AddRow(`{"test": "data"}`, "latest"))
-	
+
 	// Then it updates the checkpoint
 	helper.mock.ExpectExec("INSERT INTO workflow_checkpoints").
 		WithArgs("1", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	
+
 	req := httptest.NewRequest("DELETE", "/api/agent/workflows/1", nil)
 	rr := httptest.NewRecorder()
 	r := chi.NewRouter()

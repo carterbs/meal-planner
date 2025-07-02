@@ -130,7 +130,6 @@ func main() {
 		handlers.WorkflowService = handlers.Services.WorkflowService
 	}
 
-
 	// Set up HTTP routes with Chi router
 	r := chi.NewRouter()
 

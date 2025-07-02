@@ -19,12 +19,6 @@ var Services *services.ServiceContainer
 
 var mealplanHandlerLogger = logging.GetLogger("mealplan-handler")
 
-func populateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
-
-	// Use service layer for all database operations
-	return Services.MealPlanService.PopulateMealDetails(plan)
-}
-
 // generateShoppingListForPlan populates plan.ShoppingList using meal IDs found
 // in the plan. It fetches full meal details if needed and aggregates the
 // ingredients.
@@ -64,7 +58,7 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	detailedPlan, err := populateMealDetails(plan)
+	detailedPlan, err := Services.MealPlanService.PopulateMealDetails(plan)
 	if err != nil {
 		mealplanHandlerLogger.Errorw("Error fetching meals with ingredients", "error", err)
 		http.Error(w, "Error fetching meal details: "+err.Error(), http.StatusInternalServerError)
@@ -93,7 +87,7 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	detailedPlan, err := populateMealDetails(plan)
+	detailedPlan, err := Services.MealPlanService.PopulateMealDetails(plan)
 	if err != nil {
 		mealplanHandlerLogger.Errorw("Error fetching meals with ingredients", "error", err)
 		http.Error(w, "Error fetching meal details: "+err.Error(), http.StatusInternalServerError)

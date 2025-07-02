@@ -10,7 +10,6 @@ import (
 	"mealplanner/models"
 )
 
-
 type workflowService struct {
 	db *sql.DB
 }
@@ -28,11 +27,11 @@ func (s *workflowService) GetMealPlan(threadID string) (*models.WeeklyMealPlan, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow state: %w", err)
 	}
-	
+
 	if state.MealPlan == nil {
 		return nil, fmt.Errorf("no meal plan found in workflow state")
 	}
-	
+
 	return state.MealPlan, nil
 }
 
@@ -42,10 +41,10 @@ func (s *workflowService) UpdateMealPlan(threadID string, plan *models.WeeklyMea
 	if err != nil {
 		return fmt.Errorf("failed to get workflow state: %w", err)
 	}
-	
+
 	state.MealPlan = plan
 	state.UpdatedAt = time.Now()
-	
+
 	return s.UpdateWorkflowState(threadID, state)
 }
 
@@ -58,12 +57,12 @@ func (s *workflowService) GetWorkflowState(threadID string) (*models.InternalWor
 	if checkpointData == nil {
 		return nil, fmt.Errorf("no checkpoint found for thread %s", threadID)
 	}
-	
+
 	checkpoint, err := models.ParseCheckpointData(checkpointData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse checkpoint data: %w", err)
 	}
-	
+
 	return &checkpoint.ChannelValues, nil
 }
 
@@ -77,27 +76,27 @@ func (s *workflowService) UpdateWorkflowState(threadID string, state *models.Int
 	if checkpointData == nil {
 		return fmt.Errorf("no existing checkpoint found for thread %s", threadID)
 	}
-	
+
 	// Parse the existing checkpoint
 	var fullCheckpoint map[string]interface{}
 	if err := json.Unmarshal(checkpointData, &fullCheckpoint); err != nil {
 		return fmt.Errorf("failed to parse existing checkpoint: %w", err)
 	}
-	
+
 	// Update the channel_values with the new state
 	fullCheckpoint["channel_values"] = state
-	
+
 	// Marshal back to bytes
 	finalCheckpointBytes, err := json.Marshal(fullCheckpoint)
 	if err != nil {
 		return fmt.Errorf("failed to marshal updated checkpoint: %w", err)
 	}
-	
+
 	// Save to database
 	if err := models.UpdateWorkflowCheckpoint(s.db, threadID, finalCheckpointBytes); err != nil {
 		return fmt.Errorf("failed to update checkpoint: %w", err)
 	}
-	
+
 	return nil
 }
 

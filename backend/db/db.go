@@ -46,7 +46,7 @@ func DefaultConfig() Config {
 // Validate checks if the required config fields are provided
 func (c *Config) Validate() error {
 	var missingFields []string
-	
+
 	if c.Host == "" {
 		missingFields = append(missingFields, "DB_HOST")
 	}
@@ -59,7 +59,7 @@ func (c *Config) Validate() error {
 	if c.DBName == "" {
 		missingFields = append(missingFields, "DB_NAME")
 	}
-	
+
 	if len(missingFields) > 0 {
 		fmt.Println()
 		color.Red("═══════════════════════════════════════════════════════════════")
@@ -84,7 +84,7 @@ func (c *Config) Validate() error {
 		color.Green("   DB_NAME=mealplanner")
 		color.Red("═══════════════════════════════════════════════════════════════")
 		fmt.Println()
-		
+
 		return fmt.Errorf("missing required database configuration: %s", strings.Join(missingFields, ", "))
 	}
 	return nil
@@ -141,10 +141,10 @@ func ConnectDB(cfg Config) (*sql.DB, error) {
 	if pingTimeout == 0 {
 		pingTimeout = 3 * time.Second
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), pingTimeout)
 	defer cancel()
-	
+
 	if err := db.PingContext(ctx); err != nil {
 		db.Close() // Close the connection before returning the error
 		return nil, &ConnectionError{
@@ -161,17 +161,17 @@ func IsConnectionError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	// Check if it's our custom type first
 	var connErr *ConnectionError
 	if errors.As(err, &connErr) {
 		return true
 	}
-	
+
 	// Common PostgreSQL connection error messages
 	connectionErrors := []string{
 		"connection refused",
-		"connection reset by peer", 
+		"connection reset by peer",
 		"connection timed out",
 		"no connection to the server",
 		"the database system is starting up",
@@ -179,13 +179,13 @@ func IsConnectionError(err error) bool {
 		"dial tcp",
 		"broken pipe",
 	}
-	
+
 	errMsg := err.Error()
 	for _, msg := range connectionErrors {
 		if strings.Contains(errMsg, msg) {
 			return true
 		}
 	}
-	
+
 	return false
 }

@@ -27,7 +27,7 @@ func (s *shoppingListService) BuildShoppingList(mealIDs []int) ([]models.Shoppin
 	}
 
 	shoppingListServiceLogger.Debugw("Building shopping list for meals", "mealCount", len(mealIDs))
-	
+
 	// Get meals with full ingredient details
 	meals, err := models.GetMealsByIDs(s.db, mealIDs)
 	if err != nil {
@@ -37,10 +37,10 @@ func (s *shoppingListService) BuildShoppingList(mealIDs []int) ([]models.Shoppin
 
 	// Generate aggregated ingredients
 	ingredients := models.GenerateShoppingListFromMeals(meals)
-	
+
 	// Convert to shopping list items
 	items := models.ConvertIngredientsToShoppingItems(ingredients)
-	
+
 	shoppingListServiceLogger.Debugw("Generated shopping list with unique items", "itemCount", len(items))
 	return items, nil
 }

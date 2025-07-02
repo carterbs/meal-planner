@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"mealplanner/logging"
 	"github.com/lib/pq"
+	"mealplanner/logging"
 )
 
 var mealModelLogger = logging.GetLogger("meal-model")
