@@ -22,7 +22,7 @@
         "dev": "node scripts/dev-start.js",
         "meal-agent": "./scripts/meal-agent.sh",
         "kill:servers": "node scripts/kill-servers.js",
-        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\""
+        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\" && gofmt -w backend/"
     },
     "resolutions": {
         "react": "18.2.0",
