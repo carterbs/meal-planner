@@ -18,14 +18,6 @@ func Migrate(db *sql.DB) error {
 		unit TEXT,
 		name TEXT NOT NULL
 	)`
-	
-
-	
-
-	
-
-	
-
 
 	tables := []string{mealTable, ingredientTable}
 	indexes := []string{}

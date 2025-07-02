@@ -7,12 +7,12 @@ import (
 )
 
 func TestMealPlanToICS(t *testing.T) {
-        plan := &WeeklyMealPlan{
-                Days: []PlanDay{
-                        {DayIndex: 0, MealType: "dinner", Meal: &Meal{ID: 1, MealName: "Test Meal", URL: "https://example.com"}},
-                        {DayIndex: 1, MealType: "dinner", Meal: &Meal{ID: 2, MealName: "Another Meal"}},
-                },
-        }
+	plan := &WeeklyMealPlan{
+		Days: []PlanDay{
+			{DayIndex: 0, MealType: "dinner", Meal: &Meal{ID: 1, MealName: "Test Meal", URL: "https://example.com"}},
+			{DayIndex: 1, MealType: "dinner", Meal: &Meal{ID: 2, MealName: "Another Meal"}},
+		},
+	}
 	monday := time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)
 	ics := MealPlanToICS(plan, monday)
 

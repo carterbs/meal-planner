@@ -7,16 +7,16 @@ import (
 
 // FeedbackEntry represents user feedback in the workflow
 type FeedbackEntry struct {
-	From              string `json:"from"`
-	Message           string `json:"message"`
-	Timestamp         string `json:"timestamp"`
-	MealPlanVersion   int    `json:"meal_plan_version"`
+	From            string `json:"from"`
+	Message         string `json:"message"`
+	Timestamp       string `json:"timestamp"`
+	MealPlanVersion int    `json:"meal_plan_version"`
 }
 
 // CheckpointData represents the top-level structure stored in workflow_checkpoints
 type CheckpointData struct {
-	Next          []interface{}     `json:"next"`
-	Step          int               `json:"step"`
+	Next          []interface{}         `json:"next"`
+	Step          int                   `json:"step"`
 	ChannelValues InternalWorkflowState `json:"channel_values"`
 }
 
@@ -28,22 +28,22 @@ type AgentMessage struct {
 }
 
 type InternalWorkflowState struct {
-	ThreadID                string              `json:"threadId"`
-	WorkflowType           string              `json:"workflow_type"`
-	MealPlan               *WeeklyMealPlan     `json:"meal_plan"`
-	FeedbackHistory        []FeedbackEntry     `json:"feedback_history"`
-	AgentMessages          []AgentMessage      `json:"agent_messages"`
-	CurrentStep            string              `json:"current_step"`
-	IsFinalized            bool                `json:"is_finalized"`
-	Participants           []string            `json:"participants"`
-	ShoppingList           []ShoppingListItem  `json:"shopping_list"`
-	IterationCount         int                 `json:"iteration_count"`
-	CreatedAt              time.Time           `json:"created_at"`
-	UpdatedAt              time.Time           `json:"updated_at"`
-	UserMessage            *string             `json:"user_message,omitempty"`
-	LastFeedbackAppliedAt  *string             `json:"last_feedback_applied_at,omitempty"`
-	ShoppingListFormatted  *string             `json:"shopping_list_formatted,omitempty"`
-	Error                  *string             `json:"_error,omitempty"`
+	ThreadID              string             `json:"threadId"`
+	WorkflowType          string             `json:"workflow_type"`
+	MealPlan              *WeeklyMealPlan    `json:"meal_plan"`
+	FeedbackHistory       []FeedbackEntry    `json:"feedback_history"`
+	AgentMessages         []AgentMessage     `json:"agent_messages"`
+	CurrentStep           string             `json:"current_step"`
+	IsFinalized           bool               `json:"is_finalized"`
+	Participants          []string           `json:"participants"`
+	ShoppingList          []ShoppingListItem `json:"shopping_list"`
+	IterationCount        int                `json:"iteration_count"`
+	CreatedAt             time.Time          `json:"created_at"`
+	UpdatedAt             time.Time          `json:"updated_at"`
+	UserMessage           *string            `json:"user_message,omitempty"`
+	LastFeedbackAppliedAt *string            `json:"last_feedback_applied_at,omitempty"`
+	ShoppingListFormatted *string            `json:"shopping_list_formatted,omitempty"`
+	Error                 *string            `json:"_error,omitempty"`
 }
 
 // WorkflowState represents the complete workflow status returned to clients

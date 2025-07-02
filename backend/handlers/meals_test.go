@@ -544,8 +544,8 @@ func TestGetAllMealsHandler_AlphabeticalOrder(t *testing.T) {
 	originalServices := Services
 	DB = db
 	Services = services.NewServiceContainer(db)
-	defer func() { 
-		DB = originalDB 
+	defer func() {
+		DB = originalDB
 		Services = originalServices
 	}()
 
@@ -630,8 +630,8 @@ func TestCreateMealHandler(t *testing.T) {
 	originalServices := Services
 	DB = db
 	Services = services.NewServiceContainer(db)
-	defer func() { 
-		DB = originalDB 
+	defer func() {
+		DB = originalDB
 		Services = originalServices
 	}()
 
@@ -763,8 +763,8 @@ func TestCreateMealHandler_ValidationError(t *testing.T) {
 	originalServices := Services
 	DB = db
 	Services = services.NewServiceContainer(db)
-	defer func() { 
-		DB = originalDB 
+	defer func() {
+		DB = originalDB
 		Services = originalServices
 	}()
 
@@ -824,8 +824,8 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 	originalServices := Services
 	DB = db
 	Services = services.NewServiceContainer(db)
-	defer func() { 
-		DB = originalDB 
+	defer func() {
+		DB = originalDB
 		Services = originalServices
 	}()
 

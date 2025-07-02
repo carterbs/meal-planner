@@ -9,12 +9,12 @@ type MealService interface {
 	// Retrieval operations
 	GetAllMeals() ([]*models.Meal, error)
 	GetMealsByIDs(ids []int) ([]*models.Meal, error)
-	
+
 	// CRUD operations
 	CreateMeal(meal models.Meal) (*models.Meal, error)
 	UpdateMeal(meal *models.Meal) error
 	DeleteMeal(id int) error
-	
+
 	// Business operations
 	SwapMeal(mealID int, mealType string) (*models.Meal, error)
 	UpdateLastPlannedDates(mealIDs []int) error
@@ -87,5 +87,3 @@ type ServiceContainer struct {
 	MessageService      MessageService
 	WorkflowService     WorkflowService
 }
-
-

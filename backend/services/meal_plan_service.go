@@ -50,7 +50,7 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 	}
 
 	mealPlanServiceLogger.Debugw("Populating meal details for plan", "mealSlotCount", len(plan.Days))
-	
+
 	// Extract meal IDs from the plan
 	mealIDs := make([]int, 0)
 	for _, d := range plan.Days {
