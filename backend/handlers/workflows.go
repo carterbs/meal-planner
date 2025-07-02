@@ -79,8 +79,15 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 			mealPlanRaw = json.RawMessage(b)
 		}
 	}
-	if state.ShoppingList != nil {
+
+	// Check for shopping list in state first, then fall back to meal plan shopping list
+	if state.ShoppingList != nil && len(state.ShoppingList) > 0 {
 		if b, err := json.Marshal(state.ShoppingList); err == nil {
+			shoppingListRaw = json.RawMessage(b)
+		}
+	} else if state.MealPlan != nil && len(state.MealPlan.ShoppingList) > 0 {
+		// Use shopping list from meal plan if not present in workflow state
+		if b, err := json.Marshal(state.MealPlan.ShoppingList); err == nil {
 			shoppingListRaw = json.RawMessage(b)
 		}
 	}
