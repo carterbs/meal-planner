@@ -21,6 +21,7 @@ import (
 )
 
 var mainLogger = logging.GetLogger("main")
+var httpLogger = logging.GetLogger("http-server")
 
 // CustomErrorWriter implements http.ResponseWriter and adds custom error handling
 type CustomErrorWriter struct {
@@ -35,6 +36,39 @@ func (w *CustomErrorWriter) WriteHeader(statusCode int) {
 
 func (w *CustomErrorWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
+}
+
+// HTTPLoggerMiddleware logs HTTP requests using our structured logger
+func HTTPLoggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		cw := &CustomErrorWriter{ResponseWriter: w, status: http.StatusOK}
+		
+		next.ServeHTTP(cw, r)
+		
+		duration := time.Since(start)
+		
+		// Color the method and status based on HTTP semantics
+		methodColor := color.New(color.FgCyan, color.Bold)
+		var statusColor *color.Color
+		if cw.status >= 200 && cw.status < 300 {
+			statusColor = color.New(color.FgGreen)
+		} else if cw.status >= 300 && cw.status < 400 {
+			statusColor = color.New(color.FgYellow)
+		} else if cw.status >= 400 && cw.status < 500 {
+			statusColor = color.New(color.FgRed)
+		} else {
+			statusColor = color.New(color.FgMagenta, color.Bold)
+		}
+		
+		httpLogger.Infow(fmt.Sprintf("HTTP %s %s - %s",
+			methodColor.Sprint(r.Method),
+			color.WhiteString(r.URL.Path),
+			statusColor.Sprintf("%d", cw.status)),
+			"duration", duration,
+			"remote_addr", r.RemoteAddr,
+		)
+	})
 }
 
 // DBErrorMiddleware checks for database connection errors and provides helpful messages
@@ -134,7 +168,7 @@ func main() {
 	r := chi.NewRouter()
 
 	// Add middleware
-	r.Use(middleware.Logger)
+	r.Use(HTTPLoggerMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 	r.Use(DBErrorMiddleware)
