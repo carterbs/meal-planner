@@ -1,0 +1,439 @@
+syntax = "proto3";
+
+package mealplanner;
+
+option go_package = "github.com/bradcarter/meal-planner/proto";
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// Core Data Types
+// ============================================================================
+
+message Meal {
+  int32 id = 1;
+  string meal_name = 2;
+  string meal_type = 3;  // "breakfast", "lunch", "dinner"
+  int32 relative_effort = 4;
+  google.protobuf.Timestamp last_planned = 5;
+  bool red_meat = 6;
+  string url = 7;
+  repeated Ingredient ingredients = 8;
+  repeated Step steps = 9;
+}
+
+message Ingredient {
+  int32 id = 1;
+  int32 meal_id = 2;
+  double quantity = 3;
+  string unit = 4;
+  string name = 5;
+}
+
+message Step {
+  int32 id = 1;
+  int32 meal_id = 2;
+  int32 step_number = 3;
+  string instruction = 4;
+}
+
+message WeeklyMealPlan {
+  repeated PlanDay days = 1;
+  repeated ShoppingListItem shopping_list = 2;
+}
+
+message PlanDay {
+  Meal meal = 1;
+  int32 day_index = 2;  // 0=Monday, 1=Tuesday, etc.
+  string meal_type = 3;
+}
+
+message ShoppingListItem {
+  string ingredient = 1;
+  string quantity = 2;
+  string category = 3;
+}
+
+message ChatMessage {
+  string id = 1;
+  string content = 2;
+  string role = 3;  // "user", "assistant", "system"
+  google.protobuf.Timestamp timestamp = 4;
+  string thread_id = 5;
+  map<string, string> metadata = 6;
+}
+
+message WorkflowState {
+  string thread_id = 1;
+  string status = 2;  // "active", "completed", "abandoned"
+  string current_step = 3;
+  repeated ChatMessage messages = 4;
+  repeated string participants = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  map<string, string> context = 8;
+}
+
+// ============================================================================
+// Health Check
+// ============================================================================
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  string status = 1;
+  string database_status = 2;
+  string message = 3;
+}
+
+// ============================================================================
+// Meal Management
+// ============================================================================
+
+message GetAllMealsRequest {
+  string meal_type = 1;  // Optional filter: "breakfast", "lunch", "dinner"
+}
+
+message GetAllMealsResponse {
+  repeated Meal meals = 1;
+}
+
+message CreateMealRequest {
+  string meal_name = 1;
+  string meal_type = 2;
+  int32 relative_effort = 3;
+  bool red_meat = 4;
+  string url = 5;
+  repeated CreateIngredientRequest ingredients = 6;
+  repeated string steps = 7;
+}
+
+message CreateIngredientRequest {
+  double quantity = 1;
+  string unit = 2;
+  string name = 3;
+}
+
+message CreateMealResponse {
+  Meal meal = 1;
+  string message = 2;
+}
+
+message DeleteMealRequest {
+  int32 meal_id = 1;
+}
+
+message DeleteMealResponse {
+  string message = 1;
+}
+
+message SwapMealRequest {
+  string meal_type = 1;
+  repeated int32 exclude_ids = 2;
+}
+
+message SwapMealResponse {
+  Meal meal = 1;
+}
+
+message RemoveMealRequest {
+  int32 meal_id = 1;
+}
+
+message RemoveMealResponse {
+  string message = 1;
+}
+
+message ReplaceMealRequest {
+  int32 old_meal_id = 1;
+  int32 new_meal_id = 2;
+  int32 day_index = 3;
+  string meal_type = 4;
+}
+
+message ReplaceMealResponse {
+  WeeklyMealPlan meal_plan = 1;
+}
+
+// ============================================================================
+// Ingredient Management
+// ============================================================================
+
+message UpdateIngredientRequest {
+  int32 meal_id = 1;
+  int32 ingredient_id = 2;
+  double quantity = 3;
+  string unit = 4;
+  string name = 5;
+}
+
+message UpdateIngredientResponse {
+  Ingredient ingredient = 1;
+}
+
+message DeleteIngredientRequest {
+  int32 meal_id = 1;
+  int32 ingredient_id = 2;
+}
+
+message DeleteIngredientResponse {
+  string message = 1;
+}
+
+// ============================================================================
+// Recipe Steps Management
+// ============================================================================
+
+message GetStepsRequest {
+  int32 meal_id = 1;
+}
+
+message GetStepsResponse {
+  repeated Step steps = 1;
+}
+
+message CreateStepRequest {
+  int32 meal_id = 1;
+  string instruction = 2;
+}
+
+message CreateStepResponse {
+  Step step = 1;
+}
+
+message CreateStepsBulkRequest {
+  int32 meal_id = 1;
+  repeated string instructions = 2;
+}
+
+message CreateStepsBulkResponse {
+  repeated Step steps = 1;
+}
+
+message UpdateStepRequest {
+  int32 meal_id = 1;
+  int32 step_id = 2;
+  string instruction = 3;
+}
+
+message UpdateStepResponse {
+  Step step = 1;
+}
+
+message DeleteStepRequest {
+  int32 meal_id = 1;
+  int32 step_id = 2;
+}
+
+message DeleteStepResponse {
+  string message = 1;
+}
+
+message ReorderStepsRequest {
+  int32 meal_id = 1;
+  repeated int32 step_ids = 2;  // Ordered list of step IDs
+}
+
+message ReorderStepsResponse {
+  repeated Step steps = 1;
+}
+
+message DeleteAllStepsRequest {
+  int32 meal_id = 1;
+}
+
+message DeleteAllStepsResponse {
+  string message = 1;
+}
+
+// ============================================================================
+// Meal Plan Management
+// ============================================================================
+
+message GetMealPlanRequest {}
+
+message GetMealPlanResponse {
+  WeeklyMealPlan meal_plan = 1;
+}
+
+message GenerateMealPlanRequest {
+  bool force = 1;
+}
+
+message GenerateMealPlanResponse {
+  WeeklyMealPlan meal_plan = 1;
+}
+
+message FinalizeMealPlanRequest {}
+
+message FinalizeMealPlanResponse {
+  string message = 1;
+}
+
+message GetMealPlanIcsRequest {}
+
+message GetMealPlanIcsResponse {
+  string ics_content = 1;
+}
+
+// ============================================================================
+// Shopping List
+// ============================================================================
+
+message GenerateShoppingListRequest {
+  repeated int32 meal_ids = 1;
+}
+
+message GenerateShoppingListResponse {
+  repeated ShoppingListItem items = 1;
+}
+
+// ============================================================================
+// Workflow/Agent Management
+// ============================================================================
+
+message StartWorkflowRequest {
+  repeated string participants = 1;
+}
+
+message StartWorkflowResponse {
+  bool success = 1;
+  string message = 2;
+  string thread_id = 3;
+  string current_step = 4;
+}
+
+message SendMessageRequest {
+  string thread_id = 1;
+  string message = 2;
+}
+
+message SendMessageResponse {
+  bool success = 1;
+  string message = 2;
+  string current_step = 3;
+  repeated ChatMessage messages = 4;
+}
+
+message GetWorkflowStatusRequest {
+  string thread_id = 1;
+}
+
+message GetWorkflowStatusResponse {
+  WorkflowState workflow = 1;
+}
+
+message ListWorkflowsRequest {}
+
+message ListWorkflowsResponse {
+  repeated WorkflowState workflows = 1;
+}
+
+message CancelWorkflowRequest {
+  string thread_id = 1;
+}
+
+message CancelWorkflowResponse {
+  string message = 1;
+}
+
+// ============================================================================
+// Workflow State Management
+// ============================================================================
+
+message GetWorkflowStateRequest {
+  string thread_id = 1;
+}
+
+message GetWorkflowStateResponse {
+  WorkflowState workflow = 1;
+}
+
+message AbandonWorkflowRequest {
+  string thread_id = 1;
+}
+
+message AbandonWorkflowResponse {
+  string message = 1;
+}
+
+message AddMessageToWorkflowRequest {
+  string thread_id = 1;
+  string content = 2;
+  string role = 3;
+  map<string, string> metadata = 4;
+}
+
+message AddMessageToWorkflowResponse {
+  ChatMessage message = 1;
+}
+
+message UpdateWorkflowStateRequest {
+  string thread_id = 1;
+  string status = 2;
+  string current_step = 3;
+  map<string, string> context = 4;
+}
+
+message UpdateWorkflowStateResponse {
+  WorkflowState workflow = 1;
+}
+
+message ReconnectDatabaseRequest {}
+
+message ReconnectDatabaseResponse {
+  string message = 1;
+}
+
+// ============================================================================
+// Service Definition
+// ============================================================================
+
+service BackendService {
+  // Health checks
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc ReconnectDatabase(ReconnectDatabaseRequest) returns (ReconnectDatabaseResponse);
+  
+  // Meal management
+  rpc GetAllMeals(GetAllMealsRequest) returns (GetAllMealsResponse);
+  rpc CreateMeal(CreateMealRequest) returns (CreateMealResponse);
+  rpc DeleteMeal(DeleteMealRequest) returns (DeleteMealResponse);
+  rpc SwapMeal(SwapMealRequest) returns (SwapMealResponse);
+  rpc RemoveMeal(RemoveMealRequest) returns (RemoveMealResponse);
+  rpc ReplaceMeal(ReplaceMealRequest) returns (ReplaceMealResponse);
+  
+  // Ingredient management
+  rpc UpdateIngredient(UpdateIngredientRequest) returns (UpdateIngredientResponse);
+  rpc DeleteIngredient(DeleteIngredientRequest) returns (DeleteIngredientResponse);
+  
+  // Recipe steps management
+  rpc GetSteps(GetStepsRequest) returns (GetStepsResponse);
+  rpc CreateStep(CreateStepRequest) returns (CreateStepResponse);
+  rpc CreateStepsBulk(CreateStepsBulkRequest) returns (CreateStepsBulkResponse);
+  rpc UpdateStep(UpdateStepRequest) returns (UpdateStepResponse);
+  rpc DeleteStep(DeleteStepRequest) returns (DeleteStepResponse);
+  rpc ReorderSteps(ReorderStepsRequest) returns (ReorderStepsResponse);
+  rpc DeleteAllSteps(DeleteAllStepsRequest) returns (DeleteAllStepsResponse);
+  
+  // Meal plan management
+  rpc GetMealPlan(GetMealPlanRequest) returns (GetMealPlanResponse);
+  rpc GenerateMealPlan(GenerateMealPlanRequest) returns (GenerateMealPlanResponse);
+  rpc FinalizeMealPlan(FinalizeMealPlanRequest) returns (FinalizeMealPlanResponse);
+  rpc GetMealPlanIcs(GetMealPlanIcsRequest) returns (GetMealPlanIcsResponse);
+  
+  // Shopping list
+  rpc GenerateShoppingList(GenerateShoppingListRequest) returns (GenerateShoppingListResponse);
+  
+  // Workflow/Agent management
+  rpc StartWorkflow(StartWorkflowRequest) returns (StartWorkflowResponse);
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  rpc GetWorkflowStatus(GetWorkflowStatusRequest) returns (GetWorkflowStatusResponse);
+  rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse);
+  rpc CancelWorkflow(CancelWorkflowRequest) returns (CancelWorkflowResponse);
+  
+  // Workflow state management
+  rpc GetWorkflowState(GetWorkflowStateRequest) returns (GetWorkflowStateResponse);
+  rpc AbandonWorkflow(AbandonWorkflowRequest) returns (AbandonWorkflowResponse);
+  rpc AddMessageToWorkflow(AddMessageToWorkflowRequest) returns (AddMessageToWorkflowResponse);
+  rpc UpdateWorkflowState(UpdateWorkflowStateRequest) returns (UpdateWorkflowStateResponse);
+}

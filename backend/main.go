@@ -4,20 +4,24 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"time"
 
 	"mealplanner/db"
+	grpcserver "mealplanner/grpc"
 	"mealplanner/handlers"
 	"mealplanner/logging"
 	"mealplanner/models"
+	pb "mealplanner/proto"
 	"mealplanner/services"
 
 	"github.com/fatih/color"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
 )
 
 var mainLogger = logging.GetLogger("main")
@@ -331,8 +335,27 @@ func main() {
 	r.Put("/api/meals/{mealId}/steps/reorder", handlers.ReorderStepsHandler)
 	r.Delete("/api/meals/{mealId}/steps", handlers.DeleteAllStepsHandler)
 
-	mainLogger.Info("Backend server starting on :8080")
+	// Start gRPC server on port 9090
+	if !*dummyFlag && handlers.Services != nil {
+		go func() {
+			lis, err := net.Listen("tcp", ":9090")
+			if err != nil {
+				mainLogger.Fatalw("Failed to listen on gRPC port", "error", err)
+			}
+
+			grpcServer := grpc.NewServer()
+			backendServer := grpcserver.NewBackendServer(handlers.Services)
+			pb.RegisterBackendServiceServer(grpcServer, backendServer)
+
+			mainLogger.Info("gRPC server starting on :9090")
+			if err := grpcServer.Serve(lis); err != nil {
+				mainLogger.Fatalw("Failed to serve gRPC", "error", err)
+			}
+		}()
+	}
+
+	mainLogger.Info("HTTP server starting on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
-		mainLogger.Fatalw("Error starting server", "error", err)
+		mainLogger.Fatalw("Error starting HTTP server", "error", err)
 	}
 }

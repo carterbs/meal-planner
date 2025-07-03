@@ -22,7 +22,8 @@
         "dev": "node scripts/dev-start.js",
         "meal-agent": "./scripts/meal-agent.sh",
         "kill:servers": "node scripts/kill-servers.js",
-        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\" && gofmt -w backend/"
+        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\" && gofmt -w backend/",
+        "proto:generate": "PATH=$PATH:/Users/bradcarter/go/bin protoc --go_out=. --go-grpc_out=. proto/meal_planner.proto"
     },
     "resolutions": {
         "react": "18.2.0",
