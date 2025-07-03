@@ -96,7 +96,7 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	// AGENT-REFACTOR: handlers should not interact with models. move it to the service layer.
 	// Validate and remove the meal from the plan
 	if err := models.RemoveMealFromPlan(plan, payload.DayIndex, payload.MealType); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

@@ -73,6 +73,7 @@ func AddStepHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(createdStep)
 }
 
+// AGENT-REFACTOR: There's too much going on in this handler, move it to a service layer function.
 // AddBulkStepsHandler handles POST /api/meals/{mealId}/steps/bulk and adds multiple steps to a meal from text.
 func AddBulkStepsHandler(w http.ResponseWriter, r *http.Request) {
 	mealIDStr := chi.URLParam(r, "mealId")
@@ -158,6 +159,7 @@ func AddBulkStepsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(steps)
 }
 
+// AGENT-REFACTOR: This function is doing too much. Move it to the a service layer.
 // parseStepsFromText intelligently parses steps from text input
 func parseStepsFromText(text string) []string {
 	text = strings.TrimSpace(text)
