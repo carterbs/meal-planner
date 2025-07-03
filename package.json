@@ -1,39 +1,41 @@
 {
-    "name": "mealplanner",
-    "version": "1.0.0",
-    "private": true,
-    "workspaces": [
-        "typescript/ui",
-        "typescript/agent",
-        "typescript/mcp",
-        "typescript/shared"
-    ],
-    "scripts": {
-        "start": "yarn kill:servers &&node scripts/start.js",
-        "start:mcp": "node scripts/start-mcp.js",
-        "test:backend": "cd backend && make test",
-        "test:mcp": "cd typescript/mcp && go test -v ./...",
-        "test:frontend": "cd typescript/ui && yarn test",
-        "test:agent": "cd typescript/agent && yarn test",
-        "build:agent": "cd typescript/agent && yarn build",
-        "test": "node scripts/test-summary.js",
-        "db:backup": "node scripts/backup-db.js",
-        "db:restore": "node scripts/restore-db.js",
-        "dev": "node scripts/dev-start.js",
-        "meal-agent": "./scripts/meal-agent.sh",
-        "kill:servers": "node scripts/kill-servers.js",
-        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\" && gofmt -w backend/",
-        "proto:generate": "PATH=$PATH:/Users/bradcarter/go/bin protoc --go_out=. --go-grpc_out=. proto/meal_planner.proto"
-    },
-    "resolutions": {
-        "react": "18.2.0",
-        "react-dom": "18.2.0"
-    },
-    "devDependencies": {
-        "chalk": "^4.1.2",
-        "concurrently": "^7.6.0",
-        "prettier": "^3.6.2",
-        "wait-on": "^7.1.0"
-    },
-    "packageManager": "yarn@4.9.1"
+  "name": "mealplanner",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "typescript/ui",
+    "typescript/agent",
+    "typescript/mcp",
+    "typescript/shared",
+    "typescript/agent-service"
+  ],
+  "scripts": {
+    "start": "yarn kill:servers &&node scripts/start.js",
+    "start:mcp": "node scripts/start-mcp.js",
+    "test:backend": "cd backend && make test",
+    "test:mcp": "cd typescript/mcp && go test -v ./...",
+    "test:frontend": "cd typescript/ui && yarn test",
+    "test:agent": "cd typescript/agent && yarn test",
+    "test:agent-service": "cd typescript/agent-service && yarn test",
+    "build:agent": "cd typescript/agent && yarn build",
+    "test": "node scripts/test-summary.js",
+    "db:backup": "node scripts/backup-db.js",
+    "db:restore": "node scripts/restore-db.js",
+    "dev": "node scripts/dev-start.js",
+    "meal-agent": "./scripts/meal-agent.sh",
+    "kill:servers": "node scripts/kill-servers.js",
+    "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/agent-service/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\" && gofmt -w backend/",
+    "proto:generate": "PATH=$PATH:/Users/bradcarter/go/bin protoc --go_out=. --go-grpc_out=. proto/meal_planner.proto"
+  },
+  "resolutions": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "chalk": "^4.1.2",
+    "concurrently": "^7.6.0",
+    "prettier": "^3.6.2",
+    "wait-on": "^7.1.0"
+  },
+  "packageManager": "yarn@4.9.1"
 }

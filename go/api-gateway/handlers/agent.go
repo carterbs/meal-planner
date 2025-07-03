@@ -8,7 +8,7 @@ import (
 	"mealplanner/proto"
 )
 
-func StartWorkflow(client proto.BackendServiceClient) http.HandlerFunc {
+func StartAgent(client proto.AgentServiceClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var reqBody struct {
 			Participants []string `json:"participants"`
@@ -22,7 +22,6 @@ func StartWorkflow(client proto.BackendServiceClient) http.HandlerFunc {
 		req := &proto.StartWorkflowRequest{
 			Participants: reqBody.Participants,
 		}
-
 		resp, err := client.StartWorkflow(r.Context(), req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

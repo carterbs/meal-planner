@@ -1,0 +1,23 @@
+{
+  "name": "agent-service",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch server.ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.8.0",
+    "@grpc/proto-loader": "^0.7.6"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.4",
+    "@types/node": "^20.0.0",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.1.1",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
