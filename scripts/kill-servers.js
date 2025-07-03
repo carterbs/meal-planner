@@ -9,6 +9,7 @@
  *   - 8080  : Backend REST API when run via `yarn start:mcp`
  *   - 5000  : (legacy) Backend port when invoked by older scripts
  *   - 3001  : MCP server (GraphQL/API gateway)
+ *   - 9090  : Backend gRPC service
  *
  * NOTE: This script is **safe** to run multiple times. If a port is not in use
  * nothing happens. It relies on `lsof` which is available by default on macOS
@@ -18,7 +19,7 @@
 const { execSync } = require('child_process');
 const chalk = require('chalk');
 
-const portsToKill = [8000, 8080, 5000, 3001, 3000];
+const portsToKill = [8000, 8080, 8081, 5000, 3001, 3000, 9090];
 
 function killProcessOnPort(port) {
   try {

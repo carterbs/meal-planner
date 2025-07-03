@@ -27,22 +27,57 @@ function killProcessOnPort(port) {
   }
 }
 
-// Step 1: Kill any existing processes on ports 8000 and 5000
-console.log(chalk.blue('🔍 Checking for existing processes on ports 8000 and 5000...'));
-killProcessOnPort(8000);
-killProcessOnPort(5000);
+// Step 1: Kill any existing processes on relevant ports
+console.log(chalk.blue('🔍 Checking for existing processes...'));
+killProcessOnPort(8080); // API Gateway
+killProcessOnPort(9090); // Backend gRPC
+killProcessOnPort(3000); // Frontend dev server
 
-// Step 2: Start the applications
+// Step 2: Build API Gateway if needed
+console.log(chalk.blue('🔨 Building API Gateway...'));
+try {
+  execSync('go build -o gateway .', { 
+    cwd: path.join(PROJECT_ROOT, 'go/api-gateway'),
+    stdio: 'inherit'
+  });
+  console.log(chalk.green('✅ API Gateway built successfully'));
+} catch (error) {
+  console.error(chalk.red('❌ Failed to build API Gateway:'), error.message);
+  process.exit(1);
+}
+
+// Step 3: Start the applications
 console.log(chalk.blue('🚀 Starting frontend and backend applications...'));
 
-// Start backend first
-const backendProcess = spawn('go', ['run', 'main.go'], {
-  cwd: path.join(PROJECT_ROOT, 'backend'),
+// Start backend gRPC service first
+const backendProcess = spawn('go', ['run', '.'], {
+  cwd: path.join(PROJECT_ROOT, 'go'),
   stdio: 'inherit',
   shell: true,
 });
 
-// Wait for backend to be ready (give it a few seconds)
+// Start API Gateway after a short delay
+setTimeout(() => {
+  const gatewayProcess = spawn('./gateway', [], {
+    cwd: path.join(PROJECT_ROOT, 'go/api-gateway'),
+    stdio: 'inherit',
+    shell: true,
+    env: { ...process.env, PORT: '8080' },
+  });
+
+  // Handle gateway process events
+  gatewayProcess.on('error', (error) => {
+    console.error(chalk.red('❌ Failed to start API Gateway:'), error.message);
+    process.exit(1);
+  });
+
+  gatewayProcess.on('close', (code) => {
+    console.log(chalk.blue(`API Gateway exited with code ${code}`));
+    process.exit(code);
+  });
+}, 2000); // Wait 2 seconds for backend gRPC to initialize
+
+// Wait for both backend and gateway to be ready
 setTimeout(() => {
   // Then start frontend
   const frontendProcess = spawn('yarn', ['start'], {
@@ -61,7 +96,22 @@ setTimeout(() => {
     console.log(chalk.blue(`Frontend exited with code ${code}`));
     process.exit(code);
   });
-}, 3000); // Wait 3 seconds for backend to initialize
+
+  // Update cleanup to handle all processes
+  process.on('SIGINT', () => {
+    console.log(chalk.blue('\n🛑 Stopping application servers...'));
+    try {
+      backendProcess.kill('SIGINT');
+      frontendProcess.kill('SIGINT');
+      // Kill processes on ports as fallback
+      execSync('node scripts/kill-servers.js', { cwd: PROJECT_ROOT, stdio: 'ignore' });
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+    console.log(chalk.green('✅ Application servers stopped.'));
+    process.exit(0);
+  });
+}, 5000); // Wait 5 seconds for backend + gateway to initialize
 
 // Handle backend process events
 backendProcess.on('error', (error) => {
@@ -72,13 +122,4 @@ backendProcess.on('error', (error) => {
 backendProcess.on('close', (code) => {
   console.log(chalk.blue(`Backend exited with code ${code}`));
   process.exit(code);
-});
-
-// Handle CTRL+C gracefully
-process.on('SIGINT', () => {
-  console.log(chalk.blue('\n🛑 Stopping application servers...'));
-  backendProcess.kill('SIGINT');
-  frontendProcess.kill('SIGINT');
-  console.log(chalk.green('✅ Application servers stopped.'));
-  process.exit(0);
 });

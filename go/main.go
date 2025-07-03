@@ -354,8 +354,18 @@ func main() {
 		}()
 	}
 
-	mainLogger.Info("HTTP server starting on :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
-		mainLogger.Fatalw("Error starting HTTP server", "error", err)
+	// For Phase 2 architecture: Only run gRPC server, API Gateway handles HTTP
+	// Check if we should run in legacy HTTP mode (for backward compatibility)
+	if os.Getenv("LEGACY_HTTP_MODE") == "true" || *dummyFlag {
+		mainLogger.Info("HTTP server starting on :8080")
+		if err := http.ListenAndServe(":8080", r); err != nil {
+			mainLogger.Fatalw("Error starting HTTP server", "error", err)
+		}
+	} else {
+		mainLogger.Info("Backend running in gRPC-only mode (Phase 2 architecture)")
+		mainLogger.Info("HTTP requests should go through API Gateway on :8080")
+
+		// Keep the process alive by waiting for interrupt
+		select {}
 	}
 }
