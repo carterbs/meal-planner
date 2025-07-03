@@ -120,11 +120,11 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 // buildShoppingList retrieves meals for the given IDs and returns the aggregated
 // shopping list items.
 func buildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
-
 	// Use service layer for all database operations
 	return Services.ShoppingListService.BuildShoppingList(mealIDs)
 }
 
+// AGENT-REFACTOR: split up the ICS and the meal plan stuff. they're two separate features
 // MealPlanICSHandler returns the current meal plan as an iCalendar file.
 func MealPlanICSHandler(w http.ResponseWriter, r *http.Request) {
 	var plan *models.WeeklyMealPlan

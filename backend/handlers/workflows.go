@@ -33,6 +33,7 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// AGENT-REFACTOR: Move to a separate function in the service layer. test it.
 	// Smash FeedbackHistory and AgentMessages together, sort by timestamp, return as messages
 	type chatMsg struct {
 		Sender string
@@ -81,11 +82,12 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check for shopping list in state first, then fall back to meal plan shopping list
-	if state.ShoppingList != nil && len(state.ShoppingList) > 0 {
+	if len(state.ShoppingList) > 0 {
 		if b, err := json.Marshal(state.ShoppingList); err == nil {
 			shoppingListRaw = json.RawMessage(b)
 		}
 	} else if state.MealPlan != nil && len(state.MealPlan.ShoppingList) > 0 {
+		// AGENT-REFACTOR: We should ensure it's only ever in one place, rather than two
 		// Use shopping list from meal plan if not present in workflow state
 		if b, err := json.Marshal(state.MealPlan.ShoppingList); err == nil {
 			shoppingListRaw = json.RawMessage(b)
@@ -188,6 +190,7 @@ func UpdateSessionState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// AGENT-REFACTOR: The handler is doing too much here. Move this to a service layer function.
 	// Merge updates
 	var m map[string]interface{}
 	if err := json.Unmarshal(data, &m); err != nil {
