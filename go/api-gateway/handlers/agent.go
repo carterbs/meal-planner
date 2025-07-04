@@ -34,6 +34,29 @@ func StartWorkflow(client proto.BackendServiceClient) http.HandlerFunc {
 	}
 }
 
+// StartAgent proxies a start request to the Agent gRPC service
+func StartAgent(client proto.AgentServiceClient) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Participants []string `json:"participants"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		grpcReq := &proto.StartWorkflowRequest{Participants: req.Participants}
+		resp, err := client.StartWorkflow(r.Context(), grpcReq)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}
+}
+
 func SendMessage(client proto.BackendServiceClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var reqBody struct {

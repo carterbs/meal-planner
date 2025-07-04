@@ -25,6 +25,8 @@ type GatewayServer struct {
 	logger        *zap.Logger
 	backendClient proto.BackendServiceClient
 	backendConn   *grpc.ClientConn
+	agentClient   proto.AgentServiceClient
+	agentConn     *grpc.ClientConn
 }
 
 func NewGatewayServer(logger *zap.Logger) (*GatewayServer, error) {
@@ -41,15 +43,34 @@ func NewGatewayServer(logger *zap.Logger) (*GatewayServer, error) {
 
 	backendClient := proto.NewBackendServiceClient(backendConn)
 
+	// Connect to agent gRPC service
+	agentURL := os.Getenv("AGENT_GRPC_URL")
+	if agentURL == "" {
+		agentURL = "localhost:9091"
+	}
+	agentConn, err := grpc.NewClient(agentURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	agentClient := proto.NewAgentServiceClient(agentConn)
+
 	return &GatewayServer{
 		logger:        logger,
 		backendClient: backendClient,
 		backendConn:   backendConn,
+		agentClient:   agentClient,
+		agentConn:     agentConn,
 	}, nil
 }
 
 func (s *GatewayServer) Close() error {
-	return s.backendConn.Close()
+	if s.backendConn != nil {
+		s.backendConn.Close()
+	}
+	if s.agentConn != nil {
+		s.agentConn.Close()
+	}
+	return nil
 }
 
 func (s *GatewayServer) setupRoutes() *chi.Mux {
@@ -110,8 +131,8 @@ func (s *GatewayServer) setupRoutes() *chi.Mux {
 		// Shopping list
 		r.Post("/shopping-list", handlers.GenerateShoppingList(s.backendClient))
 
-		// Workflow/Agent management (placeholder for Phase 3)
-		r.Post("/agent/start", handlers.StartWorkflow(s.backendClient))
+		// Workflow/Agent management
+		r.Post("/agent/start", handlers.StartAgent(s.agentClient))
 		r.Post("/agent/message", handlers.SendMessage(s.backendClient))
 		r.Get("/agent/status/{thread_id}", handlers.GetWorkflowStatus(s.backendClient))
 		r.Get("/agent/workflows", handlers.ListWorkflows(s.backendClient))

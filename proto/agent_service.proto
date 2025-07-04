@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/bradcarter/meal-planner/proto";
+
+service AgentService {
+  rpc StartWorkflow(StartWorkflowRequest) returns (WorkflowResponse);
+  rpc AddFeedback(FeedbackRequest) returns (WorkflowResponse);
+  rpc ResumeWorkflow(ResumeWorkflowRequest) returns (WorkflowResponse);
+  rpc GetWorkflowStatus(GetStatusRequest) returns (StatusResponse);
+}
+
+message StartWorkflowRequest {
+  repeated string participants = 1;
+}
+
+message FeedbackRequest {
+  string thread_id = 1;
+  string message = 2;
+  string from = 3;
+}
+
+message ResumeWorkflowRequest {
+  string thread_id = 1;
+}
+
+message GetStatusRequest {
+  string thread_id = 1;
+}
+
+message StatusResponse {
+  bool success = 1;
+  string message = 2;
+  string current_step = 3;
+}
+
+message WorkflowResponse {
+  bool success = 1;
+  string message = 2;
+  string thread_id = 3;
+  string current_step = 4;
+}
