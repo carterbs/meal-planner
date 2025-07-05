@@ -5,15 +5,57 @@
 
 ---
 
+## Background & Architecture Context
+
+### Current System Architecture
+- **Backend**: Go service on port 8080 with REST endpoints (`backend/main.go`, `handlers/`)
+- **Frontend**: React TypeScript UI (`typescript/ui/`) consuming REST APIs
+- **Agent**: TypeScript workflow engine (`typescript/agent/`) for meal planning automation
+- **MCP Server**: TypeScript MCP server (`typescript/mcp/`) providing Claude integration
+- **Database**: PostgreSQL with migrations and models in `backend/models/`
+
+### Current API Structure
+The backend exposes REST endpoints organized in these categories:
+- **Health**: `/api/health`, `/api/reconnect`
+- **Meal Plans**: `/api/mealplan/*` (get, generate, finalize, ICS export)
+- **Shopping Lists**: `/api/shoppinglist`
+- **Meals**: `/api/meals/*` (CRUD, swap, remove, replace, ingredients)
+- **Recipe Steps**: `/api/meals/{id}/steps/*` (CRUD, reorder)
+- **Agent Workflows**: `/api/agent/*` (start, message, status)
+- **Workflow Management**: `/api/workflows/*` (state, abandon, messages)
+
+### Data Models
+Key entities include:
+- `Meal`: Core recipe with ingredients, steps, effort rating, meal type
+- `WeeklyMealPlan`: Array of 21 `PlanDay` entries (7 days × 3 meals)
+- `ShoppingListItem`: Aggregated ingredients with quantities
+- `Agent*Request/Response`: Workflow communication payloads
+- All models maintain JSON compatibility for existing clients
+
+### Why Protobuf + API Gateway?
+1. **Type Safety**: Shared contract prevents API drift between services
+2. **Code Generation**: Eliminates manual type definitions across Go/TypeScript
+3. **Gateway Benefits**: Centralized logging, auth, rate limiting, circuit breaking
+4. **Incremental Migration**: Each step maintains backward compatibility
+
+---
+
 ## Prerequisites
 1. All tests currently pass (`yarn test:e2e`).
 2. Docker (or Podman) installed – the gateway will eventually run in its own container.
 3. `protoc` ≥ 3.22 and plugins:
-   * `protoc-gen-go`
-   * `protoc-gen-go-grpc`
-   * `protoc-gen-ts` (via `ts-proto`)
+   * `protoc-gen-go` (install: `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest`)
+   * `protoc-gen-go-grpc` (install: `go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest`)
+   * `ts-proto` (install: `yarn add -D ts-proto`)
 4. Add the following yarn workspaces if not present:
    * `generated` – root-level folder with `go/` and `ts/` subpackages (TS published as `@mealplanner/generated`)
+
+### Implementation Notes
+- Ensure `$HOME/go/bin` is in your PATH for Go protobuf plugins
+- The `proto:gen` script includes PATH setup: `export PATH=$PATH:$HOME/go/bin`
+- Proto definitions use `google.protobuf.Timestamp` for time fields and `google.protobuf.Empty` for parameterless endpoints
+- Field names in proto messages exactly match existing JSON field names to maintain API compatibility
+- All existing REST endpoints are mapped to corresponding protobuf service methods
 
 ---
 
@@ -21,24 +63,23 @@
 1. `yarn install && yarn format && yarn test:e2e` – ✅ all green.
 ---
 
-## Step 1 - Introduce Protobuf definitions (no code uses them yet)
-1. Create `proto/api.proto` with message & service definitions equivalent to every REST endpoint in `backend.go`.
+## Step 1 - Introduce Protobuf definitions (no code uses them yet) ✅ COMPLETED
+1. ✅ Create `proto/api.proto` with message & service definitions equivalent to every REST endpoint in `backend.go`.
    * Keep field names/KVs identical so JSON shape stays stable.
-2. Add a **code-gen script**:  
+2. ✅ Add a **code-gen script**:  
    `package.json` →
    ```json
    "scripts": {
-     "proto:gen": "protoc -I=proto proto/*.proto \\
+     "proto:gen": "export PATH=$PATH:$HOME/go/bin && protoc -I=proto proto/*.proto \\
        --go_out=./generated/go --go_opt=paths=source_relative \\\
        --go-grpc_out=./generated/go --go-grpc_opt=paths=source_relative \\\
-       --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts \\
-       --ts_out=./generated/ts"
+       --plugin=./node_modules/ts-proto/protoc-gen-ts_proto --ts_proto_out=./generated/ts"
    }
    ```
-3. Run `yarn proto:gen` – verify files appear.
-4. **No production code changed yet → e2e tests should still pass**.  
+3. ✅ Run `yarn proto:gen` – verify files appear.
+4. ✅ **No production code changed yet → e2e tests should still pass**.  
    `yarn test:e2e` → ✅
-5. Commit: `feat(proto): add proto contract & generation pipeline`.
+5. ✅ Commit: `feat(proto): add proto contract & generation pipeline`.
 
 ---
 
