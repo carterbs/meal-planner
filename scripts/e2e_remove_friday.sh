@@ -27,8 +27,8 @@ THREAD_ID=$(echo "$SESSION_JSON" | jq -r '.threadId')
 
 echo "--- Sending message to remove Friday ---"
 curl -s -X POST -H 'Content-Type: application/json' \
-  -d "{\"threadId\":\"$THREAD_ID\",\"message\":\"remove friday's meals\",\"from\":\"user\"}" \
-  http://localhost:8080/api/agent/message >/dev/null
+  -d "{\"threadId\":\"$THREAD_ID\",\"message\":\"remove all of friday's meals\",\"from\":\"user\"}" \
+  http://localhost:8080/api/agent/message
 
 echo "--- Fetching state and checking results ---"
 STATE=$(curl -s http://localhost:8080/api/workflows/$THREAD_ID)

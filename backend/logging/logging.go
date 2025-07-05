@@ -31,7 +31,11 @@ func InitLogger() {
 			enc.AppendString("[" + levelStr + strings.Repeat(" ", 5-len(levelStr)) + "]")
 		}
 		config.EncoderConfig.EncodeName = func(loggerName string, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString("[" + loggerName + "]" + strings.Repeat(" ", 20-len(loggerName)))
+			padding := 20 - len(loggerName)
+			if padding < 0 {
+				padding = 0
+			}
+			enc.AppendString("[" + loggerName + "]" + strings.Repeat(" ", padding))
 		}
 		config.EncoderConfig.EncodeCaller = nil // Remove caller info unless error
 		config.EncoderConfig.StacktraceKey = "" // Remove stacktrace unless error
