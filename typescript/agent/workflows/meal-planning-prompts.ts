@@ -21,7 +21,18 @@ export function getUpdateMealPlanPrompt(
 ${feedbackText}\n
 Current meal plan:\n${planDescription}\n\nAvailable meals to choose from:\n${mealOptions}\n\nIMPORTANT GUIDELINES:\n- Consider ALL feedback messages above when making decisions\n- If feedback is contradictory or impossible to satisfy (e.g., "no eggs, no cereal, no bagels" for breakfast), do your best and explain the constraints in your message\n- Only replace meals with the same meal type (breakfast/lunch/dinner)\n- Avoid duplicate meals\n- Avoid suggesting meals that have been explicitly rejected in ANY previous feedback\n- When constraints are impossible to meet, choose the best available options and explain why in your message\n\nRespond with ONLY a JSON object containing your recommended removals and/or replacements AND a friendly message to the user:\n
 {
-  "removals": [],
+  "removals": [
+    {
+      "day": "Friday",
+      "mealType": "breakfast",
+      "reason": "Remove as requested in feedback"
+    },
+    {
+      "day": "Friday", 
+      "mealType": "lunch",
+      "reason": "Remove as requested in feedback"
+    }
+  ],
   "replacements": [
     {
       "day": "Sunday",
@@ -31,7 +42,7 @@ Current meal plan:\n${planDescription}\n\nAvailable meals to choose from:\n${mea
       "reason": "Replace as requested in feedback"
     }
   ],
-  "userMessage": "Thanks for your feedback! I've swapped out the Steak dinner for Chicken nuggets - a much easier option that should work better for your needs."
+  "userMessage": "Thanks for your feedback! I've removed Friday's meals and swapped out the Steak dinner for Chicken nuggets - a much easier option that should work better for your needs."
 }\n\nIf no removals or replacements are needed, return: {"removals": [], "replacements": [], "userMessage": "Your current meal plan already looks great and addresses your preferences!"}\n
 <important> Your response should be parseable as JSON.</important>`;
 }

@@ -411,6 +411,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
     console.log(`🤖 [MEAL-WORKFLOW] Raw LLM response:`);
     console.log(llmResponse);
+
+    console.log(`🤖 [MEAL-WORKFLOW] Feedback being processed:`, feedbackText);
     let updatedPlan = { ...plan, days: [...plan.days] };
     let userMessage = "I've updated your meal plan based on your feedback!"; // Default fallback message
 
