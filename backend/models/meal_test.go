@@ -68,24 +68,24 @@ func setupMealRows(meals []testMeal) *sqlmock.Rows {
 func assertMealEquals(t *testing.T, expected testMeal, actual *Meal) {
 	t.Helper()
 
-	if actual.ID != expected.ID {
-		t.Errorf("expected meal ID %d, got %d", expected.ID, actual.ID)
+	if actual.GetId() != int32(expected.ID) {
+		t.Errorf("expected meal ID %d, got %d", expected.ID, actual.GetId())
 	}
-	if actual.MealName != expected.Name {
-		t.Errorf("expected meal name %q, got %q", expected.Name, actual.MealName)
+	if actual.GetName() != expected.Name {
+		t.Errorf("expected meal name %q, got %q", expected.Name, actual.GetName())
 	}
-	if actual.RelativeEffort != expected.Effort {
-		t.Errorf("expected relative effort %d, got %d", expected.Effort, actual.RelativeEffort)
+	if actual.GetEffort() != int32(expected.Effort) {
+		t.Errorf("expected relative effort %d, got %d", expected.Effort, actual.GetEffort())
 	}
-	if actual.RedMeat != expected.RedMeat {
-		t.Errorf("expected red meat %t, got %t", expected.RedMeat, actual.RedMeat)
+	if actual.GetHasRedMeat() != expected.RedMeat {
+		t.Errorf("expected red meat %t, got %t", expected.RedMeat, actual.GetHasRedMeat())
 	}
-	if actual.URL != expected.URL {
-		t.Errorf("expected URL %q, got %q", expected.URL, actual.URL)
+	if actual.GetUrl() != expected.URL {
+		t.Errorf("expected URL %q, got %q", expected.URL, actual.GetUrl())
 	}
 
-	if len(actual.Ingredients) != len(expected.Ingredients) {
-		t.Fatalf("expected %d ingredients, got %d", len(expected.Ingredients), len(actual.Ingredients))
+	if len(actual.GetIngredients()) != len(expected.Ingredients) {
+		t.Fatalf("expected %d ingredients, got %d", len(expected.Ingredients), len(actual.GetIngredients()))
 		return
 	}
 
@@ -93,26 +93,26 @@ func assertMealEquals(t *testing.T, expected testMeal, actual *Meal) {
 	for _, expectedIng := range expected.Ingredients {
 		// Find the actual ingredient by name
 		var found bool
-		for _, actualIng := range actual.Ingredients {
-			if actualIng.Name == expectedIng.Name {
+		for _, actualIng := range actual.GetIngredients() {
+			if actualIng.GetName() == expectedIng.Name {
 				found = true
-				if expectedIng.ID > 0 && actualIng.ID != expectedIng.ID {
-					t.Errorf("ingredient %s: expected ID %d, got %d", expectedIng.Name, expectedIng.ID, actualIng.ID)
+				if expectedIng.ID > 0 && actualIng.GetId() != int32(expectedIng.ID) {
+					t.Errorf("ingredient %s: expected ID %d, got %d", expectedIng.Name, expectedIng.ID, actualIng.GetId())
 				}
 
 				// For quantity, handle nil cases
-				if expectedIng.Quantity == nil && actualIng.Quantity != 0 {
-					t.Errorf("ingredient %s: expected quantity 0 (nil), got %v", expectedIng.Name, actualIng.Quantity)
+				if expectedIng.Quantity == nil && actualIng.GetQuantity() != 0 {
+					t.Errorf("ingredient %s: expected quantity 0 (nil), got %v", expectedIng.Name, actualIng.GetQuantity())
 				} else if expectedIng.Quantity != nil {
 					if qty, ok := expectedIng.Quantity.(float64); ok {
-						if actualIng.Quantity != qty {
-							t.Errorf("ingredient %s: expected quantity %v, got %v", expectedIng.Name, qty, actualIng.Quantity)
+						if actualIng.GetQuantity() != qty {
+							t.Errorf("ingredient %s: expected quantity %v, got %v", expectedIng.Name, qty, actualIng.GetQuantity())
 						}
 					}
 				}
 
-				if actualIng.Unit != expectedIng.Unit {
-					t.Errorf("ingredient %s: expected unit %q, got %q", expectedIng.Name, expectedIng.Unit, actualIng.Unit)
+				if actualIng.GetUnit() != expectedIng.Unit {
+					t.Errorf("ingredient %s: expected unit %q, got %q", expectedIng.Name, expectedIng.Unit, actualIng.GetUnit())
 				}
 				break
 			}
@@ -126,7 +126,7 @@ func assertMealEquals(t *testing.T, expected testMeal, actual *Meal) {
 // findMealByID finds a meal by its ID in a slice of meals
 func findMealByID(meals []*Meal, id int) *Meal {
 	for _, m := range meals {
-		if m.ID == id {
+		if m.GetId() == int32(id) {
 			return m
 		}
 	}
@@ -304,7 +304,7 @@ func TestSwapMeal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if newMeal.ID == currentMealID {
+	if newMeal.GetId() == int32(currentMealID) {
 		t.Errorf("expected different meal, got same id %d", currentMealID)
 	}
 
@@ -319,8 +319,8 @@ func TestUpdateMealIngredient(t *testing.T) {
 	defer db.Close()
 
 	mealID := 1
-	ingredient := Ingredient{
-		ID:       2,
+	ingredient := &Ingredient{
+		Id:       2,
 		Name:     "Updated Milk",
 		Quantity: 3.0,
 		Unit:     "cup",
@@ -328,7 +328,7 @@ func TestUpdateMealIngredient(t *testing.T) {
 
 	// Setup expectations for update query
 	mock.ExpectExec("UPDATE ingredients SET").
-		WithArgs(ingredient.Name, ingredient.Quantity, ingredient.Unit, ingredient.ID, mealID).
+		WithArgs(ingredient.Name, ingredient.Quantity, ingredient.Unit, ingredient.GetId(), mealID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	// Call UpdateMealIngredient
@@ -415,11 +415,11 @@ func TestCreateMeal(t *testing.T) {
 	defer db.Close()
 
 	meal := Meal{
-		MealName:       "Test Meal",
-		RelativeEffort: 3,
-		RedMeat:        false,
-		URL:            "https://example.com/testmeal",
-		Ingredients: []Ingredient{
+		Name:       "Test Meal",
+		Effort:     3,
+		HasRedMeat: false,
+		Url:        "https://example.com/testmeal",
+		Ingredients: []*Ingredient{
 			{Name: "Test Ingredient 1", Quantity: 1.5, Unit: "cup"},
 			{Name: "Test Ingredient 2", Quantity: 2, Unit: "tbsp"},
 		},
@@ -430,7 +430,7 @@ func TestCreateMeal(t *testing.T) {
 
 	// Expect meal insertion
 	mock.ExpectQuery("INSERT INTO meals \\(meal_name, relative_effort, red_meat, url, meal_type\\) VALUES").
-		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL, "dinner").
+		WithArgs(meal.GetName(), meal.GetEffort(), meal.GetHasRedMeat(), meal.GetUrl(), "dinner").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 	// Expect ingredient insertions
@@ -444,20 +444,20 @@ func TestCreateMeal(t *testing.T) {
 	mock.ExpectCommit()
 
 	// Call CreateMeal
-	createdMeal, err := CreateMeal(db, meal)
+	createdMeal, err := CreateMeal(db, &meal)
 	if err != nil {
 		t.Fatalf("Error creating meal: %v", err)
 	}
 
 	// Verify created meal
-	if createdMeal.ID != 1 {
-		t.Errorf("expected meal ID 1, got %d", createdMeal.ID)
+	if createdMeal.GetId() != 1 {
+		t.Errorf("expected meal ID 1, got %d", createdMeal.GetId())
 	}
-	if createdMeal.MealName != meal.MealName {
-		t.Errorf("expected meal name %q, got %q", meal.MealName, createdMeal.MealName)
+	if createdMeal.GetName() != meal.GetName() {
+		t.Errorf("expected meal name %q, got %q", meal.GetName(), createdMeal.GetName())
 	}
-	if createdMeal.URL != meal.URL {
-		t.Errorf("expected URL %q, got %q", meal.URL, createdMeal.URL)
+	if createdMeal.GetUrl() != meal.GetUrl() {
+		t.Errorf("expected URL %q, got %q", meal.GetUrl(), createdMeal.GetUrl())
 	}
 	if len(createdMeal.Ingredients) != len(meal.Ingredients) {
 		t.Errorf("expected %d ingredients, got %d", len(meal.Ingredients), len(createdMeal.Ingredients))
@@ -475,11 +475,11 @@ func TestCreateMeal_Error(t *testing.T) {
 	defer db.Close()
 
 	meal := Meal{
-		MealName:       "Test Meal",
-		RelativeEffort: 3,
-		RedMeat:        false,
-		URL:            "https://example.com/testmeal",
-		Ingredients: []Ingredient{
+		Name:       "Test Meal",
+		Effort:     3,
+		HasRedMeat: false,
+		Url:        "https://example.com/testmeal",
+		Ingredients: []*Ingredient{
 			{Name: "Test Ingredient", Quantity: 1, Unit: "cup"},
 		},
 	}
@@ -489,14 +489,14 @@ func TestCreateMeal_Error(t *testing.T) {
 
 	// Expect meal insertion with error
 	mock.ExpectQuery("INSERT INTO meals").
-		WithArgs(meal.MealName, meal.RelativeEffort, meal.RedMeat, meal.URL, "dinner").
+		WithArgs(meal.GetName(), meal.GetEffort(), meal.GetHasRedMeat(), meal.GetUrl(), "dinner").
 		WillReturnError(sql.ErrConnDone)
 
 	// Expect transaction rollback
 	mock.ExpectRollback()
 
 	// Call CreateMeal
-	_, err := CreateMeal(db, meal)
+	_, err := CreateMeal(db, &meal)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

@@ -617,7 +617,7 @@ func TestCreateMealHandler(t *testing.T) {
 		Effort:     2,
 		HasRedMeat: false,
 		Url:        "https://example.com/test-recipe",
-		Ingredients: []models.Ingredient{
+		Ingredients: []*models.Ingredient{
 			{Name: "Ingredient 1", Quantity: 1, Unit: "cup"},
 			{Name: "Ingredient 2", Quantity: 2, Unit: "tbsp"},
 		},
@@ -635,7 +635,7 @@ func TestCreateMealHandler(t *testing.T) {
 
 	// 2. Insert meal
 	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO meals (meal_name, relative_effort, red_meat, url, meal_type) VALUES ($1, $2, $3, $4, $5) RETURNING id")).
-		WithArgs(newMeal.MealName, newMeal.RelativeEffort, newMeal.RedMeat, newMeal.URL, "dinner").
+		WithArgs(newMeal.Name, newMeal.Effort, newMeal.HasRedMeat, newMeal.Url, "dinner").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(expectedMealID))
 
 	// 3. Insert first ingredient
@@ -680,7 +680,7 @@ func TestCreateMealHandler(t *testing.T) {
 	}
 
 	// Verify meal properties
-	if createdMeal.Id != expectedMealID {
+	if createdMeal.Id != int32(expectedMealID) {
 		t.Errorf("expected meal ID %d, got %d", expectedMealID, createdMeal.Id)
 	}
 	if createdMeal.Name != newMeal.Name {
@@ -702,10 +702,10 @@ func TestCreateMealHandler(t *testing.T) {
 	}
 
 	for i, ing := range createdMeal.Ingredients {
-		if ing.Id != expectedIngIDs[i] {
+		if ing.Id != int32(expectedIngIDs[i]) {
 			t.Errorf("ingredient %d: expected ID %d, got %d", i, expectedIngIDs[i], ing.Id)
 		}
-		if ing.MealId != expectedMealID {
+		if ing.MealId != int32(expectedMealID) {
 			t.Errorf("ingredient %d: expected meal ID %d, got %d", i, expectedMealID, ing.MealId)
 		}
 		if ing.Name != newMeal.Ingredients[i].Name {
@@ -750,7 +750,7 @@ func TestCreateMealHandler_ValidationError(t *testing.T) {
 		Effort:     2,
 		HasRedMeat: false,
 		Url:        "https://example.com/test-recipe",
-		Ingredients: []models.Ingredient{
+		Ingredients: []*models.Ingredient{
 			{Name: "Ingredient 1", Quantity: 1, Unit: "cup"},
 		},
 	}
@@ -810,7 +810,7 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 		Effort:     2,
 		HasRedMeat: false,
 		Url:        "https://example.com/test-recipe",
-		Ingredients: []models.Ingredient{
+		Ingredients: []*models.Ingredient{
 			{Name: "Ingredient 1", Quantity: 1, Unit: "cup"},
 		},
 	}
