@@ -3,6 +3,7 @@ import { FakeChatModel } from '@langchain/core/utils/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type { WeeklyMealPlan as GeneratedWeeklyMealPlan, Meal as GeneratedMeal } from '@mealplanner/generated';
+import { WeeklyMealPlan } from '@mealplanner/generated';
 
 import {
   MealPlanningState,
@@ -257,12 +258,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         arguments: {},
       });
 
-      const backendPlan = JSON.parse(
-        this.extractJsonFromResponse(
-          (planResult as MCPToolResult).content[0].text,
-        ),
+      const jsonText = this.extractJsonFromResponse(
+        (planResult as MCPToolResult).content[0].text,
       );
-      const mealPlan = this.transformBackendPlan(backendPlan);
+      const mealPlan = WeeklyMealPlan.fromJSON(JSON.parse(jsonText));
 
       return {
         current_step: MealPlanningStep.OPTIMIZE_PLAN,
@@ -494,14 +493,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 `🤖 [MEAL-WORKFLOW] Raw response text:`,
                 responseText,
               );
-              const backendPlan = JSON.parse(
-                this.extractJsonFromResponse(responseText),
-              );
+              const jsonText = this.extractJsonFromResponse(responseText);
               console.log(
-                `🤖 [MEAL-WORKFLOW] Parsed backend plan:`,
-                JSON.stringify(backendPlan, null, 2),
+                `🤖 [MEAL-WORKFLOW] Raw JSON response:`,
+                jsonText,
               );
-              updatedPlan = this.transformBackendPlan(backendPlan);
+              updatedPlan = WeeklyMealPlan.fromJSON(JSON.parse(jsonText));
             } catch (mcpError) {
               console.error(`❌ [MEAL-WORKFLOW] MCP tool call failed:`);
               console.error(
@@ -551,7 +548,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               ) {
                 return {
                   ...planDay,
-                  meal: this.transformMeal(newMeal),
+                  meal: newMeal as GeneratedMeal,
                 };
               }
               return planDay;
@@ -860,70 +857,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return issues;
   }
 
-  private transformMeal(backendMeal: any): GeneratedMeal {
-    return {
-      id: backendMeal.id,
-      name: backendMeal.mealName ?? backendMeal.name,
-      effort: backendMeal.relativeEffort ?? backendMeal.effort,
-      lastPlanned: backendMeal.lastPlanned ? new Date(backendMeal.lastPlanned) : undefined,
-      hasRedMeat: backendMeal.redMeat ?? backendMeal.hasRedMeat,
-      url: backendMeal.url ?? '',
-      mealType: backendMeal.mealType ?? '',
-      ingredients: Array.isArray(backendMeal.ingredients) ? backendMeal.ingredients : [],
-      steps: Array.isArray(backendMeal.steps) ? backendMeal.steps : [],
-    };
-  }
-
-  private transformBackendPlan(backendPlan: any): GeneratedWeeklyMealPlan {
-    if (Array.isArray(backendPlan?.days)) {
-      // If it's already in the correct format, transform any meals that might be in backend format
-      const plan = (backendPlan as GeneratedWeeklyMealPlan);
-      plan.days = plan.days.map((day) => ({
-        ...day,
-        meal: day.meal ? this.transformMeal(day.meal) : undefined,
-      }));
-      return plan;
-    }
-
-    const days = [];
-    const dayNames = DAYS_OF_THE_WEEK;
-    const mealTypes = ['Breakfast', 'Lunch', 'Dinner'] as const;
-
-    for (let i = 0; i < dayNames.length; i++) {
-      const dayName = dayNames[i];
-      const dayData = backendPlan[dayName];
-
-      if (dayData) {
-        for (const mealType of mealTypes) {
-          const meal = dayData[mealType];
-          if (meal && meal.id) {
-            days.push({
-              dayIndex: i,
-              mealType: mealType.toLowerCase(),
-              meal: this.transformMeal(meal),
-            });
-          } else {
-            days.push({
-              dayIndex: i,
-              mealType: mealType.toLowerCase(),
-              meal: undefined,
-            });
-          }
-        }
-      } else {
-        // if no dayData still push empty entries
-        for (const mealType of mealTypes) {
-          days.push({
-            dayIndex: i,
-            mealType: mealType.toLowerCase(),
-            meal: undefined,
-          });
-        }
-      }
-    }
-
-    return { days, shoppingList: [] };
-  }
 
   private async optimizePlanWithLLM(
     plan: GeneratedWeeklyMealPlan,
@@ -996,7 +929,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               ) {
                 return {
                   ...planDay,
-                  meal: this.transformMeal(newMeal),
+                  meal: newMeal as GeneratedMeal,
                 };
               }
               return planDay;
