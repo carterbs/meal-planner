@@ -1,6 +1,6 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { VALIDATION_CRITERIA } from '../shared/types';
-import type { WeeklyMealPlan as GeneratedWeeklyMealPlan } from '@mealplanner/generated';
+import type { WeeklyMealPlan } from '@mealplanner/generated';
 import { PostgresCheckpointSaver } from '../shared/checkpointer';
 
 describe('MealPlanningWorkflow logic', () => {
@@ -24,7 +24,7 @@ describe('MealPlanningWorkflow logic', () => {
   });
 
   describe('validatePlan', () => {
-    function makePlan(days: GeneratedWeeklyMealPlan['days']): GeneratedWeeklyMealPlan {
+    function makePlan(days: WeeklyMealPlan['days']): WeeklyMealPlan {
       return { days, shoppingList: [] };
     }
 
