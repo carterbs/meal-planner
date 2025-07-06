@@ -1,17 +1,8 @@
 #!/bin/bash
 set -x
-
-echo "--- Killing existing backend processes ---"
-lsof -ti:8080 | xargs -r kill -9
-
-echo "--- Starting backend ---"
-echo "Starting backend..."
-pushd backend > /dev/null
-go run . &
-popd > /dev/null
-
-BACKEND_PID=$!
-trap "kill $BACKEND_PID" EXIT
+docker compose up -d
+echo "--- Using existing Docker setup ---"
+# Backend should already be running on 8080 via docker-compose
 
 echo "--- Waiting for backend to be ready ---"
 for i in {1..30}; do

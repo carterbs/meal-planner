@@ -1,4 +1,4 @@
-import { WeeklyMealPlan } from '../shared/types';
+import type { WeeklyMealPlan } from '@mealplanner/generated';
 import { DAYS_OF_THE_WEEK as WEEK_DAYS } from '@meal-planner/shared';
 
 /**

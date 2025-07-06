@@ -2,15 +2,15 @@ import { ChatOpenAI } from '@langchain/openai';
 import { FakeChatModel } from '@langchain/core/utils/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import type { WeeklyMealPlan as GeneratedWeeklyMealPlan, Meal as GeneratedMeal } from '@mealplanner/generated';
 
 import {
   MealPlanningState,
   MealPlanningStep,
   WorkflowType,
   VALIDATION_CRITERIA,
-  WeeklyMealPlan,
   FeedbackEntry,
-  InternalMeal,
+  
 } from '../shared/types';
 import { BaseWorkflow } from '../registry';
 import { debugLog } from '../cli';
@@ -20,7 +20,7 @@ import {
   ShoppingListResponse,
   MCPToolResult as MCPToolResultType,
 } from '../shared/mcp-types';
-import { ShoppingListItem } from '../shared/types';
+
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
 import {
   getAnalyzeFeedbackPrompt,
@@ -361,10 +361,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async applyFeedbackWithLLM(
-    plan: WeeklyMealPlan,
+    plan: GeneratedWeeklyMealPlan,
     feedback: string[],
     threadId: string,
-  ): Promise<{ mealPlan: WeeklyMealPlan; userMessage: string }> {
+  ): Promise<{ mealPlan: GeneratedWeeklyMealPlan; userMessage: string }> {
     const t0 = Date.now();
     debugLog(
       `[FEEDBACK] applyFeedbackWithLLM start (feedbackCount=${feedback.length})`,
@@ -695,7 +695,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       try {
         // Group items by category if available
         const groupedItems = shoppingList.reduce(
-          (acc: Record<string, ShoppingListItem[]>, item) => {
+          (acc: Record<string, any[]>, item) => {
             if (!item || typeof item !== 'object') {
               console.warn('Skipping invalid shopping list item:', item);
               return acc;
@@ -733,7 +733,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         let bulletedList = '';
         for (const [category, items] of Object.entries(groupedItems)) {
           bulletedList += `\n${category.toUpperCase()}:\n`.trimStart();
-          (items as ShoppingListItem[]).forEach((item) => {
+          (items as any[]).forEach((item) => {
             bulletedList += `- ${[item.quantity, item.ingredient].join(' ').trimStart()}\n`;
           });
         }
@@ -818,7 +818,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     };
   }
 
-  private validatePlan(plan: WeeklyMealPlan): string[] {
+  private validatePlan(plan: GeneratedWeeklyMealPlan): string[] {
     const issues: string[] = [];
 
     // Check consecutive high-effort meals
@@ -860,22 +860,27 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return issues;
   }
 
-  private transformMeal(backendMeal: any): InternalMeal {
+  private transformMeal(backendMeal: any): GeneratedMeal {
     return {
       id: backendMeal.id,
       name: backendMeal.mealName ?? backendMeal.name,
       effort: backendMeal.relativeEffort ?? backendMeal.effort,
+      lastPlanned: backendMeal.lastPlanned ? new Date(backendMeal.lastPlanned) : undefined,
       hasRedMeat: backendMeal.redMeat ?? backendMeal.hasRedMeat,
+      url: backendMeal.url ?? '',
+      mealType: backendMeal.mealType ?? '',
+      ingredients: Array.isArray(backendMeal.ingredients) ? backendMeal.ingredients : [],
+      steps: Array.isArray(backendMeal.steps) ? backendMeal.steps : [],
     };
   }
 
-  private transformBackendPlan(backendPlan: any): WeeklyMealPlan {
+  private transformBackendPlan(backendPlan: any): GeneratedWeeklyMealPlan {
     if (Array.isArray(backendPlan?.days)) {
       // If it's already in the correct format, transform any meals that might be in backend format
-      const plan = backendPlan as WeeklyMealPlan;
+      const plan = (backendPlan as GeneratedWeeklyMealPlan);
       plan.days = plan.days.map((day) => ({
         ...day,
-        meal: day.meal ? this.transformMeal(day.meal) : null,
+        meal: day.meal ? this.transformMeal(day.meal) : undefined,
       }));
       return plan;
     }
@@ -901,7 +906,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             days.push({
               dayIndex: i,
               mealType: mealType.toLowerCase(),
-              meal: null,
+              meal: undefined,
             });
           }
         }
@@ -911,19 +916,19 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           days.push({
             dayIndex: i,
             mealType: mealType.toLowerCase(),
-            meal: null,
+            meal: undefined,
           });
         }
       }
     }
 
-    return { days };
+    return { days, shoppingList: [] };
   }
 
   private async optimizePlanWithLLM(
-    plan: WeeklyMealPlan,
+    plan: GeneratedWeeklyMealPlan,
     issues: string[],
-  ): Promise<WeeklyMealPlan> {
+  ): Promise<GeneratedWeeklyMealPlan> {
     // Fetch available meals
     const mealsResp = await this.client.callTool({
       name: 'getMeals',
@@ -1006,7 +1011,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return optimizedPlan;
   }
 
-  private formatPlanForPresentation(plan: WeeklyMealPlan): string {
+  private formatPlanForPresentation(plan: GeneratedWeeklyMealPlan): string {
     const dayNames = DAYS_OF_THE_WEEK;
     const lines: string[] = [];
 

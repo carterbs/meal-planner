@@ -347,7 +347,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     }
     fetch(url)
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: Meal[]) => {
         setMeals(data);
         setLoading(false);
       })

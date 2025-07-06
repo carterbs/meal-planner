@@ -147,7 +147,7 @@ Key entities include:
 
 ## Step 6 - Move backend to port 8090
 1. Change constant/ENV `BACKEND_PORT` in `backend/main.go` (and Dockerfile / compose).
-2. Adjust CI/CD manifests (Helm chart, compose, k8s YAML) but **keep consumers on 8080** via temporary rewrite.
+2. Add backend to docker-compose.yml
 3. Provide Nginx proxy in `docker-compose.override.yml` mapping 8080→8090 so e2e stays happy.
 4. Run `docker-compose up -d backend` locally & `yarn test:e2e` – ✅
 5. Commit: `chore(backend): listen on 8090 (compat shim)`.

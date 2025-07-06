@@ -331,8 +331,8 @@ func main() {
 	r.Put("/api/meals/{mealId}/steps/reorder", handlers.ReorderStepsHandler)
 	r.Delete("/api/meals/{mealId}/steps", handlers.DeleteAllStepsHandler)
 
-	mainLogger.Info("Backend server starting on :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	mainLogger.Info("Backend server starting on :8090")
+	if err := http.ListenAndServe(":8090", r); err != nil {
 		mainLogger.Fatalw("Error starting server", "error", err)
 	}
 }
