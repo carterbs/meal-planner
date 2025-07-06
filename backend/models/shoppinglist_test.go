@@ -9,41 +9,41 @@ func TestGenerateShoppingListFromMeals(t *testing.T) {
 	// Construct a fake meal plan map.
 	plan := map[string]*Meal{
 		"Monday": {
-			ID: 1, MealName: "Meal A", Ingredients: []Ingredient{
+			Id: 1, Name: "Meal A", Ingredients: []*Ingredient{
 				{Name: "Eggs", Quantity: 1, Unit: "dozen"},
 				{Name: "Milk", Quantity: 1, Unit: "gallon"},
 				{Name: "Bread", Quantity: 1, Unit: "loaf"},
 			},
 		},
 		"Tuesday": {
-			ID: 2, MealName: "Meal B", Ingredients: []Ingredient{
+			Id: 2, Name: "Meal B", Ingredients: []*Ingredient{
 				{Name: "Bread", Quantity: 1, Unit: "loaf"},
 			},
 		},
 		"Wednesday": {
-			ID: 3, MealName: "Meal C", Ingredients: []Ingredient{
+			Id: 3, Name: "Meal C", Ingredients: []*Ingredient{
 				{Name: "Milk", Quantity: 1, Unit: "gallon"},
 				{Name: "Coffee", Quantity: 1, Unit: "cup"},
 			},
 		},
 		"Thursday": {
-			ID: 4, MealName: "Meal D", Ingredients: []Ingredient{
+			Id: 4, Name: "Meal D", Ingredients: []*Ingredient{
 				{Name: "Eggs", Quantity: 1, Unit: "dozen"},
 				{Name: "Butter", Quantity: 1, Unit: "cup"},
 				{Name: "Jam", Quantity: 1, Unit: "jar"},
 			},
 		},
 		"Friday": {
-			ID: 5, MealName: "Eating out", Ingredients: []Ingredient{}, // Eating out has no ingredients.
+			Id: 5, Name: "Eating out", Ingredients: []*Ingredient{}, // Eating out has no ingredients.
 		},
 		"Saturday": {
-			ID: 6, MealName: "Meal E", Ingredients: []Ingredient{
+			Id: 6, Name: "Meal E", Ingredients: []*Ingredient{
 				{Name: "Cheese", Quantity: 1, Unit: "block"},
 				{Name: "Bread", Quantity: 1, Unit: "loaf"},
 			},
 		},
 		"Sunday": {
-			ID: 7, MealName: "Meal F", Ingredients: []Ingredient{
+			Id: 7, Name: "Meal F", Ingredients: []*Ingredient{
 				{Name: "Coffee", Quantity: 1, Unit: "cup"},
 				{Name: "Eggs", Quantity: 1, Unit: "dozen"},
 			},
@@ -57,7 +57,7 @@ func TestGenerateShoppingListFromMeals(t *testing.T) {
 	}
 
 	// Expected aggregated ingredients.
-	expected := []Ingredient{
+	expected := []*Ingredient{
 		{Name: "Bread", Quantity: 3, Unit: "loaf"},
 		{Name: "Butter", Quantity: 1, Unit: "cup"},
 		{Name: "Cheese", Quantity: 1, Unit: "block"},
@@ -74,7 +74,7 @@ func TestGenerateShoppingListFromMeals(t *testing.T) {
 }
 
 func TestConvertIngredientsToShoppingItems(t *testing.T) {
-	ingredients := []Ingredient{
+	ingredients := []*Ingredient{
 		{Name: "Sugar", Quantity: 1, Unit: "cup"},
 		{Name: "Flour", Quantity: 2.5, Unit: "cups"},
 		{Name: "Eggs", Quantity: 0, Unit: ""},

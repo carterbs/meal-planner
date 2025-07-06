@@ -9,8 +9,8 @@ import (
 func TestMealPlanToICS(t *testing.T) {
 	plan := &WeeklyMealPlan{
 		Days: []PlanDay{
-			{DayIndex: 0, MealType: "dinner", Meal: &Meal{ID: 1, MealName: "Test Meal", URL: "https://example.com"}},
-			{DayIndex: 1, MealType: "dinner", Meal: &Meal{ID: 2, MealName: "Another Meal"}},
+			{DayIndex: 0, MealType: "dinner", Meal: &Meal{Id: 1, Name: "Test Meal", Url: "https://example.com"}},
+			{DayIndex: 1, MealType: "dinner", Meal: &Meal{Id: 2, Name: "Another Meal"}},
 		},
 	}
 	monday := time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)

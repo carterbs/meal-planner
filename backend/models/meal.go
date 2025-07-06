@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var mealModelLogger = logging.GetLogger("meal-model")

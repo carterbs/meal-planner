@@ -63,17 +63,17 @@ func TestAddStepToMeal(t *testing.T) {
 
 	// Test adding a step
 	step := Step{
-		MealID:      1,
+		MealId:      1,
 		StepNumber:  1,
 		Instruction: "Test instruction",
 	}
 
-	createdStep, err := AddStepToMeal(db, step)
+	createdStep, err := AddStepToMeal(db, &step)
 	if err != nil {
 		t.Fatalf("Error adding step: %v", err)
 	}
 
-	if createdStep.ID == 0 {
+	if createdStep.GetId() == 0 {
 		t.Errorf("Expected non-zero ID for created step")
 	}
 
@@ -83,12 +83,12 @@ func TestAddStepToMeal(t *testing.T) {
 
 	// Test adding a step to non-existent meal
 	invalidStep := Step{
-		MealID:      999, // Non-existent meal ID
+		MealId:      999, // Non-existent meal ID
 		StepNumber:  1,
 		Instruction: "Invalid step",
 	}
 
-	_, err = AddStepToMeal(db, invalidStep)
+	_, err = AddStepToMeal(db, &invalidStep)
 	if err == nil {
 		t.Errorf("Expected error when adding step to non-existent meal, got nil")
 	}
@@ -100,13 +100,13 @@ func TestGetStepsForMeal(t *testing.T) {
 
 	// Add multiple steps
 	steps := []Step{
-		{MealID: 1, StepNumber: 1, Instruction: "Step 1"},
-		{MealID: 1, StepNumber: 2, Instruction: "Step 2"},
-		{MealID: 1, StepNumber: 3, Instruction: "Step 3"},
+		{MealId: 1, StepNumber: 1, Instruction: "Step 1"},
+		{MealId: 1, StepNumber: 2, Instruction: "Step 2"},
+		{MealId: 1, StepNumber: 3, Instruction: "Step 3"},
 	}
 
 	for _, step := range steps {
-		_, err := AddStepToMeal(db, step)
+		_, err := AddStepToMeal(db, &step)
 		if err != nil {
 			t.Fatalf("Error adding test step: %v", err)
 		}
@@ -144,19 +144,19 @@ func TestUpdateStep(t *testing.T) {
 
 	// Add a step
 	step := Step{
-		MealID:      1,
+		MealId:      1,
 		StepNumber:  1,
 		Instruction: "Original instruction",
 	}
 
-	createdStep, err := AddStepToMeal(db, step)
+	createdStep, err := AddStepToMeal(db, &step)
 	if err != nil {
 		t.Fatalf("Error adding test step: %v", err)
 	}
 
 	// Update the step
 	createdStep.Instruction = "Updated instruction"
-	err = UpdateStep(db, *createdStep)
+	err = UpdateStep(db, createdStep)
 	if err != nil {
 		t.Fatalf("Error updating step: %v", err)
 	}
@@ -181,21 +181,21 @@ func TestDeleteStep(t *testing.T) {
 	defer db.Close()
 
 	// Add steps
-	step1 := Step{MealID: 1, StepNumber: 1, Instruction: "Step 1"}
-	step2 := Step{MealID: 1, StepNumber: 2, Instruction: "Step 2"}
+	step1 := Step{MealId: 1, StepNumber: 1, Instruction: "Step 1"}
+	step2 := Step{MealId: 1, StepNumber: 2, Instruction: "Step 2"}
 
-	createdStep1, err := AddStepToMeal(db, step1)
+	createdStep1, err := AddStepToMeal(db, &step1)
 	if err != nil {
 		t.Fatalf("Error adding test step 1: %v", err)
 	}
 
-	_, err = AddStepToMeal(db, step2)
+	_, err = AddStepToMeal(db, &step2)
 	if err != nil {
 		t.Fatalf("Error adding test step 2: %v", err)
 	}
 
 	// Delete the first step
-	err = DeleteStep(db, createdStep1.ID, 1)
+	err = DeleteStep(db, int(createdStep1.GetId()), 1)
 	if err != nil {
 		t.Fatalf("Error deleting step: %v", err)
 	}
@@ -239,7 +239,7 @@ func TestAddMultipleStepsToMeal(t *testing.T) {
 
 	// Verify step numbers are sequential
 	for i, step := range steps {
-		if step.StepNumber != i+1 {
+		if step.StepNumber != int32(i+1) {
 			t.Errorf("Expected step number %d, got %d", i+1, step.StepNumber)
 		}
 	}
@@ -266,27 +266,27 @@ func TestReorderSteps(t *testing.T) {
 	defer db.Close()
 
 	// Add multiple steps
-	step1 := Step{MealID: 1, StepNumber: 1, Instruction: "Step 1"}
-	step2 := Step{MealID: 1, StepNumber: 2, Instruction: "Step 2"}
-	step3 := Step{MealID: 1, StepNumber: 3, Instruction: "Step 3"}
+	step1 := Step{MealId: 1, StepNumber: 1, Instruction: "Step 1"}
+	step2 := Step{MealId: 1, StepNumber: 2, Instruction: "Step 2"}
+	step3 := Step{MealId: 1, StepNumber: 3, Instruction: "Step 3"}
 
-	created1, err := AddStepToMeal(db, step1)
+	created1, err := AddStepToMeal(db, &step1)
 	if err != nil {
 		t.Fatalf("Error adding test step 1: %v", err)
 	}
 
-	created2, err := AddStepToMeal(db, step2)
+	created2, err := AddStepToMeal(db, &step2)
 	if err != nil {
 		t.Fatalf("Error adding test step 2: %v", err)
 	}
 
-	created3, err := AddStepToMeal(db, step3)
+	created3, err := AddStepToMeal(db, &step3)
 	if err != nil {
 		t.Fatalf("Error adding test step 3: %v", err)
 	}
 
 	// Reorder steps (3, 1, 2)
-	newOrder := []int{created3.ID, created1.ID, created2.ID}
+	newOrder := []int{int(created3.GetId()), int(created1.GetId()), int(created2.GetId())}
 	err = ReorderSteps(db, 1, newOrder)
 	if err != nil {
 		t.Fatalf("Error reordering steps: %v", err)
@@ -308,7 +308,7 @@ func TestReorderSteps(t *testing.T) {
 			t.Errorf("Step %d: expected instruction '%s', got '%s'",
 				i+1, expectedInstructions[i], step.Instruction)
 		}
-		if step.StepNumber != i+1 {
+		if step.StepNumber != int32(i+1) {
 			t.Errorf("Step %d: expected step number %d, got %d",
 				i+1, i+1, step.StepNumber)
 		}

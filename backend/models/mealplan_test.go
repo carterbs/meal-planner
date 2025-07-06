@@ -35,7 +35,7 @@ func TestPickMeal(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if meal.ID != 1 || meal.MealName != "Test Meal" {
+		if meal.GetId() != 1 || meal.GetName() != "Test Meal" {
 			t.Errorf("expected meal with id=1 and name 'Test Meal', got: %+v", meal)
 		}
 	})
@@ -56,10 +56,10 @@ func TestPickMeal(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if meal.ID != 2 || meal.MealName != "Non Red Meat Meal" {
+		if meal.GetId() != 2 || meal.GetName() != "Non Red Meat Meal" {
 			t.Errorf("expected meal with id=2 and name 'Non Red Meat Meal', got: %+v", meal)
 		}
-		if meal.RedMeat {
+		if meal.GetHasRedMeat() {
 			t.Errorf("expected redMeat false when excluding red meat, got true")
 		}
 	})
@@ -183,7 +183,7 @@ func TestGenerateWeeklyMealPlan(t *testing.T) {
 
 	// Verify Friday is set to "Eating out"
 	fridayDinner := findMeal(plan, 4, "dinner")
-	if fridayDinner == nil || fridayDinner.MealName != "Eating out" {
+	if fridayDinner == nil || fridayDinner.GetName() != "Eating out" {
 		t.Errorf("expected Friday dinner to be 'Eating out', got %v", fridayDinner)
 	}
 	// Verify Friday breakfast and lunch are present
@@ -282,13 +282,13 @@ func TestGetLastPlannedMeals(t *testing.T) {
 		}
 
 		// Check specific meal data
-		if mondayDinner != nil && (mondayDinner.ID != 1 || mondayDinner.MealName != "Monday Dinner") {
+		if mondayDinner != nil && (mondayDinner.GetId() != 1 || mondayDinner.GetName() != "Monday Dinner") {
 			t.Errorf("unexpected dinner for Monday: %+v", mondayDinner)
 		}
 
 		// Friday should always be "Eating out"
 		fridayDinner := findMeal(mealPlan, 4, "dinner")
-		if fridayDinner == nil || fridayDinner.MealName != "Eating out" {
+		if fridayDinner == nil || fridayDinner.GetName() != "Eating out" {
 			t.Errorf("expected Friday dinner to be 'Eating out', got: %+v", fridayDinner)
 		}
 		// Friday breakfast and lunch should be present
@@ -354,9 +354,9 @@ func TestGetLastPlannedMeals(t *testing.T) {
 func TestRemoveMealFromPlan(t *testing.T) {
 	plan := &WeeklyMealPlan{
 		Days: []PlanDay{
-			{DayIndex: 0, MealType: "breakfast", Meal: &Meal{ID: 1, MealName: "A"}},
-			{DayIndex: 1, MealType: "lunch", Meal: &Meal{ID: 2, MealName: "B"}},
-			{DayIndex: 2, MealType: "dinner", Meal: &Meal{ID: 3, MealName: "C"}},
+			{DayIndex: 0, MealType: "breakfast", Meal: &Meal{Id: 1, Name: "A"}},
+			{DayIndex: 1, MealType: "lunch", Meal: &Meal{Id: 2, Name: "B"}},
+			{DayIndex: 2, MealType: "dinner", Meal: &Meal{Id: 3, Name: "C"}},
 		},
 	}
 
@@ -390,8 +390,8 @@ func TestRemoveMealFromPlan(t *testing.T) {
 func TestBuildShoppingListFromPlan(t *testing.T) {
 	plan := &WeeklyMealPlan{
 		Days: []PlanDay{
-			{DayIndex: 0, MealType: "dinner", Meal: &Meal{ID: 1, Ingredients: []Ingredient{{Name: "Eggs", Quantity: 1, Unit: ""}}}},
-			{DayIndex: 1, MealType: "dinner", Meal: &Meal{ID: 2, Ingredients: []Ingredient{{Name: "Milk", Quantity: 2, Unit: "cups"}}}},
+			{DayIndex: 0, MealType: "dinner", Meal: &Meal{Id: 1, Ingredients: []*Ingredient{{Name: "Eggs", Quantity: 1, Unit: ""}}}},
+			{DayIndex: 1, MealType: "dinner", Meal: &Meal{Id: 2, Ingredients: []*Ingredient{{Name: "Milk", Quantity: 2, Unit: "cups"}}}},
 		},
 	}
 

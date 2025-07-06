@@ -103,7 +103,7 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 	var url sql.NullString
 	var mealTypeScanned string
 	err := row.Scan(&id, &name, &effort, &lastPlanned, &hasRedMeat, &url, &mealTypeScanned)
-	
+
 	m.Id = id
 	m.Name = name
 	m.Effort = effort
@@ -200,7 +200,7 @@ func getLastPlannedMealsByType(db *sql.DB, mealType string, limit int) ([]*Meal,
 		if err != nil {
 			return nil, err
 		}
-		
+
 		m.Id = id
 		m.Name = name
 		m.Effort = effort
