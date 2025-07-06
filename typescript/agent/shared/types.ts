@@ -1,5 +1,5 @@
 import { z } from 'zod';
-
+import { WeeklyMealPlan } from '@mealplanner/generated';
 // Core workflow types
 export enum WorkflowType {
   MEAL_PLANNING = 'meal_planning',
@@ -85,31 +85,8 @@ export interface SubstitutionData {
 // Meal structure (reuse from existing agent)
 
 // Types for meal planning domain
-export interface MealInfo {
-  id: number;
-  name: string;
-  effort: number;
-  hasRedMeat: boolean;
-}
-
-export interface DayPlan {
-  dayIndex: number;
-  mealType: string;
-  meal: MealInfo | null;
-}
-
-export interface WeeklyMealPlan {
-  id?: number;
-  days: DayPlan[];
-}
-
-export interface ShoppingListItem {
-  ingredient: string;
-  quantity: string;
-  category?: string;
-}
-
-export type InternalMeal = MealInfo;
+export type InternalMeal = import('@mealplanner/generated').Meal;
+export type ShoppingListItem = import('@mealplanner/generated').ShoppingListItem;
 
 // Workflow state interfaces
 export interface MealPlanningState extends BaseWorkflowState {

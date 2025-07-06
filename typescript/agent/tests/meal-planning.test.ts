@@ -1,5 +1,6 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
-import { VALIDATION_CRITERIA, WeeklyMealPlan } from '../shared/types';
+import { VALIDATION_CRITERIA } from '../shared/types';
+import type { WeeklyMealPlan as GeneratedWeeklyMealPlan } from '@mealplanner/generated';
 import { PostgresCheckpointSaver } from '../shared/checkpointer';
 
 describe('MealPlanningWorkflow logic', () => {
@@ -23,8 +24,8 @@ describe('MealPlanningWorkflow logic', () => {
   });
 
   describe('validatePlan', () => {
-    function makePlan(days: WeeklyMealPlan['days']): WeeklyMealPlan {
-      return { days };
+    function makePlan(days: GeneratedWeeklyMealPlan['days']): GeneratedWeeklyMealPlan {
+      return { days, shoppingList: [] };
     }
 
     it('returns no issues for empty plan', () => {
@@ -38,7 +39,7 @@ describe('MealPlanningWorkflow logic', () => {
         .map((_, i) => ({
           dayIndex: i,
           mealType: 'dinner',
-          meal: { id: i, name: 'm', effort: 4, hasRedMeat: false },
+          meal: { id: i, name: 'm', effort: 4, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
         }));
       const issues = workflow.validatePlan(makePlan(days));
       expect(issues).toContain(
@@ -53,7 +54,7 @@ describe('MealPlanningWorkflow logic', () => {
         .map((_, i) => ({
           dayIndex: i,
           mealType: 'lunch',
-          meal: { id: i, name: 'm', effort: 1, hasRedMeat: true },
+          meal: { id: i, name: 'm', effort: 1, hasRedMeat: true, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
         }));
       const issues = workflow.validatePlan(makePlan(days));
       expect(issues).toContain(
@@ -66,17 +67,17 @@ describe('MealPlanningWorkflow logic', () => {
         {
           dayIndex: 0,
           mealType: 'breakfast',
-          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false },
+          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
         },
         {
           dayIndex: 1,
           mealType: 'lunch',
-          meal: { id: 2, name: 'b', effort: 1, hasRedMeat: false },
+          meal: { id: 2, name: 'b', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
         },
         {
           dayIndex: 2,
           mealType: 'dinner',
-          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false },
+          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
         },
       ];
       const issues = workflow.validatePlan(makePlan(days));
@@ -88,17 +89,17 @@ describe('MealPlanningWorkflow logic', () => {
         {
           dayIndex: 0,
           mealType: 'breakfast',
-          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false },
+          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
         },
         {
           dayIndex: 1,
           mealType: 'lunch',
-          meal: { id: 2, name: 'b', effort: 2, hasRedMeat: false },
+          meal: { id: 2, name: 'b', effort: 2, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
         },
         {
           dayIndex: 2,
           mealType: 'dinner',
-          meal: { id: 3, name: 'c', effort: 1, hasRedMeat: false },
+          meal: { id: 3, name: 'c', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
         },
       ];
       expect(workflow.validatePlan(makePlan(days))).toEqual([]);
@@ -123,7 +124,12 @@ describe('MealPlanningWorkflow logic', () => {
         id: 10,
         name: 'eggs',
         effort: 2,
+        lastPlanned: undefined,
         hasRedMeat: false,
+        url: '',
+        mealType: '',
+        ingredients: [],
+        steps: [],
       });
       const mondayDinner = plan.days.find(
         (d) => d.dayIndex === 0 && d.mealType === 'dinner',
@@ -132,9 +138,14 @@ describe('MealPlanningWorkflow logic', () => {
         id: 20,
         name: 'steak',
         effort: 5,
+        lastPlanned: undefined,
         hasRedMeat: true,
+        url: '',
+        mealType: '',
+        ingredients: [],
+        steps: [],
       });
-      const emptyCount = plan.days.filter((d) => d.meal === null).length;
+      const emptyCount = plan.days.filter((d) => d.meal === undefined).length;
       expect(emptyCount).toBe(21 - 2);
     });
 
@@ -153,12 +164,17 @@ describe('MealPlanningWorkflow logic', () => {
         id: 5,
         name: 'salad',
         effort: 1,
+        lastPlanned: undefined,
         hasRedMeat: false,
+        url: '',
+        mealType: '',
+        ingredients: [],
+        steps: [],
       });
       const wednesdayDinner = plan.days.find(
         (d) => d.dayIndex === 2 && d.mealType === 'dinner',
       );
-      expect(wednesdayDinner?.meal).toBeNull();
+      expect(wednesdayDinner?.meal).toBeUndefined();
     });
   });
 });

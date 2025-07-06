@@ -251,6 +251,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
           effort: meal.effort,
           hasRedMeat: meal.hasRedMeat,
           url: meal.url,
+          mealType: meal.mealType,
           ingredients: meal.ingredients,
           steps: meal.steps,
         }),
