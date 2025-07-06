@@ -28,6 +28,7 @@ export class WorkflowRegistry {
     type: WorkflowType,
     checkpointer: PostgresCheckpointSaver,
   ): Promise<BaseWorkflow> {
+    console.log(`Creating workflow of type: ${type}`);
     const factory = this.factories.get(type);
     if (!factory) {
       throw new Error(`No factory registered for workflow type: ${type}`);

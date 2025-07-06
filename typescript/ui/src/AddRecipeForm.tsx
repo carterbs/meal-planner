@@ -15,8 +15,7 @@ import {
   Alert,
   Divider,
 } from '@mui/material';
-import { Ingredient, Step } from './types';
-import { Meal } from '@meal-planner/shared/types';
+import { Ingredient, Step, Meal } from './types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import StepsEditor from './components/StepsEditor';
@@ -26,9 +25,9 @@ interface AddRecipeFormProps {
 }
 
 const initialMealState: Omit<Meal, 'id' | 'lastPlanned'> = {
-  mealName: '',
-  relativeEffort: 3,
-  redMeat: false,
+  name: '',
+  effort: 3,
+  hasRedMeat: false,
   url: '',
   mealType: 'dinner',
   ingredients: [],
@@ -37,7 +36,7 @@ const initialMealState: Omit<Meal, 'id' | 'lastPlanned'> = {
 
 const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   const [meal, setMeal] =
-    useState<Omit<Meal, 'id' | 'lastPlanned'>>(initialMealState);
+    useState<Omit<Meal, 'id' | 'mealId' | 'lastPlanned'>>(initialMealState);
   const [rawIngredients, setRawIngredients] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
@@ -72,7 +71,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMeal({ ...meal, mealName: e.target.value });
+    setMeal({ ...meal, name: e.target.value });
   };
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,11 +79,11 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   };
 
   const handleEffortChange = (e: Event, newValue: number | number[]) => {
-    setMeal({ ...meal, relativeEffort: newValue as number });
+    setMeal({ ...meal, effort: newValue as number });
   };
 
   const handleRedMeatChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMeal({ ...meal, redMeat: e.target.checked });
+    setMeal({ ...meal, hasRedMeat: e.target.checked });
   };
 
   const handleRawIngredientsChange = (
@@ -97,7 +96,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     // Double quantities in already processed ingredients
     const doubledIngredients = meal.ingredients.map((ing: Ingredient) => ({
       ...ing,
-      Quantity: ing.Quantity * 2,
+      quantity: ing.quantity * 2,
     }));
 
     setMeal({ ...meal, ingredients: doubledIngredients });
@@ -132,8 +131,8 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
       .filter((line) => line.trim().length > 0);
 
     // Transform raw text to ingredients
-    const newIngredients: Omit<Ingredient, 'ID'>[] = ingredientLines.map(
-      (line) => {
+    const newIngredients: Omit<Ingredient, 'id' | 'mealId'>[] =
+      ingredientLines.map((line) => {
         // First convert any fraction characters to decimal values
         const processedLine = convertFractions(line);
 
@@ -194,12 +193,11 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
         }
 
         return {
-          Name: name,
-          Quantity: quantity,
-          Unit: unit,
+          name: name,
+          quantity: quantity,
+          unit: unit,
         };
-      },
-    );
+      });
 
     setMeal({
       ...meal,
@@ -207,7 +205,8 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
         ...meal.ingredients,
         ...newIngredients.map((ing) => ({
           ...ing,
-          ID: -1, // Temporary ID, will be assigned by backend
+          id: -1, // Temporary ID, will be assigned by backend
+          mealId: 0, // Will be set by backend
         })),
       ],
     });
@@ -228,7 +227,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
   };
 
   const addRecipe = async () => {
-    if (meal.mealName.trim() === '') {
+    if (meal.name.trim() === '') {
       setError('Recipe name is required');
       return;
     }
@@ -248,9 +247,9 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          mealName: meal.mealName,
-          relativeEffort: meal.relativeEffort,
-          redMeat: meal.redMeat,
+          name: meal.name,
+          effort: meal.effort,
+          hasRedMeat: meal.hasRedMeat,
           url: meal.url,
           ingredients: meal.ingredients,
           steps: meal.steps,
@@ -301,7 +300,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
             <TextField
               label="Recipe Name"
               fullWidth
-              value={meal.mealName}
+              value={meal.name}
               onChange={handleNameChange}
               required
             />
@@ -321,7 +320,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
           <Grid item xs={12}>
             <Typography gutterBottom>Effort Level</Typography>
             <Slider
-              value={meal.relativeEffort}
+              value={meal.effort}
               onChange={handleEffortChange}
               step={1}
               marks
@@ -335,7 +334,10 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
           <Grid item xs={12}>
             <FormControlLabel
               control={
-                <Switch checked={meal.redMeat} onChange={handleRedMeatChange} />
+                <Switch
+                  checked={meal.hasRedMeat}
+                  onChange={handleRedMeatChange}
+                />
               }
               label="Contains Red Meat"
             />
@@ -389,7 +391,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
                 {meal.ingredients.map((ing, index) => (
                   <Chip
                     key={index}
-                    label={`${ing.Quantity > 0 ? `${ing.Quantity} ${ing.Unit} ` : ''}${ing.Name}`}
+                    label={`${ing.quantity > 0 ? `${ing.quantity} ${ing.unit} ` : ''}${ing.name}`}
                     onDelete={() => removeIngredient(index)}
                     deleteIcon={<DeleteIcon />}
                   />
@@ -417,7 +419,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               type="submit"
               variant="contained"
               color="primary"
-              disabled={loading || meal.mealName === ''}
+              disabled={loading || meal.name === ''}
               fullWidth
             >
               {loading ? 'Adding Recipe...' : 'Add Recipe'}

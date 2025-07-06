@@ -67,7 +67,12 @@ test('copies meal plan to clipboard', async () => {
               {
                 dayIndex: 0,
                 mealType: 'breakfast',
-                meal: { id: 1, name: 'Eggs', effort: 1 },
+                meal: {
+                  id: 0,
+                  mealId: 1,
+                  name: 'Eggs',
+                  effort: 1,
+                },
               },
             ],
           },
@@ -134,7 +139,12 @@ test('starts a new session', async () => {
               {
                 dayIndex: 0,
                 mealType: 'breakfast',
-                meal: { id: 1, name: 'Eggs', effort: 1 },
+                meal: {
+                  id: 0,
+                  mealId: 1,
+                  name: 'Eggs',
+                  effort: 1,
+                },
               },
             ],
           },
@@ -220,7 +230,12 @@ test('highlights changed meal plan entries', async () => {
               {
                 dayIndex: 0,
                 mealType: 'breakfast',
-                meal: { id: 1, name: 'Eggs', effort: 1 },
+                meal: {
+                  id: 0,
+                  mealId: 1,
+                  name: 'Eggs',
+                  effort: 1,
+                },
               },
             ],
           },
@@ -247,7 +262,12 @@ test('highlights changed meal plan entries', async () => {
             {
               dayIndex: 0,
               mealType: 'breakfast',
-              meal: { id: 2, name: 'Pancakes', effort: 1 },
+              meal: {
+                id: 0,
+                mealId: 2,
+                name: 'Pancakes',
+                effort: 1,
+              },
             },
           ],
         },

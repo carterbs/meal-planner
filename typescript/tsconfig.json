@@ -20,5 +20,8 @@
         "noEmit": true,
         "jsx": "react",
         "baseUrl": "./src"
-    }
+    },
+    "references": [
+        { "path": "../generated/ts/tsconfig.json" }
+    ]
 }

@@ -1,0 +1,19 @@
+{
+  "name": "@mealplanner/generated",
+  "version": "1.0.0",
+  "main": "api.js",
+  "types": "api.d.ts",
+  "files": [
+    "api.ts",
+    "api.js",
+    "api.d.ts",
+    "google/"
+  ],
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.6.0",
+    "protobufjs": "^7.0.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.0.0"
+  }
+}

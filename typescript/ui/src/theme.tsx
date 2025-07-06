@@ -21,7 +21,7 @@ declare module '@mui/material/styles' {
     cardTitle: React.CSSProperties;
     recipeHeading: React.CSSProperties;
     dayHeader: React.CSSProperties;
-    mealName: React.CSSProperties;
+    name: React.CSSProperties;
     mealEffort: React.CSSProperties;
   }
 
@@ -39,7 +39,7 @@ declare module '@mui/material/Typography' {
     cardTitle: true;
     recipeHeading: true;
     dayHeader: true;
-    mealName: true;
+    name: true;
     mealEffort: true;
   }
 }

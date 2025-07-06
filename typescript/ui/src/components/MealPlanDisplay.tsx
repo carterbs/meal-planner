@@ -1,23 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
-
-interface MealInfo {
-  id: number;
-  name: string;
-  effort: number;
-  hasRedMeat?: boolean;
-}
-
-interface DayEntry {
-  dayIndex: number;
-  mealType: string;
-  meal: MealInfo | null;
-}
-
-export interface WeeklyMealPlan {
-  days: DayEntry[];
-}
+import { WeeklyMealPlan } from '../types';
 
 const effortIcons = ['', '🔥', '🔥🔥', '🔥🔥🔥'];
 
