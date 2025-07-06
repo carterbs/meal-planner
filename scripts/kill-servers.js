@@ -18,7 +18,13 @@
 const { execSync } = require('child_process');
 const chalk = require('chalk');
 
-const portsToKill = [8000, 8080, 5000, 3001, 3000];
+const portsToKill = [
+  8000,
+  8080, // api-gateway
+  8090, // backend
+  5000, 
+  3001, 
+  3000];
 
 function killProcessOnPort(port) {
   try {

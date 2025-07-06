@@ -1,5 +1,6 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
-import { WeeklyMealPlan, MealPlanningStep } from '../shared/types';
+import { MealPlanningStep } from '../shared/types';
+import { WeeklyMealPlan } from '@mealplanner/generated';
 import { PostgresCheckpointSaver } from '../shared/checkpointer';
 
 describe('MealPlanningWorkflow LLM integration and edge cases', () => {

@@ -1,8 +1,14 @@
 #!/bin/bash
 set -x
-docker compose up -d
-echo "--- Using existing Docker setup ---"
-# Backend should already be running on 8080 via docker-compose
+yarn kill:servers
+pushd backend
+  echo '--- Starting backend ---'
+  go run . &
+popd
+pushd api-gateway
+  echo '--- Starting API gateway ---'
+  go run . &
+popd
 
 echo "--- Waiting for backend to be ready ---"
 for i in {1..30}; do
