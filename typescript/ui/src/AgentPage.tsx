@@ -21,8 +21,8 @@ import {
   ExpandMore as ExpandMoreIcon,
   ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
-import MealPlanDisplay, { WeeklyMealPlan } from './components/MealPlanDisplay';
-import { ShoppingListItem } from './types';
+import MealPlanDisplay from './components/MealPlanDisplay';
+import { ShoppingListItem, WeeklyMealPlan } from './types';
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
 import type { SxProps, Theme } from '@mui/material';

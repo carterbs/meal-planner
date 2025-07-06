@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Ingredient, Step } from '../types';
-import { Meal } from '@meal-planner/shared/types';
+import { Ingredient, Meal, Step } from '@mealplanner/generated';
 import {
   Box,
   Typography,
@@ -63,7 +62,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   // Column definitions for the DataGrid
   const columns: GridColDef[] = [
     {
-      field: 'mealName',
+      field: 'name',
       headerName: 'Meal Name',
       flex: 1,
       minWidth: 200,
@@ -74,7 +73,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
       width: 120,
     },
     {
-      field: 'relativeEffort',
+      field: 'effort',
       headerName: 'Effort Level',
       width: 120,
       type: 'number',
@@ -90,7 +89,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
       },
     },
     {
-      field: 'redMeat',
+      field: 'hasRedMeat',
       headerName: 'Red Meat',
       width: 100,
       renderCell: (params) => {
@@ -146,10 +145,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
     // Create a default new ingredient
     const newIngredient: Ingredient = {
-      ID: Date.now(), // Temporary ID for the UI
-      Name: '',
-      Quantity: 0,
-      Unit: '',
+      id: Date.now(), // Temporary ID for the UI
+      mealId: 0, // Will be set by backend
+      name: '',
+      quantity: 0,
+      unit: '',
     };
 
     // Create updated meal with the new ingredient
@@ -173,7 +173,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   const startEditing = (ingredient: Ingredient) => {
     if (!selectedMeal) return;
     const index = selectedMeal.ingredients.findIndex(
-      (i) => i.ID === ingredient.ID,
+      (i) => i.id === ingredient.id,
     );
     if (index !== -1) {
       setEditingIngredientIndex(index);
@@ -202,7 +202,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     };
 
     // Save to backend
-    fetch(`/api/meals/${selectedMeal.id}/ingredients/${editedIngredient.ID}`, {
+    fetch(`/api/meals/${selectedMeal.id}/ingredients/${editedIngredient.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -235,7 +235,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     if (!selectedMeal) return;
 
     const updatedIngredients = selectedMeal.ingredients.filter(
-      (i) => i.ID !== ingredientId,
+      (i) => i.id !== ingredientId,
     );
     const updatedMeal = {
       ...selectedMeal,
@@ -303,7 +303,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
   // Filter meals based on search term
   const filteredMeals = meals.filter((meal) =>
-    meal.mealName.toLowerCase().includes(mealFilter.toLowerCase()),
+    meal.name.toLowerCase().includes(mealFilter.toLowerCase()),
   );
 
   // Function to refresh meals after adding a new one
@@ -723,7 +723,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   getRowId={(row) => row.id}
                   initialState={{
                     sorting: {
-                      sortModel: [{ field: 'mealName', sort: 'asc' }],
+                      sortModel: [{ field: 'name', sort: 'asc' }],
                     },
                     pagination: {
                       paginationModel: { pageSize: 10 },
@@ -831,7 +831,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                         mb: 2,
                       }}
                     >
-                      {selectedMeal.mealName}
+                      {selectedMeal.name}
                     </Typography>
 
                     <Stack
@@ -856,16 +856,16 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                           fontSize: '0.875rem',
                         }}
                       >
-                        Effort Level: {selectedMeal.relativeEffort}
+                        Effort Level: {selectedMeal.effort}
                       </Box>
                       <Box
                         sx={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          bgcolor: selectedMeal.redMeat
+                          bgcolor: selectedMeal.hasRedMeat
                             ? alpha(theme.palette.secondary.main, 0.08)
                             : alpha(theme.palette.success.main, 0.08),
-                          color: selectedMeal.redMeat
+                          color: selectedMeal.hasRedMeat
                             ? theme.palette.secondary.main
                             : theme.palette.success.main,
                           py: 0.5,
@@ -875,7 +875,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                           fontSize: '0.875rem',
                         }}
                       >
-                        {selectedMeal.redMeat
+                        {selectedMeal.hasRedMeat
                           ? '🥩 Red Meat'
                           : '🥗 No Red Meat'}
                       </Box>
@@ -936,7 +936,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                       >
                         {selectedMeal.ingredients.map((ing, index) => (
                           <Box
-                            key={ing.ID || index}
+                            key={ing.id || index}
                             sx={{
                               display: 'flex',
                               justifyContent: 'space-between',
@@ -966,13 +966,13 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                                 <Grid container spacing={2}>
                                   <Grid item xs={6}>
                                     <TextField
-                                      label="Name"
+                                      label="name"
                                       size="small"
                                       fullWidth
-                                      value={editedIngredient?.Name || ''}
+                                      value={editedIngredient?.name || ''}
                                       onChange={(e) =>
                                         handleIngredientChange(
-                                          'Name',
+                                          'name',
                                           e.target.value,
                                         )
                                       }
@@ -980,14 +980,14 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                                   </Grid>
                                   <Grid item xs={3}>
                                     <TextField
-                                      label="Quantity"
+                                      label="quantity"
                                       size="small"
                                       type="number"
                                       fullWidth
-                                      value={editedIngredient?.Quantity || 0}
+                                      value={editedIngredient?.quantity || 0}
                                       onChange={(e) =>
                                         handleIngredientChange(
-                                          'Quantity',
+                                          'quantity',
                                           parseFloat(e.target.value),
                                         )
                                       }
@@ -995,13 +995,13 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                                   </Grid>
                                   <Grid item xs={3}>
                                     <TextField
-                                      label="Unit"
+                                      label="unit"
                                       size="small"
                                       fullWidth
-                                      value={editedIngredient?.Unit || ''}
+                                      value={editedIngredient?.unit || ''}
                                       onChange={(e) =>
                                         handleIngredientChange(
-                                          'Unit',
+                                          'unit',
                                           e.target.value,
                                         )
                                       }
@@ -1036,14 +1036,14 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                             ) : (
                               <>
                                 <Typography fontWeight={500}>
-                                  {`${ing.Quantity ? ing.Quantity + ' ' : ''}${ing.Unit ? ing.Unit + ' ' : ''}${ing.Name}`.trim()}
+                                  {`${ing.quantity ? ing.quantity + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`.trim()}
                                 </Typography>
                                 {editMode && (
                                   <Box sx={{ display: 'flex', gap: 1 }}>
                                     <Button
                                       variant="outlined"
                                       onClick={() => startEditing(ing)}
-                                      data-testid={`edit-ingredient-${ing.ID}`}
+                                      data-testid={`edit-ingredient-${ing.id}`}
                                       size="small"
                                       sx={{ borderRadius: 6 }}
                                     >
@@ -1052,7 +1052,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                                     <Button
                                       variant="outlined"
                                       color="error"
-                                      onClick={() => deleteIngredient(ing.ID)}
+                                      onClick={() => deleteIngredient(ing.id)}
                                       size="small"
                                       sx={{ borderRadius: 6 }}
                                     >

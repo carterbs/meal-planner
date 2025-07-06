@@ -17,7 +17,7 @@ jest.mock('@mui/x-data-grid', () => ({
             data-testid={`meal-row-${row.id}`}
             onClick={() => onRowClick({ id: row.id })}
           >
-            {row.mealName}
+            {row.name}
           </button>
         ))}
     </div>
@@ -27,16 +27,18 @@ jest.mock('@mui/x-data-grid', () => ({
 const mockMeals = [
   {
     id: 1,
-    mealName: 'Test Meal',
-    relativeEffort: 2,
+    mealId: 1,
+    name: 'Test Meal',
+    effort: 2,
     lastPlanned: '2024-01-01',
-    redMeat: false,
+    hasRedMeat: false,
     ingredients: [
       {
-        ID: 1,
-        Name: 'Test Ingredient',
-        Quantity: 1,
-        Unit: 'cup',
+        id: 1,
+        mealId: 1,
+        name: 'Test Ingredient',
+        quantity: 1,
+        unit: 'cup',
       },
     ],
   },
@@ -154,9 +156,9 @@ describe('MealManagementTab', () => {
     }
 
     // Update ingredient fields
-    const nameInput = screen.getByLabelText('Name');
-    const quantityInput = screen.getByLabelText('Quantity');
-    const unitInput = screen.getByLabelText('Unit');
+    const nameInput = screen.getByLabelText('name');
+    const quantityInput = screen.getByLabelText('quantity');
+    const unitInput = screen.getByLabelText('unit');
 
     fireEvent.change(nameInput, { target: { value: 'Updated Ingredient' } });
     fireEvent.change(quantityInput, { target: { value: '3' } });
@@ -435,10 +437,11 @@ describe('MealManagementTab', () => {
         ...mockMeals[0],
         ingredients: [
           {
-            ID: 1,
-            Name: 'Updated Ingredient',
-            Quantity: 3,
-            Unit: 'tablespoons',
+            id: 1,
+            mealId: 1,
+            name: 'Updated Ingredient',
+            quantity: 3,
+            unit: 'tablespoons',
           },
         ],
       },
@@ -502,16 +505,16 @@ describe('MealManagementTab', () => {
 
     // Change the ingredient name
     await act(async () => {
-      const nameField = screen.getByLabelText('Name');
+      const nameField = screen.getByLabelText('name');
       fireEvent.change(nameField, { target: { value: 'Updated Ingredient' } });
     });
 
     // Change quantity and unit
     await act(async () => {
-      const quantityField = screen.getByLabelText('Quantity');
+      const quantityField = screen.getByLabelText('quantity');
       fireEvent.change(quantityField, { target: { value: '3' } });
 
-      const unitField = screen.getByLabelText('Unit');
+      const unitField = screen.getByLabelText('unit');
       fireEvent.change(unitField, { target: { value: 'tablespoons' } });
     });
 

@@ -94,19 +94,36 @@ Key entities include:
 
 ---
 
-## Step 3 - Frontend consumes generated TS types
-1. Add the `generated` workspace to Yarn and declare it as a dependency of the UI package:
+## Step 3 - Frontend consumes generated TS types 🔄 IN PROGRESS
+1. ✅ Add the `generated` workspace to Yarn and declare it as a dependency of the UI package:
    ```json
    "dependencies": {
      "@mealplanner/generated": "*"
    }
    ```
    Then add a `references` entry in `tsconfig.json` (and in the UI-specific `tsconfig.json` if it exists) that points to `"./generated/ts/tsconfig.json"`.  No `compilerOptions.paths` mapping is needed because Node resolution will locate the package automatically.
-2. Replace any ad-hoc request/response type declarations in `typescript/frontend` with imports from `@mealplanner/generated`.
-3. Ensure API calls encode/decode via generated types (ts-proto exposes `.fromJSON` / `.toJSON` helpers).
-4. Run `yarn lint && yarn typecheck`.
-5. `yarn test:e2e` → ✅
-6. Commit: `refactor(frontend): use proto-generated types`.
+2. ✅ Replace any ad-hoc request/response type declarations in `typescript/frontend` with imports from `@mealplanner/generated`.
+   - Updated `typescript/ui/src/types.ts` to re-export all proto-generated types
+   - Updated component imports in `MealPlanDisplay.tsx`, `MealPlanTab.tsx`, `AgentPage.tsx`
+   - Updated `AddRecipeForm.tsx` to use proto field names (`name`, `effort`, `hasRedMeat` instead of `mealName`, `relativeEffort`, `redMeat`)
+3. 🔄 CURRENT: Ensure API calls encode/decode via generated types (ts-proto exposes `.fromJSON` / `.toJSON` helpers).
+   - Need to finish updating remaining field name references in `AddRecipeForm.tsx`
+   - Need to check other components for similar field name mismatches
+   - Need to update API calls to use proper serialization/deserialization
+4. ⏳ NEXT: Run `yarn lint && yarn typecheck`.
+5. ⏳ NEXT: `yarn test:e2e` → ✅
+6. ⏳ NEXT: Commit: `refactor(frontend): use proto-generated types`.
+
+### Current Status:
+- **Progress**: ~70% complete
+- **Completed**: Workspace setup, type imports, basic field name updates
+- **In Progress**: Finishing field name updates in `AddRecipeForm.tsx` (line 419: `disabled={loading || meal.mealName === ''}` needs to be updated to `meal.name`)
+- **Next**: Complete remaining field updates, verify API serialization patterns, run tests
+
+### Known Issues to Address:
+1. One remaining field reference in `AddRecipeForm.tsx` needs updating
+2. Need to verify all components use consistent field names from proto types
+3. May need to update API request/response handling to use `.fromJSON()` / `.toJSON()` helpers
 
 ---
 

@@ -1,21 +1,71 @@
-// Re-export common types from the shared package
+// Re-export types from proto-generated package
 export type {
-  MealType,
   Ingredient,
   Step,
   ShoppingListItem,
-} from '@meal-planner/shared/types';
-
-import { Meal } from '@meal-planner/shared/types';
-export interface MealPlan {
-  [day: string]: Meal;
-}
-
-// Define the response type when swapping a meal
-export interface SwapMealResponse {
-  day: string;
-  new_meal_id: number;
-  meal_name: string;
-}
-
-// If needed, you can add more types for your API endpoints (e.g., for finalize, shopping list, etc.)
+  Meal,
+  PlanDay,
+  WeeklyMealPlan,
+  AgentStartRequest,
+  AgentFeedbackRequest,
+  AgentResumeRequest,
+  AgentMessageRequest,
+  AgentResponse,
+  WorkflowStatus,
+  HealthCheckResponse,
+  ReconnectResponse,
+  GetMealPlanResponse,
+  GenerateMealPlanResponse,
+  FinalizeMealPlanRequest,
+  FinalizeMealPlanResponse,
+  MealPlanICSResponse,
+  GetShoppingListRequest,
+  GetShoppingListResponse,
+  GetAllMealsRequest,
+  GetAllMealsResponse,
+  CreateMealRequest,
+  CreateMealResponse,
+  SwapMealRequest,
+  SwapMealResponse,
+  RemoveMealRequest,
+  RemoveMealResponse,
+  ReplaceMealRequest,
+  ReplaceMealResponse,
+  UpdateMealIngredientRequest,
+  UpdateMealIngredientResponse,
+  DeleteMealIngredientRequest,
+  DeleteMealIngredientResponse,
+  DeleteMealRequest,
+  DeleteMealResponse,
+  GetStepsRequest,
+  GetStepsResponse,
+  AddStepRequest,
+  AddStepResponse,
+  AddBulkStepsRequest,
+  AddBulkStepsResponse,
+  UpdateStepRequest,
+  UpdateStepResponse,
+  DeleteStepRequest,
+  DeleteStepResponse,
+  ReorderStepsRequest,
+  ReorderStepsResponse,
+  DeleteAllStepsRequest,
+  DeleteAllStepsResponse,
+  StartAgentWorkflowRequest,
+  StartAgentWorkflowResponse,
+  MessageAgentRequest,
+  MessageAgentResponse,
+  GetWorkflowStatusRequest,
+  GetWorkflowStatusResponse,
+  ListWorkflowsResponse,
+  CancelWorkflowRequest,
+  CancelWorkflowResponse,
+  GetWorkflowStateRequest,
+  GetWorkflowStateResponse,
+  AbandonWorkflowRequest,
+  AbandonWorkflowResponse,
+  AddMessageRequest,
+  AddMessageResponse,
+  UpdateSessionStateRequest,
+  UpdateSessionStateResponse,
+} from '@mealplanner/generated';

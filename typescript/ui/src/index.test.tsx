@@ -1,6 +1,4 @@
 // Removed: index.test.tsx is no longer relevant since /agent is the only frontend view.
-import { createRoot } from 'react-dom/client';
-import App from './App';
 import { setupFetchMocks, cleanupFetchMocks } from './test-utils';
 
 // Mock createRoot function
