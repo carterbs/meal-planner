@@ -20,7 +20,7 @@ func NewRecipeStepService(db *sql.DB) RecipeStepService {
 }
 
 // GetStepsForMeal retrieves all steps for a given meal
-func (s *recipeStepService) GetStepsForMeal(mealID int) ([]models.Step, error) {
+func (s *recipeStepService) GetStepsForMeal(mealID int) ([]*models.Step, error) {
 	steps, err := models.GetStepsForMeal(s.db, mealID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get steps for meal ID %d: %w", mealID, err)
@@ -29,19 +29,19 @@ func (s *recipeStepService) GetStepsForMeal(mealID int) ([]models.Step, error) {
 }
 
 // AddStepToMeal adds a new step to a meal
-func (s *recipeStepService) AddStepToMeal(step models.Step) (*models.Step, error) {
-	recipeStepServiceLogger.Debugw("Adding step to meal", "mealID", step.MealID)
+func (s *recipeStepService) AddStepToMeal(step *models.Step) (*models.Step, error) {
+	recipeStepServiceLogger.Debugw("Adding step to meal", "mealID", step.GetMealId())
 	result, err := models.AddStepToMeal(s.db, step)
 	if err != nil {
-		recipeStepServiceLogger.Errorw("Failed to add step to meal", "mealID", step.MealID, "error", err)
-		return nil, fmt.Errorf("failed to add step to meal ID %d: %w", step.MealID, err)
+		recipeStepServiceLogger.Errorw("Failed to add step to meal", "mealID", step.GetMealId(), "error", err)
+		return nil, fmt.Errorf("failed to add step to meal ID %d: %w", step.GetMealId(), err)
 	}
-	recipeStepServiceLogger.Debugw("Successfully added step to meal", "stepID", result.ID, "mealID", step.MealID)
+	recipeStepServiceLogger.Debugw("Successfully added step to meal", "stepID", result.GetId(), "mealID", step.GetMealId())
 	return result, nil
 }
 
 // AddMultipleStepsToMeal adds multiple steps to a meal in a single transaction
-func (s *recipeStepService) AddMultipleStepsToMeal(mealID int, instructions []string) ([]models.Step, error) {
+func (s *recipeStepService) AddMultipleStepsToMeal(mealID int, instructions []string) ([]*models.Step, error) {
 	recipeStepServiceLogger.Debugw("Adding multiple steps to meal", "stepCount", len(instructions), "mealID", mealID)
 	steps, err := models.AddMultipleStepsToMeal(s.db, mealID, instructions)
 	if err != nil {
@@ -53,14 +53,14 @@ func (s *recipeStepService) AddMultipleStepsToMeal(mealID int, instructions []st
 }
 
 // UpdateStep updates an existing recipe step
-func (s *recipeStepService) UpdateStep(step models.Step) error {
-	recipeStepServiceLogger.Debugw("Updating step", "stepID", step.ID, "mealID", step.MealID)
+func (s *recipeStepService) UpdateStep(step *models.Step) error {
+	recipeStepServiceLogger.Debugw("Updating step", "stepID", step.GetId(), "mealID", step.GetMealId())
 	err := models.UpdateStep(s.db, step)
 	if err != nil {
-		recipeStepServiceLogger.Errorw("Failed to update step", "stepID", step.ID, "mealID", step.MealID, "error", err)
-		return fmt.Errorf("failed to update step ID %d for meal ID %d: %w", step.ID, step.MealID, err)
+		recipeStepServiceLogger.Errorw("Failed to update step", "stepID", step.GetId(), "mealID", step.GetMealId(), "error", err)
+		return fmt.Errorf("failed to update step ID %d for meal ID %d: %w", step.GetId(), step.GetMealId(), err)
 	}
-	recipeStepServiceLogger.Debugw("Successfully updated step", "stepID", step.ID, "mealID", step.MealID)
+	recipeStepServiceLogger.Debugw("Successfully updated step", "stepID", step.GetId(), "mealID", step.GetMealId())
 	return nil
 }
 

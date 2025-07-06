@@ -27,9 +27,8 @@ func GetStepsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var steps []models.Step
 	// Use service layer for all database operations
-	steps, err = Services.RecipeStepService.GetStepsForMeal(mealID)
+	steps, err := Services.RecipeStepService.GetStepsForMeal(mealID)
 	if err != nil {
 		http.Error(w, "Error retrieving steps: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -60,9 +59,9 @@ func AddStepHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ensure the step is associated with the correct meal
-	step.MealID = mealID
+	step.MealId = int32(mealID)
 
-	createdStep, err := Services.RecipeStepService.AddStepToMeal(step)
+	createdStep, err := Services.RecipeStepService.AddStepToMeal(&step)
 	if err != nil {
 		http.Error(w, "Error adding step: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -281,10 +280,10 @@ func UpdateStepHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ensure the IDs are set correctly
-	step.ID = stepID
-	step.MealID = mealID
+	step.Id = int32(stepID)
+	step.MealId = int32(mealID)
 
-	if err := Services.RecipeStepService.UpdateStep(step); err != nil {
+	if err := Services.RecipeStepService.UpdateStep(&step); err != nil {
 		http.Error(w, "Error updating step: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

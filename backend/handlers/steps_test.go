@@ -166,7 +166,7 @@ func TestAddStepHandler(t *testing.T) {
 		t.Fatalf("Error unmarshaling response: %v", err)
 	}
 
-	if createdStep.ID == 0 {
+	if createdStep.Id == 0 {
 		t.Errorf("Expected non-zero ID for created step")
 	}
 
@@ -277,7 +277,7 @@ func TestAddBulkStepsHandler(t *testing.T) {
 
 			// Verify step numbers are sequential
 			for i, step := range steps {
-				if step.StepNumber != i+1 {
+				if step.StepNumber != int32(i+1) {
 					t.Errorf("Expected step number %d, got %d", i+1, step.StepNumber)
 				}
 			}

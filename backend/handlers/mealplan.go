@@ -26,7 +26,7 @@ func generateShoppingListForPlan(plan *models.WeeklyMealPlan) error {
 	mealIDs := make([]int, 0)
 	for _, d := range plan.Days {
 		if d.Meal != nil {
-			mealIDs = append(mealIDs, d.Meal.ID)
+			mealIDs = append(mealIDs, int(d.Meal.GetId()))
 		}
 	}
 	if len(mealIDs) == 0 {

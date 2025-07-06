@@ -12,12 +12,12 @@ type MealService interface {
 	GetMealByID(id int) (*models.Meal, error)
 
 	// CRUD operations
-	CreateMeal(meal models.Meal) (*models.Meal, error)
+	CreateMeal(meal *models.Meal) (*models.Meal, error)
 	UpdateMeal(meal *models.Meal) error
 	DeleteMeal(id int) error
 
 	// Ingredient operations
-	UpdateMealIngredient(mealID int, ingredient models.Ingredient) (*models.Meal, error)
+	UpdateMealIngredient(mealID int, ingredient *models.Ingredient) (*models.Meal, error)
 	DeleteMealIngredient(mealID, ingredientID int) (*models.Meal, error)
 
 	// Business operations
@@ -27,16 +27,16 @@ type MealService interface {
 
 // IngredientService handles ingredient management operations
 type IngredientService interface {
-	UpdateMealIngredient(mealID int, ingredient models.Ingredient) error
+	UpdateMealIngredient(mealID int, ingredient *models.Ingredient) error
 	DeleteMealIngredient(ingredientID int) error
 }
 
 // RecipeStepService handles recipe step operations
 type RecipeStepService interface {
-	GetStepsForMeal(mealID int) ([]models.Step, error)
-	AddStepToMeal(step models.Step) (*models.Step, error)
-	AddMultipleStepsToMeal(mealID int, instructions []string) ([]models.Step, error)
-	UpdateStep(step models.Step) error
+	GetStepsForMeal(mealID int) ([]*models.Step, error)
+	AddStepToMeal(step *models.Step) (*models.Step, error)
+	AddMultipleStepsToMeal(mealID int, instructions []string) ([]*models.Step, error)
+	UpdateStep(step *models.Step) error
 	DeleteStep(stepID, mealID int) error
 	ReorderSteps(mealID int, stepIDs []int) error
 	DeleteAllStepsForMeal(mealID int) error
@@ -53,8 +53,8 @@ type MealPlanService interface {
 // ShoppingListService handles shopping list operations
 type ShoppingListService interface {
 	BuildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error)
-	GenerateShoppingListFromMeals(meals []*models.Meal) []models.Ingredient
-	ConvertIngredientsToShoppingItems(ingredients []models.Ingredient) []models.ShoppingListItem
+	GenerateShoppingListFromMeals(meals []*models.Meal) []*models.Ingredient
+	ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []models.ShoppingListItem
 }
 
 // MessageService handles chat message operations
