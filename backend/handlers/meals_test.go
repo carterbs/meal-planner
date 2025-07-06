@@ -155,7 +155,7 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 
 	mealID := 1
 	updatedIngredient := models.Ingredient{
-		ID:       1,
+		Id:       1,
 		Name:     "Sugar",
 		Quantity: 2.0,
 		Unit:     "cup",
@@ -163,7 +163,7 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 
 	// Expect a single UPDATE query using SQL from the model file
 	helper.mock.ExpectExec(regexp.QuoteMeta("UPDATE ingredients SET name=$1, quantity=$2, unit=$3 WHERE id=$4 AND meal_id=$5")).
-		WithArgs(updatedIngredient.Name, updatedIngredient.Quantity, updatedIngredient.Unit, updatedIngredient.ID, mealID).
+		WithArgs(updatedIngredient.Name, updatedIngredient.Quantity, updatedIngredient.Unit, updatedIngredient.Id, mealID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	// Expect query to return updated meal
@@ -581,8 +581,8 @@ func TestGetAllMealsHandler_AlphabeticalOrder(t *testing.T) {
 	}
 
 	for i, expectedName := range expectedOrder {
-		if response[i].MealName != expectedName {
-			t.Errorf("meal at position %d: expected %q, got %q", i, expectedName, response[i].MealName)
+		if response[i].GetName() != expectedName {
+			t.Errorf("meal at position %d: expected %q, got %q", i, expectedName, response[i].GetName())
 		}
 	}
 
@@ -613,10 +613,10 @@ func TestCreateMealHandler(t *testing.T) {
 
 	// Create a test meal with ingredients
 	newMeal := models.Meal{
-		MealName:       "Test Recipe",
-		RelativeEffort: 2,
-		RedMeat:        false,
-		URL:            "https://example.com/test-recipe",
+		Name:       "Test Recipe",
+		Effort:     2,
+		HasRedMeat: false,
+		Url:        "https://example.com/test-recipe",
 		Ingredients: []models.Ingredient{
 			{Name: "Ingredient 1", Quantity: 1, Unit: "cup"},
 			{Name: "Ingredient 2", Quantity: 2, Unit: "tbsp"},
@@ -680,20 +680,20 @@ func TestCreateMealHandler(t *testing.T) {
 	}
 
 	// Verify meal properties
-	if createdMeal.ID != expectedMealID {
-		t.Errorf("expected meal ID %d, got %d", expectedMealID, createdMeal.ID)
+	if createdMeal.Id != expectedMealID {
+		t.Errorf("expected meal ID %d, got %d", expectedMealID, createdMeal.Id)
 	}
-	if createdMeal.MealName != newMeal.MealName {
-		t.Errorf("expected meal name %q, got %q", newMeal.MealName, createdMeal.MealName)
+	if createdMeal.Name != newMeal.Name {
+		t.Errorf("expected meal name %q, got %q", newMeal.Name, createdMeal.Name)
 	}
-	if createdMeal.RelativeEffort != newMeal.RelativeEffort {
-		t.Errorf("expected relative effort %d, got %d", newMeal.RelativeEffort, createdMeal.RelativeEffort)
+	if createdMeal.Effort != newMeal.Effort {
+		t.Errorf("expected relative effort %d, got %d", newMeal.Effort, createdMeal.Effort)
 	}
-	if createdMeal.RedMeat != newMeal.RedMeat {
-		t.Errorf("expected red meat %t, got %t", newMeal.RedMeat, createdMeal.RedMeat)
+	if createdMeal.HasRedMeat != newMeal.HasRedMeat {
+		t.Errorf("expected red meat %t, got %t", newMeal.HasRedMeat, createdMeal.HasRedMeat)
 	}
-	if createdMeal.URL != newMeal.URL {
-		t.Errorf("expected URL %q, got %q", newMeal.URL, createdMeal.URL)
+	if createdMeal.Url != newMeal.Url {
+		t.Errorf("expected URL %q, got %q", newMeal.Url, createdMeal.Url)
 	}
 
 	// Verify ingredients
@@ -702,11 +702,11 @@ func TestCreateMealHandler(t *testing.T) {
 	}
 
 	for i, ing := range createdMeal.Ingredients {
-		if ing.ID != expectedIngIDs[i] {
-			t.Errorf("ingredient %d: expected ID %d, got %d", i, expectedIngIDs[i], ing.ID)
+		if ing.Id != expectedIngIDs[i] {
+			t.Errorf("ingredient %d: expected ID %d, got %d", i, expectedIngIDs[i], ing.Id)
 		}
-		if ing.MealID != expectedMealID {
-			t.Errorf("ingredient %d: expected meal ID %d, got %d", i, expectedMealID, ing.MealID)
+		if ing.MealId != expectedMealID {
+			t.Errorf("ingredient %d: expected meal ID %d, got %d", i, expectedMealID, ing.MealId)
 		}
 		if ing.Name != newMeal.Ingredients[i].Name {
 			t.Errorf("ingredient %d: expected name %q, got %q", i, newMeal.Ingredients[i].Name, ing.Name)
@@ -746,10 +746,10 @@ func TestCreateMealHandler_ValidationError(t *testing.T) {
 
 	// Create an invalid meal with no name
 	invalidMeal := models.Meal{
-		MealName:       "", // Invalid: empty name
-		RelativeEffort: 2,
-		RedMeat:        false,
-		URL:            "https://example.com/test-recipe",
+		Name:       "", // Invalid: empty name
+		Effort:     2,
+		HasRedMeat: false,
+		Url:        "https://example.com/test-recipe",
 		Ingredients: []models.Ingredient{
 			{Name: "Ingredient 1", Quantity: 1, Unit: "cup"},
 		},
@@ -806,10 +806,10 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 	}()
 
 	newMeal := models.Meal{
-		MealName:       "Test Recipe",
-		RelativeEffort: 2,
-		RedMeat:        false,
-		URL:            "https://example.com/test-recipe",
+		Name:       "Test Recipe",
+		Effort:     2,
+		HasRedMeat: false,
+		Url:        "https://example.com/test-recipe",
 		Ingredients: []models.Ingredient{
 			{Name: "Ingredient 1", Quantity: 1, Unit: "cup"},
 		},
@@ -818,7 +818,7 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 	// Set up mock to simulate a database error
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO meals (meal_name, relative_effort, red_meat, url, meal_type) VALUES ($1, $2, $3, $4, $5) RETURNING id")).
-		WithArgs(newMeal.MealName, newMeal.RelativeEffort, newMeal.RedMeat, newMeal.URL, "dinner").
+		WithArgs(newMeal.Name, newMeal.Effort, newMeal.HasRedMeat, newMeal.Url, "dinner").
 		WillReturnError(errors.New("database error"))
 	mock.ExpectRollback()
 
@@ -859,7 +859,7 @@ func TestRemoveMealHandler(t *testing.T) {
 	helper := setupTest(t)
 
 	plan := models.WeeklyMealPlan{
-		Days: []models.PlanDay{{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{ID: 1, MealName: "Egg"}}},
+		Days: []models.PlanDay{{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{Id: 1, Name: "Egg"}}},
 	}
 	checkpointStruct := map[string]interface{}{
 		"channel_values": map[string]interface{}{

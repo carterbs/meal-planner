@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // PlanDay represents a single meal slot in the plan using the array based
@@ -53,7 +55,7 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed picking %s for %s: %w", mealType, day, err)
 			}
-			if mealType == "dinner" && meal != nil && meal.RedMeat {
+			if mealType == "dinner" && meal != nil && meal.GetHasRedMeat() {
 				redMeatUsed = true
 			}
 			plan.Days = append(plan.Days, PlanDay{Meal: meal, DayIndex: i, MealType: mealType})
@@ -63,7 +65,7 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 	// Overwrite Friday dinner to "Eating out"
 	for idx := range plan.Days {
 		if plan.Days[idx].DayIndex == 4 && plan.Days[idx].MealType == "dinner" {
-			plan.Days[idx].Meal = &Meal{MealName: "Eating out"}
+			plan.Days[idx].Meal = &Meal{Name: "Eating out"}
 			break
 		}
 	}
@@ -93,11 +95,22 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 
 	row := db.QueryRow(query, minEffort, maxEffort, cutoff, mealType)
 	var m Meal
+	var id int32
+	var name string
+	var effort int32
 	var lastPlanned sql.NullTime
+	var hasRedMeat bool
 	var url sql.NullString
-	err := row.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url, &m.MealType)
+	var mealTypeScanned string
+	err := row.Scan(&id, &name, &effort, &lastPlanned, &hasRedMeat, &url, &mealTypeScanned)
+	
+	m.Id = id
+	m.Name = name
+	m.Effort = effort
+	m.HasRedMeat = hasRedMeat
+	m.MealType = mealTypeScanned
 	if url.Valid {
-		m.URL = url.String
+		m.Url = url.String
 	}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -107,9 +120,9 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 		return nil, err
 	}
 	if lastPlanned.Valid {
-		m.LastPlanned = lastPlanned.Time
+		m.LastPlanned = timestamppb.New(lastPlanned.Time)
 	} else {
-		m.LastPlanned = time.Time{}
+		m.LastPlanned = timestamppb.New(time.Time{})
 	}
 	return &m, nil
 }
@@ -151,7 +164,7 @@ func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
 
 	for idx := range plan.Days {
 		if plan.Days[idx].DayIndex == 4 && plan.Days[idx].MealType == "dinner" {
-			plan.Days[idx].Meal = &Meal{MealName: "Eating out"}
+			plan.Days[idx].Meal = &Meal{Name: "Eating out"}
 			break
 		}
 	}
@@ -176,17 +189,28 @@ func getLastPlannedMealsByType(db *sql.DB, mealType string, limit int) ([]*Meal,
 	var meals []*Meal
 	for rows.Next() {
 		var m Meal
+		var id int32
+		var name string
+		var effort int32
 		var lastPlanned sql.NullTime
+		var hasRedMeat bool
 		var url sql.NullString
-		err := rows.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url, &m.MealType)
+		var mealTypeScanned string
+		err := rows.Scan(&id, &name, &effort, &lastPlanned, &hasRedMeat, &url, &mealTypeScanned)
 		if err != nil {
 			return nil, err
 		}
+		
+		m.Id = id
+		m.Name = name
+		m.Effort = effort
+		m.HasRedMeat = hasRedMeat
+		m.MealType = mealTypeScanned
 		if lastPlanned.Valid {
-			m.LastPlanned = lastPlanned.Time
+			m.LastPlanned = timestamppb.New(lastPlanned.Time)
 		}
 		if url.Valid {
-			m.URL = url.String
+			m.Url = url.String
 		}
 		meals = append(meals, &m)
 	}
@@ -225,7 +249,7 @@ func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 			continue
 		}
 		for mealType, meal := range meals {
-			if meal == nil || meal.MealName == "" {
+			if meal == nil || meal.GetName() == "" {
 				continue
 			}
 
@@ -247,12 +271,12 @@ func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 
 			b.WriteString("BEGIN:VEVENT\r\n")
 			b.WriteString("DTSTAMP:" + time.Now().UTC().Format("20060102T150405Z") + "\r\n")
-			b.WriteString("UID:" + fmt.Sprintf("%d-%s-%s@mealplanner", meal.ID, mealType, startTime.Format("20060102T150405Z")) + "\r\n")
+			b.WriteString("UID:" + fmt.Sprintf("%d-%s-%s@mealplanner", meal.GetId(), mealType, startTime.Format("20060102T150405Z")) + "\r\n")
 			b.WriteString("DTSTART:" + startTime.Format("20060102T150405Z") + "\r\n")
 			b.WriteString("DTEND:" + endTime.Format("20060102T150405Z") + "\r\n")
-			b.WriteString("SUMMARY:" + escapeICSString(fmt.Sprintf("%s: %s", meal.MealName, mealType)) + "\r\n")
-			if meal.URL != "" {
-				b.WriteString("URL:" + meal.URL + "\r\n")
+			b.WriteString("SUMMARY:" + escapeICSString(fmt.Sprintf("%s: %s", meal.GetName(), mealType)) + "\r\n")
+			if meal.GetUrl() != "" {
+				b.WriteString("URL:" + meal.GetUrl() + "\r\n")
 			}
 			b.WriteString("END:VEVENT\r\n")
 		}

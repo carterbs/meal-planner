@@ -54,8 +54,8 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 	// Extract meal IDs from the plan
 	mealIDs := make([]int, 0)
 	for _, d := range plan.Days {
-		if d.Meal != nil && d.Meal.ID != 0 {
-			mealIDs = append(mealIDs, d.Meal.ID)
+		if d.Meal != nil && int(d.Meal.GetId()) != 0 {
+			mealIDs = append(mealIDs, int(d.Meal.GetId()))
 		}
 	}
 
@@ -74,7 +74,7 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 	// Create a map for quick lookup
 	mealMap := make(map[int]*models.Meal)
 	for _, meal := range mealsWithIngredients {
-		mealMap[meal.ID] = meal
+		mealMap[int(meal.GetId())] = meal
 	}
 
 	// Create a copy of the plan with populated meal details
@@ -85,7 +85,7 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 	for i := range populatedPlan.Days {
 		d := &populatedPlan.Days[i]
 		if d.Meal != nil {
-			if fullMeal, ok := mealMap[d.Meal.ID]; ok {
+			if fullMeal, ok := mealMap[int(d.Meal.GetId())]; ok {
 				d.Meal = fullMeal
 			}
 		}

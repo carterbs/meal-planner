@@ -22,10 +22,10 @@ func (m *mockMealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, err
 func (m *mockMealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error) {
 	// Return a simple test meal plan
 	testMeal := &models.Meal{
-		ID:       1,
-		MealName: "Test Meal",
+		Id:       1,
+		Name:     "Test Meal",
 		MealType: "dinner",
-		URL:      "https://example.com",
+		Url:      "https://example.com",
 	}
 
 	plan := &models.WeeklyMealPlan{

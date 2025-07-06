@@ -46,7 +46,7 @@ func (s *shoppingListService) BuildShoppingList(mealIDs []int) ([]models.Shoppin
 }
 
 // GenerateShoppingListFromMeals aggregates ingredients from meals
-func (s *shoppingListService) GenerateShoppingListFromMeals(meals []*models.Meal) []models.Ingredient {
+func (s *shoppingListService) GenerateShoppingListFromMeals(meals []*models.Meal) []*models.Ingredient {
 	shoppingListServiceLogger.Debugw("Generating shopping list from meals", "mealCount", len(meals))
 	ingredients := models.GenerateShoppingListFromMeals(meals)
 	shoppingListServiceLogger.Debugw("Generated unique ingredients", "ingredientCount", len(ingredients))
@@ -54,7 +54,7 @@ func (s *shoppingListService) GenerateShoppingListFromMeals(meals []*models.Meal
 }
 
 // ConvertIngredientsToShoppingItems converts ingredients to shopping list items
-func (s *shoppingListService) ConvertIngredientsToShoppingItems(ingredients []models.Ingredient) []models.ShoppingListItem {
+func (s *shoppingListService) ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []models.ShoppingListItem {
 	shoppingListServiceLogger.Debugw("Converting ingredients to shopping list items", "ingredientCount", len(ingredients))
 	items := models.ConvertIngredientsToShoppingItems(ingredients)
 	shoppingListServiceLogger.Debugw("Converted to shopping list items", "itemCount", len(items))

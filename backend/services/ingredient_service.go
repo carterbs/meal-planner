@@ -20,14 +20,14 @@ func NewIngredientService(db *sql.DB) IngredientService {
 }
 
 // UpdateMealIngredient updates an ingredient for a specific meal
-func (s *ingredientService) UpdateMealIngredient(mealID int, ingredient models.Ingredient) error {
-	ingredientServiceLogger.Debugw("Updating ingredient for meal", "ingredientID", ingredient.ID, "mealID", mealID)
+func (s *ingredientService) UpdateMealIngredient(mealID int, ingredient *models.Ingredient) error {
+	ingredientServiceLogger.Debugw("Updating ingredient for meal", "ingredientID", ingredient.GetId(), "mealID", mealID)
 	err := models.UpdateMealIngredient(s.db, mealID, ingredient)
 	if err != nil {
-		ingredientServiceLogger.Errorw("Failed to update ingredient for meal", "ingredientID", ingredient.ID, "mealID", mealID, "error", err)
-		return fmt.Errorf("failed to update ingredient ID %d for meal ID %d: %w", ingredient.ID, mealID, err)
+		ingredientServiceLogger.Errorw("Failed to update ingredient for meal", "ingredientID", ingredient.GetId(), "mealID", mealID, "error", err)
+		return fmt.Errorf("failed to update ingredient ID %d for meal ID %d: %w", ingredient.GetId(), mealID, err)
 	}
-	ingredientServiceLogger.Debugw("Successfully updated ingredient for meal", "ingredientID", ingredient.ID, "mealID", mealID)
+	ingredientServiceLogger.Debugw("Successfully updated ingredient for meal", "ingredientID", ingredient.GetId(), "mealID", mealID)
 	return nil
 }
 

@@ -38,14 +38,14 @@ func (s *mealService) GetMealsByIDs(ids []int) ([]*models.Meal, error) {
 }
 
 // CreateMeal creates a new meal in the database
-func (s *mealService) CreateMeal(meal models.Meal) (*models.Meal, error) {
-	mealServiceLogger.Debugw("Creating meal", "mealName", meal.MealName)
+func (s *mealService) CreateMeal(meal *models.Meal) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Creating meal", "mealName", meal.GetName())
 	result, err := models.CreateMeal(s.db, meal)
 	if err != nil {
-		mealServiceLogger.Errorw("Failed to create meal", "mealName", meal.MealName, "error", err)
+		mealServiceLogger.Errorw("Failed to create meal", "mealName", meal.GetName(), "error", err)
 		return nil, fmt.Errorf("failed to create meal: %w", err)
 	}
-	mealServiceLogger.Debugw("Successfully created meal", "mealName", result.MealName, "mealID", result.ID)
+	mealServiceLogger.Debugw("Successfully created meal", "mealName", result.GetName(), "mealID", result.GetId())
 	return result, nil
 }
 
@@ -76,7 +76,7 @@ func (s *mealService) SwapMeal(mealID int, mealType string) (*models.Meal, error
 		mealServiceLogger.Errorw("Failed to swap meal", "mealID", mealID, "error", err)
 		return nil, fmt.Errorf("failed to swap meal ID %d: %w", mealID, err)
 	}
-	mealServiceLogger.Debugw("Successfully swapped meal", "oldMealID", mealID, "newMealID", meal.ID)
+	mealServiceLogger.Debugw("Successfully swapped meal", "oldMealID", mealID, "newMealID", meal.GetId())
 	return meal, nil
 }
 
@@ -92,16 +92,16 @@ func (s *mealService) GetMealByID(id int) (*models.Meal, error) {
 		mealServiceLogger.Warnw("Meal not found", "mealID", id)
 		return nil, fmt.Errorf("meal with ID %d not found", id)
 	}
-	mealServiceLogger.Debugw("Successfully retrieved meal", "mealID", id, "mealName", meals[0].MealName)
+	mealServiceLogger.Debugw("Successfully retrieved meal", "mealID", id, "mealName", meals[0].GetName())
 	return meals[0], nil
 }
 
 // UpdateMealIngredient updates a specific ingredient for a meal
-func (s *mealService) UpdateMealIngredient(mealID int, ingredient models.Ingredient) (*models.Meal, error) {
-	mealServiceLogger.Debugw("Updating meal ingredient", "mealID", mealID, "ingredientID", ingredient.ID)
+func (s *mealService) UpdateMealIngredient(mealID int, ingredient *models.Ingredient) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Updating meal ingredient", "mealID", mealID, "ingredientID", ingredient.GetId())
 	err := models.UpdateMealIngredient(s.db, mealID, ingredient)
 	if err != nil {
-		mealServiceLogger.Errorw("Failed to update meal ingredient", "mealID", mealID, "ingredientID", ingredient.ID, "error", err)
+		mealServiceLogger.Errorw("Failed to update meal ingredient", "mealID", mealID, "ingredientID", ingredient.GetId(), "error", err)
 		return nil, fmt.Errorf("failed to update ingredient for meal ID %d: %w", mealID, err)
 	}
 
@@ -111,7 +111,7 @@ func (s *mealService) UpdateMealIngredient(mealID int, ingredient models.Ingredi
 		mealServiceLogger.Errorw("Failed to get updated meal after ingredient update", "mealID", mealID, "error", err)
 		return nil, fmt.Errorf("failed to get updated meal: %w", err)
 	}
-	mealServiceLogger.Debugw("Successfully updated meal ingredient", "mealID", mealID, "ingredientID", ingredient.ID)
+	mealServiceLogger.Debugw("Successfully updated meal ingredient", "mealID", mealID, "ingredientID", ingredient.GetId())
 	return meal, nil
 }
 

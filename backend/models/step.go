@@ -4,21 +4,17 @@ import (
 	"database/sql"
 	"errors"
 
+	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
 )
 
 var stepModelLogger = logging.GetLogger("step-model")
 
-// Step represents a single instruction step in a recipe
-type Step struct {
-	ID          int    `json:"id"`
-	MealID      int    `json:"mealId"`
-	StepNumber  int    `json:"stepNumber"`
-	Instruction string `json:"instruction"`
-}
+// Step is an alias to the generated protobuf type
+type Step = apipb.Step
 
 // GetStepsForMeal retrieves all steps for a given meal ID, ordered by step number
-func GetStepsForMeal(db *sql.DB, mealID int) ([]Step, error) {
+func GetStepsForMeal(db *sql.DB, mealID int) ([]*Step, error) {
 	rows, err := db.Query(`
 		SELECT id, meal_id, step_number, instruction 
 		FROM recipe_steps 
@@ -31,12 +27,19 @@ func GetStepsForMeal(db *sql.DB, mealID int) ([]Step, error) {
 	}
 	defer rows.Close()
 
-	var steps []Step
+	var steps []*Step
 	for rows.Next() {
-		var step Step
-		if err := rows.Scan(&step.ID, &step.MealID, &step.StepNumber, &step.Instruction); err != nil {
+		var id, mealID, stepNumber int32
+		var instruction string
+		if err := rows.Scan(&id, &mealID, &stepNumber, &instruction); err != nil {
 			stepModelLogger.Errorw("GetStepsForMeal: error scanning row", "mealID", mealID, "error", err)
 			return nil, err
+		}
+		step := &apipb.Step{
+			Id:          id,
+			MealId:      mealID,
+			StepNumber:  stepNumber,
+			Instruction: instruction,
 		}
 		steps = append(steps, step)
 	}
@@ -50,12 +53,12 @@ func GetStepsForMeal(db *sql.DB, mealID int) ([]Step, error) {
 }
 
 // AddStepToMeal adds a new step to a meal
-func AddStepToMeal(db *sql.DB, step Step) (*Step, error) {
+func AddStepToMeal(db *sql.DB, step *Step) (*Step, error) {
 	// Check if meal exists
 	var mealExists bool
-	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM meals WHERE id = $1)", step.MealID).Scan(&mealExists)
+	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM meals WHERE id = $1)", step.GetMealId()).Scan(&mealExists)
 	if err != nil {
-		stepModelLogger.Errorw("AddStepToMeal: error checking meal existence", "mealID", step.MealID, "error", err)
+		stepModelLogger.Errorw("AddStepToMeal: error checking meal existence", "mealID", step.GetMealId(), "error", err)
 		return nil, err
 	}
 	if !mealExists {
@@ -63,36 +66,40 @@ func AddStepToMeal(db *sql.DB, step Step) (*Step, error) {
 	}
 
 	// If no step number is provided, find the next available one
-	if step.StepNumber <= 0 {
+	if step.GetStepNumber() <= 0 {
+		var nextStepNumber int32
 		err := db.QueryRow(`
 			SELECT COALESCE(MAX(step_number), 0) + 1 
 			FROM recipe_steps 
 			WHERE meal_id = $1
-		`, step.MealID).Scan(&step.StepNumber)
+		`, step.GetMealId()).Scan(&nextStepNumber)
 		if err != nil {
-			stepModelLogger.Errorw("AddStepToMeal: error determining next step number", "mealID", step.MealID, "error", err)
+			stepModelLogger.Errorw("AddStepToMeal: error determining next step number", "mealID", step.GetMealId(), "error", err)
 			return nil, err
 		}
+		step.StepNumber = nextStepNumber
 	}
 
 	// Insert the new step
+	var id int32
 	err = db.QueryRow(`
 		INSERT INTO recipe_steps (meal_id, step_number, instruction) 
 		VALUES ($1, $2, $3) 
 		RETURNING id
-	`, step.MealID, step.StepNumber, step.Instruction).Scan(&step.ID)
+	`, step.GetMealId(), step.GetStepNumber(), step.GetInstruction()).Scan(&id)
 	if err != nil {
-		stepModelLogger.Errorw("AddStepToMeal: error inserting step", "mealID", step.MealID, "error", err)
+		stepModelLogger.Errorw("AddStepToMeal: error inserting step", "mealID", step.GetMealId(), "error", err)
 		return nil, err
 	}
+	step.Id = id
 
-	return &step, nil
+	return step, nil
 }
 
 // AddMultipleStepsToMeal adds multiple steps to a meal in a single transaction
-func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]Step, error) {
+func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]*Step, error) {
 	if len(instructions) == 0 {
-		return []Step{}, nil
+		return []*Step{}, nil
 	}
 
 	// Check if meal exists
@@ -139,21 +146,23 @@ func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]St
 	defer stmt.Close()
 
 	// Insert each step
-	steps := make([]Step, len(instructions))
+	steps := make([]*Step, len(instructions))
 	for i, instruction := range instructions {
 		stepNumber := nextStepNumber + i
-		step := Step{
-			MealID:      mealID,
-			StepNumber:  stepNumber,
+		step := &Step{
+			MealId:      int32(mealID),
+			StepNumber:  int32(stepNumber),
 			Instruction: instruction,
 		}
 
-		err = stmt.QueryRow(step.MealID, step.StepNumber, step.Instruction).Scan(&step.ID)
+		var stepID int32
+		err = stmt.QueryRow(step.GetMealId(), step.GetStepNumber(), step.GetInstruction()).Scan(&stepID)
 		if err != nil {
 			stepModelLogger.Errorw("AddMultipleStepsToMeal: error inserting step", "stepIndex", i, "mealID", mealID, "error", err)
 			return nil, err
 		}
 
+		step.Id = stepID
 		steps[i] = step
 	}
 
@@ -167,8 +176,8 @@ func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]St
 }
 
 // UpdateStep updates an existing recipe step
-func UpdateStep(db *sql.DB, step Step) error {
-	if step.ID == 0 {
+func UpdateStep(db *sql.DB, step *Step) error {
+	if step.GetId() == 0 {
 		return errors.New("step ID not provided")
 	}
 
@@ -176,15 +185,15 @@ func UpdateStep(db *sql.DB, step Step) error {
 		UPDATE recipe_steps 
 		SET step_number = $1, instruction = $2 
 		WHERE id = $3 AND meal_id = $4
-	`, step.StepNumber, step.Instruction, step.ID, step.MealID)
+	`, step.GetStepNumber(), step.GetInstruction(), step.GetId(), step.GetMealId())
 	if err != nil {
-		stepModelLogger.Errorw("UpdateStep: error executing update", "stepID", step.ID, "mealID", step.MealID, "error", err)
+		stepModelLogger.Errorw("UpdateStep: error executing update", "stepID", step.GetId(), "mealID", step.GetMealId(), "error", err)
 		return err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		stepModelLogger.Errorw("UpdateStep: error getting rows affected", "stepID", step.ID, "error", err)
+		stepModelLogger.Errorw("UpdateStep: error getting rows affected", "stepID", step.GetId(), "error", err)
 		return err
 	}
 	if rowsAffected == 0 {

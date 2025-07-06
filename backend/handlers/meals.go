@@ -22,7 +22,7 @@ func attachShoppingList(plan *models.WeeklyMealPlan) {
 	mealIDs := []int{}
 	for _, d := range plan.Days {
 		if d.Meal != nil {
-			mealIDs = append(mealIDs, d.Meal.ID)
+			mealIDs = append(mealIDs, int(d.Meal.GetId()))
 		}
 	}
 	if len(mealIDs) == 0 {
@@ -61,7 +61,7 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Sort meals alphabetically by name (A -> Z), case-insensitive
 	sort.Slice(meals, func(i, j int) bool {
-		return strings.ToLower(meals[i].MealName) < strings.ToLower(meals[j].MealName)
+		return strings.ToLower(meals[i].GetName()) < strings.ToLower(meals[j].GetName())
 	})
 
 	w.Header().Set("Content-Type", "application/json")
@@ -170,8 +170,8 @@ func UpdateMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedIngredient.ID = ingredientID
-	meal, err := Services.MealService.UpdateMealIngredient(mealID, updatedIngredient)
+	updatedIngredient.Id = int32(ingredientID)
+	meal, err := Services.MealService.UpdateMealIngredient(mealID, &updatedIngredient)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -264,8 +264,8 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract meal IDs from the plan
 	var mealIDs []int
 	for _, d := range plan.Days {
-		if d.Meal != nil && d.Meal.ID != 0 {
-			mealIDs = append(mealIDs, d.Meal.ID)
+		if d.Meal != nil && d.Meal.GetId() != 0 {
+			mealIDs = append(mealIDs, int(d.Meal.GetId()))
 		}
 	}
 
@@ -292,13 +292,13 @@ func CreateMealHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate the meal data
-	if meal.MealName == "" {
+	if meal.GetName() == "" {
 		http.Error(w, "Meal name is required", http.StatusBadRequest)
 		return
 	}
 
 	// Create the meal in the database
-	createdMeal, err := Services.MealService.CreateMeal(meal)
+	createdMeal, err := Services.MealService.CreateMeal(&meal)
 	if err != nil {
 		http.Error(w, "Error creating meal: "+err.Error(), http.StatusInternalServerError)
 		return

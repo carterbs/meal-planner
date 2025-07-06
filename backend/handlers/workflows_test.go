@@ -84,8 +84,8 @@ func TestGetWorkflowState_ShouldIncludeShoppingListFromMealPlan(t *testing.T) {
 		Days: []models.PlanDay{
 			{
 				Meal: &models.Meal{
-					ID:       1,
-					MealName: "Test Meal",
+					Id:   1,
+					Name: "Test Meal",
 				},
 				DayIndex: 0,
 				MealType: "breakfast",
