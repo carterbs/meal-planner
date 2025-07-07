@@ -2,22 +2,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { API } from '../utils.js';
+import type { Meal } from '@mealplanner/generated';
 
 export const getMealsArgs = z.object({
   mealType: z.enum(['breakfast', 'lunch', 'dinner']).optional().describe("Filter by meal type")
 });
-
-export interface Meal {
-  id: number;
-  mealName: string;
-  relativeEffort: number;
-  lastPlanned: string;
-  redMeat: boolean;
-  url: string;
-  mealType: string;
-  ingredients: any[];
-  steps: any[];
-}
 
 export async function doGetMeals(mealType?: string): Promise<Meal[]> {
   const url = mealType ? `${API}/api/meals?type=${mealType}` : `${API}/api/meals`;
