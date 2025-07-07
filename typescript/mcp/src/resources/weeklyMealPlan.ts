@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
-import type { WeeklyMealPlan } from '@meal-planner/shared/dist/types';
+import type { WeeklyMealPlan } from '@mealplanner/generated';
 
 export async function fetchWeeklyMealPlan(): Promise<WeeklyMealPlan> {
   const response = await fetch(`${API}/api/mealplan`);
