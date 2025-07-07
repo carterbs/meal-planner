@@ -167,9 +167,9 @@ message WorkflowStateResponse {
 ```
 
 ## Workflow Implementation (Phased)
-0. **Phase 0 – Create Tables**
-   - Write and apply database migration scripts to create `meal_plans`, `meal_plan_items`, and `messages` tables.
-   - Verify tables exist and schema correctness.
+0. **Phase 0 – Create Tables** ✅
+   - [x] Write and apply database migration scripts to create `meal_plans`, `meal_plan_items`, and `messages` tables.
+   - [x] Verify tables exist and schema correctness.
 
 1. **Phase 1 – Implement Go HTTP Endpoints**
    - Add HTTP handlers in Go for:
