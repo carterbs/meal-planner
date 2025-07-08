@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	apipb "mealplanner/generated/go"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,7 +19,7 @@ func TestSaveMealPlan_Success(t *testing.T) {
 
 	threadID := "thread1"
 	version := 1
-	testMeal := map[string]interface{}{"id": 101, "name": "Test Meal"}
+	testMeal := &apipb.Meal{Id: 101, Name: "Test Meal"}
 	entries := []MealPlanEntry{
 		{DayOfWeek: 0, MealType: "breakfast", Meal: testMeal},
 	}
@@ -70,9 +72,10 @@ func TestGetMealPlanItems_Success(t *testing.T) {
 	defer db.Close()
 
 	mealPlanID := 42
-	testMealJSON := `{"id": 202, "name": "Test Lunch Meal"}`
+	testMeal := &apipb.Meal{Id: 202, Name: "Test Lunch Meal"}
+	mealJSON, _ := json.Marshal(testMeal)
 	mockRows := sqlmock.NewRows([]string{"day_of_week", "meal_type", "meal"}).
-		AddRow(1, "lunch", testMealJSON)
+		AddRow(1, "lunch", mealJSON)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT day_of_week, meal_type, meal")).
 		WithArgs(mealPlanID).
 		WillReturnRows(mockRows)
@@ -80,9 +83,9 @@ func TestGetMealPlanItems_Success(t *testing.T) {
 	items, err := GetMealPlanItems(db, mealPlanID)
 	assert.NoError(t, err)
 	assert.Len(t, items, 1)
-	assert.Equal(t, 1, items[0].DayOfWeek)
+	assert.Equal(t, int32(1), items[0].DayOfWeek)
 	assert.Equal(t, "lunch", items[0].MealType)
-	assert.Equal(t, testMealJSON, items[0].Meal)
+	assert.Equal(t, testMeal, items[0].Meal)
 
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

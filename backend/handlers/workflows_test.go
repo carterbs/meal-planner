@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	apipb "mealplanner/generated/go"
+
 	"mealplanner/models"
 	"mealplanner/services"
 
@@ -236,7 +238,7 @@ func TestGetWorkflowStateReturnsShoppingList(t *testing.T) {
 	threadID := "thread123"
 	plan := &models.MealPlanIdentifier{ID: 1, ThreadID: threadID}
 	entries := []models.MealPlanEntry{
-		{DayOfWeek: 0, MealType: "breakfast", Meal: map[string]interface{}{"id": plan.ID, "name": "Test Meal"}},
+		{DayOfWeek: 0, MealType: "breakfast", Meal: &apipb.Meal{Id: int32(plan.ID), Name: "Test Meal"}},
 	}
 	shoppingItems := []models.ShoppingListItem{
 		{Ingredient: "Eggs", Quantity: "12"},
