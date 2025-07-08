@@ -15,7 +15,8 @@ import {
   Alert,
   Divider,
 } from '@mui/material';
-import { Ingredient, Step, Meal } from './types';
+import { Ingredient, Step, Meal } from '@mealplanner/generated';
+import { createMeal } from './api';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import StepsEditor from './components/StepsEditor';
@@ -241,25 +242,19 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     setError(null);
 
     try {
-      const response = await fetch('/api/meals', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: meal.name,
-          effort: meal.effort,
-          hasRedMeat: meal.hasRedMeat,
-          url: meal.url,
-          mealType: meal.mealType,
-          ingredients: meal.ingredients,
-          steps: meal.steps,
-        }),
-      });
+      const mealData = {
+        name: meal.name,
+        effort: meal.effort,
+        hasRedMeat: meal.hasRedMeat,
+        url: meal.url,
+        mealType: meal.mealType,
+        ingredients: meal.ingredients,
+        steps: meal.steps,
+        lastPlanned: undefined,
+      };
 
-      if (!response.ok) {
-        throw new Error('Error adding recipe');
-      }
+      const createdMeal = await createMeal(mealData);
+      console.log('Successfully created meal:', createdMeal);
 
       setSuccess(true);
       setMeal(initialMealState);

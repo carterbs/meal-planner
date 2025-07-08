@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"io"
 	"net/http"
 	"os/exec"
@@ -346,6 +348,20 @@ func CancelWorkflow(w http.ResponseWriter, r *http.Request) {
 
 func writeJSON(w http.ResponseWriter, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	enc := json.NewEncoder(w)
-	enc.Encode(v)
+
+	var (
+		b   []byte
+		err error
+	)
+
+	if msg, ok := v.(proto.Message); ok {
+		b, err = protojson.MarshalOptions{UseProtoNames: true}.Marshal(msg)
+	} else {
+		b, err = json.Marshal(v)
+	}
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal JSON response: %v", err), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
 }

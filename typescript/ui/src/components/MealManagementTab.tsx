@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Ingredient, Meal, Step } from '@mealplanner/generated';
 import {
+  getMeals,
+  updateMealIngredient,
+  deleteMealIngredient,
+  deleteMeal as deleteMealApi,
+  replaceAllSteps,
+} from '../api';
+import {
   Box,
   Typography,
   Grid,
@@ -202,26 +209,16 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     };
 
     // Save to backend
-    fetch(`/api/meals/${selectedMeal.id}/ingredients/${editedIngredient.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(editedIngredient),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to update ingredient');
-
-        // First, update the selected meal directly
+    updateMealIngredient(selectedMeal.id, editedIngredient.id, editedIngredient)
+      .then((updatedMeal) => {
+        // Update with the meal returned from backend
         setSelectedMeal(updatedMeal);
-        setEditingIngredientIndex(null);
-        setEditedIngredient(null);
-
-        // Then update the meals array with the new meal data
         setMeals((prev) =>
           prev.map((m) => (m.id === selectedMeal.id ? updatedMeal : m)),
         );
 
+        setEditingIngredientIndex(null);
+        setEditedIngredient(null);
         showToast('Ingredient updated successfully');
       })
       .catch((err) => {
@@ -243,19 +240,10 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     };
 
     // Save to backend
-    fetch(`/api/meals/${selectedMeal.id}/ingredients/${ingredientId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to delete ingredient');
-
-        // First, update the selected meal directly
+    deleteMealIngredient(selectedMeal.id, ingredientId)
+      .then((updatedMeal) => {
+        // Update with the meal returned from backend
         setSelectedMeal(updatedMeal);
-
-        // Then update the meals array with the new meal data
         setMeals((prev) =>
           prev.map((m) => (m.id === selectedMeal.id ? updatedMeal : m)),
         );
@@ -272,11 +260,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   const deleteMeal = (mealToDelete: Meal = selectedMeal!) => {
     if (!mealToDelete) return;
 
-    fetch(`/api/meals/${mealToDelete.id}`, {
-      method: 'DELETE',
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to delete meal');
+    deleteMealApi(mealToDelete.id)
+      .then(() => {
         setMeals(meals.filter((m) => m.id !== mealToDelete.id));
         setSelectedMeal(null);
         showToast('Meal deleted successfully');
@@ -308,15 +293,9 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
   // Function to refresh meals after adding a new one
   const handleRecipeAdded = () => {
-    fetch('/api/meals')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data: Meal[]) => {
-        setMeals(data);
+    getMeals()
+      .then((meals) => {
+        setMeals(meals);
         showToast('New recipe added successfully!');
         setCurrentView('main'); // Return to main view
       })
@@ -341,14 +320,12 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   // Add a function to fetch meals directly
   const fetchMeals = () => {
     setLoading(true);
-    let url = '/api/meals';
-    if (mealTypeFilter !== 'All') {
-      url += `?type=${mealTypeFilter.toLowerCase()}`;
-    }
-    fetch(url)
-      .then((res) => res.json())
-      .then((data: Meal[]) => {
-        setMeals(data);
+    const mealType =
+      mealTypeFilter !== 'All' ? mealTypeFilter.toLowerCase() : undefined;
+
+    getMeals(mealType)
+      .then((meals) => {
+        setMeals(meals);
         setLoading(false);
       })
       .catch((err) => {
@@ -363,41 +340,20 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     try {
       setLoading(true);
 
-      // Delete existing steps first, then add new ones in bulk
-      await fetch(`/api/meals/${mealId}/steps`, {
-        method: 'DELETE',
-      });
-
-      // Only add new steps if there are any
-      if (steps.length > 0) {
-        const response = await fetch(`/api/meals/${mealId}/steps/bulk`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            instructions: steps.map((step) => step.instruction),
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to save steps');
-        }
-      }
+      // Replace all steps using the API service
+      await replaceAllSteps(mealId, steps);
 
       // Fetch fresh data from the server but keep the selected meal visible
-      const res = await fetch('/api/meals');
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      const data: Meal[] = await res.json();
+      const freshMeals = await getMeals();
 
       // Update the meals array
-      setMeals(data);
+      setMeals(freshMeals);
 
       // Keep the currently selected meal, but with updated data
       if (selectedMeal) {
-        const updatedSelectedMeal = data.find((m) => m.id === selectedMeal.id);
+        const updatedSelectedMeal = freshMeals.find(
+          (m) => m.id === selectedMeal.id,
+        );
         if (updatedSelectedMeal) {
           setSelectedMeal(updatedSelectedMeal);
         }

@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { API } from '../utils.js';
-import type { Meal } from '@mealplanner/generated';
+import { Meal, GetAllMealsResponse } from '@mealplanner/generated';
 
 export const getMealsArgs = z.object({
   mealType: z.enum(['breakfast', 'lunch', 'dinner']).optional().describe("Filter by meal type")
@@ -14,7 +14,9 @@ export async function doGetMeals(mealType?: string): Promise<Meal[]> {
   if (!resp.ok) {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   }
-  return resp.json();
+  const responseJson = await resp.json();
+  const data = GetAllMealsResponse.fromJSON(responseJson);
+  return data.meals;
 }
 
 export function registerGetMeals(server: McpServer) {

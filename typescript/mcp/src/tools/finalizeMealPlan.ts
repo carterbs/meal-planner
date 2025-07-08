@@ -1,13 +1,16 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
+import { FinalizeMealPlanResponse } from '@mealplanner/generated';
 
 export async function finalizePlan() {
   const resp = await fetch(`${API}/api/mealplan/finalize`, { method: 'POST' });
   if (!resp.ok) {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   }
-  return resp.text();
+  const responseJson = await resp.json();
+  const data = FinalizeMealPlanResponse.fromJSON(responseJson);
+  return data.message;
 }
 
 export function registerFinalizeMealPlan(server: McpServer) {
