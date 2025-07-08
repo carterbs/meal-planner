@@ -3,7 +3,7 @@ import {
   MealPlanningState,
   WorkflowType,
 } from '../shared/types';
-import { PostgresCheckpointSaver } from '../shared/checkpointer';
+import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
 
 export interface FeedbackInput {
   threadId: string;
@@ -13,9 +13,9 @@ export interface FeedbackInput {
 }
 
 export class FeedbackHandler {
-  private checkpointer: PostgresCheckpointSaver;
+  private checkpointer: HttpCheckpointSaver;
 
-  constructor(checkpointer: PostgresCheckpointSaver) {
+  constructor(checkpointer: HttpCheckpointSaver) {
     this.checkpointer = checkpointer;
   }
 

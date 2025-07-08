@@ -314,6 +314,11 @@ func main() {
 	r.Get("/api/meals/{mealId}/steps", handlers.GetStepsHandler)
 	r.Post("/api/meals/{mealId}/steps", handlers.AddStepHandler)
 	r.Post("/api/meals/{mealId}/steps/bulk", handlers.AddBulkStepsHandler)
+
+	// Checkpoint persistence endpoints
+	r.Get("/api/checkpoints/{thread_id}", handlers.GetCheckpoint)
+	r.Post("/api/checkpoints", handlers.PutCheckpoint)
+	r.Get("/api/checkpoints", handlers.ListCheckpoints)
 	r.Route("/api/agent", func(r chi.Router) {
 		r.Post("/start", handlers.StartAgentWorkflow)
 		r.Post("/message", handlers.MessageAgentHandler)

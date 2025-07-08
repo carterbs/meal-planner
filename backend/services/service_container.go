@@ -14,5 +14,6 @@ func NewServiceContainer(db *sql.DB) *ServiceContainer {
 		ShoppingListService: NewShoppingListService(db),
 		MessageService:      SQLMessageService(db),
 		WorkflowService:     NewWorkflowService(db),
+		CheckpointService:   NewCheckpointService(db),
 	}
 }
