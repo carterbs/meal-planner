@@ -106,3 +106,18 @@ func (s *mealPlanService) RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayInd
 	mealPlanServiceLogger.Debugw("Successfully removed meal from plan", "dayIndex", dayIndex, "mealType", mealType)
 	return nil
 }
+
+// SaveMealPlan persists a meal plan
+func (s *mealPlanService) SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
+	return models.SaveMealPlan(s.db, threadID, version, entries)
+}
+
+// GetLatestMealPlan retrieves the latest meal plan identifier
+func (s *mealPlanService) GetLatestMealPlan(threadID string) (*models.MealPlanIdentifier, error) {
+	return models.GetLatestMealPlan(s.db, threadID)
+}
+
+// GetMealPlanItems retrieves entries for a meal plan
+func (s *mealPlanService) GetMealPlanItems(mealPlanID int) ([]models.MealPlanEntry, error) {
+	return models.GetMealPlanItems(s.db, mealPlanID)
+}

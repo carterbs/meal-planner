@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"google.golang.org/protobuf/encoding/protojson"
 	"io"
 	"mealplanner/models"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	apipb "mealplanner/generated/go"
 )
 
 // GetStepsHandler handles GET /api/meals/{mealId}/steps and returns all steps for a meal.
@@ -52,8 +54,13 @@ func AddStepHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	var step models.Step
-	if err := json.NewDecoder(r.Body).Decode(&step); err != nil {
+	if err := json.Unmarshal(body, &step); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -87,51 +94,33 @@ func AddBulkStepsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle two types of requests:
-	// 1. JSON array of steps (for structured input)
-	// 2. Plain text (for bulk pasting)
+	var req apipb.AddBulkStepsRequest
+	// Allow legacy plain text or generic JSON as well
+
 	contentType := r.Header.Get("Content-Type")
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	var instructions []string
 
 	if strings.Contains(contentType, "application/json") {
-		// Try to parse as JSON first
-		var payload struct {
-			Text         string   `json:"text,omitempty"`
-			Instructions []string `json:"instructions,omitempty"`
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		// Try to decode directly into protobuf struct first
+		err := protojson.Unmarshal(bodyBytes, &req)
+		if err != nil {
 			http.Error(w, "Invalid JSON payload: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		if len(payload.Instructions) > 0 {
-			// Use pre-parsed instructions if provided
-			instructions = payload.Instructions
-		} else if payload.Text != "" {
-			// Parse text into instructions
-			instructions = parseStepsFromText(payload.Text)
-		} else {
-			http.Error(w, "Either 'text' or 'instructions' must be provided", http.StatusBadRequest)
-			return
-		}
+		instructions = req.Instructions
 	} else {
-		// Assume plain text for any other content type
-		buf := new(strings.Builder)
-		_, err := io.Copy(buf, r.Body)
-		if err != nil {
-			http.Error(w, "Error reading request body: "+err.Error(), http.StatusBadRequest)
-			return
-		}
+		instructions = parseStepsFromText(string(bodyBytes))
+	}
 
-		text := buf.String()
-		if text == "" {
-			http.Error(w, "Empty request body", http.StatusBadRequest)
-			return
-		}
-
-		instructions = parseStepsFromText(text)
+	if len(instructions) == 0 {
+		http.Error(w, "Either 'text' or 'instructions' must be provided", http.StatusBadRequest)
+		return
 	}
 
 	// Filter out empty instructions
@@ -141,7 +130,6 @@ func AddBulkStepsHandler(w http.ResponseWriter, r *http.Request) {
 			nonEmptyInstructions = append(nonEmptyInstructions, instruction)
 		}
 	}
-
 	if len(nonEmptyInstructions) == 0 {
 		http.Error(w, "No valid steps found in the input", http.StatusBadRequest)
 		return
@@ -273,8 +261,13 @@ func UpdateStepHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	var step models.Step
-	if err := json.NewDecoder(r.Body).Decode(&step); err != nil {
+	if err := json.Unmarshal(body, &step); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -337,21 +330,23 @@ func ReorderStepsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload struct {
-		StepIDs []int `json:"stepIds"`
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
 	}
-
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	var req apipb.ReorderStepsRequest
+	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if len(payload.StepIDs) == 0 {
+	if len(req.StepIds) == 0 {
 		http.Error(w, "No step IDs provided", http.StatusBadRequest)
 		return
 	}
 
-	if err := Services.RecipeStepService.ReorderSteps(mealID, payload.StepIDs); err != nil {
+	if err := Services.RecipeStepService.ReorderSteps(mealID, convertInt32SliceToInt(req.StepIds)); err != nil {
 		http.Error(w, "Error reordering steps: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

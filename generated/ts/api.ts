@@ -55,6 +55,49 @@ export interface WeeklyMealPlan {
   shoppingList: ShoppingListItem[];
 }
 
+export interface MealPlanEntry {
+  /** 0=Monday..6=Sunday */
+  dayOfWeek: number;
+  /** breakfast, lunch, dinner */
+  mealType: string;
+  meal: Meal | undefined;
+}
+
+export interface SaveMealPlanRequest {
+  threadId: string;
+  version: number;
+  entries: MealPlanEntry[];
+}
+
+export interface MealPlanIdentifier {
+  id: number;
+  threadId: string;
+  version: number;
+  createdAt: string;
+}
+
+export interface SaveCheckpointRequest {
+  threadId: string;
+  version: number;
+  entries: MealPlanEntry[];
+}
+
+export interface CheckpointResponse {
+  success: boolean;
+}
+
+export interface Message {
+  threadId: string;
+  /** "user" or "agent" */
+  sender: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ShoppingList {
+  items: ShoppingListItem[];
+}
+
 export interface AgentStartRequest {
   participants: string[];
   workflowType: string;
@@ -317,8 +360,9 @@ export interface GetWorkflowStateRequest {
 }
 
 export interface GetWorkflowStateResponse {
-  /** JSON string */
-  state: string;
+  plan: WeeklyMealPlan | undefined;
+  shoppingList: ShoppingList | undefined;
+  messages: Message[];
 }
 
 export interface AbandonWorkflowRequest {
@@ -331,6 +375,8 @@ export interface AbandonWorkflowResponse {
 
 export interface AddMessageRequest {
   threadId: string;
+  /** "user" or "agent" */
+  sender: string;
   message: string;
 }
 
@@ -341,7 +387,11 @@ export interface AddMessageResponse {
 export interface UpdateSessionStateRequest {
   threadId: string;
   /** JSON string */
-  state: string;
+  mealPlan: string;
+  /** JSON string */
+  shoppingList: string;
+  currentStep: string;
+  status: string;
 }
 
 export interface UpdateSessionStateResponse {
@@ -1038,6 +1088,620 @@ export const WeeklyMealPlan: MessageFns<WeeklyMealPlan> = {
     const message = createBaseWeeklyMealPlan();
     message.days = object.days?.map((e) => PlanDay.fromPartial(e)) || [];
     message.shoppingList = object.shoppingList?.map((e) => ShoppingListItem.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseMealPlanEntry(): MealPlanEntry {
+  return { dayOfWeek: 0, mealType: "", meal: undefined };
+}
+
+export const MealPlanEntry: MessageFns<MealPlanEntry> = {
+  encode(message: MealPlanEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.dayOfWeek !== 0) {
+      writer.uint32(8).int32(message.dayOfWeek);
+    }
+    if (message.mealType !== "") {
+      writer.uint32(18).string(message.mealType);
+    }
+    if (message.meal !== undefined) {
+      Meal.encode(message.meal, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MealPlanEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMealPlanEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.dayOfWeek = reader.int32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.mealType = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.meal = Meal.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MealPlanEntry {
+    return {
+      dayOfWeek: isSet(object.dayOfWeek) ? globalThis.Number(object.dayOfWeek) : 0,
+      mealType: isSet(object.mealType) ? globalThis.String(object.mealType) : "",
+      meal: isSet(object.meal) ? Meal.fromJSON(object.meal) : undefined,
+    };
+  },
+
+  toJSON(message: MealPlanEntry): unknown {
+    const obj: any = {};
+    if (message.dayOfWeek !== 0) {
+      obj.dayOfWeek = Math.round(message.dayOfWeek);
+    }
+    if (message.mealType !== "") {
+      obj.mealType = message.mealType;
+    }
+    if (message.meal !== undefined) {
+      obj.meal = Meal.toJSON(message.meal);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MealPlanEntry>, I>>(base?: I): MealPlanEntry {
+    return MealPlanEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MealPlanEntry>, I>>(object: I): MealPlanEntry {
+    const message = createBaseMealPlanEntry();
+    message.dayOfWeek = object.dayOfWeek ?? 0;
+    message.mealType = object.mealType ?? "";
+    message.meal = (object.meal !== undefined && object.meal !== null) ? Meal.fromPartial(object.meal) : undefined;
+    return message;
+  },
+};
+
+function createBaseSaveMealPlanRequest(): SaveMealPlanRequest {
+  return { threadId: "", version: 0, entries: [] };
+}
+
+export const SaveMealPlanRequest: MessageFns<SaveMealPlanRequest> = {
+  encode(message: SaveMealPlanRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.threadId !== "") {
+      writer.uint32(10).string(message.threadId);
+    }
+    if (message.version !== 0) {
+      writer.uint32(16).int32(message.version);
+    }
+    for (const v of message.entries) {
+      MealPlanEntry.encode(v!, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SaveMealPlanRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSaveMealPlanRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.threadId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.version = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.entries.push(MealPlanEntry.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SaveMealPlanRequest {
+    return {
+      threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
+      version: isSet(object.version) ? globalThis.Number(object.version) : 0,
+      entries: globalThis.Array.isArray(object?.entries)
+        ? object.entries.map((e: any) => MealPlanEntry.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: SaveMealPlanRequest): unknown {
+    const obj: any = {};
+    if (message.threadId !== "") {
+      obj.threadId = message.threadId;
+    }
+    if (message.version !== 0) {
+      obj.version = Math.round(message.version);
+    }
+    if (message.entries?.length) {
+      obj.entries = message.entries.map((e) => MealPlanEntry.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SaveMealPlanRequest>, I>>(base?: I): SaveMealPlanRequest {
+    return SaveMealPlanRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SaveMealPlanRequest>, I>>(object: I): SaveMealPlanRequest {
+    const message = createBaseSaveMealPlanRequest();
+    message.threadId = object.threadId ?? "";
+    message.version = object.version ?? 0;
+    message.entries = object.entries?.map((e) => MealPlanEntry.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseMealPlanIdentifier(): MealPlanIdentifier {
+  return { id: 0, threadId: "", version: 0, createdAt: "" };
+}
+
+export const MealPlanIdentifier: MessageFns<MealPlanIdentifier> = {
+  encode(message: MealPlanIdentifier, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== 0) {
+      writer.uint32(8).int32(message.id);
+    }
+    if (message.threadId !== "") {
+      writer.uint32(18).string(message.threadId);
+    }
+    if (message.version !== 0) {
+      writer.uint32(24).int32(message.version);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(34).string(message.createdAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MealPlanIdentifier {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMealPlanIdentifier();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.id = reader.int32();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.threadId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.version = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MealPlanIdentifier {
+    return {
+      id: isSet(object.id) ? globalThis.Number(object.id) : 0,
+      threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
+      version: isSet(object.version) ? globalThis.Number(object.version) : 0,
+      createdAt: isSet(object.createdAt) ? globalThis.String(object.createdAt) : "",
+    };
+  },
+
+  toJSON(message: MealPlanIdentifier): unknown {
+    const obj: any = {};
+    if (message.id !== 0) {
+      obj.id = Math.round(message.id);
+    }
+    if (message.threadId !== "") {
+      obj.threadId = message.threadId;
+    }
+    if (message.version !== 0) {
+      obj.version = Math.round(message.version);
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MealPlanIdentifier>, I>>(base?: I): MealPlanIdentifier {
+    return MealPlanIdentifier.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MealPlanIdentifier>, I>>(object: I): MealPlanIdentifier {
+    const message = createBaseMealPlanIdentifier();
+    message.id = object.id ?? 0;
+    message.threadId = object.threadId ?? "";
+    message.version = object.version ?? 0;
+    message.createdAt = object.createdAt ?? "";
+    return message;
+  },
+};
+
+function createBaseSaveCheckpointRequest(): SaveCheckpointRequest {
+  return { threadId: "", version: 0, entries: [] };
+}
+
+export const SaveCheckpointRequest: MessageFns<SaveCheckpointRequest> = {
+  encode(message: SaveCheckpointRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.threadId !== "") {
+      writer.uint32(10).string(message.threadId);
+    }
+    if (message.version !== 0) {
+      writer.uint32(16).int32(message.version);
+    }
+    for (const v of message.entries) {
+      MealPlanEntry.encode(v!, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SaveCheckpointRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSaveCheckpointRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.threadId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.version = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.entries.push(MealPlanEntry.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SaveCheckpointRequest {
+    return {
+      threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
+      version: isSet(object.version) ? globalThis.Number(object.version) : 0,
+      entries: globalThis.Array.isArray(object?.entries)
+        ? object.entries.map((e: any) => MealPlanEntry.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: SaveCheckpointRequest): unknown {
+    const obj: any = {};
+    if (message.threadId !== "") {
+      obj.threadId = message.threadId;
+    }
+    if (message.version !== 0) {
+      obj.version = Math.round(message.version);
+    }
+    if (message.entries?.length) {
+      obj.entries = message.entries.map((e) => MealPlanEntry.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SaveCheckpointRequest>, I>>(base?: I): SaveCheckpointRequest {
+    return SaveCheckpointRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SaveCheckpointRequest>, I>>(object: I): SaveCheckpointRequest {
+    const message = createBaseSaveCheckpointRequest();
+    message.threadId = object.threadId ?? "";
+    message.version = object.version ?? 0;
+    message.entries = object.entries?.map((e) => MealPlanEntry.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseCheckpointResponse(): CheckpointResponse {
+  return { success: false };
+}
+
+export const CheckpointResponse: MessageFns<CheckpointResponse> = {
+  encode(message: CheckpointResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CheckpointResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCheckpointResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CheckpointResponse {
+    return { success: isSet(object.success) ? globalThis.Boolean(object.success) : false };
+  },
+
+  toJSON(message: CheckpointResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CheckpointResponse>, I>>(base?: I): CheckpointResponse {
+    return CheckpointResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CheckpointResponse>, I>>(object: I): CheckpointResponse {
+    const message = createBaseCheckpointResponse();
+    message.success = object.success ?? false;
+    return message;
+  },
+};
+
+function createBaseMessage(): Message {
+  return { threadId: "", sender: "", content: "", createdAt: "" };
+}
+
+export const Message: MessageFns<Message> = {
+  encode(message: Message, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.threadId !== "") {
+      writer.uint32(10).string(message.threadId);
+    }
+    if (message.sender !== "") {
+      writer.uint32(18).string(message.sender);
+    }
+    if (message.content !== "") {
+      writer.uint32(26).string(message.content);
+    }
+    if (message.createdAt !== "") {
+      writer.uint32(34).string(message.createdAt);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Message {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMessage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.threadId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.sender = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.content = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.createdAt = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Message {
+    return {
+      threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
+      sender: isSet(object.sender) ? globalThis.String(object.sender) : "",
+      content: isSet(object.content) ? globalThis.String(object.content) : "",
+      createdAt: isSet(object.createdAt) ? globalThis.String(object.createdAt) : "",
+    };
+  },
+
+  toJSON(message: Message): unknown {
+    const obj: any = {};
+    if (message.threadId !== "") {
+      obj.threadId = message.threadId;
+    }
+    if (message.sender !== "") {
+      obj.sender = message.sender;
+    }
+    if (message.content !== "") {
+      obj.content = message.content;
+    }
+    if (message.createdAt !== "") {
+      obj.createdAt = message.createdAt;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Message>, I>>(base?: I): Message {
+    return Message.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Message>, I>>(object: I): Message {
+    const message = createBaseMessage();
+    message.threadId = object.threadId ?? "";
+    message.sender = object.sender ?? "";
+    message.content = object.content ?? "";
+    message.createdAt = object.createdAt ?? "";
+    return message;
+  },
+};
+
+function createBaseShoppingList(): ShoppingList {
+  return { items: [] };
+}
+
+export const ShoppingList: MessageFns<ShoppingList> = {
+  encode(message: ShoppingList, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.items) {
+      ShoppingListItem.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ShoppingList {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseShoppingList();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.items.push(ShoppingListItem.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ShoppingList {
+    return {
+      items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => ShoppingListItem.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: ShoppingList): unknown {
+    const obj: any = {};
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => ShoppingListItem.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ShoppingList>, I>>(base?: I): ShoppingList {
+    return ShoppingList.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ShoppingList>, I>>(object: I): ShoppingList {
+    const message = createBaseShoppingList();
+    message.items = object.items?.map((e) => ShoppingListItem.fromPartial(e)) || [];
     return message;
   },
 };
@@ -4805,13 +5469,19 @@ export const GetWorkflowStateRequest: MessageFns<GetWorkflowStateRequest> = {
 };
 
 function createBaseGetWorkflowStateResponse(): GetWorkflowStateResponse {
-  return { state: "" };
+  return { plan: undefined, shoppingList: undefined, messages: [] };
 }
 
 export const GetWorkflowStateResponse: MessageFns<GetWorkflowStateResponse> = {
   encode(message: GetWorkflowStateResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.state !== "") {
-      writer.uint32(10).string(message.state);
+    if (message.plan !== undefined) {
+      WeeklyMealPlan.encode(message.plan, writer.uint32(10).fork()).join();
+    }
+    if (message.shoppingList !== undefined) {
+      ShoppingList.encode(message.shoppingList, writer.uint32(18).fork()).join();
+    }
+    for (const v of message.messages) {
+      Message.encode(v!, writer.uint32(26).fork()).join();
     }
     return writer;
   },
@@ -4828,7 +5498,23 @@ export const GetWorkflowStateResponse: MessageFns<GetWorkflowStateResponse> = {
             break;
           }
 
-          message.state = reader.string();
+          message.plan = WeeklyMealPlan.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.shoppingList = ShoppingList.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.messages.push(Message.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -4841,13 +5527,23 @@ export const GetWorkflowStateResponse: MessageFns<GetWorkflowStateResponse> = {
   },
 
   fromJSON(object: any): GetWorkflowStateResponse {
-    return { state: isSet(object.state) ? globalThis.String(object.state) : "" };
+    return {
+      plan: isSet(object.plan) ? WeeklyMealPlan.fromJSON(object.plan) : undefined,
+      shoppingList: isSet(object.shoppingList) ? ShoppingList.fromJSON(object.shoppingList) : undefined,
+      messages: globalThis.Array.isArray(object?.messages) ? object.messages.map((e: any) => Message.fromJSON(e)) : [],
+    };
   },
 
   toJSON(message: GetWorkflowStateResponse): unknown {
     const obj: any = {};
-    if (message.state !== "") {
-      obj.state = message.state;
+    if (message.plan !== undefined) {
+      obj.plan = WeeklyMealPlan.toJSON(message.plan);
+    }
+    if (message.shoppingList !== undefined) {
+      obj.shoppingList = ShoppingList.toJSON(message.shoppingList);
+    }
+    if (message.messages?.length) {
+      obj.messages = message.messages.map((e) => Message.toJSON(e));
     }
     return obj;
   },
@@ -4857,7 +5553,13 @@ export const GetWorkflowStateResponse: MessageFns<GetWorkflowStateResponse> = {
   },
   fromPartial<I extends Exact<DeepPartial<GetWorkflowStateResponse>, I>>(object: I): GetWorkflowStateResponse {
     const message = createBaseGetWorkflowStateResponse();
-    message.state = object.state ?? "";
+    message.plan = (object.plan !== undefined && object.plan !== null)
+      ? WeeklyMealPlan.fromPartial(object.plan)
+      : undefined;
+    message.shoppingList = (object.shoppingList !== undefined && object.shoppingList !== null)
+      ? ShoppingList.fromPartial(object.shoppingList)
+      : undefined;
+    message.messages = object.messages?.map((e) => Message.fromPartial(e)) || [];
     return message;
   },
 };
@@ -4979,7 +5681,7 @@ export const AbandonWorkflowResponse: MessageFns<AbandonWorkflowResponse> = {
 };
 
 function createBaseAddMessageRequest(): AddMessageRequest {
-  return { threadId: "", message: "" };
+  return { threadId: "", sender: "", message: "" };
 }
 
 export const AddMessageRequest: MessageFns<AddMessageRequest> = {
@@ -4987,8 +5689,11 @@ export const AddMessageRequest: MessageFns<AddMessageRequest> = {
     if (message.threadId !== "") {
       writer.uint32(10).string(message.threadId);
     }
+    if (message.sender !== "") {
+      writer.uint32(18).string(message.sender);
+    }
     if (message.message !== "") {
-      writer.uint32(18).string(message.message);
+      writer.uint32(26).string(message.message);
     }
     return writer;
   },
@@ -5013,6 +5718,14 @@ export const AddMessageRequest: MessageFns<AddMessageRequest> = {
             break;
           }
 
+          message.sender = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
           message.message = reader.string();
           continue;
         }
@@ -5028,6 +5741,7 @@ export const AddMessageRequest: MessageFns<AddMessageRequest> = {
   fromJSON(object: any): AddMessageRequest {
     return {
       threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
+      sender: isSet(object.sender) ? globalThis.String(object.sender) : "",
       message: isSet(object.message) ? globalThis.String(object.message) : "",
     };
   },
@@ -5036,6 +5750,9 @@ export const AddMessageRequest: MessageFns<AddMessageRequest> = {
     const obj: any = {};
     if (message.threadId !== "") {
       obj.threadId = message.threadId;
+    }
+    if (message.sender !== "") {
+      obj.sender = message.sender;
     }
     if (message.message !== "") {
       obj.message = message.message;
@@ -5049,6 +5766,7 @@ export const AddMessageRequest: MessageFns<AddMessageRequest> = {
   fromPartial<I extends Exact<DeepPartial<AddMessageRequest>, I>>(object: I): AddMessageRequest {
     const message = createBaseAddMessageRequest();
     message.threadId = object.threadId ?? "";
+    message.sender = object.sender ?? "";
     message.message = object.message ?? "";
     return message;
   },
@@ -5113,7 +5831,7 @@ export const AddMessageResponse: MessageFns<AddMessageResponse> = {
 };
 
 function createBaseUpdateSessionStateRequest(): UpdateSessionStateRequest {
-  return { threadId: "", state: "" };
+  return { threadId: "", mealPlan: "", shoppingList: "", currentStep: "", status: "" };
 }
 
 export const UpdateSessionStateRequest: MessageFns<UpdateSessionStateRequest> = {
@@ -5121,8 +5839,17 @@ export const UpdateSessionStateRequest: MessageFns<UpdateSessionStateRequest> = 
     if (message.threadId !== "") {
       writer.uint32(10).string(message.threadId);
     }
-    if (message.state !== "") {
-      writer.uint32(18).string(message.state);
+    if (message.mealPlan !== "") {
+      writer.uint32(18).string(message.mealPlan);
+    }
+    if (message.shoppingList !== "") {
+      writer.uint32(26).string(message.shoppingList);
+    }
+    if (message.currentStep !== "") {
+      writer.uint32(34).string(message.currentStep);
+    }
+    if (message.status !== "") {
+      writer.uint32(42).string(message.status);
     }
     return writer;
   },
@@ -5147,7 +5874,31 @@ export const UpdateSessionStateRequest: MessageFns<UpdateSessionStateRequest> = 
             break;
           }
 
-          message.state = reader.string();
+          message.mealPlan = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.shoppingList = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.currentStep = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.status = reader.string();
           continue;
         }
       }
@@ -5162,7 +5913,10 @@ export const UpdateSessionStateRequest: MessageFns<UpdateSessionStateRequest> = 
   fromJSON(object: any): UpdateSessionStateRequest {
     return {
       threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
-      state: isSet(object.state) ? globalThis.String(object.state) : "",
+      mealPlan: isSet(object.mealPlan) ? globalThis.String(object.mealPlan) : "",
+      shoppingList: isSet(object.shoppingList) ? globalThis.String(object.shoppingList) : "",
+      currentStep: isSet(object.currentStep) ? globalThis.String(object.currentStep) : "",
+      status: isSet(object.status) ? globalThis.String(object.status) : "",
     };
   },
 
@@ -5171,8 +5925,17 @@ export const UpdateSessionStateRequest: MessageFns<UpdateSessionStateRequest> = 
     if (message.threadId !== "") {
       obj.threadId = message.threadId;
     }
-    if (message.state !== "") {
-      obj.state = message.state;
+    if (message.mealPlan !== "") {
+      obj.mealPlan = message.mealPlan;
+    }
+    if (message.shoppingList !== "") {
+      obj.shoppingList = message.shoppingList;
+    }
+    if (message.currentStep !== "") {
+      obj.currentStep = message.currentStep;
+    }
+    if (message.status !== "") {
+      obj.status = message.status;
     }
     return obj;
   },
@@ -5183,7 +5946,10 @@ export const UpdateSessionStateRequest: MessageFns<UpdateSessionStateRequest> = 
   fromPartial<I extends Exact<DeepPartial<UpdateSessionStateRequest>, I>>(object: I): UpdateSessionStateRequest {
     const message = createBaseUpdateSessionStateRequest();
     message.threadId = object.threadId ?? "";
-    message.state = object.state ?? "";
+    message.mealPlan = object.mealPlan ?? "";
+    message.shoppingList = object.shoppingList ?? "";
+    message.currentStep = object.currentStep ?? "";
+    message.status = object.status ?? "";
     return message;
   },
 };

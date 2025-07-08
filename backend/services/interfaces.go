@@ -48,6 +48,11 @@ type MealPlanService interface {
 	GetLastPlannedMeals() (*models.WeeklyMealPlan, error)
 	PopulateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error)
 	RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error
+
+	// Persistence operations
+	SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error)
+	GetLatestMealPlan(threadID string) (*models.MealPlanIdentifier, error)
+	GetMealPlanItems(mealPlanID int) ([]models.MealPlanEntry, error)
 }
 
 // ShoppingListService handles shopping list operations

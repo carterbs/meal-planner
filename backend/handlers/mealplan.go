@@ -3,7 +3,11 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"google.golang.org/protobuf/encoding/protojson"
+	"io"
 	"net/http"
+
+	apipb "mealplanner/generated/go"
 	"time"
 
 	"mealplanner/logging"
@@ -95,19 +99,75 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(detailedPlan)
 }
 
+// SaveMealPlanHandler handles POST /api/mealplan and persists the provided meal plan
+func SaveMealPlanHandler(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	mealplanHandlerLogger.Debugw("SaveMealPlanHandler received request body", "body", string(body))
+	var req apipb.SaveMealPlanRequest
+	unmarshaler := protojson.UnmarshalOptions{
+		DiscardUnknown: true,
+	}
+	if err := unmarshaler.Unmarshal(body, &req); err != nil {
+		mealplanHandlerLogger.Errorw("Failed to unmarshal request", "error", err, "body", string(body))
+		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	if req.ThreadId == "" {
+		http.Error(w, "thread_id is required", http.StatusBadRequest)
+		return
+	}
+	if len(req.Entries) == 0 {
+		http.Error(w, "entries cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	version := int(req.Version)
+	if version <= 0 {
+		if latest, _ := Services.MealPlanService.GetLatestMealPlan(req.ThreadId); latest != nil {
+			version = latest.Version + 1
+		} else {
+			version = 1
+		}
+	}
+
+	entries := make([]models.MealPlanEntry, 0, len(req.Entries))
+	for _, e := range req.Entries {
+		// Allow null meals for special cases like "eating out"
+		entries = append(entries, models.MealPlanEntry{
+			DayOfWeek: int(e.DayOfWeek),
+			MealType:  e.MealType,
+			Meal:      e.Meal,
+		})
+	}
+
+	id, err := Services.MealPlanService.SaveMealPlan(req.ThreadId, version, entries)
+	if err != nil {
+		http.Error(w, "Failed to save meal plan: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, id)
+}
+
 // GetShoppingList returns all ingredients for the planned meals (no aggregation yet, per MVP).
 func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 	// Decode the plan payload from the frontend.
-	type PlanPayload struct {
-		Plan []int `json:"plan"` // array of meal IDs
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
 	}
-	var payload PlanPayload
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	var req apipb.GetShoppingListRequest
+	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
 
-	items, err := buildShoppingList(payload.Plan)
+	items, err := buildShoppingList(convertInt32SliceToInt(req.Plan))
 	if err != nil {
 		http.Error(w, "Error retrieving meals: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -119,6 +179,14 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 
 // buildShoppingList retrieves meals for the given IDs and returns the aggregated
 // shopping list items.
+func convertInt32SliceToInt(in []int32) []int {
+	out := make([]int, len(in))
+	for i, v := range in {
+		out[i] = int(v)
+	}
+	return out
+}
+
 func buildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
 	// Use service layer for all database operations
 	return Services.ShoppingListService.BuildShoppingList(mealIDs)

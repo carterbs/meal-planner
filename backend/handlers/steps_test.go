@@ -221,10 +221,10 @@ func TestAddBulkStepsHandler(t *testing.T) {
 			expected:    3,
 		},
 		{
-			name:        "JSON with text",
+			name:        "JSON with text invalid",
 			contentType: "application/json",
 			input:       `{"text":"1. First step\n2. Second step\n3. Third step"}`,
-			expected:    3,
+			expected:    0,
 		},
 		{
 			name:        "JSON with instructions array",
@@ -260,31 +260,41 @@ func TestAddBulkStepsHandler(t *testing.T) {
 			r.ServeHTTP(rr, req)
 
 			// Check the status code
-			if status := rr.Code; status != http.StatusCreated {
+			expectedStatus := http.StatusCreated
+			if tc.name == "JSON with text invalid" {
+				expectedStatus = http.StatusBadRequest
+			}
+			if status := rr.Code; status != expectedStatus {
 				t.Errorf("Handler returned wrong status code: got %v want %v, body: %s",
-					status, http.StatusCreated, rr.Body.String())
+					status, expectedStatus, rr.Body.String())
 			}
 
-			// Check the response body
-			var steps []models.Step
-			if err := json.Unmarshal(rr.Body.Bytes(), &steps); err != nil {
-				t.Fatalf("Error unmarshaling response: %v", err)
-			}
+			if expectedStatus == http.StatusCreated {
+				// Check the response body
+				var steps []models.Step
+				if err := json.Unmarshal(rr.Body.Bytes(), &steps); err != nil {
+					t.Fatalf("Error unmarshaling response: %v", err)
+				}
 
-			if len(steps) != tc.expected {
-				t.Errorf("Expected %d steps, got %d", tc.expected, len(steps))
-			}
+				if len(steps) != tc.expected {
+					t.Errorf("Expected %d steps, got %d", tc.expected, len(steps))
+				}
 
-			// Verify step numbers are sequential
-			for i, step := range steps {
-				if step.StepNumber != int32(i+1) {
-					t.Errorf("Expected step number %d, got %d", i+1, step.StepNumber)
+				// Verify step numbers are sequential
+				for i, step := range steps {
+					if step.StepNumber != int32(i+1) {
+						t.Errorf("Expected step number %d, got %d", i+1, step.StepNumber)
+					}
 				}
 			}
 		})
 	}
+}
 
-	// Test with invalid meal ID
+func TestAddBulkStepsHandlerInvalidMealID(t *testing.T) {
+	db := setupStepHandlerTest(t)
+	defer db.Close()
+
 	req, _ := http.NewRequest("POST", "/api/meals/invalid/steps/bulk", strings.NewReader("Test step"))
 	req.Header.Set("Content-Type", "text/plain")
 	rr := httptest.NewRecorder()
