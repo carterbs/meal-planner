@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { API } from '../utils.js';
+import { CreateMealRequest, CreateMealResponse, AddBulkStepsRequest, Meal, Ingredient, Step } from '@mealplanner/generated';
 
 const ingredientSchema = z.object({ 
   name: z.string().describe("Name of the ingredient"), 
@@ -21,18 +22,49 @@ export const createRecipeArgs = z.object({
 });
 
 export async function createRecipe(data: z.infer<typeof createRecipeArgs>) {
+  // Convert effort level to numeric value
+  const effortMap = { 'LOW': 1, 'MED': 3, 'HIGH': 5 };
+  
+  const mealData: Meal = {
+    id: 0, // Will be assigned by backend
+    name: data.name,
+    effort: effortMap[data.effort],
+    hasRedMeat: data.redMeat,
+    url: '',
+    mealType: 'dinner', // Default meal type
+    ingredients: [],
+    steps: [],
+    lastPlanned: undefined,
+  };
+  
+  const requestData: CreateMealRequest = {
+    meal: mealData,
+  };
+  
   const resp = await fetch(`${API}/api/meals`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: data.name, redMeat: data.redMeat, effort: data.effort })
+    body: JSON.stringify(CreateMealRequest.toJSON(requestData))
   });
   if (!resp.ok) throw new McpError(-32000, `BackendError: ${resp.statusText}`);
-  const created = await resp.json();
+  
+  const responseJson = await resp.json();
+  const createResponse = CreateMealResponse.fromJSON(responseJson);
+  if (!createResponse.meal) {
+    throw new McpError(-32000, 'No meal returned from create request');
+  }
+  
+  const created = createResponse.meal;
   const id = created.id;
+  const stepsRequestData: AddBulkStepsRequest = {
+    mealId: id,
+    instructions: data.steps.map(step => step.text),
+  };
+  
   const stepResp = await fetch(`${API}/api/meals/${id}/steps/bulk`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ steps: data.steps })
+    body: JSON.stringify(AddBulkStepsRequest.toJSON(stepsRequestData))
   });
   if (!stepResp.ok) throw new McpError(-32000, `BackendError: ${stepResp.statusText}`);
   if (data.ingredients) {

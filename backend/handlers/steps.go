@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"google.golang.org/protobuf/encoding/protojson"
 	"io"
@@ -37,7 +36,13 @@ func GetStepsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(steps)
+	resp := &apipb.GetStepsResponse{Steps: steps}
+	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
 }
 
 // AddStepHandler handles POST /api/meals/{mealId}/steps and adds a new step to a meal.
@@ -59,8 +64,8 @@ func AddStepHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	var step models.Step
-	if err := json.Unmarshal(body, &step); err != nil {
+	var step apipb.Step
+	if err := protojson.Unmarshal(body, &step); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -68,7 +73,7 @@ func AddStepHandler(w http.ResponseWriter, r *http.Request) {
 	// Ensure the step is associated with the correct meal
 	step.MealId = int32(mealID)
 
-	createdStep, err := Services.RecipeStepService.AddStepToMeal(&step)
+	createdStep, err := Services.RecipeStepService.AddStepToMeal((*models.Step)(&step))
 	if err != nil {
 		http.Error(w, "Error adding step: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -76,7 +81,13 @@ func AddStepHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(createdStep)
+	resp := &apipb.AddStepResponse{Step: createdStep}
+	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
 }
 
 // AGENT-REFACTOR: There's too much going on in this handler, move it to a service layer function.
@@ -143,7 +154,13 @@ func AddBulkStepsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(steps)
+	resp2 := &apipb.AddBulkStepsResponse{Steps: steps}
+	b2, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp2)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b2)
 }
 
 // AGENT-REFACTOR: This function is doing too much. Move it to the a service layer.
@@ -266,8 +283,8 @@ func UpdateStepHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	var step models.Step
-	if err := json.Unmarshal(body, &step); err != nil {
+	var step apipb.Step
+	if err := protojson.Unmarshal(body, &step); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}

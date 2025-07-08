@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"database/sql"
-	"encoding/json"
+	"fmt"
 	"google.golang.org/protobuf/encoding/protojson"
 	"io"
 	"net/http"
@@ -72,7 +72,13 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 		mealplanHandlerLogger.Errorw("Error generating shopping list", "error", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(detailedPlan)
+	resp := &apipb.GetMealPlanResponse{Plan: toProtoWeeklyMealPlan(detailedPlan)}
+	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
 }
 
 // GenerateMealPlan generates a new weekly meal plan regardless of whether a recent one exists.
@@ -96,7 +102,13 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	// Handle skip_days by converting to a map and excluding skipped days
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(detailedPlan)
+	resp := &apipb.GetMealPlanResponse{Plan: toProtoWeeklyMealPlan(detailedPlan)}
+	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
 }
 
 // SaveMealPlanHandler handles POST /api/mealplan and persists the provided meal plan
@@ -174,7 +186,16 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(items)
+	resp := &apipb.GetShoppingListResponse{Items: make([]*apipb.ShoppingListItem, len(items))}
+	for i, item := range items {
+		resp.Items[i] = &apipb.ShoppingListItem{Ingredient: item.Ingredient, Quantity: item.Quantity, Category: item.Category}
+	}
+	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	if err != nil {
+		http.Error(w, "Error marshalling response: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
 }
 
 // buildShoppingList retrieves meals for the given IDs and returns the aggregated

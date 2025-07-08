@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 	"mealplanner/services"
 	"net/http"
@@ -105,13 +106,13 @@ func TestGetStepsHandler(t *testing.T) {
 	}
 
 	// Check the response body
-	var steps []models.Step
-	if err := json.Unmarshal(rr.Body.Bytes(), &steps); err != nil {
+	var resp apipb.GetStepsResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("Error unmarshaling response: %v", err)
 	}
 
-	if len(steps) != 2 {
-		t.Errorf("Expected 2 steps, got %d", len(steps))
+	if len(resp.Steps) != 2 {
+		t.Errorf("Expected 2 steps, got %d", len(resp.Steps))
 	}
 
 	// Test with invalid meal ID
@@ -161,17 +162,17 @@ func TestAddStepHandler(t *testing.T) {
 	}
 
 	// Check the response body
-	var createdStep models.Step
-	if err := json.Unmarshal(rr.Body.Bytes(), &createdStep); err != nil {
+	var resp apipb.AddStepResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("Error unmarshaling response: %v", err)
 	}
 
-	if createdStep.Id == 0 {
+	if resp.Step.GetId() == 0 {
 		t.Errorf("Expected non-zero ID for created step")
 	}
 
-	if createdStep.Instruction != "Test step instruction" {
-		t.Errorf("Expected instruction 'Test step instruction', got '%s'", createdStep.Instruction)
+	if resp.Step.GetInstruction() != "Test step instruction" {
+		t.Errorf("Expected instruction 'Test step instruction', got '%s'", resp.Step.GetInstruction())
 	}
 
 	// Test with invalid meal ID
@@ -271,17 +272,17 @@ func TestAddBulkStepsHandler(t *testing.T) {
 
 			if expectedStatus == http.StatusCreated {
 				// Check the response body
-				var steps []models.Step
-				if err := json.Unmarshal(rr.Body.Bytes(), &steps); err != nil {
+				var resp apipb.AddBulkStepsResponse
+				if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
 					t.Fatalf("Error unmarshaling response: %v", err)
 				}
 
-				if len(steps) != tc.expected {
-					t.Errorf("Expected %d steps, got %d", tc.expected, len(steps))
+				if len(resp.Steps) != tc.expected {
+					t.Errorf("Expected %d steps, got %d", tc.expected, len(resp.Steps))
 				}
 
 				// Verify step numbers are sequential
-				for i, step := range steps {
+				for i, step := range resp.Steps {
 					if step.StepNumber != int32(i+1) {
 						t.Errorf("Expected step number %d, got %d", i+1, step.StepNumber)
 					}

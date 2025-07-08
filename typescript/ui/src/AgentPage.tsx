@@ -22,7 +22,8 @@ import {
   ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
 import MealPlanDisplay from './components/MealPlanDisplay';
-import { ShoppingListItem, WeeklyMealPlan } from './types';
+import { ShoppingListItem, WeeklyMealPlan } from '@mealplanner/generated';
+import { startAgentSession, sendAgentMessage, SessionInfo } from './api';
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
 import type { SxProps, Theme } from '@mui/material';
@@ -300,10 +301,7 @@ interface ChatMessage {
   text: string;
 }
 
-interface SessionInfo {
-  threadId: string;
-  currentStep: string;
-}
+// SessionInfo is now imported from api
 
 const AgentPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -357,34 +355,28 @@ const AgentPage: React.FC = () => {
   const startSession = async () => {
     setIsWorking(true);
     try {
-      const res = await fetch('/api/agent/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          participants: ['user'],
-          workflowType: 'meal_planning',
-        }),
-      });
-      const data = await res.json();
-      setSession({ threadId: data.threadId, currentStep: data.currentStep });
-      localStorage.setItem('sessionId', data.threadId);
+      const result = await startAgentSession(['user'], 'meal_planning');
 
-      // Extract meal plan from various possible locations in response
-      const plan =
-        data.initialState?.meal_plan || data.raw?.meal_plan || data.meal_plan;
-      if (plan) {
-        console.log('Setting meal plan from session start:', plan);
-        setMealPlan(plan);
+      setSession(result.session);
+      localStorage.setItem('sessionId', result.session.threadId);
+
+      // Extract meal plan from initial state
+      if (result.initialState?.meal_plan) {
+        console.log(
+          'Setting meal plan from session start:',
+          result.initialState.meal_plan,
+        );
+        setMealPlan(result.initialState.meal_plan);
       }
 
-      const list =
-        data.shopping_list ||
-        data.raw?.shopping_list ||
-        data.initialState?.shopping_list;
-      if (list) {
-        setShoppingList(list);
+      // Extract shopping list from initial state
+      if (result.initialState?.shopping_list) {
+        setShoppingList(result.initialState.shopping_list);
       }
-      if (data.message) setMessages([{ sender: 'agent', text: data.message }]);
+
+      if (result.message) {
+        setMessages([{ sender: 'agent', text: result.message }]);
+      }
     } catch (err) {
       console.error('Failed to start session', err);
     } finally {
@@ -445,33 +437,31 @@ const AgentPage: React.FC = () => {
     setInput('');
     setIsWorking(true);
     try {
-      const res = await fetch('/api/agent/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          threadId: session.threadId,
-          message: userMsg.text,
-          from: 'user',
-          interactive: false,
-        }),
-      });
-      const data = await res.json();
-      if (data.message)
-        setMessages((prev) => [
-          ...prev,
-          { sender: 'agent', text: data.message },
-        ]);
+      const result = await sendAgentMessage(
+        session.threadId,
+        userMsg.text,
+        'user',
+        false,
+      );
 
-      // Check for meal plan in both top level and raw
-      const newMealPlan = data.meal_plan || data.raw?.meal_plan;
-      if (newMealPlan) {
-        console.log('Applying highlights for new meal plan:', newMealPlan);
-        applyHighlights(newMealPlan);
+      if (result.message) {
+        const message: ChatMessage = { sender: 'agent', text: result.message };
+        setMessages((prev) => [...prev, message]);
       }
 
-      // Check for shopping list in both locations
-      const newShoppingList = data.shopping_list || data.raw?.shopping_list;
-      if (newShoppingList) setShoppingList(newShoppingList);
+      // Check for meal plan in initial state
+      if (result.initialState?.meal_plan) {
+        console.log(
+          'Applying highlights for new meal plan:',
+          result.initialState.meal_plan,
+        );
+        applyHighlights(result.initialState.meal_plan);
+      }
+
+      // Check for shopping list in initial state
+      if (result.initialState?.shopping_list) {
+        setShoppingList(result.initialState.shopping_list);
+      }
     } catch (err) {
       console.error('Failed to send message', err);
     } finally {

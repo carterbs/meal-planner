@@ -17,6 +17,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/lib/pq"
 
+	"google.golang.org/protobuf/encoding/protojson"
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 	"mealplanner/services"
 )
@@ -132,10 +134,11 @@ func TestGetAllMealsHandler(t *testing.T) {
 	}
 
 	// Decode and verify response
-	var meals []*models.Meal
-	if err := json.NewDecoder(rr.Body).Decode(&meals); err != nil {
+	var resp apipb.GetAllMealsResponse
+	if err := protojson.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("could not decode response: %v", err)
 	}
+	meals := resp.Meals
 
 	if len(meals) != 2 {
 		t.Errorf("expected 2 meals, got %d", len(meals))
@@ -170,6 +173,8 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 	now := time.Now()
 	rows := helper.expectMealQuery(models.GetMealsByIDsQuery, pq.Array([]int{mealID}))
 	rows.AddRow(mealID, "Test Meal", 1, now, false, "https://example.com/test", "dinner", 1, updatedIngredient.Name, updatedIngredient.Quantity, updatedIngredient.Unit)
+	stepsRows := sqlmock.NewRows([]string{"id", "meal_id", "step_number", "instruction"})
+	helper.mock.ExpectQuery(regexp.QuoteMeta("SELECT id, meal_id, step_number, instruction FROM recipe_steps WHERE meal_id = $1 ORDER BY step_number")).WithArgs(mealID).WillReturnRows(stepsRows)
 
 	// Create a PUT request to update the ingredient
 	req, err := createRequest("PUT", "/api/meals/1/ingredients/1", updatedIngredient)
@@ -194,16 +199,17 @@ func TestUpdateMealIngredientHandler(t *testing.T) {
 	}
 
 	// Decode and verify response
-	var meal models.Meal
-	if err := json.NewDecoder(rr.Body).Decode(&meal); err != nil {
+	var resp apipb.UpdateMealIngredientResponse
+	if err := protojson.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
+	ingredients := resp.Meal.GetIngredients()
 
-	if len(meal.Ingredients) != 1 {
-		t.Errorf("expected 1 ingredient, got %d", len(meal.Ingredients))
+	if len(ingredients) != 1 {
+		t.Errorf("expected 1 ingredient, got %d", len(ingredients))
 	}
-	if meal.Ingredients[0].Quantity != updatedIngredient.Quantity {
-		t.Errorf("expected quantity %v, got %v", updatedIngredient.Quantity, meal.Ingredients[0].Quantity)
+	if ingredients[0].GetQuantity() != updatedIngredient.Quantity {
+		t.Errorf("expected quantity %v, got %v", updatedIngredient.Quantity, ingredients[0].GetQuantity())
 	}
 
 	// Verify all expectations were met
@@ -230,6 +236,8 @@ func TestDeleteMealIngredientHandler(t *testing.T) {
 	now := time.Now()
 	rows := helper.expectMealQuery(models.GetMealsByIDsQuery, pq.Array([]int{mealID}))
 	rows.AddRow(mealID, "Test Meal", 1, now, false, "https://example.com/test", "dinner", 2, "Pepper", 0.5, "tsp")
+	stepsRows := sqlmock.NewRows([]string{"id", "meal_id", "step_number", "instruction"})
+	helper.mock.ExpectQuery(regexp.QuoteMeta("SELECT id, meal_id, step_number, instruction FROM recipe_steps WHERE meal_id = $1 ORDER BY step_number")).WithArgs(mealID).WillReturnRows(stepsRows)
 
 	// Create request and add URL parameters
 	req, err := createRequest("DELETE", "/api/meals/1/ingredients/1", nil)
@@ -253,17 +261,18 @@ func TestDeleteMealIngredientHandler(t *testing.T) {
 	}
 
 	// Decode and verify response
-	var meal models.Meal
-	if err := json.NewDecoder(rr.Body).Decode(&meal); err != nil {
+	var resp apipb.DeleteMealIngredientResponse
+	if err := protojson.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
+	ingredients := resp.Meal.GetIngredients()
 
 	// Verify meal data
-	if len(meal.Ingredients) != 1 {
-		t.Errorf("expected 1 ingredient remaining, got %d", len(meal.Ingredients))
+	if len(ingredients) != 1 {
+		t.Errorf("expected 1 ingredient remaining, got %d", len(ingredients))
 	}
-	if meal.Ingredients[0].Name != "Pepper" {
-		t.Errorf("expected remaining ingredient to be 'Pepper', got %s", meal.Ingredients[0].Name)
+	if ingredients[0].GetName() != "Pepper" {
+		t.Errorf("expected remaining ingredient to be 'Pepper', got %s", ingredients[0].GetName())
 	}
 
 	// Verify all expectations were met
@@ -569,20 +578,21 @@ func TestGetAllMealsHandler_AlphabeticalOrder(t *testing.T) {
 	}
 
 	// Parse the response body
-	var response []*models.Meal
-	if err := json.NewDecoder(rr.Body).Decode(&response); err != nil {
+	var resp apipb.GetAllMealsResponse
+	if err := protojson.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("couldn't parse response: %v", err)
 	}
+	meals := resp.GetMeals()
 
 	// Verify meals are sorted alphabetically (case-insensitive)
 	expectedOrder := []string{"apple pie", "banana bread", "Meatballs", "Zucchini Pasta"}
-	if len(response) != len(expectedOrder) {
-		t.Fatalf("expected %d meals, got %d", len(expectedOrder), len(response))
+	if len(meals) != len(expectedOrder) {
+		t.Fatalf("expected %d meals, got %d", len(expectedOrder), len(meals))
 	}
 
 	for i, expectedName := range expectedOrder {
-		if response[i].GetName() != expectedName {
-			t.Errorf("meal at position %d: expected %q, got %q", i, expectedName, response[i].GetName())
+		if meals[i].GetName() != expectedName {
+			t.Errorf("meal at position %d: expected %q, got %q", i, expectedName, meals[i].GetName())
 		}
 	}
 
@@ -652,7 +662,8 @@ func TestCreateMealHandler(t *testing.T) {
 	mock.ExpectCommit()
 
 	// Create request with meal data
-	body, err := json.Marshal(newMeal)
+	reqProto := &apipb.CreateMealRequest{Meal: &newMeal}
+	body, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(reqProto)
 	if err != nil {
 		t.Fatalf("failed to marshal meal: %v", err)
 	}
@@ -674,10 +685,11 @@ func TestCreateMealHandler(t *testing.T) {
 	}
 
 	// Parse response
-	var createdMeal *models.Meal
-	if err := json.NewDecoder(rr.Body).Decode(&createdMeal); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
+	var resp apipb.CreateMealResponse
+	if err := protojson.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
 	}
+	createdMeal := resp.GetMeal()
 
 	// Verify meal properties
 	if createdMeal.Id != int32(expectedMealID) {
@@ -755,7 +767,8 @@ func TestCreateMealHandler_ValidationError(t *testing.T) {
 		},
 	}
 
-	body, err := json.Marshal(invalidMeal)
+	reqProto := &apipb.CreateMealRequest{Meal: &invalidMeal}
+	body, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(reqProto)
 	if err != nil {
 		t.Fatalf("failed to marshal meal: %v", err)
 	}
@@ -823,7 +836,8 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 	mock.ExpectRollback()
 
 	// Create request with meal data
-	body, err := json.Marshal(newMeal)
+	reqProto := &apipb.CreateMealRequest{Meal: &newMeal}
+	body, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(reqProto)
 	if err != nil {
 		t.Fatalf("failed to marshal meal: %v", err)
 	}
@@ -898,10 +912,11 @@ func TestRemoveMealHandler(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d. Response body: %s", rr.Code, rr.Body.String())
 	}
-	var out models.WeeklyMealPlan
-	if err := json.NewDecoder(rr.Body).Decode(&out); err != nil {
+	var respRemove apipb.RemoveMealResponse
+	if err := protojson.Unmarshal(rr.Body.Bytes(), &respRemove); err != nil {
 		t.Fatalf("failed decoding response: %v", err)
 	}
+	out := respRemove.Plan
 	if len(out.Days) == 0 || out.Days[0].Meal != nil {
 		t.Errorf("expected meal removed")
 	}

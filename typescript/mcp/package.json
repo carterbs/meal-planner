@@ -12,8 +12,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.3",
     "@mealplanner/generated": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.12.3",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "zod": "^3.25.64"
