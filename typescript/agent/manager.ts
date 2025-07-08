@@ -1,9 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
 import { WorkflowType } from './shared/types';
-import {
-  PostgresCheckpointConfig,
-} from './shared/checkpointer';
+// Removed PostgreSQL dependencies - using HTTP checkpointer only
 import { HttpCheckpointSaver } from './shared/httpCheckpointer';
 import { WorkflowRegistry } from './registry';
 import { debugLog } from './cli';
@@ -30,7 +28,7 @@ export class WorkflowManager {
   private registry: WorkflowRegistry;
   private activeSessions = new Map<string, WorkflowSession>();
 
-  constructor(dbConfig: PostgresCheckpointConfig, registry: WorkflowRegistry) {
+  constructor(registry: WorkflowRegistry) {
     this.checkpointer = new HttpCheckpointSaver();
     this.registry = registry;
   }
@@ -309,8 +307,8 @@ export class WorkflowManager {
   }
 
   // List all workflows
-  async listWorkflows(type?: WorkflowType): Promise<WorkflowSession[]> {
-    const dbWorkflows = await this.checkpointer.listWorkflows(type);
+  async listWorkflows(_type?: WorkflowType): Promise<WorkflowSession[]> {
+    const dbWorkflows = await this.checkpointer.listWorkflows();
     const sessions: WorkflowSession[] = [];
 
     for (const dbWorkflow of dbWorkflows) {

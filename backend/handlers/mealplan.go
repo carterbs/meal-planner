@@ -150,7 +150,7 @@ func SaveMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 	for _, e := range req.Entries {
 		// Allow null meals for special cases like "eating out"
 		entries = append(entries, models.MealPlanEntry{
-			DayOfWeek: int(e.DayOfWeek),
+			DayOfWeek: e.DayOfWeek,
 			MealType:  e.MealType,
 			Meal:      e.Meal,
 		})

@@ -1,6 +1,6 @@
 import { WorkflowManager } from './manager';
 import { WorkflowRegistry } from './registry';
-import { PostgresCheckpointConfig } from './shared/checkpointer';
+// Removed PostgreSQL dependencies - using HTTP checkpointer only
 import {
   ConversationHandler,
   ConversationMessage,
@@ -19,7 +19,6 @@ import type { MealPlanningState } from './shared/types';
 import { spawnSync } from 'child_process';
 
 export interface LangGraphAgentConfig {
-  database: PostgresCheckpointConfig;
   defaultParticipants?: string[];
 }
 
@@ -30,7 +29,7 @@ export class LangGraphAgent {
   private registry: WorkflowRegistry;
   private isInitialized = false;
 
-  constructor(config: LangGraphAgentConfig) {
+  constructor(_config: LangGraphAgentConfig) {
     // Initialize registry and register factories
     this.registry = new WorkflowRegistry();
     for (const factory of workflowFactories) {
@@ -38,7 +37,7 @@ export class LangGraphAgent {
     }
 
     // Initialize workflow manager
-    this.workflowManager = new WorkflowManager(config.database, this.registry);
+    this.workflowManager = new WorkflowManager(this.registry);
 
     // Initialize handlers - we'll get the actual feedback handler after initialization
     this.feedbackHandler = new FeedbackHandler(
@@ -242,7 +241,14 @@ export class LangGraphAgent {
     });
     if (!tuple) throw new Error(`No state found for thread ${threadId}`);
     const [checkpoint] = tuple;
-    return checkpoint.channel_values as MealPlanningState;
+    // Properly deserialize state from checkpoint
+    const stateAny = checkpoint.channelValues['state'];
+    if (!stateAny || typeof stateAny !== 'object' || !('value' in stateAny)) {
+      throw new Error('Invalid checkpoint state format');
+    }
+    const stateBytes = stateAny.value as Uint8Array;
+    const stateJson = new TextDecoder().decode(stateBytes);
+    return JSON.parse(stateJson) as MealPlanningState;
   }
 }
 
@@ -258,13 +264,6 @@ export async function createLangGraphMealPlannerAgent(
 // CLI usage example
 async function main() {
   const config: LangGraphAgentConfig = {
-    database: {
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      database: process.env.DB_NAME || 'meal_planner_dev',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'password',
-    },
     defaultParticipants: ['brad', 'shannon'],
   };
 

@@ -6,7 +6,8 @@ import type {
   WeeklyMealPlan as GeneratedWeeklyMealPlan,
   Meal as GeneratedMeal,
 } from '@mealplanner/generated';
-import { WeeklyMealPlan } from '@mealplanner/generated';
+import { WeeklyMealPlan, AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated';
+import { Any } from '../../../generated/ts/google/protobuf/any';
 
 import {
   MealPlanningState,
@@ -80,6 +81,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     // Connect to MCP server
     // In JSON mode (API calls), assume MCP server is already running and connect to it directly
     // Otherwise, start the full server stack
+    console.log(`🍽️ [MEAL-WORKFLOW] Starting to initialize meal planning workflow`);
+
     const transport = new StdioClientTransport({
       command: 'node',
       args: isJsonMode
@@ -150,16 +153,38 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           state = { ...state, ...(await this.optimizePlanNode(state)) };
           state = { ...state, ...(await this.presentPlanNode(state)) };
           // Pause: checkpoint state
-          await this.checkpointer.put(
-            config,
-            { channel_values: state, next: [], step: 0 },
-            { source: 'workflow', step: 0, writes: {} },
-          );
+          // Create properly typed checkpoint
+          const stateJson = JSON.stringify(state);
+          const stateBytes = new TextEncoder().encode(stateJson);
+          const stateAny = Any.create({
+            typeUrl: 'type.googleapis.com/MealPlanningState',
+            value: stateBytes
+          });
+          const checkpoint = AgentCheckpoint.create({
+            channelValues: { state: stateAny },
+            next: [],
+            step: 0
+          });
+          const metadata = AgentCheckpointMetadata.create({
+            source: 'workflow',
+            step: 0,
+            writes: {},
+            additionalFields: {}
+          });
+          await this.checkpointer.put(config, checkpoint, metadata);
           return state;
         } else {
           // Resume run: feedback loop
           const [checkpoint] = tuple;
-          state = checkpoint.channel_values as MealPlanningState;
+          // Properly deserialize state from checkpoint
+          const stateAny = checkpoint.channelValues['state'];
+          if (stateAny && typeof stateAny === 'object' && 'value' in stateAny) {
+            const stateBytes = stateAny.value as Uint8Array;
+            const stateJson = new TextDecoder().decode(stateBytes);
+            state = JSON.parse(stateJson) as MealPlanningState;
+          } else {
+            throw new Error('Invalid checkpoint state format');
+          }
           console.log(
             `🔄 [MEAL-WORKFLOW] Resuming workflow at step ${state.current_step}`,
           );
@@ -208,11 +233,25 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             state = { ...state, ...(await this.presentPlanNode(state)) };
             // 6. Pause for feedback after presenting the plan
             if (state.current_step === MealPlanningStep.AWAIT_FEEDBACK) {
-              await this.checkpointer.put(
-                config,
-                { channel_values: state, next: [], step: 0 },
-                { source: 'workflow', step: 0, writes: {} },
-              );
+              // Create properly typed checkpoint
+              const stateJson = JSON.stringify(state);
+              const stateBytes = new TextEncoder().encode(stateJson);
+              const stateAny = Any.create({
+                typeUrl: 'type.googleapis.com/MealPlanningState',
+                value: stateBytes
+              });
+              const checkpoint = AgentCheckpoint.create({
+                channelValues: { state: stateAny },
+                next: [],
+                step: 0
+              });
+              const metadata = AgentCheckpointMetadata.create({
+                source: 'workflow',
+                step: 0,
+                writes: {},
+                additionalFields: {}
+              });
+              await this.checkpointer.put(config, checkpoint, metadata);
               return state;
             }
             // 7. If feedback is positive, break loop and finalize
@@ -255,11 +294,17 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       const body = {
         threadId: threadId,
         version: 0,
-        entries: planJson.days.map((d: any) => ({
-          dayOfWeek: d.dayIndex ?? 0,
-          mealType: d.mealType,
-          meal: d.meal,
-        })),
+        entries: planJson.days.map((d: any) => {
+          if (d.dayIndex === undefined || d.dayIndex === null) {
+            console.error('Missing dayIndex for meal plan entry:', d);
+            throw new Error(`Missing dayIndex for meal plan entry: ${JSON.stringify(d)}`);
+          }
+          return {
+            dayOfWeek: d.dayIndex,
+            mealType: d.mealType,
+            meal: d.meal,
+          };
+        }),
       };
       await fetch(`${backend}/api/mealplan`, {
         method: 'POST',
@@ -365,11 +410,13 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private async analyzeFeedbackNode(
     feedbackEntries: FeedbackEntry[],
   ): Promise<{ satisfied: boolean; reasoning: string }> {
+    console.log(`🍽️ [MEAL-WORKFLOW] Analyzing feedback: ${feedbackEntries}`);
     const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
     const prompt = getAnalyzeFeedbackPrompt(latestFeedback.message);
     const result = await this.nanoLlm.invoke([
       { role: 'user', content: prompt },
     ]);
+    console.log(`🍽️ [MEAL-WORKFLOW] Analyzed feedback: ${result.content}`);
     let analysis = {
       satisfied: false,
       reasoning: 'Could not parse LLM response.',

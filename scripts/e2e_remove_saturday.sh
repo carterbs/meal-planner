@@ -40,8 +40,8 @@ curl -s -X POST -H 'Content-Type: application/json' \
 echo "--- Fetching state and validating ---"
 # fetch_state & validate_saturday
 STATE=$(curl -s http://localhost:8080/api/workflows/$THREAD_ID)
-# Validate that no meals (breakfast, lunch, dinner) remain for Saturday (dayIndex == 5)
-if echo "$STATE" | jq -e '[.meal_plan.days[] | select(.dayIndex == 5 and .meal != null)] | length == 0' >/dev/null; then
+# Validate that no meals remain for Saturday (day_of_week == 5)
+if echo "$STATE" | jq -e '[.entries[] | select(.day_of_week == 5 and .meal != null and .meal != "")] | length == 0' >/dev/null; then
   echo "success"
 else
   echo "Full state:"

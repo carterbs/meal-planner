@@ -1,4 +1,5 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Any } from "./google/protobuf/any";
 import { Empty } from "./google/protobuf/empty";
 export declare const protobufPackage = "mealplanner.api";
 export interface Ingredient {
@@ -38,6 +39,42 @@ export interface ShoppingListItem {
 export interface WeeklyMealPlan {
     days: PlanDay[];
     shoppingList: ShoppingListItem[];
+}
+export interface MealPlanEntry {
+    /** 0=Monday..6=Sunday */
+    dayOfWeek: number;
+    /** breakfast, lunch, dinner */
+    mealType: string;
+    meal: Meal | undefined;
+}
+export interface SaveMealPlanRequest {
+    threadId: string;
+    version: number;
+    entries: MealPlanEntry[];
+}
+export interface MealPlanIdentifier {
+    id: number;
+    threadId: string;
+    version: number;
+    createdAt: string;
+}
+export interface SaveCheckpointRequest {
+    threadId: string;
+    version: number;
+    entries: MealPlanEntry[];
+}
+export interface CheckpointResponse {
+    success: boolean;
+}
+export interface Message {
+    threadId: string;
+    /** "user" or "agent" */
+    sender: string;
+    content: string;
+    createdAt: string;
+}
+export interface ShoppingList {
+    items: ShoppingListItem[];
 }
 export interface AgentStartRequest {
     participants: string[];
@@ -246,8 +283,9 @@ export interface GetWorkflowStateRequest {
     threadId: string;
 }
 export interface GetWorkflowStateResponse {
-    /** JSON string */
-    state: string;
+    plan: WeeklyMealPlan | undefined;
+    shoppingList: ShoppingList | undefined;
+    messages: Message[];
 }
 export interface AbandonWorkflowRequest {
     threadId: string;
@@ -257,6 +295,8 @@ export interface AbandonWorkflowResponse {
 }
 export interface AddMessageRequest {
     threadId: string;
+    /** "user" or "agent" */
+    sender: string;
     message: string;
 }
 export interface AddMessageResponse {
@@ -265,10 +305,82 @@ export interface AddMessageResponse {
 export interface UpdateSessionStateRequest {
     threadId: string;
     /** JSON string */
-    state: string;
+    mealPlan: string;
+    /** JSON string */
+    shoppingList: string;
+    currentStep: string;
+    status: string;
 }
 export interface UpdateSessionStateResponse {
     message: string;
+}
+/** LangGraph checkpoint persistence */
+export interface AgentCheckpoint {
+    channelValues: {
+        [key: string]: Any;
+    };
+    next: string[];
+    step: number;
+}
+export interface AgentCheckpoint_ChannelValuesEntry {
+    key: string;
+    value: Any | undefined;
+}
+export interface AgentCheckpointMetadata {
+    source: string;
+    step: number;
+    writes: {
+        [key: string]: Any;
+    };
+    additionalFields: {
+        [key: string]: Any;
+    };
+}
+export interface AgentCheckpointMetadata_WritesEntry {
+    key: string;
+    value: Any | undefined;
+}
+export interface AgentCheckpointMetadata_AdditionalFieldsEntry {
+    key: string;
+    value: Any | undefined;
+}
+export interface CheckpointTuple {
+    checkpoint: AgentCheckpoint | undefined;
+    metadata: AgentCheckpointMetadata | undefined;
+}
+export interface GetCheckpointRequest {
+    threadId: string;
+    /** optional - if empty, fetch latest */
+    checkpointNs: string;
+}
+export interface GetCheckpointResponse {
+    tuple: CheckpointTuple | undefined;
+    found: boolean;
+}
+export interface PutCheckpointRequest {
+    threadId: string;
+    checkpointNs: string;
+    workflowType: string;
+    checkpoint: AgentCheckpoint | undefined;
+    metadata: AgentCheckpointMetadata | undefined;
+}
+export interface PutCheckpointResponse {
+    success: boolean;
+    threadId: string;
+    checkpointNs: string;
+}
+export interface ListCheckpointsRequest {
+    limit: number;
+    /** optional pagination */
+    beforeThreadId: string;
+}
+export interface ListCheckpointsResponse {
+    entries: CheckpointEntry[];
+}
+export interface CheckpointEntry {
+    threadId: string;
+    checkpointNs: string;
+    tuple: CheckpointTuple | undefined;
 }
 export declare const Ingredient: MessageFns<Ingredient>;
 export declare const Step: MessageFns<Step>;
@@ -276,6 +388,13 @@ export declare const Meal: MessageFns<Meal>;
 export declare const PlanDay: MessageFns<PlanDay>;
 export declare const ShoppingListItem: MessageFns<ShoppingListItem>;
 export declare const WeeklyMealPlan: MessageFns<WeeklyMealPlan>;
+export declare const MealPlanEntry: MessageFns<MealPlanEntry>;
+export declare const SaveMealPlanRequest: MessageFns<SaveMealPlanRequest>;
+export declare const MealPlanIdentifier: MessageFns<MealPlanIdentifier>;
+export declare const SaveCheckpointRequest: MessageFns<SaveCheckpointRequest>;
+export declare const CheckpointResponse: MessageFns<CheckpointResponse>;
+export declare const Message: MessageFns<Message>;
+export declare const ShoppingList: MessageFns<ShoppingList>;
 export declare const AgentStartRequest: MessageFns<AgentStartRequest>;
 export declare const AgentFeedbackRequest: MessageFns<AgentFeedbackRequest>;
 export declare const AgentResumeRequest: MessageFns<AgentResumeRequest>;
@@ -338,6 +457,19 @@ export declare const AddMessageRequest: MessageFns<AddMessageRequest>;
 export declare const AddMessageResponse: MessageFns<AddMessageResponse>;
 export declare const UpdateSessionStateRequest: MessageFns<UpdateSessionStateRequest>;
 export declare const UpdateSessionStateResponse: MessageFns<UpdateSessionStateResponse>;
+export declare const AgentCheckpoint: MessageFns<AgentCheckpoint>;
+export declare const AgentCheckpoint_ChannelValuesEntry: MessageFns<AgentCheckpoint_ChannelValuesEntry>;
+export declare const AgentCheckpointMetadata: MessageFns<AgentCheckpointMetadata>;
+export declare const AgentCheckpointMetadata_WritesEntry: MessageFns<AgentCheckpointMetadata_WritesEntry>;
+export declare const AgentCheckpointMetadata_AdditionalFieldsEntry: MessageFns<AgentCheckpointMetadata_AdditionalFieldsEntry>;
+export declare const CheckpointTuple: MessageFns<CheckpointTuple>;
+export declare const GetCheckpointRequest: MessageFns<GetCheckpointRequest>;
+export declare const GetCheckpointResponse: MessageFns<GetCheckpointResponse>;
+export declare const PutCheckpointRequest: MessageFns<PutCheckpointRequest>;
+export declare const PutCheckpointResponse: MessageFns<PutCheckpointResponse>;
+export declare const ListCheckpointsRequest: MessageFns<ListCheckpointsRequest>;
+export declare const ListCheckpointsResponse: MessageFns<ListCheckpointsResponse>;
+export declare const CheckpointEntry: MessageFns<CheckpointEntry>;
 /** Service definition */
 export interface MealPlannerAPI {
     /** Health endpoints */
@@ -378,6 +510,10 @@ export interface MealPlannerAPI {
     AbandonWorkflow(request: AbandonWorkflowRequest): Promise<AbandonWorkflowResponse>;
     AddMessage(request: AddMessageRequest): Promise<AddMessageResponse>;
     UpdateSessionState(request: UpdateSessionStateRequest): Promise<UpdateSessionStateResponse>;
+    /** Checkpoint persistence endpoints */
+    GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
+    PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
+    ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
 }
 export declare const MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
 export declare class MealPlannerAPIClientImpl implements MealPlannerAPI {
@@ -417,6 +553,9 @@ export declare class MealPlannerAPIClientImpl implements MealPlannerAPI {
     AbandonWorkflow(request: AbandonWorkflowRequest): Promise<AbandonWorkflowResponse>;
     AddMessage(request: AddMessageRequest): Promise<AddMessageResponse>;
     UpdateSessionState(request: UpdateSessionStateRequest): Promise<UpdateSessionStateResponse>;
+    GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
+    PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
+    ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
 }
 interface Rpc {
     request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;

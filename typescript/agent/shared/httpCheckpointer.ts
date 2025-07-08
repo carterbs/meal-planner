@@ -1,6 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
-import { AgentCheckpoint, AgentCheckpointMetadata } from '../../../generated/ts/api';
+
+// Import from package like UI does
+import type { 
+  AgentCheckpoint as AgentCheckpointType, 
+  AgentCheckpointMetadata as AgentCheckpointMetadataType 
+} from '@mealplanner/generated';
+import { AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated';
 
 export class HttpCheckpointSaver {
   private baseUrl: string;
@@ -9,7 +15,7 @@ export class HttpCheckpointSaver {
     this.baseUrl = baseUrl;
   }
 
-  async getTuple(config: RunnableConfig): Promise<[AgentCheckpoint, AgentCheckpointMetadata] | undefined> {
+  async getTuple(config: RunnableConfig): Promise<[AgentCheckpointType, AgentCheckpointMetadataType] | undefined> {
     const threadId = (config as any).configurable?.threadId;
     const checkpointNs = (config as any).configurable?.checkpoint_ns;
     if (!threadId) return undefined;
@@ -17,33 +23,59 @@ export class HttpCheckpointSaver {
     const resp = await fetch(url);
     if (!resp.ok) return undefined;
     const data = await resp.json();
-    return data.found ? [data.tuple.checkpoint, data.tuple.metadata] : undefined;
+    if (!data.found) return undefined;
+    
+    // Convert from JSON to protobuf types
+    const checkpoint = AgentCheckpoint.fromJSON(data.tuple.checkpoint);
+    const metadata = AgentCheckpointMetadata.fromJSON(data.tuple.metadata);
+    return [checkpoint, metadata];
   }
 
-  async put(config: RunnableConfig, checkpoint: AgentCheckpoint, metadata: AgentCheckpointMetadata): Promise<RunnableConfig> {
+  async put(config: RunnableConfig, checkpoint: AgentCheckpointType, metadata: AgentCheckpointMetadataType): Promise<RunnableConfig> {
     const threadId = (config as any).configurable?.threadId || uuidv4();
     const checkpointNs = (config as any).configurable?.checkpoint_ns || uuidv4();
+    
+    // Convert protobuf types to JSON for API
+    const checkpointJson = AgentCheckpoint.toJSON(checkpoint);
+    const metadataJson = AgentCheckpointMetadata.toJSON(metadata);
+    
     const resp = await fetch(`${this.baseUrl}/api/checkpoints`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         thread_id: threadId,
         checkpoint_ns: checkpointNs,
-        workflow_type: (metadata as any).workflow_type || 'meal_planning',
-        checkpoint,
-        metadata,
+        workflow_type: (metadataJson as any).workflow_type || 'meal_planning',
+        checkpoint: checkpointJson,
+        metadata: metadataJson,
       }),
     });
     if (!resp.ok) throw new Error(`Failed to save checkpoint: ${resp.statusText}`);
     return { configurable: { ...(config as any).configurable, threadId, checkpoint_ns: checkpointNs } } as RunnableConfig;
   }
 
-  async *list(config: RunnableConfig, limit?: number): AsyncGenerator<[RunnableConfig, AgentCheckpoint, AgentCheckpointMetadata]> {
+  async *list(_config: RunnableConfig, limit?: number): AsyncGenerator<[RunnableConfig, AgentCheckpointType, AgentCheckpointMetadataType]> {
     const resp = await fetch(`${this.baseUrl}/api/checkpoints?limit=${limit || 100}`);
     if (!resp.ok) return;
     const data = await resp.json();
     for (const entry of data.entries) {
-      yield [{ configurable: { threadId: entry.thread_id, checkpoint_ns: entry.checkpoint_ns } } as RunnableConfig, entry.tuple.checkpoint, entry.tuple.metadata];
+      // Convert from JSON to protobuf types
+      const checkpoint = AgentCheckpoint.fromJSON(entry.tuple.checkpoint);
+      const metadata = AgentCheckpointMetadata.fromJSON(entry.tuple.metadata);
+      yield [{ configurable: { threadId: entry.thread_id, checkpoint_ns: entry.checkpoint_ns } } as RunnableConfig, checkpoint, metadata];
     }
+  }
+
+  async getWorkflowStatus(threadId: string): Promise<any> {
+    const resp = await fetch(`${this.baseUrl}/api/workflows/${threadId}`);
+    if (!resp.ok) return null;
+    return await resp.json();
+  }
+
+  async listWorkflows(limit?: number): Promise<any[]> {
+    const resp = await fetch(`${this.baseUrl}/api/workflows?limit=${limit || 100}`);
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return data.workflows || [];
   }
 }
