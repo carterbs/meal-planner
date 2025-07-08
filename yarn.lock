@@ -2930,6 +2930,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@meal-planner/ui@workspace:typescript/ui"
   dependencies:
+    "@bufbuild/protobuf": "npm:^2.6.0"
     "@dnd-kit/core": "npm:^6.3.1"
     "@dnd-kit/sortable": "npm:^10.0.0"
     "@dnd-kit/utilities": "npm:^3.2.2"
@@ -11761,6 +11762,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "meal-planner-agent@workspace:typescript/agent"
   dependencies:
+    "@bufbuild/protobuf": "npm:^2.6.0"
     "@langchain/core": "npm:^0.2.0"
     "@langchain/langgraph": "npm:^0.0.20"
     "@langchain/openai": "npm:^0.1.0"

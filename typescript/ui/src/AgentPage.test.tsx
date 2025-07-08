@@ -18,11 +18,13 @@ test('auto resumes from localStorage', async () => {
     ok: true,
     json: () =>
       Promise.resolve({
-        threadId: 'abc',
-        workflow_type: 'meal_planning',
-        current_step: 'planning',
-        message: 'hi',
-        raw: { meal_plan: { days: [] } },
+        response: {
+          threadId: 'abc',
+          workflowType: 'meal_planning',
+          currentStep: 'planning',
+          message: 'hi',
+          initialState: JSON.stringify({ meal_plan: { days: [] } }),
+        },
       }),
   });
 
@@ -40,9 +42,11 @@ test('clears completed session from storage', async () => {
     ok: true,
     json: () =>
       Promise.resolve({
-        threadId: 'done',
-        workflow_type: 'meal_planning',
-        current_step: 'complete',
+        response: {
+          threadId: 'done',
+          workflowType: 'meal_planning',
+          currentStep: 'complete',
+        },
       }),
   });
 
@@ -56,26 +60,29 @@ test('clears completed session from storage', async () => {
 
 test('copies meal plan to clipboard', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
     json: () =>
       Promise.resolve({
-        threadId: '123',
-        currentStep: 'started',
-        message: 'hi',
-        initialState: {
-          meal_plan: {
-            days: [
-              {
-                dayIndex: 0,
-                mealType: 'breakfast',
-                meal: {
-                  id: 0,
-                  mealId: 1,
-                  name: 'Eggs',
-                  effort: 1,
+        response: {
+          threadId: '123',
+          currentStep: 'started',
+          message: 'hi',
+          initialState: JSON.stringify({
+            meal_plan: {
+              days: [
+                {
+                  dayIndex: 0,
+                  mealType: 'breakfast',
+                  meal: {
+                    id: 0,
+                    mealId: 1,
+                    name: 'Eggs',
+                    effort: 1,
+                  },
                 },
-              },
-            ],
-          },
+              ],
+            },
+          }),
         },
       }),
   });
@@ -100,14 +107,17 @@ test('copies meal plan to clipboard', async () => {
 
 test('copies shopping list to clipboard', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
     json: () =>
       Promise.resolve({
-        threadId: '123',
-        currentStep: 'started',
-        message: 'hi',
-        raw: {
-          meal_plan: { days: [] },
-          shopping_list: [{ ingredient: 'eggs', quantity: '1' }],
+        response: {
+          threadId: '123',
+          currentStep: 'started',
+          message: 'hi',
+          initialState: JSON.stringify({
+            meal_plan: { days: [] },
+            shopping_list: [{ ingredient: 'eggs', quantity: '1' }],
+          }),
         },
       }),
   });
@@ -128,26 +138,29 @@ test('copies shopping list to clipboard', async () => {
 
 test('starts a new session', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
     json: () =>
       Promise.resolve({
-        threadId: '123',
-        currentStep: 'started',
-        message: 'hi',
-        initialState: {
-          meal_plan: {
-            days: [
-              {
-                dayIndex: 0,
-                mealType: 'breakfast',
-                meal: {
-                  id: 0,
-                  mealId: 1,
-                  name: 'Eggs',
-                  effort: 1,
+        response: {
+          threadId: '123',
+          currentStep: 'started',
+          message: 'hi',
+          initialState: JSON.stringify({
+            meal_plan: {
+              days: [
+                {
+                  dayIndex: 0,
+                  mealType: 'breakfast',
+                  meal: {
+                    id: 0,
+                    mealId: 1,
+                    name: 'Eggs',
+                    effort: 1,
+                  },
                 },
-              },
-            ],
-          },
+              ],
+            },
+          }),
         },
       }),
   });
@@ -166,7 +179,11 @@ test('starts a new session', async () => {
 test('sends a message in an existing session', async () => {
   // Mock start session response
   (global.fetch as jest.Mock).mockResolvedValueOnce({
-    json: () => Promise.resolve({ threadId: '123', currentStep: 'started' }),
+    ok: true,
+    json: () =>
+      Promise.resolve({
+        response: { threadId: '123', currentStep: 'started' },
+      }),
   });
   render(<AgentPage />);
   fireEvent.click(screen.getByTestId('start-session'));
@@ -176,8 +193,14 @@ test('sends a message in an existing session', async () => {
 
   // Mock message send and response
   (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
     json: () =>
-      Promise.resolve({ message: 'ok', raw: { meal_plan: { days: [] } } }),
+      Promise.resolve({
+        response: {
+          message: 'ok',
+          initialState: JSON.stringify({ meal_plan: { days: [] } }),
+        },
+      }),
   });
 
   fireEvent.change(screen.getByTestId('message-input'), {
@@ -190,7 +213,11 @@ test('sends a message in an existing session', async () => {
 
 test('pressing Enter sends the message', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
-    json: () => Promise.resolve({ threadId: '123', currentStep: 'started' }),
+    ok: true,
+    json: () =>
+      Promise.resolve({
+        response: { threadId: '123', currentStep: 'started' },
+      }),
   });
   render(<AgentPage />);
   fireEvent.click(screen.getByTestId('start-session'));
@@ -199,11 +226,14 @@ test('pressing Enter sends the message', async () => {
   );
 
   (global.fetch as jest.Mock).mockResolvedValueOnce({
-    json: () => Promise.resolve({}),
-  });
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
     json: () =>
-      Promise.resolve({ message: 'ok', raw: { meal_plan: { days: [] } } }),
+      Promise.resolve({
+        response: {
+          message: 'ok',
+          initialState: JSON.stringify({ meal_plan: { days: [] } }),
+        },
+      }),
   });
 
   fireEvent.change(screen.getByTestId('message-input'), {
@@ -220,25 +250,28 @@ test('pressing Enter sends the message', async () => {
 
 test('highlights changed meal plan entries', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
     json: () =>
       Promise.resolve({
-        threadId: '123',
-        currentStep: 'started',
-        initialState: {
-          meal_plan: {
-            days: [
-              {
-                dayIndex: 0,
-                mealType: 'breakfast',
-                meal: {
-                  id: 0,
-                  mealId: 1,
-                  name: 'Eggs',
-                  effort: 1,
+        response: {
+          threadId: '123',
+          currentStep: 'started',
+          initialState: JSON.stringify({
+            meal_plan: {
+              days: [
+                {
+                  dayIndex: 0,
+                  mealType: 'breakfast',
+                  meal: {
+                    id: 0,
+                    mealId: 1,
+                    name: 'Eggs',
+                    effort: 1,
+                  },
                 },
-              },
-            ],
-          },
+              ],
+            },
+          }),
         },
       }),
   });
@@ -251,25 +284,22 @@ test('highlights changed meal plan entries', async () => {
   );
 
   (global.fetch as jest.Mock).mockResolvedValueOnce({
-    json: () => Promise.resolve({}),
-  });
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
     json: () =>
       Promise.resolve({
-        message: 'ok',
-        meal_plan: {
-          days: [
-            {
-              dayIndex: 0,
-              mealType: 'breakfast',
-              meal: {
-                id: 0,
-                mealId: 2,
-                name: 'Pancakes',
-                effort: 1,
-              },
+        response: {
+          message: 'ok',
+          initialState: JSON.stringify({
+            meal_plan: {
+              days: [
+                {
+                  dayIndex: 0,
+                  mealType: 'breakfast',
+                  meal: { id: 0, mealId: 2, name: 'Pancakes', effort: 1 },
+                },
+              ],
             },
-          ],
+          }),
         },
       }),
   });
@@ -291,6 +321,7 @@ test('shows typing indicator when agent is working', async () => {
   });
 
   (global.fetch as jest.Mock).mockReturnValueOnce({
+    ok: true,
     json: () => promise,
   });
 
@@ -304,9 +335,7 @@ test('shows typing indicator when agent is working', async () => {
 
   // Resolve the promise to complete the request
   resolvePromise!({
-    threadId: '123',
-    currentStep: 'started',
-    message: 'Ready',
+    response: { threadId: '123', currentStep: 'started', message: 'Ready' },
   });
 
   // Wait for typing indicator to disappear
@@ -328,7 +357,11 @@ test('startNewSession abandons existing workflow', async () => {
       json: () => Promise.resolve({ status: 'ABANDONED' }),
     }) // abandon
     .mockResolvedValueOnce({
-      json: () => Promise.resolve({ threadId: 'new', currentStep: 'started' }),
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          response: { threadId: 'new', currentStep: 'started' },
+        }),
     });
 
   render(<AgentPage />);
