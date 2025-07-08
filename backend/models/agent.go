@@ -2,16 +2,15 @@ package models
 
 import (
 	"errors"
+
+	apipb "mealplanner/generated/go"
 )
 
 // AgentStartRequest represents a request to start a workflow
 // Example JSON: {"participants":["brad","shannon"],"workflowType":"meal_planning"}
-type AgentStartRequest struct {
-	Participants []string `json:"participants"`
-	WorkflowType string   `json:"workflowType"`
-}
+type AgentStartRequest = apipb.AgentStartRequest
 
-func (r *AgentStartRequest) Validate() error {
+func ValidateAgentStartRequest(r *AgentStartRequest) error {
 	if len(r.Participants) == 0 {
 		return errors.New("participants required")
 	}
@@ -23,14 +22,10 @@ func (r *AgentStartRequest) Validate() error {
 
 // AgentFeedbackRequest represents feedback for a workflow
 // Example JSON: {"threadId":"uuid","message":"text","from":"brad"}
-type AgentFeedbackRequest struct {
-	ThreadID string `json:"threadId"`
-	Message  string `json:"message"`
-	From     string `json:"from"`
-}
+type AgentFeedbackRequest = apipb.AgentFeedbackRequest
 
-func (r *AgentFeedbackRequest) Validate() error {
-	if r.ThreadID == "" {
+func ValidateAgentFeedbackRequest(r *AgentFeedbackRequest) error {
+	if r.ThreadId == "" {
 		return errors.New("threadId required")
 	}
 	if r.Message == "" {
@@ -44,13 +39,10 @@ func (r *AgentFeedbackRequest) Validate() error {
 
 // AgentResumeRequest represents a resume request
 // Example JSON: {"threadId":"uuid","interactive":false}
-type AgentResumeRequest struct {
-	ThreadID    string `json:"threadId"`
-	Interactive bool   `json:"interactive"`
-}
+type AgentResumeRequest = apipb.AgentResumeRequest
 
-func (r *AgentResumeRequest) Validate() error {
-	if r.ThreadID == "" {
+func ValidateAgentResumeRequest(r *AgentResumeRequest) error {
+	if r.ThreadId == "" {
 		return errors.New("threadId required")
 	}
 	return nil
@@ -58,16 +50,11 @@ func (r *AgentResumeRequest) Validate() error {
 
 // AgentMessageRequest represents a combined feedback and resume request
 // Example JSON: {"threadId":"uuid","message":"text","from":"user","interactive":false}
-type AgentMessageRequest struct {
-	ThreadID    string `json:"threadId"`
-	Message     string `json:"message"`
-	From        string `json:"from"`
-	Interactive bool   `json:"interactive"`
-}
+type AgentMessageRequest = apipb.AgentMessageRequest
 
-// Validate ensures AgentMessageRequest has required fields
-func (r *AgentMessageRequest) Validate() error {
-	if r.ThreadID == "" {
+// ValidateAgentMessageRequest ensures AgentMessageRequest has required fields
+func ValidateAgentMessageRequest(r *AgentMessageRequest) error {
+	if r.ThreadId == "" {
 		return errors.New("threadId required")
 	}
 	if r.Message == "" {
@@ -85,20 +72,8 @@ func (r *AgentMessageRequest) Validate() error {
 // CurrentStep is the agent's workflow step
 // MealPlan or other data may be embedded in Raw
 
-type AgentResponse struct {
-	Success      bool        `json:"success"`
-	Message      string      `json:"message,omitempty"`
-	ThreadID     string      `json:"threadId,omitempty"`
-	CurrentStep  string      `json:"currentStep,omitempty"`
-	InitialState interface{} `json:"initialState,omitempty"`
-	Raw          interface{} `json:"raw,omitempty"`
-}
+type AgentResponse = apipb.AgentResponse
 
 // WorkflowStatus represents high level workflow info
 // {"threadId":"uuid","workflowType":"meal_planning","currentStep":"step","participants":["brad"]}
-type WorkflowStatus struct {
-	ThreadID     string   `json:"threadId"`
-	WorkflowType string   `json:"workflowType"`
-	CurrentStep  string   `json:"currentStep"`
-	Participants []string `json:"participants"`
-}
+type WorkflowStatus = apipb.WorkflowStatus

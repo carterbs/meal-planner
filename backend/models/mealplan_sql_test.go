@@ -8,6 +8,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	apipb "mealplanner/generated/go"
 )
 
 func TestSaveMealPlan_Success(t *testing.T) {
@@ -17,7 +18,7 @@ func TestSaveMealPlan_Success(t *testing.T) {
 
 	threadID := "thread1"
 	version := 1
-	testMeal := map[string]interface{}{"id": 101, "name": "Test Meal"}
+	testMeal := &apipb.Meal{Id: 101, Name: "Test Meal"}
 	entries := []MealPlanEntry{
 		{DayOfWeek: 0, MealType: "breakfast", Meal: testMeal},
 	}
@@ -80,9 +81,10 @@ func TestGetMealPlanItems_Success(t *testing.T) {
 	items, err := GetMealPlanItems(db, mealPlanID)
 	assert.NoError(t, err)
 	assert.Len(t, items, 1)
-	assert.Equal(t, 1, items[0].DayOfWeek)
+	assert.Equal(t, int32(1), items[0].DayOfWeek)
 	assert.Equal(t, "lunch", items[0].MealType)
-	assert.Equal(t, testMealJSON, items[0].Meal)
+	assert.Equal(t, int32(202), items[0].Meal.Id)
+	assert.Equal(t, "Test Lunch Meal", items[0].Meal.Name)
 
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
