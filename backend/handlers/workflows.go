@@ -39,7 +39,7 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get meal plan entries
-	entries, err := Services.MealPlanService.GetMealPlanItems(plan.ID)
+	entries, err := Services.MealPlanService.GetMealPlanItems(int(plan.GetId()))
 	if err != nil {
 		http.Error(w, "failed to get meal plan items: "+err.Error(), http.StatusInternalServerError)
 		return

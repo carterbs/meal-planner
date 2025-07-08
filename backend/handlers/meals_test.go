@@ -873,7 +873,7 @@ func TestRemoveMealHandler(t *testing.T) {
 	helper := setupTest(t)
 
 	plan := models.WeeklyMealPlan{
-		Days: []models.PlanDay{{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{Id: 1, Name: "Egg"}}},
+		Days: []*models.PlanDay{{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{Id: 1, Name: "Egg"}}},
 	}
 	checkpointStruct := map[string]interface{}{
 		"channel_values": map[string]interface{}{

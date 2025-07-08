@@ -91,7 +91,7 @@ func TestPickMeal(t *testing.T) {
 // It returns the meal or nil if not found.
 func findMeal(plan *WeeklyMealPlan, dayIndex int, mealType string) *Meal {
 	for _, d := range plan.Days {
-		if d.DayIndex == dayIndex && d.MealType == mealType {
+		if int(d.DayIndex) == dayIndex && d.MealType == mealType {
 			return d.Meal
 		}
 	}
@@ -353,7 +353,7 @@ func TestGetLastPlannedMeals(t *testing.T) {
 
 func TestRemoveMealFromPlan(t *testing.T) {
 	plan := &WeeklyMealPlan{
-		Days: []PlanDay{
+		Days: []*PlanDay{
 			{DayIndex: 0, MealType: "breakfast", Meal: &Meal{Id: 1, Name: "A"}},
 			{DayIndex: 1, MealType: "lunch", Meal: &Meal{Id: 2, Name: "B"}},
 			{DayIndex: 2, MealType: "dinner", Meal: &Meal{Id: 3, Name: "C"}},
@@ -389,7 +389,7 @@ func TestRemoveMealFromPlan(t *testing.T) {
 
 func TestBuildShoppingListFromPlan(t *testing.T) {
 	plan := &WeeklyMealPlan{
-		Days: []PlanDay{
+		Days: []*PlanDay{
 			{DayIndex: 0, MealType: "dinner", Meal: &Meal{Id: 1, Ingredients: []*Ingredient{{Name: "Eggs", Quantity: 1, Unit: ""}}}},
 			{DayIndex: 1, MealType: "dinner", Meal: &Meal{Id: 2, Ingredients: []*Ingredient{{Name: "Milk", Quantity: 2, Unit: "cups"}}}},
 		},

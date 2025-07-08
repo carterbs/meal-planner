@@ -192,7 +192,7 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 	dayNames := models.DaysOfTheWeek
 	mealTypes := []string{"breakfast", "lunch", "dinner"}
 
-	plan := &models.WeeklyMealPlan{Days: make([]models.PlanDay, 0, 21)}
+	plan := &models.WeeklyMealPlan{Days: make([]*models.PlanDay, 0, 21)}
 	for i, day := range dayNames {
 		for _, mt := range mealTypes {
 			minEffort, maxEffort := 0, 2
@@ -205,12 +205,12 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 				}
 			}
 			meal := pick(minEffort, maxEffort, mt)
-			plan.Days = append(plan.Days, models.PlanDay{DayIndex: i, MealType: mt, Meal: meal})
+			plan.Days = append(plan.Days, &models.PlanDay{DayIndex: int32(i), MealType: mt, Meal: meal})
 		}
 	}
 
 	for idx := range plan.Days {
-		if plan.Days[idx].DayIndex == 4 && plan.Days[idx].MealType == "dinner" {
+		if int(plan.Days[idx].DayIndex) == 4 && plan.Days[idx].MealType == "dinner" {
 			plan.Days[idx].Meal = &models.Meal{Name: "Eating out"}
 			break
 		}

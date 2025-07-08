@@ -4,16 +4,12 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	apipb "mealplanner/generated/go"
 )
 
-// ShoppingListItem represents a single entry in the generated shopping list.
-// Ingredient is the name of the item and Quantity is a human readable amount
-// (e.g. "1 cup"). Category is optional and may be empty.
-type ShoppingListItem struct {
-	Ingredient string `json:"ingredient"`
-	Quantity   string `json:"quantity"`
-	Category   string `json:"category,omitempty"`
-}
+// ShoppingListItem aliases the protobuf message
+type ShoppingListItem = apipb.ShoppingListItem
 
 // GenerateShoppingListFromMeals aggregates the ingredients needed for the given meals.
 // It returns a sorted slice of unique ingredients with aggregated quantities.

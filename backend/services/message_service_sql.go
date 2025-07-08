@@ -22,7 +22,7 @@ func (s *sqlMessageService) GetMessages(threadID string) ([]models.ChatMessage, 
 	}
 	var out []models.ChatMessage
 	for _, m := range msgs {
-		out = append(out, models.ChatMessage{Sender: m.Sender, Text: m.Content})
+		out = append(out, models.ChatMessage{Sender: m.Sender, Content: m.Content})
 	}
 	return out, nil
 }
@@ -33,7 +33,7 @@ func (s *sqlMessageService) AddMessage(threadID, sender, message string) (models
 	if err != nil {
 		return models.ChatMessage{}, err
 	}
-	return models.ChatMessage{Sender: m.Sender, Text: m.Content}, nil
+	return models.ChatMessage{Sender: m.Sender, Content: m.Content}, nil
 }
 
 // UpdateWorkflowCheckpointWithMessage is unsupported in SQLMessageService

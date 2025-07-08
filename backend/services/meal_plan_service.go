@@ -79,11 +79,11 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 
 	// Create a copy of the plan with populated meal details
 	populatedPlan := *plan
-	populatedPlan.Days = make([]models.PlanDay, len(plan.Days))
+	populatedPlan.Days = make([]*models.PlanDay, len(plan.Days))
 	copy(populatedPlan.Days, plan.Days)
 
 	for i := range populatedPlan.Days {
-		d := &populatedPlan.Days[i]
+		d := populatedPlan.Days[i]
 		if d.Meal != nil {
 			if fullMeal, ok := mealMap[int(d.Meal.GetId())]; ok {
 				d.Meal = fullMeal

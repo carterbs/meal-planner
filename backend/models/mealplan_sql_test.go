@@ -17,7 +17,7 @@ func TestSaveMealPlan_Success(t *testing.T) {
 
 	threadID := "thread1"
 	version := 1
-	testMeal := map[string]interface{}{"id": 101, "name": "Test Meal"}
+	testMeal := &Meal{Id: 101, Name: "Test Meal"}
 	entries := []MealPlanEntry{
 		{DayOfWeek: 0, MealType: "breakfast", Meal: testMeal},
 	}
@@ -36,9 +36,9 @@ func TestSaveMealPlan_Success(t *testing.T) {
 
 	id, err := SaveMealPlan(db, threadID, version, entries)
 	assert.NoError(t, err)
-	assert.Equal(t, 42, id.ID)
-	assert.Equal(t, threadID, id.ThreadID)
-	assert.Equal(t, version, id.Version)
+	assert.Equal(t, int32(42), id.Id)
+	assert.Equal(t, threadID, id.ThreadId)
+	assert.Equal(t, int32(version), id.Version)
 
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -57,9 +57,9 @@ func TestGetLatestMealPlan_Success(t *testing.T) {
 
 	mp, err := GetLatestMealPlan(db, threadID)
 	assert.NoError(t, err)
-	assert.Equal(t, 43, mp.ID)
-	assert.Equal(t, threadID, mp.ThreadID)
-	assert.Equal(t, 2, mp.Version)
+	assert.Equal(t, int32(43), mp.Id)
+	assert.Equal(t, threadID, mp.ThreadId)
+	assert.Equal(t, int32(2), mp.Version)
 
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -80,9 +80,10 @@ func TestGetMealPlanItems_Success(t *testing.T) {
 	items, err := GetMealPlanItems(db, mealPlanID)
 	assert.NoError(t, err)
 	assert.Len(t, items, 1)
-	assert.Equal(t, 1, items[0].DayOfWeek)
+	assert.Equal(t, int32(1), items[0].DayOfWeek)
 	assert.Equal(t, "lunch", items[0].MealType)
-	assert.Equal(t, testMealJSON, items[0].Meal)
+	assert.Equal(t, int32(202), items[0].Meal.Id)
+	assert.Equal(t, "Test Lunch Meal", items[0].Meal.Name)
 
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

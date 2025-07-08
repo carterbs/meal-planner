@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"time"
+
 	apipb "mealplanner/generated/go"
 )
 
@@ -11,12 +12,8 @@ import (
 type MealPlanEntry = apipb.MealPlanEntry
 
 // MealPlanIdentifier represents a persisted meal plan
-type MealPlanIdentifier struct {
-	ID        int       `json:"id"`
-	ThreadID  string    `json:"thread_id"`
-	Version   int       `json:"version"`
-	CreatedAt time.Time `json:"created_at"`
-}
+// MealPlanIdentifier aliases the protobuf message
+type MealPlanIdentifier = apipb.MealPlanIdentifier
 
 // SaveMealPlan persists a meal plan and its items
 func SaveMealPlan(db *sql.DB, threadID string, version int, entries []MealPlanEntry) (*MealPlanIdentifier, error) {
@@ -46,7 +43,12 @@ func SaveMealPlan(db *sql.DB, threadID string, version int, entries []MealPlanEn
 			return nil, err
 		}
 	}
-	return &MealPlanIdentifier{ID: id, ThreadID: tid, Version: ver, CreatedAt: createdAt}, nil
+	return &MealPlanIdentifier{
+		Id:        int32(id),
+		ThreadId:  tid,
+		Version:   int32(ver),
+		CreatedAt: createdAt.Format(time.RFC3339),
+	}, nil
 }
 
 // GetLatestMealPlan retrieves the latest meal plan identifier for a thread
@@ -57,12 +59,20 @@ func GetLatestMealPlan(db *sql.DB, threadID string) (*MealPlanIdentifier, error)
 	WHERE thread_id = $1
 	ORDER BY version DESC
 	LIMIT 1`
-	var m MealPlanIdentifier
-	err := db.QueryRow(query, threadID).Scan(&m.ID, &m.ThreadID, &m.Version, &m.CreatedAt)
+	var id int
+	var tid string
+	var ver int
+	var createdAt time.Time
+	err := db.QueryRow(query, threadID).Scan(&id, &tid, &ver, &createdAt)
 	if err != nil {
 		return nil, err
 	}
-	return &m, nil
+	return &MealPlanIdentifier{
+		Id:        int32(id),
+		ThreadId:  tid,
+		Version:   int32(ver),
+		CreatedAt: createdAt.Format(time.RFC3339),
+	}, nil
 }
 
 // GetMealPlanItems retrieves items for a given meal plan
@@ -84,7 +94,7 @@ func GetMealPlanItems(db *sql.DB, mealPlanID int) ([]MealPlanEntry, error) {
 		if err := rows.Scan(&e.DayOfWeek, &e.MealType, &mealJSON); err != nil {
 			return nil, err
 		}
-		
+
 		// Unmarshal the JSON into a Meal object
 		var meal Meal
 		if err := json.Unmarshal(mealJSON, &meal); err != nil {

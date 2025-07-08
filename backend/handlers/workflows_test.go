@@ -234,19 +234,19 @@ func TestGetWorkflowStateReturnsShoppingList(t *testing.T) {
 	Services = svc
 
 	threadID := "thread123"
-	plan := &models.MealPlanIdentifier{ID: 1, ThreadID: threadID}
+	plan := &models.MealPlanIdentifier{Id: 1, ThreadId: threadID}
 	entries := []models.MealPlanEntry{
-		{DayOfWeek: 0, MealType: "breakfast", Meal: map[string]interface{}{"id": plan.ID, "name": "Test Meal"}},
+		{DayOfWeek: 0, MealType: "breakfast", Meal: &models.Meal{Id: plan.Id, Name: "Test Meal"}},
 	}
 	shoppingItems := []models.ShoppingListItem{
 		{Ingredient: "Eggs", Quantity: "12"},
 	}
 	messages := []models.ChatMessage{
-		{Sender: "user", Text: "Hello"},
+		{Sender: "user", Content: "Hello"},
 	}
 
 	stubMealPlanSvc.On("GetLatestMealPlan", threadID).Return(plan, nil)
-	stubMealPlanSvc.On("GetMealPlanItems", plan.ID).Return(entries, nil)
+	stubMealPlanSvc.On("GetMealPlanItems", int(plan.Id)).Return(entries, nil)
 	mockShoppingListSvc.On("BuildShoppingList", []int{}).Return(shoppingItems, nil)
 	stubMessageSvc.On("GetMessages", threadID).Return(messages, nil)
 

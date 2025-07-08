@@ -42,7 +42,10 @@ func generateShoppingListForPlan(plan *models.WeeklyMealPlan) error {
 	if err != nil {
 		return err
 	}
-	plan.ShoppingList = items
+	plan.ShoppingList = make([]*models.ShoppingListItem, len(items))
+	for i := range items {
+		plan.ShoppingList[i] = &items[i]
+	}
 	return nil
 }
 
@@ -140,7 +143,7 @@ func SaveMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 	version := int(req.Version)
 	if version <= 0 {
 		if latest, _ := Services.MealPlanService.GetLatestMealPlan(req.ThreadId); latest != nil {
-			version = latest.Version + 1
+			version = int(latest.Version) + 1
 		} else {
 			version = 1
 		}

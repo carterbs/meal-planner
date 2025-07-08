@@ -23,7 +23,7 @@ import (
 func toProtoWeeklyMealPlan(plan *models.WeeklyMealPlan) *apipb.WeeklyMealPlan {
 	pb := &apipb.WeeklyMealPlan{Days: make([]*apipb.PlanDay, len(plan.Days))}
 	for i, d := range plan.Days {
-		pb.Days[i] = &apipb.PlanDay{Meal: d.Meal, DayIndex: int32(d.DayIndex), MealType: d.MealType}
+		pb.Days[i] = &apipb.PlanDay{Meal: d.Meal, DayIndex: d.DayIndex, MealType: d.MealType}
 	}
 	pb.ShoppingList = make([]*apipb.ShoppingListItem, len(plan.ShoppingList))
 	for i, item := range plan.ShoppingList {
@@ -49,7 +49,10 @@ func attachShoppingList(plan *models.WeeklyMealPlan) {
 	}
 	items, err := buildShoppingList(mealIDs)
 	if err == nil {
-		plan.ShoppingList = items
+		plan.ShoppingList = make([]*models.ShoppingListItem, len(items))
+		for i := range items {
+			plan.ShoppingList[i] = &items[i]
+		}
 	}
 }
 

@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	apipb "mealplanner/generated/go"
 )
 
-// ChatMessage represents a chat message in a workflow
-type ChatMessage struct {
-	Sender string `json:"sender"`
-	Text   string `json:"text"`
-}
+// ChatMessage aliases the protobuf message
+type ChatMessage = apipb.Message
 
 // GetWorkflowCheckpoint retrieves the latest checkpoint data for a thread
 func GetWorkflowCheckpoint(db *sql.DB, threadID string) ([]byte, string, error) {
@@ -91,7 +90,7 @@ func GetMessages(db *sql.DB, threadID string) ([]ChatMessage, error) {
 		if vm, ok := v.(map[string]interface{}); ok {
 			sender, _ := vm["sender"].(string)
 			text, _ := vm["text"].(string)
-			msgs = append(msgs, ChatMessage{Sender: sender, Text: text})
+			msgs = append(msgs, ChatMessage{Sender: sender, Content: text})
 		}
 	}
 	return msgs, nil
@@ -103,5 +102,5 @@ func AddMessage(db *sql.DB, threadID, sender, message string) (ChatMessage, erro
 	if err != nil {
 		return ChatMessage{}, err
 	}
-	return ChatMessage{Sender: sender, Text: message}, nil
+	return ChatMessage{Sender: sender, Content: message}, nil
 }

@@ -41,7 +41,7 @@ func (m *mockMealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, 
 	}
 
 	plan := &models.WeeklyMealPlan{
-		Days: []models.PlanDay{
+		Days: []*models.PlanDay{
 			{DayIndex: 0, MealType: "dinner", Meal: testMeal},
 		},
 	}
