@@ -71,9 +71,16 @@ describe('AddRecipeForm', () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            id: 0,
-            mealId: 0,
-            name: 'New Recipe',
+            meal: {
+              id: 0,
+              name: 'New Recipe',
+              effort: 3,
+              hasRedMeat: false,
+              url: '',
+              mealType: 'dinner',
+              ingredients: [],
+              steps: [],
+            },
           }),
       }),
     );
@@ -91,6 +98,11 @@ describe('AddRecipeForm', () => {
       target: { value: '1 cup flour\n2 tbsp sugar' },
     });
     fireEvent.click(screen.getByText('Process Ingredients'));
+
+    // Wait for ingredients to be processed and verify they appear
+    await waitFor(() => {
+      expect(screen.getByText('Processed Ingredients:')).toBeInTheDocument();
+    });
 
     // Set effort level - find the Effort Level section and then find the slider
     // We don't use getByLabelText since the Slider doesn't use standard label association

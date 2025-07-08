@@ -52,7 +52,7 @@ describe('MealManagementTab', () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockMeals),
+        json: () => Promise.resolve({ meals: mockMeals }),
       }),
     ) as jest.Mock;
     mockShowToast.mockClear();
@@ -105,7 +105,7 @@ describe('MealManagementTab', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(mockMeals),
+          json: () => Promise.resolve({ meals: mockMeals }),
         }),
       )
       .mockImplementationOnce((url, options) => {
@@ -114,8 +114,7 @@ describe('MealManagementTab', () => {
         expect(options.method).toBe('PUT');
         return Promise.resolve({
           ok: true,
-          json: () =>
-            Promise.resolve({ message: 'Ingredient updated successfully' }),
+          json: () => Promise.resolve({ meal: mockMeals[0] }),
         });
       }) as jest.Mock;
 
@@ -182,7 +181,7 @@ describe('MealManagementTab', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(mockMeals),
+          json: () => Promise.resolve({ meals: mockMeals }),
         }),
       )
       .mockImplementationOnce((url, options) => {
@@ -191,8 +190,7 @@ describe('MealManagementTab', () => {
         expect(options.method).toBe('DELETE');
         return Promise.resolve({
           ok: true,
-          json: () =>
-            Promise.resolve({ message: 'Ingredient deleted successfully' }),
+          json: () => Promise.resolve({ meal: mockMeals[0] }),
         });
       }) as jest.Mock;
 
@@ -251,7 +249,7 @@ describe('MealManagementTab', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(mockMeals),
+          json: () => Promise.resolve({ meals: mockMeals }),
         }),
       )
       .mockImplementationOnce((url, options) => {
@@ -353,7 +351,7 @@ describe('MealManagementTab', () => {
     global.fetch = jest.fn().mockImplementationOnce(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(mockMeals),
+        json: () => Promise.resolve({ meals: mockMeals }),
       }),
     ) as jest.Mock;
 
@@ -452,14 +450,17 @@ describe('MealManagementTab', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(mockMeals),
+          json: () => Promise.resolve({ meals: mockMeals }),
         }),
       )
       .mockImplementationOnce((url, options) => {
         // Verify correct URL for ingredient update
         expect(url).toBe('/api/meals/1/ingredients/1');
         expect(options.method).toBe('PUT');
-        return Promise.resolve({ ok: true });
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ meal: updatedMeals[0] }),
+        });
       })
       .mockImplementationOnce(() =>
         Promise.resolve({

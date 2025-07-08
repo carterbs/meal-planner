@@ -125,7 +125,13 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
           {
             dayIndex: 6,
             mealType: 'breakfast',
-            meal: { id: 2, name: 'x', effort: 1, hasRedMeat: false },
+            meal: {
+              id: 2,
+              name: 'x',
+              effort: 1,
+              hasRedMeat: false,
+              mealType: 'breakfast',
+            },
           },
         ],
       };
