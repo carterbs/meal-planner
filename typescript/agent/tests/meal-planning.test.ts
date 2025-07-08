@@ -1,11 +1,11 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { VALIDATION_CRITERIA } from '../shared/types';
 import type { WeeklyMealPlan } from '@mealplanner/generated';
-import { PostgresCheckpointSaver } from '../shared/checkpointer';
+import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
 
 describe('MealPlanningWorkflow logic', () => {
   let workflow: any;
-  const mockCheckpointer = {} as PostgresCheckpointSaver;
+  const mockCheckpointer = {} as HttpCheckpointSaver;
 
   beforeAll(() => {
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;
