@@ -43,7 +43,7 @@ CURRENT_PLAN=$(curl -s -X GET -H 'Content-Type: application/json' \
 echo "Current plan response:"
 echo "$CURRENT_PLAN" | jq . || echo "Raw response: $CURRENT_PLAN"
 
-SATURDAY_BEFORE=$(echo "$CURRENT_PLAN" | jq '.days[] | select(.dayIndex == 5)')
+SATURDAY_BEFORE=$(echo "$CURRENT_PLAN" | jq '.entries[] | select(.day_of_week == 5)')
 echo "Saturday meals before removal:"
 echo "$SATURDAY_BEFORE" | jq . || echo "Raw Saturday data: $SATURDAY_BEFORE"
 
@@ -90,20 +90,20 @@ echo "Workflow state response:"
 echo "$WORKFLOW_STATE" | jq . || echo "Raw response: $WORKFLOW_STATE"
 
 echo "--- Step 8: Check meal plan state ---"
-MEAL_PLAN_STATE=$(echo "$WORKFLOW_STATE" | jq '.meal_plan // .mealPlan // empty')
+MEAL_PLAN_STATE=$(echo "$WORKFLOW_STATE" | jq '.entries // empty')
 echo "Meal plan from workflow:"
 echo "$MEAL_PLAN_STATE" | jq . || echo "Raw meal plan: $MEAL_PLAN_STATE"
 
 echo "--- Step 9: Verify Saturday meals are removed ---"
-SATURDAY_AFTER=$(echo "$MEAL_PLAN_STATE" | jq '.days[] | select(.dayIndex == 5)' 2>/dev/null || echo "")
+SATURDAY_AFTER=$(echo "$WORKFLOW_STATE" | jq '.entries[] | select(.day_of_week == 5)' 2>/dev/null || echo "")
 echo "Saturday meals after removal:"
 echo "$SATURDAY_AFTER" | jq . || echo "Raw Saturday data: $SATURDAY_AFTER"
 
 if [ -z "$SATURDAY_AFTER" ]; then
   echo "SUCCESS: No Saturday meals found after removal"
 else
-  # Check if all Saturday meals are null
-  NULL_COUNT=$(echo "$SATURDAY_AFTER" | jq '[.meal == null] | length' 2>/dev/null || echo "0")
+  # Check if all Saturday meals are null or empty
+  NULL_COUNT=$(echo "$SATURDAY_AFTER" | jq '[.meal == null or .meal == ""] | length' 2>/dev/null || echo "0")
   TOTAL_COUNT=$(echo "$SATURDAY_AFTER" | jq '. | length' 2>/dev/null || echo "0")
   
   echo "Saturday meal analysis: $NULL_COUNT null meals out of $TOTAL_COUNT total"

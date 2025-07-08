@@ -69,7 +69,14 @@ export class FeedbackHandler {
       }
 
       const [checkpoint] = tuple;
-      const state = checkpoint.channel_values as MealPlanningState;
+      // Properly deserialize state from checkpoint
+      const stateAny = checkpoint.channelValues['state'];
+      if (!stateAny || typeof stateAny !== 'object' || !('value' in stateAny)) {
+        return [];
+      }
+      const stateBytes = stateAny.value as Uint8Array;
+      const stateJson = new TextDecoder().decode(stateBytes);
+      const state = JSON.parse(stateJson) as MealPlanningState;
 
       return state.feedback_history || [];
     } catch (error) {
@@ -107,7 +114,14 @@ export class FeedbackHandler {
       }
 
       const [checkpoint] = tuple;
-      const state = checkpoint.channel_values as MealPlanningState;
+      // Properly deserialize state from checkpoint
+      const stateAny = checkpoint.channelValues['state'];
+      if (!stateAny || typeof stateAny !== 'object' || !('value' in stateAny)) {
+        return false;
+      }
+      const stateBytes = stateAny.value as Uint8Array;
+      const stateJson = new TextDecoder().decode(stateBytes);
+      const state = JSON.parse(stateJson) as MealPlanningState;
 
       return state.current_step === 'await_feedback';
     } catch (error) {

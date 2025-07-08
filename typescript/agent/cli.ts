@@ -200,15 +200,8 @@ import { MessageGenerator } from './utils/messageGenerator';
 
 const program = new Command();
 
-// Global configuration
+// Global configuration  
 const config: LangGraphAgentConfig = {
-  database: {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'meal_planner_dev',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'password',
-  },
   defaultParticipants: ['brad', 'shannon'],
 };
 

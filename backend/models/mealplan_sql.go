@@ -4,14 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"time"
+	apipb "mealplanner/generated/go"
 )
 
-// MealPlanEntry represents a single meal plan item
-type MealPlanEntry struct {
-	DayOfWeek int         `json:"day_of_week"`
-	MealType  string      `json:"meal_type"`
-	Meal      interface{} `json:"meal"`
-}
+// MealPlanEntry is an alias to the generated protobuf type
+type MealPlanEntry = apipb.MealPlanEntry
 
 // MealPlanIdentifier represents a persisted meal plan
 type MealPlanIdentifier struct {
@@ -87,7 +84,13 @@ func GetMealPlanItems(db *sql.DB, mealPlanID int) ([]MealPlanEntry, error) {
 		if err := rows.Scan(&e.DayOfWeek, &e.MealType, &mealJSON); err != nil {
 			return nil, err
 		}
-		e.Meal = string(mealJSON)
+		
+		// Unmarshal the JSON into a Meal object
+		var meal Meal
+		if err := json.Unmarshal(mealJSON, &meal); err != nil {
+			return nil, err
+		}
+		e.Meal = &meal
 		entries = append(entries, e)
 	}
 	return entries, nil

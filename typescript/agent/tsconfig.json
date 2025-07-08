@@ -9,11 +9,11 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "rootDir": "./",
-    "declaration": true,
+    "declaration": false,
     "sourceMap": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
   "include": ["**/*.ts", "../typescript/shared/ts/**/*.ts", "../typescript/shared/days.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "../../generated/**/*"]
 }

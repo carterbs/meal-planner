@@ -40,7 +40,7 @@ SESSION_JSON=$(curl -s -X POST -H 'Content-Type: application/json' \
   -d '{"workflowType":"MEAL_PLANNING","participants":["user"]}' \
   http://localhost:8080/api/agent/start)
 echo "Session creation response (summary):"
-echo "$SESSION_JSON" | jq '{success, threadId, message, meal_plan_size: .initialState.meal_plan.days | length}' || echo "Raw response: $SESSION_JSON"
+echo "$SESSION_JSON" | jq '{success, threadId, message, meal_plan_size: .initialState.entries | length}' || echo "Raw response: $SESSION_JSON"
 
 THREAD_ID=$(echo "$SESSION_JSON" | jq -r '.threadId')
 echo "Thread ID: $THREAD_ID"
@@ -52,12 +52,12 @@ fi
 
 echo "--- Step 2: Extract meal plan from session ---"
 # The session already contains a meal plan in initialState
-MEAL_PLAN=$(echo "$SESSION_JSON" | jq '.initialState.meal_plan')
-echo "Meal plan from session (first 3 days):"
-echo "$MEAL_PLAN" | jq '.days[0:3] | map({dayIndex, mealType, mealName: .meal.name})' || echo "Error parsing meal plan"
+MEAL_PLAN=$(echo "$SESSION_JSON" | jq '.initialState.entries')
+echo "Meal plan from session (first 3 entries):"
+echo "$MEAL_PLAN" | jq '.[0:3] | map({day_of_week, meal_type, mealName: (.meal | fromjson | .name // "null")})' 2>/dev/null || echo "Error parsing meal plan"
 
 # Verify meal plan was created
-MEAL_COUNT=$(echo "$MEAL_PLAN" | jq '.days | length' 2>/dev/null || echo "0")
+MEAL_COUNT=$(echo "$MEAL_PLAN" | jq '. | length' 2>/dev/null || echo "0")
 echo "Session created with meal plan containing $MEAL_COUNT meal slots"
 
 if [ "$MEAL_COUNT" -eq 0 ]; then
@@ -67,7 +67,7 @@ fi
 
 echo "--- Step 3: Generate shopping list from meal plan ---"
 # Extract meal IDs from the session meal plan
-MEAL_IDS=$(echo "$MEAL_PLAN" | jq '[.days[] | select(.meal != null) | .meal.id]')
+MEAL_IDS=$(echo "$MEAL_PLAN" | jq '[.[] | select(.meal != null and .meal != "") | .meal | fromjson | .id] // []' 2>/dev/null || echo "[]")
 echo "Meal IDs for shopping list: $(echo "$MEAL_IDS" | jq 'length') meals"
 
 SHOPPING_LIST=$(curl -s -X POST -H 'Content-Type: application/json' \
@@ -89,10 +89,10 @@ echo "--- Step 4: Verify session state ---"
 WORKFLOW_STATE=$(curl -s -X GET -H 'Content-Type: application/json' \
   http://localhost:8080/api/workflows/$THREAD_ID)
 echo "Final workflow state (summary):"
-echo "$WORKFLOW_STATE" | jq '{threadId, current_step, meal_plan: (.meal_plan.days | length), shopping_list: (.shopping_list != null)}' || echo "Error parsing workflow state"
+echo "$WORKFLOW_STATE" | jq '{threadId, current_step, meal_plan: (.entries | length), shopping_list: (.shopping_list != null)}' || echo "Error parsing workflow state"
 
 # Check if workflow contains meal plan data
-HAS_MEAL_PLAN=$(echo "$WORKFLOW_STATE" | jq 'has("meal_plan") or has("mealPlan")' 2>/dev/null || echo "false")
+HAS_MEAL_PLAN=$(echo "$WORKFLOW_STATE" | jq 'has("entries")' 2>/dev/null || echo "false")
 echo "Workflow has meal plan: $HAS_MEAL_PLAN"
 
 # Success criteria: We have a valid session, meal plan, and shopping list
