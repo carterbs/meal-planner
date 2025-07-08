@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os/exec"
 	"time"
@@ -63,8 +64,13 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 
 // StartAgentWorkflow handles POST /api/agent/start
 func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	var req models.AgentStartRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.Unmarshal(body, &req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
@@ -123,8 +129,13 @@ func joinParticipants(p []string) string {
 
 // AddAgentFeedback handles POST /api/agent/feedback
 func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	var req models.AgentFeedbackRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.Unmarshal(body, &req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
@@ -165,8 +176,13 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 
 // ResumeAgentWorkflow handles POST /api/agent/resume
 func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	var req models.AgentResumeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.Unmarshal(body, &req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
@@ -228,8 +244,13 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 
 // MessageAgentHandler handles POST /api/agent/message
 func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	var req models.AgentMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.Unmarshal(body, &req); err != nil {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}

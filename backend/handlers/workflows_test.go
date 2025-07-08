@@ -11,7 +11,6 @@ import (
 	"mealplanner/services"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -70,87 +69,212 @@ func (m *MockWorkflowService) UpdateWorkflowCheckpointWithMessage(threadID, send
 	return args.Error(0)
 }
 
-func TestGetWorkflowState_ShouldIncludeShoppingListFromMealPlan(t *testing.T) {
-	// Create a mock workflow service
-	mockService := &MockWorkflowService{}
+// MockMealPlanService mocks the MealPlanService interface for testing
+type MockMealPlanService struct {
+	mock.Mock
+}
 
-	// Create test data with shopping list in the meal plan
-	shoppingListItems := []models.ShoppingListItem{
-		{Ingredient: "Eggs", Quantity: "12 each", Category: "Dairy"},
-		{Ingredient: "Bread", Quantity: "1 loaf", Category: "Bakery"},
-	}
+func (m *MockMealPlanService) GetLatestMealPlan(threadID string) (*models.MealPlanIdentifier, error) {
+	args := m.Called(threadID)
+	return args.Get(0).(*models.MealPlanIdentifier), args.Error(1)
+}
 
-	mealPlan := &models.WeeklyMealPlan{
-		Days: []models.PlanDay{
-			{
-				Meal: &models.Meal{
-					Id:   1,
-					Name: "Test Meal",
-				},
-				DayIndex: 0,
-				MealType: "breakfast",
-			},
-		},
-		ShoppingList: shoppingListItems,
-	}
+func (m *MockMealPlanService) GetMealPlanItems(planID int) ([]models.MealPlanEntry, error) {
+	args := m.Called(planID)
+	return args.Get(0).([]models.MealPlanEntry), args.Error(1)
+}
 
-	workflowState := &models.InternalWorkflowState{
-		ThreadID:        "test-thread-id",
-		MealPlan:        mealPlan,
-		ShoppingList:    nil, // No shopping list in the root state
-		CurrentStep:     "test_step",
-		FeedbackHistory: []models.FeedbackEntry{},
-		AgentMessages:   []models.AgentMessage{},
-	}
+func (m *MockMealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error) {
+	args := m.Called()
+	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+}
 
-	// Set up the mock expectation
-	mockService.On("GetWorkflowState", "test-thread-id").Return(workflowState, nil)
+func (m *MockMealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) {
+	args := m.Called()
+	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+}
 
-	// Replace the global Services with our mock
+func (m *MockMealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
+	args := m.Called(plan)
+	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+}
+
+func (m *MockMealPlanService) RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
+	args := m.Called(plan, dayIndex, mealType)
+	return args.Error(0)
+}
+
+func (m *MockMealPlanService) UpdateMealInPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string, meal *models.Meal) error {
+	args := m.Called(plan, dayIndex, mealType, meal)
+	return args.Error(0)
+}
+
+func (m *MockMealPlanService) GenerateShoppingListForPlan(plan *models.WeeklyMealPlan) error {
+	args := m.Called(plan)
+	return args.Error(0)
+}
+
+func (m *MockMealPlanService) SaveMealPlan(plan *models.WeeklyMealPlan) error {
+	args := m.Called(plan)
+	return args.Error(0)
+}
+
+func (m *MockMealPlanService) SaveMealPlanToDB(plan *models.WeeklyMealPlan) error {
+	args := m.Called(plan)
+	return args.Error(0)
+}
+
+func (m *MockMealPlanService) SaveMealPlanWithIdentifier(plan *models.WeeklyMealPlan, threadID string) (*models.MealPlanIdentifier, error) {
+	args := m.Called(plan, threadID)
+	return args.Get(0).(*models.MealPlanIdentifier), args.Error(1)
+}
+
+func (m *MockMealPlanService) UpdateMealPlanItems(planID int, items []models.MealPlanEntry) error {
+	args := m.Called(planID, items)
+	return args.Error(0)
+}
+
+// MockShoppingListService mocks the ShoppingListService interface for testing
+type MockShoppingListService struct {
+	mock.Mock
+}
+
+func (m *MockShoppingListService) BuildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
+	args := m.Called(mealIDs)
+	return args.Get(0).([]models.ShoppingListItem), args.Error(1)
+}
+
+func (m *MockShoppingListService) GenerateShoppingListFromMeals(meals []*models.Meal) []*models.Ingredient {
+	args := m.Called(meals)
+	return args.Get(0).([]*models.Ingredient)
+}
+
+func (m *MockShoppingListService) ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []models.ShoppingListItem {
+	args := m.Called(ingredients)
+	return args.Get(0).([]models.ShoppingListItem)
+}
+
+// MockMessageService mocks the MessageService interface for testing
+type MockMessageService struct {
+	mock.Mock
+}
+
+func (m *MockMessageService) GetMessages(threadID string) ([]models.ChatMessage, error) {
+	args := m.Called(threadID)
+	return args.Get(0).([]models.ChatMessage), args.Error(1)
+}
+
+// stub implementations to satisfy services interfaces
+type stubMealPlanService struct {
+	mock.Mock
+}
+
+func (m *stubMealPlanService) GetLatestMealPlan(threadID string) (*models.MealPlanIdentifier, error) {
+	args := m.Called(threadID)
+	return args.Get(0).(*models.MealPlanIdentifier), args.Error(1)
+}
+
+func (m *stubMealPlanService) GetMealPlanItems(planID int) ([]models.MealPlanEntry, error) {
+	args := m.Called(planID)
+	return args.Get(0).([]models.MealPlanEntry), args.Error(1)
+}
+
+func (m *stubMealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error) {
+	return nil, nil
+}
+
+func (m *stubMealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) {
+	return nil, nil
+}
+
+func (m *stubMealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
+	return nil, nil
+}
+
+func (m *stubMealPlanService) RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
+	return nil
+}
+
+func (m *stubMealPlanService) SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
+	return nil, nil
+}
+
+// stub MessageService implementation
+type stubMessageService struct {
+	mock.Mock
+}
+
+func (m *stubMessageService) GetMessages(threadID string) ([]models.ChatMessage, error) {
+	args := m.Called(threadID)
+	return args.Get(0).([]models.ChatMessage), args.Error(1)
+}
+
+func (m *stubMessageService) AddMessage(threadID, sender, message string) (models.ChatMessage, error) {
+	return models.ChatMessage{}, nil
+}
+
+func (m *stubMessageService) UpdateWorkflowCheckpointWithMessage(threadID, sender, message string) error {
+	return nil
+}
+
+// TestGetWorkflowStateReturnsShoppingList ensures GET /api/workflows/{thread_id} returns a shopping list
+func TestGetWorkflowStateReturnsShoppingList(t *testing.T) {
 	originalServices := Services
-	Services = &services.ServiceContainer{
-		WorkflowService: mockService,
+	defer func() { Services = originalServices }()
+
+	stubMealPlanSvc := new(stubMealPlanService)
+	mockShoppingListSvc := new(MockShoppingListService)
+	stubMessageSvc := new(stubMessageService)
+
+	svc := &services.ServiceContainer{
+		MealPlanService:     stubMealPlanSvc,
+		ShoppingListService: mockShoppingListSvc,
+		MessageService:      stubMessageSvc,
 	}
-	defer func() {
-		Services = originalServices
-	}()
+	Services = svc
 
-	// Create a test request
-	req := httptest.NewRequest("GET", "/api/workflows/test-thread-id", nil)
-
-	// Create a chi router context with the threadId parameter
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("threadId", "test-thread-id")
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-
-	// Create a response recorder
-	w := httptest.NewRecorder()
-
-	// Call the handler
-	GetWorkflowState(w, req)
-
-	// Assert the response
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var response models.WorkflowState
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-
-	// THIS IS THE FAILING ASSERTION - The shopping list should be populated
-	// from the meal plan but currently returns null
-	if string(response.ShoppingList) == "null" {
-		t.Errorf("Shopping list should not be null when present in meal plan. Got: %s", response.ShoppingList)
-		return
+	threadID := "thread123"
+	plan := &models.MealPlanIdentifier{ID: 1, ThreadID: threadID}
+	entries := []models.MealPlanEntry{
+		{DayOfWeek: 0, MealType: "breakfast", Meal: map[string]interface{}{"id": plan.ID, "name": "Test Meal"}},
+	}
+	shoppingItems := []models.ShoppingListItem{
+		{Ingredient: "Eggs", Quantity: "12"},
+	}
+	messages := []models.ChatMessage{
+		{Sender: "user", Text: "Hello"},
 	}
 
-	// Verify the shopping list contains the expected items
-	var shoppingList []models.ShoppingListItem
-	err = json.Unmarshal(response.ShoppingList, &shoppingList)
-	assert.NoError(t, err)
-	assert.Len(t, shoppingList, 2, "Shopping list should contain 2 items from meal plan")
-	assert.Equal(t, "Eggs", shoppingList[0].Ingredient)
-	assert.Equal(t, "Bread", shoppingList[1].Ingredient)
+	stubMealPlanSvc.On("GetLatestMealPlan", threadID).Return(plan, nil)
+	stubMealPlanSvc.On("GetMealPlanItems", plan.ID).Return(entries, nil)
+	mockShoppingListSvc.On("BuildShoppingList", []int{}).Return(shoppingItems, nil)
+	stubMessageSvc.On("GetMessages", threadID).Return(messages, nil)
 
-	// Verify mock was called
-	mockService.AssertExpectations(t)
+	req := httptest.NewRequest("GET", "/api/workflows/"+threadID, nil)
+	rc := chi.NewRouteContext()
+	rc.URLParams.Add("threadId", threadID)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rc))
+
+	rr := httptest.NewRecorder()
+	GetWorkflowState(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rr.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to parse response: %v", err)
+	}
+	sl, ok := resp["shopping_list"].([]interface{})
+	if !ok {
+		t.Errorf("shopping_list is missing or wrong type")
+	}
+	if len(sl) != 1 {
+		t.Errorf("expected 1 shopping list item, got %d", len(sl))
+	}
+
+	stubMealPlanSvc.AssertExpectations(t)
+	mockShoppingListSvc.AssertExpectations(t)
+	stubMessageSvc.AssertExpectations(t)
 }

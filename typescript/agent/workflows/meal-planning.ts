@@ -2,7 +2,10 @@ import { ChatOpenAI } from '@langchain/openai';
 import { FakeChatModel } from '@langchain/core/utils/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import type { WeeklyMealPlan as GeneratedWeeklyMealPlan, Meal as GeneratedMeal } from '@mealplanner/generated';
+import type {
+  WeeklyMealPlan as GeneratedWeeklyMealPlan,
+  Meal as GeneratedMeal,
+} from '@mealplanner/generated';
 import { WeeklyMealPlan } from '@mealplanner/generated';
 
 import {
@@ -11,7 +14,6 @@ import {
   WorkflowType,
   VALIDATION_CRITERIA,
   FeedbackEntry,
-  
 } from '../shared/types';
 import { BaseWorkflow } from '../registry';
 import { debugLog } from '../cli';
@@ -59,6 +61,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private feedbackHandler: FeedbackHandler;
 
   constructor(checkpointer: PostgresCheckpointSaver) {
+    this.saveMealPlan = this.saveMealPlan.bind(this);
     this.checkpointer = checkpointer;
     this.feedbackHandler = new FeedbackHandler(checkpointer);
     this.client = new Client({
@@ -245,6 +248,28 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       updated_at: new Date(),
     };
   }
+  private async saveMealPlan(threadId: string, plan: WeeklyMealPlan) {
+    try {
+      const backend = process.env.BACKEND_URL ?? 'http://localhost:8080';
+      const planJson = WeeklyMealPlan.toJSON(plan) as any;
+      const body = {
+        threadId: threadId,
+        version: 0,
+        entries: planJson.days.map((d: any) => ({
+          dayOfWeek: d.dayIndex ?? 0,
+          mealType: d.mealType,
+          meal: d.meal,
+        })),
+      };
+      await fetch(`${backend}/api/mealplan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      console.warn('⚠️ [MEAL-WORKFLOW] Failed to persist meal plan', err);
+    }
+  }
 
   private async generatePlanNode(
     _state: MealPlanningState,
@@ -263,13 +288,15 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       );
       const mealPlan = WeeklyMealPlan.fromJSON(JSON.parse(jsonText));
 
+      await this.saveMealPlan(_state.threadId, mealPlan);
+
       return {
         current_step: MealPlanningStep.OPTIMIZE_PLAN,
         meal_plan: mealPlan,
         updated_at: new Date(),
       };
     } catch (error) {
-      console.error(`❌ [MEAL-WORKFLOW] Error generating plan:`, error);
+      console.error(` [MEAL-WORKFLOW] Error generating plan:`, error);
       throw error;
     }
   }
@@ -280,6 +307,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     console.log(
       `🍽️ [MEAL-WORKFLOW] Optimizing meal plan (iteration ${state.iteration_count + 1})`,
     );
+
+    const threadId = state.threadId;
 
     if (!state.meal_plan) {
       throw new Error('No meal plan to optimize');
@@ -294,6 +323,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     } else {
       console.log(`✅ [MEAL-WORKFLOW] Plan is already valid`);
     }
+
+    await this.saveMealPlan(threadId, optimizedPlan);
 
     return {
       current_step: MealPlanningStep.PRESENT_PLAN,
@@ -322,6 +353,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       feedbackMessages,
       state.threadId,
     );
+    await this.saveMealPlan(state.threadId, result.mealPlan);
     return {
       meal_plan: result.mealPlan,
       user_message: result.userMessage,
@@ -494,10 +526,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 responseText,
               );
               const jsonText = this.extractJsonFromResponse(responseText);
-              console.log(
-                `🤖 [MEAL-WORKFLOW] Raw JSON response:`,
-                jsonText,
-              );
+              console.log(`🤖 [MEAL-WORKFLOW] Raw JSON response:`, jsonText);
               updatedPlan = WeeklyMealPlan.fromJSON(JSON.parse(jsonText));
             } catch (mcpError) {
               console.error(`❌ [MEAL-WORKFLOW] MCP tool call failed:`);
@@ -856,7 +885,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
     return issues;
   }
-
 
   private async optimizePlanWithLLM(
     plan: GeneratedWeeklyMealPlan,

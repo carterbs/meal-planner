@@ -86,7 +86,8 @@ export interface SubstitutionData {
 
 // Types for meal planning domain
 export type InternalMeal = import('@mealplanner/generated').Meal;
-export type ShoppingListItem = import('@mealplanner/generated').ShoppingListItem;
+export type ShoppingListItem =
+  import('@mealplanner/generated').ShoppingListItem;
 
 // Workflow state interfaces
 export interface MealPlanningState extends BaseWorkflowState {

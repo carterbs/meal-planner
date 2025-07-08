@@ -14,6 +14,18 @@ import (
 // mockMealPlanService implements the MealPlanService interface for testing
 type mockMealPlanService struct{}
 
+func (m *mockMealPlanService) SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
+	return nil, nil
+}
+
+func (m *mockMealPlanService) GetLatestMealPlan(threadID string) (*models.MealPlanIdentifier, error) {
+	return nil, nil
+}
+
+func (m *mockMealPlanService) GetMealPlanItems(mealPlanID int) ([]models.MealPlanEntry, error) {
+	return nil, nil
+}
+
 func (m *mockMealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) {
 	// Return an error to trigger generation path
 	return nil, errors.New("no recent meal plan found")

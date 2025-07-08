@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"google.golang.org/protobuf/encoding/protojson"
+	"io"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 	"mealplanner/services"
 
@@ -70,35 +73,34 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 
 // RemoveMealHandler handles POST /api/meals/remove and removes a meal from the user's meal plan.
 func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
-	// Ensure workflow service is available
 	if WorkflowService == nil {
 		http.Error(w, "Workflow service not initialized", http.StatusInternalServerError)
 		return
 	}
-	// Parse payload
-	var payload struct {
-		ThreadID string `json:"threadId"`
-		DayIndex int    `json:"dayIndex"`
-		MealType string `json:"mealType"`
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
 	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	var req apipb.RemoveMealRequest
+	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-	if payload.ThreadID == "" {
+	if req.ThreadId == "" {
 		http.Error(w, "Missing threadId", http.StatusBadRequest)
 		return
 	}
 
-	// Load meal plan using service
-	plan, err := WorkflowService.GetMealPlan(payload.ThreadID)
+	plan, err := WorkflowService.GetMealPlan(req.ThreadId)
 	if err != nil {
 		http.Error(w, "Failed to fetch meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	// AGENT-REFACTOR: handlers should not interact with models. move it to the service layer.
 	// Validate and remove the meal from the plan
-	if err := models.RemoveMealFromPlan(plan, payload.DayIndex, payload.MealType); err != nil {
+	if err := models.RemoveMealFromPlan(plan, int(req.DayIndex), req.MealType); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -108,7 +110,7 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 	attachShoppingList(plan)
 
 	// Save updated plan using service
-	if err := WorkflowService.UpdateMealPlan(payload.ThreadID, plan); err != nil {
+	if err := WorkflowService.UpdateMealPlan(req.ThreadId, plan); err != nil {
 		http.Error(w, "Failed to update meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -119,19 +121,18 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 
 // SwapMealHandler handles POST /api/meals/swap and returns a new meal to replace the current one.
 func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		MealID   int    `json:"meal_id"`
-		MealType string `json:"meal_type"`
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
 	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	var req apipb.SwapMealRequest
+	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	var newMeal *models.Meal
-	var err error
-	// Use service layer for all database operations
-	newMeal, err = Services.MealService.SwapMeal(payload.MealID, payload.MealType)
+	newMeal, err := Services.MealService.SwapMeal(int(req.MealId), req.MealType)
 	if err != nil {
 		http.Error(w, "Error swapping meal: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -164,8 +165,13 @@ func UpdateMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	var updatedIngredient models.Ingredient
-	if err := json.NewDecoder(r.Body).Decode(&updatedIngredient); err != nil {
+	if err := json.Unmarshal(body, &updatedIngredient); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
@@ -234,16 +240,18 @@ func DeleteMealHandler(w http.ResponseWriter, r *http.Request) {
 
 // ReplaceMealHandler handles POST /api/meals/replace and returns a new meal to replace the current one.
 func ReplaceMealHandler(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		Day       string `json:"day"`
-		NewMealID int    `json:"new_meal_id"`
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
 	}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	var req apipb.ReplaceMealRequest
+	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	meal, err := Services.MealService.GetMealByID(payload.NewMealID)
+	meal, err := Services.MealService.GetMealByID(int(req.NewMealId))
 	if err != nil {
 		http.Error(w, "Meal not found", http.StatusNotFound)
 		return
@@ -255,8 +263,13 @@ func ReplaceMealHandler(w http.ResponseWriter, r *http.Request) {
 
 // FinalizeMealPlanHandler handles POST /api/mealplan/finalize and updates the last planned date for all meals in the plan
 func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	var plan models.WeeklyMealPlan
-	if err := json.NewDecoder(r.Body).Decode(&plan); err != nil {
+	if err := json.Unmarshal(body, &plan); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -273,9 +286,9 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 	sort.Ints(mealIDs)
 
 	// Update last planned date for all meals in the plan
-	err := Services.MealService.UpdateLastPlannedDates(mealIDs)
-	if err != nil {
-		http.Error(w, "Failed to finalize meal plan: "+err.Error(), http.StatusInternalServerError)
+	updateErr := Services.MealService.UpdateLastPlannedDates(mealIDs)
+	if updateErr != nil {
+		http.Error(w, "Failed to finalize meal plan: "+updateErr.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -285,8 +298,13 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 
 // CreateMealHandler handles POST /api/meals and creates a new meal with ingredients.
 func CreateMealHandler(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	var meal models.Meal
-	if err := json.NewDecoder(r.Body).Decode(&meal); err != nil {
+	if err := json.Unmarshal(body, &meal); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}

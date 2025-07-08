@@ -10,9 +10,9 @@ func NewServiceContainer(db *sql.DB) *ServiceContainer {
 		MealService:         NewMealService(db),
 		IngredientService:   NewIngredientService(db),
 		RecipeStepService:   NewRecipeStepService(db),
-		MealPlanService:     NewMealPlanService(db),
+		MealPlanService:     SQLMealPlanService(db),
 		ShoppingListService: NewShoppingListService(db),
-		MessageService:      NewMessageService(db),
+		MessageService:      SQLMessageService(db),
 		WorkflowService:     NewWorkflowService(db),
 	}
 }

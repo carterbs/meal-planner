@@ -53,6 +53,48 @@ message WeeklyMealPlan {
   repeated ShoppingListItem shopping_list = 2;
 }
 
+// Additional meal plan persistence models
+
+message MealPlanEntry {
+  int32 day_of_week = 1; // 0=Monday..6=Sunday
+  string meal_type = 2;  // breakfast, lunch, dinner
+  Meal meal = 3;
+}
+
+message SaveMealPlanRequest {
+  string thread_id = 1;
+  int32 version = 2;
+  repeated MealPlanEntry entries = 3;
+}
+
+message MealPlanIdentifier {
+  int32 id = 1;
+  string thread_id = 2;
+  int32 version = 3;
+  string created_at = 4;
+}
+
+message SaveCheckpointRequest {
+  string thread_id = 1;
+  int32 version = 2;
+  repeated MealPlanEntry entries = 3;
+}
+
+message CheckpointResponse {
+  bool success = 1;
+}
+
+message Message {
+  string thread_id = 1;
+  string sender = 2; // "user" or "agent"
+  string content = 3;
+  string created_at = 4;
+}
+
+message ShoppingList {
+  repeated ShoppingListItem items = 1;
+}
+
 // Agent-related models
 
 message AgentStartRequest {
@@ -315,7 +357,9 @@ message GetWorkflowStateRequest {
 }
 
 message GetWorkflowStateResponse {
-  string state = 1; // JSON string
+  WeeklyMealPlan plan = 1;
+  ShoppingList shopping_list = 2;
+  repeated Message messages = 3;
 }
 
 message AbandonWorkflowRequest {
@@ -328,7 +372,8 @@ message AbandonWorkflowResponse {
 
 message AddMessageRequest {
   string thread_id = 1;
-  string message = 2;
+  string sender = 2; // "user" or "agent"
+  string message = 3;
 }
 
 message AddMessageResponse {
@@ -337,7 +382,10 @@ message AddMessageResponse {
 
 message UpdateSessionStateRequest {
   string thread_id = 1;
-  string state = 2; // JSON string
+  string meal_plan = 2; // JSON string
+  string shopping_list = 3; // JSON string
+  string current_step = 4;
+  string status = 5;
 }
 
 message UpdateSessionStateResponse {

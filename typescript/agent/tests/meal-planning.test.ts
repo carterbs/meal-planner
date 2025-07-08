@@ -39,7 +39,17 @@ describe('MealPlanningWorkflow logic', () => {
         .map((_, i) => ({
           dayIndex: i,
           mealType: 'dinner',
-          meal: { id: i, name: 'm', effort: 4, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
+          meal: {
+            id: i,
+            name: 'm',
+            effort: 4,
+            hasRedMeat: false,
+            lastPlanned: undefined,
+            url: '',
+            mealType: '',
+            ingredients: [],
+            steps: [],
+          },
         }));
       const issues = workflow.validatePlan(makePlan(days));
       expect(issues).toContain(
@@ -54,7 +64,17 @@ describe('MealPlanningWorkflow logic', () => {
         .map((_, i) => ({
           dayIndex: i,
           mealType: 'lunch',
-          meal: { id: i, name: 'm', effort: 1, hasRedMeat: true, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
+          meal: {
+            id: i,
+            name: 'm',
+            effort: 1,
+            hasRedMeat: true,
+            lastPlanned: undefined,
+            url: '',
+            mealType: '',
+            ingredients: [],
+            steps: [],
+          },
         }));
       const issues = workflow.validatePlan(makePlan(days));
       expect(issues).toContain(
@@ -67,17 +87,47 @@ describe('MealPlanningWorkflow logic', () => {
         {
           dayIndex: 0,
           mealType: 'breakfast',
-          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
+          meal: {
+            id: 1,
+            name: 'a',
+            effort: 1,
+            hasRedMeat: false,
+            lastPlanned: undefined,
+            url: '',
+            mealType: '',
+            ingredients: [],
+            steps: [],
+          },
         },
         {
           dayIndex: 1,
           mealType: 'lunch',
-          meal: { id: 2, name: 'b', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
+          meal: {
+            id: 2,
+            name: 'b',
+            effort: 1,
+            hasRedMeat: false,
+            lastPlanned: undefined,
+            url: '',
+            mealType: '',
+            ingredients: [],
+            steps: [],
+          },
         },
         {
           dayIndex: 2,
           mealType: 'dinner',
-          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
+          meal: {
+            id: 1,
+            name: 'a',
+            effort: 1,
+            hasRedMeat: false,
+            lastPlanned: undefined,
+            url: '',
+            mealType: '',
+            ingredients: [],
+            steps: [],
+          },
         },
       ];
       const issues = workflow.validatePlan(makePlan(days));
@@ -89,17 +139,47 @@ describe('MealPlanningWorkflow logic', () => {
         {
           dayIndex: 0,
           mealType: 'breakfast',
-          meal: { id: 1, name: 'a', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
+          meal: {
+            id: 1,
+            name: 'a',
+            effort: 1,
+            hasRedMeat: false,
+            lastPlanned: undefined,
+            url: '',
+            mealType: '',
+            ingredients: [],
+            steps: [],
+          },
         },
         {
           dayIndex: 1,
           mealType: 'lunch',
-          meal: { id: 2, name: 'b', effort: 2, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
+          meal: {
+            id: 2,
+            name: 'b',
+            effort: 2,
+            hasRedMeat: false,
+            lastPlanned: undefined,
+            url: '',
+            mealType: '',
+            ingredients: [],
+            steps: [],
+          },
         },
         {
           dayIndex: 2,
           mealType: 'dinner',
-          meal: { id: 3, name: 'c', effort: 1, hasRedMeat: false, lastPlanned: undefined, url: '', mealType: '', ingredients: [], steps: [] },
+          meal: {
+            id: 3,
+            name: 'c',
+            effort: 1,
+            hasRedMeat: false,
+            lastPlanned: undefined,
+            url: '',
+            mealType: '',
+            ingredients: [],
+            steps: [],
+          },
         },
       ];
       expect(workflow.validatePlan(makePlan(days))).toEqual([]);

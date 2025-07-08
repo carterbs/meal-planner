@@ -3,21 +3,16 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"io"
 	"net/http"
-	"sort"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 
 	"github.com/go-chi/chi/v5"
 )
-
-// in-memory map to track workflow status like ABANDONED (kept for backwards compatibility)
-var workflowStatus = make(map[string]string)
-
-// parseJSON parses JSON from request body into target struct
-func parseJSON(r *http.Request, target interface{}) error {
-	return json.NewDecoder(r.Body).Decode(target)
-}
 
 // GetWorkflowState handles GET /api/workflows/{threadId}
 func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
@@ -27,80 +22,59 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	state, err := Services.WorkflowService.GetWorkflowState(threadID)
+	// Get latest meal plan identifier
+	plan, err := Services.MealPlanService.GetLatestMealPlan(threadID)
 	if err != nil {
-		http.Error(w, "failed to get workflow state: "+err.Error(), http.StatusInternalServerError)
+		if err == sql.ErrNoRows {
+			writeJSON(w, map[string]any{
+				"plan":          nil,
+				"entries":       []models.MealPlanEntry{},
+				"messages":      []models.ChatMessage{},
+				"shopping_list": []models.ShoppingListItem{},
+			})
+			return
+		}
+		http.Error(w, "failed to get latest meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// AGENT-REFACTOR: Move to a separate function in the service layer. test it.
-	// Smash FeedbackHistory and AgentMessages together, sort by timestamp, return as messages
-	type chatMsg struct {
-		Sender string
-		Text   string
-		Time   string
-	}
-	var combined []chatMsg
-	for _, fb := range state.FeedbackHistory {
-		combined = append(combined, chatMsg{
-			Sender: fb.From,
-			Text:   fb.Message,
-			Time:   fb.Timestamp,
-		})
-	}
-	for _, am := range state.AgentMessages {
-		combined = append(combined, chatMsg{
-			Sender: am.Sender,
-			Text:   am.Text,
-			Time:   am.Timestamp,
-		})
-	}
-	sort.SliceStable(combined, func(i, j int) bool {
-		if combined[i].Time == "" && combined[j].Time == "" {
-			return false
-		}
-		if combined[i].Time == "" {
-			return false
-		}
-		if combined[j].Time == "" {
-			return true
-		}
-		return combined[i].Time < combined[j].Time
-	})
-
-	messages := make([]models.ChatMessage, len(combined))
-	for i, v := range combined {
-		messages[i] = models.ChatMessage{Sender: v.Sender, Text: v.Text}
+	// Get meal plan entries
+	entries, err := Services.MealPlanService.GetMealPlanItems(plan.ID)
+	if err != nil {
+		http.Error(w, "failed to get meal plan items: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	// Return as before, but with combined chat history
-	mealPlanRaw, shoppingListRaw, currentStep := json.RawMessage([]byte("null")), json.RawMessage([]byte("null")), ""
-	if state.MealPlan != nil {
-		if b, err := json.Marshal(state.MealPlan); err == nil {
-			mealPlanRaw = json.RawMessage(b)
-		}
+	// get meals from meal plan entries
+	mealIDs := make([]int, 0)
+	// soon we will be able to get Ids from the meal plan entries
+
+	// generate shopping list from meals
+	shoppingList, err := buildShoppingList(mealIDs)
+	if err != nil {
+		http.Error(w, "failed to generate shopping list: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	// Check for shopping list in state first, then fall back to meal plan shopping list
-	if len(state.ShoppingList) > 0 {
-		if b, err := json.Marshal(state.ShoppingList); err == nil {
-			shoppingListRaw = json.RawMessage(b)
-		}
-	} else if state.MealPlan != nil && len(state.MealPlan.ShoppingList) > 0 {
-		// AGENT-REFACTOR: We should ensure it's only ever in one place, rather than two
-		// Use shopping list from meal plan if not present in workflow state
-		if b, err := json.Marshal(state.MealPlan.ShoppingList); err == nil {
-			shoppingListRaw = json.RawMessage(b)
-		}
+	// Get messages for the thread
+	messages, err := Services.MessageService.GetMessages(threadID)
+	if err != nil {
+		http.Error(w, "failed to get messages: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
-	currentStep = state.CurrentStep
 
-	resp := models.WorkflowState{
-		ThreadID:     threadID,
-		CurrentStep:  currentStep,
+	// Build and return response
+	type WorkflowStateResponse struct {
+		Plan         *models.MealPlanIdentifier `json:"plan"`
+		Entries      []models.MealPlanEntry     `json:"entries"`
+		Messages     []models.ChatMessage       `json:"messages"`
+		ShoppingList []models.ShoppingListItem  `json:"shopping_list"`
+	}
+	resp := WorkflowStateResponse{
+		Plan:         plan,
+		Entries:      entries,
 		Messages:     messages,
-		MealPlan:     mealPlanRaw,
-		ShoppingList: shoppingListRaw,
+		ShoppingList: shoppingList,
 	}
 	writeJSON(w, resp)
 }
@@ -130,12 +104,13 @@ func AddMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req struct {
-		Sender  string `json:"sender"`
-		Message string `json:"message"`
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
 	}
-
-	if err := parseJSON(r, &req); err != nil {
+	var req apipb.AddMessageRequest
+	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "invalid JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -167,14 +142,13 @@ func UpdateSessionState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req struct {
-		MealPlan     *json.RawMessage `json:"meal_plan,omitempty"`
-		ShoppingList *json.RawMessage `json:"shopping_list,omitempty"`
-		CurrentStep  *string          `json:"current_step,omitempty"`
-		Status       *string          `json:"status,omitempty"`
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
 	}
-
-	if err := parseJSON(r, &req); err != nil {
+	var req apipb.UpdateSessionStateRequest
+	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "invalid JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -197,17 +171,19 @@ func UpdateSessionState(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to parse checkpoint: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if req.MealPlan != nil {
-		m["meal_plan"] = *req.MealPlan
+	if req.MealPlan != "" {
+		var mp json.RawMessage = json.RawMessage(req.MealPlan)
+		m["meal_plan"] = mp
 	}
-	if req.ShoppingList != nil {
-		m["shopping_list"] = *req.ShoppingList
+	if req.ShoppingList != "" {
+		var sl json.RawMessage = json.RawMessage(req.ShoppingList)
+		m["shopping_list"] = sl
 	}
-	if req.CurrentStep != nil {
-		m["current_step"] = *req.CurrentStep
+	if req.CurrentStep != "" {
+		m["current_step"] = req.CurrentStep
 	}
-	if req.Status != nil {
-		m["status"] = *req.Status
+	if req.Status != "" {
+		m["status"] = req.Status
 	}
 
 	newData, err := json.Marshal(m)
