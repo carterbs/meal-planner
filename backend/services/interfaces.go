@@ -88,6 +88,21 @@ type WorkflowService interface {
 	AddUserFeedback(threadID, from, message, timestamp string) error
 }
 
+// CheckpointService handles low level checkpoint persistence
+type CheckpointService interface {
+	GetCheckpoint(threadID, checkpointNS string) (checkpoint []byte, metadata []byte, found bool, err error)
+	PutCheckpoint(threadID, checkpointNS, workflowType string, checkpoint []byte, metadata []byte) error
+	ListCheckpoints(limit int, before string) ([]CheckpointRecord, error)
+}
+
+// CheckpointRecord represents a checkpoint entry
+type CheckpointRecord struct {
+	ThreadID     string
+	CheckpointNS string
+	Checkpoint   []byte
+	Metadata     []byte
+}
+
 // ServiceContainer holds all service dependencies
 type ServiceContainer struct {
 	MealService         MealService
@@ -97,4 +112,5 @@ type ServiceContainer struct {
 	ShoppingListService ShoppingListService
 	MessageService      MessageService
 	WorkflowService     WorkflowService
+	CheckpointService   CheckpointService
 }

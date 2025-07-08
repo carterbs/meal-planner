@@ -2,9 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
 import { WorkflowType } from './shared/types';
 import {
-  PostgresCheckpointSaver,
   PostgresCheckpointConfig,
 } from './shared/checkpointer';
+import { HttpCheckpointSaver } from './shared/httpCheckpointer';
 import { WorkflowRegistry } from './registry';
 import { debugLog } from './cli';
 
@@ -26,29 +26,26 @@ export interface WorkflowExecutionOptions {
 }
 
 export class WorkflowManager {
-  private checkpointer: PostgresCheckpointSaver;
+  private checkpointer: HttpCheckpointSaver;
   private registry: WorkflowRegistry;
   private activeSessions = new Map<string, WorkflowSession>();
 
   constructor(dbConfig: PostgresCheckpointConfig, registry: WorkflowRegistry) {
-    this.checkpointer = new PostgresCheckpointSaver(dbConfig);
+    this.checkpointer = new HttpCheckpointSaver();
     this.registry = registry;
   }
 
   // Public getter for checkpointer
-  getCheckpointer(): PostgresCheckpointSaver {
+  getCheckpointer(): HttpCheckpointSaver {
     return this.checkpointer;
   }
 
   async initialize(): Promise<void> {
-    // No need to explicitly connect anymore as we're using connection pooling
     await this.loadActiveSessions();
   }
 
   async shutdown(): Promise<void> {
     await this.registry.cleanupAll();
-    // This will close the connection pool
-    await this.checkpointer.disconnect();
   }
 
   // Start a new workflow session

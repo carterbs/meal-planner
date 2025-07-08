@@ -1,5 +1,5 @@
 import { WorkflowType } from './shared/types';
-import { PostgresCheckpointSaver } from './shared/checkpointer';
+import { HttpCheckpointSaver } from './shared/httpCheckpointer';
 
 // Base workflow interface
 export interface BaseWorkflow {
@@ -11,7 +11,7 @@ export interface BaseWorkflow {
 
 // Workflow factory interface
 export interface WorkflowFactory {
-  create(checkpointer: PostgresCheckpointSaver): Promise<BaseWorkflow>;
+  create(checkpointer: HttpCheckpointSaver): Promise<BaseWorkflow>;
   getType(): WorkflowType;
 }
 
@@ -26,7 +26,7 @@ export class WorkflowRegistry {
 
   async createWorkflow(
     type: WorkflowType,
-    checkpointer: PostgresCheckpointSaver,
+    checkpointer: HttpCheckpointSaver,
   ): Promise<BaseWorkflow> {
     console.log(`Creating workflow of type: ${type}`);
     const factory = this.factories.get(type);
@@ -43,7 +43,7 @@ export class WorkflowRegistry {
   async getOrCreateWorkflow(
     type: WorkflowType,
     threadId: string,
-    checkpointer: PostgresCheckpointSaver,
+    checkpointer: HttpCheckpointSaver,
   ): Promise<BaseWorkflow> {
     const key = `${type}:${threadId}`;
 

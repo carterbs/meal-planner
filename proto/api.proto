@@ -6,6 +6,7 @@ option go_package = "mealplanner/generated/go/apipb";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/any.proto";
 
 // Core data models
 
@@ -392,6 +393,64 @@ message UpdateSessionStateResponse {
   string message = 1;
 }
 
+// LangGraph checkpoint persistence
+message AgentCheckpoint {
+  map<string, google.protobuf.Any> channel_values = 1;
+  repeated string next = 2;
+  int32 step = 3;
+}
+
+message AgentCheckpointMetadata {
+  string source = 1;
+  int32 step = 2;
+  map<string, google.protobuf.Any> writes = 3;
+  map<string, google.protobuf.Any> additional_fields = 4;
+}
+
+message CheckpointTuple {
+  AgentCheckpoint checkpoint = 1;
+  AgentCheckpointMetadata metadata = 2;
+}
+
+message GetCheckpointRequest {
+  string thread_id = 1;
+  string checkpoint_ns = 2; // optional - if empty, fetch latest
+}
+
+message GetCheckpointResponse {
+  CheckpointTuple tuple = 1;
+  bool found = 2;
+}
+
+message PutCheckpointRequest {
+  string thread_id = 1;
+  string checkpoint_ns = 2;
+  string workflow_type = 3;
+  AgentCheckpoint checkpoint = 4;
+  AgentCheckpointMetadata metadata = 5;
+}
+
+message PutCheckpointResponse {
+  bool success = 1;
+  string thread_id = 2;
+  string checkpoint_ns = 3;
+}
+
+message ListCheckpointsRequest {
+  int32 limit = 1;
+  string before_thread_id = 2; // optional pagination
+}
+
+message ListCheckpointsResponse {
+  repeated CheckpointEntry entries = 1;
+}
+
+message CheckpointEntry {
+  string thread_id = 1;
+  string checkpoint_ns = 2;
+  CheckpointTuple tuple = 3;
+}
+
 // Service definition
 service MealPlannerAPI {
   // Health endpoints
@@ -438,4 +497,9 @@ service MealPlannerAPI {
   rpc AbandonWorkflow(AbandonWorkflowRequest) returns (AbandonWorkflowResponse);
   rpc AddMessage(AddMessageRequest) returns (AddMessageResponse);
   rpc UpdateSessionState(UpdateSessionStateRequest) returns (UpdateSessionStateResponse);
+
+  // Checkpoint persistence endpoints
+  rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse);
+  rpc PutCheckpoint(PutCheckpointRequest) returns (PutCheckpointResponse);
+  rpc ListCheckpoints(ListCheckpointsRequest) returns (ListCheckpointsResponse);
 }

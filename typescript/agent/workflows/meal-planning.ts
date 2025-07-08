@@ -17,7 +17,7 @@ import {
 } from '../shared/types';
 import { BaseWorkflow } from '../registry';
 import { debugLog } from '../cli';
-import { PostgresCheckpointSaver } from '../shared/checkpointer';
+import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
 import { FeedbackHandler } from './feedback-handler';
 import {
   ShoppingListResponse,
@@ -57,10 +57,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private client: Client;
   private llm: any;
   private nanoLlm: any;
-  private checkpointer: PostgresCheckpointSaver;
+  private checkpointer: HttpCheckpointSaver;
   private feedbackHandler: FeedbackHandler;
 
-  constructor(checkpointer: PostgresCheckpointSaver) {
+  constructor(checkpointer: HttpCheckpointSaver) {
     this.saveMealPlan = this.saveMealPlan.bind(this);
     this.checkpointer = checkpointer;
     this.feedbackHandler = new FeedbackHandler(checkpointer);
