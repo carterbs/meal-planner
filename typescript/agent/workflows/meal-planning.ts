@@ -7,7 +7,7 @@ import type {
   Meal as GeneratedMeal,
 } from '@mealplanner/generated';
 import { WeeklyMealPlan, AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated';
-import { Any } from '../../../generated/ts/google/protobuf/any';
+import { Any } from '@mealplanner/generated/google/protobuf/any';
 
 import {
   MealPlanningState,
