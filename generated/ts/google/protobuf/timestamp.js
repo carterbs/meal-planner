@@ -7,13 +7,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Timestamp = exports.protobufPackage = void 0;
 /* eslint-disable */
-const wire_1 = require("@bufbuild/protobuf/wire");
+var wire_1 = require("@bufbuild/protobuf/wire");
 exports.protobufPackage = "google.protobuf";
 function createBaseTimestamp() {
     return { seconds: 0, nanos: 0 };
 }
 exports.Timestamp = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.seconds !== 0) {
             writer.uint32(8).int64(message.seconds);
         }
@@ -22,12 +23,12 @@ exports.Timestamp = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseTimestamp();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseTimestamp();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -51,14 +52,14 @@ exports.Timestamp = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             seconds: isSet(object.seconds) ? globalThis.Number(object.seconds) : 0,
             nanos: isSet(object.nanos) ? globalThis.Number(object.nanos) : 0,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.seconds !== 0) {
             obj.seconds = Math.round(message.seconds);
         }
@@ -67,18 +68,19 @@ exports.Timestamp = {
         }
         return obj;
     },
-    create(base) {
-        return exports.Timestamp.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.Timestamp.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseTimestamp();
-        message.seconds = object.seconds ?? 0;
-        message.nanos = object.nanos ?? 0;
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseTimestamp();
+        message.seconds = (_a = object.seconds) !== null && _a !== void 0 ? _a : 0;
+        message.nanos = (_b = object.nanos) !== null && _b !== void 0 ? _b : 0;
         return message;
     },
 };
 function longToNumber(int64) {
-    const num = globalThis.Number(int64.toString());
+    var num = globalThis.Number(int64.toString());
     if (num > globalThis.Number.MAX_SAFE_INTEGER) {
         throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
     }
@@ -90,4 +92,3 @@ function longToNumber(int64) {
 function isSet(value) {
     return value !== null && value !== undefined;
 }
-//# sourceMappingURL=timestamp.js.map
