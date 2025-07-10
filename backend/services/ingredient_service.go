@@ -12,7 +12,7 @@ type ingredientService struct {
 	db *sql.DB
 }
 
-var ingredientServiceLogger = logging.GetLogger("ingredient-service")
+var ingredientServiceLogger = logging.GetGrpcLogger("ingredient-service")
 
 // NewIngredientService creates a new ingredient service instance
 func NewIngredientService(db *sql.DB) IngredientService {

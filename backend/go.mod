@@ -6,6 +6,8 @@ toolchain go1.24.4
 
 replace mealplanner/generated/go => ../generated/go
 
+replace logging-service/client/go => ../logging-service/client/go
+
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-chi/chi/v5 v5.0.8
@@ -19,6 +21,8 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.26.0
+	google.golang.org/protobuf v1.36.1
+	logging-service/client/go v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -33,6 +37,5 @@ require (
 	golang.org/x/text v0.19.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
 	google.golang.org/grpc v1.69.2 // indirect
-	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -7,22 +7,21 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Empty = exports.protobufPackage = void 0;
 /* eslint-disable */
-var wire_1 = require("@bufbuild/protobuf/wire");
+const wire_1 = require("@bufbuild/protobuf/wire");
 exports.protobufPackage = "google.protobuf";
 function createBaseEmpty() {
     return {};
 }
 exports.Empty = {
-    encode: function (_, writer) {
-        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+    encode(_, writer = new wire_1.BinaryWriter()) {
         return writer;
     },
-    decode: function (input, length) {
-        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        var end = length === undefined ? reader.len : reader.pos + length;
-        var message = createBaseEmpty();
+    decode(input, length) {
+        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        const end = length === undefined ? reader.len : reader.pos + length;
+        const message = createBaseEmpty();
         while (reader.pos < end) {
-            var tag = reader.uint32();
+            const tag = reader.uint32();
             switch (tag >>> 3) {
             }
             if ((tag & 7) === 4 || tag === 0) {
@@ -32,18 +31,19 @@ exports.Empty = {
         }
         return message;
     },
-    fromJSON: function (_) {
+    fromJSON(_) {
         return {};
     },
-    toJSON: function (_) {
-        var obj = {};
+    toJSON(_) {
+        const obj = {};
         return obj;
     },
-    create: function (base) {
-        return exports.Empty.fromPartial(base !== null && base !== void 0 ? base : {});
+    create(base) {
+        return exports.Empty.fromPartial(base ?? {});
     },
-    fromPartial: function (_) {
-        var message = createBaseEmpty();
+    fromPartial(_) {
+        const message = createBaseEmpty();
         return message;
     },
 };
+//# sourceMappingURL=empty.js.map

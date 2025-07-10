@@ -14,7 +14,7 @@ type workflowService struct {
 	db *sql.DB
 }
 
-var workflowServiceLogger = logging.GetLogger("workflow-service")
+var workflowServiceLogger = logging.GetGrpcLogger("workflow-service")
 
 // NewWorkflowService creates a new instance of the workflow service
 func NewWorkflowService(db *sql.DB) WorkflowService {

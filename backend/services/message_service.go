@@ -12,7 +12,7 @@ type messageService struct {
 	db *sql.DB
 }
 
-var messageServiceLogger = logging.GetLogger("message-service")
+var messageServiceLogger = logging.GetGrpcLogger("message-service")
 
 // NewMessageService creates a new message service instance
 func NewMessageService(db *sql.DB) MessageService {

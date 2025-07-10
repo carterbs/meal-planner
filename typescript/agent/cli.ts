@@ -3,32 +3,22 @@
 // Load environment variables FIRST before any other imports
 import { config as dotenvConfig } from 'dotenv';
 import { join } from 'path';
-import { writeFileSync, appendFileSync } from 'fs';
 
 // In CommonJS builds __dirname is available globally. Fallback to process.cwd() when it isn't (e.g. during tests).
 const CURRENT_DIR =
   typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
 const envPath = join(CURRENT_DIR, '..', '.env');
-const debugLogPath = join(CURRENT_DIR, '..', 'cli-debug.log');
 // In built version, we're in dist/ so go up one level to agent/
 // (moved above into CURRENT_DIR block)
 // (moved above into CURRENT_DIR block)
 
+// Import the new logging system
+import { debugLog as grpcDebugLog } from './logging';
+
 // Debug logger that works in JSON mode
-export function debugLog(message: string) {
-  const timestamp = new Date().toISOString();
-  const logEntry = `[${timestamp}] ${message}\n`;
-  try {
-    appendFileSync(debugLogPath, logEntry);
-  } catch (err) {
-    // If file doesn't exist, create it
-    try {
-      writeFileSync(debugLogPath, logEntry);
-    } catch (createErr) {
-      // Ignore logging errors to prevent blocking execution
-    }
-  }
+export function debugLog(message: string, fields?: Record<string, string>) {
+  grpcDebugLog(message, fields);
 }
 
 debugLog('CLI starting...');

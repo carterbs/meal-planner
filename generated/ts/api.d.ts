@@ -382,6 +382,41 @@ export interface CheckpointEntry {
     checkpointNs: string;
     tuple: CheckpointTuple | undefined;
 }
+/** Logging Service Messages */
+export interface LogEntry {
+    serviceName: string;
+    /** DEBUG, INFO, WARN, ERROR */
+    level: string;
+    message: string;
+    timestamp: Date | undefined;
+    /** optional correlation ID */
+    threadId: string;
+    /** optional component/module name */
+    component: string;
+    /** structured fields */
+    fields: {
+        [key: string]: string;
+    };
+}
+export interface LogEntry_FieldsEntry {
+    key: string;
+    value: string;
+}
+export interface LogRequest {
+    entry: LogEntry | undefined;
+}
+export interface LogResponse {
+    success: boolean;
+    message: string;
+}
+export interface LogBatchRequest {
+    entries: LogEntry[];
+}
+export interface LogBatchResponse {
+    success: boolean;
+    processed: number;
+    errors: string[];
+}
 export declare const Ingredient: MessageFns<Ingredient>;
 export declare const Step: MessageFns<Step>;
 export declare const Meal: MessageFns<Meal>;
@@ -470,6 +505,12 @@ export declare const PutCheckpointResponse: MessageFns<PutCheckpointResponse>;
 export declare const ListCheckpointsRequest: MessageFns<ListCheckpointsRequest>;
 export declare const ListCheckpointsResponse: MessageFns<ListCheckpointsResponse>;
 export declare const CheckpointEntry: MessageFns<CheckpointEntry>;
+export declare const LogEntry: MessageFns<LogEntry>;
+export declare const LogEntry_FieldsEntry: MessageFns<LogEntry_FieldsEntry>;
+export declare const LogRequest: MessageFns<LogRequest>;
+export declare const LogResponse: MessageFns<LogResponse>;
+export declare const LogBatchRequest: MessageFns<LogBatchRequest>;
+export declare const LogBatchResponse: MessageFns<LogBatchResponse>;
 /** Service definition */
 export interface MealPlannerAPI {
     /** Health endpoints */
@@ -514,6 +555,9 @@ export interface MealPlannerAPI {
     GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
     PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
     ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
+    /** Logging Service endpoints */
+    Log(request: LogRequest): Promise<LogResponse>;
+    LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
 }
 export declare const MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
 export declare class MealPlannerAPIClientImpl implements MealPlannerAPI {
@@ -556,6 +600,8 @@ export declare class MealPlannerAPIClientImpl implements MealPlannerAPI {
     GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
     PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
     ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
+    Log(request: LogRequest): Promise<LogResponse>;
+    LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
 }
 interface Rpc {
     request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;

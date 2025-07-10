@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 	"io"
 	"net/http"
 	"os/exec"
 	"time"
+
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	"mealplanner/logging"
 	"mealplanner/models"
@@ -19,7 +20,7 @@ import (
 )
 
 var agentCommandContext = exec.CommandContext
-var logger = logging.GetLogger("agent-handler")
+var logger = logging.GetGrpcLogger("agent-handler")
 
 // runAgentCLI executes the agent CLI with given args and unmarshals JSON output into resp
 func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, error) {

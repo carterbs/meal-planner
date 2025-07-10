@@ -474,6 +474,47 @@ export interface CheckpointEntry {
   tuple: CheckpointTuple | undefined;
 }
 
+/** Logging Service Messages */
+export interface LogEntry {
+  serviceName: string;
+  /** DEBUG, INFO, WARN, ERROR */
+  level: string;
+  message: string;
+  timestamp:
+    | Date
+    | undefined;
+  /** optional correlation ID */
+  threadId: string;
+  /** optional component/module name */
+  component: string;
+  /** structured fields */
+  fields: { [key: string]: string };
+}
+
+export interface LogEntry_FieldsEntry {
+  key: string;
+  value: string;
+}
+
+export interface LogRequest {
+  entry: LogEntry | undefined;
+}
+
+export interface LogResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface LogBatchRequest {
+  entries: LogEntry[];
+}
+
+export interface LogBatchResponse {
+  success: boolean;
+  processed: number;
+  errors: string[];
+}
+
 function createBaseIngredient(): Ingredient {
   return { id: 0, mealId: 0, quantity: 0, unit: "", name: "" };
 }
@@ -7281,6 +7322,545 @@ export const CheckpointEntry: MessageFns<CheckpointEntry> = {
   },
 };
 
+function createBaseLogEntry(): LogEntry {
+  return { serviceName: "", level: "", message: "", timestamp: undefined, threadId: "", component: "", fields: {} };
+}
+
+export const LogEntry: MessageFns<LogEntry> = {
+  encode(message: LogEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.serviceName !== "") {
+      writer.uint32(10).string(message.serviceName);
+    }
+    if (message.level !== "") {
+      writer.uint32(18).string(message.level);
+    }
+    if (message.message !== "") {
+      writer.uint32(26).string(message.message);
+    }
+    if (message.timestamp !== undefined) {
+      Timestamp.encode(toTimestamp(message.timestamp), writer.uint32(34).fork()).join();
+    }
+    if (message.threadId !== "") {
+      writer.uint32(42).string(message.threadId);
+    }
+    if (message.component !== "") {
+      writer.uint32(50).string(message.component);
+    }
+    Object.entries(message.fields).forEach(([key, value]) => {
+      LogEntry_FieldsEntry.encode({ key: key as any, value }, writer.uint32(58).fork()).join();
+    });
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LogEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLogEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.serviceName = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.level = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.timestamp = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.threadId = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.component = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          const entry7 = LogEntry_FieldsEntry.decode(reader, reader.uint32());
+          if (entry7.value !== undefined) {
+            message.fields[entry7.key] = entry7.value;
+          }
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LogEntry {
+    return {
+      serviceName: isSet(object.serviceName) ? globalThis.String(object.serviceName) : "",
+      level: isSet(object.level) ? globalThis.String(object.level) : "",
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+      timestamp: isSet(object.timestamp) ? fromJsonTimestamp(object.timestamp) : undefined,
+      threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
+      component: isSet(object.component) ? globalThis.String(object.component) : "",
+      fields: isObject(object.fields)
+        ? Object.entries(object.fields).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {})
+        : {},
+    };
+  },
+
+  toJSON(message: LogEntry): unknown {
+    const obj: any = {};
+    if (message.serviceName !== "") {
+      obj.serviceName = message.serviceName;
+    }
+    if (message.level !== "") {
+      obj.level = message.level;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    if (message.timestamp !== undefined) {
+      obj.timestamp = message.timestamp.toISOString();
+    }
+    if (message.threadId !== "") {
+      obj.threadId = message.threadId;
+    }
+    if (message.component !== "") {
+      obj.component = message.component;
+    }
+    if (message.fields) {
+      const entries = Object.entries(message.fields);
+      if (entries.length > 0) {
+        obj.fields = {};
+        entries.forEach(([k, v]) => {
+          obj.fields[k] = v;
+        });
+      }
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LogEntry>, I>>(base?: I): LogEntry {
+    return LogEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LogEntry>, I>>(object: I): LogEntry {
+    const message = createBaseLogEntry();
+    message.serviceName = object.serviceName ?? "";
+    message.level = object.level ?? "";
+    message.message = object.message ?? "";
+    message.timestamp = object.timestamp ?? undefined;
+    message.threadId = object.threadId ?? "";
+    message.component = object.component ?? "";
+    message.fields = Object.entries(object.fields ?? {}).reduce<{ [key: string]: string }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = globalThis.String(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+function createBaseLogEntry_FieldsEntry(): LogEntry_FieldsEntry {
+  return { key: "", value: "" };
+}
+
+export const LogEntry_FieldsEntry: MessageFns<LogEntry_FieldsEntry> = {
+  encode(message: LogEntry_FieldsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LogEntry_FieldsEntry {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLogEntry_FieldsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LogEntry_FieldsEntry {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
+    };
+  },
+
+  toJSON(message: LogEntry_FieldsEntry): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.value !== "") {
+      obj.value = message.value;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LogEntry_FieldsEntry>, I>>(base?: I): LogEntry_FieldsEntry {
+    return LogEntry_FieldsEntry.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LogEntry_FieldsEntry>, I>>(object: I): LogEntry_FieldsEntry {
+    const message = createBaseLogEntry_FieldsEntry();
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
+    return message;
+  },
+};
+
+function createBaseLogRequest(): LogRequest {
+  return { entry: undefined };
+}
+
+export const LogRequest: MessageFns<LogRequest> = {
+  encode(message: LogRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.entry !== undefined) {
+      LogEntry.encode(message.entry, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LogRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLogRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.entry = LogEntry.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LogRequest {
+    return { entry: isSet(object.entry) ? LogEntry.fromJSON(object.entry) : undefined };
+  },
+
+  toJSON(message: LogRequest): unknown {
+    const obj: any = {};
+    if (message.entry !== undefined) {
+      obj.entry = LogEntry.toJSON(message.entry);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LogRequest>, I>>(base?: I): LogRequest {
+    return LogRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LogRequest>, I>>(object: I): LogRequest {
+    const message = createBaseLogRequest();
+    message.entry = (object.entry !== undefined && object.entry !== null)
+      ? LogEntry.fromPartial(object.entry)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseLogResponse(): LogResponse {
+  return { success: false, message: "" };
+}
+
+export const LogResponse: MessageFns<LogResponse> = {
+  encode(message: LogResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LogResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLogResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LogResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+    };
+  },
+
+  toJSON(message: LogResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LogResponse>, I>>(base?: I): LogResponse {
+    return LogResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LogResponse>, I>>(object: I): LogResponse {
+    const message = createBaseLogResponse();
+    message.success = object.success ?? false;
+    message.message = object.message ?? "";
+    return message;
+  },
+};
+
+function createBaseLogBatchRequest(): LogBatchRequest {
+  return { entries: [] };
+}
+
+export const LogBatchRequest: MessageFns<LogBatchRequest> = {
+  encode(message: LogBatchRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.entries) {
+      LogEntry.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LogBatchRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLogBatchRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.entries.push(LogEntry.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LogBatchRequest {
+    return {
+      entries: globalThis.Array.isArray(object?.entries) ? object.entries.map((e: any) => LogEntry.fromJSON(e)) : [],
+    };
+  },
+
+  toJSON(message: LogBatchRequest): unknown {
+    const obj: any = {};
+    if (message.entries?.length) {
+      obj.entries = message.entries.map((e) => LogEntry.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LogBatchRequest>, I>>(base?: I): LogBatchRequest {
+    return LogBatchRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LogBatchRequest>, I>>(object: I): LogBatchRequest {
+    const message = createBaseLogBatchRequest();
+    message.entries = object.entries?.map((e) => LogEntry.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseLogBatchResponse(): LogBatchResponse {
+  return { success: false, processed: 0, errors: [] };
+}
+
+export const LogBatchResponse: MessageFns<LogBatchResponse> = {
+  encode(message: LogBatchResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.success !== false) {
+      writer.uint32(8).bool(message.success);
+    }
+    if (message.processed !== 0) {
+      writer.uint32(16).int32(message.processed);
+    }
+    for (const v of message.errors) {
+      writer.uint32(26).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LogBatchResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLogBatchResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.success = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.processed = reader.int32();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.errors.push(reader.string());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LogBatchResponse {
+    return {
+      success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+      processed: isSet(object.processed) ? globalThis.Number(object.processed) : 0,
+      errors: globalThis.Array.isArray(object?.errors) ? object.errors.map((e: any) => globalThis.String(e)) : [],
+    };
+  },
+
+  toJSON(message: LogBatchResponse): unknown {
+    const obj: any = {};
+    if (message.success !== false) {
+      obj.success = message.success;
+    }
+    if (message.processed !== 0) {
+      obj.processed = Math.round(message.processed);
+    }
+    if (message.errors?.length) {
+      obj.errors = message.errors;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LogBatchResponse>, I>>(base?: I): LogBatchResponse {
+    return LogBatchResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LogBatchResponse>, I>>(object: I): LogBatchResponse {
+    const message = createBaseLogBatchResponse();
+    message.success = object.success ?? false;
+    message.processed = object.processed ?? 0;
+    message.errors = object.errors?.map((e) => e) || [];
+    return message;
+  },
+};
+
 /** Service definition */
 export interface MealPlannerAPI {
   /** Health endpoints */
@@ -7325,6 +7905,9 @@ export interface MealPlannerAPI {
   GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
   PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
   ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
+  /** Logging Service endpoints */
+  Log(request: LogRequest): Promise<LogResponse>;
+  LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
 }
 
 export const MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
@@ -7368,6 +7951,8 @@ export class MealPlannerAPIClientImpl implements MealPlannerAPI {
     this.GetCheckpoint = this.GetCheckpoint.bind(this);
     this.PutCheckpoint = this.PutCheckpoint.bind(this);
     this.ListCheckpoints = this.ListCheckpoints.bind(this);
+    this.Log = this.Log.bind(this);
+    this.LogBatch = this.LogBatch.bind(this);
   }
   HealthCheck(request: Empty): Promise<HealthCheckResponse> {
     const data = Empty.encode(request).finish();
@@ -7571,6 +8156,18 @@ export class MealPlannerAPIClientImpl implements MealPlannerAPI {
     const data = ListCheckpointsRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "ListCheckpoints", data);
     return promise.then((data) => ListCheckpointsResponse.decode(new BinaryReader(data)));
+  }
+
+  Log(request: LogRequest): Promise<LogResponse> {
+    const data = LogRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "Log", data);
+    return promise.then((data) => LogResponse.decode(new BinaryReader(data)));
+  }
+
+  LogBatch(request: LogBatchRequest): Promise<LogBatchResponse> {
+    const data = LogBatchRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "LogBatch", data);
+    return promise.then((data) => LogBatchResponse.decode(new BinaryReader(data)));
   }
 }
 
