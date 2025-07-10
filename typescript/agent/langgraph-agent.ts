@@ -17,6 +17,7 @@ import type {
 } from '@mealplanner/generated';
 import type { MealPlanningState } from './shared/types';
 import { spawnSync } from 'child_process';
+import { debugLog } from './logging';
 
 export interface LangGraphAgentConfig {
   defaultParticipants?: string[];
@@ -59,12 +60,11 @@ export class LangGraphAgent {
       this.isInitialized = true;
 
       const supportedTypes = this.workflowManager.getSupportedWorkflowTypes();
-      console.log(
-        `🚀 [LANGGRAPH-AGENT] Initialized with ${supportedTypes.length} workflow types:`,
-        supportedTypes,
+      debugLog(
+        `🚀 [LANGGRAPH-AGENT] Initialized with ${supportedTypes.length} workflow types:${JSON.stringify(supportedTypes)}`,
       );
     } catch (error) {
-      console.error(`❌ [LANGGRAPH-AGENT] Initialization failed:`, error);
+      debugLog(`❌[LANGGRAPH - AGENT] Initialization failed: ${JSON.stringify(error)}`);
       throw error;
     }
   }
@@ -77,9 +77,9 @@ export class LangGraphAgent {
     try {
       await this.workflowManager.shutdown();
       this.isInitialized = false;
-      console.log(`🛑 [LANGGRAPH-AGENT] Agent shut down successfully`);
+      debugLog(`🛑[LANGGRAPH - AGENT] Agent shut down successfully`);
     } catch (error) {
-      console.error(`❌ [LANGGRAPH-AGENT] Shutdown error:`, error);
+      debugLog(`❌[LANGGRAPH - AGENT] Shutdown error: ${JSON.stringify(error)}`);
       throw error;
     }
   }
@@ -302,14 +302,14 @@ async function main() {
                 []) as GeneratedShoppingListItem[],
             } as GeneratedWeeklyMealPlan);
             await io.sendMessage(text, 'System');
-            console.log('\nHTML version:\n', html);
+            debugLog(`\nHTML version:\n${html}`);
 
             // Auto copy HTML table to clipboard as HTML
             try {
               spawnSync('pbcopy', ['-Prefer', 'html'], { input: html });
-              console.log('✅ HTML table copied to clipboard (as HTML)');
+              debugLog(`✅ HTML table copied to clipboard (as HTML)`);
             } catch (err) {
-              console.error('⚠️ Failed to copy HTML to clipboard:', err);
+              debugLog(`⚠️ Failed to copy HTML to clipboard: ${JSON.stringify(err)}`);
             }
           }
         }
@@ -317,7 +317,7 @@ async function main() {
       }
     }
   } catch (error) {
-    console.error('❌ Agent Error:', error);
+    debugLog(`❌ Agent Error: ${JSON.stringify(error)} `);
   } finally {
     io.close();
     await agent.shutdown();

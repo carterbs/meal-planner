@@ -4,52 +4,49 @@ import { ChannelCredentials, Metadata, Client } from '@grpc/grpc-js';
 import {
   LoggingServiceClientImpl,
   LogEntry,
-  LoggingServiceServiceName } from
-'@mealplanner/generated';
+  LoggingServiceServiceName,
+} from '@mealplanner/generated';
 
 let rpcClient: Client;
 let loggingService: LoggingServiceClientImpl;
 let initialized = false;
 
-export async function initLogging(serviceName = 'agent') {
+export async function initLogging(serviceName = 'mcp-server') {
   if (initialized) return;
   const addr = process.env.LOGGING_SERVICE_ADDR || 'localhost:50052';
-  console.log(`[AGENT] Initializing logging to ${addr}`);
-
+  console.log(`[MCP] Initializing logging to ${addr}`);
+  
   rpcClient = new Client(addr, ChannelCredentials.createInsecure(), {
     'grpc.max_receive_message_length': -1,
-    'grpc.max_send_message_length': -1
+    'grpc.max_send_message_length': -1,
   });
-
-  // Add connection event listeners for debugging
-
-
+  
   // store promise to resolve when rpc is ready
   await new Promise<void>((resolve, reject) => {
     rpcClient.waitForReady(Date.now() + 500, (error) => {
       if (error) {
-        console.error(`[AGENT] Failed to connect to logging service: ${error.message}`);
+        console.error(`[MCP] Failed to connect to logging service: ${error.message}`);
         logToFile('ERROR', `Failed to connect to logging service: ${error.message}`);
         reject(error);
       } else {
-        console.log(`[AGENT] Successfully connected to logging service at ${addr}`);
+        console.log(`[MCP] Successfully connected to logging service at ${addr}`);
         logToFile('INFO', `Successfully connected to logging service at ${addr}`);
         resolve();
       }
     });
   });
-
+  
   const rpc = {
     request: (svc: string, method: string, data: Uint8Array): Promise<Uint8Array> => {
       return new Promise((resolve, reject) => {
-        console.log(`[AGENT] Making gRPC request: ${svc}/${method}`);
+        console.log(`[MCP] Making gRPC request: ${svc}/${method}`);
         const metadata = new Metadata();
         metadata.add('service-name', serviceName);
-
+        
         // Add a timeout
         const deadline = new Date();
         deadline.setSeconds(deadline.getSeconds() + 5);
-
+        
         rpcClient.makeUnaryRequest(
           `/${svc}/${method}`,
           (arg) => Buffer.from(arg),
@@ -59,64 +56,64 @@ export async function initLogging(serviceName = 'agent') {
           { deadline },
           (err, resp) => {
             if (err) {
-              console.error(`[AGENT] gRPC request failed: ${err.message}, code: ${err.code}, details: ${err.details}`);
+              console.error(`[MCP] gRPC request failed: ${err.message}, code: ${err.code}, details: ${err.details}`);
               return reject(err);
             }
             if (!resp) {
-              console.error(`[AGENT] gRPC request returned no response`);
+              console.error(`[MCP] gRPC request returned no response`);
               return reject(new Error('no response'));
             }
-            console.log(`[AGENT] gRPC request successful`);
+            console.log(`[MCP] gRPC request successful`);
             resolve(new Uint8Array(resp));
           }
         );
       });
-    }
+    },
   };
   loggingService = new LoggingServiceClientImpl(rpc, {
-    service: LoggingServiceServiceName
+    service: LoggingServiceServiceName,
   });
   initialized = true;
-  console.log(`[AGENT] Logging service client initialized`);
-  sendLog('INFO', 'Agent logging initialized');
+  console.log(`[MCP] Logging service client initialized`);
+  sendLog('INFO', 'MCP server logging initialized');
 }
 
 function logToFile(level: string, message: string) {
   const timestamp = new Date().toISOString();
   const logEntry = `[${timestamp}] [${level}] ${message}\n`;
-  const debugLogPath = join(process.cwd(), 'cli-debug.log');
+  const debugLogPath = join(process.cwd(), 'mcp-debug.log');
   try {
     appendFileSync(debugLogPath, logEntry);
   } catch {
-    try {writeFileSync(debugLogPath, logEntry);} catch {/* ignore */}
+    try { writeFileSync(debugLogPath, logEntry); } catch { /* ignore */ }
   }
 }
 
 async function sendLog(level: string, message: string, fields: Record<string, string> = {}) {
   await initLogging();
   const entry: LogEntry = {
-    serviceName: 'agent',
+    serviceName: 'mcp-server',
     level,
     message,
     timestamp: new Date(),
     threadId: '',
     component: '',
-    fields
+    fields,
   };
-
-  console.log(`[AGENT] Attempting to send log: ${level} - ${message}`);
+  
+  console.log(`[MCP] Attempting to send log: ${level} - ${message}`);
   logToFile(level, message); // Always log to file for backup
-
+  
   if (!loggingService) {
-    console.error(`[AGENT] No logging service available`);
+    console.error(`[MCP] No logging service available`);
     return;
   }
   try {
-    console.log(`[AGENT] Calling loggingService.Log with entry:`, JSON.stringify(entry, null, 2));
+    console.log(`[MCP] Calling loggingService.Log with entry:`, JSON.stringify(entry, null, 2));
     const response = await loggingService.Log({ entry });
-    console.log(`[AGENT] Log sent successfully:`, response);
+    console.log(`[MCP] Log sent successfully:`, response);
   } catch (error) {
-    console.error(`[AGENT] Failed to send log to service:`, error);
+    console.error(`[MCP] Failed to send log to service:`, error);
   }
 }
 

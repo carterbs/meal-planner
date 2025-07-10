@@ -1,3 +1,4 @@
+import { debugLog, infoLog, warnLog, errorLog } from "../logging";
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
@@ -8,11 +9,11 @@ function convertSnakeToCamel(obj: any): any {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
-  
+
   if (Array.isArray(obj)) {
     return obj.map(convertSnakeToCamel);
   }
-  
+
   const converted: any = {};
   for (const [key, value] of Object.entries(obj)) {
     const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -23,16 +24,16 @@ function convertSnakeToCamel(obj: any): any {
 
 export async function generateMealPlan() {
   const resp = await fetch(`${API}/api/mealplan/generate`, { method: "POST" });
-  if (!resp.ok) { throw new McpError(-32000, `BackendError: ${resp.statusText}`); }
+  if (!resp.ok) {throw new McpError(-32000, `BackendError: ${resp.statusText}`);}
   const responseJson = await resp.json();
-  console.log("MEAL PLAN from mcp generate (snake_case)-------")
-  console.log(responseJson)
-  
+  infoLog("MEAL PLAN from mcp generate (snake_case)-------");
+  infoLog(responseJson);
+
   // Convert snake_case to camelCase before using protobuf fromJSON
   const camelCaseJson = convertSnakeToCamel(responseJson);
-  console.log("MEAL PLAN converted to camelCase-------")
-  console.log(camelCaseJson)
-  
+  infoLog("MEAL PLAN converted to camelCase-------");
+  infoLog(camelCaseJson);
+
   const data = GenerateMealPlanResponse.fromJSON(camelCaseJson);
   if (!data.plan) {
     throw new McpError(-32000, 'No meal plan returned from backend');

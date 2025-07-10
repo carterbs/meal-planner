@@ -1,3 +1,4 @@
+import { debugLog, infoLog, warnLog, errorLog } from "../logging";
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
@@ -11,33 +12,33 @@ interface ShoppingListRequest {
 
 export async function generateList(plan: number[]): Promise<ShoppingList> {
   try {
-    console.log('🛒 [MCP] Generating shopping list for plan:', plan);
-    const resp = await fetch(`${API}/api/shoppinglist`, { 
+    infoLog(`🛒 [MCP] Generating shopping list for plan: ${plan}`);
+    const resp = await fetch(`${API}/api/shoppinglist`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ plan } as ShoppingListRequest)
     });
-    
+
     if (!resp.ok) {
       const errorData = await resp.json().catch(() => ({}));
       throw new McpError(
-        -32000, 
+        -32000,
         `BackendError: ${resp.status} ${resp.statusText} - ${errorData.message || 'Unknown error'}`
       );
     }
-    
+
     const data = await resp.json();
-    console.log('🛒 [MCP] Received shopping list data:', JSON.stringify(data, null, 2));
-    
+    infoLog(`🛒 [MCP] Received shopping list data: ${JSON.stringify(data, null, 2)}`);
+
     // Ensure the response is an array of items with required fields
     if (!Array.isArray(data)) {
       throw new McpError(-32603, 'Invalid response format: expected an array of items');
     }
 
     // Map legacy/raw item fields to the unified ShoppingListItem type
-    const mappedItems = data.map(item => {
+    const mappedItems = data.map((item) => {
       // If already in correct format, return as is
       if (typeof item.ingredient === 'string' && typeof item.quantity === 'string') {
         return item;
@@ -55,17 +56,17 @@ export async function generateList(plan: number[]): Promise<ShoppingList> {
     }).filter(Boolean);
 
     // Validate each item has required fields
-    const validItems = mappedItems.filter(item => 
-      item && typeof item.ingredient === 'string' && typeof item.quantity === 'string'
+    const validItems = mappedItems.filter((item) =>
+    item && typeof item.ingredient === 'string' && typeof item.quantity === 'string'
     );
 
     if (validItems.length !== mappedItems.length) {
-      console.warn('🛒 [MCP] Some items in the shopping list are missing required fields or could not be mapped');
+      warnLog('🛒 [MCP] Some items in the shopping list are missing required fields or could not be mapped');
     }
 
     return validItems;
   } catch (error) {
-    console.error('🛒 [MCP] Error generating shopping list:', error);
+    errorLog(`🛒 [MCP] Error generating shopping list: ${error}`);
     throw error;
   }
 }
