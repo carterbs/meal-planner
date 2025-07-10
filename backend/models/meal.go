@@ -5,13 +5,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/lib/pq"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
+
+	"github.com/lib/pq"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-var mealModelLogger = logging.GetLogger("meal-model")
+var mealModelLogger = logging.GetGrpcLogger("meal-model")
 
 // Meal is an alias to the generated protobuf type
 type Meal = apipb.Meal

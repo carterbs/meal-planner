@@ -12,7 +12,7 @@ type recipeStepService struct {
 	db *sql.DB
 }
 
-var recipeStepServiceLogger = logging.GetLogger("recipe-step-service")
+var recipeStepServiceLogger = logging.GetGrpcLogger("recipe-step-service")
 
 // NewRecipeStepService creates a new recipe step service instance
 func NewRecipeStepService(db *sql.DB) RecipeStepService {

@@ -8,7 +8,7 @@ import (
 	"mealplanner/logging"
 )
 
-var stepModelLogger = logging.GetLogger("step-model")
+var stepModelLogger = logging.GetGrpcLogger("step-model")
 
 // Step is an alias to the generated protobuf type
 type Step = apipb.Step

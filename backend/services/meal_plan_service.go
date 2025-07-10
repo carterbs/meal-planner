@@ -12,7 +12,7 @@ type mealPlanService struct {
 	db *sql.DB
 }
 
-var mealPlanServiceLogger = logging.GetLogger("meal-plan-service")
+var mealPlanServiceLogger = logging.GetGrpcLogger("meal-plan-service")
 
 // NewMealPlanService creates a new meal plan service instance
 func NewMealPlanService(db *sql.DB) MealPlanService {

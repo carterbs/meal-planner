@@ -12,7 +12,7 @@ type shoppingListService struct {
 	db *sql.DB
 }
 
-var shoppingListServiceLogger = logging.GetLogger("shopping-list-service")
+var shoppingListServiceLogger = logging.GetGrpcLogger("shopping-list-service")
 
 // NewShoppingListService creates a new shopping list service instance
 func NewShoppingListService(db *sql.DB) ShoppingListService {

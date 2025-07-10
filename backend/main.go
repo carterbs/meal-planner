@@ -190,7 +190,7 @@ func main() {
 	// Special endpoint to check database connectivity
 	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-
+		mainLogger.Debug("Running Health check")
 		if handlers.DB == nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			w.Write([]byte(`{"status":"error","message":"Database not connected. Make sure Docker is running and the database container is started."}`))

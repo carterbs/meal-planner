@@ -451,6 +451,36 @@ message CheckpointEntry {
   CheckpointTuple tuple = 3;
 }
 
+// Logging Service Messages
+message LogEntry {
+  string service_name = 1;
+  string level = 2; // DEBUG, INFO, WARN, ERROR
+  string message = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  string thread_id = 5; // optional correlation ID
+  string component = 6; // optional component/module name
+  map<string, string> fields = 7; // structured fields
+}
+
+message LogRequest {
+  LogEntry entry = 1;
+}
+
+message LogResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message LogBatchRequest {
+  repeated LogEntry entries = 1;
+}
+
+message LogBatchResponse {
+  bool success = 1;
+  int32 processed = 2;
+  repeated string errors = 3;
+}
+
 // Service definition
 service MealPlannerAPI {
   // Health endpoints
@@ -502,4 +532,8 @@ service MealPlannerAPI {
   rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse);
   rpc PutCheckpoint(PutCheckpointRequest) returns (PutCheckpointResponse);
   rpc ListCheckpoints(ListCheckpointsRequest) returns (ListCheckpointsResponse);
+
+  // Logging Service endpoints
+  rpc Log(LogRequest) returns (LogResponse);
+  rpc LogBatch(LogBatchRequest) returns (LogBatchResponse);
 }

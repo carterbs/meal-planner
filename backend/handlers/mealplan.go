@@ -3,9 +3,10 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
-	"google.golang.org/protobuf/encoding/protojson"
 	"io"
 	"net/http"
+
+	"google.golang.org/protobuf/encoding/protojson"
 
 	apipb "mealplanner/generated/go"
 	"time"
@@ -21,7 +22,7 @@ var DB *sql.DB
 // Services is a global service container (set in main.go)
 var Services *services.ServiceContainer
 
-var mealplanHandlerLogger = logging.GetLogger("mealplan-handler")
+var mealplanHandlerLogger = logging.GetGrpcLogger("mealplan-handler")
 
 // generateShoppingListForPlan populates plan.ShoppingList using meal IDs found
 // in the plan. It fetches full meal details if needed and aggregates the

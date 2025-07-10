@@ -54,6 +54,8 @@ const (
 	MealPlannerAPI_GetCheckpoint_FullMethodName        = "/mealplanner.api.MealPlannerAPI/GetCheckpoint"
 	MealPlannerAPI_PutCheckpoint_FullMethodName        = "/mealplanner.api.MealPlannerAPI/PutCheckpoint"
 	MealPlannerAPI_ListCheckpoints_FullMethodName      = "/mealplanner.api.MealPlannerAPI/ListCheckpoints"
+	MealPlannerAPI_Log_FullMethodName                  = "/mealplanner.api.MealPlannerAPI/Log"
+	MealPlannerAPI_LogBatch_FullMethodName             = "/mealplanner.api.MealPlannerAPI/LogBatch"
 )
 
 // MealPlannerAPIClient is the client API for MealPlannerAPI service.
@@ -104,6 +106,9 @@ type MealPlannerAPIClient interface {
 	GetCheckpoint(ctx context.Context, in *GetCheckpointRequest, opts ...grpc.CallOption) (*GetCheckpointResponse, error)
 	PutCheckpoint(ctx context.Context, in *PutCheckpointRequest, opts ...grpc.CallOption) (*PutCheckpointResponse, error)
 	ListCheckpoints(ctx context.Context, in *ListCheckpointsRequest, opts ...grpc.CallOption) (*ListCheckpointsResponse, error)
+	// Logging Service endpoints
+	Log(ctx context.Context, in *LogRequest, opts ...grpc.CallOption) (*LogResponse, error)
+	LogBatch(ctx context.Context, in *LogBatchRequest, opts ...grpc.CallOption) (*LogBatchResponse, error)
 }
 
 type mealPlannerAPIClient struct {
@@ -454,6 +459,26 @@ func (c *mealPlannerAPIClient) ListCheckpoints(ctx context.Context, in *ListChec
 	return out, nil
 }
 
+func (c *mealPlannerAPIClient) Log(ctx context.Context, in *LogRequest, opts ...grpc.CallOption) (*LogResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LogResponse)
+	err := c.cc.Invoke(ctx, MealPlannerAPI_Log_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *mealPlannerAPIClient) LogBatch(ctx context.Context, in *LogBatchRequest, opts ...grpc.CallOption) (*LogBatchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LogBatchResponse)
+	err := c.cc.Invoke(ctx, MealPlannerAPI_LogBatch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MealPlannerAPIServer is the server API for MealPlannerAPI service.
 // All implementations must embed UnimplementedMealPlannerAPIServer
 // for forward compatibility.
@@ -502,6 +527,9 @@ type MealPlannerAPIServer interface {
 	GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error)
 	PutCheckpoint(context.Context, *PutCheckpointRequest) (*PutCheckpointResponse, error)
 	ListCheckpoints(context.Context, *ListCheckpointsRequest) (*ListCheckpointsResponse, error)
+	// Logging Service endpoints
+	Log(context.Context, *LogRequest) (*LogResponse, error)
+	LogBatch(context.Context, *LogBatchRequest) (*LogBatchResponse, error)
 	mustEmbedUnimplementedMealPlannerAPIServer()
 }
 
@@ -613,6 +641,12 @@ func (UnimplementedMealPlannerAPIServer) PutCheckpoint(context.Context, *PutChec
 }
 func (UnimplementedMealPlannerAPIServer) ListCheckpoints(context.Context, *ListCheckpointsRequest) (*ListCheckpointsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCheckpoints not implemented")
+}
+func (UnimplementedMealPlannerAPIServer) Log(context.Context, *LogRequest) (*LogResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Log not implemented")
+}
+func (UnimplementedMealPlannerAPIServer) LogBatch(context.Context, *LogBatchRequest) (*LogBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogBatch not implemented")
 }
 func (UnimplementedMealPlannerAPIServer) mustEmbedUnimplementedMealPlannerAPIServer() {}
 func (UnimplementedMealPlannerAPIServer) testEmbeddedByValue()                        {}
@@ -1247,6 +1281,42 @@ func _MealPlannerAPI_ListCheckpoints_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MealPlannerAPI_Log_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MealPlannerAPIServer).Log(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MealPlannerAPI_Log_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MealPlannerAPIServer).Log(ctx, req.(*LogRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MealPlannerAPI_LogBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MealPlannerAPIServer).LogBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MealPlannerAPI_LogBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MealPlannerAPIServer).LogBatch(ctx, req.(*LogBatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MealPlannerAPI_ServiceDesc is the grpc.ServiceDesc for MealPlannerAPI service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1389,6 +1459,14 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListCheckpoints",
 			Handler:    _MealPlannerAPI_ListCheckpoints_Handler,
+		},
+		{
+			MethodName: "Log",
+			Handler:    _MealPlannerAPI_Log_Handler,
+		},
+		{
+			MethodName: "LogBatch",
+			Handler:    _MealPlannerAPI_LogBatch_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
