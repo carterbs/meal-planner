@@ -3,8 +3,8 @@ package models
 import (
 	"database/sql"
 	"encoding/json"
-	"time"
 	apipb "mealplanner/generated/go"
+	"time"
 )
 
 // MealPlanEntry is an alias to the generated protobuf type
@@ -42,7 +42,7 @@ func SaveMealPlan(db *sql.DB, threadID string, version int, entries []MealPlanEn
 		if err != nil {
 			return nil, err
 		}
-		if _, err := db.Exec(itemQuery, id, e.DayOfWeek, e.MealType, mealJSON); err != nil {
+		if _, err := db.Exec(itemQuery, id, e.DayIndex, e.MealType, mealJSON); err != nil {
 			return nil, err
 		}
 	}
@@ -81,10 +81,10 @@ func GetMealPlanItems(db *sql.DB, mealPlanID int) ([]MealPlanEntry, error) {
 	for rows.Next() {
 		var e MealPlanEntry
 		var mealJSON []byte
-		if err := rows.Scan(&e.DayOfWeek, &e.MealType, &mealJSON); err != nil {
+		if err := rows.Scan(&e.DayIndex, &e.MealType, &mealJSON); err != nil {
 			return nil, err
 		}
-		
+
 		// Unmarshal the JSON into a Meal object
 		var meal Meal
 		if err := json.Unmarshal(mealJSON, &meal); err != nil {

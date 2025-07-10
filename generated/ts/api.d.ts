@@ -42,7 +42,7 @@ export interface WeeklyMealPlan {
 }
 export interface MealPlanEntry {
     /** 0=Monday..6=Sunday */
-    dayOfWeek: number;
+    dayIndex: number;
     /** breakfast, lunch, dinner */
     mealType: string;
     meal: Meal | undefined;

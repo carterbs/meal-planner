@@ -57,7 +57,7 @@ message WeeklyMealPlan {
 // Additional meal plan persistence models
 
 message MealPlanEntry {
-  int32 day_of_week = 1; // 0=Monday..6=Sunday
+  int32 day_index = 1; // 0=Monday..6=Sunday
   string meal_type = 2;  // breakfast, lunch, dinner
   Meal meal = 3;
 }

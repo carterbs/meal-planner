@@ -25,10 +25,8 @@ export class HttpCheckpointSaver {
     const data = await resp.json();
     if (!data.found) return undefined;
     
-    // Convert from JSON to protobuf types
-    const checkpoint = AgentCheckpoint.fromJSON(data.tuple.checkpoint);
-    const metadata = AgentCheckpointMetadata.fromJSON(data.tuple.metadata);
-    return [checkpoint, metadata];
+    // Return raw JSON data - the protobuf conversion doesn't work
+    return [data.tuple.checkpoint as any, data.tuple.metadata as any];
   }
 
   async put(config: RunnableConfig, checkpoint: AgentCheckpointType, metadata: AgentCheckpointMetadataType): Promise<RunnableConfig> {
@@ -73,7 +71,7 @@ export class HttpCheckpointSaver {
   }
 
   async listWorkflows(limit?: number): Promise<any[]> {
-    const resp = await fetch(`${this.baseUrl}/api/workflows?limit=${limit || 100}`);
+    const resp = await fetch(`${this.baseUrl}/api/agent/workflows?limit=${limit || 100}`);
     if (!resp.ok) return [];
     const data = await resp.json();
     return data.workflows || [];

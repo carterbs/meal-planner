@@ -29,6 +29,7 @@ func toProtoWeeklyMealPlan(plan *models.WeeklyMealPlan) *apipb.WeeklyMealPlan {
 	for i, item := range plan.ShoppingList {
 		pb.ShoppingList[i] = &apipb.ShoppingListItem{Ingredient: item.Ingredient, Quantity: item.Quantity, Category: item.Category}
 	}
+
 	return pb
 }
 
@@ -141,6 +142,7 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 	// Marshal and write updated plan response as proto JSON
 	resp := &apipb.RemoveMealResponse{Plan: toProtoWeeklyMealPlan(plan)}
 	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal updated plan response: %v", err), http.StatusInternalServerError)
 		return
