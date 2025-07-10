@@ -1,4 +1,4 @@
-import { debugLog, infoLog, warnLog, errorLog } from "../logging";
+import { debugLog, infoLog, warnLog, errorLog } from "../logging.js";
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';

@@ -22,9 +22,7 @@ var (
 
 // GetLogger returns a named SugaredLogger, initializing the logger if necessary.
 func GetLogger(name string) *zap.SugaredLogger {
-	fmt.Printf("DEBUG: GetLogger called for '%s'\n", name)
 	InitLogger()
-	fmt.Printf("DEBUG: Returning logger for '%s', useGrpcLog=%v\n", name, useGrpcLog)
 	return Logger.Named(name)
 }
 
@@ -107,11 +105,8 @@ func InitLogger() {
 		
 		// If gRPC logging is available, wrap the logger with gRPC hook
 		if useGrpcLog && grpcLogger != nil {
-			fmt.Printf("DEBUG: Setting up gRPC hook for global logger\n")
 			grpcCore := NewGrpcHook(l.Core(), "backend")
 			l = zap.New(grpcCore)
-		} else {
-			fmt.Printf("DEBUG: Not using gRPC hook: useGrpcLog=%v, grpcLogger=%v\n", useGrpcLog, grpcLogger != nil)
 		}
 		
 		Logger = l.Sugar()
