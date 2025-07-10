@@ -236,7 +236,7 @@ func TestGetWorkflowStateReturnsShoppingList(t *testing.T) {
 	threadID := "thread123"
 	plan := &models.MealPlanIdentifier{ID: 1, ThreadID: threadID}
 	entries := []models.MealPlanEntry{
-		{DayOfWeek: 0, MealType: "breakfast", Meal: map[string]interface{}{"id": plan.ID, "name": "Test Meal"}},
+		{DayIndex: 0, MealType: "breakfast", Meal: map[string]interface{}{"id": plan.ID, "name": "Test Meal"}},
 	}
 	shoppingItems := []models.ShoppingListItem{
 		{Ingredient: "Eggs", Quantity: "12"},

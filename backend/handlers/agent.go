@@ -81,7 +81,7 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 	resp, err := runAgentCLI(ctx, "plan", "start", "--participants", joinParticipants(req.Participants))
 	if err != nil {
@@ -155,7 +155,7 @@ func AddAgentFeedback(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 	logger.Infof("[DEBUG AddAgentFeedback] Running agent CLI: plan feedback %s %s --from %s", req.ThreadID, req.Message, req.From)
 	resp, err := runAgentCLI(ctx, "plan", "feedback", req.ThreadID, req.Message, "--from", req.From)
@@ -193,7 +193,7 @@ func ResumeAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 	args := []string{"resume", req.ThreadID}
 
@@ -270,7 +270,7 @@ func MessageAgentHandler(w http.ResponseWriter, r *http.Request) {
 			logger.Infof("[MessageAgentHandler] Saved user message to FeedbackHistory: %q", req.Message)
 		}
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 	// Run feedback
 	logger.Infof("[DEBUG MessageAgentHandler] Running agent CLI: plan feedback %s %s --from %s", req.ThreadID, req.Message, req.From)
@@ -324,11 +324,11 @@ func GetWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 
 // ListWorkflows handles GET /api/agent/workflows
 func ListWorkflows(w http.ResponseWriter, r *http.Request) {
-	// NOTE: This implementation lists all workflow checkpoints in the DB. You may want to filter by type if needed.
-	// For now, just return a list of all thread IDs and their states.
-	// This is a placeholder: in a real implementation, you'd likely have a DB query for all checkpoints.
-	// For now, return not implemented.
-	http.Error(w, "ListWorkflows DB implementation not yet implemented", http.StatusNotImplemented)
+	// Return empty list for now to allow agent initialization
+	// TODO: Implement proper workflow listing from database
+	writeJSON(w, map[string]interface{}{
+		"workflows": []interface{}{},
+	})
 }
 
 // CancelWorkflow handles DELETE /api/agent/workflows/{threadId}

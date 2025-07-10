@@ -19,7 +19,7 @@ func TestSaveMealPlan_Success(t *testing.T) {
 	version := 1
 	testMeal := map[string]interface{}{"id": 101, "name": "Test Meal"}
 	entries := []MealPlanEntry{
-		{DayOfWeek: 0, MealType: "breakfast", Meal: testMeal},
+		{DayIndex: 0, MealType: "breakfast", Meal: testMeal},
 	}
 
 	// Mock plan insert
@@ -31,7 +31,7 @@ func TestSaveMealPlan_Success(t *testing.T) {
 	// Mock item insert - now expects JSON meal
 	expectedMealJSON, _ := json.Marshal(testMeal)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO meal_plan_items")).
-		WithArgs(42, entries[0].DayOfWeek, entries[0].MealType, expectedMealJSON).
+		WithArgs(42, entries[0].DayIndex, entries[0].MealType, expectedMealJSON).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	id, err := SaveMealPlan(db, threadID, version, entries)
@@ -80,7 +80,7 @@ func TestGetMealPlanItems_Success(t *testing.T) {
 	items, err := GetMealPlanItems(db, mealPlanID)
 	assert.NoError(t, err)
 	assert.Len(t, items, 1)
-	assert.Equal(t, 1, items[0].DayOfWeek)
+	assert.Equal(t, 1, items[0].DayIndex)
 	assert.Equal(t, "lunch", items[0].MealType)
 	assert.Equal(t, testMealJSON, items[0].Meal)
 

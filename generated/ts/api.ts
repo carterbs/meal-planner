@@ -58,7 +58,7 @@ export interface WeeklyMealPlan {
 
 export interface MealPlanEntry {
   /** 0=Monday..6=Sunday */
-  dayOfWeek: number;
+  dayIndex: number;
   /** breakfast, lunch, dinner */
   mealType: string;
   meal: Meal | undefined;
@@ -1210,13 +1210,13 @@ export const WeeklyMealPlan: MessageFns<WeeklyMealPlan> = {
 };
 
 function createBaseMealPlanEntry(): MealPlanEntry {
-  return { dayOfWeek: 0, mealType: "", meal: undefined };
+  return { dayIndex: 0, mealType: "", meal: undefined };
 }
 
 export const MealPlanEntry: MessageFns<MealPlanEntry> = {
   encode(message: MealPlanEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.dayOfWeek !== 0) {
-      writer.uint32(8).int32(message.dayOfWeek);
+    if (message.dayIndex !== 0) {
+      writer.uint32(8).int32(message.dayIndex);
     }
     if (message.mealType !== "") {
       writer.uint32(18).string(message.mealType);
@@ -1239,7 +1239,7 @@ export const MealPlanEntry: MessageFns<MealPlanEntry> = {
             break;
           }
 
-          message.dayOfWeek = reader.int32();
+          message.dayIndex = reader.int32();
           continue;
         }
         case 2: {
@@ -1269,7 +1269,7 @@ export const MealPlanEntry: MessageFns<MealPlanEntry> = {
 
   fromJSON(object: any): MealPlanEntry {
     return {
-      dayOfWeek: isSet(object.dayOfWeek) ? globalThis.Number(object.dayOfWeek) : 0,
+      dayIndex: isSet(object.dayIndex) ? globalThis.Number(object.dayIndex) : 0,
       mealType: isSet(object.mealType) ? globalThis.String(object.mealType) : "",
       meal: isSet(object.meal) ? Meal.fromJSON(object.meal) : undefined,
     };
@@ -1277,8 +1277,8 @@ export const MealPlanEntry: MessageFns<MealPlanEntry> = {
 
   toJSON(message: MealPlanEntry): unknown {
     const obj: any = {};
-    if (message.dayOfWeek !== 0) {
-      obj.dayOfWeek = Math.round(message.dayOfWeek);
+    if (message.dayIndex !== 0) {
+      obj.dayIndex = Math.round(message.dayIndex);
     }
     if (message.mealType !== "") {
       obj.mealType = message.mealType;
@@ -1294,7 +1294,7 @@ export const MealPlanEntry: MessageFns<MealPlanEntry> = {
   },
   fromPartial<I extends Exact<DeepPartial<MealPlanEntry>, I>>(object: I): MealPlanEntry {
     const message = createBaseMealPlanEntry();
-    message.dayOfWeek = object.dayOfWeek ?? 0;
+    message.dayIndex = object.dayIndex ?? 0;
     message.mealType = object.mealType ?? "";
     message.meal = (object.meal !== undefined && object.meal !== null) ? Meal.fromPartial(object.meal) : undefined;
     return message;

@@ -8,16 +8,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AddBulkStepsRequest = exports.AddStepResponse = exports.AddStepRequest = exports.GetStepsResponse = exports.GetStepsRequest = exports.DeleteMealResponse = exports.DeleteMealRequest = exports.DeleteMealIngredientResponse = exports.DeleteMealIngredientRequest = exports.UpdateMealIngredientResponse = exports.UpdateMealIngredientRequest = exports.ReplaceMealResponse = exports.ReplaceMealRequest = exports.RemoveMealResponse = exports.RemoveMealRequest = exports.SwapMealResponse = exports.SwapMealRequest = exports.CreateMealResponse = exports.CreateMealRequest = exports.GetAllMealsResponse = exports.GetAllMealsRequest = exports.GetShoppingListResponse = exports.GetShoppingListRequest = exports.MealPlanICSResponse = exports.FinalizeMealPlanResponse = exports.FinalizeMealPlanRequest = exports.GenerateMealPlanResponse = exports.GetMealPlanResponse = exports.ReconnectResponse = exports.HealthCheckResponse = exports.WorkflowStatus = exports.AgentResponse = exports.AgentMessageRequest = exports.AgentResumeRequest = exports.AgentFeedbackRequest = exports.AgentStartRequest = exports.ShoppingList = exports.Message = exports.CheckpointResponse = exports.SaveCheckpointRequest = exports.MealPlanIdentifier = exports.SaveMealPlanRequest = exports.MealPlanEntry = exports.WeeklyMealPlan = exports.ShoppingListItem = exports.PlanDay = exports.Meal = exports.Step = exports.Ingredient = exports.protobufPackage = void 0;
 exports.MealPlannerAPIClientImpl = exports.MealPlannerAPIServiceName = exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry_FieldsEntry = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata_AdditionalFieldsEntry = exports.AgentCheckpointMetadata_WritesEntry = exports.AgentCheckpointMetadata = exports.AgentCheckpoint_ChannelValuesEntry = exports.AgentCheckpoint = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = exports.UpdateStepRequest = exports.AddBulkStepsResponse = void 0;
 /* eslint-disable */
-const wire_1 = require("@bufbuild/protobuf/wire");
-const any_1 = require("./google/protobuf/any");
-const empty_1 = require("./google/protobuf/empty");
-const timestamp_1 = require("./google/protobuf/timestamp");
+var wire_1 = require("@bufbuild/protobuf/wire");
+var any_1 = require("./google/protobuf/any");
+var empty_1 = require("./google/protobuf/empty");
+var timestamp_1 = require("./google/protobuf/timestamp");
 exports.protobufPackage = "mealplanner.api";
 function createBaseIngredient() {
     return { id: 0, mealId: 0, quantity: 0, unit: "", name: "" };
 }
 exports.Ingredient = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.id !== 0) {
             writer.uint32(8).int32(message.id);
         }
@@ -35,12 +36,12 @@ exports.Ingredient = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseIngredient();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseIngredient();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -85,7 +86,7 @@ exports.Ingredient = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             id: isSet(object.id) ? globalThis.Number(object.id) : 0,
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
@@ -94,8 +95,8 @@ exports.Ingredient = {
             name: isSet(object.name) ? globalThis.String(object.name) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.id !== 0) {
             obj.id = Math.round(message.id);
         }
@@ -113,16 +114,17 @@ exports.Ingredient = {
         }
         return obj;
     },
-    create(base) {
-        return exports.Ingredient.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.Ingredient.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseIngredient();
-        message.id = object.id ?? 0;
-        message.mealId = object.mealId ?? 0;
-        message.quantity = object.quantity ?? 0;
-        message.unit = object.unit ?? "";
-        message.name = object.name ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c, _d, _e;
+        var message = createBaseIngredient();
+        message.id = (_a = object.id) !== null && _a !== void 0 ? _a : 0;
+        message.mealId = (_b = object.mealId) !== null && _b !== void 0 ? _b : 0;
+        message.quantity = (_c = object.quantity) !== null && _c !== void 0 ? _c : 0;
+        message.unit = (_d = object.unit) !== null && _d !== void 0 ? _d : "";
+        message.name = (_e = object.name) !== null && _e !== void 0 ? _e : "";
         return message;
     },
 };
@@ -130,7 +132,8 @@ function createBaseStep() {
     return { id: 0, mealId: 0, stepNumber: 0, instruction: "" };
 }
 exports.Step = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.id !== 0) {
             writer.uint32(8).int32(message.id);
         }
@@ -145,12 +148,12 @@ exports.Step = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseStep();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseStep();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -188,7 +191,7 @@ exports.Step = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             id: isSet(object.id) ? globalThis.Number(object.id) : 0,
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
@@ -196,8 +199,8 @@ exports.Step = {
             instruction: isSet(object.instruction) ? globalThis.String(object.instruction) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.id !== 0) {
             obj.id = Math.round(message.id);
         }
@@ -212,15 +215,16 @@ exports.Step = {
         }
         return obj;
     },
-    create(base) {
-        return exports.Step.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.Step.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseStep();
-        message.id = object.id ?? 0;
-        message.mealId = object.mealId ?? 0;
-        message.stepNumber = object.stepNumber ?? 0;
-        message.instruction = object.instruction ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c, _d;
+        var message = createBaseStep();
+        message.id = (_a = object.id) !== null && _a !== void 0 ? _a : 0;
+        message.mealId = (_b = object.mealId) !== null && _b !== void 0 ? _b : 0;
+        message.stepNumber = (_c = object.stepNumber) !== null && _c !== void 0 ? _c : 0;
+        message.instruction = (_d = object.instruction) !== null && _d !== void 0 ? _d : "";
         return message;
     },
 };
@@ -238,7 +242,8 @@ function createBaseMeal() {
     };
 }
 exports.Meal = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.id !== 0) {
             writer.uint32(8).int32(message.id);
         }
@@ -260,20 +265,22 @@ exports.Meal = {
         if (message.mealType !== "") {
             writer.uint32(58).string(message.mealType);
         }
-        for (const v of message.ingredients) {
+        for (var _i = 0, _a = message.ingredients; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.Ingredient.encode(v, writer.uint32(66).fork()).join();
         }
-        for (const v of message.steps) {
+        for (var _b = 0, _c = message.steps; _b < _c.length; _b++) {
+            var v = _c[_b];
             exports.Step.encode(v, writer.uint32(74).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseMeal();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseMeal();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -346,7 +353,7 @@ exports.Meal = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             id: isSet(object.id) ? globalThis.Number(object.id) : 0,
             name: isSet(object.name) ? globalThis.String(object.name) : "",
@@ -355,14 +362,15 @@ exports.Meal = {
             hasRedMeat: isSet(object.hasRedMeat) ? globalThis.Boolean(object.hasRedMeat) : false,
             url: isSet(object.url) ? globalThis.String(object.url) : "",
             mealType: isSet(object.mealType) ? globalThis.String(object.mealType) : "",
-            ingredients: globalThis.Array.isArray(object?.ingredients)
-                ? object.ingredients.map((e) => exports.Ingredient.fromJSON(e))
+            ingredients: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.ingredients)
+                ? object.ingredients.map(function (e) { return exports.Ingredient.fromJSON(e); })
                 : [],
-            steps: globalThis.Array.isArray(object?.steps) ? object.steps.map((e) => exports.Step.fromJSON(e)) : [],
+            steps: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.steps) ? object.steps.map(function (e) { return exports.Step.fromJSON(e); }) : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var _a, _b;
+        var obj = {};
         if (message.id !== 0) {
             obj.id = Math.round(message.id);
         }
@@ -384,28 +392,29 @@ exports.Meal = {
         if (message.mealType !== "") {
             obj.mealType = message.mealType;
         }
-        if (message.ingredients?.length) {
-            obj.ingredients = message.ingredients.map((e) => exports.Ingredient.toJSON(e));
+        if ((_a = message.ingredients) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.ingredients = message.ingredients.map(function (e) { return exports.Ingredient.toJSON(e); });
         }
-        if (message.steps?.length) {
-            obj.steps = message.steps.map((e) => exports.Step.toJSON(e));
+        if ((_b = message.steps) === null || _b === void 0 ? void 0 : _b.length) {
+            obj.steps = message.steps.map(function (e) { return exports.Step.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.Meal.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.Meal.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseMeal();
-        message.id = object.id ?? 0;
-        message.name = object.name ?? "";
-        message.effort = object.effort ?? 0;
-        message.lastPlanned = object.lastPlanned ?? undefined;
-        message.hasRedMeat = object.hasRedMeat ?? false;
-        message.url = object.url ?? "";
-        message.mealType = object.mealType ?? "";
-        message.ingredients = object.ingredients?.map((e) => exports.Ingredient.fromPartial(e)) || [];
-        message.steps = object.steps?.map((e) => exports.Step.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+        var message = createBaseMeal();
+        message.id = (_a = object.id) !== null && _a !== void 0 ? _a : 0;
+        message.name = (_b = object.name) !== null && _b !== void 0 ? _b : "";
+        message.effort = (_c = object.effort) !== null && _c !== void 0 ? _c : 0;
+        message.lastPlanned = (_d = object.lastPlanned) !== null && _d !== void 0 ? _d : undefined;
+        message.hasRedMeat = (_e = object.hasRedMeat) !== null && _e !== void 0 ? _e : false;
+        message.url = (_f = object.url) !== null && _f !== void 0 ? _f : "";
+        message.mealType = (_g = object.mealType) !== null && _g !== void 0 ? _g : "";
+        message.ingredients = ((_h = object.ingredients) === null || _h === void 0 ? void 0 : _h.map(function (e) { return exports.Ingredient.fromPartial(e); })) || [];
+        message.steps = ((_j = object.steps) === null || _j === void 0 ? void 0 : _j.map(function (e) { return exports.Step.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -413,7 +422,8 @@ function createBasePlanDay() {
     return { meal: undefined, dayIndex: 0, mealType: "" };
 }
 exports.PlanDay = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.meal !== undefined) {
             exports.Meal.encode(message.meal, writer.uint32(10).fork()).join();
         }
@@ -425,12 +435,12 @@ exports.PlanDay = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBasePlanDay();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBasePlanDay();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -461,15 +471,15 @@ exports.PlanDay = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             meal: isSet(object.meal) ? exports.Meal.fromJSON(object.meal) : undefined,
             dayIndex: isSet(object.dayIndex) ? globalThis.Number(object.dayIndex) : 0,
             mealType: isSet(object.mealType) ? globalThis.String(object.mealType) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.meal !== undefined) {
             obj.meal = exports.Meal.toJSON(message.meal);
         }
@@ -481,14 +491,15 @@ exports.PlanDay = {
         }
         return obj;
     },
-    create(base) {
-        return exports.PlanDay.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.PlanDay.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBasePlanDay();
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBasePlanDay();
         message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
-        message.dayIndex = object.dayIndex ?? 0;
-        message.mealType = object.mealType ?? "";
+        message.dayIndex = (_a = object.dayIndex) !== null && _a !== void 0 ? _a : 0;
+        message.mealType = (_b = object.mealType) !== null && _b !== void 0 ? _b : "";
         return message;
     },
 };
@@ -496,7 +507,8 @@ function createBaseShoppingListItem() {
     return { ingredient: "", quantity: "", category: "" };
 }
 exports.ShoppingListItem = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.ingredient !== "") {
             writer.uint32(10).string(message.ingredient);
         }
@@ -508,12 +520,12 @@ exports.ShoppingListItem = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseShoppingListItem();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseShoppingListItem();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -544,15 +556,15 @@ exports.ShoppingListItem = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             ingredient: isSet(object.ingredient) ? globalThis.String(object.ingredient) : "",
             quantity: isSet(object.quantity) ? globalThis.String(object.quantity) : "",
             category: isSet(object.category) ? globalThis.String(object.category) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.ingredient !== "") {
             obj.ingredient = message.ingredient;
         }
@@ -564,14 +576,15 @@ exports.ShoppingListItem = {
         }
         return obj;
     },
-    create(base) {
-        return exports.ShoppingListItem.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ShoppingListItem.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseShoppingListItem();
-        message.ingredient = object.ingredient ?? "";
-        message.quantity = object.quantity ?? "";
-        message.category = object.category ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBaseShoppingListItem();
+        message.ingredient = (_a = object.ingredient) !== null && _a !== void 0 ? _a : "";
+        message.quantity = (_b = object.quantity) !== null && _b !== void 0 ? _b : "";
+        message.category = (_c = object.category) !== null && _c !== void 0 ? _c : "";
         return message;
     },
 };
@@ -579,21 +592,24 @@ function createBaseWeeklyMealPlan() {
     return { days: [], shoppingList: [] };
 }
 exports.WeeklyMealPlan = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.days) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.days; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.PlanDay.encode(v, writer.uint32(10).fork()).join();
         }
-        for (const v of message.shoppingList) {
+        for (var _b = 0, _c = message.shoppingList; _b < _c.length; _b++) {
+            var v = _c[_b];
             exports.ShoppingListItem.encode(v, writer.uint32(18).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseWeeklyMealPlan();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseWeeklyMealPlan();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -617,41 +633,44 @@ exports.WeeklyMealPlan = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
-            days: globalThis.Array.isArray(object?.days) ? object.days.map((e) => exports.PlanDay.fromJSON(e)) : [],
-            shoppingList: globalThis.Array.isArray(object?.shoppingList)
-                ? object.shoppingList.map((e) => exports.ShoppingListItem.fromJSON(e))
+            days: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.days) ? object.days.map(function (e) { return exports.PlanDay.fromJSON(e); }) : [],
+            shoppingList: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.shoppingList)
+                ? object.shoppingList.map(function (e) { return exports.ShoppingListItem.fromJSON(e); })
                 : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.days?.length) {
-            obj.days = message.days.map((e) => exports.PlanDay.toJSON(e));
+    toJSON: function (message) {
+        var _a, _b;
+        var obj = {};
+        if ((_a = message.days) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.days = message.days.map(function (e) { return exports.PlanDay.toJSON(e); });
         }
-        if (message.shoppingList?.length) {
-            obj.shoppingList = message.shoppingList.map((e) => exports.ShoppingListItem.toJSON(e));
+        if ((_b = message.shoppingList) === null || _b === void 0 ? void 0 : _b.length) {
+            obj.shoppingList = message.shoppingList.map(function (e) { return exports.ShoppingListItem.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.WeeklyMealPlan.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.WeeklyMealPlan.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseWeeklyMealPlan();
-        message.days = object.days?.map((e) => exports.PlanDay.fromPartial(e)) || [];
-        message.shoppingList = object.shoppingList?.map((e) => exports.ShoppingListItem.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseWeeklyMealPlan();
+        message.days = ((_a = object.days) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.PlanDay.fromPartial(e); })) || [];
+        message.shoppingList = ((_b = object.shoppingList) === null || _b === void 0 ? void 0 : _b.map(function (e) { return exports.ShoppingListItem.fromPartial(e); })) || [];
         return message;
     },
 };
 function createBaseMealPlanEntry() {
-    return { dayOfWeek: 0, mealType: "", meal: undefined };
+    return { dayIndex: 0, mealType: "", meal: undefined };
 }
 exports.MealPlanEntry = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        if (message.dayOfWeek !== 0) {
-            writer.uint32(8).int32(message.dayOfWeek);
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        if (message.dayIndex !== 0) {
+            writer.uint32(8).int32(message.dayIndex);
         }
         if (message.mealType !== "") {
             writer.uint32(18).string(message.mealType);
@@ -661,18 +680,18 @@ exports.MealPlanEntry = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseMealPlanEntry();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseMealPlanEntry();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
                         break;
                     }
-                    message.dayOfWeek = reader.int32();
+                    message.dayIndex = reader.int32();
                     continue;
                 }
                 case 2: {
@@ -697,17 +716,17 @@ exports.MealPlanEntry = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
-            dayOfWeek: isSet(object.dayOfWeek) ? globalThis.Number(object.dayOfWeek) : 0,
+            dayIndex: isSet(object.dayIndex) ? globalThis.Number(object.dayIndex) : 0,
             mealType: isSet(object.mealType) ? globalThis.String(object.mealType) : "",
             meal: isSet(object.meal) ? exports.Meal.fromJSON(object.meal) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.dayOfWeek !== 0) {
-            obj.dayOfWeek = Math.round(message.dayOfWeek);
+    toJSON: function (message) {
+        var obj = {};
+        if (message.dayIndex !== 0) {
+            obj.dayIndex = Math.round(message.dayIndex);
         }
         if (message.mealType !== "") {
             obj.mealType = message.mealType;
@@ -717,13 +736,14 @@ exports.MealPlanEntry = {
         }
         return obj;
     },
-    create(base) {
-        return exports.MealPlanEntry.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.MealPlanEntry.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseMealPlanEntry();
-        message.dayOfWeek = object.dayOfWeek ?? 0;
-        message.mealType = object.mealType ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseMealPlanEntry();
+        message.dayIndex = (_a = object.dayIndex) !== null && _a !== void 0 ? _a : 0;
+        message.mealType = (_b = object.mealType) !== null && _b !== void 0 ? _b : "";
         message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
         return message;
     },
@@ -732,24 +752,26 @@ function createBaseSaveMealPlanRequest() {
     return { threadId: "", version: 0, entries: [] };
 }
 exports.SaveMealPlanRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
         if (message.version !== 0) {
             writer.uint32(16).int32(message.version);
         }
-        for (const v of message.entries) {
+        for (var _i = 0, _a = message.entries; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.MealPlanEntry.encode(v, writer.uint32(26).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseSaveMealPlanRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseSaveMealPlanRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -780,36 +802,38 @@ exports.SaveMealPlanRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             version: isSet(object.version) ? globalThis.Number(object.version) : 0,
-            entries: globalThis.Array.isArray(object?.entries)
-                ? object.entries.map((e) => exports.MealPlanEntry.fromJSON(e))
+            entries: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.entries)
+                ? object.entries.map(function (e) { return exports.MealPlanEntry.fromJSON(e); })
                 : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
         if (message.version !== 0) {
             obj.version = Math.round(message.version);
         }
-        if (message.entries?.length) {
-            obj.entries = message.entries.map((e) => exports.MealPlanEntry.toJSON(e));
+        if ((_a = message.entries) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.entries = message.entries.map(function (e) { return exports.MealPlanEntry.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.SaveMealPlanRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.SaveMealPlanRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseSaveMealPlanRequest();
-        message.threadId = object.threadId ?? "";
-        message.version = object.version ?? 0;
-        message.entries = object.entries?.map((e) => exports.MealPlanEntry.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBaseSaveMealPlanRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.version = (_b = object.version) !== null && _b !== void 0 ? _b : 0;
+        message.entries = ((_c = object.entries) === null || _c === void 0 ? void 0 : _c.map(function (e) { return exports.MealPlanEntry.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -817,7 +841,8 @@ function createBaseMealPlanIdentifier() {
     return { id: 0, threadId: "", version: 0, createdAt: "" };
 }
 exports.MealPlanIdentifier = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.id !== 0) {
             writer.uint32(8).int32(message.id);
         }
@@ -832,12 +857,12 @@ exports.MealPlanIdentifier = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseMealPlanIdentifier();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseMealPlanIdentifier();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -875,7 +900,7 @@ exports.MealPlanIdentifier = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             id: isSet(object.id) ? globalThis.Number(object.id) : 0,
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
@@ -883,8 +908,8 @@ exports.MealPlanIdentifier = {
             createdAt: isSet(object.createdAt) ? globalThis.String(object.createdAt) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.id !== 0) {
             obj.id = Math.round(message.id);
         }
@@ -899,15 +924,16 @@ exports.MealPlanIdentifier = {
         }
         return obj;
     },
-    create(base) {
-        return exports.MealPlanIdentifier.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.MealPlanIdentifier.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseMealPlanIdentifier();
-        message.id = object.id ?? 0;
-        message.threadId = object.threadId ?? "";
-        message.version = object.version ?? 0;
-        message.createdAt = object.createdAt ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c, _d;
+        var message = createBaseMealPlanIdentifier();
+        message.id = (_a = object.id) !== null && _a !== void 0 ? _a : 0;
+        message.threadId = (_b = object.threadId) !== null && _b !== void 0 ? _b : "";
+        message.version = (_c = object.version) !== null && _c !== void 0 ? _c : 0;
+        message.createdAt = (_d = object.createdAt) !== null && _d !== void 0 ? _d : "";
         return message;
     },
 };
@@ -915,24 +941,26 @@ function createBaseSaveCheckpointRequest() {
     return { threadId: "", version: 0, entries: [] };
 }
 exports.SaveCheckpointRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
         if (message.version !== 0) {
             writer.uint32(16).int32(message.version);
         }
-        for (const v of message.entries) {
+        for (var _i = 0, _a = message.entries; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.MealPlanEntry.encode(v, writer.uint32(26).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseSaveCheckpointRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseSaveCheckpointRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -963,36 +991,38 @@ exports.SaveCheckpointRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             version: isSet(object.version) ? globalThis.Number(object.version) : 0,
-            entries: globalThis.Array.isArray(object?.entries)
-                ? object.entries.map((e) => exports.MealPlanEntry.fromJSON(e))
+            entries: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.entries)
+                ? object.entries.map(function (e) { return exports.MealPlanEntry.fromJSON(e); })
                 : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
         if (message.version !== 0) {
             obj.version = Math.round(message.version);
         }
-        if (message.entries?.length) {
-            obj.entries = message.entries.map((e) => exports.MealPlanEntry.toJSON(e));
+        if ((_a = message.entries) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.entries = message.entries.map(function (e) { return exports.MealPlanEntry.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.SaveCheckpointRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.SaveCheckpointRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseSaveCheckpointRequest();
-        message.threadId = object.threadId ?? "";
-        message.version = object.version ?? 0;
-        message.entries = object.entries?.map((e) => exports.MealPlanEntry.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBaseSaveCheckpointRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.version = (_b = object.version) !== null && _b !== void 0 ? _b : 0;
+        message.entries = ((_c = object.entries) === null || _c === void 0 ? void 0 : _c.map(function (e) { return exports.MealPlanEntry.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -1000,18 +1030,19 @@ function createBaseCheckpointResponse() {
     return { success: false };
 }
 exports.CheckpointResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.success !== false) {
             writer.uint32(8).bool(message.success);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseCheckpointResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseCheckpointResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -1028,22 +1059,23 @@ exports.CheckpointResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { success: isSet(object.success) ? globalThis.Boolean(object.success) : false };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.success !== false) {
             obj.success = message.success;
         }
         return obj;
     },
-    create(base) {
-        return exports.CheckpointResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.CheckpointResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseCheckpointResponse();
-        message.success = object.success ?? false;
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseCheckpointResponse();
+        message.success = (_a = object.success) !== null && _a !== void 0 ? _a : false;
         return message;
     },
 };
@@ -1051,7 +1083,8 @@ function createBaseMessage() {
     return { threadId: "", sender: "", content: "", createdAt: "" };
 }
 exports.Message = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -1066,12 +1099,12 @@ exports.Message = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseMessage();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseMessage();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1109,7 +1142,7 @@ exports.Message = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             sender: isSet(object.sender) ? globalThis.String(object.sender) : "",
@@ -1117,8 +1150,8 @@ exports.Message = {
             createdAt: isSet(object.createdAt) ? globalThis.String(object.createdAt) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -1133,15 +1166,16 @@ exports.Message = {
         }
         return obj;
     },
-    create(base) {
-        return exports.Message.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.Message.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseMessage();
-        message.threadId = object.threadId ?? "";
-        message.sender = object.sender ?? "";
-        message.content = object.content ?? "";
-        message.createdAt = object.createdAt ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c, _d;
+        var message = createBaseMessage();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.sender = (_b = object.sender) !== null && _b !== void 0 ? _b : "";
+        message.content = (_c = object.content) !== null && _c !== void 0 ? _c : "";
+        message.createdAt = (_d = object.createdAt) !== null && _d !== void 0 ? _d : "";
         return message;
     },
 };
@@ -1149,18 +1183,20 @@ function createBaseShoppingList() {
     return { items: [] };
 }
 exports.ShoppingList = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.items) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.items; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.ShoppingListItem.encode(v, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseShoppingList();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseShoppingList();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1177,24 +1213,26 @@ exports.ShoppingList = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
-            items: globalThis.Array.isArray(object?.items) ? object.items.map((e) => exports.ShoppingListItem.fromJSON(e)) : [],
+            items: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.items) ? object.items.map(function (e) { return exports.ShoppingListItem.fromJSON(e); }) : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.items?.length) {
-            obj.items = message.items.map((e) => exports.ShoppingListItem.toJSON(e));
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.items) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.items = message.items.map(function (e) { return exports.ShoppingListItem.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.ShoppingList.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ShoppingList.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseShoppingList();
-        message.items = object.items?.map((e) => exports.ShoppingListItem.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseShoppingList();
+        message.items = ((_a = object.items) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.ShoppingListItem.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -1202,8 +1240,10 @@ function createBaseAgentStartRequest() {
     return { participants: [], workflowType: "" };
 }
 exports.AgentStartRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.participants) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.participants; _i < _a.length; _i++) {
+            var v = _a[_i];
             writer.uint32(10).string(v);
         }
         if (message.workflowType !== "") {
@@ -1211,12 +1251,12 @@ exports.AgentStartRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentStartRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentStartRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1240,17 +1280,18 @@ exports.AgentStartRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
-            participants: globalThis.Array.isArray(object?.participants)
-                ? object.participants.map((e) => globalThis.String(e))
+            participants: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.participants)
+                ? object.participants.map(function (e) { return globalThis.String(e); })
                 : [],
             workflowType: isSet(object.workflowType) ? globalThis.String(object.workflowType) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.participants?.length) {
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.participants) === null || _a === void 0 ? void 0 : _a.length) {
             obj.participants = message.participants;
         }
         if (message.workflowType !== "") {
@@ -1258,13 +1299,14 @@ exports.AgentStartRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentStartRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentStartRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentStartRequest();
-        message.participants = object.participants?.map((e) => e) || [];
-        message.workflowType = object.workflowType ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseAgentStartRequest();
+        message.participants = ((_a = object.participants) === null || _a === void 0 ? void 0 : _a.map(function (e) { return e; })) || [];
+        message.workflowType = (_b = object.workflowType) !== null && _b !== void 0 ? _b : "";
         return message;
     },
 };
@@ -1272,7 +1314,8 @@ function createBaseAgentFeedbackRequest() {
     return { threadId: "", message: "", from: "" };
 }
 exports.AgentFeedbackRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -1284,12 +1327,12 @@ exports.AgentFeedbackRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentFeedbackRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentFeedbackRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1320,15 +1363,15 @@ exports.AgentFeedbackRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             message: isSet(object.message) ? globalThis.String(object.message) : "",
             from: isSet(object.from) ? globalThis.String(object.from) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -1340,14 +1383,15 @@ exports.AgentFeedbackRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentFeedbackRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentFeedbackRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentFeedbackRequest();
-        message.threadId = object.threadId ?? "";
-        message.message = object.message ?? "";
-        message.from = object.from ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBaseAgentFeedbackRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.message = (_b = object.message) !== null && _b !== void 0 ? _b : "";
+        message.from = (_c = object.from) !== null && _c !== void 0 ? _c : "";
         return message;
     },
 };
@@ -1355,7 +1399,8 @@ function createBaseAgentResumeRequest() {
     return { threadId: "", interactive: false };
 }
 exports.AgentResumeRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -1364,12 +1409,12 @@ exports.AgentResumeRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentResumeRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentResumeRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1393,14 +1438,14 @@ exports.AgentResumeRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             interactive: isSet(object.interactive) ? globalThis.Boolean(object.interactive) : false,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -1409,13 +1454,14 @@ exports.AgentResumeRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentResumeRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentResumeRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentResumeRequest();
-        message.threadId = object.threadId ?? "";
-        message.interactive = object.interactive ?? false;
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseAgentResumeRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.interactive = (_b = object.interactive) !== null && _b !== void 0 ? _b : false;
         return message;
     },
 };
@@ -1423,7 +1469,8 @@ function createBaseAgentMessageRequest() {
     return { threadId: "", message: "", from: "", interactive: false };
 }
 exports.AgentMessageRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -1438,12 +1485,12 @@ exports.AgentMessageRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentMessageRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentMessageRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1481,7 +1528,7 @@ exports.AgentMessageRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             message: isSet(object.message) ? globalThis.String(object.message) : "",
@@ -1489,8 +1536,8 @@ exports.AgentMessageRequest = {
             interactive: isSet(object.interactive) ? globalThis.Boolean(object.interactive) : false,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -1505,15 +1552,16 @@ exports.AgentMessageRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentMessageRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentMessageRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentMessageRequest();
-        message.threadId = object.threadId ?? "";
-        message.message = object.message ?? "";
-        message.from = object.from ?? "";
-        message.interactive = object.interactive ?? false;
+    fromPartial: function (object) {
+        var _a, _b, _c, _d;
+        var message = createBaseAgentMessageRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.message = (_b = object.message) !== null && _b !== void 0 ? _b : "";
+        message.from = (_c = object.from) !== null && _c !== void 0 ? _c : "";
+        message.interactive = (_d = object.interactive) !== null && _d !== void 0 ? _d : false;
         return message;
     },
 };
@@ -1521,7 +1569,8 @@ function createBaseAgentResponse() {
     return { success: false, message: "", threadId: "", currentStep: "", initialState: "", raw: "" };
 }
 exports.AgentResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.success !== false) {
             writer.uint32(8).bool(message.success);
         }
@@ -1542,12 +1591,12 @@ exports.AgentResponse = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -1599,7 +1648,7 @@ exports.AgentResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
             message: isSet(object.message) ? globalThis.String(object.message) : "",
@@ -1609,8 +1658,8 @@ exports.AgentResponse = {
             raw: isSet(object.raw) ? globalThis.String(object.raw) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.success !== false) {
             obj.success = message.success;
         }
@@ -1631,17 +1680,18 @@ exports.AgentResponse = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentResponse();
-        message.success = object.success ?? false;
-        message.message = object.message ?? "";
-        message.threadId = object.threadId ?? "";
-        message.currentStep = object.currentStep ?? "";
-        message.initialState = object.initialState ?? "";
-        message.raw = object.raw ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c, _d, _e, _f;
+        var message = createBaseAgentResponse();
+        message.success = (_a = object.success) !== null && _a !== void 0 ? _a : false;
+        message.message = (_b = object.message) !== null && _b !== void 0 ? _b : "";
+        message.threadId = (_c = object.threadId) !== null && _c !== void 0 ? _c : "";
+        message.currentStep = (_d = object.currentStep) !== null && _d !== void 0 ? _d : "";
+        message.initialState = (_e = object.initialState) !== null && _e !== void 0 ? _e : "";
+        message.raw = (_f = object.raw) !== null && _f !== void 0 ? _f : "";
         return message;
     },
 };
@@ -1649,7 +1699,8 @@ function createBaseWorkflowStatus() {
     return { threadId: "", workflowType: "", currentStep: "", participants: [] };
 }
 exports.WorkflowStatus = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -1659,17 +1710,18 @@ exports.WorkflowStatus = {
         if (message.currentStep !== "") {
             writer.uint32(26).string(message.currentStep);
         }
-        for (const v of message.participants) {
+        for (var _i = 0, _a = message.participants; _i < _a.length; _i++) {
+            var v = _a[_i];
             writer.uint32(34).string(v);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseWorkflowStatus();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseWorkflowStatus();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1707,18 +1759,19 @@ exports.WorkflowStatus = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             workflowType: isSet(object.workflowType) ? globalThis.String(object.workflowType) : "",
             currentStep: isSet(object.currentStep) ? globalThis.String(object.currentStep) : "",
-            participants: globalThis.Array.isArray(object?.participants)
-                ? object.participants.map((e) => globalThis.String(e))
+            participants: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.participants)
+                ? object.participants.map(function (e) { return globalThis.String(e); })
                 : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -1728,20 +1781,21 @@ exports.WorkflowStatus = {
         if (message.currentStep !== "") {
             obj.currentStep = message.currentStep;
         }
-        if (message.participants?.length) {
+        if ((_a = message.participants) === null || _a === void 0 ? void 0 : _a.length) {
             obj.participants = message.participants;
         }
         return obj;
     },
-    create(base) {
-        return exports.WorkflowStatus.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.WorkflowStatus.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseWorkflowStatus();
-        message.threadId = object.threadId ?? "";
-        message.workflowType = object.workflowType ?? "";
-        message.currentStep = object.currentStep ?? "";
-        message.participants = object.participants?.map((e) => e) || [];
+    fromPartial: function (object) {
+        var _a, _b, _c, _d;
+        var message = createBaseWorkflowStatus();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.workflowType = (_b = object.workflowType) !== null && _b !== void 0 ? _b : "";
+        message.currentStep = (_c = object.currentStep) !== null && _c !== void 0 ? _c : "";
+        message.participants = ((_d = object.participants) === null || _d === void 0 ? void 0 : _d.map(function (e) { return e; })) || [];
         return message;
     },
 };
@@ -1749,7 +1803,8 @@ function createBaseHealthCheckResponse() {
     return { status: "", message: "" };
 }
 exports.HealthCheckResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.status !== "") {
             writer.uint32(10).string(message.status);
         }
@@ -1758,12 +1813,12 @@ exports.HealthCheckResponse = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseHealthCheckResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseHealthCheckResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1787,14 +1842,14 @@ exports.HealthCheckResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             status: isSet(object.status) ? globalThis.String(object.status) : "",
             message: isSet(object.message) ? globalThis.String(object.message) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.status !== "") {
             obj.status = message.status;
         }
@@ -1803,13 +1858,14 @@ exports.HealthCheckResponse = {
         }
         return obj;
     },
-    create(base) {
-        return exports.HealthCheckResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.HealthCheckResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseHealthCheckResponse();
-        message.status = object.status ?? "";
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseHealthCheckResponse();
+        message.status = (_a = object.status) !== null && _a !== void 0 ? _a : "";
+        message.message = (_b = object.message) !== null && _b !== void 0 ? _b : "";
         return message;
     },
 };
@@ -1817,7 +1873,8 @@ function createBaseReconnectResponse() {
     return { status: "", message: "" };
 }
 exports.ReconnectResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.status !== "") {
             writer.uint32(10).string(message.status);
         }
@@ -1826,12 +1883,12 @@ exports.ReconnectResponse = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseReconnectResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseReconnectResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1855,14 +1912,14 @@ exports.ReconnectResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             status: isSet(object.status) ? globalThis.String(object.status) : "",
             message: isSet(object.message) ? globalThis.String(object.message) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.status !== "") {
             obj.status = message.status;
         }
@@ -1871,13 +1928,14 @@ exports.ReconnectResponse = {
         }
         return obj;
     },
-    create(base) {
-        return exports.ReconnectResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ReconnectResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseReconnectResponse();
-        message.status = object.status ?? "";
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseReconnectResponse();
+        message.status = (_a = object.status) !== null && _a !== void 0 ? _a : "";
+        message.message = (_b = object.message) !== null && _b !== void 0 ? _b : "";
         return message;
     },
 };
@@ -1885,18 +1943,19 @@ function createBaseGetMealPlanResponse() {
     return { plan: undefined };
 }
 exports.GetMealPlanResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.plan !== undefined) {
             exports.WeeklyMealPlan.encode(message.plan, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetMealPlanResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetMealPlanResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1913,21 +1972,21 @@ exports.GetMealPlanResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { plan: isSet(object.plan) ? exports.WeeklyMealPlan.fromJSON(object.plan) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.plan !== undefined) {
             obj.plan = exports.WeeklyMealPlan.toJSON(message.plan);
         }
         return obj;
     },
-    create(base) {
-        return exports.GetMealPlanResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetMealPlanResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetMealPlanResponse();
+    fromPartial: function (object) {
+        var message = createBaseGetMealPlanResponse();
         message.plan = (object.plan !== undefined && object.plan !== null)
             ? exports.WeeklyMealPlan.fromPartial(object.plan)
             : undefined;
@@ -1938,18 +1997,19 @@ function createBaseGenerateMealPlanResponse() {
     return { plan: undefined };
 }
 exports.GenerateMealPlanResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.plan !== undefined) {
             exports.WeeklyMealPlan.encode(message.plan, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGenerateMealPlanResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGenerateMealPlanResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -1966,21 +2026,21 @@ exports.GenerateMealPlanResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { plan: isSet(object.plan) ? exports.WeeklyMealPlan.fromJSON(object.plan) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.plan !== undefined) {
             obj.plan = exports.WeeklyMealPlan.toJSON(message.plan);
         }
         return obj;
     },
-    create(base) {
-        return exports.GenerateMealPlanResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GenerateMealPlanResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGenerateMealPlanResponse();
+    fromPartial: function (object) {
+        var message = createBaseGenerateMealPlanResponse();
         message.plan = (object.plan !== undefined && object.plan !== null)
             ? exports.WeeklyMealPlan.fromPartial(object.plan)
             : undefined;
@@ -1991,18 +2051,19 @@ function createBaseFinalizeMealPlanRequest() {
     return { plan: undefined };
 }
 exports.FinalizeMealPlanRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.plan !== undefined) {
             exports.WeeklyMealPlan.encode(message.plan, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseFinalizeMealPlanRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseFinalizeMealPlanRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2019,21 +2080,21 @@ exports.FinalizeMealPlanRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { plan: isSet(object.plan) ? exports.WeeklyMealPlan.fromJSON(object.plan) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.plan !== undefined) {
             obj.plan = exports.WeeklyMealPlan.toJSON(message.plan);
         }
         return obj;
     },
-    create(base) {
-        return exports.FinalizeMealPlanRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.FinalizeMealPlanRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseFinalizeMealPlanRequest();
+    fromPartial: function (object) {
+        var message = createBaseFinalizeMealPlanRequest();
         message.plan = (object.plan !== undefined && object.plan !== null)
             ? exports.WeeklyMealPlan.fromPartial(object.plan)
             : undefined;
@@ -2044,18 +2105,19 @@ function createBaseFinalizeMealPlanResponse() {
     return { message: "" };
 }
 exports.FinalizeMealPlanResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.message !== "") {
             writer.uint32(10).string(message.message);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseFinalizeMealPlanResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseFinalizeMealPlanResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2072,22 +2134,23 @@ exports.FinalizeMealPlanResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.message !== "") {
             obj.message = message.message;
         }
         return obj;
     },
-    create(base) {
-        return exports.FinalizeMealPlanResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.FinalizeMealPlanResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseFinalizeMealPlanResponse();
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseFinalizeMealPlanResponse();
+        message.message = (_a = object.message) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -2095,18 +2158,19 @@ function createBaseMealPlanICSResponse() {
     return { icsData: new Uint8Array(0) };
 }
 exports.MealPlanICSResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.icsData.length !== 0) {
             writer.uint32(10).bytes(message.icsData);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseMealPlanICSResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseMealPlanICSResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2123,22 +2187,23 @@ exports.MealPlanICSResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { icsData: isSet(object.icsData) ? bytesFromBase64(object.icsData) : new Uint8Array(0) };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.icsData.length !== 0) {
             obj.icsData = base64FromBytes(message.icsData);
         }
         return obj;
     },
-    create(base) {
-        return exports.MealPlanICSResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.MealPlanICSResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseMealPlanICSResponse();
-        message.icsData = object.icsData ?? new Uint8Array(0);
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseMealPlanICSResponse();
+        message.icsData = (_a = object.icsData) !== null && _a !== void 0 ? _a : new Uint8Array(0);
         return message;
     },
 };
@@ -2146,20 +2211,22 @@ function createBaseGetShoppingListRequest() {
     return { plan: [] };
 }
 exports.GetShoppingListRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         writer.uint32(10).fork();
-        for (const v of message.plan) {
+        for (var _i = 0, _a = message.plan; _i < _a.length; _i++) {
+            var v = _a[_i];
             writer.int32(v);
         }
         writer.join();
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetShoppingListRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetShoppingListRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag === 8) {
@@ -2167,7 +2234,7 @@ exports.GetShoppingListRequest = {
                         continue;
                     }
                     if (tag === 10) {
-                        const end2 = reader.uint32() + reader.pos;
+                        var end2 = reader.uint32() + reader.pos;
                         while (reader.pos < end2) {
                             message.plan.push(reader.int32());
                         }
@@ -2183,22 +2250,24 @@ exports.GetShoppingListRequest = {
         }
         return message;
     },
-    fromJSON(object) {
-        return { plan: globalThis.Array.isArray(object?.plan) ? object.plan.map((e) => globalThis.Number(e)) : [] };
+    fromJSON: function (object) {
+        return { plan: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.plan) ? object.plan.map(function (e) { return globalThis.Number(e); }) : [] };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.plan?.length) {
-            obj.plan = message.plan.map((e) => Math.round(e));
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.plan) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.plan = message.plan.map(function (e) { return Math.round(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.GetShoppingListRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetShoppingListRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetShoppingListRequest();
-        message.plan = object.plan?.map((e) => e) || [];
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetShoppingListRequest();
+        message.plan = ((_a = object.plan) === null || _a === void 0 ? void 0 : _a.map(function (e) { return e; })) || [];
         return message;
     },
 };
@@ -2206,18 +2275,20 @@ function createBaseGetShoppingListResponse() {
     return { items: [] };
 }
 exports.GetShoppingListResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.items) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.items; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.ShoppingListItem.encode(v, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetShoppingListResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetShoppingListResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2234,24 +2305,26 @@ exports.GetShoppingListResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
-            items: globalThis.Array.isArray(object?.items) ? object.items.map((e) => exports.ShoppingListItem.fromJSON(e)) : [],
+            items: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.items) ? object.items.map(function (e) { return exports.ShoppingListItem.fromJSON(e); }) : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.items?.length) {
-            obj.items = message.items.map((e) => exports.ShoppingListItem.toJSON(e));
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.items) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.items = message.items.map(function (e) { return exports.ShoppingListItem.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.GetShoppingListResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetShoppingListResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetShoppingListResponse();
-        message.items = object.items?.map((e) => exports.ShoppingListItem.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetShoppingListResponse();
+        message.items = ((_a = object.items) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.ShoppingListItem.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -2259,18 +2332,19 @@ function createBaseGetAllMealsRequest() {
     return { type: "" };
 }
 exports.GetAllMealsRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.type !== "") {
             writer.uint32(10).string(message.type);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetAllMealsRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetAllMealsRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2287,22 +2361,23 @@ exports.GetAllMealsRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { type: isSet(object.type) ? globalThis.String(object.type) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.type !== "") {
             obj.type = message.type;
         }
         return obj;
     },
-    create(base) {
-        return exports.GetAllMealsRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetAllMealsRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetAllMealsRequest();
-        message.type = object.type ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetAllMealsRequest();
+        message.type = (_a = object.type) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -2310,18 +2385,20 @@ function createBaseGetAllMealsResponse() {
     return { meals: [] };
 }
 exports.GetAllMealsResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.meals) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.meals; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.Meal.encode(v, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetAllMealsResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetAllMealsResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2338,22 +2415,24 @@ exports.GetAllMealsResponse = {
         }
         return message;
     },
-    fromJSON(object) {
-        return { meals: globalThis.Array.isArray(object?.meals) ? object.meals.map((e) => exports.Meal.fromJSON(e)) : [] };
+    fromJSON: function (object) {
+        return { meals: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.meals) ? object.meals.map(function (e) { return exports.Meal.fromJSON(e); }) : [] };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.meals?.length) {
-            obj.meals = message.meals.map((e) => exports.Meal.toJSON(e));
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.meals) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.meals = message.meals.map(function (e) { return exports.Meal.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.GetAllMealsResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetAllMealsResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetAllMealsResponse();
-        message.meals = object.meals?.map((e) => exports.Meal.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetAllMealsResponse();
+        message.meals = ((_a = object.meals) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.Meal.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -2361,18 +2440,19 @@ function createBaseCreateMealRequest() {
     return { meal: undefined };
 }
 exports.CreateMealRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.meal !== undefined) {
             exports.Meal.encode(message.meal, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseCreateMealRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseCreateMealRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2389,21 +2469,21 @@ exports.CreateMealRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { meal: isSet(object.meal) ? exports.Meal.fromJSON(object.meal) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.meal !== undefined) {
             obj.meal = exports.Meal.toJSON(message.meal);
         }
         return obj;
     },
-    create(base) {
-        return exports.CreateMealRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.CreateMealRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseCreateMealRequest();
+    fromPartial: function (object) {
+        var message = createBaseCreateMealRequest();
         message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
         return message;
     },
@@ -2412,18 +2492,19 @@ function createBaseCreateMealResponse() {
     return { meal: undefined };
 }
 exports.CreateMealResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.meal !== undefined) {
             exports.Meal.encode(message.meal, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseCreateMealResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseCreateMealResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2440,21 +2521,21 @@ exports.CreateMealResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { meal: isSet(object.meal) ? exports.Meal.fromJSON(object.meal) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.meal !== undefined) {
             obj.meal = exports.Meal.toJSON(message.meal);
         }
         return obj;
     },
-    create(base) {
-        return exports.CreateMealResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.CreateMealResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseCreateMealResponse();
+    fromPartial: function (object) {
+        var message = createBaseCreateMealResponse();
         message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
         return message;
     },
@@ -2463,7 +2544,8 @@ function createBaseSwapMealRequest() {
     return { mealId: 0, mealType: "" };
 }
 exports.SwapMealRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
@@ -2472,12 +2554,12 @@ exports.SwapMealRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseSwapMealRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseSwapMealRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -2501,14 +2583,14 @@ exports.SwapMealRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
             mealType: isSet(object.mealType) ? globalThis.String(object.mealType) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
@@ -2517,13 +2599,14 @@ exports.SwapMealRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.SwapMealRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.SwapMealRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseSwapMealRequest();
-        message.mealId = object.mealId ?? 0;
-        message.mealType = object.mealType ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseSwapMealRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
+        message.mealType = (_b = object.mealType) !== null && _b !== void 0 ? _b : "";
         return message;
     },
 };
@@ -2531,18 +2614,19 @@ function createBaseSwapMealResponse() {
     return { meal: undefined };
 }
 exports.SwapMealResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.meal !== undefined) {
             exports.Meal.encode(message.meal, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseSwapMealResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseSwapMealResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2559,21 +2643,21 @@ exports.SwapMealResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { meal: isSet(object.meal) ? exports.Meal.fromJSON(object.meal) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.meal !== undefined) {
             obj.meal = exports.Meal.toJSON(message.meal);
         }
         return obj;
     },
-    create(base) {
-        return exports.SwapMealResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.SwapMealResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseSwapMealResponse();
+    fromPartial: function (object) {
+        var message = createBaseSwapMealResponse();
         message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
         return message;
     },
@@ -2582,7 +2666,8 @@ function createBaseRemoveMealRequest() {
     return { threadId: "", dayIndex: 0, mealType: "" };
 }
 exports.RemoveMealRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -2594,12 +2679,12 @@ exports.RemoveMealRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseRemoveMealRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseRemoveMealRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2630,15 +2715,15 @@ exports.RemoveMealRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             dayIndex: isSet(object.dayIndex) ? globalThis.Number(object.dayIndex) : 0,
             mealType: isSet(object.mealType) ? globalThis.String(object.mealType) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -2650,14 +2735,15 @@ exports.RemoveMealRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.RemoveMealRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.RemoveMealRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseRemoveMealRequest();
-        message.threadId = object.threadId ?? "";
-        message.dayIndex = object.dayIndex ?? 0;
-        message.mealType = object.mealType ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBaseRemoveMealRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.dayIndex = (_b = object.dayIndex) !== null && _b !== void 0 ? _b : 0;
+        message.mealType = (_c = object.mealType) !== null && _c !== void 0 ? _c : "";
         return message;
     },
 };
@@ -2665,18 +2751,19 @@ function createBaseRemoveMealResponse() {
     return { plan: undefined };
 }
 exports.RemoveMealResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.plan !== undefined) {
             exports.WeeklyMealPlan.encode(message.plan, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseRemoveMealResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseRemoveMealResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2693,21 +2780,21 @@ exports.RemoveMealResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { plan: isSet(object.plan) ? exports.WeeklyMealPlan.fromJSON(object.plan) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.plan !== undefined) {
             obj.plan = exports.WeeklyMealPlan.toJSON(message.plan);
         }
         return obj;
     },
-    create(base) {
-        return exports.RemoveMealResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.RemoveMealResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseRemoveMealResponse();
+    fromPartial: function (object) {
+        var message = createBaseRemoveMealResponse();
         message.plan = (object.plan !== undefined && object.plan !== null)
             ? exports.WeeklyMealPlan.fromPartial(object.plan)
             : undefined;
@@ -2718,7 +2805,8 @@ function createBaseReplaceMealRequest() {
     return { day: "", newMealId: 0 };
 }
 exports.ReplaceMealRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.day !== "") {
             writer.uint32(10).string(message.day);
         }
@@ -2727,12 +2815,12 @@ exports.ReplaceMealRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseReplaceMealRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseReplaceMealRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2756,14 +2844,14 @@ exports.ReplaceMealRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             day: isSet(object.day) ? globalThis.String(object.day) : "",
             newMealId: isSet(object.newMealId) ? globalThis.Number(object.newMealId) : 0,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.day !== "") {
             obj.day = message.day;
         }
@@ -2772,13 +2860,14 @@ exports.ReplaceMealRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.ReplaceMealRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ReplaceMealRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseReplaceMealRequest();
-        message.day = object.day ?? "";
-        message.newMealId = object.newMealId ?? 0;
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseReplaceMealRequest();
+        message.day = (_a = object.day) !== null && _a !== void 0 ? _a : "";
+        message.newMealId = (_b = object.newMealId) !== null && _b !== void 0 ? _b : 0;
         return message;
     },
 };
@@ -2786,18 +2875,19 @@ function createBaseReplaceMealResponse() {
     return { meal: undefined };
 }
 exports.ReplaceMealResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.meal !== undefined) {
             exports.Meal.encode(message.meal, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseReplaceMealResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseReplaceMealResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2814,21 +2904,21 @@ exports.ReplaceMealResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { meal: isSet(object.meal) ? exports.Meal.fromJSON(object.meal) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.meal !== undefined) {
             obj.meal = exports.Meal.toJSON(message.meal);
         }
         return obj;
     },
-    create(base) {
-        return exports.ReplaceMealResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ReplaceMealResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseReplaceMealResponse();
+    fromPartial: function (object) {
+        var message = createBaseReplaceMealResponse();
         message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
         return message;
     },
@@ -2837,7 +2927,8 @@ function createBaseUpdateMealIngredientRequest() {
     return { mealId: 0, ingredientId: 0, ingredient: undefined };
 }
 exports.UpdateMealIngredientRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
@@ -2849,12 +2940,12 @@ exports.UpdateMealIngredientRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseUpdateMealIngredientRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseUpdateMealIngredientRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -2885,15 +2976,15 @@ exports.UpdateMealIngredientRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
             ingredientId: isSet(object.ingredientId) ? globalThis.Number(object.ingredientId) : 0,
             ingredient: isSet(object.ingredient) ? exports.Ingredient.fromJSON(object.ingredient) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
@@ -2905,13 +2996,14 @@ exports.UpdateMealIngredientRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.UpdateMealIngredientRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.UpdateMealIngredientRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseUpdateMealIngredientRequest();
-        message.mealId = object.mealId ?? 0;
-        message.ingredientId = object.ingredientId ?? 0;
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseUpdateMealIngredientRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
+        message.ingredientId = (_b = object.ingredientId) !== null && _b !== void 0 ? _b : 0;
         message.ingredient = (object.ingredient !== undefined && object.ingredient !== null)
             ? exports.Ingredient.fromPartial(object.ingredient)
             : undefined;
@@ -2922,18 +3014,19 @@ function createBaseUpdateMealIngredientResponse() {
     return { meal: undefined };
 }
 exports.UpdateMealIngredientResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.meal !== undefined) {
             exports.Meal.encode(message.meal, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseUpdateMealIngredientResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseUpdateMealIngredientResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -2950,21 +3043,21 @@ exports.UpdateMealIngredientResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { meal: isSet(object.meal) ? exports.Meal.fromJSON(object.meal) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.meal !== undefined) {
             obj.meal = exports.Meal.toJSON(message.meal);
         }
         return obj;
     },
-    create(base) {
-        return exports.UpdateMealIngredientResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.UpdateMealIngredientResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseUpdateMealIngredientResponse();
+    fromPartial: function (object) {
+        var message = createBaseUpdateMealIngredientResponse();
         message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
         return message;
     },
@@ -2973,7 +3066,8 @@ function createBaseDeleteMealIngredientRequest() {
     return { mealId: 0, ingredientId: 0 };
 }
 exports.DeleteMealIngredientRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
@@ -2982,12 +3076,12 @@ exports.DeleteMealIngredientRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseDeleteMealIngredientRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseDeleteMealIngredientRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -3011,14 +3105,14 @@ exports.DeleteMealIngredientRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
             ingredientId: isSet(object.ingredientId) ? globalThis.Number(object.ingredientId) : 0,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
@@ -3027,13 +3121,14 @@ exports.DeleteMealIngredientRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.DeleteMealIngredientRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.DeleteMealIngredientRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseDeleteMealIngredientRequest();
-        message.mealId = object.mealId ?? 0;
-        message.ingredientId = object.ingredientId ?? 0;
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseDeleteMealIngredientRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
+        message.ingredientId = (_b = object.ingredientId) !== null && _b !== void 0 ? _b : 0;
         return message;
     },
 };
@@ -3041,18 +3136,19 @@ function createBaseDeleteMealIngredientResponse() {
     return { meal: undefined };
 }
 exports.DeleteMealIngredientResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.meal !== undefined) {
             exports.Meal.encode(message.meal, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseDeleteMealIngredientResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseDeleteMealIngredientResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -3069,21 +3165,21 @@ exports.DeleteMealIngredientResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { meal: isSet(object.meal) ? exports.Meal.fromJSON(object.meal) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.meal !== undefined) {
             obj.meal = exports.Meal.toJSON(message.meal);
         }
         return obj;
     },
-    create(base) {
-        return exports.DeleteMealIngredientResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.DeleteMealIngredientResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseDeleteMealIngredientResponse();
+    fromPartial: function (object) {
+        var message = createBaseDeleteMealIngredientResponse();
         message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
         return message;
     },
@@ -3092,18 +3188,19 @@ function createBaseDeleteMealRequest() {
     return { mealId: 0 };
 }
 exports.DeleteMealRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseDeleteMealRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseDeleteMealRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -3120,22 +3217,23 @@ exports.DeleteMealRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0 };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
         return obj;
     },
-    create(base) {
-        return exports.DeleteMealRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.DeleteMealRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseDeleteMealRequest();
-        message.mealId = object.mealId ?? 0;
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseDeleteMealRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
         return message;
     },
 };
@@ -3143,18 +3241,19 @@ function createBaseDeleteMealResponse() {
     return { message: "" };
 }
 exports.DeleteMealResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.message !== "") {
             writer.uint32(10).string(message.message);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseDeleteMealResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseDeleteMealResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -3171,22 +3270,23 @@ exports.DeleteMealResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.message !== "") {
             obj.message = message.message;
         }
         return obj;
     },
-    create(base) {
-        return exports.DeleteMealResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.DeleteMealResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseDeleteMealResponse();
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseDeleteMealResponse();
+        message.message = (_a = object.message) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -3194,18 +3294,19 @@ function createBaseGetStepsRequest() {
     return { mealId: 0 };
 }
 exports.GetStepsRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetStepsRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetStepsRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -3222,22 +3323,23 @@ exports.GetStepsRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0 };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
         return obj;
     },
-    create(base) {
-        return exports.GetStepsRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetStepsRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetStepsRequest();
-        message.mealId = object.mealId ?? 0;
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetStepsRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
         return message;
     },
 };
@@ -3245,18 +3347,20 @@ function createBaseGetStepsResponse() {
     return { steps: [] };
 }
 exports.GetStepsResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.steps) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.steps; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.Step.encode(v, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetStepsResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetStepsResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -3273,22 +3377,24 @@ exports.GetStepsResponse = {
         }
         return message;
     },
-    fromJSON(object) {
-        return { steps: globalThis.Array.isArray(object?.steps) ? object.steps.map((e) => exports.Step.fromJSON(e)) : [] };
+    fromJSON: function (object) {
+        return { steps: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.steps) ? object.steps.map(function (e) { return exports.Step.fromJSON(e); }) : [] };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.steps?.length) {
-            obj.steps = message.steps.map((e) => exports.Step.toJSON(e));
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.steps) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.steps = message.steps.map(function (e) { return exports.Step.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.GetStepsResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetStepsResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetStepsResponse();
-        message.steps = object.steps?.map((e) => exports.Step.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetStepsResponse();
+        message.steps = ((_a = object.steps) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.Step.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -3296,7 +3402,8 @@ function createBaseAddStepRequest() {
     return { mealId: 0, step: undefined };
 }
 exports.AddStepRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
@@ -3305,12 +3412,12 @@ exports.AddStepRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAddStepRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAddStepRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -3334,14 +3441,14 @@ exports.AddStepRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
             step: isSet(object.step) ? exports.Step.fromJSON(object.step) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
@@ -3350,12 +3457,13 @@ exports.AddStepRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AddStepRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AddStepRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAddStepRequest();
-        message.mealId = object.mealId ?? 0;
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseAddStepRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
         message.step = (object.step !== undefined && object.step !== null) ? exports.Step.fromPartial(object.step) : undefined;
         return message;
     },
@@ -3364,18 +3472,19 @@ function createBaseAddStepResponse() {
     return { step: undefined };
 }
 exports.AddStepResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.step !== undefined) {
             exports.Step.encode(message.step, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAddStepResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAddStepResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -3392,21 +3501,21 @@ exports.AddStepResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { step: isSet(object.step) ? exports.Step.fromJSON(object.step) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.step !== undefined) {
             obj.step = exports.Step.toJSON(message.step);
         }
         return obj;
     },
-    create(base) {
-        return exports.AddStepResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AddStepResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAddStepResponse();
+    fromPartial: function (object) {
+        var message = createBaseAddStepResponse();
         message.step = (object.step !== undefined && object.step !== null) ? exports.Step.fromPartial(object.step) : undefined;
         return message;
     },
@@ -3415,21 +3524,23 @@ function createBaseAddBulkStepsRequest() {
     return { mealId: 0, instructions: [] };
 }
 exports.AddBulkStepsRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
-        for (const v of message.instructions) {
+        for (var _i = 0, _a = message.instructions; _i < _a.length; _i++) {
+            var v = _a[_i];
             writer.uint32(18).string(v);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAddBulkStepsRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAddBulkStepsRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -3453,31 +3564,33 @@ exports.AddBulkStepsRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
-            instructions: globalThis.Array.isArray(object?.instructions)
-                ? object.instructions.map((e) => globalThis.String(e))
+            instructions: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.instructions)
+                ? object.instructions.map(function (e) { return globalThis.String(e); })
                 : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
-        if (message.instructions?.length) {
+        if ((_a = message.instructions) === null || _a === void 0 ? void 0 : _a.length) {
             obj.instructions = message.instructions;
         }
         return obj;
     },
-    create(base) {
-        return exports.AddBulkStepsRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AddBulkStepsRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAddBulkStepsRequest();
-        message.mealId = object.mealId ?? 0;
-        message.instructions = object.instructions?.map((e) => e) || [];
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseAddBulkStepsRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
+        message.instructions = ((_b = object.instructions) === null || _b === void 0 ? void 0 : _b.map(function (e) { return e; })) || [];
         return message;
     },
 };
@@ -3485,18 +3598,20 @@ function createBaseAddBulkStepsResponse() {
     return { steps: [] };
 }
 exports.AddBulkStepsResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.steps) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.steps; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.Step.encode(v, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAddBulkStepsResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAddBulkStepsResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -3513,22 +3628,24 @@ exports.AddBulkStepsResponse = {
         }
         return message;
     },
-    fromJSON(object) {
-        return { steps: globalThis.Array.isArray(object?.steps) ? object.steps.map((e) => exports.Step.fromJSON(e)) : [] };
+    fromJSON: function (object) {
+        return { steps: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.steps) ? object.steps.map(function (e) { return exports.Step.fromJSON(e); }) : [] };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.steps?.length) {
-            obj.steps = message.steps.map((e) => exports.Step.toJSON(e));
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.steps) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.steps = message.steps.map(function (e) { return exports.Step.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.AddBulkStepsResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AddBulkStepsResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAddBulkStepsResponse();
-        message.steps = object.steps?.map((e) => exports.Step.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseAddBulkStepsResponse();
+        message.steps = ((_a = object.steps) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.Step.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -3536,7 +3653,8 @@ function createBaseUpdateStepRequest() {
     return { mealId: 0, stepId: 0, step: undefined };
 }
 exports.UpdateStepRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
@@ -3548,12 +3666,12 @@ exports.UpdateStepRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseUpdateStepRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseUpdateStepRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -3584,15 +3702,15 @@ exports.UpdateStepRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
             stepId: isSet(object.stepId) ? globalThis.Number(object.stepId) : 0,
             step: isSet(object.step) ? exports.Step.fromJSON(object.step) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
@@ -3604,13 +3722,14 @@ exports.UpdateStepRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.UpdateStepRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.UpdateStepRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseUpdateStepRequest();
-        message.mealId = object.mealId ?? 0;
-        message.stepId = object.stepId ?? 0;
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseUpdateStepRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
+        message.stepId = (_b = object.stepId) !== null && _b !== void 0 ? _b : 0;
         message.step = (object.step !== undefined && object.step !== null) ? exports.Step.fromPartial(object.step) : undefined;
         return message;
     },
@@ -3619,18 +3738,19 @@ function createBaseUpdateStepResponse() {
     return { step: undefined };
 }
 exports.UpdateStepResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.step !== undefined) {
             exports.Step.encode(message.step, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseUpdateStepResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseUpdateStepResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -3647,21 +3767,21 @@ exports.UpdateStepResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { step: isSet(object.step) ? exports.Step.fromJSON(object.step) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.step !== undefined) {
             obj.step = exports.Step.toJSON(message.step);
         }
         return obj;
     },
-    create(base) {
-        return exports.UpdateStepResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.UpdateStepResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseUpdateStepResponse();
+    fromPartial: function (object) {
+        var message = createBaseUpdateStepResponse();
         message.step = (object.step !== undefined && object.step !== null) ? exports.Step.fromPartial(object.step) : undefined;
         return message;
     },
@@ -3670,7 +3790,8 @@ function createBaseDeleteStepRequest() {
     return { mealId: 0, stepId: 0 };
 }
 exports.DeleteStepRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
@@ -3679,12 +3800,12 @@ exports.DeleteStepRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseDeleteStepRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseDeleteStepRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -3708,14 +3829,14 @@ exports.DeleteStepRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
             stepId: isSet(object.stepId) ? globalThis.Number(object.stepId) : 0,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
@@ -3724,13 +3845,14 @@ exports.DeleteStepRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.DeleteStepRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.DeleteStepRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseDeleteStepRequest();
-        message.mealId = object.mealId ?? 0;
-        message.stepId = object.stepId ?? 0;
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseDeleteStepRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
+        message.stepId = (_b = object.stepId) !== null && _b !== void 0 ? _b : 0;
         return message;
     },
 };
@@ -3738,18 +3860,19 @@ function createBaseDeleteStepResponse() {
     return { message: "" };
 }
 exports.DeleteStepResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.message !== "") {
             writer.uint32(10).string(message.message);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseDeleteStepResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseDeleteStepResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -3766,22 +3889,23 @@ exports.DeleteStepResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.message !== "") {
             obj.message = message.message;
         }
         return obj;
     },
-    create(base) {
-        return exports.DeleteStepResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.DeleteStepResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseDeleteStepResponse();
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseDeleteStepResponse();
+        message.message = (_a = object.message) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -3789,23 +3913,25 @@ function createBaseReorderStepsRequest() {
     return { mealId: 0, stepIds: [] };
 }
 exports.ReorderStepsRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
         writer.uint32(18).fork();
-        for (const v of message.stepIds) {
+        for (var _i = 0, _a = message.stepIds; _i < _a.length; _i++) {
+            var v = _a[_i];
             writer.int32(v);
         }
         writer.join();
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseReorderStepsRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseReorderStepsRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -3820,7 +3946,7 @@ exports.ReorderStepsRequest = {
                         continue;
                     }
                     if (tag === 18) {
-                        const end2 = reader.uint32() + reader.pos;
+                        var end2 = reader.uint32() + reader.pos;
                         while (reader.pos < end2) {
                             message.stepIds.push(reader.int32());
                         }
@@ -3836,29 +3962,31 @@ exports.ReorderStepsRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0,
-            stepIds: globalThis.Array.isArray(object?.stepIds) ? object.stepIds.map((e) => globalThis.Number(e)) : [],
+            stepIds: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.stepIds) ? object.stepIds.map(function (e) { return globalThis.Number(e); }) : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
-        if (message.stepIds?.length) {
-            obj.stepIds = message.stepIds.map((e) => Math.round(e));
+        if ((_a = message.stepIds) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.stepIds = message.stepIds.map(function (e) { return Math.round(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.ReorderStepsRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ReorderStepsRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseReorderStepsRequest();
-        message.mealId = object.mealId ?? 0;
-        message.stepIds = object.stepIds?.map((e) => e) || [];
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseReorderStepsRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
+        message.stepIds = ((_b = object.stepIds) === null || _b === void 0 ? void 0 : _b.map(function (e) { return e; })) || [];
         return message;
     },
 };
@@ -3866,18 +3994,19 @@ function createBaseReorderStepsResponse() {
     return { message: "" };
 }
 exports.ReorderStepsResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.message !== "") {
             writer.uint32(10).string(message.message);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseReorderStepsResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseReorderStepsResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -3894,22 +4023,23 @@ exports.ReorderStepsResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.message !== "") {
             obj.message = message.message;
         }
         return obj;
     },
-    create(base) {
-        return exports.ReorderStepsResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ReorderStepsResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseReorderStepsResponse();
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseReorderStepsResponse();
+        message.message = (_a = object.message) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -3917,18 +4047,19 @@ function createBaseDeleteAllStepsRequest() {
     return { mealId: 0 };
 }
 exports.DeleteAllStepsRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.mealId !== 0) {
             writer.uint32(8).int32(message.mealId);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseDeleteAllStepsRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseDeleteAllStepsRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -3945,22 +4076,23 @@ exports.DeleteAllStepsRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { mealId: isSet(object.mealId) ? globalThis.Number(object.mealId) : 0 };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.mealId !== 0) {
             obj.mealId = Math.round(message.mealId);
         }
         return obj;
     },
-    create(base) {
-        return exports.DeleteAllStepsRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.DeleteAllStepsRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseDeleteAllStepsRequest();
-        message.mealId = object.mealId ?? 0;
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseDeleteAllStepsRequest();
+        message.mealId = (_a = object.mealId) !== null && _a !== void 0 ? _a : 0;
         return message;
     },
 };
@@ -3968,18 +4100,19 @@ function createBaseDeleteAllStepsResponse() {
     return { message: "" };
 }
 exports.DeleteAllStepsResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.message !== "") {
             writer.uint32(10).string(message.message);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseDeleteAllStepsResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseDeleteAllStepsResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -3996,22 +4129,23 @@ exports.DeleteAllStepsResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.message !== "") {
             obj.message = message.message;
         }
         return obj;
     },
-    create(base) {
-        return exports.DeleteAllStepsResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.DeleteAllStepsResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseDeleteAllStepsResponse();
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseDeleteAllStepsResponse();
+        message.message = (_a = object.message) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -4019,18 +4153,19 @@ function createBaseStartAgentWorkflowRequest() {
     return { request: undefined };
 }
 exports.StartAgentWorkflowRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.request !== undefined) {
             exports.AgentStartRequest.encode(message.request, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseStartAgentWorkflowRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseStartAgentWorkflowRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4047,21 +4182,21 @@ exports.StartAgentWorkflowRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { request: isSet(object.request) ? exports.AgentStartRequest.fromJSON(object.request) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.request !== undefined) {
             obj.request = exports.AgentStartRequest.toJSON(message.request);
         }
         return obj;
     },
-    create(base) {
-        return exports.StartAgentWorkflowRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.StartAgentWorkflowRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseStartAgentWorkflowRequest();
+    fromPartial: function (object) {
+        var message = createBaseStartAgentWorkflowRequest();
         message.request = (object.request !== undefined && object.request !== null)
             ? exports.AgentStartRequest.fromPartial(object.request)
             : undefined;
@@ -4072,18 +4207,19 @@ function createBaseStartAgentWorkflowResponse() {
     return { response: undefined };
 }
 exports.StartAgentWorkflowResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.response !== undefined) {
             exports.AgentResponse.encode(message.response, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseStartAgentWorkflowResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseStartAgentWorkflowResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4100,21 +4236,21 @@ exports.StartAgentWorkflowResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { response: isSet(object.response) ? exports.AgentResponse.fromJSON(object.response) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.response !== undefined) {
             obj.response = exports.AgentResponse.toJSON(message.response);
         }
         return obj;
     },
-    create(base) {
-        return exports.StartAgentWorkflowResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.StartAgentWorkflowResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseStartAgentWorkflowResponse();
+    fromPartial: function (object) {
+        var message = createBaseStartAgentWorkflowResponse();
         message.response = (object.response !== undefined && object.response !== null)
             ? exports.AgentResponse.fromPartial(object.response)
             : undefined;
@@ -4125,18 +4261,19 @@ function createBaseMessageAgentRequest() {
     return { request: undefined };
 }
 exports.MessageAgentRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.request !== undefined) {
             exports.AgentMessageRequest.encode(message.request, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseMessageAgentRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseMessageAgentRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4153,21 +4290,21 @@ exports.MessageAgentRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { request: isSet(object.request) ? exports.AgentMessageRequest.fromJSON(object.request) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.request !== undefined) {
             obj.request = exports.AgentMessageRequest.toJSON(message.request);
         }
         return obj;
     },
-    create(base) {
-        return exports.MessageAgentRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.MessageAgentRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseMessageAgentRequest();
+    fromPartial: function (object) {
+        var message = createBaseMessageAgentRequest();
         message.request = (object.request !== undefined && object.request !== null)
             ? exports.AgentMessageRequest.fromPartial(object.request)
             : undefined;
@@ -4178,18 +4315,19 @@ function createBaseMessageAgentResponse() {
     return { response: undefined };
 }
 exports.MessageAgentResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.response !== undefined) {
             exports.AgentResponse.encode(message.response, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseMessageAgentResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseMessageAgentResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4206,21 +4344,21 @@ exports.MessageAgentResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { response: isSet(object.response) ? exports.AgentResponse.fromJSON(object.response) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.response !== undefined) {
             obj.response = exports.AgentResponse.toJSON(message.response);
         }
         return obj;
     },
-    create(base) {
-        return exports.MessageAgentResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.MessageAgentResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseMessageAgentResponse();
+    fromPartial: function (object) {
+        var message = createBaseMessageAgentResponse();
         message.response = (object.response !== undefined && object.response !== null)
             ? exports.AgentResponse.fromPartial(object.response)
             : undefined;
@@ -4231,18 +4369,19 @@ function createBaseGetWorkflowStatusRequest() {
     return { threadId: "" };
 }
 exports.GetWorkflowStatusRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetWorkflowStatusRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetWorkflowStatusRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4259,22 +4398,23 @@ exports.GetWorkflowStatusRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
         return obj;
     },
-    create(base) {
-        return exports.GetWorkflowStatusRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetWorkflowStatusRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetWorkflowStatusRequest();
-        message.threadId = object.threadId ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetWorkflowStatusRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -4282,18 +4422,19 @@ function createBaseGetWorkflowStatusResponse() {
     return { status: undefined };
 }
 exports.GetWorkflowStatusResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.status !== undefined) {
             exports.WorkflowStatus.encode(message.status, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetWorkflowStatusResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetWorkflowStatusResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4310,21 +4451,21 @@ exports.GetWorkflowStatusResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { status: isSet(object.status) ? exports.WorkflowStatus.fromJSON(object.status) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.status !== undefined) {
             obj.status = exports.WorkflowStatus.toJSON(message.status);
         }
         return obj;
     },
-    create(base) {
-        return exports.GetWorkflowStatusResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetWorkflowStatusResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetWorkflowStatusResponse();
+    fromPartial: function (object) {
+        var message = createBaseGetWorkflowStatusResponse();
         message.status = (object.status !== undefined && object.status !== null)
             ? exports.WorkflowStatus.fromPartial(object.status)
             : undefined;
@@ -4335,18 +4476,20 @@ function createBaseListWorkflowsResponse() {
     return { workflows: [] };
 }
 exports.ListWorkflowsResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.workflows) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.workflows; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.WorkflowStatus.encode(v, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseListWorkflowsResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseListWorkflowsResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4363,26 +4506,28 @@ exports.ListWorkflowsResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
-            workflows: globalThis.Array.isArray(object?.workflows)
-                ? object.workflows.map((e) => exports.WorkflowStatus.fromJSON(e))
+            workflows: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.workflows)
+                ? object.workflows.map(function (e) { return exports.WorkflowStatus.fromJSON(e); })
                 : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.workflows?.length) {
-            obj.workflows = message.workflows.map((e) => exports.WorkflowStatus.toJSON(e));
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.workflows) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.workflows = message.workflows.map(function (e) { return exports.WorkflowStatus.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.ListWorkflowsResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ListWorkflowsResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseListWorkflowsResponse();
-        message.workflows = object.workflows?.map((e) => exports.WorkflowStatus.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseListWorkflowsResponse();
+        message.workflows = ((_a = object.workflows) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.WorkflowStatus.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -4390,18 +4535,19 @@ function createBaseCancelWorkflowRequest() {
     return { threadId: "" };
 }
 exports.CancelWorkflowRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseCancelWorkflowRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseCancelWorkflowRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4418,22 +4564,23 @@ exports.CancelWorkflowRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
         return obj;
     },
-    create(base) {
-        return exports.CancelWorkflowRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.CancelWorkflowRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseCancelWorkflowRequest();
-        message.threadId = object.threadId ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseCancelWorkflowRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -4441,18 +4588,19 @@ function createBaseCancelWorkflowResponse() {
     return { status: "" };
 }
 exports.CancelWorkflowResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.status !== "") {
             writer.uint32(10).string(message.status);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseCancelWorkflowResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseCancelWorkflowResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4469,22 +4617,23 @@ exports.CancelWorkflowResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { status: isSet(object.status) ? globalThis.String(object.status) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.status !== "") {
             obj.status = message.status;
         }
         return obj;
     },
-    create(base) {
-        return exports.CancelWorkflowResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.CancelWorkflowResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseCancelWorkflowResponse();
-        message.status = object.status ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseCancelWorkflowResponse();
+        message.status = (_a = object.status) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -4492,18 +4641,19 @@ function createBaseGetWorkflowStateRequest() {
     return { threadId: "" };
 }
 exports.GetWorkflowStateRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetWorkflowStateRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetWorkflowStateRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4520,22 +4670,23 @@ exports.GetWorkflowStateRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
         return obj;
     },
-    create(base) {
-        return exports.GetWorkflowStateRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetWorkflowStateRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetWorkflowStateRequest();
-        message.threadId = object.threadId ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetWorkflowStateRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -4543,24 +4694,26 @@ function createBaseGetWorkflowStateResponse() {
     return { plan: undefined, shoppingList: undefined, messages: [] };
 }
 exports.GetWorkflowStateResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.plan !== undefined) {
             exports.WeeklyMealPlan.encode(message.plan, writer.uint32(10).fork()).join();
         }
         if (message.shoppingList !== undefined) {
             exports.ShoppingList.encode(message.shoppingList, writer.uint32(18).fork()).join();
         }
-        for (const v of message.messages) {
+        for (var _i = 0, _a = message.messages; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.Message.encode(v, writer.uint32(26).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetWorkflowStateResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetWorkflowStateResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4591,38 +4744,40 @@ exports.GetWorkflowStateResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             plan: isSet(object.plan) ? exports.WeeklyMealPlan.fromJSON(object.plan) : undefined,
             shoppingList: isSet(object.shoppingList) ? exports.ShoppingList.fromJSON(object.shoppingList) : undefined,
-            messages: globalThis.Array.isArray(object?.messages) ? object.messages.map((e) => exports.Message.fromJSON(e)) : [],
+            messages: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.messages) ? object.messages.map(function (e) { return exports.Message.fromJSON(e); }) : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
         if (message.plan !== undefined) {
             obj.plan = exports.WeeklyMealPlan.toJSON(message.plan);
         }
         if (message.shoppingList !== undefined) {
             obj.shoppingList = exports.ShoppingList.toJSON(message.shoppingList);
         }
-        if (message.messages?.length) {
-            obj.messages = message.messages.map((e) => exports.Message.toJSON(e));
+        if ((_a = message.messages) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.messages = message.messages.map(function (e) { return exports.Message.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.GetWorkflowStateResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetWorkflowStateResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetWorkflowStateResponse();
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetWorkflowStateResponse();
         message.plan = (object.plan !== undefined && object.plan !== null)
             ? exports.WeeklyMealPlan.fromPartial(object.plan)
             : undefined;
         message.shoppingList = (object.shoppingList !== undefined && object.shoppingList !== null)
             ? exports.ShoppingList.fromPartial(object.shoppingList)
             : undefined;
-        message.messages = object.messages?.map((e) => exports.Message.fromPartial(e)) || [];
+        message.messages = ((_a = object.messages) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.Message.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -4630,18 +4785,19 @@ function createBaseAbandonWorkflowRequest() {
     return { threadId: "" };
 }
 exports.AbandonWorkflowRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAbandonWorkflowRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAbandonWorkflowRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4658,22 +4814,23 @@ exports.AbandonWorkflowRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
         return obj;
     },
-    create(base) {
-        return exports.AbandonWorkflowRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AbandonWorkflowRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAbandonWorkflowRequest();
-        message.threadId = object.threadId ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseAbandonWorkflowRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -4681,18 +4838,19 @@ function createBaseAbandonWorkflowResponse() {
     return { message: "" };
 }
 exports.AbandonWorkflowResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.message !== "") {
             writer.uint32(10).string(message.message);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAbandonWorkflowResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAbandonWorkflowResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4709,22 +4867,23 @@ exports.AbandonWorkflowResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.message !== "") {
             obj.message = message.message;
         }
         return obj;
     },
-    create(base) {
-        return exports.AbandonWorkflowResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AbandonWorkflowResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAbandonWorkflowResponse();
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseAbandonWorkflowResponse();
+        message.message = (_a = object.message) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -4732,7 +4891,8 @@ function createBaseAddMessageRequest() {
     return { threadId: "", sender: "", message: "" };
 }
 exports.AddMessageRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -4744,12 +4904,12 @@ exports.AddMessageRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAddMessageRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAddMessageRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4780,15 +4940,15 @@ exports.AddMessageRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             sender: isSet(object.sender) ? globalThis.String(object.sender) : "",
             message: isSet(object.message) ? globalThis.String(object.message) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -4800,14 +4960,15 @@ exports.AddMessageRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AddMessageRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AddMessageRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAddMessageRequest();
-        message.threadId = object.threadId ?? "";
-        message.sender = object.sender ?? "";
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBaseAddMessageRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.sender = (_b = object.sender) !== null && _b !== void 0 ? _b : "";
+        message.message = (_c = object.message) !== null && _c !== void 0 ? _c : "";
         return message;
     },
 };
@@ -4815,18 +4976,19 @@ function createBaseAddMessageResponse() {
     return { message: "" };
 }
 exports.AddMessageResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.message !== "") {
             writer.uint32(10).string(message.message);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAddMessageResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAddMessageResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4843,22 +5005,23 @@ exports.AddMessageResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.message !== "") {
             obj.message = message.message;
         }
         return obj;
     },
-    create(base) {
-        return exports.AddMessageResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AddMessageResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAddMessageResponse();
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseAddMessageResponse();
+        message.message = (_a = object.message) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -4866,7 +5029,8 @@ function createBaseUpdateSessionStateRequest() {
     return { threadId: "", mealPlan: "", shoppingList: "", currentStep: "", status: "" };
 }
 exports.UpdateSessionStateRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -4884,12 +5048,12 @@ exports.UpdateSessionStateRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseUpdateSessionStateRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseUpdateSessionStateRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -4934,7 +5098,7 @@ exports.UpdateSessionStateRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             mealPlan: isSet(object.mealPlan) ? globalThis.String(object.mealPlan) : "",
@@ -4943,8 +5107,8 @@ exports.UpdateSessionStateRequest = {
             status: isSet(object.status) ? globalThis.String(object.status) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -4962,16 +5126,17 @@ exports.UpdateSessionStateRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.UpdateSessionStateRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.UpdateSessionStateRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseUpdateSessionStateRequest();
-        message.threadId = object.threadId ?? "";
-        message.mealPlan = object.mealPlan ?? "";
-        message.shoppingList = object.shoppingList ?? "";
-        message.currentStep = object.currentStep ?? "";
-        message.status = object.status ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c, _d, _e;
+        var message = createBaseUpdateSessionStateRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.mealPlan = (_b = object.mealPlan) !== null && _b !== void 0 ? _b : "";
+        message.shoppingList = (_c = object.shoppingList) !== null && _c !== void 0 ? _c : "";
+        message.currentStep = (_d = object.currentStep) !== null && _d !== void 0 ? _d : "";
+        message.status = (_e = object.status) !== null && _e !== void 0 ? _e : "";
         return message;
     },
 };
@@ -4979,18 +5144,19 @@ function createBaseUpdateSessionStateResponse() {
     return { message: "" };
 }
 exports.UpdateSessionStateResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.message !== "") {
             writer.uint32(10).string(message.message);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseUpdateSessionStateResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseUpdateSessionStateResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5007,22 +5173,23 @@ exports.UpdateSessionStateResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { message: isSet(object.message) ? globalThis.String(object.message) : "" };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.message !== "") {
             obj.message = message.message;
         }
         return obj;
     },
-    create(base) {
-        return exports.UpdateSessionStateResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.UpdateSessionStateResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseUpdateSessionStateResponse();
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseUpdateSessionStateResponse();
+        message.message = (_a = object.message) !== null && _a !== void 0 ? _a : "";
         return message;
     },
 };
@@ -5030,11 +5197,14 @@ function createBaseAgentCheckpoint() {
     return { channelValues: {}, next: [], step: 0 };
 }
 exports.AgentCheckpoint = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        Object.entries(message.channelValues).forEach(([key, value]) => {
-            exports.AgentCheckpoint_ChannelValuesEntry.encode({ key: key, value }, writer.uint32(10).fork()).join();
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        Object.entries(message.channelValues).forEach(function (_a) {
+            var key = _a[0], value = _a[1];
+            exports.AgentCheckpoint_ChannelValuesEntry.encode({ key: key, value: value }, writer.uint32(10).fork()).join();
         });
-        for (const v of message.next) {
+        for (var _i = 0, _a = message.next; _i < _a.length; _i++) {
+            var v = _a[_i];
             writer.uint32(18).string(v);
         }
         if (message.step !== 0) {
@@ -5042,18 +5212,18 @@ exports.AgentCheckpoint = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentCheckpoint();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentCheckpoint();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
                         break;
                     }
-                    const entry1 = exports.AgentCheckpoint_ChannelValuesEntry.decode(reader, reader.uint32());
+                    var entry1 = exports.AgentCheckpoint_ChannelValuesEntry.decode(reader, reader.uint32());
                     if (entry1.value !== undefined) {
                         message.channelValues[entry1.key] = entry1.value;
                     }
@@ -5081,30 +5251,33 @@ exports.AgentCheckpoint = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             channelValues: isObject(object.channelValues)
-                ? Object.entries(object.channelValues).reduce((acc, [key, value]) => {
+                ? Object.entries(object.channelValues).reduce(function (acc, _a) {
+                    var key = _a[0], value = _a[1];
                     acc[key] = any_1.Any.fromJSON(value);
                     return acc;
                 }, {})
                 : {},
-            next: globalThis.Array.isArray(object?.next) ? object.next.map((e) => globalThis.String(e)) : [],
+            next: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.next) ? object.next.map(function (e) { return globalThis.String(e); }) : [],
             step: isSet(object.step) ? globalThis.Number(object.step) : 0,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
         if (message.channelValues) {
-            const entries = Object.entries(message.channelValues);
+            var entries = Object.entries(message.channelValues);
             if (entries.length > 0) {
                 obj.channelValues = {};
-                entries.forEach(([k, v]) => {
+                entries.forEach(function (_a) {
+                    var k = _a[0], v = _a[1];
                     obj.channelValues[k] = any_1.Any.toJSON(v);
                 });
             }
         }
-        if (message.next?.length) {
+        if ((_a = message.next) === null || _a === void 0 ? void 0 : _a.length) {
             obj.next = message.next;
         }
         if (message.step !== 0) {
@@ -5112,19 +5285,21 @@ exports.AgentCheckpoint = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentCheckpoint.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentCheckpoint.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentCheckpoint();
-        message.channelValues = Object.entries(object.channelValues ?? {}).reduce((acc, [key, value]) => {
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBaseAgentCheckpoint();
+        message.channelValues = Object.entries((_a = object.channelValues) !== null && _a !== void 0 ? _a : {}).reduce(function (acc, _a) {
+            var key = _a[0], value = _a[1];
             if (value !== undefined) {
                 acc[key] = any_1.Any.fromPartial(value);
             }
             return acc;
         }, {});
-        message.next = object.next?.map((e) => e) || [];
-        message.step = object.step ?? 0;
+        message.next = ((_b = object.next) === null || _b === void 0 ? void 0 : _b.map(function (e) { return e; })) || [];
+        message.step = (_c = object.step) !== null && _c !== void 0 ? _c : 0;
         return message;
     },
 };
@@ -5132,7 +5307,8 @@ function createBaseAgentCheckpoint_ChannelValuesEntry() {
     return { key: "", value: undefined };
 }
 exports.AgentCheckpoint_ChannelValuesEntry = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.key !== "") {
             writer.uint32(10).string(message.key);
         }
@@ -5141,12 +5317,12 @@ exports.AgentCheckpoint_ChannelValuesEntry = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentCheckpoint_ChannelValuesEntry();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentCheckpoint_ChannelValuesEntry();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5170,14 +5346,14 @@ exports.AgentCheckpoint_ChannelValuesEntry = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             key: isSet(object.key) ? globalThis.String(object.key) : "",
             value: isSet(object.value) ? any_1.Any.fromJSON(object.value) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.key !== "") {
             obj.key = message.key;
         }
@@ -5186,12 +5362,13 @@ exports.AgentCheckpoint_ChannelValuesEntry = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentCheckpoint_ChannelValuesEntry.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentCheckpoint_ChannelValuesEntry.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentCheckpoint_ChannelValuesEntry();
-        message.key = object.key ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseAgentCheckpoint_ChannelValuesEntry();
+        message.key = (_a = object.key) !== null && _a !== void 0 ? _a : "";
         message.value = (object.value !== undefined && object.value !== null) ? any_1.Any.fromPartial(object.value) : undefined;
         return message;
     },
@@ -5200,27 +5377,30 @@ function createBaseAgentCheckpointMetadata() {
     return { source: "", step: 0, writes: {}, additionalFields: {} };
 }
 exports.AgentCheckpointMetadata = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.source !== "") {
             writer.uint32(10).string(message.source);
         }
         if (message.step !== 0) {
             writer.uint32(16).int32(message.step);
         }
-        Object.entries(message.writes).forEach(([key, value]) => {
-            exports.AgentCheckpointMetadata_WritesEntry.encode({ key: key, value }, writer.uint32(26).fork()).join();
+        Object.entries(message.writes).forEach(function (_a) {
+            var key = _a[0], value = _a[1];
+            exports.AgentCheckpointMetadata_WritesEntry.encode({ key: key, value: value }, writer.uint32(26).fork()).join();
         });
-        Object.entries(message.additionalFields).forEach(([key, value]) => {
-            exports.AgentCheckpointMetadata_AdditionalFieldsEntry.encode({ key: key, value }, writer.uint32(34).fork()).join();
+        Object.entries(message.additionalFields).forEach(function (_a) {
+            var key = _a[0], value = _a[1];
+            exports.AgentCheckpointMetadata_AdditionalFieldsEntry.encode({ key: key, value: value }, writer.uint32(34).fork()).join();
         });
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentCheckpointMetadata();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentCheckpointMetadata();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5240,7 +5420,7 @@ exports.AgentCheckpointMetadata = {
                     if (tag !== 26) {
                         break;
                     }
-                    const entry3 = exports.AgentCheckpointMetadata_WritesEntry.decode(reader, reader.uint32());
+                    var entry3 = exports.AgentCheckpointMetadata_WritesEntry.decode(reader, reader.uint32());
                     if (entry3.value !== undefined) {
                         message.writes[entry3.key] = entry3.value;
                     }
@@ -5250,7 +5430,7 @@ exports.AgentCheckpointMetadata = {
                     if (tag !== 34) {
                         break;
                     }
-                    const entry4 = exports.AgentCheckpointMetadata_AdditionalFieldsEntry.decode(reader, reader.uint32());
+                    var entry4 = exports.AgentCheckpointMetadata_AdditionalFieldsEntry.decode(reader, reader.uint32());
                     if (entry4.value !== undefined) {
                         message.additionalFields[entry4.key] = entry4.value;
                     }
@@ -5264,26 +5444,28 @@ exports.AgentCheckpointMetadata = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             source: isSet(object.source) ? globalThis.String(object.source) : "",
             step: isSet(object.step) ? globalThis.Number(object.step) : 0,
             writes: isObject(object.writes)
-                ? Object.entries(object.writes).reduce((acc, [key, value]) => {
+                ? Object.entries(object.writes).reduce(function (acc, _a) {
+                    var key = _a[0], value = _a[1];
                     acc[key] = any_1.Any.fromJSON(value);
                     return acc;
                 }, {})
                 : {},
             additionalFields: isObject(object.additionalFields)
-                ? Object.entries(object.additionalFields).reduce((acc, [key, value]) => {
+                ? Object.entries(object.additionalFields).reduce(function (acc, _a) {
+                    var key = _a[0], value = _a[1];
                     acc[key] = any_1.Any.fromJSON(value);
                     return acc;
                 }, {})
                 : {},
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.source !== "") {
             obj.source = message.source;
         }
@@ -5291,39 +5473,44 @@ exports.AgentCheckpointMetadata = {
             obj.step = Math.round(message.step);
         }
         if (message.writes) {
-            const entries = Object.entries(message.writes);
+            var entries = Object.entries(message.writes);
             if (entries.length > 0) {
                 obj.writes = {};
-                entries.forEach(([k, v]) => {
+                entries.forEach(function (_a) {
+                    var k = _a[0], v = _a[1];
                     obj.writes[k] = any_1.Any.toJSON(v);
                 });
             }
         }
         if (message.additionalFields) {
-            const entries = Object.entries(message.additionalFields);
+            var entries = Object.entries(message.additionalFields);
             if (entries.length > 0) {
                 obj.additionalFields = {};
-                entries.forEach(([k, v]) => {
+                entries.forEach(function (_a) {
+                    var k = _a[0], v = _a[1];
                     obj.additionalFields[k] = any_1.Any.toJSON(v);
                 });
             }
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentCheckpointMetadata.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentCheckpointMetadata.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentCheckpointMetadata();
-        message.source = object.source ?? "";
-        message.step = object.step ?? 0;
-        message.writes = Object.entries(object.writes ?? {}).reduce((acc, [key, value]) => {
+    fromPartial: function (object) {
+        var _a, _b, _c, _d;
+        var message = createBaseAgentCheckpointMetadata();
+        message.source = (_a = object.source) !== null && _a !== void 0 ? _a : "";
+        message.step = (_b = object.step) !== null && _b !== void 0 ? _b : 0;
+        message.writes = Object.entries((_c = object.writes) !== null && _c !== void 0 ? _c : {}).reduce(function (acc, _a) {
+            var key = _a[0], value = _a[1];
             if (value !== undefined) {
                 acc[key] = any_1.Any.fromPartial(value);
             }
             return acc;
         }, {});
-        message.additionalFields = Object.entries(object.additionalFields ?? {}).reduce((acc, [key, value]) => {
+        message.additionalFields = Object.entries((_d = object.additionalFields) !== null && _d !== void 0 ? _d : {}).reduce(function (acc, _a) {
+            var key = _a[0], value = _a[1];
             if (value !== undefined) {
                 acc[key] = any_1.Any.fromPartial(value);
             }
@@ -5336,7 +5523,8 @@ function createBaseAgentCheckpointMetadata_WritesEntry() {
     return { key: "", value: undefined };
 }
 exports.AgentCheckpointMetadata_WritesEntry = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.key !== "") {
             writer.uint32(10).string(message.key);
         }
@@ -5345,12 +5533,12 @@ exports.AgentCheckpointMetadata_WritesEntry = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentCheckpointMetadata_WritesEntry();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentCheckpointMetadata_WritesEntry();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5374,14 +5562,14 @@ exports.AgentCheckpointMetadata_WritesEntry = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             key: isSet(object.key) ? globalThis.String(object.key) : "",
             value: isSet(object.value) ? any_1.Any.fromJSON(object.value) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.key !== "") {
             obj.key = message.key;
         }
@@ -5390,12 +5578,13 @@ exports.AgentCheckpointMetadata_WritesEntry = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentCheckpointMetadata_WritesEntry.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentCheckpointMetadata_WritesEntry.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentCheckpointMetadata_WritesEntry();
-        message.key = object.key ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseAgentCheckpointMetadata_WritesEntry();
+        message.key = (_a = object.key) !== null && _a !== void 0 ? _a : "";
         message.value = (object.value !== undefined && object.value !== null) ? any_1.Any.fromPartial(object.value) : undefined;
         return message;
     },
@@ -5404,7 +5593,8 @@ function createBaseAgentCheckpointMetadata_AdditionalFieldsEntry() {
     return { key: "", value: undefined };
 }
 exports.AgentCheckpointMetadata_AdditionalFieldsEntry = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.key !== "") {
             writer.uint32(10).string(message.key);
         }
@@ -5413,12 +5603,12 @@ exports.AgentCheckpointMetadata_AdditionalFieldsEntry = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAgentCheckpointMetadata_AdditionalFieldsEntry();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAgentCheckpointMetadata_AdditionalFieldsEntry();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5442,14 +5632,14 @@ exports.AgentCheckpointMetadata_AdditionalFieldsEntry = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             key: isSet(object.key) ? globalThis.String(object.key) : "",
             value: isSet(object.value) ? any_1.Any.fromJSON(object.value) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.key !== "") {
             obj.key = message.key;
         }
@@ -5458,12 +5648,13 @@ exports.AgentCheckpointMetadata_AdditionalFieldsEntry = {
         }
         return obj;
     },
-    create(base) {
-        return exports.AgentCheckpointMetadata_AdditionalFieldsEntry.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.AgentCheckpointMetadata_AdditionalFieldsEntry.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAgentCheckpointMetadata_AdditionalFieldsEntry();
-        message.key = object.key ?? "";
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseAgentCheckpointMetadata_AdditionalFieldsEntry();
+        message.key = (_a = object.key) !== null && _a !== void 0 ? _a : "";
         message.value = (object.value !== undefined && object.value !== null) ? any_1.Any.fromPartial(object.value) : undefined;
         return message;
     },
@@ -5472,7 +5663,8 @@ function createBaseCheckpointTuple() {
     return { checkpoint: undefined, metadata: undefined };
 }
 exports.CheckpointTuple = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.checkpoint !== undefined) {
             exports.AgentCheckpoint.encode(message.checkpoint, writer.uint32(10).fork()).join();
         }
@@ -5481,12 +5673,12 @@ exports.CheckpointTuple = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseCheckpointTuple();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseCheckpointTuple();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5510,14 +5702,14 @@ exports.CheckpointTuple = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             checkpoint: isSet(object.checkpoint) ? exports.AgentCheckpoint.fromJSON(object.checkpoint) : undefined,
             metadata: isSet(object.metadata) ? exports.AgentCheckpointMetadata.fromJSON(object.metadata) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.checkpoint !== undefined) {
             obj.checkpoint = exports.AgentCheckpoint.toJSON(message.checkpoint);
         }
@@ -5526,11 +5718,11 @@ exports.CheckpointTuple = {
         }
         return obj;
     },
-    create(base) {
-        return exports.CheckpointTuple.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.CheckpointTuple.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseCheckpointTuple();
+    fromPartial: function (object) {
+        var message = createBaseCheckpointTuple();
         message.checkpoint = (object.checkpoint !== undefined && object.checkpoint !== null)
             ? exports.AgentCheckpoint.fromPartial(object.checkpoint)
             : undefined;
@@ -5544,7 +5736,8 @@ function createBaseGetCheckpointRequest() {
     return { threadId: "", checkpointNs: "" };
 }
 exports.GetCheckpointRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -5553,12 +5746,12 @@ exports.GetCheckpointRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetCheckpointRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetCheckpointRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5582,14 +5775,14 @@ exports.GetCheckpointRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             checkpointNs: isSet(object.checkpointNs) ? globalThis.String(object.checkpointNs) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -5598,13 +5791,14 @@ exports.GetCheckpointRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.GetCheckpointRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetCheckpointRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetCheckpointRequest();
-        message.threadId = object.threadId ?? "";
-        message.checkpointNs = object.checkpointNs ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseGetCheckpointRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.checkpointNs = (_b = object.checkpointNs) !== null && _b !== void 0 ? _b : "";
         return message;
     },
 };
@@ -5612,7 +5806,8 @@ function createBaseGetCheckpointResponse() {
     return { tuple: undefined, found: false };
 }
 exports.GetCheckpointResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.tuple !== undefined) {
             exports.CheckpointTuple.encode(message.tuple, writer.uint32(10).fork()).join();
         }
@@ -5621,12 +5816,12 @@ exports.GetCheckpointResponse = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseGetCheckpointResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseGetCheckpointResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5650,14 +5845,14 @@ exports.GetCheckpointResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             tuple: isSet(object.tuple) ? exports.CheckpointTuple.fromJSON(object.tuple) : undefined,
             found: isSet(object.found) ? globalThis.Boolean(object.found) : false,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.tuple !== undefined) {
             obj.tuple = exports.CheckpointTuple.toJSON(message.tuple);
         }
@@ -5666,15 +5861,16 @@ exports.GetCheckpointResponse = {
         }
         return obj;
     },
-    create(base) {
-        return exports.GetCheckpointResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.GetCheckpointResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseGetCheckpointResponse();
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseGetCheckpointResponse();
         message.tuple = (object.tuple !== undefined && object.tuple !== null)
             ? exports.CheckpointTuple.fromPartial(object.tuple)
             : undefined;
-        message.found = object.found ?? false;
+        message.found = (_a = object.found) !== null && _a !== void 0 ? _a : false;
         return message;
     },
 };
@@ -5682,7 +5878,8 @@ function createBasePutCheckpointRequest() {
     return { threadId: "", checkpointNs: "", workflowType: "", checkpoint: undefined, metadata: undefined };
 }
 exports.PutCheckpointRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -5700,12 +5897,12 @@ exports.PutCheckpointRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBasePutCheckpointRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBasePutCheckpointRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5750,7 +5947,7 @@ exports.PutCheckpointRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             checkpointNs: isSet(object.checkpointNs) ? globalThis.String(object.checkpointNs) : "",
@@ -5759,8 +5956,8 @@ exports.PutCheckpointRequest = {
             metadata: isSet(object.metadata) ? exports.AgentCheckpointMetadata.fromJSON(object.metadata) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -5778,14 +5975,15 @@ exports.PutCheckpointRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.PutCheckpointRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.PutCheckpointRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBasePutCheckpointRequest();
-        message.threadId = object.threadId ?? "";
-        message.checkpointNs = object.checkpointNs ?? "";
-        message.workflowType = object.workflowType ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBasePutCheckpointRequest();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.checkpointNs = (_b = object.checkpointNs) !== null && _b !== void 0 ? _b : "";
+        message.workflowType = (_c = object.workflowType) !== null && _c !== void 0 ? _c : "";
         message.checkpoint = (object.checkpoint !== undefined && object.checkpoint !== null)
             ? exports.AgentCheckpoint.fromPartial(object.checkpoint)
             : undefined;
@@ -5799,7 +5997,8 @@ function createBasePutCheckpointResponse() {
     return { success: false, threadId: "", checkpointNs: "" };
 }
 exports.PutCheckpointResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.success !== false) {
             writer.uint32(8).bool(message.success);
         }
@@ -5811,12 +6010,12 @@ exports.PutCheckpointResponse = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBasePutCheckpointResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBasePutCheckpointResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -5847,15 +6046,15 @@ exports.PutCheckpointResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             checkpointNs: isSet(object.checkpointNs) ? globalThis.String(object.checkpointNs) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.success !== false) {
             obj.success = message.success;
         }
@@ -5867,14 +6066,15 @@ exports.PutCheckpointResponse = {
         }
         return obj;
     },
-    create(base) {
-        return exports.PutCheckpointResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.PutCheckpointResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBasePutCheckpointResponse();
-        message.success = object.success ?? false;
-        message.threadId = object.threadId ?? "";
-        message.checkpointNs = object.checkpointNs ?? "";
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBasePutCheckpointResponse();
+        message.success = (_a = object.success) !== null && _a !== void 0 ? _a : false;
+        message.threadId = (_b = object.threadId) !== null && _b !== void 0 ? _b : "";
+        message.checkpointNs = (_c = object.checkpointNs) !== null && _c !== void 0 ? _c : "";
         return message;
     },
 };
@@ -5882,7 +6082,8 @@ function createBaseListCheckpointsRequest() {
     return { limit: 0, beforeThreadId: "" };
 }
 exports.ListCheckpointsRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.limit !== 0) {
             writer.uint32(8).int32(message.limit);
         }
@@ -5891,12 +6092,12 @@ exports.ListCheckpointsRequest = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseListCheckpointsRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseListCheckpointsRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -5920,14 +6121,14 @@ exports.ListCheckpointsRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             limit: isSet(object.limit) ? globalThis.Number(object.limit) : 0,
             beforeThreadId: isSet(object.beforeThreadId) ? globalThis.String(object.beforeThreadId) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.limit !== 0) {
             obj.limit = Math.round(message.limit);
         }
@@ -5936,13 +6137,14 @@ exports.ListCheckpointsRequest = {
         }
         return obj;
     },
-    create(base) {
-        return exports.ListCheckpointsRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ListCheckpointsRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseListCheckpointsRequest();
-        message.limit = object.limit ?? 0;
-        message.beforeThreadId = object.beforeThreadId ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseListCheckpointsRequest();
+        message.limit = (_a = object.limit) !== null && _a !== void 0 ? _a : 0;
+        message.beforeThreadId = (_b = object.beforeThreadId) !== null && _b !== void 0 ? _b : "";
         return message;
     },
 };
@@ -5950,18 +6152,20 @@ function createBaseListCheckpointsResponse() {
     return { entries: [] };
 }
 exports.ListCheckpointsResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.entries) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.entries; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.CheckpointEntry.encode(v, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseListCheckpointsResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseListCheckpointsResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -5978,26 +6182,28 @@ exports.ListCheckpointsResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
-            entries: globalThis.Array.isArray(object?.entries)
-                ? object.entries.map((e) => exports.CheckpointEntry.fromJSON(e))
+            entries: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.entries)
+                ? object.entries.map(function (e) { return exports.CheckpointEntry.fromJSON(e); })
                 : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.entries?.length) {
-            obj.entries = message.entries.map((e) => exports.CheckpointEntry.toJSON(e));
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.entries) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.entries = message.entries.map(function (e) { return exports.CheckpointEntry.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.ListCheckpointsResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.ListCheckpointsResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseListCheckpointsResponse();
-        message.entries = object.entries?.map((e) => exports.CheckpointEntry.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseListCheckpointsResponse();
+        message.entries = ((_a = object.entries) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.CheckpointEntry.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -6005,7 +6211,8 @@ function createBaseCheckpointEntry() {
     return { threadId: "", checkpointNs: "", tuple: undefined };
 }
 exports.CheckpointEntry = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.threadId !== "") {
             writer.uint32(10).string(message.threadId);
         }
@@ -6017,12 +6224,12 @@ exports.CheckpointEntry = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseCheckpointEntry();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseCheckpointEntry();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -6053,15 +6260,15 @@ exports.CheckpointEntry = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             checkpointNs: isSet(object.checkpointNs) ? globalThis.String(object.checkpointNs) : "",
             tuple: isSet(object.tuple) ? exports.CheckpointTuple.fromJSON(object.tuple) : undefined,
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.threadId !== "") {
             obj.threadId = message.threadId;
         }
@@ -6073,13 +6280,14 @@ exports.CheckpointEntry = {
         }
         return obj;
     },
-    create(base) {
-        return exports.CheckpointEntry.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.CheckpointEntry.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseCheckpointEntry();
-        message.threadId = object.threadId ?? "";
-        message.checkpointNs = object.checkpointNs ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseCheckpointEntry();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.checkpointNs = (_b = object.checkpointNs) !== null && _b !== void 0 ? _b : "";
         message.tuple = (object.tuple !== undefined && object.tuple !== null)
             ? exports.CheckpointTuple.fromPartial(object.tuple)
             : undefined;
@@ -6090,7 +6298,8 @@ function createBaseLogEntry() {
     return { serviceName: "", level: "", message: "", timestamp: undefined, threadId: "", component: "", fields: {} };
 }
 exports.LogEntry = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.serviceName !== "") {
             writer.uint32(10).string(message.serviceName);
         }
@@ -6109,17 +6318,18 @@ exports.LogEntry = {
         if (message.component !== "") {
             writer.uint32(50).string(message.component);
         }
-        Object.entries(message.fields).forEach(([key, value]) => {
-            exports.LogEntry_FieldsEntry.encode({ key: key, value }, writer.uint32(58).fork()).join();
+        Object.entries(message.fields).forEach(function (_a) {
+            var key = _a[0], value = _a[1];
+            exports.LogEntry_FieldsEntry.encode({ key: key, value: value }, writer.uint32(58).fork()).join();
         });
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseLogEntry();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseLogEntry();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -6167,7 +6377,7 @@ exports.LogEntry = {
                     if (tag !== 58) {
                         break;
                     }
-                    const entry7 = exports.LogEntry_FieldsEntry.decode(reader, reader.uint32());
+                    var entry7 = exports.LogEntry_FieldsEntry.decode(reader, reader.uint32());
                     if (entry7.value !== undefined) {
                         message.fields[entry7.key] = entry7.value;
                     }
@@ -6181,7 +6391,7 @@ exports.LogEntry = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             serviceName: isSet(object.serviceName) ? globalThis.String(object.serviceName) : "",
             level: isSet(object.level) ? globalThis.String(object.level) : "",
@@ -6190,15 +6400,16 @@ exports.LogEntry = {
             threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
             component: isSet(object.component) ? globalThis.String(object.component) : "",
             fields: isObject(object.fields)
-                ? Object.entries(object.fields).reduce((acc, [key, value]) => {
+                ? Object.entries(object.fields).reduce(function (acc, _a) {
+                    var key = _a[0], value = _a[1];
                     acc[key] = String(value);
                     return acc;
                 }, {})
                 : {},
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.serviceName !== "") {
             obj.serviceName = message.serviceName;
         }
@@ -6218,28 +6429,31 @@ exports.LogEntry = {
             obj.component = message.component;
         }
         if (message.fields) {
-            const entries = Object.entries(message.fields);
+            var entries = Object.entries(message.fields);
             if (entries.length > 0) {
                 obj.fields = {};
-                entries.forEach(([k, v]) => {
+                entries.forEach(function (_a) {
+                    var k = _a[0], v = _a[1];
                     obj.fields[k] = v;
                 });
             }
         }
         return obj;
     },
-    create(base) {
-        return exports.LogEntry.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.LogEntry.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseLogEntry();
-        message.serviceName = object.serviceName ?? "";
-        message.level = object.level ?? "";
-        message.message = object.message ?? "";
-        message.timestamp = object.timestamp ?? undefined;
-        message.threadId = object.threadId ?? "";
-        message.component = object.component ?? "";
-        message.fields = Object.entries(object.fields ?? {}).reduce((acc, [key, value]) => {
+    fromPartial: function (object) {
+        var _a, _b, _c, _d, _e, _f, _g;
+        var message = createBaseLogEntry();
+        message.serviceName = (_a = object.serviceName) !== null && _a !== void 0 ? _a : "";
+        message.level = (_b = object.level) !== null && _b !== void 0 ? _b : "";
+        message.message = (_c = object.message) !== null && _c !== void 0 ? _c : "";
+        message.timestamp = (_d = object.timestamp) !== null && _d !== void 0 ? _d : undefined;
+        message.threadId = (_e = object.threadId) !== null && _e !== void 0 ? _e : "";
+        message.component = (_f = object.component) !== null && _f !== void 0 ? _f : "";
+        message.fields = Object.entries((_g = object.fields) !== null && _g !== void 0 ? _g : {}).reduce(function (acc, _a) {
+            var key = _a[0], value = _a[1];
             if (value !== undefined) {
                 acc[key] = globalThis.String(value);
             }
@@ -6252,7 +6466,8 @@ function createBaseLogEntry_FieldsEntry() {
     return { key: "", value: "" };
 }
 exports.LogEntry_FieldsEntry = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.key !== "") {
             writer.uint32(10).string(message.key);
         }
@@ -6261,12 +6476,12 @@ exports.LogEntry_FieldsEntry = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseLogEntry_FieldsEntry();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseLogEntry_FieldsEntry();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -6290,14 +6505,14 @@ exports.LogEntry_FieldsEntry = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             key: isSet(object.key) ? globalThis.String(object.key) : "",
             value: isSet(object.value) ? globalThis.String(object.value) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.key !== "") {
             obj.key = message.key;
         }
@@ -6306,13 +6521,14 @@ exports.LogEntry_FieldsEntry = {
         }
         return obj;
     },
-    create(base) {
-        return exports.LogEntry_FieldsEntry.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.LogEntry_FieldsEntry.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseLogEntry_FieldsEntry();
-        message.key = object.key ?? "";
-        message.value = object.value ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseLogEntry_FieldsEntry();
+        message.key = (_a = object.key) !== null && _a !== void 0 ? _a : "";
+        message.value = (_b = object.value) !== null && _b !== void 0 ? _b : "";
         return message;
     },
 };
@@ -6320,18 +6536,19 @@ function createBaseLogRequest() {
     return { entry: undefined };
 }
 exports.LogRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.entry !== undefined) {
             exports.LogEntry.encode(message.entry, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseLogRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseLogRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -6348,21 +6565,21 @@ exports.LogRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return { entry: isSet(object.entry) ? exports.LogEntry.fromJSON(object.entry) : undefined };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.entry !== undefined) {
             obj.entry = exports.LogEntry.toJSON(message.entry);
         }
         return obj;
     },
-    create(base) {
-        return exports.LogRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.LogRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseLogRequest();
+    fromPartial: function (object) {
+        var message = createBaseLogRequest();
         message.entry = (object.entry !== undefined && object.entry !== null)
             ? exports.LogEntry.fromPartial(object.entry)
             : undefined;
@@ -6373,7 +6590,8 @@ function createBaseLogResponse() {
     return { success: false, message: "" };
 }
 exports.LogResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.success !== false) {
             writer.uint32(8).bool(message.success);
         }
@@ -6382,12 +6600,12 @@ exports.LogResponse = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseLogResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseLogResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -6411,14 +6629,14 @@ exports.LogResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
             message: isSet(object.message) ? globalThis.String(object.message) : "",
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.success !== false) {
             obj.success = message.success;
         }
@@ -6427,13 +6645,14 @@ exports.LogResponse = {
         }
         return obj;
     },
-    create(base) {
-        return exports.LogResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.LogResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseLogResponse();
-        message.success = object.success ?? false;
-        message.message = object.message ?? "";
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseLogResponse();
+        message.success = (_a = object.success) !== null && _a !== void 0 ? _a : false;
+        message.message = (_b = object.message) !== null && _b !== void 0 ? _b : "";
         return message;
     },
 };
@@ -6441,18 +6660,20 @@ function createBaseLogBatchRequest() {
     return { entries: [] };
 }
 exports.LogBatchRequest = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
-        for (const v of message.entries) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        for (var _i = 0, _a = message.entries; _i < _a.length; _i++) {
+            var v = _a[_i];
             exports.LogEntry.encode(v, writer.uint32(10).fork()).join();
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseLogBatchRequest();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseLogBatchRequest();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -6469,24 +6690,26 @@ exports.LogBatchRequest = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
-            entries: globalThis.Array.isArray(object?.entries) ? object.entries.map((e) => exports.LogEntry.fromJSON(e)) : [],
+            entries: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.entries) ? object.entries.map(function (e) { return exports.LogEntry.fromJSON(e); }) : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
-        if (message.entries?.length) {
-            obj.entries = message.entries.map((e) => exports.LogEntry.toJSON(e));
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
+        if ((_a = message.entries) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.entries = message.entries.map(function (e) { return exports.LogEntry.toJSON(e); });
         }
         return obj;
     },
-    create(base) {
-        return exports.LogBatchRequest.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.LogBatchRequest.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseLogBatchRequest();
-        message.entries = object.entries?.map((e) => exports.LogEntry.fromPartial(e)) || [];
+    fromPartial: function (object) {
+        var _a;
+        var message = createBaseLogBatchRequest();
+        message.entries = ((_a = object.entries) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.LogEntry.fromPartial(e); })) || [];
         return message;
     },
 };
@@ -6494,24 +6717,26 @@ function createBaseLogBatchResponse() {
     return { success: false, processed: 0, errors: [] };
 }
 exports.LogBatchResponse = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.success !== false) {
             writer.uint32(8).bool(message.success);
         }
         if (message.processed !== 0) {
             writer.uint32(16).int32(message.processed);
         }
-        for (const v of message.errors) {
+        for (var _i = 0, _a = message.errors; _i < _a.length; _i++) {
+            var v = _a[_i];
             writer.uint32(26).string(v);
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseLogBatchResponse();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseLogBatchResponse();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 8) {
@@ -6542,43 +6767,43 @@ exports.LogBatchResponse = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
             processed: isSet(object.processed) ? globalThis.Number(object.processed) : 0,
-            errors: globalThis.Array.isArray(object?.errors) ? object.errors.map((e) => globalThis.String(e)) : [],
+            errors: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.errors) ? object.errors.map(function (e) { return globalThis.String(e); }) : [],
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var _a;
+        var obj = {};
         if (message.success !== false) {
             obj.success = message.success;
         }
         if (message.processed !== 0) {
             obj.processed = Math.round(message.processed);
         }
-        if (message.errors?.length) {
+        if ((_a = message.errors) === null || _a === void 0 ? void 0 : _a.length) {
             obj.errors = message.errors;
         }
         return obj;
     },
-    create(base) {
-        return exports.LogBatchResponse.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.LogBatchResponse.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseLogBatchResponse();
-        message.success = object.success ?? false;
-        message.processed = object.processed ?? 0;
-        message.errors = object.errors?.map((e) => e) || [];
+    fromPartial: function (object) {
+        var _a, _b, _c;
+        var message = createBaseLogBatchResponse();
+        message.success = (_a = object.success) !== null && _a !== void 0 ? _a : false;
+        message.processed = (_b = object.processed) !== null && _b !== void 0 ? _b : 0;
+        message.errors = ((_c = object.errors) === null || _c === void 0 ? void 0 : _c.map(function (e) { return e; })) || [];
         return message;
     },
 };
 exports.MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
-class MealPlannerAPIClientImpl {
-    rpc;
-    service;
-    constructor(rpc, opts) {
-        this.service = opts?.service || exports.MealPlannerAPIServiceName;
+var MealPlannerAPIClientImpl = /** @class */ (function () {
+    function MealPlannerAPIClientImpl(rpc, opts) {
+        this.service = (opts === null || opts === void 0 ? void 0 : opts.service) || exports.MealPlannerAPIServiceName;
         this.rpc = rpc;
         this.HealthCheck = this.HealthCheck.bind(this);
         this.Reconnect = this.Reconnect.bind(this);
@@ -6617,196 +6842,197 @@ class MealPlannerAPIClientImpl {
         this.Log = this.Log.bind(this);
         this.LogBatch = this.LogBatch.bind(this);
     }
-    HealthCheck(request) {
-        const data = empty_1.Empty.encode(request).finish();
-        const promise = this.rpc.request(this.service, "HealthCheck", data);
-        return promise.then((data) => exports.HealthCheckResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    Reconnect(request) {
-        const data = empty_1.Empty.encode(request).finish();
-        const promise = this.rpc.request(this.service, "Reconnect", data);
-        return promise.then((data) => exports.ReconnectResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    GetMealPlan(request) {
-        const data = empty_1.Empty.encode(request).finish();
-        const promise = this.rpc.request(this.service, "GetMealPlan", data);
-        return promise.then((data) => exports.GetMealPlanResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    GenerateMealPlan(request) {
-        const data = empty_1.Empty.encode(request).finish();
-        const promise = this.rpc.request(this.service, "GenerateMealPlan", data);
-        return promise.then((data) => exports.GenerateMealPlanResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    FinalizeMealPlan(request) {
-        const data = exports.FinalizeMealPlanRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "FinalizeMealPlan", data);
-        return promise.then((data) => exports.FinalizeMealPlanResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    GetMealPlanICS(request) {
-        const data = empty_1.Empty.encode(request).finish();
-        const promise = this.rpc.request(this.service, "GetMealPlanICS", data);
-        return promise.then((data) => exports.MealPlanICSResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    GetShoppingList(request) {
-        const data = exports.GetShoppingListRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "GetShoppingList", data);
-        return promise.then((data) => exports.GetShoppingListResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    GetAllMeals(request) {
-        const data = exports.GetAllMealsRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "GetAllMeals", data);
-        return promise.then((data) => exports.GetAllMealsResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    CreateMeal(request) {
-        const data = exports.CreateMealRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "CreateMeal", data);
-        return promise.then((data) => exports.CreateMealResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    SwapMeal(request) {
-        const data = exports.SwapMealRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "SwapMeal", data);
-        return promise.then((data) => exports.SwapMealResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    RemoveMeal(request) {
-        const data = exports.RemoveMealRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "RemoveMeal", data);
-        return promise.then((data) => exports.RemoveMealResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    ReplaceMeal(request) {
-        const data = exports.ReplaceMealRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "ReplaceMeal", data);
-        return promise.then((data) => exports.ReplaceMealResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    UpdateMealIngredient(request) {
-        const data = exports.UpdateMealIngredientRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "UpdateMealIngredient", data);
-        return promise.then((data) => exports.UpdateMealIngredientResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    DeleteMealIngredient(request) {
-        const data = exports.DeleteMealIngredientRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "DeleteMealIngredient", data);
-        return promise.then((data) => exports.DeleteMealIngredientResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    DeleteMeal(request) {
-        const data = exports.DeleteMealRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "DeleteMeal", data);
-        return promise.then((data) => exports.DeleteMealResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    GetSteps(request) {
-        const data = exports.GetStepsRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "GetSteps", data);
-        return promise.then((data) => exports.GetStepsResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    AddStep(request) {
-        const data = exports.AddStepRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "AddStep", data);
-        return promise.then((data) => exports.AddStepResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    AddBulkSteps(request) {
-        const data = exports.AddBulkStepsRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "AddBulkSteps", data);
-        return promise.then((data) => exports.AddBulkStepsResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    UpdateStep(request) {
-        const data = exports.UpdateStepRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "UpdateStep", data);
-        return promise.then((data) => exports.UpdateStepResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    DeleteStep(request) {
-        const data = exports.DeleteStepRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "DeleteStep", data);
-        return promise.then((data) => exports.DeleteStepResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    ReorderSteps(request) {
-        const data = exports.ReorderStepsRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "ReorderSteps", data);
-        return promise.then((data) => exports.ReorderStepsResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    DeleteAllSteps(request) {
-        const data = exports.DeleteAllStepsRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "DeleteAllSteps", data);
-        return promise.then((data) => exports.DeleteAllStepsResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    StartAgentWorkflow(request) {
-        const data = exports.StartAgentWorkflowRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "StartAgentWorkflow", data);
-        return promise.then((data) => exports.StartAgentWorkflowResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    MessageAgent(request) {
-        const data = exports.MessageAgentRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "MessageAgent", data);
-        return promise.then((data) => exports.MessageAgentResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    GetWorkflowStatus(request) {
-        const data = exports.GetWorkflowStatusRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "GetWorkflowStatus", data);
-        return promise.then((data) => exports.GetWorkflowStatusResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    ListWorkflows(request) {
-        const data = empty_1.Empty.encode(request).finish();
-        const promise = this.rpc.request(this.service, "ListWorkflows", data);
-        return promise.then((data) => exports.ListWorkflowsResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    CancelWorkflow(request) {
-        const data = exports.CancelWorkflowRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "CancelWorkflow", data);
-        return promise.then((data) => exports.CancelWorkflowResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    GetWorkflowState(request) {
-        const data = exports.GetWorkflowStateRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "GetWorkflowState", data);
-        return promise.then((data) => exports.GetWorkflowStateResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    AbandonWorkflow(request) {
-        const data = exports.AbandonWorkflowRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "AbandonWorkflow", data);
-        return promise.then((data) => exports.AbandonWorkflowResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    AddMessage(request) {
-        const data = exports.AddMessageRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "AddMessage", data);
-        return promise.then((data) => exports.AddMessageResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    UpdateSessionState(request) {
-        const data = exports.UpdateSessionStateRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "UpdateSessionState", data);
-        return promise.then((data) => exports.UpdateSessionStateResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    GetCheckpoint(request) {
-        const data = exports.GetCheckpointRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "GetCheckpoint", data);
-        return promise.then((data) => exports.GetCheckpointResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    PutCheckpoint(request) {
-        const data = exports.PutCheckpointRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "PutCheckpoint", data);
-        return promise.then((data) => exports.PutCheckpointResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    ListCheckpoints(request) {
-        const data = exports.ListCheckpointsRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "ListCheckpoints", data);
-        return promise.then((data) => exports.ListCheckpointsResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    Log(request) {
-        const data = exports.LogRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "Log", data);
-        return promise.then((data) => exports.LogResponse.decode(new wire_1.BinaryReader(data)));
-    }
-    LogBatch(request) {
-        const data = exports.LogBatchRequest.encode(request).finish();
-        const promise = this.rpc.request(this.service, "LogBatch", data);
-        return promise.then((data) => exports.LogBatchResponse.decode(new wire_1.BinaryReader(data)));
-    }
-}
+    MealPlannerAPIClientImpl.prototype.HealthCheck = function (request) {
+        var data = empty_1.Empty.encode(request).finish();
+        var promise = this.rpc.request(this.service, "HealthCheck", data);
+        return promise.then(function (data) { return exports.HealthCheckResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.Reconnect = function (request) {
+        var data = empty_1.Empty.encode(request).finish();
+        var promise = this.rpc.request(this.service, "Reconnect", data);
+        return promise.then(function (data) { return exports.ReconnectResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.GetMealPlan = function (request) {
+        var data = empty_1.Empty.encode(request).finish();
+        var promise = this.rpc.request(this.service, "GetMealPlan", data);
+        return promise.then(function (data) { return exports.GetMealPlanResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.GenerateMealPlan = function (request) {
+        var data = empty_1.Empty.encode(request).finish();
+        var promise = this.rpc.request(this.service, "GenerateMealPlan", data);
+        return promise.then(function (data) { return exports.GenerateMealPlanResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.FinalizeMealPlan = function (request) {
+        var data = exports.FinalizeMealPlanRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "FinalizeMealPlan", data);
+        return promise.then(function (data) { return exports.FinalizeMealPlanResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.GetMealPlanICS = function (request) {
+        var data = empty_1.Empty.encode(request).finish();
+        var promise = this.rpc.request(this.service, "GetMealPlanICS", data);
+        return promise.then(function (data) { return exports.MealPlanICSResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.GetShoppingList = function (request) {
+        var data = exports.GetShoppingListRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "GetShoppingList", data);
+        return promise.then(function (data) { return exports.GetShoppingListResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.GetAllMeals = function (request) {
+        var data = exports.GetAllMealsRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "GetAllMeals", data);
+        return promise.then(function (data) { return exports.GetAllMealsResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.CreateMeal = function (request) {
+        var data = exports.CreateMealRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "CreateMeal", data);
+        return promise.then(function (data) { return exports.CreateMealResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.SwapMeal = function (request) {
+        var data = exports.SwapMealRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "SwapMeal", data);
+        return promise.then(function (data) { return exports.SwapMealResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.RemoveMeal = function (request) {
+        var data = exports.RemoveMealRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "RemoveMeal", data);
+        return promise.then(function (data) { return exports.RemoveMealResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.ReplaceMeal = function (request) {
+        var data = exports.ReplaceMealRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "ReplaceMeal", data);
+        return promise.then(function (data) { return exports.ReplaceMealResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.UpdateMealIngredient = function (request) {
+        var data = exports.UpdateMealIngredientRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "UpdateMealIngredient", data);
+        return promise.then(function (data) { return exports.UpdateMealIngredientResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.DeleteMealIngredient = function (request) {
+        var data = exports.DeleteMealIngredientRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "DeleteMealIngredient", data);
+        return promise.then(function (data) { return exports.DeleteMealIngredientResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.DeleteMeal = function (request) {
+        var data = exports.DeleteMealRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "DeleteMeal", data);
+        return promise.then(function (data) { return exports.DeleteMealResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.GetSteps = function (request) {
+        var data = exports.GetStepsRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "GetSteps", data);
+        return promise.then(function (data) { return exports.GetStepsResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.AddStep = function (request) {
+        var data = exports.AddStepRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "AddStep", data);
+        return promise.then(function (data) { return exports.AddStepResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.AddBulkSteps = function (request) {
+        var data = exports.AddBulkStepsRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "AddBulkSteps", data);
+        return promise.then(function (data) { return exports.AddBulkStepsResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.UpdateStep = function (request) {
+        var data = exports.UpdateStepRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "UpdateStep", data);
+        return promise.then(function (data) { return exports.UpdateStepResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.DeleteStep = function (request) {
+        var data = exports.DeleteStepRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "DeleteStep", data);
+        return promise.then(function (data) { return exports.DeleteStepResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.ReorderSteps = function (request) {
+        var data = exports.ReorderStepsRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "ReorderSteps", data);
+        return promise.then(function (data) { return exports.ReorderStepsResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.DeleteAllSteps = function (request) {
+        var data = exports.DeleteAllStepsRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "DeleteAllSteps", data);
+        return promise.then(function (data) { return exports.DeleteAllStepsResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.StartAgentWorkflow = function (request) {
+        var data = exports.StartAgentWorkflowRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "StartAgentWorkflow", data);
+        return promise.then(function (data) { return exports.StartAgentWorkflowResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.MessageAgent = function (request) {
+        var data = exports.MessageAgentRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "MessageAgent", data);
+        return promise.then(function (data) { return exports.MessageAgentResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.GetWorkflowStatus = function (request) {
+        var data = exports.GetWorkflowStatusRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "GetWorkflowStatus", data);
+        return promise.then(function (data) { return exports.GetWorkflowStatusResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.ListWorkflows = function (request) {
+        var data = empty_1.Empty.encode(request).finish();
+        var promise = this.rpc.request(this.service, "ListWorkflows", data);
+        return promise.then(function (data) { return exports.ListWorkflowsResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.CancelWorkflow = function (request) {
+        var data = exports.CancelWorkflowRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "CancelWorkflow", data);
+        return promise.then(function (data) { return exports.CancelWorkflowResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.GetWorkflowState = function (request) {
+        var data = exports.GetWorkflowStateRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "GetWorkflowState", data);
+        return promise.then(function (data) { return exports.GetWorkflowStateResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.AbandonWorkflow = function (request) {
+        var data = exports.AbandonWorkflowRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "AbandonWorkflow", data);
+        return promise.then(function (data) { return exports.AbandonWorkflowResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.AddMessage = function (request) {
+        var data = exports.AddMessageRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "AddMessage", data);
+        return promise.then(function (data) { return exports.AddMessageResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.UpdateSessionState = function (request) {
+        var data = exports.UpdateSessionStateRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "UpdateSessionState", data);
+        return promise.then(function (data) { return exports.UpdateSessionStateResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.GetCheckpoint = function (request) {
+        var data = exports.GetCheckpointRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "GetCheckpoint", data);
+        return promise.then(function (data) { return exports.GetCheckpointResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.PutCheckpoint = function (request) {
+        var data = exports.PutCheckpointRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "PutCheckpoint", data);
+        return promise.then(function (data) { return exports.PutCheckpointResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.ListCheckpoints = function (request) {
+        var data = exports.ListCheckpointsRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "ListCheckpoints", data);
+        return promise.then(function (data) { return exports.ListCheckpointsResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.Log = function (request) {
+        var data = exports.LogRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "Log", data);
+        return promise.then(function (data) { return exports.LogResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    MealPlannerAPIClientImpl.prototype.LogBatch = function (request) {
+        var data = exports.LogBatchRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "LogBatch", data);
+        return promise.then(function (data) { return exports.LogBatchResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    return MealPlannerAPIClientImpl;
+}());
 exports.MealPlannerAPIClientImpl = MealPlannerAPIClientImpl;
 function bytesFromBase64(b64) {
     if (globalThis.Buffer) {
         return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
     }
     else {
-        const bin = globalThis.atob(b64);
-        const arr = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; ++i) {
+        var bin = globalThis.atob(b64);
+        var arr = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; ++i) {
             arr[i] = bin.charCodeAt(i);
         }
         return arr;
@@ -6817,21 +7043,21 @@ function base64FromBytes(arr) {
         return globalThis.Buffer.from(arr).toString("base64");
     }
     else {
-        const bin = [];
-        arr.forEach((byte) => {
-            bin.push(globalThis.String.fromCharCode(byte));
+        var bin_1 = [];
+        arr.forEach(function (byte) {
+            bin_1.push(globalThis.String.fromCharCode(byte));
         });
-        return globalThis.btoa(bin.join(""));
+        return globalThis.btoa(bin_1.join(""));
     }
 }
 function toTimestamp(date) {
-    const seconds = Math.trunc(date.getTime() / 1_000);
-    const nanos = (date.getTime() % 1_000) * 1_000_000;
-    return { seconds, nanos };
+    var seconds = Math.trunc(date.getTime() / 1000);
+    var nanos = (date.getTime() % 1000) * 1000000;
+    return { seconds: seconds, nanos: nanos };
 }
 function fromTimestamp(t) {
-    let millis = (t.seconds || 0) * 1_000;
-    millis += (t.nanos || 0) / 1_000_000;
+    var millis = (t.seconds || 0) * 1000;
+    millis += (t.nanos || 0) / 1000000;
     return new globalThis.Date(millis);
 }
 function fromJsonTimestamp(o) {
@@ -6851,4 +7077,3 @@ function isObject(value) {
 function isSet(value) {
     return value !== null && value !== undefined;
 }
-//# sourceMappingURL=api.js.map

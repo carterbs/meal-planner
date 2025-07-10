@@ -450,8 +450,8 @@ func (x *WeeklyMealPlan) GetShoppingList() []*ShoppingListItem {
 
 type MealPlanEntry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	DayOfWeek     int32                  `protobuf:"varint,1,opt,name=day_of_week,json=dayOfWeek,proto3" json:"day_of_week,omitempty"` // 0=Monday..6=Sunday
-	MealType      string                 `protobuf:"bytes,2,opt,name=meal_type,json=mealType,proto3" json:"meal_type,omitempty"`       // breakfast, lunch, dinner
+	DayIndex      int32                  `protobuf:"varint,1,opt,name=day_index,json=dayIndex,proto3" json:"day_index,omitempty"` // 0=Monday..6=Sunday
+	MealType      string                 `protobuf:"bytes,2,opt,name=meal_type,json=mealType,proto3" json:"meal_type,omitempty"`  // breakfast, lunch, dinner
 	Meal          *Meal                  `protobuf:"bytes,3,opt,name=meal,proto3" json:"meal,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -487,9 +487,9 @@ func (*MealPlanEntry) Descriptor() ([]byte, []int) {
 	return file_api_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *MealPlanEntry) GetDayOfWeek() int32 {
+func (x *MealPlanEntry) GetDayIndex() int32 {
 	if x != nil {
-		return x.DayOfWeek
+		return x.DayIndex
 	}
 	return 0
 }
@@ -4802,9 +4802,9 @@ const file_api_proto_rawDesc = "" +
 	"\bcategory\x18\x03 \x01(\tR\bcategory\"\x86\x01\n" +
 	"\x0eWeeklyMealPlan\x12,\n" +
 	"\x04days\x18\x01 \x03(\v2\x18.mealplanner.api.PlanDayR\x04days\x12F\n" +
-	"\rshopping_list\x18\x02 \x03(\v2!.mealplanner.api.ShoppingListItemR\fshoppingList\"w\n" +
-	"\rMealPlanEntry\x12\x1e\n" +
-	"\vday_of_week\x18\x01 \x01(\x05R\tdayOfWeek\x12\x1b\n" +
+	"\rshopping_list\x18\x02 \x03(\v2!.mealplanner.api.ShoppingListItemR\fshoppingList\"t\n" +
+	"\rMealPlanEntry\x12\x1b\n" +
+	"\tday_index\x18\x01 \x01(\x05R\bdayIndex\x12\x1b\n" +
 	"\tmeal_type\x18\x02 \x01(\tR\bmealType\x12)\n" +
 	"\x04meal\x18\x03 \x01(\v2\x15.mealplanner.api.MealR\x04meal\"\x86\x01\n" +
 	"\x13SaveMealPlanRequest\x12\x1b\n" +

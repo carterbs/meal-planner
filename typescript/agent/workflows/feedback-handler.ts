@@ -108,24 +108,79 @@ export class FeedbackHandler {
         },
       };
 
-      const tuple = await this.checkpointer.getTuple(config);
+      console.error(`[FEEDBACK] Checking if workflow ${threadId} is awaiting feedback...`);
+      console.error(`[FEEDBACK] Config:`, JSON.stringify(config));
+      
+      let tuple;
+      try {
+        tuple = await this.checkpointer.getTuple(config);
+      } catch (getTupleError) {
+        console.error(`[FEEDBACK] Error calling getTuple:`, getTupleError);
+        throw getTupleError;
+      }
+      
       if (!tuple) {
+        console.error(`[FEEDBACK] No checkpoint found for thread ${threadId}`);
         return false;
       }
 
+      console.error(`[FEEDBACK] Got tuple, extracting checkpoint...`);
       const [checkpoint] = tuple;
-      // Properly deserialize state from checkpoint
-      const stateAny = checkpoint.channelValues['state'];
-      if (!stateAny || typeof stateAny !== 'object' || !('value' in stateAny)) {
-        return false;
+      let state: MealPlanningState;
+      
+      // Try to get state from channelValues directly (backend format)
+      if (checkpoint.channelValues && 'current_step' in checkpoint.channelValues) {
+        console.log(`[FEEDBACK] Found state in channelValues directly`);
+        state = checkpoint.channelValues as any as MealPlanningState;
+      } 
+      // Otherwise try protobuf format
+      else {
+        console.log(`[FEEDBACK] Trying protobuf format...`);
+        const stateAny = checkpoint.channelValues['state'];
+        console.log(`[FEEDBACK] stateAny type:`, typeof stateAny);
+        console.log(`[FEEDBACK] stateAny keys:`, stateAny ? Object.keys(stateAny) : 'null');
+        
+        if (!stateAny || typeof stateAny !== 'object' || !('value' in stateAny)) {
+          console.log(`[FEEDBACK] No valid state found in checkpoint`);
+          return false;
+        }
+        
+        console.log(`[FEEDBACK] stateAny.value type:`, typeof stateAny.value);
+        console.log(`[FEEDBACK] stateAny.value constructor:`, stateAny.value?.constructor?.name);
+        
+        // Convert to proper Uint8Array if it's not already one
+        let stateBytes: Uint8Array;
+        if (stateAny.value instanceof Uint8Array) {
+          stateBytes = stateAny.value;
+        } else if (Array.isArray(stateAny.value)) {
+          stateBytes = new Uint8Array(stateAny.value);
+        } else if (stateAny.value && typeof stateAny.value === 'object' && 'data' in stateAny.value) {
+          // Handle Buffer-like objects
+          stateBytes = new Uint8Array((stateAny.value as any).data);
+        } else {
+          console.log(`[FEEDBACK] Unexpected stateAny.value format, trying direct conversion`);
+          stateBytes = new Uint8Array(Object.values(stateAny.value as any));
+        }
+        
+        console.log(`[FEEDBACK] About to decode ${stateBytes.length} bytes`);
+        
+        const stateJson = new TextDecoder().decode(stateBytes);
+        console.log(`[FEEDBACK] Decoded JSON string length:`, stateJson.length);
+        console.log(`[FEEDBACK] First 100 chars:`, stateJson.substring(0, 100));
+        
+        state = JSON.parse(stateJson) as MealPlanningState;
       }
-      const stateBytes = stateAny.value as Uint8Array;
-      const stateJson = new TextDecoder().decode(stateBytes);
-      const state = JSON.parse(stateJson) as MealPlanningState;
 
+      console.log(`[FEEDBACK] Current step: ${state.current_step}`);
       return state.current_step === 'await_feedback';
     } catch (error) {
       console.error(`❌ [FEEDBACK] Error checking feedback status:`, error);
+      console.error(`[FEEDBACK] Error type:`, typeof error);
+      console.error(`[FEEDBACK] Error stringified:`, JSON.stringify(error));
+      if (error instanceof Error) {
+        console.error(`[FEEDBACK] Error message:`, error.message);
+        console.error(`[FEEDBACK] Error stack:`, error.stack);
+      }
       return false;
     }
   }

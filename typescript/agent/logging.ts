@@ -2,22 +2,28 @@
 // to avoid TypeScript path issues
 import { writeFileSync, appendFileSync } from 'fs';
 import { join } from 'path';
-import { LoggingClient } from '@mealplanner/logging-client';
+// import { LoggingClient } from '@mealplanner/logging-client';
 
-let loggingClient: LoggingClient | null = null;
+let loggingClient: any | null = null;
 let useGrpcLogging = false;
 
 // Initialize gRPC logging
 export function initLogging() {
-  try {
-    const loggingServiceAddr = process.env.LOGGING_SERVICE_ADDR || 'localhost:50052';
-    loggingClient = new LoggingClient(loggingServiceAddr, 'agent');
-    useGrpcLogging = true;
-    console.log(`gRPC logging service connected at ${loggingServiceAddr}`);
-  } catch (error) {
-    console.warn(`gRPC logging service not available: ${error}`);
-    useGrpcLogging = false;
+  // Temporarily disable gRPC logging to test if it's causing the hang
+  useGrpcLogging = false;
+  // Don't log to stdout in JSON mode to avoid contaminating the output
+  if (!process.argv.includes('--json')) {
+    console.log(`gRPC logging disabled for testing`);
   }
+  // try {
+  //   const loggingServiceAddr = process.env.LOGGING_SERVICE_ADDR || 'localhost:50052';
+  //   loggingClient = new LoggingClient(loggingServiceAddr, 'agent');
+  //   useGrpcLogging = true;
+  //   console.log(`gRPC logging service connected at ${loggingServiceAddr}`);
+  // } catch (error) {
+  //   console.warn(`gRPC logging service not available: ${error}`);
+  //   useGrpcLogging = false;
+  // }
 }
 
 // Enhanced debug logger that works in JSON mode and sends to gRPC service
@@ -26,7 +32,7 @@ export function debugLog(message: string, fields?: Record<string, string>) {
   
   // Send to gRPC service if available
   if (useGrpcLogging && loggingClient) {
-    loggingClient.debug(message, fields).catch(err => {
+    loggingClient.debug(message, fields).catch((err: any) => {
       // Fallback to file logging if gRPC fails
       console.warn('gRPC logging failed, falling back to file:', err);
       logToFile(message, timestamp);
@@ -40,7 +46,7 @@ export function debugLog(message: string, fields?: Record<string, string>) {
 // Enhanced info logger
 export function infoLog(message: string, fields?: Record<string, string>) {
   if (useGrpcLogging && loggingClient) {
-    loggingClient.info(message, fields).catch(err => {
+    loggingClient.info(message, fields).catch((err: any) => {
       console.warn('gRPC logging failed:', err);
     });
   }
@@ -49,7 +55,7 @@ export function infoLog(message: string, fields?: Record<string, string>) {
 // Enhanced warn logger
 export function warnLog(message: string, fields?: Record<string, string>) {
   if (useGrpcLogging && loggingClient) {
-    loggingClient.warn(message, fields).catch(err => {
+    loggingClient.warn(message, fields).catch((err: any) => {
       console.warn('gRPC logging failed:', err);
     });
   }
@@ -58,7 +64,7 @@ export function warnLog(message: string, fields?: Record<string, string>) {
 // Enhanced error logger
 export function errorLog(message: string, fields?: Record<string, string>) {
   if (useGrpcLogging && loggingClient) {
-    loggingClient.error(message, fields).catch(err => {
+    loggingClient.error(message, fields).catch((err: any) => {
       console.warn('gRPC logging failed:', err);
     });
   }

@@ -7,6 +7,9 @@ export async function generateMealPlan() {
   const resp = await fetch(`${API}/api/mealplan/generate`, { method: "POST" });
   if (!resp.ok) { throw new McpError(-32000, `BackendError: ${resp.statusText}`); }
   const responseJson = await resp.json();
+  console.log("MEAL PLAN from mcp generate-------")
+  console.log(responseJson)
+  
   const data = GenerateMealPlanResponse.fromJSON(responseJson);
   if (!data.plan) {
     throw new McpError(-32000, 'No meal plan returned from backend');

@@ -452,7 +452,9 @@ planCommand
       const agent = await initializeAgent();
 
       // Check if workflow is awaiting feedback
+      debugLog(`Checking if workflow ${threadId} is awaiting feedback...`);
       const isAwaiting = await agent.isAwaitingFeedback(threadId);
+      debugLog(`isAwaitingFeedback returned: ${isAwaiting}`);
       if (!isAwaiting) {
         outputError(
           'This workflow is not currently awaiting feedback.',

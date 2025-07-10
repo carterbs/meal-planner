@@ -6,7 +6,7 @@ import type {
   WeeklyMealPlan as GeneratedWeeklyMealPlan,
   Meal as GeneratedMeal,
 } from '@mealplanner/generated';
-import { WeeklyMealPlan, AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated';
+import { WeeklyMealPlan, AgentCheckpoint, AgentCheckpointMetadata, SaveMealPlanRequest, MealPlanEntry } from '@mealplanner/generated';
 import { Any } from '@mealplanner/generated/google/protobuf/any';
 
 import {
@@ -291,21 +291,24 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     try {
       const backend = process.env.BACKEND_URL ?? 'http://localhost:8080';
       const planJson = WeeklyMealPlan.toJSON(plan) as any;
-      const body = {
+
+      console.log("PLAN JSON-------")
+      console.log(JSON.stringify(planJson, null, 2))
+      const entries = planJson.days.map((d: any) => {
+        return MealPlanEntry.create({
+          dayIndex: d.day_index, // Use snake_case from protobuf JSON
+          mealType: d.meal_type,  // Use snake_case from protobuf JSON  
+          meal: d.meal,
+        });
+      });
+      
+      const saveRequest = SaveMealPlanRequest.create({
         threadId: threadId,
         version: 0,
-        entries: planJson.days.map((d: any) => {
-          if (d.dayIndex === undefined || d.dayIndex === null) {
-            console.error('Missing dayIndex for meal plan entry:', d);
-            throw new Error(`Missing dayIndex for meal plan entry: ${JSON.stringify(d)}`);
-          }
-          return {
-            dayOfWeek: d.dayIndex,
-            mealType: d.mealType,
-            meal: d.meal,
-          };
-        }),
-      };
+        entries: entries,
+      });
+      
+      const body = SaveMealPlanRequest.toJSON(saveRequest);
       await fetch(`${backend}/api/mealplan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -313,6 +316,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       });
     } catch (err) {
       console.warn('⚠️ [MEAL-WORKFLOW] Failed to persist meal plan', err);
+      throw err;
     }
   }
 
@@ -333,6 +337,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       );
       const mealPlan = WeeklyMealPlan.fromJSON(JSON.parse(jsonText));
 
+      console.log("MEAL PLAN from generate-------")
+      console.log(jsonText)
       await this.saveMealPlan(_state.threadId, mealPlan);
 
       return {

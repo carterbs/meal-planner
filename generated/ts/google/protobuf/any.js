@@ -7,13 +7,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Any = exports.protobufPackage = void 0;
 /* eslint-disable */
-const wire_1 = require("@bufbuild/protobuf/wire");
+var wire_1 = require("@bufbuild/protobuf/wire");
 exports.protobufPackage = "google.protobuf";
 function createBaseAny() {
     return { typeUrl: "", value: new Uint8Array(0) };
 }
 exports.Any = {
-    encode(message, writer = new wire_1.BinaryWriter()) {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.typeUrl !== "") {
             writer.uint32(10).string(message.typeUrl);
         }
@@ -22,12 +23,12 @@ exports.Any = {
         }
         return writer;
     },
-    decode(input, length) {
-        const reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        const end = length === undefined ? reader.len : reader.pos + length;
-        const message = createBaseAny();
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseAny();
         while (reader.pos < end) {
-            const tag = reader.uint32();
+            var tag = reader.uint32();
             switch (tag >>> 3) {
                 case 1: {
                     if (tag !== 10) {
@@ -51,14 +52,14 @@ exports.Any = {
         }
         return message;
     },
-    fromJSON(object) {
+    fromJSON: function (object) {
         return {
             typeUrl: isSet(object.typeUrl) ? globalThis.String(object.typeUrl) : "",
             value: isSet(object.value) ? bytesFromBase64(object.value) : new Uint8Array(0),
         };
     },
-    toJSON(message) {
-        const obj = {};
+    toJSON: function (message) {
+        var obj = {};
         if (message.typeUrl !== "") {
             obj.typeUrl = message.typeUrl;
         }
@@ -67,13 +68,14 @@ exports.Any = {
         }
         return obj;
     },
-    create(base) {
-        return exports.Any.fromPartial(base ?? {});
+    create: function (base) {
+        return exports.Any.fromPartial(base !== null && base !== void 0 ? base : {});
     },
-    fromPartial(object) {
-        const message = createBaseAny();
-        message.typeUrl = object.typeUrl ?? "";
-        message.value = object.value ?? new Uint8Array(0);
+    fromPartial: function (object) {
+        var _a, _b;
+        var message = createBaseAny();
+        message.typeUrl = (_a = object.typeUrl) !== null && _a !== void 0 ? _a : "";
+        message.value = (_b = object.value) !== null && _b !== void 0 ? _b : new Uint8Array(0);
         return message;
     },
 };
@@ -82,9 +84,9 @@ function bytesFromBase64(b64) {
         return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
     }
     else {
-        const bin = globalThis.atob(b64);
-        const arr = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; ++i) {
+        var bin = globalThis.atob(b64);
+        var arr = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; ++i) {
             arr[i] = bin.charCodeAt(i);
         }
         return arr;
@@ -95,14 +97,13 @@ function base64FromBytes(arr) {
         return globalThis.Buffer.from(arr).toString("base64");
     }
     else {
-        const bin = [];
-        arr.forEach((byte) => {
-            bin.push(globalThis.String.fromCharCode(byte));
+        var bin_1 = [];
+        arr.forEach(function (byte) {
+            bin_1.push(globalThis.String.fromCharCode(byte));
         });
-        return globalThis.btoa(bin.join(""));
+        return globalThis.btoa(bin_1.join(""));
     }
 }
 function isSet(value) {
     return value !== null && value !== undefined;
 }
-//# sourceMappingURL=any.js.map

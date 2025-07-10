@@ -105,6 +105,8 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	resp := &apipb.GetMealPlanResponse{Plan: toProtoWeeklyMealPlan(detailedPlan)}
 	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	mealplanHandlerLogger.Debugw("8th meal", "meal", resp.Plan.Days[7].Meal.Name, resp.Plan.Days[7].MealType, resp.Plan.Days[7].DayIndex)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
 		return
@@ -149,11 +151,10 @@ func SaveMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 
 	entries := make([]models.MealPlanEntry, 0, len(req.Entries))
 	for _, e := range req.Entries {
-		// Allow null meals for special cases like "eating out"
 		entries = append(entries, models.MealPlanEntry{
-			DayOfWeek: e.DayOfWeek,
-			MealType:  e.MealType,
-			Meal:      e.Meal,
+			DayIndex: e.DayIndex,
+			MealType: e.MealType,
+			Meal:     e.Meal,
 		})
 	}
 
@@ -175,7 +176,8 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req apipb.GetShoppingListRequest
-	if err := protojson.Unmarshal(body, &req); err != nil {
+	unmarshaler := protojson.UnmarshalOptions{}
+	if err := unmarshaler.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
