@@ -16,7 +16,6 @@
     "@langchain/langgraph": "^0.0.20",
     "@langchain/openai": "^0.1.0",
     "@mealplanner/generated": "*",
-    "@mealplanner/logging-client": "*",
     "@modelcontextprotocol/sdk": "1.12.3",
     "commander": "^14.0.0",
     "dotenv": "^16.5.0",

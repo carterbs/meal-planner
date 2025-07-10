@@ -1,3 +1,4 @@
+import { infoLog } from "./logging";
 import { WorkflowType } from './shared/types';
 import { HttpCheckpointSaver } from './shared/httpCheckpointer';
 
@@ -25,10 +26,10 @@ export class WorkflowRegistry {
   }
 
   async createWorkflow(
-    type: WorkflowType,
-    checkpointer: HttpCheckpointSaver,
-  ): Promise<BaseWorkflow> {
-    console.log(`Creating workflow of type: ${type}`);
+  type: WorkflowType,
+  checkpointer: HttpCheckpointSaver)
+  : Promise<BaseWorkflow> {
+    infoLog(`Creating workflow of type: ${type}`);
     const factory = this.factories.get(type);
     if (!factory) {
       throw new Error(`No factory registered for workflow type: ${type}`);
@@ -41,10 +42,10 @@ export class WorkflowRegistry {
   }
 
   async getOrCreateWorkflow(
-    type: WorkflowType,
-    threadId: string,
-    checkpointer: HttpCheckpointSaver,
-  ): Promise<BaseWorkflow> {
+  type: WorkflowType,
+  threadId: string,
+  checkpointer: HttpCheckpointSaver)
+  : Promise<BaseWorkflow> {
     const key = `${type}:${threadId}`;
 
     if (this.instances.has(key)) {
@@ -74,7 +75,7 @@ export class WorkflowRegistry {
         if (workflow.cleanup) {
           await workflow.cleanup();
         }
-      },
+      }
     );
 
     await Promise.all(cleanupPromises);

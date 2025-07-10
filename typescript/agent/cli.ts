@@ -135,27 +135,15 @@ if (process.argv.includes('--json')) {
     flushFilteredOutput();
     process.exit(0);
   });
-} 
+}
 
 const result = dotenvConfig({ path: envPath });
 
-console.log("ENV STUFF")
-console.log(process.env.OPENAI_API_KEY)
-// Debug environment loading (only in non-JSON mode)
-if (!process.argv.includes('--json')) {
-  console.log(`📧 [ENV] Loading from: ${envPath}`);
-  console.log(
-    `📧 [ENV] Result:`,
-    result.error ? `Error: ${result.error}` : 'Success',
-  );
-  console.log(`📧 [ENV] OPENAI_API_KEY present:`, !!process.env.OPENAI_API_KEY);
-}
-
-debugLog(`Environment loaded from: ${envPath}`);
+debugLog(`📧 [ENV] Loading from: ${envPath}`);
 debugLog(
-  `Environment result: ${result.error ? `Error: ${result.error}` : 'Success'}`,
+  `📧 [ENV] Result: ${result.error ? `Error: ${result.error}` : 'Success'}`,
 );
-debugLog(`OPENAI_API_KEY present: ${!!process.env.OPENAI_API_KEY}`);
+debugLog(`📧 [ENV] OPENAI_API_KEY present: ${!!process.env.OPENAI_API_KEY}`);
 
 // Now import everything else
 import { Command } from 'commander';
@@ -201,22 +189,22 @@ function outputResult(
   isJsonMode: boolean = false,
 ) {
   if (isJsonMode) {
-    // In JSON mode, this will be captured and filtered
     console.log(JSON.stringify(result));
+    debugLog(JSON.stringify(result));
   } else {
     // Handle console output based on result type
     if (result.success) {
       if (result.message) {
-        console.log(`✅ ${result.message}`);
+        debugLog(`✅ ${result.message}`);
       }
       if (result.threadId) {
-        console.log(`   Thread ID: ${result.threadId}`);
+        debugLog(`   Thread ID: ${result.threadId}`);
       }
       if (result.currentStep) {
-        console.log(`   Current step: ${result.currentStep}`);
+        debugLog(`   Current step: ${result.currentStep}`);
       }
     } else {
-      console.error(`❌ ${result.message || 'Operation failed'}`);
+      debugLog(`❌ ${result.message || 'Operation failed'}`);
       process.exit(1);
     }
   }
@@ -227,10 +215,11 @@ function outputError(message: string, isJsonMode: boolean = false) {
   if (isJsonMode) {
     // In JSON mode, this will be captured and filtered
     console.log(JSON.stringify({ success: false, message }));
+    debugLog(JSON.stringify({ success: false, message }));
     // Force flush and exit in JSON mode
     flushFilteredOutput();
   } else {
-    console.error(`❌ ${message}`);
+    debugLog(`❌ ${message}`);
   }
   process.exit(1);
 }
@@ -347,7 +336,7 @@ planCommand
         .map((p: string) => p.trim());
 
       if (!isJsonMode) {
-        console.log(
+        debugLog(
           `🚀 Starting new meal planning session with participants: ${participants.join(', ')}`,
         );
       }
@@ -376,16 +365,16 @@ planCommand
         current_step: 'started',
         initialState,
       };
-      console.error(
+      debugLog(
         `[DEBUG CLI plan start] Object being passed to outputResult: ${JSON.stringify(resultToOutput)}`,
       );
       outputResult(resultToOutput, isJsonMode);
 
       if (!isJsonMode) {
-        console.log(
+        debugLog(
           `   Use: meal-agent plan feedback "${threadId}" "your feedback here"`,
         );
-        console.log(`   Or:  meal-agent resume ${threadId}`);
+        debugLog(`   Or:  meal-agent resume ${threadId}`);
       } else {
         // In JSON mode, clean up and exit to prevent hanging
         debugLog('Shutting down agent and cleaning up connections...');
@@ -470,7 +459,7 @@ planCommand
           flushFilteredOutput();
           process.exit(0);
         } else {
-          console.log(
+          debugLog(
             `   Use: meal-agent resume ${threadId} to continue the workflow`,
           );
         }
@@ -501,36 +490,37 @@ planCommand
 
       const agent = await initializeAgent();
 
-      console.log('🔄 Finalizing meal plan and generating shopping list...');
+      debugLog('🔄 Finalizing meal plan and generating shopping list...');
 
       const result = await agent.resumeWorkflow(threadId, {
         action: 'finalize',
       });
 
       if (result.success) {
-        console.log('✅ Meal plan finalized successfully!');
+        debugLog('✅ Meal plan finalized successfully!');
 
         // Get and display the final meal plan
         try {
           const state = await agent.getWorkflowState(threadId);
           if (state.meal_plan) {
             const { text, html } = formatMealPlan(state.meal_plan);
-            console.log('\n📋 Final Meal Plan:');
-            console.log(text);
+            debugLog('\n📋 Final Meal Plan:');
+            debugLog(text);
 
             // Copy HTML to clipboard
             try {
               spawnSync('pbcopy', ['-Prefer', 'html'], { input: html });
-              console.log('✅ HTML table copied to clipboard');
+              debugLog('✅ HTML table copied to clipboard');
             } catch (err) {
-              console.error('⚠️ Failed to copy HTML to clipboard:', err);
+              debugLog('⚠️ Failed to copy HTML to clipboard:');
+              debugLog(JSON.stringify(err));
             }
           }
 
           if (state.shopping_list && state.shopping_list.length > 0) {
-            console.log('\n🛒 Shopping List:');
+            debugLog('\n🛒 Shopping List:');
             state.shopping_list.forEach((item) => {
-              console.log(
+              debugLog(
                 `  • ${item.quantity} ${item.ingredient}${item.category ? ` (${item.category})` : ''}`,
               );
             });
@@ -607,15 +597,15 @@ program
           );
           process.exit(0);
         } else {
-          console.log('🏥 System Health:', health.status);
-          console.log('📊 Statistics:');
-          console.log(`   Active Sessions: ${stats.activeSessionCount}`);
-          console.log(`   Total Workflows: ${stats.totalWorkflows}`);
-          console.log('   Workflows by Type:');
+          debugLog('🏥 System Health: ' + health.status);
+          debugLog('📊 Statistics:');
+          debugLog(`   Active Sessions: ${stats.activeSessionCount}`);
+          debugLog(`   Total Workflows: ${stats.totalWorkflows}`);
+          debugLog('   Workflows by Type:');
           Object.entries(stats.workflowsByType).forEach(([type, count]) => {
-            console.log(`     ${type}: ${count}`);
+            debugLog(`     ${type}: ${count}`);
           });
-          console.log(
+          debugLog(
             `   Supported Types: ${stats.supportedWorkflowTypes.join(', ')}`,
           );
         }
@@ -665,12 +655,12 @@ program
         );
       } else {
         if (workflowType) {
-          console.log(`📋 ${workflowType} workflows:`);
+          debugLog(`📋 ${workflowType} workflows:`);
         } else {
-          console.log('📋 All workflows:');
+          debugLog('📋 All workflows:');
         }
 
-        console.log(formatWorkflowList(workflows));
+        debugLog(formatWorkflowList(workflows));
       }
     } catch (error) {
       outputError(
@@ -707,7 +697,7 @@ program
       }
 
       if (!isJsonMode) {
-        console.log(
+        debugLog(
           `🔄 Resuming ${status.workflowType} workflow (${status.currentStep})`,
         );
       }
@@ -871,7 +861,7 @@ program
             confirm.toLowerCase() !== 'y' &&
             confirm.toLowerCase() !== 'yes'
           ) {
-            console.log('❌ Cancellation aborted.');
+            debugLog('❌ Cancellation aborted.');
             return;
           }
         } finally {
@@ -904,12 +894,12 @@ program
 
 // Global error handler and cleanup
 process.on('SIGINT', async () => {
-  console.log('\n🛑 Shutting down...');
+  debugLog('\n🛑 Shutting down...');
   if (agent) {
     try {
       await agent.shutdown();
     } catch (error) {
-      console.error('Error during shutdown:', error);
+      debugLog('Error during shutdown: ' + String(error));
     }
   }
   process.exit(0);
