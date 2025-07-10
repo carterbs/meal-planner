@@ -23,8 +23,6 @@ func NewGrpcHook(core zapcore.Core, component string) *GrpcHook {
 
 // Write intercepts log entries and sends them to gRPC service
 func (h *GrpcHook) Write(entry zapcore.Entry, fields []zapcore.Field) error {
-	fmt.Printf("DEBUG: GrpcHook.Write called for level %s: %s\n", entry.Level.String(), entry.Message)
-
 	// Send to gRPC service if available
 	if useGrpcLog && grpcLogger != nil {
 		fieldMap := make(map[string]string)
@@ -33,15 +31,10 @@ func (h *GrpcHook) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 		}
 
 		ctx := context.Background()
-		fmt.Printf("DEBUG: Sending log to gRPC: %s - %s\n", entry.Level.String(), entry.Message)
 		err := grpcLogger.LogWithDetails(ctx, entry.Level.String(), entry.Message, "", h.component, fieldMap)
 		if err != nil {
-			fmt.Printf("DEBUG: gRPC log failed: %v\n", err)
-		} else {
-			fmt.Printf("DEBUG: gRPC log successful\n")
+			// Fall back to console logging if gRPC fails
 		}
-	} else {
-		fmt.Printf("DEBUG: gRPC logging not available: useGrpcLog=%v, grpcLogger=%v\n", useGrpcLog, grpcLogger != nil)
 	}
 
 	// Continue with original logging
