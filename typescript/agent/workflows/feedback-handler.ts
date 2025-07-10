@@ -172,6 +172,9 @@ export class FeedbackHandler {
       }
 
       console.log(`[FEEDBACK] Current step: ${state.current_step}`);
+      console.log(`[FEEDBACK] Current step type: ${typeof state.current_step}`);
+      console.log(`[FEEDBACK] Checking if equals 'await_feedback': ${state.current_step === 'await_feedback'}`);
+      console.log(`[FEEDBACK] Full state:`, JSON.stringify(state, null, 2));
       return state.current_step === 'await_feedback';
     } catch (error) {
       console.error(`❌ [FEEDBACK] Error checking feedback status:`, error);
