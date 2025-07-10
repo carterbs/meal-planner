@@ -511,6 +511,21 @@ export declare const LogRequest: MessageFns<LogRequest>;
 export declare const LogResponse: MessageFns<LogResponse>;
 export declare const LogBatchRequest: MessageFns<LogBatchRequest>;
 export declare const LogBatchResponse: MessageFns<LogBatchResponse>;
+/** Logging Service definition */
+export interface LoggingService {
+    Log(request: LogRequest): Promise<LogResponse>;
+    LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
+}
+export declare const LoggingServiceServiceName = "mealplanner.api.LoggingService";
+export declare class LoggingServiceClientImpl implements LoggingService {
+    private readonly rpc;
+    private readonly service;
+    constructor(rpc: Rpc, opts?: {
+        service?: string;
+    });
+    Log(request: LogRequest): Promise<LogResponse>;
+    LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
+}
 /** Service definition */
 export interface MealPlannerAPI {
     /** Health endpoints */
@@ -555,9 +570,6 @@ export interface MealPlannerAPI {
     GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
     PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
     ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
-    /** Logging Service endpoints */
-    Log(request: LogRequest): Promise<LogResponse>;
-    LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
 }
 export declare const MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
 export declare class MealPlannerAPIClientImpl implements MealPlannerAPI {
@@ -600,8 +612,6 @@ export declare class MealPlannerAPIClientImpl implements MealPlannerAPI {
     GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
     PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
     ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
-    Log(request: LogRequest): Promise<LogResponse>;
-    LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
 }
 interface Rpc {
     request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;

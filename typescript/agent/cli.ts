@@ -8,10 +8,8 @@ import { join } from 'path';
 const CURRENT_DIR =
   typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
-const envPath = join(CURRENT_DIR, '..', '.env');
+const envPath = join(CURRENT_DIR, '../../../', 'backend', '.env');
 // In built version, we're in dist/ so go up one level to agent/
-// (moved above into CURRENT_DIR block)
-// (moved above into CURRENT_DIR block)
 
 // Import the new logging system
 import { debugLog as grpcDebugLog } from './logging';
@@ -111,7 +109,6 @@ if (process.argv.includes('--json')) {
   process.stdout.write = function (chunk: any): boolean {
     const str = chunk.toString();
     outputBuffer.push(str);
-    debugLog(`[STDOUT] ${str.replace(/\n/g, '\\n')}`);
     // Attempt real-time JSON detection/output
     tryOutputJSON(str);
     return true;
@@ -121,24 +118,10 @@ if (process.argv.includes('--json')) {
   process.stderr.write = function (chunk: any): boolean {
     const str = chunk.toString();
     errorBuffer.push(str);
-    debugLog(`[STDERR] ${str.replace(/\n/g, '\\n')}`);
     // Forward to original stderr so that errors are visible immediately
     originalStderrWrite.call(process.stderr, str);
     return true;
   } as any;
-
-  // Override console methods to also use capture
-  console.log = (message: any) => {
-    const str = String(message) + '\n';
-    outputBuffer.push(str);
-    debugLog(`[CONSOLE.LOG] ${str.replace(/\n/g, '\\n')}`);
-    // Attempt real-time JSON detection/output
-    tryOutputJSON(str);
-  };
-  console.error = debugLog;
-  console.warn = debugLog;
-  console.info = debugLog;
-  console.debug = debugLog;
 
   // Setup cleanup on process exit
   process.on('exit', flushFilteredOutput);
@@ -152,17 +135,12 @@ if (process.argv.includes('--json')) {
     flushFilteredOutput();
     process.exit(0);
   });
-} else {
-  // Non-JSON mode: override console methods to use file logging
-  console.log = debugLog;
-  console.error = debugLog;
-  console.warn = debugLog;
-  console.info = debugLog;
-  console.debug = debugLog;
-}
+} 
 
 const result = dotenvConfig({ path: envPath });
 
+console.log("ENV STUFF")
+console.log(process.env.OPENAI_API_KEY)
 // Debug environment loading (only in non-JSON mode)
 if (!process.argv.includes('--json')) {
   console.log(`📧 [ENV] Loading from: ${envPath}`);
