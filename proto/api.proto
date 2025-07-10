@@ -481,6 +481,12 @@ message LogBatchResponse {
   repeated string errors = 3;
 }
 
+// Logging Service definition
+service LoggingService {
+  rpc Log(LogRequest) returns (LogResponse);
+  rpc LogBatch(LogBatchRequest) returns (LogBatchResponse);
+}
+
 // Service definition
 service MealPlannerAPI {
   // Health endpoints
@@ -533,7 +539,4 @@ service MealPlannerAPI {
   rpc PutCheckpoint(PutCheckpointRequest) returns (PutCheckpointResponse);
   rpc ListCheckpoints(ListCheckpointsRequest) returns (ListCheckpointsResponse);
 
-  // Logging Service endpoints
-  rpc Log(LogRequest) returns (LogResponse);
-  rpc LogBatch(LogBatchRequest) returns (LogBatchResponse);
 }

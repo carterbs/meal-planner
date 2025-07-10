@@ -22,7 +22,7 @@ import (
 )
 
 type LoggingService struct {
-	pb.UnimplementedMealPlannerAPIServer
+	pb.UnimplementedLoggingServiceServer
 	logger *zap.Logger
 	writer *lumberjack.Logger
 }
@@ -57,14 +57,21 @@ func NewLoggingService() *LoggingService {
 }
 
 func (s *LoggingService) Log(ctx context.Context, req *pb.LogRequest) (*pb.LogResponse, error) {
+	fmt.Println("[LOGGING-SERVICE] Received Log request")
+	
 	if req.Entry == nil {
+		fmt.Println("[LOGGING-SERVICE] ERROR: log entry is nil")
 		return &pb.LogResponse{
 			Success: false,
 			Message: "log entry is required",
 		}, status.Error(codes.InvalidArgument, "log entry is required")
 	}
 
+	fmt.Printf("[LOGGING-SERVICE] Processing log entry from service: %s, level: %s, message: %s\n", 
+		req.Entry.ServiceName, req.Entry.Level, req.Entry.Message)
+
 	if err := s.writeLogEntry(req.Entry); err != nil {
+		fmt.Printf("[LOGGING-SERVICE] ERROR: Failed to write log entry: %v\n", err)
 		s.logger.Error("Failed to write log entry", zap.Error(err))
 		return &pb.LogResponse{
 			Success: false,
@@ -72,6 +79,7 @@ func (s *LoggingService) Log(ctx context.Context, req *pb.LogRequest) (*pb.LogRe
 		}, status.Error(codes.Internal, "failed to write log")
 	}
 
+	fmt.Println("[LOGGING-SERVICE] Log entry written successfully")
 	return &pb.LogResponse{
 		Success: true,
 		Message: "log entry written successfully",
@@ -81,9 +89,9 @@ func (s *LoggingService) Log(ctx context.Context, req *pb.LogRequest) (*pb.LogRe
 func (s *LoggingService) LogBatch(ctx context.Context, req *pb.LogBatchRequest) (*pb.LogBatchResponse, error) {
 	if len(req.Entries) == 0 {
 		return &pb.LogBatchResponse{
-			Success: false,
+			Success:   false,
 			Processed: 0,
-			Errors: []string{"no log entries provided"},
+			Errors:    []string{"no log entries provided"},
 		}, status.Error(codes.InvalidArgument, "no log entries provided")
 	}
 
@@ -117,15 +125,15 @@ func (s *LoggingService) writeLogEntry(entry *pb.LogEntry) error {
 
 	// Create structured log entry
 	logData := map[string]interface{}{
-		"timestamp":    timestamp.Format(time.RFC3339Nano),
-		"service":      entry.ServiceName,
-		"level":        entry.Level,
-		"message":      entry.Message,
-		"component":    entry.Component,
-		"thread_id":    entry.ThreadId,
-		"fields":       entry.Fields,
+		"timestamp": timestamp.Format(time.RFC3339Nano),
+		"service":   entry.ServiceName,
+		"level":     entry.Level,
+		"message":   entry.Message,
+		"component": entry.Component,
+		"thread_id": entry.ThreadId,
+		"fields":    entry.Fields,
 	}
-
+	fmt.Println("Log entry:", entry.ServiceName, entry.Message)
 	// Convert to JSON
 	jsonData, err := json.Marshal(logData)
 	if err != nil {
@@ -161,8 +169,29 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
-	pb.RegisterMealPlannerAPIServer(grpcServer, service)
+	// Add unary interceptor for debugging
+	unaryInterceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		fmt.Printf("[LOGGING-SERVICE] Received gRPC call: %s\n", info.FullMethod)
+		resp, err := handler(ctx, req)
+		if err != nil {
+			fmt.Printf("[LOGGING-SERVICE] gRPC call failed: %v\n", err)
+		} else {
+			fmt.Printf("[LOGGING-SERVICE] gRPC call succeeded\n")
+		}
+		return resp, err
+	}
+
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(unaryInterceptor))
+	pb.RegisterLoggingServiceServer(grpcServer, service)
+	
+	fmt.Printf("[LOGGING-SERVICE] Registered LoggingService server on port %s\n", port)
+	fmt.Println("[LOGGING-SERVICE] Available methods:")
+	for serviceName, serviceInfo := range grpcServer.GetServiceInfo() {
+		fmt.Printf("  Service: %s\n", serviceName)
+		for _, methodInfo := range serviceInfo.Methods {
+			fmt.Printf("    Method: %s\n", methodInfo.Name)
+		}
+	}
 
 	// Handle graceful shutdown
 	c := make(chan os.Signal, 1)

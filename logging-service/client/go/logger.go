@@ -15,7 +15,7 @@ import (
 )
 
 type LoggingClient struct {
-	client      pb.MealPlannerAPIClient
+	client      pb.LoggingServiceClient
 	conn        *grpc.ClientConn
 	serviceName string
 }
@@ -26,7 +26,7 @@ func NewLoggingClient(addr, serviceName string) (*LoggingClient, error) {
 		return nil, err
 	}
 
-	client := pb.NewMealPlannerAPIClient(conn)
+	client := pb.NewLoggingServiceClient(conn)
 	return &LoggingClient{
 		client:      client,
 		conn:        conn,

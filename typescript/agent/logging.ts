@@ -1,92 +1,138 @@
-// We'll create a simple HTTP client instead of importing the gRPC client
-// to avoid TypeScript path issues
 import { writeFileSync, appendFileSync } from 'fs';
 import { join } from 'path';
-// import { LoggingClient } from '@mealplanner/logging-client';
+import { ChannelCredentials, Metadata, Client } from '@grpc/grpc-js';
+import {
+  LoggingServiceClientImpl,
+  LogEntry,
+  LoggingServiceServiceName,
+} from '@mealplanner/generated';
 
-let loggingClient: any | null = null;
-let useGrpcLogging = false;
+let rpcClient: Client;
+let loggingService: LoggingServiceClientImpl;
+let initialized = false;
 
-// Initialize gRPC logging
-export function initLogging() {
-  // Temporarily disable gRPC logging to test if it's causing the hang
-  useGrpcLogging = false;
-  // Don't log to stdout in JSON mode to avoid contaminating the output
-  if (!process.argv.includes('--json')) {
-    console.log(`gRPC logging disabled for testing`);
-  }
-  // try {
-  //   const loggingServiceAddr = process.env.LOGGING_SERVICE_ADDR || 'localhost:50052';
-  //   loggingClient = new LoggingClient(loggingServiceAddr, 'agent');
-  //   useGrpcLogging = true;
-  //   console.log(`gRPC logging service connected at ${loggingServiceAddr}`);
-  // } catch (error) {
-  //   console.warn(`gRPC logging service not available: ${error}`);
-  //   useGrpcLogging = false;
-  // }
+export async function initLogging(serviceName = 'agent') {
+  if (initialized) return;
+  const addr = process.env.LOGGING_SERVICE_ADDR || 'localhost:50052';
+  console.log(`[AGENT] Initializing logging to ${addr}`);
+  
+  rpcClient = new Client(addr, ChannelCredentials.createInsecure(), {
+    'grpc.max_receive_message_length': -1,
+    'grpc.max_send_message_length': -1,
+  });
+  
+  // Add connection event listeners for debugging
+
+
+  // store promise to resolve when rpc is ready
+  await new Promise<void>((resolve, reject) => {
+    rpcClient.waitForReady(Date.now() + 500, (error) => {
+      if (error) {
+        console.error(`[AGENT] Failed to connect to logging service: ${error.message}`);
+        logToFile('ERROR', `Failed to connect to logging service: ${error.message}`);
+        reject(error);
+      } else {
+        console.log(`[AGENT] Successfully connected to logging service at ${addr}`);
+        logToFile('INFO', `Successfully connected to logging service at ${addr}`);
+        resolve();
+      }
+    });
+  });
+  
+  const rpc = {
+    request: (svc: string, method: string, data: Uint8Array): Promise<Uint8Array> => {
+      return new Promise((resolve, reject) => {
+        console.log(`[AGENT] Making gRPC request: ${svc}/${method}`);
+        const metadata = new Metadata();
+        metadata.add('service-name', serviceName);
+        
+        // Add a timeout
+        const deadline = new Date();
+        deadline.setSeconds(deadline.getSeconds() + 5);
+        
+        rpcClient.makeUnaryRequest(
+          `/${svc}/${method}`,
+          (arg) => Buffer.from(arg),
+          (buf: Buffer) => buf,
+          data,
+          metadata,
+          { deadline },
+          (err, resp) => {
+            if (err) {
+              console.error(`[AGENT] gRPC request failed: ${err.message}, code: ${err.code}, details: ${err.details}`);
+              return reject(err);
+            }
+            if (!resp) {
+              console.error(`[AGENT] gRPC request returned no response`);
+              return reject(new Error('no response'));
+            }
+            console.log(`[AGENT] gRPC request successful`);
+            resolve(new Uint8Array(resp));
+          }
+        );
+      });
+    },
+  };
+  loggingService = new LoggingServiceClientImpl(rpc, {
+    service: LoggingServiceServiceName,
+  });
+  initialized = true;
+  console.log(`[AGENT] Logging service client initialized`);
+  sendLog('INFO', 'Agent logging initialized');
 }
 
-// Enhanced debug logger that works in JSON mode and sends to gRPC service
-export function debugLog(message: string, fields?: Record<string, string>) {
+function logToFile(level: string, message: string) {
   const timestamp = new Date().toISOString();
-  
-  // Send to gRPC service if available
-  if (useGrpcLogging && loggingClient) {
-    loggingClient.debug(message, fields).catch((err: any) => {
-      // Fallback to file logging if gRPC fails
-      console.warn('gRPC logging failed, falling back to file:', err);
-      logToFile(message, timestamp);
-    });
-  } else {
-    // Fallback to file logging
-    logToFile(message, timestamp);
-  }
-}
-
-// Enhanced info logger
-export function infoLog(message: string, fields?: Record<string, string>) {
-  if (useGrpcLogging && loggingClient) {
-    loggingClient.info(message, fields).catch((err: any) => {
-      console.warn('gRPC logging failed:', err);
-    });
-  }
-}
-
-// Enhanced warn logger
-export function warnLog(message: string, fields?: Record<string, string>) {
-  if (useGrpcLogging && loggingClient) {
-    loggingClient.warn(message, fields).catch((err: any) => {
-      console.warn('gRPC logging failed:', err);
-    });
-  }
-}
-
-// Enhanced error logger
-export function errorLog(message: string, fields?: Record<string, string>) {
-  if (useGrpcLogging && loggingClient) {
-    loggingClient.error(message, fields).catch((err: any) => {
-      console.warn('gRPC logging failed:', err);
-    });
-  }
-}
-
-// Fallback file logging
-function logToFile(message: string, timestamp: string) {
-  const CURRENT_DIR = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
-  const debugLogPath = join(CURRENT_DIR, '..', 'cli-debug.log');
-  const logEntry = `[${timestamp}] ${message}\n`;
-  
+  const logEntry = `[${timestamp}] [${level}] ${message}\n`;
+  const debugLogPath = join(process.cwd(), 'cli-debug.log');
   try {
     appendFileSync(debugLogPath, logEntry);
-  } catch (err) {
-    // If file doesn't exist, create it
-    try {
-      writeFileSync(debugLogPath, logEntry);
-    } catch (createErr) {
-      // Ignore logging errors to prevent blocking execution
-    }
+  } catch {
+    try { writeFileSync(debugLogPath, logEntry); } catch { /* ignore */ }
   }
 }
 
-// Initialize logging when module is imported
-initLogging();
+async function sendLog(level: string, message: string, fields: Record<string, string> = {}) {
+  await initLogging();
+  const entry: LogEntry = {
+    serviceName: 'agent',
+    level,
+    message,
+    timestamp: new Date(),
+    threadId: '',
+    component: '',
+    fields,
+  };
+  
+  console.log(`[AGENT] Attempting to send log: ${level} - ${message}`);
+  logToFile(level, message); // Always log to file for backup
+  
+  if (!loggingService) {
+    console.error(`[AGENT] No logging service available`);
+    return;
+  }
+  try {
+    console.log(`[AGENT] Calling loggingService.Log with entry:`, JSON.stringify(entry, null, 2));
+    const response = await loggingService.Log({ entry });
+    console.log(`[AGENT] Log sent successfully:`, response);
+  } catch (error) {
+    console.error(`[AGENT] Failed to send log to service:`, error);
+  }
+}
+
+export function debugLog(message: string, fields: Record<string, string> = {}) {
+  sendLog('DEBUG', message, fields);
+}
+
+export function infoLog(message: string, fields: Record<string, string> = {}) {
+  sendLog('INFO', message, fields);
+}
+
+export function warnLog(message: string, fields: Record<string, string> = {}) {
+  sendLog('WARN', message, fields);
+}
+
+export function errorLog(message: string, fields: Record<string, string> = {}) {
+  sendLog('ERROR', message, fields);
+}
+

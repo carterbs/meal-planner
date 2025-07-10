@@ -6,7 +6,7 @@
 // source: api.proto
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AddBulkStepsRequest = exports.AddStepResponse = exports.AddStepRequest = exports.GetStepsResponse = exports.GetStepsRequest = exports.DeleteMealResponse = exports.DeleteMealRequest = exports.DeleteMealIngredientResponse = exports.DeleteMealIngredientRequest = exports.UpdateMealIngredientResponse = exports.UpdateMealIngredientRequest = exports.ReplaceMealResponse = exports.ReplaceMealRequest = exports.RemoveMealResponse = exports.RemoveMealRequest = exports.SwapMealResponse = exports.SwapMealRequest = exports.CreateMealResponse = exports.CreateMealRequest = exports.GetAllMealsResponse = exports.GetAllMealsRequest = exports.GetShoppingListResponse = exports.GetShoppingListRequest = exports.MealPlanICSResponse = exports.FinalizeMealPlanResponse = exports.FinalizeMealPlanRequest = exports.GenerateMealPlanResponse = exports.GetMealPlanResponse = exports.ReconnectResponse = exports.HealthCheckResponse = exports.WorkflowStatus = exports.AgentResponse = exports.AgentMessageRequest = exports.AgentResumeRequest = exports.AgentFeedbackRequest = exports.AgentStartRequest = exports.ShoppingList = exports.Message = exports.CheckpointResponse = exports.SaveCheckpointRequest = exports.MealPlanIdentifier = exports.SaveMealPlanRequest = exports.MealPlanEntry = exports.WeeklyMealPlan = exports.ShoppingListItem = exports.PlanDay = exports.Meal = exports.Step = exports.Ingredient = exports.protobufPackage = void 0;
-exports.MealPlannerAPIClientImpl = exports.MealPlannerAPIServiceName = exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry_FieldsEntry = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata_AdditionalFieldsEntry = exports.AgentCheckpointMetadata_WritesEntry = exports.AgentCheckpointMetadata = exports.AgentCheckpoint_ChannelValuesEntry = exports.AgentCheckpoint = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = exports.UpdateStepRequest = exports.AddBulkStepsResponse = void 0;
+exports.MealPlannerAPIClientImpl = exports.MealPlannerAPIServiceName = exports.LoggingServiceClientImpl = exports.LoggingServiceServiceName = exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry_FieldsEntry = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata_AdditionalFieldsEntry = exports.AgentCheckpointMetadata_WritesEntry = exports.AgentCheckpointMetadata = exports.AgentCheckpoint_ChannelValuesEntry = exports.AgentCheckpoint = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = exports.UpdateStepRequest = exports.AddBulkStepsResponse = void 0;
 /* eslint-disable */
 var wire_1 = require("@bufbuild/protobuf/wire");
 var any_1 = require("./google/protobuf/any");
@@ -6800,6 +6800,27 @@ exports.LogBatchResponse = {
         return message;
     },
 };
+exports.LoggingServiceServiceName = "mealplanner.api.LoggingService";
+var LoggingServiceClientImpl = /** @class */ (function () {
+    function LoggingServiceClientImpl(rpc, opts) {
+        this.service = (opts === null || opts === void 0 ? void 0 : opts.service) || exports.LoggingServiceServiceName;
+        this.rpc = rpc;
+        this.Log = this.Log.bind(this);
+        this.LogBatch = this.LogBatch.bind(this);
+    }
+    LoggingServiceClientImpl.prototype.Log = function (request) {
+        var data = exports.LogRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "Log", data);
+        return promise.then(function (data) { return exports.LogResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    LoggingServiceClientImpl.prototype.LogBatch = function (request) {
+        var data = exports.LogBatchRequest.encode(request).finish();
+        var promise = this.rpc.request(this.service, "LogBatch", data);
+        return promise.then(function (data) { return exports.LogBatchResponse.decode(new wire_1.BinaryReader(data)); });
+    };
+    return LoggingServiceClientImpl;
+}());
+exports.LoggingServiceClientImpl = LoggingServiceClientImpl;
 exports.MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
 var MealPlannerAPIClientImpl = /** @class */ (function () {
     function MealPlannerAPIClientImpl(rpc, opts) {
@@ -6839,8 +6860,6 @@ var MealPlannerAPIClientImpl = /** @class */ (function () {
         this.GetCheckpoint = this.GetCheckpoint.bind(this);
         this.PutCheckpoint = this.PutCheckpoint.bind(this);
         this.ListCheckpoints = this.ListCheckpoints.bind(this);
-        this.Log = this.Log.bind(this);
-        this.LogBatch = this.LogBatch.bind(this);
     }
     MealPlannerAPIClientImpl.prototype.HealthCheck = function (request) {
         var data = empty_1.Empty.encode(request).finish();
@@ -7011,16 +7030,6 @@ var MealPlannerAPIClientImpl = /** @class */ (function () {
         var data = exports.ListCheckpointsRequest.encode(request).finish();
         var promise = this.rpc.request(this.service, "ListCheckpoints", data);
         return promise.then(function (data) { return exports.ListCheckpointsResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.Log = function (request) {
-        var data = exports.LogRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "Log", data);
-        return promise.then(function (data) { return exports.LogResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.LogBatch = function (request) {
-        var data = exports.LogBatchRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "LogBatch", data);
-        return promise.then(function (data) { return exports.LogBatchResponse.decode(new wire_1.BinaryReader(data)); });
     };
     return MealPlannerAPIClientImpl;
 }());

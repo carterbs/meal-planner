@@ -7861,6 +7861,35 @@ export const LogBatchResponse: MessageFns<LogBatchResponse> = {
   },
 };
 
+/** Logging Service definition */
+export interface LoggingService {
+  Log(request: LogRequest): Promise<LogResponse>;
+  LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
+}
+
+export const LoggingServiceServiceName = "mealplanner.api.LoggingService";
+export class LoggingServiceClientImpl implements LoggingService {
+  private readonly rpc: Rpc;
+  private readonly service: string;
+  constructor(rpc: Rpc, opts?: { service?: string }) {
+    this.service = opts?.service || LoggingServiceServiceName;
+    this.rpc = rpc;
+    this.Log = this.Log.bind(this);
+    this.LogBatch = this.LogBatch.bind(this);
+  }
+  Log(request: LogRequest): Promise<LogResponse> {
+    const data = LogRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "Log", data);
+    return promise.then((data) => LogResponse.decode(new BinaryReader(data)));
+  }
+
+  LogBatch(request: LogBatchRequest): Promise<LogBatchResponse> {
+    const data = LogBatchRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "LogBatch", data);
+    return promise.then((data) => LogBatchResponse.decode(new BinaryReader(data)));
+  }
+}
+
 /** Service definition */
 export interface MealPlannerAPI {
   /** Health endpoints */
@@ -7905,9 +7934,6 @@ export interface MealPlannerAPI {
   GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
   PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
   ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
-  /** Logging Service endpoints */
-  Log(request: LogRequest): Promise<LogResponse>;
-  LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
 }
 
 export const MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
@@ -7951,8 +7977,6 @@ export class MealPlannerAPIClientImpl implements MealPlannerAPI {
     this.GetCheckpoint = this.GetCheckpoint.bind(this);
     this.PutCheckpoint = this.PutCheckpoint.bind(this);
     this.ListCheckpoints = this.ListCheckpoints.bind(this);
-    this.Log = this.Log.bind(this);
-    this.LogBatch = this.LogBatch.bind(this);
   }
   HealthCheck(request: Empty): Promise<HealthCheckResponse> {
     const data = Empty.encode(request).finish();
@@ -8156,18 +8180,6 @@ export class MealPlannerAPIClientImpl implements MealPlannerAPI {
     const data = ListCheckpointsRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "ListCheckpoints", data);
     return promise.then((data) => ListCheckpointsResponse.decode(new BinaryReader(data)));
-  }
-
-  Log(request: LogRequest): Promise<LogResponse> {
-    const data = LogRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "Log", data);
-    return promise.then((data) => LogResponse.decode(new BinaryReader(data)));
-  }
-
-  LogBatch(request: LogBatchRequest): Promise<LogBatchResponse> {
-    const data = LogBatchRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "LogBatch", data);
-    return promise.then((data) => LogBatchResponse.decode(new BinaryReader(data)));
   }
 }
 
