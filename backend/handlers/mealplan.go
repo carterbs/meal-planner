@@ -106,6 +106,8 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	resp := &apipb.GetMealPlanResponse{Plan: toProtoWeeklyMealPlan(detailedPlan)}
 	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
 	mealplanHandlerLogger.Debugw("8th meal", "meal", resp.Plan.Days[7].Meal.Name, resp.Plan.Days[7].MealType, resp.Plan.Days[7].DayIndex)
+	mealplanHandlerLogger.Debugw("Go model - 1st day", "dayIndex", detailedPlan.Days[0].DayIndex, "mealType", detailedPlan.Days[0].MealType)
+	mealplanHandlerLogger.Debugw("Go model - 8th day", "dayIndex", detailedPlan.Days[7].DayIndex, "mealType", detailedPlan.Days[7].MealType)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)

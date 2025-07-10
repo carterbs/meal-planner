@@ -1,55 +1,82 @@
-# The Workflow Debacle
+# The Workflow Debacle - Current State & Next Steps
 
-## Problem Summary
+## Original Problem (SOLVED ✅)
+The e2e test `scripts/e2e_remove_friday.sh` was failing because:
+1. **Missing `dayIndex` field**: The MCP server was receiving meal plan data without `dayIndex` values
+2. **500 errors on meal plan save**: The `/api/mealplan` endpoint was returning 500 errors
 
-The e2e test `scripts/e2e_remove_friday.sh` is failing because when it tries to send feedback to remove Friday's meals, the agent CLI returns:
-```
-"This workflow is not currently awaiting feedback."
-```
+## Root Cause Analysis & Fixes
 
-However, the workflow state clearly shows `current_step: "await_feedback"`, so it SHOULD be accepting feedback.
+### Problem 1: Missing `dayIndex` Field ✅ FIXED
+**Issue**: Backend was using `protojson.MarshalOptions{UseProtoNames: true}` which serializes protobuf fields as snake_case (`day_index`), but TypeScript generated code expects camelCase (`dayIndex`).
 
-## What We've Discovered
+**Solution**: 
+- Reverted all marshal operations back to `UseProtoNames: true` (snake_case output)
+- Fixed frontend workflow to use proper protobuf types when creating requests
+- Updated `SaveMealPlanRequest` creation to use `MealPlanEntry.create()` with correct field mapping
 
-1. **The test is "passing" for the wrong reason** - It shows Friday/Saturday meals as removed because:
-   - All meals have `dayIndex: 0` (Monday) 
-   - There are no Friday (dayIndex: 4) or Saturday (dayIndex: 5) meals to begin with
-   - The test checks an empty `entries` array and finds no meals on those days
-2. **Multiple data structure mismatches**:
-   - The test expects `.entries[] | select(.dayOfWeek == 4)` 
-   - But the actual data is in `.meal_plan.days[]` with `dayIndex`
-   - The `/api/workflows/{id}` endpoint returns empty `entries: []`
+### Problem 2: 500 Errors on Meal Plan Save ✅ PARTIALLY FIXED
+**Issue**: The `SaveMealPlanHandler` was receiving JSON with camelCase field names but `protojson.Unmarshal` expects snake_case proto field names.
 
-## What We've Tried
+**Current Status**: 
+- Fixed the workflow to properly create protobuf-compliant JSON requests
+- Backend now expects snake_case field names consistently
+- Still seeing 500 errors in latest test run - need to investigate further
 
-1. **Fixed endpoint URLs** - Changed `/api/workflows` to `/api/agent/workflows` in HttpCheckpointSaver
-2. **Implemented missing handler** - Added empty list response for ListWorkflows 
-3. **Fixed JSON parsing** - Removed console.log that was contaminating JSON output
-4. **Added debug logging** - Added console.error statements to trace the issue
-5. **Checked checkpoint format** - Confirmed the checkpoint contains `current_step: "await_feedback"`
+### Problem 3: Workflow State Management 🔄 IN PROGRESS
+**Issue**: The workflow reports "not currently awaiting feedback" even when `current_step: "await_feedback"` is set.
 
-## The Core Issue
+**Investigation**: 
+- Added debug logging to see what state is actually being saved/retrieved
+- Confirmed checkpoint saving/loading uses consistent config structure
+- Need to run test with debug logs to see actual state values
 
-The `isAwaitingFeedback` check is failing even though:
-- The checkpoint exists and is retrieved successfully 
-- The checkpoint clearly shows `current_step: "await_feedback"`
-- The debug logs we added to `isAwaitingFeedback` are NOT appearing in output
+## Current State & Next Steps
 
-This suggests either:
-1. The `isAwaitingFeedback` method is not being called at all
-2. It's being called but console output is being suppressed
-3. There's an exception before it reaches our debug statements
+### Immediate Issues to Resolve:
 
-## What We Should Try Next
+1. **SaveMealPlan 500 Errors** 🚨 HIGH PRIORITY
+   - The workflow is still getting 500 errors when saving meal plans
+   - Need to check if the protobuf request structure is correct
+   - Verify that `day_index` and `meal_type` fields are present in request
 
-1. **Add debug logging earlier in the chain** - In the CLI feedback command handler before it calls `agent.isAwaitingFeedback()`
+2. **Missing Debug Output** 🔍 
+   - Our debug logs aren't appearing in test output
+   - Need to confirm TypeScript compilation is working
+   - May need to check console output redirection
 
-2. **Test the feedback handler directly** - Create a simple test script that calls the feedback handler methods directly to isolate the issue
+3. **Feedback Loop Testing** 🧪
+   - Once save errors are fixed, test the complete feedback workflow
+   - Verify checkpoint state persistence
+   - Confirm `isAwaitingFeedback` works correctly
 
-3. **Check for initialization issues** - The agent might not be properly initialized when the feedback command runs
+### Next Actions:
 
-4. **Verify the checkpoint retrieval** - Add logging to see what the `getTuple` method actually returns when called from the feedback handler
+1. **Run test with full debug output** to see:
+   - What the `planJson.days` structure actually contains
+   - Whether our protobuf request mapping is working
+   - What state is being saved to checkpoints
 
-5. **Check for TypeScript compilation issues** - Make sure our changes are actually being compiled and used
+2. **Fix remaining 500 errors** by:
+   - Checking request body structure in SaveMealPlanHandler
+   - Ensuring all required fields are present
+   - Verifying protobuf unmarshaling works correctly
 
-The most likely issue is that there's a problem with how the checkpoint data is being retrieved or parsed when called from the feedback command context.
+3. **Complete feedback loop testing** once save works:
+   - Test that checkpoints preserve `await_feedback` state
+   - Verify feedback processing works end-to-end
+   - Confirm meal removal functionality
+
+## Key Technical Insights
+
+1. **Protobuf Field Naming**: The backend consistently uses snake_case field names (`day_index`, `meal_type`) while frontend objects use camelCase. The solution is to use protobuf `toJSON()` methods for consistent serialization.
+
+2. **State Management**: The workflow saves state to checkpoints using protobuf Any types, and the feedback handler retrieves it using the same config structure. The consistency here looks correct.
+
+3. **Request Structure**: The `SaveMealPlanRequest` needs properly formatted entries with `day_index`, `meal_type`, and `meal` fields to avoid 500 errors.
+
+## Status Summary
+- ✅ **dayIndex field issue**: RESOLVED 
+- 🔄 **500 errors**: IN PROGRESS - need to verify request structure
+- 🔄 **Feedback workflow**: PENDING - waiting on save fix
+- 🎯 **Next milestone**: Complete end-to-end meal removal test

@@ -153,6 +153,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           state = { ...state, ...(await this.optimizePlanNode(state)) };
           state = { ...state, ...(await this.presentPlanNode(state)) };
           // Pause: checkpoint state
+          // Debug: log the final state before saving checkpoint
+          console.log(`🔍 [WORKFLOW] Final state before checkpoint: current_step=${state.current_step}`);
+          console.log(`🔍 [WORKFLOW] Full state:`, JSON.stringify(state, null, 2));
+          
           // Create properly typed checkpoint
           const stateJson = JSON.stringify(state);
           const stateBytes = new TextEncoder().encode(stateJson);
@@ -294,10 +298,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
       console.log("PLAN JSON-------")
       console.log(JSON.stringify(planJson, null, 2))
+      console.log("FIRST DAY:", JSON.stringify(planJson.days[0], null, 2))
       const entries = planJson.days.map((d: any) => {
         return MealPlanEntry.create({
-          dayIndex: d.day_index, // Use snake_case from protobuf JSON
-          mealType: d.meal_type,  // Use snake_case from protobuf JSON  
+          dayIndex: d.dayIndex, // Use camelCase from toJSON output
+          mealType: d.mealType,  // Use camelCase from toJSON output
           meal: d.meal,
         });
       });
