@@ -14,7 +14,6 @@ import (
 	"mealplanner/models"
 	"mealplanner/services"
 
-	"github.com/fatih/color"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -48,23 +47,10 @@ func HTTPLoggerMiddleware(next http.Handler) http.Handler {
 
 		duration := time.Since(start)
 
-		// Color the method and status based on HTTP semantics
-		methodColor := color.New(color.FgCyan, color.Bold)
-		var statusColor *color.Color
-		if cw.status >= 200 && cw.status < 300 {
-			statusColor = color.New(color.FgGreen)
-		} else if cw.status >= 300 && cw.status < 400 {
-			statusColor = color.New(color.FgYellow)
-		} else if cw.status >= 400 && cw.status < 500 {
-			statusColor = color.New(color.FgRed)
-		} else {
-			statusColor = color.New(color.FgMagenta, color.Bold)
-		}
-
-		httpLogger.Infow(fmt.Sprintf("HTTP %s %s - %s",
-			methodColor.Sprint(r.Method),
-			color.WhiteString(r.URL.Path),
-			statusColor.Sprintf("%d", cw.status)),
+		httpLogger.Infow(fmt.Sprintf("HTTP %s %s - %d",
+			r.Method,
+			r.URL.Path,
+			cw.status),
 			"duration", duration,
 			"remote_addr", r.RemoteAddr,
 		)
@@ -95,7 +81,7 @@ func DBErrorMiddleware(next http.Handler) http.Handler {
 func main() {
 	// Load env variables from .env file automatically
 	if err := godotenv.Load(); err != nil {
-		color.Yellow("⚠️  No .env file found, proceeding with existing env variables")
+		fmt.Println("⚠️  No .env file found, proceeding with existing env variables")
 		fmt.Println()
 	}
 
