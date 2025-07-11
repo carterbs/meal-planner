@@ -19,7 +19,10 @@ export function debugLog(message: string, fields?: Record<string, string>) {
   grpcDebugLog(message, fields);
 }
 
-debugLog('CLI starting...');
+// Avoid emitting logs to stdout before JSON capture is set up
+if (!process.argv.includes('--json')) {
+  debugLog('CLI starting...');
+}
 
 // Smart output filtering for JSON mode
 let outputBuffer: string[] = [];
