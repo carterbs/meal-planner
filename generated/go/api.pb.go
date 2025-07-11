@@ -173,7 +173,7 @@ type Meal struct {
 	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Effort        int32                  `protobuf:"varint,3,opt,name=effort,proto3" json:"effort,omitempty"`
-	LastPlanned   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_planned,json=lastPlanned,proto3" json:"last_planned,omitempty"`
+	LastPlanned   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_planned,json=lastPlanned,proto3,oneof" json:"last_planned,omitempty"`
 	HasRedMeat    bool                   `protobuf:"varint,5,opt,name=has_red_meat,json=hasRedMeat,proto3" json:"has_red_meat,omitempty"`
 	Url           string                 `protobuf:"bytes,6,opt,name=url,proto3" json:"url,omitempty"`
 	MealType      string                 `protobuf:"bytes,7,opt,name=meal_type,json=mealType,proto3" json:"meal_type,omitempty"`
@@ -4778,18 +4778,19 @@ const file_api_proto_rawDesc = "" +
 	"\ameal_id\x18\x02 \x01(\x05R\x06mealId\x12\x1f\n" +
 	"\vstep_number\x18\x03 \x01(\x05R\n" +
 	"stepNumber\x12 \n" +
-	"\vinstruction\x18\x04 \x01(\tR\vinstruction\"\xbe\x02\n" +
+	"\vinstruction\x18\x04 \x01(\tR\vinstruction\"\xd4\x02\n" +
 	"\x04Meal\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
-	"\x06effort\x18\x03 \x01(\x05R\x06effort\x12=\n" +
-	"\flast_planned\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vlastPlanned\x12 \n" +
+	"\x06effort\x18\x03 \x01(\x05R\x06effort\x12B\n" +
+	"\flast_planned\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\vlastPlanned\x88\x01\x01\x12 \n" +
 	"\fhas_red_meat\x18\x05 \x01(\bR\n" +
 	"hasRedMeat\x12\x10\n" +
 	"\x03url\x18\x06 \x01(\tR\x03url\x12\x1b\n" +
 	"\tmeal_type\x18\a \x01(\tR\bmealType\x12=\n" +
 	"\vingredients\x18\b \x03(\v2\x1b.mealplanner.api.IngredientR\vingredients\x12+\n" +
-	"\x05steps\x18\t \x03(\v2\x15.mealplanner.api.StepR\x05steps\"n\n" +
+	"\x05steps\x18\t \x03(\v2\x15.mealplanner.api.StepR\x05stepsB\x0f\n" +
+	"\r_last_planned\"n\n" +
 	"\aPlanDay\x12)\n" +
 	"\x04meal\x18\x01 \x01(\v2\x15.mealplanner.api.MealR\x04meal\x12\x1b\n" +
 	"\tday_index\x18\x02 \x01(\x05R\bdayIndex\x12\x1b\n" +
@@ -5365,6 +5366,7 @@ func file_api_proto_init() {
 	if File_api_proto != nil {
 		return
 	}
+	file_api_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

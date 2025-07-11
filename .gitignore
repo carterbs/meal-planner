@@ -16,7 +16,6 @@ dist/
 
 # Log files
 *.log
-
 # Environment files
 .env
 

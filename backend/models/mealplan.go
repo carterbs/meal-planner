@@ -121,9 +121,8 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 	}
 	if lastPlanned.Valid {
 		m.LastPlanned = timestamppb.New(lastPlanned.Time)
-	} else {
-		m.LastPlanned = timestamppb.New(time.Time{})
 	}
+	// Leave m.LastPlanned as nil if lastPlanned is not valid
 	return &m, nil
 }
 

@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"errors"
-	"time"
 
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
@@ -87,13 +86,6 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 			}
 		}
 		if m == nil {
-			var lp time.Time
-			if nt.Valid {
-				lp = nt.Time
-			} else {
-				lp = time.Time{}
-			}
-
 			urlValue := ""
 			if url.Valid {
 				urlValue = url.String
@@ -103,12 +95,16 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 				Id:          int32(mealID),
 				Name:        mealName,
 				Effort:      int32(relativeEffort),
-				LastPlanned: timestamppb.New(lp),
 				HasRedMeat:  redMeat,
 				Url:         urlValue,
 				MealType:    mealType,
 				Ingredients: []*Ingredient{},
 				Steps:       []*Step{},
+			}
+
+			// Only set LastPlanned if the timestamp is valid
+			if nt.Valid {
+				m.LastPlanned = timestamppb.New(nt.Time)
 			}
 			meals = append(meals, m)
 		}

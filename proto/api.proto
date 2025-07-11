@@ -29,7 +29,7 @@ message Meal {
   int32 id = 1;
   string name = 2;
   int32 effort = 3;
-  google.protobuf.Timestamp last_planned = 4;
+  optional google.protobuf.Timestamp last_planned = 4;
   bool has_red_meat = 5;
   string url = 6;
   string meal_type = 7;
