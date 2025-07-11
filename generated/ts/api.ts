@@ -31,7 +31,7 @@ export interface Meal {
   id: number;
   name: string;
   effort: number;
-  lastPlanned: Date | undefined;
+  lastPlanned?: Date | undefined;
   hasRedMeat: boolean;
   url: string;
   mealType: string;

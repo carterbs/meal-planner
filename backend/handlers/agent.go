@@ -60,6 +60,7 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 	var resp models.AgentResponse
 	if err := json.Unmarshal(stdoutBuffer.Bytes(), &resp); err != nil {
 		// If unmarshal fails, return an error including the stdout that failed to parse
+		logger.Errorw("Failed to unmarshal agent response", "error", err, "stdout", stdoutBuffer.String())
 		return models.AgentResponse{}, fmt.Errorf("failed to unmarshal agent response: %v\nStdout: %s", err, stdoutBuffer.String()) // Include stdoutBuffer for context
 	}
 	return resp, nil
@@ -74,10 +75,12 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 	var req models.AgentStartRequest
 	if err := json.Unmarshal(body, &req); err != nil {
+		logger.Errorw("Failed to unmarshal agent start request", "error", err)
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 	if err := req.Validate(); err != nil {
+		logger.Errorw("Invalid agent start request", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

@@ -300,11 +300,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       infoLog("PLAN JSON-------");
       infoLog(JSON.stringify(planJson, null, 2));
       infoLog(`FIRST DAY: ${JSON.stringify(planJson.days[0], null, 2)}`);
-      const entries = planJson.days.map((d: any) => {
+      // Convert back to protobuf Meal messages to ensure Date fields are preserved
+      const entries = plan.days.map((d: any) => {
         return MealPlanEntry.create({
-          dayIndex: d.dayIndex, // Use camelCase from toJSON output
-          mealType: d.mealType, // Use camelCase from toJSON output
-          meal: d.meal
+          dayIndex: d.dayIndex,
+          mealType: d.mealType,
+          meal: d.meal, // d.meal is already a protobuf Meal message with Date fields
         });
       });
 
