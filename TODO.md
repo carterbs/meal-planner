@@ -48,6 +48,19 @@ We currently have two similar but different endpoints that serve overlapping pur
 
 ## Medium Priority
 
+### Persist Messages in Every Checkpoint
+**Status: Planned**
+- Remove the special `latest` namespace that only stores chat messages.
+- Add `repeated ChatMessage messages` to `AgentCheckpoint` proto.
+- Regenerate code (`yarn proto:gen`, `go generate`).
+- Update TypeScript & Go code to append chat messages directly into each checkpoint before calling `/api/checkpoints`.
+- Write migration script to merge legacy `latest` rows into most recent real checkpoint per thread and delete them.
+- Delete `UpdateWorkflowCheckpoint*` helpers once migration is done.
+
+---
+
+## Medium Priority
+
 ### Database Schema Review
 **Status: Future Enhancement**
 - Review if checkpoint storage can be optimized
@@ -66,3 +79,4 @@ We currently have two similar but different endpoints that serve overlapping pur
 - The current hotfix in `GetWorkflowState` adds `current_step` extraction but is a temporary solution
 - This creates technical debt that should be addressed in the next sprint
 - Consider this when planning the next major API refactor
+- After initial checkpoint sanitization fix, purge or resave any legacy checkpoints containing the deprecated `workflow_type` or `channel_values` fields (Step 2).

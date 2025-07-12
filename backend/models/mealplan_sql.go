@@ -35,7 +35,7 @@ func SaveMealPlan(db *sql.DB, threadID string, version int, entries []MealPlanEn
 	}
 	// Insert items
 	const itemQuery = `
-	INSERT INTO meal_plan_items (meal_plan_id, day_of_week, meal_type, meal)
+	INSERT INTO meal_plan_items (meal_plan_id, day_index, meal_type, meal)
 	VALUES ($1, $2, $3, $4)`
 	for _, e := range entries {
 		mealJSON, err := json.Marshal(e.Meal)
@@ -68,10 +68,10 @@ func GetLatestMealPlan(db *sql.DB, threadID string) (*MealPlanIdentifier, error)
 // GetMealPlanItems retrieves items for a given meal plan
 func GetMealPlanItems(db *sql.DB, mealPlanID int) ([]MealPlanEntry, error) {
 	const query = `
-	SELECT day_of_week, meal_type, meal
+	SELECT day_index, meal_type, meal
 	FROM meal_plan_items
 	WHERE meal_plan_id = $1
-	ORDER BY day_of_week, meal_type`
+	ORDER BY day_index, meal_type`
 	rows, err := db.Query(query, mealPlanID)
 	if err != nil {
 		return nil, err

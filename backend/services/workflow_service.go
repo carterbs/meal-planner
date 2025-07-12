@@ -63,7 +63,7 @@ func (s *workflowService) GetWorkflowState(threadID string) (*models.InternalWor
 		return nil, fmt.Errorf("failed to parse checkpoint data: %w", err)
 	}
 
-	return &checkpoint.ChannelValues, nil
+	return &checkpoint.State, nil
 }
 
 // UpdateWorkflowState updates the complete workflow state for a thread
@@ -83,8 +83,9 @@ func (s *workflowService) UpdateWorkflowState(threadID string, state *models.Int
 		return fmt.Errorf("failed to parse existing checkpoint: %w", err)
 	}
 
-	// Update the channel_values with the new state
-	fullCheckpoint["channel_values"] = state
+	// Switch to canonical `state` key, removing any legacy `channel_values`
+	delete(fullCheckpoint, "channel_values")
+	fullCheckpoint["state"] = state
 
 	// Marshal back to bytes
 	finalCheckpointBytes, err := json.Marshal(fullCheckpoint)

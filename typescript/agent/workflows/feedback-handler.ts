@@ -1,10 +1,14 @@
 import { infoLog, errorLog } from "../logging";
+
 import {
   FeedbackEntry,
   MealPlanningState,
   WorkflowType } from
 '../shared/types';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
+
+
+
 
 export interface FeedbackInput {
   threadId: string;
@@ -70,15 +74,23 @@ export class FeedbackHandler {
       }
 
       const [checkpoint] = tuple;
-      // Properly deserialize state from checkpoint
-      const stateAny = checkpoint.channelValues['state'];
-      if (!stateAny || typeof stateAny !== 'object' || !('value' in stateAny)) {
+      if (!checkpoint.state) {
         return [];
       }
-      const stateBytes = stateAny.value as Uint8Array;
-      const stateJson = new TextDecoder().decode(stateBytes);
-      const state = JSON.parse(stateJson) as MealPlanningState;
-
+      const proto = checkpoint.state;
+      const state: MealPlanningState = {
+        threadId: proto.threadId,
+        workflow_type: WorkflowType.MEAL_PLANNING,
+        participants: proto.participants,
+        created_at: proto.createdAt ? new Date(proto.createdAt) : new Date(),
+        updated_at: proto.updatedAt ? new Date(proto.updatedAt) : new Date(),
+        current_step: proto.currentStep as any,
+        meal_plan: proto.mealPlan as any,
+        feedback_history: proto.feedbackHistory as any,
+        iteration_count: proto.iterationCount,
+        shopping_list: proto.shoppingList as any,
+        is_finalized: proto.isFinalized,
+      };
       return state.feedback_history || [];
     } catch (error) {
       errorLog(`${`❌ [FEEDBACK] Error getting feedback:`} ${error}`);
@@ -127,50 +139,24 @@ export class FeedbackHandler {
 
       errorLog(`[FEEDBACK] Got tuple, extracting checkpoint...`);
       const [checkpoint] = tuple;
-      let state: MealPlanningState;
-
-      // Try to get state from channelValues directly (backend format)
-      if (checkpoint.channelValues && 'current_step' in checkpoint.channelValues) {
-        infoLog(`[FEEDBACK] Found state in channelValues directly`);
-        state = checkpoint.channelValues as any as MealPlanningState;
+      if (!checkpoint.state) {
+        errorLog('[FEEDBACK] No state in checkpoint');
+        return false;
       }
-      // Otherwise try protobuf format
-      else {
-        infoLog(`[FEEDBACK] Trying protobuf format...`);
-        const stateAny = checkpoint.channelValues['state'];
-        infoLog(`${`[FEEDBACK] stateAny type:`} ${typeof stateAny}`);
-        infoLog(`${`[FEEDBACK] stateAny keys:`} ${stateAny ? Object.keys(stateAny) : 'null'}`);
-
-        if (!stateAny || typeof stateAny !== 'object' || !('value' in stateAny)) {
-          infoLog(`[FEEDBACK] No valid state found in checkpoint`);
-          return false;
-        }
-
-        infoLog(`${`[FEEDBACK] stateAny.value type:`} ${typeof stateAny.value}`);
-        infoLog(`${`[FEEDBACK] stateAny.value constructor:`} ${stateAny.value?.constructor?.name}`);
-
-        // Convert to proper Uint8Array if it's not already one
-        let stateBytes: Uint8Array;
-        if (stateAny.value instanceof Uint8Array) {
-          stateBytes = stateAny.value;
-        } else if (Array.isArray(stateAny.value)) {
-          stateBytes = new Uint8Array(stateAny.value);
-        } else if (stateAny.value && typeof stateAny.value === 'object' && 'data' in stateAny.value) {
-          // Handle Buffer-like objects
-          stateBytes = new Uint8Array((stateAny.value as any).data);
-        } else {
-          infoLog(`[FEEDBACK] Unexpected stateAny.value format, trying direct conversion`);
-          stateBytes = new Uint8Array(Object.values(stateAny.value as any));
-        }
-
-        infoLog(`[FEEDBACK] About to decode ${stateBytes.length} bytes`);
-
-        const stateJson = new TextDecoder().decode(stateBytes);
-        infoLog(`${`[FEEDBACK] Decoded JSON string length:`} ${stateJson.length}`);
-        infoLog(`${`[FEEDBACK] First 100 chars:`} ${stateJson.substring(0, 100)}`);
-
-        state = JSON.parse(stateJson) as MealPlanningState;
-      }
+      const proto = checkpoint.state;
+      const state: MealPlanningState = {
+        threadId: proto.threadId,
+        workflow_type: WorkflowType.MEAL_PLANNING,
+        participants: proto.participants,
+        created_at: proto.createdAt ? new Date(proto.createdAt) : new Date(),
+        updated_at: proto.updatedAt ? new Date(proto.updatedAt) : new Date(),
+        current_step: proto.currentStep as any,
+        meal_plan: proto.mealPlan as any,
+        feedback_history: proto.feedbackHistory as any,
+        iteration_count: proto.iterationCount,
+        shopping_list: proto.shoppingList as any,
+        is_finalized: proto.isFinalized,
+      };
 
       infoLog(`[FEEDBACK] Current step: ${state.current_step}`);
       infoLog(`[FEEDBACK] Current step type: ${typeof state.current_step}`);

@@ -1,4 +1,6 @@
 import { writeFileSync, appendFileSync } from 'fs';
+
+
 import { join } from 'path';
 import { ChannelCredentials, Metadata, Client } from '@grpc/grpc-js';
 import {
@@ -14,7 +16,6 @@ let initialized = false;
 export async function initLogging(serviceName = 'agent') {
   if (initialized) return;
   const addr = process.env.LOGGING_SERVICE_ADDR || 'localhost:50052';
-  console.log(`[AGENT] Initializing logging to ${addr}`);
 
   rpcClient = new Client(addr, ChannelCredentials.createInsecure(), {
     'grpc.max_receive_message_length': -1,
@@ -32,7 +33,6 @@ export async function initLogging(serviceName = 'agent') {
         logToFile('ERROR', `Failed to connect to logging service: ${error.message}`);
         reject(error);
       } else {
-        console.log(`[AGENT] Successfully connected to logging service at ${addr}`);
         logToFile('INFO', `Successfully connected to logging service at ${addr}`);
         resolve();
       }
@@ -42,7 +42,6 @@ export async function initLogging(serviceName = 'agent') {
   const rpc = {
     request: (svc: string, method: string, data: Uint8Array): Promise<Uint8Array> => {
       return new Promise((resolve, reject) => {
-        console.log(`[AGENT] Making gRPC request: ${svc}/${method}`);
         const metadata = new Metadata();
         metadata.add('service-name', serviceName);
 
@@ -66,7 +65,6 @@ export async function initLogging(serviceName = 'agent') {
               console.error(`[AGENT] gRPC request returned no response`);
               return reject(new Error('no response'));
             }
-            console.log(`[AGENT] gRPC request successful`);
             resolve(new Uint8Array(resp));
           }
         );
@@ -77,7 +75,6 @@ export async function initLogging(serviceName = 'agent') {
     service: LoggingServiceServiceName
   });
   initialized = true;
-  console.log(`[AGENT] Logging service client initialized`);
   sendLog('INFO', 'Agent logging initialized');
 }
 
@@ -104,7 +101,6 @@ async function sendLog(level: string, message: string, fields: Record<string, st
     fields
   };
 
-  console.log(`[AGENT] Attempting to send log: ${level} - ${message}`);
   logToFile(level, message); // Always log to file for backup
 
   if (!loggingService) {
@@ -112,9 +108,7 @@ async function sendLog(level: string, message: string, fields: Record<string, st
     return;
   }
   try {
-    console.log(`[AGENT] Calling loggingService.Log with entry:`, JSON.stringify(entry, null, 2));
-    const response = await loggingService.Log({ entry });
-    console.log(`[AGENT] Log sent successfully:`, response);
+    await loggingService.Log({ entry });
   } catch (error) {
     console.error(`[AGENT] Failed to send log to service:`, error);
   }

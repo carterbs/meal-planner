@@ -13,11 +13,15 @@ type FeedbackEntry struct {
 	MealPlanVersion int    `json:"meal_plan_version"`
 }
 
-// CheckpointData represents the top-level structure stored in workflow_checkpoints
+// CheckpointData represents the top-level structure stored in workflow_checkpoints.
+// The canonical field for the workflow state is now `state`. The legacy
+// `channel_values` key is kept for backwards-compatibility and migrated to the
+// new field on load so that older checkpoints continue to work.
 type CheckpointData struct {
 	Next          []interface{}         `json:"next"`
 	Step          int                   `json:"step"`
-	ChannelValues InternalWorkflowState `json:"channel_values"`
+	State         InternalWorkflowState `json:"state"`
+	ChannelValues InternalWorkflowState `json:"channel_values,omitempty"`
 }
 
 // InternalWorkflowState represents the workflow state stored in channel_values (internal format)
@@ -60,11 +64,18 @@ type WorkflowState struct {
 	UpdatedAt    time.Time       `json:"updated_at,omitempty"`
 }
 
-// ParseCheckpointData parses raw checkpoint bytes into a structured CheckpointData
+// ParseCheckpointData parses raw checkpoint bytes into a structured CheckpointData.
+// If the legacy `channel_values` key is present, its contents are migrated to
+// the canonical `state` field so that callers can rely on `State` being
+// populated.
 func ParseCheckpointData(data []byte) (*CheckpointData, error) {
 	var checkpoint CheckpointData
 	if err := json.Unmarshal(data, &checkpoint); err != nil {
 		return nil, err
+	}
+	// Migrate legacy data
+	if checkpoint.State.ThreadID == "" && checkpoint.ChannelValues.ThreadID != "" {
+		checkpoint.State = checkpoint.ChannelValues
 	}
 	return &checkpoint, nil
 }

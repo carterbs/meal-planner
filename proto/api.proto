@@ -6,7 +6,7 @@ option go_package = "mealplanner/generated/go/apipb";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
-import "google/protobuf/any.proto";
+
 
 // Core data models
 
@@ -393,18 +393,41 @@ message UpdateSessionStateResponse {
   string message = 1;
 }
 
-// LangGraph checkpoint persistence
+// Workflow persistence structures without google.protobuf.Any
+
+// Feedback entry reused inside MealPlanningState and checkpoints
+message FeedbackEntryProto {
+  string from = 1; // "user" or agent id
+  string message = 2;
+  google.protobuf.Timestamp timestamp = 3;
+  int32 meal_plan_version = 4;
+}
+
+// Strictly-typed state for the meal-planning workflow
+message MealPlanningCheckpointState {
+  string thread_id = 1;
+  repeated string participants = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string current_step = 5;
+  WeeklyMealPlan meal_plan = 6;
+  repeated FeedbackEntryProto feedback_history = 7;
+  int32 iteration_count = 8;
+  ShoppingList shopping_list = 9;
+  bool is_finalized = 10;
+}
+
+// LangGraph checkpoint persistence (strict)
 message AgentCheckpoint {
-  map<string, google.protobuf.Any> channel_values = 1;
-  repeated string next = 2;
-  int32 step = 3;
+  MealPlanningCheckpointState state = 1;
+  repeated Message messages = 2;
+  repeated string next = 3;
+  int32 step = 4;
 }
 
 message AgentCheckpointMetadata {
   string source = 1;
   int32 step = 2;
-  map<string, google.protobuf.Any> writes = 3;
-  map<string, google.protobuf.Any> additional_fields = 4;
 }
 
 message CheckpointTuple {

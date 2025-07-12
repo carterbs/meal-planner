@@ -214,7 +214,7 @@ function outputResult(
 }
 
 // Helper function to output errors in JSON or console format
-function outputError(message: string, isJsonMode: boolean = false) {
+async function outputError(message: string, isJsonMode: boolean = false) {
   if (isJsonMode) {
     // In JSON mode, this will be captured and filtered
     console.log(JSON.stringify({ success: false, message }));
@@ -224,6 +224,7 @@ function outputError(message: string, isJsonMode: boolean = false) {
   } else {
     debugLog(`❌ ${message}`);
   }
+  await new Promise(r => setTimeout(r, 200));  // give logging a moment
   process.exit(1);
 }
 
