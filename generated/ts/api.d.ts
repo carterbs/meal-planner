@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Any } from "./google/protobuf/any";
 import { Empty } from "./google/protobuf/empty";
 export declare const protobufPackage = "mealplanner.api";
 export interface Ingredient {
@@ -314,35 +313,37 @@ export interface UpdateSessionStateRequest {
 export interface UpdateSessionStateResponse {
     message: string;
 }
-/** LangGraph checkpoint persistence */
+/** Feedback entry reused inside MealPlanningState and checkpoints */
+export interface FeedbackEntryProto {
+    /** "user" or agent id */
+    from: string;
+    message: string;
+    timestamp: Date | undefined;
+    mealPlanVersion: number;
+}
+/** Strictly-typed state for the meal-planning workflow */
+export interface MealPlanningCheckpointState {
+    threadId: string;
+    participants: string[];
+    createdAt: Date | undefined;
+    updatedAt: Date | undefined;
+    currentStep: string;
+    mealPlan: WeeklyMealPlan | undefined;
+    feedbackHistory: FeedbackEntryProto[];
+    iterationCount: number;
+    shoppingList: ShoppingList | undefined;
+    isFinalized: boolean;
+}
+/** LangGraph checkpoint persistence (strict) */
 export interface AgentCheckpoint {
-    channelValues: {
-        [key: string]: Any;
-    };
+    state: MealPlanningCheckpointState | undefined;
+    messages: Message[];
     next: string[];
     step: number;
-}
-export interface AgentCheckpoint_ChannelValuesEntry {
-    key: string;
-    value: Any | undefined;
 }
 export interface AgentCheckpointMetadata {
     source: string;
     step: number;
-    writes: {
-        [key: string]: Any;
-    };
-    additionalFields: {
-        [key: string]: Any;
-    };
-}
-export interface AgentCheckpointMetadata_WritesEntry {
-    key: string;
-    value: Any | undefined;
-}
-export interface AgentCheckpointMetadata_AdditionalFieldsEntry {
-    key: string;
-    value: Any | undefined;
 }
 export interface CheckpointTuple {
     checkpoint: AgentCheckpoint | undefined;
@@ -492,11 +493,10 @@ export declare const AddMessageRequest: MessageFns<AddMessageRequest>;
 export declare const AddMessageResponse: MessageFns<AddMessageResponse>;
 export declare const UpdateSessionStateRequest: MessageFns<UpdateSessionStateRequest>;
 export declare const UpdateSessionStateResponse: MessageFns<UpdateSessionStateResponse>;
+export declare const FeedbackEntryProto: MessageFns<FeedbackEntryProto>;
+export declare const MealPlanningCheckpointState: MessageFns<MealPlanningCheckpointState>;
 export declare const AgentCheckpoint: MessageFns<AgentCheckpoint>;
-export declare const AgentCheckpoint_ChannelValuesEntry: MessageFns<AgentCheckpoint_ChannelValuesEntry>;
 export declare const AgentCheckpointMetadata: MessageFns<AgentCheckpointMetadata>;
-export declare const AgentCheckpointMetadata_WritesEntry: MessageFns<AgentCheckpointMetadata_WritesEntry>;
-export declare const AgentCheckpointMetadata_AdditionalFieldsEntry: MessageFns<AgentCheckpointMetadata_AdditionalFieldsEntry>;
 export declare const CheckpointTuple: MessageFns<CheckpointTuple>;
 export declare const GetCheckpointRequest: MessageFns<GetCheckpointRequest>;
 export declare const GetCheckpointResponse: MessageFns<GetCheckpointResponse>;

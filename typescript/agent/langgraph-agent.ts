@@ -241,14 +241,22 @@ export class LangGraphAgent {
     });
     if (!tuple) throw new Error(`No state found for thread ${threadId}`);
     const [checkpoint] = tuple;
-    // Properly deserialize state from checkpoint
-    const stateAny = checkpoint.channelValues['state'];
-    if (!stateAny || typeof stateAny !== 'object' || !('value' in stateAny)) {
+    if (!checkpoint.state) {
       throw new Error('Invalid checkpoint state format');
     }
-    const stateBytes = stateAny.value as Uint8Array;
-    const stateJson = new TextDecoder().decode(stateBytes);
-    return JSON.parse(stateJson) as MealPlanningState;
+    return {
+      threadId: checkpoint.state.threadId,
+      workflow_type: WorkflowType.MEAL_PLANNING,
+      participants: checkpoint.state.participants,
+      created_at: checkpoint.state.createdAt ? new Date(checkpoint.state.createdAt) : new Date(),
+      updated_at: checkpoint.state.updatedAt ? new Date(checkpoint.state.updatedAt) : new Date(),
+      current_step: checkpoint.state.currentStep as any,
+      meal_plan: checkpoint.state.mealPlan as any,
+      feedback_history: checkpoint.state.feedbackHistory as any,
+      iteration_count: checkpoint.state.iterationCount,
+      shopping_list: checkpoint.state.shoppingList as any,
+      is_finalized: checkpoint.state.isFinalized,
+    } as MealPlanningState;
   }
 }
 

@@ -6,7 +6,6 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Any } from "./google/protobuf/any";
 import { Empty } from "./google/protobuf/empty";
 import { Timestamp } from "./google/protobuf/timestamp";
 
@@ -399,33 +398,40 @@ export interface UpdateSessionStateResponse {
   message: string;
 }
 
-/** LangGraph checkpoint persistence */
-export interface AgentCheckpoint {
-  channelValues: { [key: string]: Any };
-  next: string[];
-  step: number;
+/** Feedback entry reused inside MealPlanningState and checkpoints */
+export interface FeedbackEntryProto {
+  /** "user" or agent id */
+  from: string;
+  message: string;
+  timestamp: Date | undefined;
+  mealPlanVersion: number;
 }
 
-export interface AgentCheckpoint_ChannelValuesEntry {
-  key: string;
-  value: Any | undefined;
+/** Strictly-typed state for the meal-planning workflow */
+export interface MealPlanningCheckpointState {
+  threadId: string;
+  participants: string[];
+  createdAt: Date | undefined;
+  updatedAt: Date | undefined;
+  currentStep: string;
+  mealPlan: WeeklyMealPlan | undefined;
+  feedbackHistory: FeedbackEntryProto[];
+  iterationCount: number;
+  shoppingList: ShoppingList | undefined;
+  isFinalized: boolean;
+}
+
+/** LangGraph checkpoint persistence (strict) */
+export interface AgentCheckpoint {
+  state: MealPlanningCheckpointState | undefined;
+  messages: Message[];
+  next: string[];
+  step: number;
 }
 
 export interface AgentCheckpointMetadata {
   source: string;
   step: number;
-  writes: { [key: string]: Any };
-  additionalFields: { [key: string]: Any };
-}
-
-export interface AgentCheckpointMetadata_WritesEntry {
-  key: string;
-  value: Any | undefined;
-}
-
-export interface AgentCheckpointMetadata_AdditionalFieldsEntry {
-  key: string;
-  value: Any | undefined;
 }
 
 export interface CheckpointTuple {
@@ -6129,20 +6135,354 @@ export const UpdateSessionStateResponse: MessageFns<UpdateSessionStateResponse> 
   },
 };
 
+function createBaseFeedbackEntryProto(): FeedbackEntryProto {
+  return { from: "", message: "", timestamp: undefined, mealPlanVersion: 0 };
+}
+
+export const FeedbackEntryProto: MessageFns<FeedbackEntryProto> = {
+  encode(message: FeedbackEntryProto, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.from !== "") {
+      writer.uint32(10).string(message.from);
+    }
+    if (message.message !== "") {
+      writer.uint32(18).string(message.message);
+    }
+    if (message.timestamp !== undefined) {
+      Timestamp.encode(toTimestamp(message.timestamp), writer.uint32(26).fork()).join();
+    }
+    if (message.mealPlanVersion !== 0) {
+      writer.uint32(32).int32(message.mealPlanVersion);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FeedbackEntryProto {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFeedbackEntryProto();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.from = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.message = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.timestamp = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.mealPlanVersion = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FeedbackEntryProto {
+    return {
+      from: isSet(object.from) ? globalThis.String(object.from) : "",
+      message: isSet(object.message) ? globalThis.String(object.message) : "",
+      timestamp: isSet(object.timestamp) ? fromJsonTimestamp(object.timestamp) : undefined,
+      mealPlanVersion: isSet(object.mealPlanVersion) ? globalThis.Number(object.mealPlanVersion) : 0,
+    };
+  },
+
+  toJSON(message: FeedbackEntryProto): unknown {
+    const obj: any = {};
+    if (message.from !== "") {
+      obj.from = message.from;
+    }
+    if (message.message !== "") {
+      obj.message = message.message;
+    }
+    if (message.timestamp !== undefined) {
+      obj.timestamp = message.timestamp.toISOString();
+    }
+    if (message.mealPlanVersion !== 0) {
+      obj.mealPlanVersion = Math.round(message.mealPlanVersion);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FeedbackEntryProto>, I>>(base?: I): FeedbackEntryProto {
+    return FeedbackEntryProto.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FeedbackEntryProto>, I>>(object: I): FeedbackEntryProto {
+    const message = createBaseFeedbackEntryProto();
+    message.from = object.from ?? "";
+    message.message = object.message ?? "";
+    message.timestamp = object.timestamp ?? undefined;
+    message.mealPlanVersion = object.mealPlanVersion ?? 0;
+    return message;
+  },
+};
+
+function createBaseMealPlanningCheckpointState(): MealPlanningCheckpointState {
+  return {
+    threadId: "",
+    participants: [],
+    createdAt: undefined,
+    updatedAt: undefined,
+    currentStep: "",
+    mealPlan: undefined,
+    feedbackHistory: [],
+    iterationCount: 0,
+    shoppingList: undefined,
+    isFinalized: false,
+  };
+}
+
+export const MealPlanningCheckpointState: MessageFns<MealPlanningCheckpointState> = {
+  encode(message: MealPlanningCheckpointState, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.threadId !== "") {
+      writer.uint32(10).string(message.threadId);
+    }
+    for (const v of message.participants) {
+      writer.uint32(18).string(v!);
+    }
+    if (message.createdAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(26).fork()).join();
+    }
+    if (message.updatedAt !== undefined) {
+      Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(34).fork()).join();
+    }
+    if (message.currentStep !== "") {
+      writer.uint32(42).string(message.currentStep);
+    }
+    if (message.mealPlan !== undefined) {
+      WeeklyMealPlan.encode(message.mealPlan, writer.uint32(50).fork()).join();
+    }
+    for (const v of message.feedbackHistory) {
+      FeedbackEntryProto.encode(v!, writer.uint32(58).fork()).join();
+    }
+    if (message.iterationCount !== 0) {
+      writer.uint32(64).int32(message.iterationCount);
+    }
+    if (message.shoppingList !== undefined) {
+      ShoppingList.encode(message.shoppingList, writer.uint32(74).fork()).join();
+    }
+    if (message.isFinalized !== false) {
+      writer.uint32(80).bool(message.isFinalized);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MealPlanningCheckpointState {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMealPlanningCheckpointState();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.threadId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.participants.push(reader.string());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.updatedAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.currentStep = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.mealPlan = WeeklyMealPlan.decode(reader, reader.uint32());
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.feedbackHistory.push(FeedbackEntryProto.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.iterationCount = reader.int32();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.shoppingList = ShoppingList.decode(reader, reader.uint32());
+          continue;
+        }
+        case 10: {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.isFinalized = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MealPlanningCheckpointState {
+    return {
+      threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
+      participants: globalThis.Array.isArray(object?.participants)
+        ? object.participants.map((e: any) => globalThis.String(e))
+        : [],
+      createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
+      updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
+      currentStep: isSet(object.currentStep) ? globalThis.String(object.currentStep) : "",
+      mealPlan: isSet(object.mealPlan) ? WeeklyMealPlan.fromJSON(object.mealPlan) : undefined,
+      feedbackHistory: globalThis.Array.isArray(object?.feedbackHistory)
+        ? object.feedbackHistory.map((e: any) => FeedbackEntryProto.fromJSON(e))
+        : [],
+      iterationCount: isSet(object.iterationCount) ? globalThis.Number(object.iterationCount) : 0,
+      shoppingList: isSet(object.shoppingList) ? ShoppingList.fromJSON(object.shoppingList) : undefined,
+      isFinalized: isSet(object.isFinalized) ? globalThis.Boolean(object.isFinalized) : false,
+    };
+  },
+
+  toJSON(message: MealPlanningCheckpointState): unknown {
+    const obj: any = {};
+    if (message.threadId !== "") {
+      obj.threadId = message.threadId;
+    }
+    if (message.participants?.length) {
+      obj.participants = message.participants;
+    }
+    if (message.createdAt !== undefined) {
+      obj.createdAt = message.createdAt.toISOString();
+    }
+    if (message.updatedAt !== undefined) {
+      obj.updatedAt = message.updatedAt.toISOString();
+    }
+    if (message.currentStep !== "") {
+      obj.currentStep = message.currentStep;
+    }
+    if (message.mealPlan !== undefined) {
+      obj.mealPlan = WeeklyMealPlan.toJSON(message.mealPlan);
+    }
+    if (message.feedbackHistory?.length) {
+      obj.feedbackHistory = message.feedbackHistory.map((e) => FeedbackEntryProto.toJSON(e));
+    }
+    if (message.iterationCount !== 0) {
+      obj.iterationCount = Math.round(message.iterationCount);
+    }
+    if (message.shoppingList !== undefined) {
+      obj.shoppingList = ShoppingList.toJSON(message.shoppingList);
+    }
+    if (message.isFinalized !== false) {
+      obj.isFinalized = message.isFinalized;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MealPlanningCheckpointState>, I>>(base?: I): MealPlanningCheckpointState {
+    return MealPlanningCheckpointState.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MealPlanningCheckpointState>, I>>(object: I): MealPlanningCheckpointState {
+    const message = createBaseMealPlanningCheckpointState();
+    message.threadId = object.threadId ?? "";
+    message.participants = object.participants?.map((e) => e) || [];
+    message.createdAt = object.createdAt ?? undefined;
+    message.updatedAt = object.updatedAt ?? undefined;
+    message.currentStep = object.currentStep ?? "";
+    message.mealPlan = (object.mealPlan !== undefined && object.mealPlan !== null)
+      ? WeeklyMealPlan.fromPartial(object.mealPlan)
+      : undefined;
+    message.feedbackHistory = object.feedbackHistory?.map((e) => FeedbackEntryProto.fromPartial(e)) || [];
+    message.iterationCount = object.iterationCount ?? 0;
+    message.shoppingList = (object.shoppingList !== undefined && object.shoppingList !== null)
+      ? ShoppingList.fromPartial(object.shoppingList)
+      : undefined;
+    message.isFinalized = object.isFinalized ?? false;
+    return message;
+  },
+};
+
 function createBaseAgentCheckpoint(): AgentCheckpoint {
-  return { channelValues: {}, next: [], step: 0 };
+  return { state: undefined, messages: [], next: [], step: 0 };
 }
 
 export const AgentCheckpoint: MessageFns<AgentCheckpoint> = {
   encode(message: AgentCheckpoint, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    Object.entries(message.channelValues).forEach(([key, value]) => {
-      AgentCheckpoint_ChannelValuesEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
-    });
+    if (message.state !== undefined) {
+      MealPlanningCheckpointState.encode(message.state, writer.uint32(10).fork()).join();
+    }
+    for (const v of message.messages) {
+      Message.encode(v!, writer.uint32(18).fork()).join();
+    }
     for (const v of message.next) {
-      writer.uint32(18).string(v!);
+      writer.uint32(26).string(v!);
     }
     if (message.step !== 0) {
-      writer.uint32(24).int32(message.step);
+      writer.uint32(32).int32(message.step);
     }
     return writer;
   },
@@ -6159,10 +6499,7 @@ export const AgentCheckpoint: MessageFns<AgentCheckpoint> = {
             break;
           }
 
-          const entry1 = AgentCheckpoint_ChannelValuesEntry.decode(reader, reader.uint32());
-          if (entry1.value !== undefined) {
-            message.channelValues[entry1.key] = entry1.value;
-          }
+          message.state = MealPlanningCheckpointState.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
@@ -6170,11 +6507,19 @@ export const AgentCheckpoint: MessageFns<AgentCheckpoint> = {
             break;
           }
 
-          message.next.push(reader.string());
+          message.messages.push(Message.decode(reader, reader.uint32()));
           continue;
         }
         case 3: {
-          if (tag !== 24) {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.next.push(reader.string());
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
             break;
           }
 
@@ -6192,12 +6537,8 @@ export const AgentCheckpoint: MessageFns<AgentCheckpoint> = {
 
   fromJSON(object: any): AgentCheckpoint {
     return {
-      channelValues: isObject(object.channelValues)
-        ? Object.entries(object.channelValues).reduce<{ [key: string]: Any }>((acc, [key, value]) => {
-          acc[key] = Any.fromJSON(value);
-          return acc;
-        }, {})
-        : {},
+      state: isSet(object.state) ? MealPlanningCheckpointState.fromJSON(object.state) : undefined,
+      messages: globalThis.Array.isArray(object?.messages) ? object.messages.map((e: any) => Message.fromJSON(e)) : [],
       next: globalThis.Array.isArray(object?.next) ? object.next.map((e: any) => globalThis.String(e)) : [],
       step: isSet(object.step) ? globalThis.Number(object.step) : 0,
     };
@@ -6205,14 +6546,11 @@ export const AgentCheckpoint: MessageFns<AgentCheckpoint> = {
 
   toJSON(message: AgentCheckpoint): unknown {
     const obj: any = {};
-    if (message.channelValues) {
-      const entries = Object.entries(message.channelValues);
-      if (entries.length > 0) {
-        obj.channelValues = {};
-        entries.forEach(([k, v]) => {
-          obj.channelValues[k] = Any.toJSON(v);
-        });
-      }
+    if (message.state !== undefined) {
+      obj.state = MealPlanningCheckpointState.toJSON(message.state);
+    }
+    if (message.messages?.length) {
+      obj.messages = message.messages.map((e) => Message.toJSON(e));
     }
     if (message.next?.length) {
       obj.next = message.next;
@@ -6228,103 +6566,18 @@ export const AgentCheckpoint: MessageFns<AgentCheckpoint> = {
   },
   fromPartial<I extends Exact<DeepPartial<AgentCheckpoint>, I>>(object: I): AgentCheckpoint {
     const message = createBaseAgentCheckpoint();
-    message.channelValues = Object.entries(object.channelValues ?? {}).reduce<{ [key: string]: Any }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = Any.fromPartial(value);
-        }
-        return acc;
-      },
-      {},
-    );
+    message.state = (object.state !== undefined && object.state !== null)
+      ? MealPlanningCheckpointState.fromPartial(object.state)
+      : undefined;
+    message.messages = object.messages?.map((e) => Message.fromPartial(e)) || [];
     message.next = object.next?.map((e) => e) || [];
     message.step = object.step ?? 0;
     return message;
   },
 };
 
-function createBaseAgentCheckpoint_ChannelValuesEntry(): AgentCheckpoint_ChannelValuesEntry {
-  return { key: "", value: undefined };
-}
-
-export const AgentCheckpoint_ChannelValuesEntry: MessageFns<AgentCheckpoint_ChannelValuesEntry> = {
-  encode(message: AgentCheckpoint_ChannelValuesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
-    }
-    if (message.value !== undefined) {
-      Any.encode(message.value, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): AgentCheckpoint_ChannelValuesEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAgentCheckpoint_ChannelValuesEntry();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.key = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.value = Any.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): AgentCheckpoint_ChannelValuesEntry {
-    return {
-      key: isSet(object.key) ? globalThis.String(object.key) : "",
-      value: isSet(object.value) ? Any.fromJSON(object.value) : undefined,
-    };
-  },
-
-  toJSON(message: AgentCheckpoint_ChannelValuesEntry): unknown {
-    const obj: any = {};
-    if (message.key !== "") {
-      obj.key = message.key;
-    }
-    if (message.value !== undefined) {
-      obj.value = Any.toJSON(message.value);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<AgentCheckpoint_ChannelValuesEntry>, I>>(
-    base?: I,
-  ): AgentCheckpoint_ChannelValuesEntry {
-    return AgentCheckpoint_ChannelValuesEntry.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<AgentCheckpoint_ChannelValuesEntry>, I>>(
-    object: I,
-  ): AgentCheckpoint_ChannelValuesEntry {
-    const message = createBaseAgentCheckpoint_ChannelValuesEntry();
-    message.key = object.key ?? "";
-    message.value = (object.value !== undefined && object.value !== null) ? Any.fromPartial(object.value) : undefined;
-    return message;
-  },
-};
-
 function createBaseAgentCheckpointMetadata(): AgentCheckpointMetadata {
-  return { source: "", step: 0, writes: {}, additionalFields: {} };
+  return { source: "", step: 0 };
 }
 
 export const AgentCheckpointMetadata: MessageFns<AgentCheckpointMetadata> = {
@@ -6335,12 +6588,6 @@ export const AgentCheckpointMetadata: MessageFns<AgentCheckpointMetadata> = {
     if (message.step !== 0) {
       writer.uint32(16).int32(message.step);
     }
-    Object.entries(message.writes).forEach(([key, value]) => {
-      AgentCheckpointMetadata_WritesEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).join();
-    });
-    Object.entries(message.additionalFields).forEach(([key, value]) => {
-      AgentCheckpointMetadata_AdditionalFieldsEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).join();
-    });
     return writer;
   },
 
@@ -6367,28 +6614,6 @@ export const AgentCheckpointMetadata: MessageFns<AgentCheckpointMetadata> = {
           message.step = reader.int32();
           continue;
         }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          const entry3 = AgentCheckpointMetadata_WritesEntry.decode(reader, reader.uint32());
-          if (entry3.value !== undefined) {
-            message.writes[entry3.key] = entry3.value;
-          }
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          const entry4 = AgentCheckpointMetadata_AdditionalFieldsEntry.decode(reader, reader.uint32());
-          if (entry4.value !== undefined) {
-            message.additionalFields[entry4.key] = entry4.value;
-          }
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -6402,18 +6627,6 @@ export const AgentCheckpointMetadata: MessageFns<AgentCheckpointMetadata> = {
     return {
       source: isSet(object.source) ? globalThis.String(object.source) : "",
       step: isSet(object.step) ? globalThis.Number(object.step) : 0,
-      writes: isObject(object.writes)
-        ? Object.entries(object.writes).reduce<{ [key: string]: Any }>((acc, [key, value]) => {
-          acc[key] = Any.fromJSON(value);
-          return acc;
-        }, {})
-        : {},
-      additionalFields: isObject(object.additionalFields)
-        ? Object.entries(object.additionalFields).reduce<{ [key: string]: Any }>((acc, [key, value]) => {
-          acc[key] = Any.fromJSON(value);
-          return acc;
-        }, {})
-        : {},
     };
   },
 
@@ -6425,24 +6638,6 @@ export const AgentCheckpointMetadata: MessageFns<AgentCheckpointMetadata> = {
     if (message.step !== 0) {
       obj.step = Math.round(message.step);
     }
-    if (message.writes) {
-      const entries = Object.entries(message.writes);
-      if (entries.length > 0) {
-        obj.writes = {};
-        entries.forEach(([k, v]) => {
-          obj.writes[k] = Any.toJSON(v);
-        });
-      }
-    }
-    if (message.additionalFields) {
-      const entries = Object.entries(message.additionalFields);
-      if (entries.length > 0) {
-        obj.additionalFields = {};
-        entries.forEach(([k, v]) => {
-          obj.additionalFields[k] = Any.toJSON(v);
-        });
-      }
-    }
     return obj;
   },
 
@@ -6453,188 +6648,9 @@ export const AgentCheckpointMetadata: MessageFns<AgentCheckpointMetadata> = {
     const message = createBaseAgentCheckpointMetadata();
     message.source = object.source ?? "";
     message.step = object.step ?? 0;
-    message.writes = Object.entries(object.writes ?? {}).reduce<{ [key: string]: Any }>((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = Any.fromPartial(value);
-      }
-      return acc;
-    }, {});
-    message.additionalFields = Object.entries(object.additionalFields ?? {}).reduce<{ [key: string]: Any }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = Any.fromPartial(value);
-        }
-        return acc;
-      },
-      {},
-    );
     return message;
   },
 };
-
-function createBaseAgentCheckpointMetadata_WritesEntry(): AgentCheckpointMetadata_WritesEntry {
-  return { key: "", value: undefined };
-}
-
-export const AgentCheckpointMetadata_WritesEntry: MessageFns<AgentCheckpointMetadata_WritesEntry> = {
-  encode(message: AgentCheckpointMetadata_WritesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
-    }
-    if (message.value !== undefined) {
-      Any.encode(message.value, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): AgentCheckpointMetadata_WritesEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAgentCheckpointMetadata_WritesEntry();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.key = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.value = Any.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): AgentCheckpointMetadata_WritesEntry {
-    return {
-      key: isSet(object.key) ? globalThis.String(object.key) : "",
-      value: isSet(object.value) ? Any.fromJSON(object.value) : undefined,
-    };
-  },
-
-  toJSON(message: AgentCheckpointMetadata_WritesEntry): unknown {
-    const obj: any = {};
-    if (message.key !== "") {
-      obj.key = message.key;
-    }
-    if (message.value !== undefined) {
-      obj.value = Any.toJSON(message.value);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<AgentCheckpointMetadata_WritesEntry>, I>>(
-    base?: I,
-  ): AgentCheckpointMetadata_WritesEntry {
-    return AgentCheckpointMetadata_WritesEntry.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<AgentCheckpointMetadata_WritesEntry>, I>>(
-    object: I,
-  ): AgentCheckpointMetadata_WritesEntry {
-    const message = createBaseAgentCheckpointMetadata_WritesEntry();
-    message.key = object.key ?? "";
-    message.value = (object.value !== undefined && object.value !== null) ? Any.fromPartial(object.value) : undefined;
-    return message;
-  },
-};
-
-function createBaseAgentCheckpointMetadata_AdditionalFieldsEntry(): AgentCheckpointMetadata_AdditionalFieldsEntry {
-  return { key: "", value: undefined };
-}
-
-export const AgentCheckpointMetadata_AdditionalFieldsEntry: MessageFns<AgentCheckpointMetadata_AdditionalFieldsEntry> =
-  {
-    encode(
-      message: AgentCheckpointMetadata_AdditionalFieldsEntry,
-      writer: BinaryWriter = new BinaryWriter(),
-    ): BinaryWriter {
-      if (message.key !== "") {
-        writer.uint32(10).string(message.key);
-      }
-      if (message.value !== undefined) {
-        Any.encode(message.value, writer.uint32(18).fork()).join();
-      }
-      return writer;
-    },
-
-    decode(input: BinaryReader | Uint8Array, length?: number): AgentCheckpointMetadata_AdditionalFieldsEntry {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === undefined ? reader.len : reader.pos + length;
-      const message = createBaseAgentCheckpointMetadata_AdditionalFieldsEntry();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1: {
-            if (tag !== 10) {
-              break;
-            }
-
-            message.key = reader.string();
-            continue;
-          }
-          case 2: {
-            if (tag !== 18) {
-              break;
-            }
-
-            message.value = Any.decode(reader, reader.uint32());
-            continue;
-          }
-        }
-        if ((tag & 7) === 4 || tag === 0) {
-          break;
-        }
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-
-    fromJSON(object: any): AgentCheckpointMetadata_AdditionalFieldsEntry {
-      return {
-        key: isSet(object.key) ? globalThis.String(object.key) : "",
-        value: isSet(object.value) ? Any.fromJSON(object.value) : undefined,
-      };
-    },
-
-    toJSON(message: AgentCheckpointMetadata_AdditionalFieldsEntry): unknown {
-      const obj: any = {};
-      if (message.key !== "") {
-        obj.key = message.key;
-      }
-      if (message.value !== undefined) {
-        obj.value = Any.toJSON(message.value);
-      }
-      return obj;
-    },
-
-    create<I extends Exact<DeepPartial<AgentCheckpointMetadata_AdditionalFieldsEntry>, I>>(
-      base?: I,
-    ): AgentCheckpointMetadata_AdditionalFieldsEntry {
-      return AgentCheckpointMetadata_AdditionalFieldsEntry.fromPartial(base ?? ({} as any));
-    },
-    fromPartial<I extends Exact<DeepPartial<AgentCheckpointMetadata_AdditionalFieldsEntry>, I>>(
-      object: I,
-    ): AgentCheckpointMetadata_AdditionalFieldsEntry {
-      const message = createBaseAgentCheckpointMetadata_AdditionalFieldsEntry();
-      message.key = object.key ?? "";
-      message.value = (object.value !== undefined && object.value !== null) ? Any.fromPartial(object.value) : undefined;
-      return message;
-    },
-  };
 
 function createBaseCheckpointTuple(): CheckpointTuple {
   return { checkpoint: undefined, metadata: undefined };

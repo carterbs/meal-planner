@@ -8,7 +8,7 @@ import type {
   Meal as GeneratedMeal } from
 '@mealplanner/generated';
 import { WeeklyMealPlan, AgentCheckpoint, AgentCheckpointMetadata, SaveMealPlanRequest, MealPlanEntry } from '@mealplanner/generated';
-import { Any } from '@mealplanner/generated/google/protobuf/any';
+import { MealPlanningCheckpointState } from '@mealplanner/generated';
 
 import {
   MealPlanningState,
@@ -73,6 +73,32 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
     // Create workflow graph
     this.graph = this.createGraph();
+  }
+
+  private async saveCheckpoint(config: any, state: MealPlanningState): Promise<void> {
+    const protoState: MealPlanningCheckpointState = {
+      threadId: state.threadId,
+      participants: state.participants,
+      createdAt: state.created_at instanceof Date ? state.created_at : new Date(state.created_at as any),
+      updatedAt: state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at as any),
+      currentStep: state.current_step,
+      mealPlan: state.meal_plan as any,
+      feedbackHistory: state.feedback_history as any,
+      iterationCount: state.iteration_count,
+      shoppingList: state.shopping_list as any,
+      isFinalized: state.is_finalized,
+    };
+    const checkpoint = AgentCheckpoint.create({
+      state: protoState,
+      messages: [],
+      next: [],
+      step: 0,
+    });
+    const metadata = AgentCheckpointMetadata.create({
+      source: 'workflow',
+      step: 0,
+    });
+    await this.checkpointer.put(config, checkpoint, metadata);
   }
 
   async initialize(): Promise<void> {
@@ -150,31 +176,40 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           };
           // Generate, optimize, present, pause for feedback
           state = { ...state, ...(await this.initiateNode(state)) };
+await this.saveCheckpoint(config, state);
           state = { ...state, ...(await this.generatePlanNode(state)) };
+await this.saveCheckpoint(config, state);
           state = { ...state, ...(await this.optimizePlanNode(state)) };
+await this.saveCheckpoint(config, state);
           state = { ...state, ...(await this.presentPlanNode(state)) };
+await this.saveCheckpoint(config, state);
           // Pause: checkpoint state
           // Debug: log the final state before saving checkpoint
           infoLog(`🔍 [WORKFLOW] Final state before checkpoint: current_step=${state.current_step}`);
           infoLog(`${`🔍 [WORKFLOW] Full state:`} ${JSON.stringify(state, null, 2)}`);
 
-          // Create properly typed checkpoint
-          const stateJson = JSON.stringify(state);
-          const stateBytes = new TextEncoder().encode(stateJson);
-          const stateAny = Any.create({
-            typeUrl: 'type.googleapis.com/MealPlanningState',
-            value: stateBytes
-          });
+          // Create checkpoint with new proto state
+          const protoState: MealPlanningCheckpointState = {
+      threadId: state.threadId,
+      participants: state.participants,
+      createdAt: state.created_at instanceof Date ? state.created_at : new Date(state.created_at as any),
+      updatedAt: state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at as any),
+      currentStep: state.current_step,
+      mealPlan: state.meal_plan as any,
+      feedbackHistory: state.feedback_history as any,
+      iterationCount: state.iteration_count,
+      shoppingList: state.shopping_list as any,
+      isFinalized: state.is_finalized,
+    };
           const checkpoint = AgentCheckpoint.create({
-            channelValues: { state: stateAny },
+            state: protoState,
+            messages: [],
             next: [],
-            step: 0
+            step: 0,
           });
           const metadata = AgentCheckpointMetadata.create({
             source: 'workflow',
             step: 0,
-            writes: {},
-            additionalFields: {}
           });
           await this.checkpointer.put(config, checkpoint, metadata);
           return state;
@@ -182,14 +217,22 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           // Resume run: feedback loop
           const [checkpoint] = tuple;
           // Properly deserialize state from checkpoint
-          const stateAny = checkpoint.channelValues['state'];
-          if (stateAny && typeof stateAny === 'object' && 'value' in stateAny) {
-            const stateBytes = stateAny.value as Uint8Array;
-            const stateJson = new TextDecoder().decode(stateBytes);
-            state = JSON.parse(stateJson) as MealPlanningState;
-          } else {
+          if (!checkpoint.state) {
             throw new Error('Invalid checkpoint state format');
           }
+          state = {
+            threadId: checkpoint.state.threadId,
+            workflow_type: WorkflowType.MEAL_PLANNING,
+            participants: checkpoint.state.participants,
+            created_at: checkpoint.state.createdAt ? new Date(checkpoint.state.createdAt) : new Date(),
+            updated_at: checkpoint.state.updatedAt ? new Date(checkpoint.state.updatedAt) : new Date(),
+            current_step: checkpoint.state.currentStep as MealPlanningStep,
+            meal_plan: checkpoint.state.mealPlan as any,
+            feedback_history: checkpoint.state.feedbackHistory as any,
+            iteration_count: checkpoint.state.iterationCount,
+            shopping_list: checkpoint.state.shoppingList as any,
+            is_finalized: checkpoint.state.isFinalized,
+          } as MealPlanningState;
           infoLog(
             `🔄 [MEAL-WORKFLOW] Resuming workflow at step ${state.current_step}`
           );
@@ -232,29 +275,36 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 newFeedback[newFeedback.length - 1].timestamp
               ).toISOString();
               state = { ...state, ...(await this.optimizePlanNode(state)) };
+await this.saveCheckpoint(config, state);
             }
 
             // 5. Present the plan after feedback is processed/applied
             state = { ...state, ...(await this.presentPlanNode(state)) };
+await this.saveCheckpoint(config, state);
             // 6. Pause for feedback after presenting the plan
             if (state.current_step === MealPlanningStep.AWAIT_FEEDBACK) {
               // Create properly typed checkpoint
-              const stateJson = JSON.stringify(state);
-              const stateBytes = new TextEncoder().encode(stateJson);
-              const stateAny = Any.create({
-                typeUrl: 'type.googleapis.com/MealPlanningState',
-                value: stateBytes
-              });
+              const protoState: MealPlanningCheckpointState = {
+      threadId: state.threadId,
+      participants: state.participants,
+      createdAt: state.created_at instanceof Date ? state.created_at : new Date(state.created_at as any),
+      updatedAt: state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at as any),
+      currentStep: state.current_step,
+      mealPlan: state.meal_plan as any,
+      feedbackHistory: state.feedback_history as any,
+      iterationCount: state.iteration_count,
+      shoppingList: state.shopping_list as any,
+      isFinalized: state.is_finalized,
+    };
               const checkpoint = AgentCheckpoint.create({
-                channelValues: { state: stateAny },
+                state: protoState,
+                messages: [],
                 next: [],
                 step: 0
               });
               const metadata = AgentCheckpointMetadata.create({
                 source: 'workflow',
-                step: 0,
-                writes: {},
-                additionalFields: {}
+                step: 0
               });
               await this.checkpointer.put(config, checkpoint, metadata);
               return state;

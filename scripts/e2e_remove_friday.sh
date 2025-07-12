@@ -31,18 +31,18 @@ echo "--- Fetching state and checking results ---"
 STATE=$(curl -s http://localhost:8080/api/workflows/$THREAD_ID)
 
 echo "=== FRIDAY MEALS (dayIndex 4) ==="
-echo "$STATE" | jq '.entries[] | select(.dayIndex == 4)' | jq -s '.'
+echo "$STATE" | jq '.entries[] | select(.day_index == 4)' | jq -s '.'
 
 echo "=== SATURDAY MEALS (dayIndex 5) ==="
-echo "$STATE" | jq '.entries[] | select(.dayIndex == 5)' | jq -s '.'
+echo "$STATE" | jq '.entries[] | select(.day_index == 5)' | jq -s '.'
 
 echo "=== DAY NAMES MAPPING ==="
 echo "0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday"
 
 # Check if Friday (dayIndex 4) meals are removed
-FRIDAY_MEALS_REMOVED=$(echo "$STATE" | jq '[.entries[] | select(.dayIndex == 4 and .meal != null and .meal != "")] | length == 0')
+FRIDAY_MEALS_REMOVED=$(echo "$STATE" | jq '[.entries[] | select(.day_index == 4 and .meal != null and .meal != "")] | length == 0')
 echo "Friday meals removed: $FRIDAY_MEALS_REMOVED"
 
 # Check if Saturday (dayIndex 5) meals are removed  
-SATURDAY_MEALS_REMOVED=$(echo "$STATE" | jq '[.entries[] | select(.dayIndex == 5 and .meal != null and .meal != "")] | length == 0')
+SATURDAY_MEALS_REMOVED=$(echo "$STATE" | jq '[.entries[] | select(.day_index == 5 and .meal != null and .meal != "")] | length == 0')
 echo "Saturday meals removed: $SATURDAY_MEALS_REMOVED"

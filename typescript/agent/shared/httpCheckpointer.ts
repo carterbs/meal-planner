@@ -7,6 +7,7 @@ import type {
   AgentCheckpointMetadata as AgentCheckpointMetadataType 
 } from '@mealplanner/generated';
 import { AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated';
+import { infoLog } from '../logging';
 
 export class HttpCheckpointSaver {
   private baseUrl: string;
@@ -25,8 +26,12 @@ export class HttpCheckpointSaver {
     const data = await resp.json();
     if (!data.found) return undefined;
     
-    // Return raw JSON data - the protobuf conversion doesn't work
-    return [data.tuple.checkpoint as any, data.tuple.metadata as any];
+    // Convert JSON payload to generated protobuf types so field names use camelCase
+    const checkpoint = AgentCheckpoint.fromJSON(data.tuple.checkpoint);
+    infoLog(`[CHECKPOINT] Got checkpoint for thread ${threadId}: ${JSON.stringify(checkpoint)}`);
+    const metadataRaw = data.tuple.metadata;
+    const metadata = metadataRaw ? AgentCheckpointMetadata.fromJSON(metadataRaw) : AgentCheckpointMetadata.create({});
+    return [checkpoint, metadata];
   }
 
   async put(config: RunnableConfig, checkpoint: AgentCheckpointType, metadata: AgentCheckpointMetadataType): Promise<RunnableConfig> {
@@ -36,7 +41,7 @@ export class HttpCheckpointSaver {
     // Convert protobuf types to JSON for API
     const checkpointJson = AgentCheckpoint.toJSON(checkpoint);
     const metadataJson = AgentCheckpointMetadata.toJSON(metadata);
-    
+    infoLog(`[CHECKPOINT] Saving checkpoint for thread ${threadId}: ${JSON.stringify(checkpointJson)}`);
     const resp = await fetch(`${this.baseUrl}/api/checkpoints`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -48,7 +53,11 @@ export class HttpCheckpointSaver {
         metadata: metadataJson,
       }),
     });
-    if (!resp.ok) throw new Error(`Failed to save checkpoint: ${resp.statusText}`);
+    if (!resp.ok) {
+      const errText = await resp.text();
+      infoLog(`[CHECKPOINT] Save failed: ${errText}`);
+      throw new Error(`Failed to save checkpoint: ${resp.statusText}`);
+    }
     return { configurable: { ...(config as any).configurable, threadId, checkpoint_ns: checkpointNs } } as RunnableConfig;
   }
 
@@ -66,8 +75,25 @@ export class HttpCheckpointSaver {
 
   async getWorkflowStatus(threadId: string): Promise<any> {
     const resp = await fetch(`${this.baseUrl}/api/workflows/${threadId}`);
-    if (!resp.ok) return null;
-    return await resp.json();
+
+    // Attempt to parse JSON **only** if the response is OK (2xx). In error cases
+    // the backend may respond with a plain-text error, which would otherwise
+    // cause a JSON.parse failure and mask the real problem.
+    if (!resp.ok) {
+      const text = await resp.text();
+      infoLog(
+        `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${resp.status} – ${text}`,
+      );
+      return null;
+    }
+
+    const json = await resp.json();
+    infoLog(
+      `[CHECKPOINT] Got workflow status for thread ${threadId}: ${JSON.stringify(
+        json,
+      )}`,
+    );
+    return json;
   }
 
   async listWorkflows(limit?: number): Promise<any[]> {

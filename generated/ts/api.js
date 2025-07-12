@@ -6,10 +6,9 @@
 // source: api.proto
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AddBulkStepsRequest = exports.AddStepResponse = exports.AddStepRequest = exports.GetStepsResponse = exports.GetStepsRequest = exports.DeleteMealResponse = exports.DeleteMealRequest = exports.DeleteMealIngredientResponse = exports.DeleteMealIngredientRequest = exports.UpdateMealIngredientResponse = exports.UpdateMealIngredientRequest = exports.ReplaceMealResponse = exports.ReplaceMealRequest = exports.RemoveMealResponse = exports.RemoveMealRequest = exports.SwapMealResponse = exports.SwapMealRequest = exports.CreateMealResponse = exports.CreateMealRequest = exports.GetAllMealsResponse = exports.GetAllMealsRequest = exports.GetShoppingListResponse = exports.GetShoppingListRequest = exports.MealPlanICSResponse = exports.FinalizeMealPlanResponse = exports.FinalizeMealPlanRequest = exports.GenerateMealPlanResponse = exports.GetMealPlanResponse = exports.ReconnectResponse = exports.HealthCheckResponse = exports.WorkflowStatus = exports.AgentResponse = exports.AgentMessageRequest = exports.AgentResumeRequest = exports.AgentFeedbackRequest = exports.AgentStartRequest = exports.ShoppingList = exports.Message = exports.CheckpointResponse = exports.SaveCheckpointRequest = exports.MealPlanIdentifier = exports.SaveMealPlanRequest = exports.MealPlanEntry = exports.WeeklyMealPlan = exports.ShoppingListItem = exports.PlanDay = exports.Meal = exports.Step = exports.Ingredient = exports.protobufPackage = void 0;
-exports.MealPlannerAPIClientImpl = exports.MealPlannerAPIServiceName = exports.LoggingServiceClientImpl = exports.LoggingServiceServiceName = exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry_FieldsEntry = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata_AdditionalFieldsEntry = exports.AgentCheckpointMetadata_WritesEntry = exports.AgentCheckpointMetadata = exports.AgentCheckpoint_ChannelValuesEntry = exports.AgentCheckpoint = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = exports.UpdateStepRequest = exports.AddBulkStepsResponse = void 0;
+exports.MealPlannerAPIClientImpl = exports.MealPlannerAPIServiceName = exports.LoggingServiceClientImpl = exports.LoggingServiceServiceName = exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry_FieldsEntry = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata = exports.AgentCheckpoint = exports.MealPlanningCheckpointState = exports.FeedbackEntryProto = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = exports.UpdateStepRequest = exports.AddBulkStepsResponse = void 0;
 /* eslint-disable */
 var wire_1 = require("@bufbuild/protobuf/wire");
-var any_1 = require("./google/protobuf/any");
 var empty_1 = require("./google/protobuf/empty");
 var timestamp_1 = require("./google/protobuf/timestamp");
 exports.protobufPackage = "mealplanner.api";
@@ -5193,22 +5192,337 @@ exports.UpdateSessionStateResponse = {
         return message;
     },
 };
+function createBaseFeedbackEntryProto() {
+    return { from: "", message: "", timestamp: undefined, mealPlanVersion: 0 };
+}
+exports.FeedbackEntryProto = {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        if (message.from !== "") {
+            writer.uint32(10).string(message.from);
+        }
+        if (message.message !== "") {
+            writer.uint32(18).string(message.message);
+        }
+        if (message.timestamp !== undefined) {
+            timestamp_1.Timestamp.encode(toTimestamp(message.timestamp), writer.uint32(26).fork()).join();
+        }
+        if (message.mealPlanVersion !== 0) {
+            writer.uint32(32).int32(message.mealPlanVersion);
+        }
+        return writer;
+    },
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseFeedbackEntryProto();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1: {
+                    if (tag !== 10) {
+                        break;
+                    }
+                    message.from = reader.string();
+                    continue;
+                }
+                case 2: {
+                    if (tag !== 18) {
+                        break;
+                    }
+                    message.message = reader.string();
+                    continue;
+                }
+                case 3: {
+                    if (tag !== 26) {
+                        break;
+                    }
+                    message.timestamp = fromTimestamp(timestamp_1.Timestamp.decode(reader, reader.uint32()));
+                    continue;
+                }
+                case 4: {
+                    if (tag !== 32) {
+                        break;
+                    }
+                    message.mealPlanVersion = reader.int32();
+                    continue;
+                }
+            }
+            if ((tag & 7) === 4 || tag === 0) {
+                break;
+            }
+            reader.skip(tag & 7);
+        }
+        return message;
+    },
+    fromJSON: function (object) {
+        return {
+            from: isSet(object.from) ? globalThis.String(object.from) : "",
+            message: isSet(object.message) ? globalThis.String(object.message) : "",
+            timestamp: isSet(object.timestamp) ? fromJsonTimestamp(object.timestamp) : undefined,
+            mealPlanVersion: isSet(object.mealPlanVersion) ? globalThis.Number(object.mealPlanVersion) : 0,
+        };
+    },
+    toJSON: function (message) {
+        var obj = {};
+        if (message.from !== "") {
+            obj.from = message.from;
+        }
+        if (message.message !== "") {
+            obj.message = message.message;
+        }
+        if (message.timestamp !== undefined) {
+            obj.timestamp = message.timestamp.toISOString();
+        }
+        if (message.mealPlanVersion !== 0) {
+            obj.mealPlanVersion = Math.round(message.mealPlanVersion);
+        }
+        return obj;
+    },
+    create: function (base) {
+        return exports.FeedbackEntryProto.fromPartial(base !== null && base !== void 0 ? base : {});
+    },
+    fromPartial: function (object) {
+        var _a, _b, _c, _d;
+        var message = createBaseFeedbackEntryProto();
+        message.from = (_a = object.from) !== null && _a !== void 0 ? _a : "";
+        message.message = (_b = object.message) !== null && _b !== void 0 ? _b : "";
+        message.timestamp = (_c = object.timestamp) !== null && _c !== void 0 ? _c : undefined;
+        message.mealPlanVersion = (_d = object.mealPlanVersion) !== null && _d !== void 0 ? _d : 0;
+        return message;
+    },
+};
+function createBaseMealPlanningCheckpointState() {
+    return {
+        threadId: "",
+        participants: [],
+        createdAt: undefined,
+        updatedAt: undefined,
+        currentStep: "",
+        mealPlan: undefined,
+        feedbackHistory: [],
+        iterationCount: 0,
+        shoppingList: undefined,
+        isFinalized: false,
+    };
+}
+exports.MealPlanningCheckpointState = {
+    encode: function (message, writer) {
+        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
+        if (message.threadId !== "") {
+            writer.uint32(10).string(message.threadId);
+        }
+        for (var _i = 0, _a = message.participants; _i < _a.length; _i++) {
+            var v = _a[_i];
+            writer.uint32(18).string(v);
+        }
+        if (message.createdAt !== undefined) {
+            timestamp_1.Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(26).fork()).join();
+        }
+        if (message.updatedAt !== undefined) {
+            timestamp_1.Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(34).fork()).join();
+        }
+        if (message.currentStep !== "") {
+            writer.uint32(42).string(message.currentStep);
+        }
+        if (message.mealPlan !== undefined) {
+            exports.WeeklyMealPlan.encode(message.mealPlan, writer.uint32(50).fork()).join();
+        }
+        for (var _b = 0, _c = message.feedbackHistory; _b < _c.length; _b++) {
+            var v = _c[_b];
+            exports.FeedbackEntryProto.encode(v, writer.uint32(58).fork()).join();
+        }
+        if (message.iterationCount !== 0) {
+            writer.uint32(64).int32(message.iterationCount);
+        }
+        if (message.shoppingList !== undefined) {
+            exports.ShoppingList.encode(message.shoppingList, writer.uint32(74).fork()).join();
+        }
+        if (message.isFinalized !== false) {
+            writer.uint32(80).bool(message.isFinalized);
+        }
+        return writer;
+    },
+    decode: function (input, length) {
+        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
+        var end = length === undefined ? reader.len : reader.pos + length;
+        var message = createBaseMealPlanningCheckpointState();
+        while (reader.pos < end) {
+            var tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1: {
+                    if (tag !== 10) {
+                        break;
+                    }
+                    message.threadId = reader.string();
+                    continue;
+                }
+                case 2: {
+                    if (tag !== 18) {
+                        break;
+                    }
+                    message.participants.push(reader.string());
+                    continue;
+                }
+                case 3: {
+                    if (tag !== 26) {
+                        break;
+                    }
+                    message.createdAt = fromTimestamp(timestamp_1.Timestamp.decode(reader, reader.uint32()));
+                    continue;
+                }
+                case 4: {
+                    if (tag !== 34) {
+                        break;
+                    }
+                    message.updatedAt = fromTimestamp(timestamp_1.Timestamp.decode(reader, reader.uint32()));
+                    continue;
+                }
+                case 5: {
+                    if (tag !== 42) {
+                        break;
+                    }
+                    message.currentStep = reader.string();
+                    continue;
+                }
+                case 6: {
+                    if (tag !== 50) {
+                        break;
+                    }
+                    message.mealPlan = exports.WeeklyMealPlan.decode(reader, reader.uint32());
+                    continue;
+                }
+                case 7: {
+                    if (tag !== 58) {
+                        break;
+                    }
+                    message.feedbackHistory.push(exports.FeedbackEntryProto.decode(reader, reader.uint32()));
+                    continue;
+                }
+                case 8: {
+                    if (tag !== 64) {
+                        break;
+                    }
+                    message.iterationCount = reader.int32();
+                    continue;
+                }
+                case 9: {
+                    if (tag !== 74) {
+                        break;
+                    }
+                    message.shoppingList = exports.ShoppingList.decode(reader, reader.uint32());
+                    continue;
+                }
+                case 10: {
+                    if (tag !== 80) {
+                        break;
+                    }
+                    message.isFinalized = reader.bool();
+                    continue;
+                }
+            }
+            if ((tag & 7) === 4 || tag === 0) {
+                break;
+            }
+            reader.skip(tag & 7);
+        }
+        return message;
+    },
+    fromJSON: function (object) {
+        return {
+            threadId: isSet(object.threadId) ? globalThis.String(object.threadId) : "",
+            participants: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.participants)
+                ? object.participants.map(function (e) { return globalThis.String(e); })
+                : [],
+            createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
+            updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
+            currentStep: isSet(object.currentStep) ? globalThis.String(object.currentStep) : "",
+            mealPlan: isSet(object.mealPlan) ? exports.WeeklyMealPlan.fromJSON(object.mealPlan) : undefined,
+            feedbackHistory: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.feedbackHistory)
+                ? object.feedbackHistory.map(function (e) { return exports.FeedbackEntryProto.fromJSON(e); })
+                : [],
+            iterationCount: isSet(object.iterationCount) ? globalThis.Number(object.iterationCount) : 0,
+            shoppingList: isSet(object.shoppingList) ? exports.ShoppingList.fromJSON(object.shoppingList) : undefined,
+            isFinalized: isSet(object.isFinalized) ? globalThis.Boolean(object.isFinalized) : false,
+        };
+    },
+    toJSON: function (message) {
+        var _a, _b;
+        var obj = {};
+        if (message.threadId !== "") {
+            obj.threadId = message.threadId;
+        }
+        if ((_a = message.participants) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.participants = message.participants;
+        }
+        if (message.createdAt !== undefined) {
+            obj.createdAt = message.createdAt.toISOString();
+        }
+        if (message.updatedAt !== undefined) {
+            obj.updatedAt = message.updatedAt.toISOString();
+        }
+        if (message.currentStep !== "") {
+            obj.currentStep = message.currentStep;
+        }
+        if (message.mealPlan !== undefined) {
+            obj.mealPlan = exports.WeeklyMealPlan.toJSON(message.mealPlan);
+        }
+        if ((_b = message.feedbackHistory) === null || _b === void 0 ? void 0 : _b.length) {
+            obj.feedbackHistory = message.feedbackHistory.map(function (e) { return exports.FeedbackEntryProto.toJSON(e); });
+        }
+        if (message.iterationCount !== 0) {
+            obj.iterationCount = Math.round(message.iterationCount);
+        }
+        if (message.shoppingList !== undefined) {
+            obj.shoppingList = exports.ShoppingList.toJSON(message.shoppingList);
+        }
+        if (message.isFinalized !== false) {
+            obj.isFinalized = message.isFinalized;
+        }
+        return obj;
+    },
+    create: function (base) {
+        return exports.MealPlanningCheckpointState.fromPartial(base !== null && base !== void 0 ? base : {});
+    },
+    fromPartial: function (object) {
+        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var message = createBaseMealPlanningCheckpointState();
+        message.threadId = (_a = object.threadId) !== null && _a !== void 0 ? _a : "";
+        message.participants = ((_b = object.participants) === null || _b === void 0 ? void 0 : _b.map(function (e) { return e; })) || [];
+        message.createdAt = (_c = object.createdAt) !== null && _c !== void 0 ? _c : undefined;
+        message.updatedAt = (_d = object.updatedAt) !== null && _d !== void 0 ? _d : undefined;
+        message.currentStep = (_e = object.currentStep) !== null && _e !== void 0 ? _e : "";
+        message.mealPlan = (object.mealPlan !== undefined && object.mealPlan !== null)
+            ? exports.WeeklyMealPlan.fromPartial(object.mealPlan)
+            : undefined;
+        message.feedbackHistory = ((_f = object.feedbackHistory) === null || _f === void 0 ? void 0 : _f.map(function (e) { return exports.FeedbackEntryProto.fromPartial(e); })) || [];
+        message.iterationCount = (_g = object.iterationCount) !== null && _g !== void 0 ? _g : 0;
+        message.shoppingList = (object.shoppingList !== undefined && object.shoppingList !== null)
+            ? exports.ShoppingList.fromPartial(object.shoppingList)
+            : undefined;
+        message.isFinalized = (_h = object.isFinalized) !== null && _h !== void 0 ? _h : false;
+        return message;
+    },
+};
 function createBaseAgentCheckpoint() {
-    return { channelValues: {}, next: [], step: 0 };
+    return { state: undefined, messages: [], next: [], step: 0 };
 }
 exports.AgentCheckpoint = {
     encode: function (message, writer) {
         if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
-        Object.entries(message.channelValues).forEach(function (_a) {
-            var key = _a[0], value = _a[1];
-            exports.AgentCheckpoint_ChannelValuesEntry.encode({ key: key, value: value }, writer.uint32(10).fork()).join();
-        });
-        for (var _i = 0, _a = message.next; _i < _a.length; _i++) {
+        if (message.state !== undefined) {
+            exports.MealPlanningCheckpointState.encode(message.state, writer.uint32(10).fork()).join();
+        }
+        for (var _i = 0, _a = message.messages; _i < _a.length; _i++) {
             var v = _a[_i];
-            writer.uint32(18).string(v);
+            exports.Message.encode(v, writer.uint32(18).fork()).join();
+        }
+        for (var _b = 0, _c = message.next; _b < _c.length; _b++) {
+            var v = _c[_b];
+            writer.uint32(26).string(v);
         }
         if (message.step !== 0) {
-            writer.uint32(24).int32(message.step);
+            writer.uint32(32).int32(message.step);
         }
         return writer;
     },
@@ -5223,21 +5537,25 @@ exports.AgentCheckpoint = {
                     if (tag !== 10) {
                         break;
                     }
-                    var entry1 = exports.AgentCheckpoint_ChannelValuesEntry.decode(reader, reader.uint32());
-                    if (entry1.value !== undefined) {
-                        message.channelValues[entry1.key] = entry1.value;
-                    }
+                    message.state = exports.MealPlanningCheckpointState.decode(reader, reader.uint32());
                     continue;
                 }
                 case 2: {
                     if (tag !== 18) {
                         break;
                     }
-                    message.next.push(reader.string());
+                    message.messages.push(exports.Message.decode(reader, reader.uint32()));
                     continue;
                 }
                 case 3: {
-                    if (tag !== 24) {
+                    if (tag !== 26) {
+                        break;
+                    }
+                    message.next.push(reader.string());
+                    continue;
+                }
+                case 4: {
+                    if (tag !== 32) {
                         break;
                     }
                     message.step = reader.int32();
@@ -5253,31 +5571,22 @@ exports.AgentCheckpoint = {
     },
     fromJSON: function (object) {
         return {
-            channelValues: isObject(object.channelValues)
-                ? Object.entries(object.channelValues).reduce(function (acc, _a) {
-                    var key = _a[0], value = _a[1];
-                    acc[key] = any_1.Any.fromJSON(value);
-                    return acc;
-                }, {})
-                : {},
+            state: isSet(object.state) ? exports.MealPlanningCheckpointState.fromJSON(object.state) : undefined,
+            messages: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.messages) ? object.messages.map(function (e) { return exports.Message.fromJSON(e); }) : [],
             next: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.next) ? object.next.map(function (e) { return globalThis.String(e); }) : [],
             step: isSet(object.step) ? globalThis.Number(object.step) : 0,
         };
     },
     toJSON: function (message) {
-        var _a;
+        var _a, _b;
         var obj = {};
-        if (message.channelValues) {
-            var entries = Object.entries(message.channelValues);
-            if (entries.length > 0) {
-                obj.channelValues = {};
-                entries.forEach(function (_a) {
-                    var k = _a[0], v = _a[1];
-                    obj.channelValues[k] = any_1.Any.toJSON(v);
-                });
-            }
+        if (message.state !== undefined) {
+            obj.state = exports.MealPlanningCheckpointState.toJSON(message.state);
         }
-        if ((_a = message.next) === null || _a === void 0 ? void 0 : _a.length) {
+        if ((_a = message.messages) === null || _a === void 0 ? void 0 : _a.length) {
+            obj.messages = message.messages.map(function (e) { return exports.Message.toJSON(e); });
+        }
+        if ((_b = message.next) === null || _b === void 0 ? void 0 : _b.length) {
             obj.next = message.next;
         }
         if (message.step !== 0) {
@@ -5291,90 +5600,17 @@ exports.AgentCheckpoint = {
     fromPartial: function (object) {
         var _a, _b, _c;
         var message = createBaseAgentCheckpoint();
-        message.channelValues = Object.entries((_a = object.channelValues) !== null && _a !== void 0 ? _a : {}).reduce(function (acc, _a) {
-            var key = _a[0], value = _a[1];
-            if (value !== undefined) {
-                acc[key] = any_1.Any.fromPartial(value);
-            }
-            return acc;
-        }, {});
+        message.state = (object.state !== undefined && object.state !== null)
+            ? exports.MealPlanningCheckpointState.fromPartial(object.state)
+            : undefined;
+        message.messages = ((_a = object.messages) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.Message.fromPartial(e); })) || [];
         message.next = ((_b = object.next) === null || _b === void 0 ? void 0 : _b.map(function (e) { return e; })) || [];
         message.step = (_c = object.step) !== null && _c !== void 0 ? _c : 0;
         return message;
     },
 };
-function createBaseAgentCheckpoint_ChannelValuesEntry() {
-    return { key: "", value: undefined };
-}
-exports.AgentCheckpoint_ChannelValuesEntry = {
-    encode: function (message, writer) {
-        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
-        if (message.key !== "") {
-            writer.uint32(10).string(message.key);
-        }
-        if (message.value !== undefined) {
-            any_1.Any.encode(message.value, writer.uint32(18).fork()).join();
-        }
-        return writer;
-    },
-    decode: function (input, length) {
-        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        var end = length === undefined ? reader.len : reader.pos + length;
-        var message = createBaseAgentCheckpoint_ChannelValuesEntry();
-        while (reader.pos < end) {
-            var tag = reader.uint32();
-            switch (tag >>> 3) {
-                case 1: {
-                    if (tag !== 10) {
-                        break;
-                    }
-                    message.key = reader.string();
-                    continue;
-                }
-                case 2: {
-                    if (tag !== 18) {
-                        break;
-                    }
-                    message.value = any_1.Any.decode(reader, reader.uint32());
-                    continue;
-                }
-            }
-            if ((tag & 7) === 4 || tag === 0) {
-                break;
-            }
-            reader.skip(tag & 7);
-        }
-        return message;
-    },
-    fromJSON: function (object) {
-        return {
-            key: isSet(object.key) ? globalThis.String(object.key) : "",
-            value: isSet(object.value) ? any_1.Any.fromJSON(object.value) : undefined,
-        };
-    },
-    toJSON: function (message) {
-        var obj = {};
-        if (message.key !== "") {
-            obj.key = message.key;
-        }
-        if (message.value !== undefined) {
-            obj.value = any_1.Any.toJSON(message.value);
-        }
-        return obj;
-    },
-    create: function (base) {
-        return exports.AgentCheckpoint_ChannelValuesEntry.fromPartial(base !== null && base !== void 0 ? base : {});
-    },
-    fromPartial: function (object) {
-        var _a;
-        var message = createBaseAgentCheckpoint_ChannelValuesEntry();
-        message.key = (_a = object.key) !== null && _a !== void 0 ? _a : "";
-        message.value = (object.value !== undefined && object.value !== null) ? any_1.Any.fromPartial(object.value) : undefined;
-        return message;
-    },
-};
 function createBaseAgentCheckpointMetadata() {
-    return { source: "", step: 0, writes: {}, additionalFields: {} };
+    return { source: "", step: 0 };
 }
 exports.AgentCheckpointMetadata = {
     encode: function (message, writer) {
@@ -5385,14 +5621,6 @@ exports.AgentCheckpointMetadata = {
         if (message.step !== 0) {
             writer.uint32(16).int32(message.step);
         }
-        Object.entries(message.writes).forEach(function (_a) {
-            var key = _a[0], value = _a[1];
-            exports.AgentCheckpointMetadata_WritesEntry.encode({ key: key, value: value }, writer.uint32(26).fork()).join();
-        });
-        Object.entries(message.additionalFields).forEach(function (_a) {
-            var key = _a[0], value = _a[1];
-            exports.AgentCheckpointMetadata_AdditionalFieldsEntry.encode({ key: key, value: value }, writer.uint32(34).fork()).join();
-        });
         return writer;
     },
     decode: function (input, length) {
@@ -5416,26 +5644,6 @@ exports.AgentCheckpointMetadata = {
                     message.step = reader.int32();
                     continue;
                 }
-                case 3: {
-                    if (tag !== 26) {
-                        break;
-                    }
-                    var entry3 = exports.AgentCheckpointMetadata_WritesEntry.decode(reader, reader.uint32());
-                    if (entry3.value !== undefined) {
-                        message.writes[entry3.key] = entry3.value;
-                    }
-                    continue;
-                }
-                case 4: {
-                    if (tag !== 34) {
-                        break;
-                    }
-                    var entry4 = exports.AgentCheckpointMetadata_AdditionalFieldsEntry.decode(reader, reader.uint32());
-                    if (entry4.value !== undefined) {
-                        message.additionalFields[entry4.key] = entry4.value;
-                    }
-                    continue;
-                }
             }
             if ((tag & 7) === 4 || tag === 0) {
                 break;
@@ -5448,20 +5656,6 @@ exports.AgentCheckpointMetadata = {
         return {
             source: isSet(object.source) ? globalThis.String(object.source) : "",
             step: isSet(object.step) ? globalThis.Number(object.step) : 0,
-            writes: isObject(object.writes)
-                ? Object.entries(object.writes).reduce(function (acc, _a) {
-                    var key = _a[0], value = _a[1];
-                    acc[key] = any_1.Any.fromJSON(value);
-                    return acc;
-                }, {})
-                : {},
-            additionalFields: isObject(object.additionalFields)
-                ? Object.entries(object.additionalFields).reduce(function (acc, _a) {
-                    var key = _a[0], value = _a[1];
-                    acc[key] = any_1.Any.fromJSON(value);
-                    return acc;
-                }, {})
-                : {},
         };
     },
     toJSON: function (message) {
@@ -5472,190 +5666,16 @@ exports.AgentCheckpointMetadata = {
         if (message.step !== 0) {
             obj.step = Math.round(message.step);
         }
-        if (message.writes) {
-            var entries = Object.entries(message.writes);
-            if (entries.length > 0) {
-                obj.writes = {};
-                entries.forEach(function (_a) {
-                    var k = _a[0], v = _a[1];
-                    obj.writes[k] = any_1.Any.toJSON(v);
-                });
-            }
-        }
-        if (message.additionalFields) {
-            var entries = Object.entries(message.additionalFields);
-            if (entries.length > 0) {
-                obj.additionalFields = {};
-                entries.forEach(function (_a) {
-                    var k = _a[0], v = _a[1];
-                    obj.additionalFields[k] = any_1.Any.toJSON(v);
-                });
-            }
-        }
         return obj;
     },
     create: function (base) {
         return exports.AgentCheckpointMetadata.fromPartial(base !== null && base !== void 0 ? base : {});
     },
     fromPartial: function (object) {
-        var _a, _b, _c, _d;
+        var _a, _b;
         var message = createBaseAgentCheckpointMetadata();
         message.source = (_a = object.source) !== null && _a !== void 0 ? _a : "";
         message.step = (_b = object.step) !== null && _b !== void 0 ? _b : 0;
-        message.writes = Object.entries((_c = object.writes) !== null && _c !== void 0 ? _c : {}).reduce(function (acc, _a) {
-            var key = _a[0], value = _a[1];
-            if (value !== undefined) {
-                acc[key] = any_1.Any.fromPartial(value);
-            }
-            return acc;
-        }, {});
-        message.additionalFields = Object.entries((_d = object.additionalFields) !== null && _d !== void 0 ? _d : {}).reduce(function (acc, _a) {
-            var key = _a[0], value = _a[1];
-            if (value !== undefined) {
-                acc[key] = any_1.Any.fromPartial(value);
-            }
-            return acc;
-        }, {});
-        return message;
-    },
-};
-function createBaseAgentCheckpointMetadata_WritesEntry() {
-    return { key: "", value: undefined };
-}
-exports.AgentCheckpointMetadata_WritesEntry = {
-    encode: function (message, writer) {
-        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
-        if (message.key !== "") {
-            writer.uint32(10).string(message.key);
-        }
-        if (message.value !== undefined) {
-            any_1.Any.encode(message.value, writer.uint32(18).fork()).join();
-        }
-        return writer;
-    },
-    decode: function (input, length) {
-        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        var end = length === undefined ? reader.len : reader.pos + length;
-        var message = createBaseAgentCheckpointMetadata_WritesEntry();
-        while (reader.pos < end) {
-            var tag = reader.uint32();
-            switch (tag >>> 3) {
-                case 1: {
-                    if (tag !== 10) {
-                        break;
-                    }
-                    message.key = reader.string();
-                    continue;
-                }
-                case 2: {
-                    if (tag !== 18) {
-                        break;
-                    }
-                    message.value = any_1.Any.decode(reader, reader.uint32());
-                    continue;
-                }
-            }
-            if ((tag & 7) === 4 || tag === 0) {
-                break;
-            }
-            reader.skip(tag & 7);
-        }
-        return message;
-    },
-    fromJSON: function (object) {
-        return {
-            key: isSet(object.key) ? globalThis.String(object.key) : "",
-            value: isSet(object.value) ? any_1.Any.fromJSON(object.value) : undefined,
-        };
-    },
-    toJSON: function (message) {
-        var obj = {};
-        if (message.key !== "") {
-            obj.key = message.key;
-        }
-        if (message.value !== undefined) {
-            obj.value = any_1.Any.toJSON(message.value);
-        }
-        return obj;
-    },
-    create: function (base) {
-        return exports.AgentCheckpointMetadata_WritesEntry.fromPartial(base !== null && base !== void 0 ? base : {});
-    },
-    fromPartial: function (object) {
-        var _a;
-        var message = createBaseAgentCheckpointMetadata_WritesEntry();
-        message.key = (_a = object.key) !== null && _a !== void 0 ? _a : "";
-        message.value = (object.value !== undefined && object.value !== null) ? any_1.Any.fromPartial(object.value) : undefined;
-        return message;
-    },
-};
-function createBaseAgentCheckpointMetadata_AdditionalFieldsEntry() {
-    return { key: "", value: undefined };
-}
-exports.AgentCheckpointMetadata_AdditionalFieldsEntry = {
-    encode: function (message, writer) {
-        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
-        if (message.key !== "") {
-            writer.uint32(10).string(message.key);
-        }
-        if (message.value !== undefined) {
-            any_1.Any.encode(message.value, writer.uint32(18).fork()).join();
-        }
-        return writer;
-    },
-    decode: function (input, length) {
-        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        var end = length === undefined ? reader.len : reader.pos + length;
-        var message = createBaseAgentCheckpointMetadata_AdditionalFieldsEntry();
-        while (reader.pos < end) {
-            var tag = reader.uint32();
-            switch (tag >>> 3) {
-                case 1: {
-                    if (tag !== 10) {
-                        break;
-                    }
-                    message.key = reader.string();
-                    continue;
-                }
-                case 2: {
-                    if (tag !== 18) {
-                        break;
-                    }
-                    message.value = any_1.Any.decode(reader, reader.uint32());
-                    continue;
-                }
-            }
-            if ((tag & 7) === 4 || tag === 0) {
-                break;
-            }
-            reader.skip(tag & 7);
-        }
-        return message;
-    },
-    fromJSON: function (object) {
-        return {
-            key: isSet(object.key) ? globalThis.String(object.key) : "",
-            value: isSet(object.value) ? any_1.Any.fromJSON(object.value) : undefined,
-        };
-    },
-    toJSON: function (message) {
-        var obj = {};
-        if (message.key !== "") {
-            obj.key = message.key;
-        }
-        if (message.value !== undefined) {
-            obj.value = any_1.Any.toJSON(message.value);
-        }
-        return obj;
-    },
-    create: function (base) {
-        return exports.AgentCheckpointMetadata_AdditionalFieldsEntry.fromPartial(base !== null && base !== void 0 ? base : {});
-    },
-    fromPartial: function (object) {
-        var _a;
-        var message = createBaseAgentCheckpointMetadata_AdditionalFieldsEntry();
-        message.key = (_a = object.key) !== null && _a !== void 0 ? _a : "";
-        message.value = (object.value !== undefined && object.value !== null) ? any_1.Any.fromPartial(object.value) : undefined;
         return message;
     },
 };

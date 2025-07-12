@@ -100,10 +100,24 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 	// Seed full workflow state into checkpoint
 	if resp.InitialState != nil {
+		// Convert the arbitrary JSON initial state into a mutable map so that we can
+		// strip any fields that are *not* present in the canonical
+		// MealPlanningCheckpointState proto (e.g. legacy "workflow_type").
+		var stateMap map[string]interface{}
+		if b, err := json.Marshal(resp.InitialState); err == nil {
+			_ = json.Unmarshal(b, &stateMap)
+		}
+		if stateMap == nil {
+			stateMap = map[string]interface{}{}
+		}
+		// Remove deprecated / non-proto fields
+		delete(stateMap, "workflow_type")
+		delete(stateMap, "channel_values") // safety
+
 		checkpoint := map[string]interface{}{
-			"channel_values": resp.InitialState,
-			"next":           []interface{}{},
-			"step":           0,
+			"state": stateMap,
+			"next":  []interface{}{},
+			"step":  0,
 		}
 		if data, err := json.Marshal(checkpoint); err != nil {
 			logger.Errorw("Failed to serialize initial checkpoint", "error", err)
