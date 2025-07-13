@@ -2,9 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
 
 // Import from package like UI does
-import type { 
-  AgentCheckpoint as AgentCheckpointType, 
-  AgentCheckpointMetadata as AgentCheckpointMetadataType 
+import type {
+  AgentCheckpoint as AgentCheckpointType,
+  AgentCheckpointMetadata as AgentCheckpointMetadataType
 } from '@mealplanner/generated';
 import { AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated';
 import { infoLog } from '../logging';
@@ -25,7 +25,7 @@ export class HttpCheckpointSaver {
     if (!resp.ok) return undefined;
     const data = await resp.json();
     if (!data.found) return undefined;
-    
+
     // Convert JSON payload to generated protobuf types so field names use camelCase
     const checkpoint = AgentCheckpoint.fromJSON(data.tuple.checkpoint);
     infoLog(`[CHECKPOINT] Got checkpoint for thread ${threadId}: ${JSON.stringify(checkpoint)}`);
@@ -37,28 +37,42 @@ export class HttpCheckpointSaver {
   async put(config: RunnableConfig, checkpoint: AgentCheckpointType, metadata: AgentCheckpointMetadataType): Promise<RunnableConfig> {
     const threadId = (config as any).configurable?.threadId || uuidv4();
     const checkpointNs = (config as any).configurable?.checkpoint_ns || uuidv4();
-    
+
     // Convert protobuf types to JSON for API
-    const checkpointJson = AgentCheckpoint.toJSON(checkpoint);
-    const metadataJson = AgentCheckpointMetadata.toJSON(metadata);
-    infoLog(`[CHECKPOINT] Saving checkpoint for thread ${threadId}: ${JSON.stringify(checkpointJson)}`);
-    const resp = await fetch(`${this.baseUrl}/api/checkpoints`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        thread_id: threadId,
-        checkpoint_ns: checkpointNs,
-        workflow_type: (metadataJson as any).workflow_type || 'meal_planning',
-        checkpoint: checkpointJson,
-        metadata: metadataJson,
-      }),
-    });
-    if (!resp.ok) {
-      const errText = await resp.text();
-      infoLog(`[CHECKPOINT] Save failed: ${errText}`);
-      throw new Error(`Failed to save checkpoint: ${resp.statusText}`);
+    try {
+      // log checkpoint
+      infoLog(`[CHECKPOINT] Saving checkpoint for thread ${threadId}: ${JSON.stringify(checkpoint)}`);
+      const resp = await fetch(`${this.baseUrl}/api/checkpoints`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          thread_id: threadId,
+          checkpoint_ns: checkpointNs,
+          workflow_type: 'meal_planning',
+          checkpoint,
+          metadata,
+        }),
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        infoLog(`[CHECKPOINT] Save failed: ${errText}`);
+        throw new Error(`Failed to save checkpoint: ${resp.statusText}`);
+      }
+      return { configurable: { ...(config as any).configurable, threadId, checkpoint_ns: checkpointNs } } as RunnableConfig;
+    } catch (e) {
+      infoLog(`[CHECKPOINT] Save failed: ${e}`);
+      // log checkpoint lastPlanned
+      if (checkpoint) {
+        for (const day of checkpoint.state?.mealPlan?.days || []) {
+          if (day.meal) {
+            infoLog(`[CHECKPOINT] lastPlanned: ${day.meal.lastPlanned}`);
+          }
+        }
+      }
+      throw e;
     }
-    return { configurable: { ...(config as any).configurable, threadId, checkpoint_ns: checkpointNs } } as RunnableConfig;
+
   }
 
   async *list(_config: RunnableConfig, limit?: number): AsyncGenerator<[RunnableConfig, AgentCheckpointType, AgentCheckpointMetadataType]> {

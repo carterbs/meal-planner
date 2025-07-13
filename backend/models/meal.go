@@ -100,12 +100,14 @@ func processMealRows(rows *sql.Rows) ([]*Meal, error) {
 				MealType:    mealType,
 				Ingredients: []*Ingredient{},
 				Steps:       []*Step{},
+				LastPlanned: nil,
 			}
 
 			// Only set LastPlanned if the timestamp is valid
 			if nt.Valid {
 				m.LastPlanned = timestamppb.New(nt.Time)
 			}
+
 			meals = append(meals, m)
 		}
 
