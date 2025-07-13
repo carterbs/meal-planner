@@ -10,7 +10,7 @@ import {
 
 const execAsync = promisify(exec);
 // for debugging in vscode
-const skipBackend = true;
+const skipBackend = false;
 interface SessionResponse {
   threadId: string;
 }
