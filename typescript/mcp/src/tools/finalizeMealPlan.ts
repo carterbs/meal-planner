@@ -9,7 +9,7 @@ export async function finalizePlan(): Promise<FinalizeMealPlanResponse> {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   }
   const responseJson = await resp.json();
-  return FinalizeMealPlanResponse.fromJSON(responseJson)
+  return FinalizeMealPlanResponse.fromJson(responseJson)
 }
 
 export function registerFinalizeMealPlan(server: McpServer) {

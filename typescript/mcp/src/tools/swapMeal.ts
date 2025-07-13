@@ -9,21 +9,21 @@ export const swapArgs = z.object({
 });
 
 export async function doSwapMeal(dayIndex: number): Promise<SwapMealResponse> {
-  const requestData: SwapMealRequest = {
+  const requestData = new SwapMealRequest({
     mealId: 0, // This might need to be adjusted based on backend API
     mealType: 'dinner', // This might need to be adjusted based on backend API
-  };
+  });
 
   const resp = await fetch(`${API}/api/meals/swap`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(SwapMealRequest.toJSON(requestData))
+    body: JSON.stringify(requestData.toJson())
   });
   if (!resp.ok) {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   }
   const responseJson = await resp.json();
-  return SwapMealResponse.fromJSON(responseJson);
+  return SwapMealResponse.fromJson(responseJson);
 }
 
 export function registerSwapMeal(server: McpServer) {

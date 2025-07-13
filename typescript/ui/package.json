@@ -5,7 +5,10 @@
   "proxy": "http://localhost:8080",
   "main": "src/index.tsx",
   "dependencies": {
-    "@bufbuild/protobuf": "^2.6.0",
+    "@bufbuild/protobuf": "^1.10.0",
+    "@connectrpc/connect": "^1.6.0",
+    "@connectrpc/connect-node": "^1.6.0",
+    "@connectrpc/connect-web": "^1.6.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",

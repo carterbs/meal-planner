@@ -9,7 +9,7 @@ export async function doGetCurrentMealPlan(): Promise<WeeklyMealPlan> {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   }
   const responseJson = await resp.json();
-  const data = GetMealPlanResponse.fromJSON(responseJson);
+  const data = GetMealPlanResponse.fromJson(responseJson);
   if (!data.plan) {
     throw new McpError(-32000, 'No meal plan returned from backend');
   }

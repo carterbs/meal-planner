@@ -14,7 +14,7 @@ export async function doRemoveMeal(threadId: string, dayIndex: number, mealType:
   const resp = await fetch(`${API}/api/meals/remove`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },    
-    body: JSON.stringify(RemoveMealRequest.fromJSON({ threadId, dayIndex, mealType }))
+    body: JSON.stringify(new RemoveMealRequest({ threadId, dayIndex, mealType }))
   });
   if (!resp.ok) {
     const errText = await resp.text();

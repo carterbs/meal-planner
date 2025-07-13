@@ -2,21 +2,34 @@
 
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
-import { 
-  MealPlanEntry, 
-  AgentStartRequest, 
-  AgentMessageRequest 
-} from '../generated/ts/api.js';
 
 const execAsync = promisify(exec);
 // for debugging in vscode
 const skipBackend = false;
+
 interface SessionResponse {
   threadId: string;
 }
 
+interface MealPlanEntry {
+  dayIndex: number;
+  meal?: any;
+}
+
 interface WorkflowState {
   entries: MealPlanEntry[];
+}
+
+interface AgentStartRequest {
+  workflowType: string;
+  participants: string[];
+}
+
+interface AgentMessageRequest {
+  threadId: string;
+  message: string;
+  from: string;
+  interactive: boolean;
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -54,7 +67,7 @@ async function createSession(): Promise<string> {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(AgentStartRequest.toJSON(startRequest)),
+    body: JSON.stringify(startRequest),
   });
 
   if (!response.ok) {
@@ -80,7 +93,7 @@ async function sendMessage(threadId: string, message: string): Promise<void> {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(AgentMessageRequest.toJSON(messageRequest)),
+    body: JSON.stringify(messageRequest),
   });
 
   if (!response.ok) {

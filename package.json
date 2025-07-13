@@ -34,8 +34,7 @@
         "react-dom": "18.2.0"
     },
     "devDependencies": {
-        "@bufbuild/protoc-gen-connect-es": "^0.13.0",
-        "@bufbuild/protoc-gen-es": "^2.6.0",
+        "@bufbuild/protoc-gen-es": "^1.10.0",
         "@types/node": "^24.0.13",
         "chalk": "^4.1.2",
         "concurrently": "^7.6.0",
@@ -47,8 +46,10 @@
     },
     "packageManager": "yarn@4.9.1",
     "dependencies": {
-        "@connectrpc/connect": "^2.0.2",
-        "@connectrpc/connect-node": "^2.0.2",
-        "@connectrpc/connect-web": "^2.0.2"
+        "@bufbuild/protobuf": "^1.10.0",
+        "@connectrpc/connect": "^1.6.0",
+        "@connectrpc/connect-node": "^1.6.0",
+        "@connectrpc/connect-web": "^1.6.0",
+        "@connectrpc/protoc-gen-connect-es": "^1.6.1"
     }
 }

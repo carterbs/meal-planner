@@ -296,7 +296,7 @@ function hasRecentFeedbackInResult(result: any): boolean {
     // Check if there's feedback within the last 30 seconds
     const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
     const hasRecent = feedbackHistory.some((feedback: any) => {
-      const feedbackTime = new Date(feedback.timestamp);
+      const feedbackTime = feedback.timestamp ? feedback.timestamp : new Date(0);
       return feedbackTime > thirtySecondsAgo;
     });
 
