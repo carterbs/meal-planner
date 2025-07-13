@@ -5,7 +5,7 @@ import { fetchRecipeSteps } from '../src/resources/recipeSteps.js';
 
 describe('MCP Resources', () => {
   it('fetches weekly meal plan', async () => {
-    const data = { days: [] };
+    const data = { plan: { days: [], shopping_list: [] } };
     global.fetch = jest.fn().mockResolvedValue({
       status: 200,
       ok: true,
@@ -13,7 +13,7 @@ describe('MCP Resources', () => {
     });
 
     const result = await fetchWeeklyMealPlan();
-    expect(result).toEqual(data);
+    expect(result).toEqual({ plan: { days: [], shoppingList: [] } });
 
     jest.resetAllMocks();
   });

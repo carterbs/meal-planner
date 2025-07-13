@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 	"mealplanner/services"
 )
@@ -26,12 +27,12 @@ func (m *mockMealPlanService) GetMealPlanItems(mealPlanID int) ([]models.MealPla
 	return nil, nil
 }
 
-func (m *mockMealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) {
+func (m *mockMealPlanService) GetLastPlannedMeals() (*apipb.WeeklyMealPlan, error) {
 	// Return an error to trigger generation path
 	return nil, errors.New("no recent meal plan found")
 }
 
-func (m *mockMealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error) {
+func (m *mockMealPlanService) GenerateWeeklyMealPlan() (*apipb.WeeklyMealPlan, error) {
 	// Return a simple test meal plan
 	testMeal := &models.Meal{
 		Id:       1,
@@ -40,19 +41,19 @@ func (m *mockMealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, 
 		Url:      "https://example.com",
 	}
 
-	plan := &models.WeeklyMealPlan{
-		Days: []models.PlanDay{
+	plan := &apipb.WeeklyMealPlan{
+		Days: []*apipb.MealPlanEntry{
 			{DayIndex: 0, MealType: "dinner", Meal: testMeal},
 		},
 	}
 	return plan, nil
 }
 
-func (m *mockMealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
+func (m *mockMealPlanService) PopulateMealDetails(plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error) {
 	return plan, nil
 }
 
-func (m *mockMealPlanService) RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
+func (m *mockMealPlanService) RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error {
 	return nil
 }
 

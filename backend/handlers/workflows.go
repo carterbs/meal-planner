@@ -30,7 +30,7 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 				"plan":          nil,
 				"entries":       []models.MealPlanEntry{},
 				"messages":      []models.ChatMessage{},
-				"shopping_list": []models.ShoppingListItem{},
+				"shopping_list": []*apipb.ShoppingListItem{},
 			})
 			return
 		}
@@ -63,18 +63,34 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch additional details from checkpoint to include workflow metadata
+	var workflowType, currentStep string
+	if st, err := Services.WorkflowService.GetWorkflowState(threadID); err == nil {
+		workflowType = st.WorkflowType
+		currentStep = st.CurrentStep
+	}
+	if workflowType == "" {
+		workflowType = "meal_planning"
+	}
+
 	// Build and return response
 	type WorkflowStateResponse struct {
-		Plan         *models.MealPlanIdentifier `json:"plan"`
-		Entries      []models.MealPlanEntry     `json:"entries"`
-		Messages     []models.ChatMessage       `json:"messages"`
-		ShoppingList []models.ShoppingListItem  `json:"shopping_list"`
+		Plan          *models.MealPlanIdentifier `json:"plan"`
+		Entries       []models.MealPlanEntry     `json:"entries"`
+		Messages      []models.ChatMessage       `json:"messages"`
+		ShoppingList  []*apipb.ShoppingListItem  `json:"shopping_list"`
+		WorkflowType  string                     `json:"workflowType,omitempty"`
+		Workflow_Type string                     `json:"workflow_type,omitempty"`
+		CurrentStep   string                     `json:"currentStep,omitempty"`
 	}
 	resp := WorkflowStateResponse{
-		Plan:         plan,
-		Entries:      entries,
-		Messages:     messages,
-		ShoppingList: shoppingList,
+		Plan:          plan,
+		Entries:       entries,
+		Messages:      messages,
+		ShoppingList:  shoppingList,
+		WorkflowType:  workflowType,
+		Workflow_Type: workflowType,
+		CurrentStep:   currentStep,
 	}
 	writeJSON(w, resp)
 }

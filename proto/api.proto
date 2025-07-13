@@ -37,8 +37,8 @@ message Meal {
   repeated Step steps = 9;
 }
 
-message PlanDay {
-  Meal meal = 1;
+message MealPlanEntry {
+  optional Meal meal = 1;
   int32 day_index = 2;
   string meal_type = 3;
 }
@@ -50,16 +50,8 @@ message ShoppingListItem {
 }
 
 message WeeklyMealPlan {
-  repeated PlanDay days = 1;
+  repeated MealPlanEntry days = 1;
   repeated ShoppingListItem shopping_list = 2;
-}
-
-// Additional meal plan persistence models
-
-message MealPlanEntry {
-  int32 day_index = 1; // 0=Monday..6=Sunday
-  string meal_type = 2;  // breakfast, lunch, dinner
-  Meal meal = 3;
 }
 
 message SaveMealPlanRequest {

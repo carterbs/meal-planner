@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 )
 
@@ -15,21 +16,21 @@ type sqlMealPlanService struct {
 	db *sql.DB
 }
 
-func (s *sqlMealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error) {
+func (s *sqlMealPlanService) GenerateWeeklyMealPlan() (*apipb.WeeklyMealPlan, error) {
 	// Delegate to existing model select logic
 	return models.GenerateWeeklyMealPlan(s.db)
 }
 
-func (s *sqlMealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) {
+func (s *sqlMealPlanService) GetLastPlannedMeals() (*apipb.WeeklyMealPlan, error) {
 	return models.GetLastPlannedMeals(s.db)
 }
 
-func (s *sqlMealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
+func (s *sqlMealPlanService) PopulateMealDetails(plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error) {
 	// Delegate to business service for populating meal details
 	return NewMealPlanService(s.db).PopulateMealDetails(plan)
 }
 
-func (s *sqlMealPlanService) RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
+func (s *sqlMealPlanService) RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error {
 	return models.RemoveMealFromPlan(plan, dayIndex, mealType)
 }
 

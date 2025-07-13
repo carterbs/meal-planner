@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/mock"
+	apipb "mealplanner/generated/go"
 )
 
 // MockWorkflowService mocks the WorkflowService interface for testing
@@ -29,14 +30,14 @@ func (m *MockWorkflowService) UpdateWorkflowState(threadID string, state *models
 	return args.Error(0)
 }
 
-func (m *MockWorkflowService) UpdateMealPlan(threadID string, plan *models.WeeklyMealPlan) error {
+func (m *MockWorkflowService) UpdateMealPlan(threadID string, plan *apipb.WeeklyMealPlan) error {
 	args := m.Called(threadID, plan)
 	return args.Error(0)
 }
 
-func (m *MockWorkflowService) GetMealPlan(threadID string) (*models.WeeklyMealPlan, error) {
+func (m *MockWorkflowService) GetMealPlan(threadID string) (*apipb.WeeklyMealPlan, error) {
 	args := m.Called(threadID)
-	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+	return args.Get(0).(*apipb.WeeklyMealPlan), args.Error(1)
 }
 
 func (m *MockWorkflowService) GetWorkflowCheckpoint(threadID string) ([]byte, string, error) {
@@ -84,47 +85,47 @@ func (m *MockMealPlanService) GetMealPlanItems(planID int) ([]models.MealPlanEnt
 	return args.Get(0).([]models.MealPlanEntry), args.Error(1)
 }
 
-func (m *MockMealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error) {
+func (m *MockMealPlanService) GenerateWeeklyMealPlan() (*apipb.WeeklyMealPlan, error) {
 	args := m.Called()
-	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+	return args.Get(0).(*apipb.WeeklyMealPlan), args.Error(1)
 }
 
-func (m *MockMealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) {
+func (m *MockMealPlanService) GetLastPlannedMeals() (*apipb.WeeklyMealPlan, error) {
 	args := m.Called()
-	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+	return args.Get(0).(*apipb.WeeklyMealPlan), args.Error(1)
 }
 
-func (m *MockMealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
+func (m *MockMealPlanService) PopulateMealDetails(plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error) {
 	args := m.Called(plan)
-	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+	return args.Get(0).(*apipb.WeeklyMealPlan), args.Error(1)
 }
 
-func (m *MockMealPlanService) RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
+func (m *MockMealPlanService) RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error {
 	args := m.Called(plan, dayIndex, mealType)
 	return args.Error(0)
 }
 
-func (m *MockMealPlanService) UpdateMealInPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string, meal *models.Meal) error {
+func (m *MockMealPlanService) UpdateMealInPlan(plan *apipb.WeeklyMealPlan, dayIndex int, mealType string, meal *models.Meal) error {
 	args := m.Called(plan, dayIndex, mealType, meal)
 	return args.Error(0)
 }
 
-func (m *MockMealPlanService) GenerateShoppingListForPlan(plan *models.WeeklyMealPlan) error {
+func (m *MockMealPlanService) GenerateShoppingListForPlan(plan *apipb.WeeklyMealPlan) error {
 	args := m.Called(plan)
 	return args.Error(0)
 }
 
-func (m *MockMealPlanService) SaveMealPlan(plan *models.WeeklyMealPlan) error {
+func (m *MockMealPlanService) SaveMealPlan(plan *apipb.WeeklyMealPlan) error {
 	args := m.Called(plan)
 	return args.Error(0)
 }
 
-func (m *MockMealPlanService) SaveMealPlanToDB(plan *models.WeeklyMealPlan) error {
+func (m *MockMealPlanService) SaveMealPlanToDB(plan *apipb.WeeklyMealPlan) error {
 	args := m.Called(plan)
 	return args.Error(0)
 }
 
-func (m *MockMealPlanService) SaveMealPlanWithIdentifier(plan *models.WeeklyMealPlan, threadID string) (*models.MealPlanIdentifier, error) {
+func (m *MockMealPlanService) SaveMealPlanWithIdentifier(plan *apipb.WeeklyMealPlan, threadID string) (*models.MealPlanIdentifier, error) {
 	args := m.Called(plan, threadID)
 	return args.Get(0).(*models.MealPlanIdentifier), args.Error(1)
 }
@@ -139,9 +140,9 @@ type MockShoppingListService struct {
 	mock.Mock
 }
 
-func (m *MockShoppingListService) BuildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
+func (m *MockShoppingListService) BuildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
 	args := m.Called(mealIDs)
-	return args.Get(0).([]models.ShoppingListItem), args.Error(1)
+	return args.Get(0).([]*apipb.ShoppingListItem), args.Error(1)
 }
 
 func (m *MockShoppingListService) GenerateShoppingListFromMeals(meals []*models.Meal) []*models.Ingredient {
@@ -149,9 +150,9 @@ func (m *MockShoppingListService) GenerateShoppingListFromMeals(meals []*models.
 	return args.Get(0).([]*models.Ingredient)
 }
 
-func (m *MockShoppingListService) ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []models.ShoppingListItem {
+func (m *MockShoppingListService) ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []*apipb.ShoppingListItem {
 	args := m.Called(ingredients)
-	return args.Get(0).([]models.ShoppingListItem)
+	return args.Get(0).([]*apipb.ShoppingListItem)
 }
 
 // MockMessageService mocks the MessageService interface for testing
@@ -179,19 +180,19 @@ func (m *stubMealPlanService) GetMealPlanItems(planID int) ([]models.MealPlanEnt
 	return args.Get(0).([]models.MealPlanEntry), args.Error(1)
 }
 
-func (m *stubMealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error) {
+func (m *stubMealPlanService) GenerateWeeklyMealPlan() (*apipb.WeeklyMealPlan, error) {
 	return nil, nil
 }
 
-func (m *stubMealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) {
+func (m *stubMealPlanService) GetLastPlannedMeals() (*apipb.WeeklyMealPlan, error) {
 	return nil, nil
 }
 
-func (m *stubMealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
+func (m *stubMealPlanService) PopulateMealDetails(plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error) {
 	return nil, nil
 }
 
-func (m *stubMealPlanService) RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
+func (m *stubMealPlanService) RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error {
 	return nil
 }
 
@@ -236,9 +237,9 @@ func TestGetWorkflowStateReturnsShoppingList(t *testing.T) {
 	threadID := "thread123"
 	plan := &models.MealPlanIdentifier{ID: 1, ThreadID: threadID}
 	entries := []models.MealPlanEntry{
-		{DayIndex: 0, MealType: "breakfast", Meal: map[string]interface{}{"id": plan.ID, "name": "Test Meal"}},
+		{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{Id: int32(plan.ID), Name: "Test Meal"}},
 	}
-	shoppingItems := []models.ShoppingListItem{
+	shoppingItems := []*apipb.ShoppingListItem{
 		{Ingredient: "Eggs", Quantity: "12"},
 	}
 	messages := []models.ChatMessage{

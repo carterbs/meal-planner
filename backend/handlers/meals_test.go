@@ -17,10 +17,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/lib/pq"
 
-	"google.golang.org/protobuf/encoding/protojson"
 	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 	"mealplanner/services"
+
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // testHelper contains utilities for testing handlers
@@ -663,7 +664,7 @@ func TestCreateMealHandler(t *testing.T) {
 
 	// Create request with meal data
 	reqProto := &apipb.CreateMealRequest{Meal: &newMeal}
-	body, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(reqProto)
+	body, err := protojson.Marshal(reqProto)
 	if err != nil {
 		t.Fatalf("failed to marshal meal: %v", err)
 	}
@@ -768,7 +769,7 @@ func TestCreateMealHandler_ValidationError(t *testing.T) {
 	}
 
 	reqProto := &apipb.CreateMealRequest{Meal: &invalidMeal}
-	body, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(reqProto)
+	body, err := protojson.Marshal(reqProto)
 	if err != nil {
 		t.Fatalf("failed to marshal meal: %v", err)
 	}
@@ -837,7 +838,7 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 
 	// Create request with meal data
 	reqProto := &apipb.CreateMealRequest{Meal: &newMeal}
-	body, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(reqProto)
+	body, err := protojson.Marshal(reqProto)
 	if err != nil {
 		t.Fatalf("failed to marshal meal: %v", err)
 	}
@@ -872,8 +873,8 @@ func TestCreateMealHandler_DatabaseError(t *testing.T) {
 func TestRemoveMealHandler(t *testing.T) {
 	helper := setupTest(t)
 
-	plan := models.WeeklyMealPlan{
-		Days: []models.PlanDay{{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{Id: 1, Name: "Egg"}}},
+	plan := apipb.WeeklyMealPlan{
+		Days: []*apipb.MealPlanEntry{{DayIndex: 0, MealType: "breakfast", Meal: &models.Meal{Id: 1, Name: "Egg"}}},
 	}
 	checkpointStruct := map[string]interface{}{
 		"channel_values": map[string]interface{}{

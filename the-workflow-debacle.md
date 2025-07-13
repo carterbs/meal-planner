@@ -8,10 +8,10 @@ The e2e test `scripts/e2e_remove_friday.sh` was failing because:
 ## Root Cause Analysis & Fixes
 
 ### Problem 1: Missing `dayIndex` Field ✅ FIXED
-**Issue**: Backend was using `protojson.MarshalOptions{UseProtoNames: true}` which serializes protobuf fields as snake_case (`day_index`), but TypeScript generated code expects camelCase (`dayIndex`).
+**Issue**: Backend was using `protojson.MarshalOptions{UseProtoNames: false}` which serializes protobuf fields as snake_case (`day_index`), but TypeScript generated code expects camelCase (`dayIndex`).
 
 **Solution**: 
-- Reverted all marshal operations back to `UseProtoNames: true` (snake_case output)
+- Reverted all marshal operations back to `UseProtoNames: false` (snake_case output)
 - Fixed frontend workflow to use proper protobuf types when creating requests
 - Updated `SaveMealPlanRequest` creation to use `MealPlanEntry.create()` with correct field mapping
 

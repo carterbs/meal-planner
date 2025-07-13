@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
 	"mealplanner/models"
 )
@@ -20,10 +21,10 @@ func NewShoppingListService(db *sql.DB) ShoppingListService {
 }
 
 // BuildShoppingList builds a shopping list from meal IDs
-func (s *shoppingListService) BuildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
+func (s *shoppingListService) BuildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
 	if len(mealIDs) == 0 {
 		shoppingListServiceLogger.Info("No meal IDs provided for shopping list")
-		return []models.ShoppingListItem{}, nil
+		return []*apipb.ShoppingListItem{}, nil
 	}
 
 	shoppingListServiceLogger.Debugw("Building shopping list for meals", "mealCount", len(mealIDs))
@@ -54,7 +55,7 @@ func (s *shoppingListService) GenerateShoppingListFromMeals(meals []*models.Meal
 }
 
 // ConvertIngredientsToShoppingItems converts ingredients to shopping list items
-func (s *shoppingListService) ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []models.ShoppingListItem {
+func (s *shoppingListService) ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []*apipb.ShoppingListItem {
 	shoppingListServiceLogger.Debugw("Converting ingredients to shopping list items", "ingredientCount", len(ingredients))
 	items := models.ConvertIngredientsToShoppingItems(ingredients)
 	shoppingListServiceLogger.Debugw("Converted to shopping list items", "itemCount", len(items))

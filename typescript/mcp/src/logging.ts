@@ -118,17 +118,17 @@ async function sendLog(level: string, message: string, fields: Record<string, st
 }
 
 export function debugLog(message: string, fields: Record<string, string> = {}) {
-  sendLog('DEBUG', message, fields);
+  return sendLog('DEBUG', message, fields);
 }
 
 export function infoLog(message: string, fields: Record<string, string> = {}) {
-  sendLog('INFO', message, fields);
+  return sendLog('INFO', message, fields);
 }
 
 export function warnLog(message: string, fields: Record<string, string> = {}) {
-  sendLog('WARN', message, fields);
+  return sendLog('WARN', message, fields);
 }
 
 export function errorLog(message: string, fields: Record<string, string> = {}) {
-  sendLog('ERROR', message, fields);
+  return sendLog('ERROR', message, fields);
 }

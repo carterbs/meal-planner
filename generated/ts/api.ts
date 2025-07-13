@@ -38,8 +38,8 @@ export interface Meal {
   steps: Step[];
 }
 
-export interface PlanDay {
-  meal: Meal | undefined;
+export interface MealPlanEntry {
+  meal?: Meal | undefined;
   dayIndex: number;
   mealType: string;
 }
@@ -51,16 +51,8 @@ export interface ShoppingListItem {
 }
 
 export interface WeeklyMealPlan {
-  days: PlanDay[];
+  days: MealPlanEntry[];
   shoppingList: ShoppingListItem[];
-}
-
-export interface MealPlanEntry {
-  /** 0=Monday..6=Sunday */
-  dayIndex: number;
-  /** breakfast, lunch, dinner */
-  mealType: string;
-  meal: Meal | undefined;
 }
 
 export interface SaveMealPlanRequest {
@@ -915,7 +907,20 @@ export const Meal: MessageFns<Meal> = {
       obj.effort = Math.round(message.effort);
     }
     if (message.lastPlanned !== undefined) {
-      obj.lastPlanned = message.lastPlanned.toISOString();
+      // Ensure we always serialize an ISO-8601 string. The generated type expects a Date, but in
+      // practice callers sometimes populate this field with a raw ISO string. Handle both cases
+      // gracefully so that serialization never throws.
+      if (message.lastPlanned instanceof Date) {
+        obj.lastPlanned = message.lastPlanned.toISOString();
+      } else {
+        // Fallback: attempt to parse string/number-like values into a Date, otherwise pass through.
+        try {
+          const dt = new Date(message.lastPlanned as unknown as string);
+          obj.lastPlanned = isNaN(dt.getTime()) ? (message.lastPlanned as unknown as string) : dt.toISOString();
+        } catch {
+          obj.lastPlanned = message.lastPlanned as unknown as string;
+        }
+      }
     }
     if (message.hasRedMeat !== false) {
       obj.hasRedMeat = message.hasRedMeat;
@@ -953,12 +958,12 @@ export const Meal: MessageFns<Meal> = {
   },
 };
 
-function createBasePlanDay(): PlanDay {
+function createBaseMealPlanEntry(): MealPlanEntry {
   return { meal: undefined, dayIndex: 0, mealType: "" };
 }
 
-export const PlanDay: MessageFns<PlanDay> = {
-  encode(message: PlanDay, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const MealPlanEntry: MessageFns<MealPlanEntry> = {
+  encode(message: MealPlanEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.meal !== undefined) {
       Meal.encode(message.meal, writer.uint32(10).fork()).join();
     }
@@ -971,10 +976,10 @@ export const PlanDay: MessageFns<PlanDay> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PlanDay {
+  decode(input: BinaryReader | Uint8Array, length?: number): MealPlanEntry {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePlanDay();
+    const message = createBaseMealPlanEntry();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1011,7 +1016,7 @@ export const PlanDay: MessageFns<PlanDay> = {
     return message;
   },
 
-  fromJSON(object: any): PlanDay {
+  fromJSON(object: any): MealPlanEntry {
     return {
       meal: isSet(object.meal) ? Meal.fromJSON(object.meal) : undefined,
       dayIndex: isSet(object.dayIndex) ? globalThis.Number(object.dayIndex) : 0,
@@ -1019,7 +1024,7 @@ export const PlanDay: MessageFns<PlanDay> = {
     };
   },
 
-  toJSON(message: PlanDay): unknown {
+  toJSON(message: MealPlanEntry): unknown {
     const obj: any = {};
     if (message.meal !== undefined) {
       obj.meal = Meal.toJSON(message.meal);
@@ -1033,11 +1038,11 @@ export const PlanDay: MessageFns<PlanDay> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<PlanDay>, I>>(base?: I): PlanDay {
-    return PlanDay.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<MealPlanEntry>, I>>(base?: I): MealPlanEntry {
+    return MealPlanEntry.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<PlanDay>, I>>(object: I): PlanDay {
-    const message = createBasePlanDay();
+  fromPartial<I extends Exact<DeepPartial<MealPlanEntry>, I>>(object: I): MealPlanEntry {
+    const message = createBaseMealPlanEntry();
     message.meal = (object.meal !== undefined && object.meal !== null) ? Meal.fromPartial(object.meal) : undefined;
     message.dayIndex = object.dayIndex ?? 0;
     message.mealType = object.mealType ?? "";
@@ -1144,7 +1149,7 @@ function createBaseWeeklyMealPlan(): WeeklyMealPlan {
 export const WeeklyMealPlan: MessageFns<WeeklyMealPlan> = {
   encode(message: WeeklyMealPlan, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     for (const v of message.days) {
-      PlanDay.encode(v!, writer.uint32(10).fork()).join();
+      MealPlanEntry.encode(v!, writer.uint32(10).fork()).join();
     }
     for (const v of message.shoppingList) {
       ShoppingListItem.encode(v!, writer.uint32(18).fork()).join();
@@ -1164,7 +1169,7 @@ export const WeeklyMealPlan: MessageFns<WeeklyMealPlan> = {
             break;
           }
 
-          message.days.push(PlanDay.decode(reader, reader.uint32()));
+          message.days.push(MealPlanEntry.decode(reader, reader.uint32()));
           continue;
         }
         case 2: {
@@ -1186,7 +1191,7 @@ export const WeeklyMealPlan: MessageFns<WeeklyMealPlan> = {
 
   fromJSON(object: any): WeeklyMealPlan {
     return {
-      days: globalThis.Array.isArray(object?.days) ? object.days.map((e: any) => PlanDay.fromJSON(e)) : [],
+      days: globalThis.Array.isArray(object?.days) ? object.days.map((e: any) => MealPlanEntry.fromJSON(e)) : [],
       shoppingList: globalThis.Array.isArray(object?.shoppingList)
         ? object.shoppingList.map((e: any) => ShoppingListItem.fromJSON(e))
         : [],
@@ -1196,7 +1201,7 @@ export const WeeklyMealPlan: MessageFns<WeeklyMealPlan> = {
   toJSON(message: WeeklyMealPlan): unknown {
     const obj: any = {};
     if (message.days?.length) {
-      obj.days = message.days.map((e) => PlanDay.toJSON(e));
+      obj.days = message.days.map((e) => MealPlanEntry.toJSON(e));
     }
     if (message.shoppingList?.length) {
       obj.shoppingList = message.shoppingList.map((e) => ShoppingListItem.toJSON(e));
@@ -1209,100 +1214,8 @@ export const WeeklyMealPlan: MessageFns<WeeklyMealPlan> = {
   },
   fromPartial<I extends Exact<DeepPartial<WeeklyMealPlan>, I>>(object: I): WeeklyMealPlan {
     const message = createBaseWeeklyMealPlan();
-    message.days = object.days?.map((e) => PlanDay.fromPartial(e)) || [];
+    message.days = object.days?.map((e) => MealPlanEntry.fromPartial(e)) || [];
     message.shoppingList = object.shoppingList?.map((e) => ShoppingListItem.fromPartial(e)) || [];
-    return message;
-  },
-};
-
-function createBaseMealPlanEntry(): MealPlanEntry {
-  return { dayIndex: 0, mealType: "", meal: undefined };
-}
-
-export const MealPlanEntry: MessageFns<MealPlanEntry> = {
-  encode(message: MealPlanEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.dayIndex !== 0) {
-      writer.uint32(8).int32(message.dayIndex);
-    }
-    if (message.mealType !== "") {
-      writer.uint32(18).string(message.mealType);
-    }
-    if (message.meal !== undefined) {
-      Meal.encode(message.meal, writer.uint32(26).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): MealPlanEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMealPlanEntry();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
-            break;
-          }
-
-          message.dayIndex = reader.int32();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.mealType = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.meal = Meal.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): MealPlanEntry {
-    return {
-      dayIndex: isSet(object.dayIndex) ? globalThis.Number(object.dayIndex) : 0,
-      mealType: isSet(object.mealType) ? globalThis.String(object.mealType) : "",
-      meal: isSet(object.meal) ? Meal.fromJSON(object.meal) : undefined,
-    };
-  },
-
-  toJSON(message: MealPlanEntry): unknown {
-    const obj: any = {};
-    if (message.dayIndex !== 0) {
-      obj.dayIndex = Math.round(message.dayIndex);
-    }
-    if (message.mealType !== "") {
-      obj.mealType = message.mealType;
-    }
-    if (message.meal !== undefined) {
-      obj.meal = Meal.toJSON(message.meal);
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<MealPlanEntry>, I>>(base?: I): MealPlanEntry {
-    return MealPlanEntry.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<MealPlanEntry>, I>>(object: I): MealPlanEntry {
-    const message = createBaseMealPlanEntry();
-    message.dayIndex = object.dayIndex ?? 0;
-    message.mealType = object.mealType ?? "";
-    message.meal = (object.meal !== undefined && object.meal !== null) ? Meal.fromPartial(object.meal) : undefined;
     return message;
   },
 };

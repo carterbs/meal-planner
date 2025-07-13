@@ -4,16 +4,12 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	apipb "mealplanner/generated/go"
 )
 
-// ShoppingListItem represents a single entry in the generated shopping list.
-// Ingredient is the name of the item and Quantity is a human readable amount
-// (e.g. "1 cup"). Category is optional and may be empty.
-type ShoppingListItem struct {
-	Ingredient string `json:"ingredient"`
-	Quantity   string `json:"quantity"`
-	Category   string `json:"category,omitempty"`
-}
+// ShoppingListItem is an alias to the generated protobuf type
+type ShoppingListItem = apipb.ShoppingListItem
 
 // GenerateShoppingListFromMeals aggregates the ingredients needed for the given meals.
 // It returns a sorted slice of unique ingredients with aggregated quantities.
@@ -52,11 +48,11 @@ func GenerateShoppingListFromMeals(meals []*Meal) []*Ingredient {
 }
 
 // ConvertIngredients converts a slice of Ingredient into ShoppingListItem entries.
-func ConvertIngredientsToShoppingItems(ings []*Ingredient) []ShoppingListItem {
-	items := make([]ShoppingListItem, 0, len(ings))
+func ConvertIngredientsToShoppingItems(ings []*Ingredient) []*ShoppingListItem {
+	items := make([]*apipb.ShoppingListItem, 0, len(ings))
 	for _, ing := range ings {
 		qty := strings.TrimSpace(fmt.Sprintf("%v %s", ing.GetQuantity(), ing.GetUnit()))
-		items = append(items, ShoppingListItem{
+		items = append(items, &apipb.ShoppingListItem{
 			Ingredient: ing.GetName(),
 			Quantity:   strings.TrimSpace(qty),
 		})

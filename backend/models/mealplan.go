@@ -7,27 +7,23 @@ import (
 	"strings"
 	"time"
 
+	apipb "mealplanner/generated/go"
+	"mealplanner/logging"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// PlanDay represents a single meal slot in the plan using the array based
-// representation preferred by the agent workflow.
-type PlanDay struct {
-	Meal     *Meal  `json:"meal"`
-	DayIndex int    `json:"dayIndex"` // 0=Monday .. 6=Sunday
-	MealType string `json:"mealType"` // breakfast, lunch or dinner
-}
+// PlanDay is an alias to the generated protobuf type
+type PlanDay = apipb.MealPlanEntry
 
-// WeeklyMealPlan represents a week's worth of meals as a flat array of PlanDay
-// entries.  This mirrors the structure produced and consumed by the agent.
-type WeeklyMealPlan struct {
-	Days         []PlanDay          `json:"days"`
-	ShoppingList []ShoppingListItem `json:"shoppingList,omitempty"`
-}
+// WeeklyMealPlan is an alias to the generated protobuf type
+type WeeklyMealPlan = apipb.WeeklyMealPlan
+
+var mealPlanServiceLogger = logging.GetGrpcLogger("meal-plan-service")
 
 // GenerateWeeklyMealPlan generates a weekly plan with breakfast, lunch, and dinner.
 func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
-	plan := &WeeklyMealPlan{Days: make([]PlanDay, 0, 21)}
+	plan := &WeeklyMealPlan{Days: make([]*PlanDay, 0, 21)}
 	redMeatUsed := false
 	threeWeeksAgo := time.Now().AddDate(0, 0, -21)
 
@@ -58,7 +54,14 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 			if mealType == "dinner" && meal != nil && meal.GetHasRedMeat() {
 				redMeatUsed = true
 			}
-			plan.Days = append(plan.Days, PlanDay{Meal: meal, DayIndex: i, MealType: mealType})
+			//log the day that we're adding to the plan
+			if meal != nil {
+				mealPlanServiceLogger.Debugw("Adding meal to plan with dayIndex", "dayIndex", int32(i), "mealName", meal.Name)
+			} else {
+				mealPlanServiceLogger.Debugw("Adding nil meal to plan with dayIndex", "dayIndex", int32(i))
+			}
+
+			plan.Days = append(plan.Days, &apipb.MealPlanEntry{Meal: meal, DayIndex: int32(i), MealType: mealType})
 		}
 	}
 
@@ -69,6 +72,9 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 			break
 		}
 	}
+
+	// log dayIndex for the 8th meal
+	mealPlanServiceLogger.Debugw("In the model, 8th meal", "dayIndex", plan.Days[7].DayIndex)
 
 	return plan, nil
 }
@@ -128,7 +134,7 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 
 // GetLastPlannedMeals retrieves the most recently planned meals to reconstruct the last meal plan
 func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
-	plan := &WeeklyMealPlan{Days: make([]PlanDay, 0, 21)}
+	plan := &WeeklyMealPlan{Days: make([]*PlanDay, 0, 21)}
 	// Friday is now included for breakfast and lunch, but dinner is always "Eating out"
 	weekdays := DaysOfTheWeek
 	numMealsNeeded := len(weekdays)
@@ -154,11 +160,7 @@ func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
 	}
 
 	for i := range weekdays {
-		plan.Days = append(plan.Days,
-			PlanDay{DayIndex: i, MealType: "breakfast", Meal: lastBreakfasts[i]},
-			PlanDay{DayIndex: i, MealType: "lunch", Meal: lastLunches[i]},
-			PlanDay{DayIndex: i, MealType: "dinner", Meal: lastDinners[i]},
-		)
+		plan.Days = append(plan.Days, &apipb.MealPlanEntry{DayIndex: int32(i), MealType: "breakfast", Meal: lastBreakfasts[i]}, &apipb.MealPlanEntry{DayIndex: int32(i), MealType: "lunch", Meal: lastLunches[i]}, &apipb.MealPlanEntry{DayIndex: int32(i), MealType: "dinner", Meal: lastDinners[i]})
 	}
 
 	for idx := range plan.Days {
@@ -231,10 +233,11 @@ func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 	// Build lookup maps for quick access
 	mealsByDay := make(map[int]map[string]*Meal)
 	for _, pd := range plan.Days {
-		if _, ok := mealsByDay[pd.DayIndex]; !ok {
-			mealsByDay[pd.DayIndex] = make(map[string]*Meal)
+		dayIdx := int(pd.DayIndex)
+		if _, ok := mealsByDay[dayIdx]; !ok {
+			mealsByDay[dayIdx] = make(map[string]*Meal)
 		}
-		mealsByDay[pd.DayIndex][strings.Title(pd.MealType)] = pd.Meal
+		mealsByDay[dayIdx][strings.Title(pd.MealType)] = pd.Meal
 	}
 
 	var b strings.Builder
@@ -306,8 +309,8 @@ func RemoveMealFromPlan(plan *WeeklyMealPlan, dayIndex int, mealType string) err
 	}
 
 	for i := range plan.Days {
-		d := &plan.Days[i]
-		if d.DayIndex == dayIndex && d.MealType == mealType {
+		d := plan.Days[i]
+		if int(d.DayIndex) == dayIndex && d.MealType == mealType {
 			if d.Meal == nil {
 				return errors.New("meal already empty")
 			}
@@ -321,7 +324,7 @@ func RemoveMealFromPlan(plan *WeeklyMealPlan, dayIndex int, mealType string) err
 // BuildShoppingListFromPlan aggregates all ingredients referenced in the plan's
 // meals and returns them as ShoppingListItem entries.
 // The plan's Meal objects must include ingredient details.
-func BuildShoppingListFromPlan(plan *WeeklyMealPlan) []ShoppingListItem {
+func BuildShoppingListFromPlan(plan *WeeklyMealPlan) []*ShoppingListItem {
 	if plan == nil {
 		return nil
 	}
