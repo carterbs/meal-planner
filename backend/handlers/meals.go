@@ -19,25 +19,12 @@ import (
 )
 
 // WorkflowService is the service instance for workflow operations
-// toProtoWeeklyMealPlan converts internal model to protobuf WeeklyMealPlan
-func toProtoWeeklyMealPlan(plan *models.WeeklyMealPlan) *apipb.WeeklyMealPlan {
-	pb := &apipb.WeeklyMealPlan{Days: make([]*apipb.PlanDay, len(plan.Days))}
-	for i, d := range plan.Days {
-		pb.Days[i] = &apipb.PlanDay{Meal: d.Meal, DayIndex: int32(d.DayIndex), MealType: d.MealType}
-	}
-	pb.ShoppingList = make([]*apipb.ShoppingListItem, len(plan.ShoppingList))
-	for i, item := range plan.ShoppingList {
-		pb.ShoppingList[i] = &apipb.ShoppingListItem{Ingredient: item.Ingredient, Quantity: item.Quantity, Category: item.Category}
-	}
-
-	return pb
-}
 
 var WorkflowService services.WorkflowService
 
 // attachShoppingList populates plan.ShoppingList by querying ingredients for all
 // meals referenced in the plan.
-func attachShoppingList(plan *models.WeeklyMealPlan) {
+func attachShoppingList(plan *apipb.WeeklyMealPlan) {
 	mealIDs := []int{}
 	for _, d := range plan.Days {
 		if d.Meal != nil {
@@ -86,7 +73,7 @@ func GetAllMealsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	// Marshal and write meals response as proto JSON
 	resp := &apipb.GetAllMealsResponse{Meals: meals}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	b, err := protojson.Marshal(resp)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal meals response: %v", err), http.StatusInternalServerError)
 		return
@@ -140,8 +127,8 @@ func RemoveMealHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	// Marshal and write updated plan response as proto JSON
-	resp := &apipb.RemoveMealResponse{Plan: toProtoWeeklyMealPlan(plan)}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	resp := &apipb.RemoveMealResponse{Plan: plan}
+	b, err := protojson.Marshal(resp)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal updated plan response: %v", err), http.StatusInternalServerError)
@@ -170,7 +157,7 @@ func SwapMealHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	// Marshal and write swap meal response as proto JSON
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(newMeal)
+	b, err := protojson.Marshal(newMeal)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal swap meal response: %v", err), http.StatusInternalServerError)
 		return
@@ -222,7 +209,7 @@ func UpdateMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	// Marshal and write update ingredient response as proto JSON
 	resp := &apipb.UpdateMealIngredientResponse{Meal: meal}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	b, err := protojson.Marshal(resp)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal meal response: %v", err), http.StatusInternalServerError)
 		return
@@ -259,7 +246,7 @@ func DeleteMealIngredientHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	// Marshal and write delete ingredient response as proto JSON
 	resp := &apipb.DeleteMealIngredientResponse{Meal: meal}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	b, err := protojson.Marshal(resp)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal meal response: %v", err), http.StatusInternalServerError)
 		return
@@ -310,7 +297,7 @@ func ReplaceMealHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	// Marshal and write meal response as proto JSON
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(meal)
+	b, err := protojson.Marshal(meal)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal meal response: %v", err), http.StatusInternalServerError)
 		return
@@ -325,7 +312,7 @@ func FinalizeMealPlanHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	var plan models.WeeklyMealPlan
+	var plan apipb.WeeklyMealPlan
 	if err := json.Unmarshal(body, &plan); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
@@ -385,7 +372,7 @@ func CreateMealHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	// Marshal and write created meal response as proto JSON
 	resp := &apipb.CreateMealResponse{Meal: createdMeal}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	b, err := protojson.Marshal(resp)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal created meal response: %v", err), http.StatusInternalServerError)
 		return

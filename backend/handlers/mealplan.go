@@ -27,7 +27,7 @@ var mealplanHandlerLogger = logging.GetGrpcLogger("mealplan-handler")
 // generateShoppingListForPlan populates plan.ShoppingList using meal IDs found
 // in the plan. It fetches full meal details if needed and aggregates the
 // ingredients.
-func generateShoppingListForPlan(plan *models.WeeklyMealPlan) error {
+func generateShoppingListForPlan(plan *apipb.WeeklyMealPlan) error {
 	mealIDs := make([]int, 0)
 	for _, d := range plan.Days {
 		if d.Meal != nil {
@@ -50,7 +50,7 @@ func generateShoppingListForPlan(plan *models.WeeklyMealPlan) error {
 // GetMealPlan retrieves a meal plan - either the last saved one or generates a new one if none exists.
 func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 	// First try to get the last planned meals
-	var plan *models.WeeklyMealPlan
+	var plan *apipb.WeeklyMealPlan
 	var err error
 	// Use service layer for all database operations
 	plan, err = Services.MealPlanService.GetLastPlannedMeals()
@@ -73,8 +73,8 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 		mealplanHandlerLogger.Errorw("Error generating shopping list", "error", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	resp := &apipb.GetMealPlanResponse{Plan: toProtoWeeklyMealPlan(detailedPlan)}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	resp := &apipb.GetMealPlanResponse{Plan: detailedPlan}
+	b, err := protojson.Marshal(resp)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
 		return
@@ -84,7 +84,7 @@ func GetMealPlan(w http.ResponseWriter, r *http.Request) {
 
 // GenerateMealPlan generates a new weekly meal plan regardless of whether a recent one exists.
 func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
-	var plan *models.WeeklyMealPlan
+	var plan *apipb.WeeklyMealPlan
 	var err error
 	// Use service layer for all database operations
 	plan, err = Services.MealPlanService.GenerateWeeklyMealPlan()
@@ -92,6 +92,10 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error generating meal plan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// log the 8th day of the plan, pre detail population
+	mealplanHandlerLogger.Debugw("GenerateMealPlan, pre-detail-population")
+	mealplanHandlerLogger.Debug(plan.Days[7].DayIndex)
 
 	detailedPlan, err := Services.MealPlanService.PopulateMealDetails(plan)
 	if err != nil {
@@ -103,12 +107,15 @@ func GenerateMealPlan(w http.ResponseWriter, r *http.Request) {
 	// Handle skip_days by converting to a map and excluding skipped days
 
 	w.Header().Set("Content-Type", "application/json")
-	resp := &apipb.GetMealPlanResponse{Plan: toProtoWeeklyMealPlan(detailedPlan)}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
-	mealplanHandlerLogger.Debugw("8th meal", "meal", resp.Plan.Days[7].Meal.Name, resp.Plan.Days[7].MealType, resp.Plan.Days[7].DayIndex)
-	mealplanHandlerLogger.Debugw("Go model - 1st day", "dayIndex", detailedPlan.Days[0].DayIndex, "mealType", detailedPlan.Days[0].MealType)
-	mealplanHandlerLogger.Debugw("Go model - 8th day", "dayIndex", detailedPlan.Days[7].DayIndex, "mealType", detailedPlan.Days[7].MealType)
+	resp := &apipb.GetMealPlanResponse{Plan: detailedPlan}
+	// log the 8th meal of the detailed plan
+	mealplanHandlerLogger.Debugw("8th meal from detailed plan")
+	mealplanHandlerLogger.Debug(detailedPlan.Days[7].DayIndex)
 
+	b, err := protojson.MarshalOptions{UseProtoNames: false, EmitUnpopulated: true}.Marshal(resp)
+	// log the marhsalled json
+	mealplanHandlerLogger.Debugw("marshaled json")
+	mealplanHandlerLogger.Debugw(string(b))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
 		return
@@ -195,7 +202,7 @@ func GetShoppingList(w http.ResponseWriter, r *http.Request) {
 	for i, item := range items {
 		resp.Items[i] = &apipb.ShoppingListItem{Ingredient: item.Ingredient, Quantity: item.Quantity, Category: item.Category}
 	}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	b, err := protojson.Marshal(resp)
 	if err != nil {
 		http.Error(w, "Error marshalling response: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -213,7 +220,7 @@ func convertInt32SliceToInt(in []int32) []int {
 	return out
 }
 
-func buildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
+func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
 	// Use service layer for all database operations
 	return Services.ShoppingListService.BuildShoppingList(mealIDs)
 }
@@ -221,7 +228,7 @@ func buildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error) {
 // AGENT-REFACTOR: split up the ICS and the meal plan stuff. they're two separate features
 // MealPlanICSHandler returns the current meal plan as an iCalendar file.
 func MealPlanICSHandler(w http.ResponseWriter, r *http.Request) {
-	var plan *models.WeeklyMealPlan
+	var plan *apipb.WeeklyMealPlan
 	var err error
 	// Use service layer for all database operations
 	plan, err = Services.MealPlanService.GetLastPlannedMeals()

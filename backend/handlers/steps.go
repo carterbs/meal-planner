@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"google.golang.org/protobuf/encoding/protojson"
 	"io"
 	"mealplanner/models"
 	"net/http"
@@ -10,8 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	apipb "mealplanner/generated/go"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // GetStepsHandler handles GET /api/meals/{mealId}/steps and returns all steps for a meal.
@@ -37,7 +39,7 @@ func GetStepsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	resp := &apipb.GetStepsResponse{Steps: steps}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	b, err := protojson.Marshal(resp)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
 		return
@@ -82,7 +84,7 @@ func AddStepHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	resp := &apipb.AddStepResponse{Step: createdStep}
-	b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp)
+	b, err := protojson.Marshal(resp)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
 		return
@@ -155,7 +157,7 @@ func AddBulkStepsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	resp2 := &apipb.AddBulkStepsResponse{Steps: steps}
-	b2, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(resp2)
+	b2, err := protojson.Marshal(resp2)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to marshal response: %v", err), http.StatusInternalServerError)
 		return

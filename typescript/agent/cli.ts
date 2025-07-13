@@ -16,7 +16,7 @@ import { debugLog as grpcDebugLog } from './logging';
 
 // Debug logger that works in JSON mode
 export function debugLog(message: string, fields?: Record<string, string>) {
-  grpcDebugLog(message, fields);
+  return grpcDebugLog(message, fields);
 }
 
 // Avoid emitting logs to stdout before JSON capture is set up
@@ -395,8 +395,10 @@ planCommand
         process.exit(0);
       }
     } catch (error) {
+      const errMsg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
+      debugLog(`Full error stack: ${errMsg}`);
       outputError(
-        `Error starting meal planning session: ${error instanceof Error ? error.message : error}`,
+        `Error starting meal planning session: ${errMsg}`,
         isJsonMode,
       );
     }

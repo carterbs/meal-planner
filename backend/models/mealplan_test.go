@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	apipb "mealplanner/generated/go"
 )
 
 func TestPickMeal(t *testing.T) {
@@ -354,9 +355,9 @@ func TestGetLastPlannedMeals(t *testing.T) {
 func TestRemoveMealFromPlan(t *testing.T) {
 	plan := &WeeklyMealPlan{
 		Days: []PlanDay{
-			{DayIndex: 0, MealType: "breakfast", Meal: &Meal{Id: 1, Name: "A"}},
-			{DayIndex: 1, MealType: "lunch", Meal: &Meal{Id: 2, Name: "B"}},
-			{DayIndex: 2, MealType: "dinner", Meal: &Meal{Id: 3, Name: "C"}},
+			{DayIndex: int32(0), MealType: "breakfast", Meal: &Meal{Id: 1, Name: "A"}},
+			{DayIndex: int32(1), MealType: "lunch", Meal: &Meal{Id: 2, Name: "B"}},
+			{DayIndex: int32(2), MealType: "dinner", Meal: &Meal{Id: 3, Name: "C"}},
 		},
 	}
 
@@ -390,8 +391,8 @@ func TestRemoveMealFromPlan(t *testing.T) {
 func TestBuildShoppingListFromPlan(t *testing.T) {
 	plan := &WeeklyMealPlan{
 		Days: []PlanDay{
-			{DayIndex: 0, MealType: "dinner", Meal: &Meal{Id: 1, Ingredients: []*Ingredient{{Name: "Eggs", Quantity: 1, Unit: ""}}}},
-			{DayIndex: 1, MealType: "dinner", Meal: &Meal{Id: 2, Ingredients: []*Ingredient{{Name: "Milk", Quantity: 2, Unit: "cups"}}}},
+			{DayIndex: int32(0), MealType: "dinner", Meal: &Meal{Id: 1, Ingredients: []*Ingredient{{Name: "Eggs", Quantity: 1, Unit: ""}}}},
+			{DayIndex: int32(1), MealType: "dinner", Meal: &Meal{Id: 2, Ingredients: []*Ingredient{{Name: "Milk", Quantity: 2, Unit: "cups"}}}},
 		},
 	}
 

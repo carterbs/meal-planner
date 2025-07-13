@@ -25,8 +25,8 @@ export interface Meal {
     ingredients: Ingredient[];
     steps: Step[];
 }
-export interface PlanDay {
-    meal: Meal | undefined;
+export interface MealPlanEntry {
+    meal?: Meal | undefined;
     dayIndex: number;
     mealType: string;
 }
@@ -36,15 +36,8 @@ export interface ShoppingListItem {
     category: string;
 }
 export interface WeeklyMealPlan {
-    days: PlanDay[];
+    days: MealPlanEntry[];
     shoppingList: ShoppingListItem[];
-}
-export interface MealPlanEntry {
-    /** 0=Monday..6=Sunday */
-    dayIndex: number;
-    /** breakfast, lunch, dinner */
-    mealType: string;
-    meal: Meal | undefined;
 }
 export interface SaveMealPlanRequest {
     threadId: string;
@@ -421,10 +414,9 @@ export interface LogBatchResponse {
 export declare const Ingredient: MessageFns<Ingredient>;
 export declare const Step: MessageFns<Step>;
 export declare const Meal: MessageFns<Meal>;
-export declare const PlanDay: MessageFns<PlanDay>;
+export declare const MealPlanEntry: MessageFns<MealPlanEntry>;
 export declare const ShoppingListItem: MessageFns<ShoppingListItem>;
 export declare const WeeklyMealPlan: MessageFns<WeeklyMealPlan>;
-export declare const MealPlanEntry: MessageFns<MealPlanEntry>;
 export declare const SaveMealPlanRequest: MessageFns<SaveMealPlanRequest>;
 export declare const MealPlanIdentifier: MessageFns<MealPlanIdentifier>;
 export declare const SaveCheckpointRequest: MessageFns<SaveCheckpointRequest>;

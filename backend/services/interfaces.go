@@ -1,6 +1,7 @@
 package services
 
 import (
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 )
 
@@ -44,10 +45,10 @@ type RecipeStepService interface {
 
 // MealPlanService handles meal plan generation and management
 type MealPlanService interface {
-	GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error)
-	GetLastPlannedMeals() (*models.WeeklyMealPlan, error)
-	PopulateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error)
-	RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error
+	GenerateWeeklyMealPlan() (*apipb.WeeklyMealPlan, error)
+	GetLastPlannedMeals() (*apipb.WeeklyMealPlan, error)
+	PopulateMealDetails(plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error)
+	RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error
 
 	// Persistence operations
 	SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error)
@@ -57,9 +58,9 @@ type MealPlanService interface {
 
 // ShoppingListService handles shopping list operations
 type ShoppingListService interface {
-	BuildShoppingList(mealIDs []int) ([]models.ShoppingListItem, error)
+	BuildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error)
 	GenerateShoppingListFromMeals(meals []*models.Meal) []*models.Ingredient
-	ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []models.ShoppingListItem
+	ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []*apipb.ShoppingListItem
 }
 
 // MessageService handles chat message operations
@@ -72,8 +73,8 @@ type MessageService interface {
 // WorkflowService handles workflow state management (expanded)
 type WorkflowService interface {
 	// Existing methods
-	GetMealPlan(threadID string) (*models.WeeklyMealPlan, error)
-	UpdateMealPlan(threadID string, plan *models.WeeklyMealPlan) error
+	GetMealPlan(threadID string) (*apipb.WeeklyMealPlan, error)
+	UpdateMealPlan(threadID string, plan *apipb.WeeklyMealPlan) error
 	GetWorkflowState(threadID string) (*models.InternalWorkflowState, error)
 	UpdateWorkflowState(threadID string, state *models.InternalWorkflowState) error
 

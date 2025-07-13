@@ -8,6 +8,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	apipb "mealplanner/generated/go"
 )
 
 func TestSaveMealPlan_Success(t *testing.T) {
@@ -17,9 +18,9 @@ func TestSaveMealPlan_Success(t *testing.T) {
 
 	threadID := "thread1"
 	version := 1
-	testMeal := map[string]interface{}{"id": 101, "name": "Test Meal"}
+	testMeal := &Meal{Id: 101, Name: "Test Meal"}
 	entries := []MealPlanEntry{
-		{DayIndex: 0, MealType: "breakfast", Meal: testMeal},
+		{DayIndex: int32(0), MealType: "breakfast", Meal: testMeal},
 	}
 
 	// Mock plan insert

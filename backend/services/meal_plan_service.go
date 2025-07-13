@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
 	"mealplanner/models"
 )
@@ -20,7 +21,7 @@ func NewMealPlanService(db *sql.DB) MealPlanService {
 }
 
 // GenerateWeeklyMealPlan generates a new weekly meal plan
-func (s *mealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, error) {
+func (s *mealPlanService) GenerateWeeklyMealPlan() (*apipb.WeeklyMealPlan, error) {
 	mealPlanServiceLogger.Info("Generating new weekly meal plan")
 	plan, err := models.GenerateWeeklyMealPlan(s.db)
 	if err != nil {
@@ -32,7 +33,7 @@ func (s *mealPlanService) GenerateWeeklyMealPlan() (*models.WeeklyMealPlan, erro
 }
 
 // GetLastPlannedMeals retrieves the most recently planned meals
-func (s *mealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) {
+func (s *mealPlanService) GetLastPlannedMeals() (*apipb.WeeklyMealPlan, error) {
 	mealPlanServiceLogger.Info("Retrieving last planned meals")
 	plan, err := models.GetLastPlannedMeals(s.db)
 	if err != nil {
@@ -44,7 +45,7 @@ func (s *mealPlanService) GetLastPlannedMeals() (*models.WeeklyMealPlan, error) 
 }
 
 // PopulateMealDetails populates meal details for a given plan
-func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
+func (s *mealPlanService) PopulateMealDetails(plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error) {
 	if plan == nil {
 		return nil, fmt.Errorf("plan is nil")
 	}
@@ -79,11 +80,11 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 
 	// Create a copy of the plan with populated meal details
 	populatedPlan := *plan
-	populatedPlan.Days = make([]models.PlanDay, len(plan.Days))
+	populatedPlan.Days = make([]*apipb.MealPlanEntry, len(plan.Days))
 	copy(populatedPlan.Days, plan.Days)
 
 	for i := range populatedPlan.Days {
-		d := &populatedPlan.Days[i]
+		d := populatedPlan.Days[i]
 		if d.Meal != nil {
 			if fullMeal, ok := mealMap[int(d.Meal.GetId())]; ok {
 				d.Meal = fullMeal
@@ -96,7 +97,7 @@ func (s *mealPlanService) PopulateMealDetails(plan *models.WeeklyMealPlan) (*mod
 }
 
 // RemoveMealFromPlan removes a meal from a specific day and meal type
-func (s *mealPlanService) RemoveMealFromPlan(plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
+func (s *mealPlanService) RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error {
 	mealPlanServiceLogger.Debugw("Removing meal from plan", "dayIndex", dayIndex, "mealType", mealType)
 	err := models.RemoveMealFromPlan(plan, dayIndex, mealType)
 	if err != nil {

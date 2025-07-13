@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 )
 
@@ -141,7 +142,7 @@ func GenerateWeeklyMealPlan() (map[string]*models.Meal, error) {
 }
 
 // GenerateWeeklyMealPlanStruct creates a meal plan using the new WeeklyMealPlan struct format
-func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
+func GenerateWeeklyMealPlanStruct() (*apipb.WeeklyMealPlan, error) {
 	rand.Seed(time.Now().UnixNano())
 	redUsed := false
 
@@ -192,7 +193,7 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 	dayNames := models.DaysOfTheWeek
 	mealTypes := []string{"breakfast", "lunch", "dinner"}
 
-	plan := &models.WeeklyMealPlan{Days: make([]models.PlanDay, 0, 21)}
+	plan := &apipb.WeeklyMealPlan{Days: make([]*apipb.MealPlanEntry, 0, 21)}
 	for i, day := range dayNames {
 		for _, mt := range mealTypes {
 			minEffort, maxEffort := 0, 2
@@ -205,7 +206,7 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 				}
 			}
 			meal := pick(minEffort, maxEffort, mt)
-			plan.Days = append(plan.Days, models.PlanDay{DayIndex: i, MealType: mt, Meal: meal})
+			plan.Days = append(plan.Days, &apipb.MealPlanEntry{DayIndex: int32(i), MealType: mt, Meal: meal})
 		}
 	}
 

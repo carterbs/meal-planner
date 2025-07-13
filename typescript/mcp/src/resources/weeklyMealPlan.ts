@@ -1,14 +1,14 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
-import type { WeeklyMealPlan } from '@mealplanner/generated';
+import { GetMealPlanResponse } from '@mealplanner/generated';
 
-export async function fetchWeeklyMealPlan(): Promise<WeeklyMealPlan> {
+export async function fetchWeeklyMealPlan(): Promise<GetMealPlanResponse> {
   const response = await fetch(`${API}/api/mealplan`);
   if (!response.ok) {
     throw new McpError(-32000, `BackendError: ${response.statusText}`);
   }
-  return response.json();
+  return await response.json() as GetMealPlanResponse;
 }
 
 export function registerWeeklyMealPlan(server: McpServer) {

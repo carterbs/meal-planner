@@ -373,7 +373,7 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 	)
 
 	if msg, ok := v.(proto.Message); ok {
-		b, err = protojson.MarshalOptions{UseProtoNames: true}.Marshal(msg)
+		b, err = protojson.Marshal(msg)
 	} else {
 		b, err = json.Marshal(v)
 	}

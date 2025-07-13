@@ -15,7 +15,7 @@
         "start": "yarn kill:servers &&node scripts/start.js",
         "start:mcp": "node scripts/start-mcp.js",
         "stop:logging": "kill -9 $(lsof -t -i :50052)",
-        "test:e2e": "./scripts/e2e_remove_friday.sh",
+        "test:e2e": "ts-node ./scripts/e2e_remove_friday.ts",
         "test:backend": "cd backend && make test",
         "test:mcp": "cd typescript/mcp && go test -v ./...",
         "test:frontend": "cd typescript/ui && yarn test",
@@ -34,10 +34,13 @@
         "react-dom": "18.2.0"
     },
     "devDependencies": {
+        "@types/node": "^24.0.13",
         "chalk": "^4.1.2",
         "concurrently": "^7.6.0",
         "prettier": "^3.6.2",
+        "ts-node": "^10.9.2",
         "ts-proto": "^2.7.5",
+        "typescript": "^5.8.3",
         "wait-on": "^7.1.0"
     },
     "packageManager": "yarn@4.9.1"

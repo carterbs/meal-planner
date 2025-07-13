@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
 	"mealplanner/models"
 )
@@ -22,7 +23,7 @@ func NewWorkflowService(db *sql.DB) WorkflowService {
 }
 
 // GetMealPlan retrieves the meal plan for a specific workflow thread
-func (s *workflowService) GetMealPlan(threadID string) (*models.WeeklyMealPlan, error) {
+func (s *workflowService) GetMealPlan(threadID string) (*apipb.WeeklyMealPlan, error) {
 	state, err := s.GetWorkflowState(threadID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow state: %w", err)
@@ -36,7 +37,36 @@ func (s *workflowService) GetMealPlan(threadID string) (*models.WeeklyMealPlan, 
 }
 
 // UpdateMealPlan updates the meal plan for a specific workflow thread
-func (s *workflowService) UpdateMealPlan(threadID string, plan *models.WeeklyMealPlan) error {
+func (s *workflowService) UpdateMealPlan(threadID string, plan *apipb.WeeklyMealPlan) error {
+	// Persist the plan to the relational tables as a new version so that
+	// GET /api/workflows/{threadId} (which reads from those tables) reflects
+	// the latest state. This keeps the database in sync with the checkpoint.
+
+	// 1. Determine the next version number.
+	var version int
+	if latest, err := models.GetLatestMealPlan(s.db, threadID); err == nil {
+		version = latest.Version + 1
+	} else if err == sql.ErrNoRows {
+		version = 1
+	} else if err != nil {
+		workflowServiceLogger.Warnw("Failed to fetch latest meal plan version - skipping RDBMS persist", "error", err)
+	}
+
+	// 2. Convert WeeklyMealPlan -> []MealPlanEntry
+	entries := make([]models.MealPlanEntry, 0, len(plan.Days))
+	for _, d := range plan.Days {
+		entries = append(entries, models.MealPlanEntry{
+			DayIndex: int32(d.DayIndex),
+			MealType: d.MealType,
+			Meal:     d.Meal,
+		})
+	}
+
+	if version > 0 {
+		if _, err := models.SaveMealPlan(s.db, threadID, version, entries); err != nil {
+			workflowServiceLogger.Warnw("Failed to persist updated meal plan", "error", err)
+		}
+	}
 	state, err := s.GetWorkflowState(threadID)
 	if err != nil {
 		return fmt.Errorf("failed to get workflow state: %w", err)
@@ -45,6 +75,7 @@ func (s *workflowService) UpdateMealPlan(threadID string, plan *models.WeeklyMea
 	state.MealPlan = plan
 	state.UpdatedAt = time.Now()
 
+	// 3. Update checkpoint as before
 	return s.UpdateWorkflowState(threadID, state)
 }
 
@@ -198,3 +229,7 @@ func (s *workflowService) UpdateWorkflowCheckpoint(threadID string, data []byte)
 	workflowServiceLogger.Debugw("Successfully updated workflow checkpoint for thread ID", "threadID", threadID)
 	return nil
 }
+
+/**
+Note for tomorrow.it appears that by the first time we try to get a checkpoint. dayIndex is already 0 for the whole plan.
+**/

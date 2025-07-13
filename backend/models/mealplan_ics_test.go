@@ -1,6 +1,7 @@
 package models
 
 import (
+	apipb "mealplanner/generated/go"
 	"strings"
 	"testing"
 	"time"
@@ -9,8 +10,8 @@ import (
 func TestMealPlanToICS(t *testing.T) {
 	plan := &WeeklyMealPlan{
 		Days: []PlanDay{
-			{DayIndex: 0, MealType: "dinner", Meal: &Meal{Id: 1, Name: "Test Meal", Url: "https://example.com"}},
-			{DayIndex: 1, MealType: "dinner", Meal: &Meal{Id: 2, Name: "Another Meal"}},
+			{DayIndex: int32(0), MealType: "dinner", Meal: &Meal{Id: 1, Name: "Test Meal", Url: "https://example.com"}},
+			{DayIndex: int32(1), MealType: "dinner", Meal: &Meal{Id: 2, Name: "Another Meal"}},
 		},
 	}
 	monday := time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC)

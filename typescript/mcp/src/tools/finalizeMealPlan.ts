@@ -3,14 +3,13 @@ import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
 import { FinalizeMealPlanResponse } from '@mealplanner/generated';
 
-export async function finalizePlan() {
+export async function finalizePlan(): Promise<FinalizeMealPlanResponse> {
   const resp = await fetch(`${API}/api/mealplan/finalize`, { method: 'POST' });
   if (!resp.ok) {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   }
   const responseJson = await resp.json();
-  const data = FinalizeMealPlanResponse.fromJSON(responseJson);
-  return data.message;
+  return FinalizeMealPlanResponse.fromJSON(responseJson)
 }
 
 export function registerFinalizeMealPlan(server: McpServer) {
@@ -18,9 +17,9 @@ export function registerFinalizeMealPlan(server: McpServer) {
     'finalizeMealPlan',
     'Finalize the current meal plan and make it the active meal plan. This commits the planned meals and makes them permanent until a new plan is generated.',
     async () => {
-      const text = await finalizePlan();
+      const result = await finalizePlan();
       return {
-        content: [{ type: 'text', text }]
+        content: [{ type: 'text', text: JSON.stringify(result) }]
       };
     }
   );

@@ -7,7 +7,7 @@ export const deleteRecipeArgs = z.object({
   id: z.number().int().positive().describe("The unique ID of the recipe to permanently delete from the database")
 });
 
-export async function deleteRecipe(id: number) {
+export async function deleteRecipe(id: number): Promise<any> {
   const resp = await fetch(`${API}/api/meals/${id}`, { method: 'DELETE' });
   if (!resp.ok) throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   return resp.json();

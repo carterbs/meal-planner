@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { API } from '../utils.js';
+import { RemoveMealRequest } from '@mealplanner/generated';
 
 export const removeMealArgs = z.object({
   threadId: z.string().describe('Agent session thread ID'),
@@ -12,8 +13,8 @@ export const removeMealArgs = z.object({
 export async function doRemoveMeal(threadId: string, dayIndex: number, mealType: string): Promise<any> {
   const resp = await fetch(`${API}/api/meals/remove`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ threadId, dayIndex, mealType })
+    headers: { 'Content-Type': 'application/json' },    
+    body: JSON.stringify(RemoveMealRequest.fromJSON({ threadId, dayIndex, mealType }))
   });
   if (!resp.ok) {
     const errText = await resp.text();

@@ -5,8 +5,8 @@
 //   protoc               v5.29.3
 // source: api.proto
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AddBulkStepsRequest = exports.AddStepResponse = exports.AddStepRequest = exports.GetStepsResponse = exports.GetStepsRequest = exports.DeleteMealResponse = exports.DeleteMealRequest = exports.DeleteMealIngredientResponse = exports.DeleteMealIngredientRequest = exports.UpdateMealIngredientResponse = exports.UpdateMealIngredientRequest = exports.ReplaceMealResponse = exports.ReplaceMealRequest = exports.RemoveMealResponse = exports.RemoveMealRequest = exports.SwapMealResponse = exports.SwapMealRequest = exports.CreateMealResponse = exports.CreateMealRequest = exports.GetAllMealsResponse = exports.GetAllMealsRequest = exports.GetShoppingListResponse = exports.GetShoppingListRequest = exports.MealPlanICSResponse = exports.FinalizeMealPlanResponse = exports.FinalizeMealPlanRequest = exports.GenerateMealPlanResponse = exports.GetMealPlanResponse = exports.ReconnectResponse = exports.HealthCheckResponse = exports.WorkflowStatus = exports.AgentResponse = exports.AgentMessageRequest = exports.AgentResumeRequest = exports.AgentFeedbackRequest = exports.AgentStartRequest = exports.ShoppingList = exports.Message = exports.CheckpointResponse = exports.SaveCheckpointRequest = exports.MealPlanIdentifier = exports.SaveMealPlanRequest = exports.MealPlanEntry = exports.WeeklyMealPlan = exports.ShoppingListItem = exports.PlanDay = exports.Meal = exports.Step = exports.Ingredient = exports.protobufPackage = void 0;
-exports.MealPlannerAPIClientImpl = exports.MealPlannerAPIServiceName = exports.LoggingServiceClientImpl = exports.LoggingServiceServiceName = exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry_FieldsEntry = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata = exports.AgentCheckpoint = exports.MealPlanningCheckpointState = exports.FeedbackEntryProto = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = exports.UpdateStepRequest = exports.AddBulkStepsResponse = void 0;
+exports.AddBulkStepsResponse = exports.AddBulkStepsRequest = exports.AddStepResponse = exports.AddStepRequest = exports.GetStepsResponse = exports.GetStepsRequest = exports.DeleteMealResponse = exports.DeleteMealRequest = exports.DeleteMealIngredientResponse = exports.DeleteMealIngredientRequest = exports.UpdateMealIngredientResponse = exports.UpdateMealIngredientRequest = exports.ReplaceMealResponse = exports.ReplaceMealRequest = exports.RemoveMealResponse = exports.RemoveMealRequest = exports.SwapMealResponse = exports.SwapMealRequest = exports.CreateMealResponse = exports.CreateMealRequest = exports.GetAllMealsResponse = exports.GetAllMealsRequest = exports.GetShoppingListResponse = exports.GetShoppingListRequest = exports.MealPlanICSResponse = exports.FinalizeMealPlanResponse = exports.FinalizeMealPlanRequest = exports.GenerateMealPlanResponse = exports.GetMealPlanResponse = exports.ReconnectResponse = exports.HealthCheckResponse = exports.WorkflowStatus = exports.AgentResponse = exports.AgentMessageRequest = exports.AgentResumeRequest = exports.AgentFeedbackRequest = exports.AgentStartRequest = exports.ShoppingList = exports.Message = exports.CheckpointResponse = exports.SaveCheckpointRequest = exports.MealPlanIdentifier = exports.SaveMealPlanRequest = exports.WeeklyMealPlan = exports.ShoppingListItem = exports.MealPlanEntry = exports.Meal = exports.Step = exports.Ingredient = exports.protobufPackage = void 0;
+exports.MealPlannerAPIClientImpl = exports.MealPlannerAPIServiceName = exports.LoggingServiceClientImpl = exports.LoggingServiceServiceName = exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry_FieldsEntry = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata = exports.AgentCheckpoint = exports.MealPlanningCheckpointState = exports.FeedbackEntryProto = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = exports.UpdateStepRequest = void 0;
 /* eslint-disable */
 var wire_1 = require("@bufbuild/protobuf/wire");
 var empty_1 = require("./google/protobuf/empty");
@@ -417,10 +417,10 @@ exports.Meal = {
         return message;
     },
 };
-function createBasePlanDay() {
+function createBaseMealPlanEntry() {
     return { meal: undefined, dayIndex: 0, mealType: "" };
 }
-exports.PlanDay = {
+exports.MealPlanEntry = {
     encode: function (message, writer) {
         if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         if (message.meal !== undefined) {
@@ -437,7 +437,7 @@ exports.PlanDay = {
     decode: function (input, length) {
         var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
         var end = length === undefined ? reader.len : reader.pos + length;
-        var message = createBasePlanDay();
+        var message = createBaseMealPlanEntry();
         while (reader.pos < end) {
             var tag = reader.uint32();
             switch (tag >>> 3) {
@@ -491,11 +491,11 @@ exports.PlanDay = {
         return obj;
     },
     create: function (base) {
-        return exports.PlanDay.fromPartial(base !== null && base !== void 0 ? base : {});
+        return exports.MealPlanEntry.fromPartial(base !== null && base !== void 0 ? base : {});
     },
     fromPartial: function (object) {
         var _a, _b;
-        var message = createBasePlanDay();
+        var message = createBaseMealPlanEntry();
         message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
         message.dayIndex = (_a = object.dayIndex) !== null && _a !== void 0 ? _a : 0;
         message.mealType = (_b = object.mealType) !== null && _b !== void 0 ? _b : "";
@@ -595,7 +595,7 @@ exports.WeeklyMealPlan = {
         if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
         for (var _i = 0, _a = message.days; _i < _a.length; _i++) {
             var v = _a[_i];
-            exports.PlanDay.encode(v, writer.uint32(10).fork()).join();
+            exports.MealPlanEntry.encode(v, writer.uint32(10).fork()).join();
         }
         for (var _b = 0, _c = message.shoppingList; _b < _c.length; _b++) {
             var v = _c[_b];
@@ -614,7 +614,7 @@ exports.WeeklyMealPlan = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.days.push(exports.PlanDay.decode(reader, reader.uint32()));
+                    message.days.push(exports.MealPlanEntry.decode(reader, reader.uint32()));
                     continue;
                 }
                 case 2: {
@@ -634,7 +634,7 @@ exports.WeeklyMealPlan = {
     },
     fromJSON: function (object) {
         return {
-            days: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.days) ? object.days.map(function (e) { return exports.PlanDay.fromJSON(e); }) : [],
+            days: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.days) ? object.days.map(function (e) { return exports.MealPlanEntry.fromJSON(e); }) : [],
             shoppingList: globalThis.Array.isArray(object === null || object === void 0 ? void 0 : object.shoppingList)
                 ? object.shoppingList.map(function (e) { return exports.ShoppingListItem.fromJSON(e); })
                 : [],
@@ -644,7 +644,7 @@ exports.WeeklyMealPlan = {
         var _a, _b;
         var obj = {};
         if ((_a = message.days) === null || _a === void 0 ? void 0 : _a.length) {
-            obj.days = message.days.map(function (e) { return exports.PlanDay.toJSON(e); });
+            obj.days = message.days.map(function (e) { return exports.MealPlanEntry.toJSON(e); });
         }
         if ((_b = message.shoppingList) === null || _b === void 0 ? void 0 : _b.length) {
             obj.shoppingList = message.shoppingList.map(function (e) { return exports.ShoppingListItem.toJSON(e); });
@@ -657,93 +657,8 @@ exports.WeeklyMealPlan = {
     fromPartial: function (object) {
         var _a, _b;
         var message = createBaseWeeklyMealPlan();
-        message.days = ((_a = object.days) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.PlanDay.fromPartial(e); })) || [];
+        message.days = ((_a = object.days) === null || _a === void 0 ? void 0 : _a.map(function (e) { return exports.MealPlanEntry.fromPartial(e); })) || [];
         message.shoppingList = ((_b = object.shoppingList) === null || _b === void 0 ? void 0 : _b.map(function (e) { return exports.ShoppingListItem.fromPartial(e); })) || [];
-        return message;
-    },
-};
-function createBaseMealPlanEntry() {
-    return { dayIndex: 0, mealType: "", meal: undefined };
-}
-exports.MealPlanEntry = {
-    encode: function (message, writer) {
-        if (writer === void 0) { writer = new wire_1.BinaryWriter(); }
-        if (message.dayIndex !== 0) {
-            writer.uint32(8).int32(message.dayIndex);
-        }
-        if (message.mealType !== "") {
-            writer.uint32(18).string(message.mealType);
-        }
-        if (message.meal !== undefined) {
-            exports.Meal.encode(message.meal, writer.uint32(26).fork()).join();
-        }
-        return writer;
-    },
-    decode: function (input, length) {
-        var reader = input instanceof wire_1.BinaryReader ? input : new wire_1.BinaryReader(input);
-        var end = length === undefined ? reader.len : reader.pos + length;
-        var message = createBaseMealPlanEntry();
-        while (reader.pos < end) {
-            var tag = reader.uint32();
-            switch (tag >>> 3) {
-                case 1: {
-                    if (tag !== 8) {
-                        break;
-                    }
-                    message.dayIndex = reader.int32();
-                    continue;
-                }
-                case 2: {
-                    if (tag !== 18) {
-                        break;
-                    }
-                    message.mealType = reader.string();
-                    continue;
-                }
-                case 3: {
-                    if (tag !== 26) {
-                        break;
-                    }
-                    message.meal = exports.Meal.decode(reader, reader.uint32());
-                    continue;
-                }
-            }
-            if ((tag & 7) === 4 || tag === 0) {
-                break;
-            }
-            reader.skip(tag & 7);
-        }
-        return message;
-    },
-    fromJSON: function (object) {
-        return {
-            dayIndex: isSet(object.dayIndex) ? globalThis.Number(object.dayIndex) : 0,
-            mealType: isSet(object.mealType) ? globalThis.String(object.mealType) : "",
-            meal: isSet(object.meal) ? exports.Meal.fromJSON(object.meal) : undefined,
-        };
-    },
-    toJSON: function (message) {
-        var obj = {};
-        if (message.dayIndex !== 0) {
-            obj.dayIndex = Math.round(message.dayIndex);
-        }
-        if (message.mealType !== "") {
-            obj.mealType = message.mealType;
-        }
-        if (message.meal !== undefined) {
-            obj.meal = exports.Meal.toJSON(message.meal);
-        }
-        return obj;
-    },
-    create: function (base) {
-        return exports.MealPlanEntry.fromPartial(base !== null && base !== void 0 ? base : {});
-    },
-    fromPartial: function (object) {
-        var _a, _b;
-        var message = createBaseMealPlanEntry();
-        message.dayIndex = (_a = object.dayIndex) !== null && _a !== void 0 ? _a : 0;
-        message.mealType = (_b = object.mealType) !== null && _b !== void 0 ? _b : "";
-        message.meal = (object.meal !== undefined && object.meal !== null) ? exports.Meal.fromPartial(object.meal) : undefined;
         return message;
     },
 };
