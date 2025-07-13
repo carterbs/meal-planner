@@ -11,6 +11,15 @@ export async function generateMealPlan(): Promise<GenerateMealPlanResponse> {
   await infoLog("MEAL PLAN from backend-------");
   await infoLog(JSON.stringify(responseJson));
 
+  // DEBUGGING: Log dayIndex values from backend response
+  await infoLog("🔍 [MCP] Checking dayIndex values from backend:");
+  if (responseJson.plan?.days) {
+    for (let i = 0; i < responseJson.plan.days.length; i++) {
+      const day = responseJson.plan.days[i];
+      await infoLog(`🔍 [MCP] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+    }
+  }
+
   return responseJson;
 }
 

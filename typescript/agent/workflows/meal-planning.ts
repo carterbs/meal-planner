@@ -109,19 +109,34 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async saveCheckpoint(config: any, state: MealPlanningState): Promise<void> {
+    // DEBUGGING: Log meal plan before checkpoint serialization (saveCheckpoint)
+    if (state.meal_plan) {
+      await infoLog("🔍 [SAVE-CHECKPOINT] mealPlan before checkpoint serialization:");
+      if (state.meal_plan.days) {
+        for (let i = 0; i < state.meal_plan.days.length; i++) {
+          const day = state.meal_plan.days[i];
+          await infoLog(`🔍 [SAVE-CHECKPOINT] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+        }
+      }
+    }
+    
+    // Coerce dates before serialization (temporarily disabled for debugging)
+    // if (state.meal_plan) {
+    //   this.coerceDates(state.meal_plan);
+    // }
+    
     const protoState: MealPlanningCheckpointState = {
       threadId: state.threadId,
       participants: state.participants,
       createdAt: state.created_at instanceof Date ? state.created_at : new Date(state.created_at as any),
       updatedAt: state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at as any),
       currentStep: state.current_step,
-      mealPlan: state.meal_plan as any,
+      mealPlan: state.meal_plan ? WeeklyMealPlan.toJSON(state.meal_plan) as any : null,
       feedbackHistory: state.feedback_history as any,
       iterationCount: state.iteration_count,
       shoppingList: state.shopping_list as any,
       isFinalized: state.is_finalized,
     };
-    this.coerceDates(protoState.mealPlan);
     const checkpoint = AgentCheckpoint.create({
       state: protoState,
       messages: [],
@@ -223,13 +238,24 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           infoLog(`${`🔍 [WORKFLOW] Full state:`} ${JSON.stringify(state, null, 2)}`);
 
           // Create checkpoint with new proto state
+          // DEBUGGING: Log meal plan before checkpoint serialization
+          if (state.meal_plan) {
+            await infoLog("🔍 [CHECKPOINT-SAVE] mealPlan before checkpoint serialization:");
+            if (state.meal_plan.days) {
+              for (let i = 0; i < state.meal_plan.days.length; i++) {
+                const day = state.meal_plan.days[i];
+                await infoLog(`🔍 [CHECKPOINT-SAVE] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+              }
+            }
+          }
+          
           const protoState: MealPlanningCheckpointState = {
             threadId: state.threadId,
             participants: state.participants,
             createdAt: state.created_at instanceof Date ? state.created_at : new Date(state.created_at as any),
             updatedAt: state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at as any),
             currentStep: state.current_step,
-            mealPlan: state.meal_plan as any,
+            mealPlan: state.meal_plan ? WeeklyMealPlan.toJSON(state.meal_plan) as any : null,
             feedbackHistory: state.feedback_history as any,
             iterationCount: state.iteration_count,
             shoppingList: state.shopping_list as any,
@@ -254,6 +280,26 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           if (!checkpoint.state) {
             throw new Error('Invalid checkpoint state format');
           }
+          // Properly deserialize the meal_plan from checkpoint using fromJSON
+          let deserializedMealPlan = null;
+          if (checkpoint.state.mealPlan) {
+            // DEBUGGING: Log mealPlan before deserialization
+            await infoLog("🔍 [CHECKPOINT] mealPlan before WeeklyMealPlan.fromJSON:");
+            await infoLog(JSON.stringify(checkpoint.state.mealPlan, null, 2));
+            
+            // this.coerceDates(checkpoint.state.mealPlan as any); // temporarily disabled for debugging
+            deserializedMealPlan = WeeklyMealPlan.fromJSON(checkpoint.state.mealPlan as any);
+            
+            // DEBUGGING: Log mealPlan after deserialization
+            await infoLog("🔍 [CHECKPOINT] mealPlan after WeeklyMealPlan.fromJSON:");
+            if (deserializedMealPlan.days) {
+              for (let i = 0; i < deserializedMealPlan.days.length; i++) {
+                const day = deserializedMealPlan.days[i];
+                await infoLog(`🔍 [CHECKPOINT] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+              }
+            }
+          }
+          
           state = {
             threadId: checkpoint.state.threadId,
             workflow_type: WorkflowType.MEAL_PLANNING,
@@ -261,7 +307,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             created_at: checkpoint.state.createdAt ? new Date(checkpoint.state.createdAt) : new Date(),
             updated_at: checkpoint.state.updatedAt ? new Date(checkpoint.state.updatedAt) : new Date(),
             current_step: checkpoint.state.currentStep as MealPlanningStep,
-            meal_plan: checkpoint.state.mealPlan as any,
+            meal_plan: deserializedMealPlan,
             feedback_history: checkpoint.state.feedbackHistory as any,
             iteration_count: checkpoint.state.iterationCount,
             shopping_list: checkpoint.state.shoppingList as any,
@@ -318,13 +364,24 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             // 6. Pause for feedback after presenting the plan
             if (state.current_step === MealPlanningStep.AWAIT_FEEDBACK) {
               // Create properly typed checkpoint
+              // DEBUGGING: Log meal plan before checkpoint serialization (feedback loop)
+              if (state.meal_plan) {
+                await infoLog("🔍 [CHECKPOINT-SAVE-FEEDBACK] mealPlan before checkpoint serialization:");
+                if (state.meal_plan.days) {
+                  for (let i = 0; i < state.meal_plan.days.length; i++) {
+                    const day = state.meal_plan.days[i];
+                    await infoLog(`🔍 [CHECKPOINT-SAVE-FEEDBACK] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+                  }
+                }
+              }
+              
               const protoState: MealPlanningCheckpointState = {
                 threadId: state.threadId,
                 participants: state.participants,
                 createdAt: state.created_at instanceof Date ? state.created_at : new Date(state.created_at as any),
                 updatedAt: state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at as any),
                 currentStep: state.current_step,
-                mealPlan: state.meal_plan as any,
+                mealPlan: state.meal_plan ? WeeklyMealPlan.toJSON(state.meal_plan) as any : null,
                 feedbackHistory: state.feedback_history as any,
                 iterationCount: state.iteration_count,
                 shoppingList: state.shopping_list as any,
@@ -379,6 +436,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private async saveMealPlan(threadId: string, plan: WeeklyMealPlan) {
     try {
       const backend = process.env.BACKEND_URL ?? 'http://localhost:8080';
+      
+      // DEBUGGING: Log dayIndex values BEFORE coerceDates and serialization
+      await infoLog("🔍 [AGENT] dayIndex values BEFORE saveMealPlan processing:");
+      if (plan.days) {
+        for (let i = 0; i < plan.days.length; i++) {
+          const day = plan.days[i];
+          await infoLog(`🔍 [AGENT] SAVE BEFORE Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+        }
+      }
+      
       this.coerceDates(plan);
       // Use the typed entries directly (they still contain Date objects)
       const entries = plan.days;
@@ -389,7 +456,17 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         entries,
       });
 
-      const body = SaveMealPlanRequest.toJSON(saveRequest);
+      const body = SaveMealPlanRequest.toJSON(saveRequest) as SaveMealPlanRequest;
+      
+      // DEBUGGING: Log dayIndex values in the serialized body
+      await infoLog("🔍 [AGENT] dayIndex values in SaveMealPlanRequest.toJSON body:");
+      if (body.entries) {
+        for (let i = 0; i < body.entries.length; i++) {
+          const entry = body.entries[i];
+          await infoLog(`🔍 [AGENT] SAVE JSON Entry ${i}: dayIndex=${entry.dayIndex}, mealType=${entry.mealType}, meal=${entry.meal?.name || 'nil'}`);
+        }
+      }
+      
       debugLog("Full body for save request");
       debug(JSON.stringify(body))
       await fetch(`${backend}/api/mealplan`, {
@@ -438,8 +515,26 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
       await infoLog(`MEAL PLAN from generate------- req: ${reqId}`);
       await infoLog(JSON.stringify(generateResponse, null, 2));
-      this.coerceDates(generateResponse.plan);  
+      
+      // DEBUGGING: Log dayIndex values BEFORE fromJSON conversion
+      await infoLog("🔍 [AGENT] dayIndex values BEFORE WeeklyMealPlan.fromJSON:");
+      if (generateResponse.plan?.days) {
+        for (let i = 0; i < generateResponse.plan.days.length; i++) {
+          const day = generateResponse.plan.days[i];
+          await infoLog(`🔍 [AGENT] BEFORE Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+        }
+      }
+      
       const mealPlan = WeeklyMealPlan.fromJSON(generateResponse.plan);
+
+      // DEBUGGING: Log dayIndex values AFTER fromJSON conversion
+      await infoLog("🔍 [AGENT] dayIndex values AFTER WeeklyMealPlan.fromJSON:");
+      if (mealPlan.days) {
+        for (let i = 0; i < mealPlan.days.length; i++) {
+          const day = mealPlan.days[i];
+          await infoLog(`🔍 [AGENT] AFTER Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+        }
+      }
 
       await infoLog(`MEAL PLAN from generate------- req: ${reqId}`);
       await infoLog(JSON.stringify(mealPlan, null, 2));
@@ -599,7 +694,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     infoLog(llmResponse);
 
     infoLog(`${`🤖 [MEAL-WORKFLOW] Feedback being processed:`} ${feedbackText}`);
-    let updatedPlan: WeeklyMealPlan = { ...plan, days: [...plan.days] };
+    // Create a proper WeeklyMealPlan object to preserve protobuf structure
+    let updatedPlan: WeeklyMealPlan = WeeklyMealPlan.fromJSON(plan);
     let userMessage = "I've updated your meal plan based on your feedback!"; // Default fallback message
 
     try {
