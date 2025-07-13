@@ -6,7 +6,6 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Empty } from "./google/protobuf/empty";
 import { Timestamp } from "./google/protobuf/timestamp";
 
 export const protobufPackage = "mealplanner.api";
@@ -160,7 +159,7 @@ export interface FinalizeMealPlanResponse {
 }
 
 export interface MealPlanICSResponse {
-  icsData: Uint8Array;
+  icsData: Buffer;
 }
 
 /** Shopping list endpoints */
@@ -907,20 +906,7 @@ export const Meal: MessageFns<Meal> = {
       obj.effort = Math.round(message.effort);
     }
     if (message.lastPlanned !== undefined) {
-      // Ensure we always serialize an ISO-8601 string. The generated type expects a Date, but in
-      // practice callers sometimes populate this field with a raw ISO string. Handle both cases
-      // gracefully so that serialization never throws.
-      if (message.lastPlanned instanceof Date) {
-        obj.lastPlanned = message.lastPlanned.toISOString();
-      } else {
-        // Fallback: attempt to parse string/number-like values into a Date, otherwise pass through.
-        try {
-          const dt = new Date(message.lastPlanned as unknown as string);
-          obj.lastPlanned = isNaN(dt.getTime()) ? (message.lastPlanned as unknown as string) : dt.toISOString();
-        } catch {
-          obj.lastPlanned = message.lastPlanned as unknown as string;
-        }
-      }
+      obj.lastPlanned = message.lastPlanned.toISOString();
     }
     if (message.hasRedMeat !== false) {
       obj.hasRedMeat = message.hasRedMeat;
@@ -2737,7 +2723,7 @@ export const FinalizeMealPlanResponse: MessageFns<FinalizeMealPlanResponse> = {
 };
 
 function createBaseMealPlanICSResponse(): MealPlanICSResponse {
-  return { icsData: new Uint8Array(0) };
+  return { icsData: Buffer.alloc(0) };
 }
 
 export const MealPlanICSResponse: MessageFns<MealPlanICSResponse> = {
@@ -2760,7 +2746,7 @@ export const MealPlanICSResponse: MessageFns<MealPlanICSResponse> = {
             break;
           }
 
-          message.icsData = reader.bytes();
+          message.icsData = Buffer.from(reader.bytes());
           continue;
         }
       }
@@ -2773,7 +2759,7 @@ export const MealPlanICSResponse: MessageFns<MealPlanICSResponse> = {
   },
 
   fromJSON(object: any): MealPlanICSResponse {
-    return { icsData: isSet(object.icsData) ? bytesFromBase64(object.icsData) : new Uint8Array(0) };
+    return { icsData: isSet(object.icsData) ? Buffer.from(bytesFromBase64(object.icsData)) : Buffer.alloc(0) };
   },
 
   toJSON(message: MealPlanICSResponse): unknown {
@@ -2789,7 +2775,7 @@ export const MealPlanICSResponse: MessageFns<MealPlanICSResponse> = {
   },
   fromPartial<I extends Exact<DeepPartial<MealPlanICSResponse>, I>>(object: I): MealPlanICSResponse {
     const message = createBaseMealPlanICSResponse();
-    message.icsData = object.icsData ?? new Uint8Array(0);
+    message.icsData = object.icsData ?? Buffer.alloc(0);
     return message;
   },
 };
@@ -7790,355 +7776,12 @@ export const LogBatchResponse: MessageFns<LogBatchResponse> = {
   },
 };
 
-/** Logging Service definition */
-export interface LoggingService {
-  Log(request: LogRequest): Promise<LogResponse>;
-  LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
-}
-
-export const LoggingServiceServiceName = "mealplanner.api.LoggingService";
-export class LoggingServiceClientImpl implements LoggingService {
-  private readonly rpc: Rpc;
-  private readonly service: string;
-  constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || LoggingServiceServiceName;
-    this.rpc = rpc;
-    this.Log = this.Log.bind(this);
-    this.LogBatch = this.LogBatch.bind(this);
-  }
-  Log(request: LogRequest): Promise<LogResponse> {
-    const data = LogRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "Log", data);
-    return promise.then((data) => LogResponse.decode(new BinaryReader(data)));
-  }
-
-  LogBatch(request: LogBatchRequest): Promise<LogBatchResponse> {
-    const data = LogBatchRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "LogBatch", data);
-    return promise.then((data) => LogBatchResponse.decode(new BinaryReader(data)));
-  }
-}
-
-/** Service definition */
-export interface MealPlannerAPI {
-  /** Health endpoints */
-  HealthCheck(request: Empty): Promise<HealthCheckResponse>;
-  Reconnect(request: Empty): Promise<ReconnectResponse>;
-  /** Meal plan endpoints */
-  GetMealPlan(request: Empty): Promise<GetMealPlanResponse>;
-  GenerateMealPlan(request: Empty): Promise<GenerateMealPlanResponse>;
-  FinalizeMealPlan(request: FinalizeMealPlanRequest): Promise<FinalizeMealPlanResponse>;
-  GetMealPlanICS(request: Empty): Promise<MealPlanICSResponse>;
-  /** Shopping list endpoints */
-  GetShoppingList(request: GetShoppingListRequest): Promise<GetShoppingListResponse>;
-  /** Meals endpoints */
-  GetAllMeals(request: GetAllMealsRequest): Promise<GetAllMealsResponse>;
-  CreateMeal(request: CreateMealRequest): Promise<CreateMealResponse>;
-  SwapMeal(request: SwapMealRequest): Promise<SwapMealResponse>;
-  RemoveMeal(request: RemoveMealRequest): Promise<RemoveMealResponse>;
-  ReplaceMeal(request: ReplaceMealRequest): Promise<ReplaceMealResponse>;
-  UpdateMealIngredient(request: UpdateMealIngredientRequest): Promise<UpdateMealIngredientResponse>;
-  DeleteMealIngredient(request: DeleteMealIngredientRequest): Promise<DeleteMealIngredientResponse>;
-  DeleteMeal(request: DeleteMealRequest): Promise<DeleteMealResponse>;
-  /** Recipe steps endpoints */
-  GetSteps(request: GetStepsRequest): Promise<GetStepsResponse>;
-  AddStep(request: AddStepRequest): Promise<AddStepResponse>;
-  AddBulkSteps(request: AddBulkStepsRequest): Promise<AddBulkStepsResponse>;
-  UpdateStep(request: UpdateStepRequest): Promise<UpdateStepResponse>;
-  DeleteStep(request: DeleteStepRequest): Promise<DeleteStepResponse>;
-  ReorderSteps(request: ReorderStepsRequest): Promise<ReorderStepsResponse>;
-  DeleteAllSteps(request: DeleteAllStepsRequest): Promise<DeleteAllStepsResponse>;
-  /** Agent workflow endpoints */
-  StartAgentWorkflow(request: StartAgentWorkflowRequest): Promise<StartAgentWorkflowResponse>;
-  MessageAgent(request: MessageAgentRequest): Promise<MessageAgentResponse>;
-  GetWorkflowStatus(request: GetWorkflowStatusRequest): Promise<GetWorkflowStatusResponse>;
-  ListWorkflows(request: Empty): Promise<ListWorkflowsResponse>;
-  CancelWorkflow(request: CancelWorkflowRequest): Promise<CancelWorkflowResponse>;
-  /** Workflow management endpoints */
-  GetWorkflowState(request: GetWorkflowStateRequest): Promise<GetWorkflowStateResponse>;
-  AbandonWorkflow(request: AbandonWorkflowRequest): Promise<AbandonWorkflowResponse>;
-  AddMessage(request: AddMessageRequest): Promise<AddMessageResponse>;
-  UpdateSessionState(request: UpdateSessionStateRequest): Promise<UpdateSessionStateResponse>;
-  /** Checkpoint persistence endpoints */
-  GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
-  PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
-  ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
-}
-
-export const MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
-export class MealPlannerAPIClientImpl implements MealPlannerAPI {
-  private readonly rpc: Rpc;
-  private readonly service: string;
-  constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || MealPlannerAPIServiceName;
-    this.rpc = rpc;
-    this.HealthCheck = this.HealthCheck.bind(this);
-    this.Reconnect = this.Reconnect.bind(this);
-    this.GetMealPlan = this.GetMealPlan.bind(this);
-    this.GenerateMealPlan = this.GenerateMealPlan.bind(this);
-    this.FinalizeMealPlan = this.FinalizeMealPlan.bind(this);
-    this.GetMealPlanICS = this.GetMealPlanICS.bind(this);
-    this.GetShoppingList = this.GetShoppingList.bind(this);
-    this.GetAllMeals = this.GetAllMeals.bind(this);
-    this.CreateMeal = this.CreateMeal.bind(this);
-    this.SwapMeal = this.SwapMeal.bind(this);
-    this.RemoveMeal = this.RemoveMeal.bind(this);
-    this.ReplaceMeal = this.ReplaceMeal.bind(this);
-    this.UpdateMealIngredient = this.UpdateMealIngredient.bind(this);
-    this.DeleteMealIngredient = this.DeleteMealIngredient.bind(this);
-    this.DeleteMeal = this.DeleteMeal.bind(this);
-    this.GetSteps = this.GetSteps.bind(this);
-    this.AddStep = this.AddStep.bind(this);
-    this.AddBulkSteps = this.AddBulkSteps.bind(this);
-    this.UpdateStep = this.UpdateStep.bind(this);
-    this.DeleteStep = this.DeleteStep.bind(this);
-    this.ReorderSteps = this.ReorderSteps.bind(this);
-    this.DeleteAllSteps = this.DeleteAllSteps.bind(this);
-    this.StartAgentWorkflow = this.StartAgentWorkflow.bind(this);
-    this.MessageAgent = this.MessageAgent.bind(this);
-    this.GetWorkflowStatus = this.GetWorkflowStatus.bind(this);
-    this.ListWorkflows = this.ListWorkflows.bind(this);
-    this.CancelWorkflow = this.CancelWorkflow.bind(this);
-    this.GetWorkflowState = this.GetWorkflowState.bind(this);
-    this.AbandonWorkflow = this.AbandonWorkflow.bind(this);
-    this.AddMessage = this.AddMessage.bind(this);
-    this.UpdateSessionState = this.UpdateSessionState.bind(this);
-    this.GetCheckpoint = this.GetCheckpoint.bind(this);
-    this.PutCheckpoint = this.PutCheckpoint.bind(this);
-    this.ListCheckpoints = this.ListCheckpoints.bind(this);
-  }
-  HealthCheck(request: Empty): Promise<HealthCheckResponse> {
-    const data = Empty.encode(request).finish();
-    const promise = this.rpc.request(this.service, "HealthCheck", data);
-    return promise.then((data) => HealthCheckResponse.decode(new BinaryReader(data)));
-  }
-
-  Reconnect(request: Empty): Promise<ReconnectResponse> {
-    const data = Empty.encode(request).finish();
-    const promise = this.rpc.request(this.service, "Reconnect", data);
-    return promise.then((data) => ReconnectResponse.decode(new BinaryReader(data)));
-  }
-
-  GetMealPlan(request: Empty): Promise<GetMealPlanResponse> {
-    const data = Empty.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetMealPlan", data);
-    return promise.then((data) => GetMealPlanResponse.decode(new BinaryReader(data)));
-  }
-
-  GenerateMealPlan(request: Empty): Promise<GenerateMealPlanResponse> {
-    const data = Empty.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GenerateMealPlan", data);
-    return promise.then((data) => GenerateMealPlanResponse.decode(new BinaryReader(data)));
-  }
-
-  FinalizeMealPlan(request: FinalizeMealPlanRequest): Promise<FinalizeMealPlanResponse> {
-    const data = FinalizeMealPlanRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "FinalizeMealPlan", data);
-    return promise.then((data) => FinalizeMealPlanResponse.decode(new BinaryReader(data)));
-  }
-
-  GetMealPlanICS(request: Empty): Promise<MealPlanICSResponse> {
-    const data = Empty.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetMealPlanICS", data);
-    return promise.then((data) => MealPlanICSResponse.decode(new BinaryReader(data)));
-  }
-
-  GetShoppingList(request: GetShoppingListRequest): Promise<GetShoppingListResponse> {
-    const data = GetShoppingListRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetShoppingList", data);
-    return promise.then((data) => GetShoppingListResponse.decode(new BinaryReader(data)));
-  }
-
-  GetAllMeals(request: GetAllMealsRequest): Promise<GetAllMealsResponse> {
-    const data = GetAllMealsRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetAllMeals", data);
-    return promise.then((data) => GetAllMealsResponse.decode(new BinaryReader(data)));
-  }
-
-  CreateMeal(request: CreateMealRequest): Promise<CreateMealResponse> {
-    const data = CreateMealRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "CreateMeal", data);
-    return promise.then((data) => CreateMealResponse.decode(new BinaryReader(data)));
-  }
-
-  SwapMeal(request: SwapMealRequest): Promise<SwapMealResponse> {
-    const data = SwapMealRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "SwapMeal", data);
-    return promise.then((data) => SwapMealResponse.decode(new BinaryReader(data)));
-  }
-
-  RemoveMeal(request: RemoveMealRequest): Promise<RemoveMealResponse> {
-    const data = RemoveMealRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "RemoveMeal", data);
-    return promise.then((data) => RemoveMealResponse.decode(new BinaryReader(data)));
-  }
-
-  ReplaceMeal(request: ReplaceMealRequest): Promise<ReplaceMealResponse> {
-    const data = ReplaceMealRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "ReplaceMeal", data);
-    return promise.then((data) => ReplaceMealResponse.decode(new BinaryReader(data)));
-  }
-
-  UpdateMealIngredient(request: UpdateMealIngredientRequest): Promise<UpdateMealIngredientResponse> {
-    const data = UpdateMealIngredientRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "UpdateMealIngredient", data);
-    return promise.then((data) => UpdateMealIngredientResponse.decode(new BinaryReader(data)));
-  }
-
-  DeleteMealIngredient(request: DeleteMealIngredientRequest): Promise<DeleteMealIngredientResponse> {
-    const data = DeleteMealIngredientRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "DeleteMealIngredient", data);
-    return promise.then((data) => DeleteMealIngredientResponse.decode(new BinaryReader(data)));
-  }
-
-  DeleteMeal(request: DeleteMealRequest): Promise<DeleteMealResponse> {
-    const data = DeleteMealRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "DeleteMeal", data);
-    return promise.then((data) => DeleteMealResponse.decode(new BinaryReader(data)));
-  }
-
-  GetSteps(request: GetStepsRequest): Promise<GetStepsResponse> {
-    const data = GetStepsRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetSteps", data);
-    return promise.then((data) => GetStepsResponse.decode(new BinaryReader(data)));
-  }
-
-  AddStep(request: AddStepRequest): Promise<AddStepResponse> {
-    const data = AddStepRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "AddStep", data);
-    return promise.then((data) => AddStepResponse.decode(new BinaryReader(data)));
-  }
-
-  AddBulkSteps(request: AddBulkStepsRequest): Promise<AddBulkStepsResponse> {
-    const data = AddBulkStepsRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "AddBulkSteps", data);
-    return promise.then((data) => AddBulkStepsResponse.decode(new BinaryReader(data)));
-  }
-
-  UpdateStep(request: UpdateStepRequest): Promise<UpdateStepResponse> {
-    const data = UpdateStepRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "UpdateStep", data);
-    return promise.then((data) => UpdateStepResponse.decode(new BinaryReader(data)));
-  }
-
-  DeleteStep(request: DeleteStepRequest): Promise<DeleteStepResponse> {
-    const data = DeleteStepRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "DeleteStep", data);
-    return promise.then((data) => DeleteStepResponse.decode(new BinaryReader(data)));
-  }
-
-  ReorderSteps(request: ReorderStepsRequest): Promise<ReorderStepsResponse> {
-    const data = ReorderStepsRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "ReorderSteps", data);
-    return promise.then((data) => ReorderStepsResponse.decode(new BinaryReader(data)));
-  }
-
-  DeleteAllSteps(request: DeleteAllStepsRequest): Promise<DeleteAllStepsResponse> {
-    const data = DeleteAllStepsRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "DeleteAllSteps", data);
-    return promise.then((data) => DeleteAllStepsResponse.decode(new BinaryReader(data)));
-  }
-
-  StartAgentWorkflow(request: StartAgentWorkflowRequest): Promise<StartAgentWorkflowResponse> {
-    const data = StartAgentWorkflowRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "StartAgentWorkflow", data);
-    return promise.then((data) => StartAgentWorkflowResponse.decode(new BinaryReader(data)));
-  }
-
-  MessageAgent(request: MessageAgentRequest): Promise<MessageAgentResponse> {
-    const data = MessageAgentRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "MessageAgent", data);
-    return promise.then((data) => MessageAgentResponse.decode(new BinaryReader(data)));
-  }
-
-  GetWorkflowStatus(request: GetWorkflowStatusRequest): Promise<GetWorkflowStatusResponse> {
-    const data = GetWorkflowStatusRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetWorkflowStatus", data);
-    return promise.then((data) => GetWorkflowStatusResponse.decode(new BinaryReader(data)));
-  }
-
-  ListWorkflows(request: Empty): Promise<ListWorkflowsResponse> {
-    const data = Empty.encode(request).finish();
-    const promise = this.rpc.request(this.service, "ListWorkflows", data);
-    return promise.then((data) => ListWorkflowsResponse.decode(new BinaryReader(data)));
-  }
-
-  CancelWorkflow(request: CancelWorkflowRequest): Promise<CancelWorkflowResponse> {
-    const data = CancelWorkflowRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "CancelWorkflow", data);
-    return promise.then((data) => CancelWorkflowResponse.decode(new BinaryReader(data)));
-  }
-
-  GetWorkflowState(request: GetWorkflowStateRequest): Promise<GetWorkflowStateResponse> {
-    const data = GetWorkflowStateRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetWorkflowState", data);
-    return promise.then((data) => GetWorkflowStateResponse.decode(new BinaryReader(data)));
-  }
-
-  AbandonWorkflow(request: AbandonWorkflowRequest): Promise<AbandonWorkflowResponse> {
-    const data = AbandonWorkflowRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "AbandonWorkflow", data);
-    return promise.then((data) => AbandonWorkflowResponse.decode(new BinaryReader(data)));
-  }
-
-  AddMessage(request: AddMessageRequest): Promise<AddMessageResponse> {
-    const data = AddMessageRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "AddMessage", data);
-    return promise.then((data) => AddMessageResponse.decode(new BinaryReader(data)));
-  }
-
-  UpdateSessionState(request: UpdateSessionStateRequest): Promise<UpdateSessionStateResponse> {
-    const data = UpdateSessionStateRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "UpdateSessionState", data);
-    return promise.then((data) => UpdateSessionStateResponse.decode(new BinaryReader(data)));
-  }
-
-  GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse> {
-    const data = GetCheckpointRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetCheckpoint", data);
-    return promise.then((data) => GetCheckpointResponse.decode(new BinaryReader(data)));
-  }
-
-  PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse> {
-    const data = PutCheckpointRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "PutCheckpoint", data);
-    return promise.then((data) => PutCheckpointResponse.decode(new BinaryReader(data)));
-  }
-
-  ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse> {
-    const data = ListCheckpointsRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "ListCheckpoints", data);
-    return promise.then((data) => ListCheckpointsResponse.decode(new BinaryReader(data)));
-  }
-}
-
-interface Rpc {
-  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
-}
-
 function bytesFromBase64(b64: string): Uint8Array {
-  if ((globalThis as any).Buffer) {
-    return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
-  } else {
-    const bin = globalThis.atob(b64);
-    const arr = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; ++i) {
-      arr[i] = bin.charCodeAt(i);
-    }
-    return arr;
-  }
+  return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
 }
 
 function base64FromBytes(arr: Uint8Array): string {
-  if ((globalThis as any).Buffer) {
-    return globalThis.Buffer.from(arr).toString("base64");
-  } else {
-    const bin: string[] = [];
-    arr.forEach((byte) => {
-      bin.push(globalThis.String.fromCharCode(byte));
-    });
-    return globalThis.btoa(bin.join(""));
-  }
+  return globalThis.Buffer.from(arr).toString("base64");
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

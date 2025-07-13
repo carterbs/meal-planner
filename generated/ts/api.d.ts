@@ -1,5 +1,4 @@
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Empty } from "./google/protobuf/empty";
 export declare const protobufPackage = "mealplanner.api";
 export interface Ingredient {
     id: number;
@@ -126,7 +125,7 @@ export interface FinalizeMealPlanResponse {
     message: string;
 }
 export interface MealPlanICSResponse {
-    icsData: Uint8Array;
+    icsData: Buffer;
 }
 /** Shopping list endpoints */
 export interface GetShoppingListRequest {
@@ -503,111 +502,6 @@ export declare const LogRequest: MessageFns<LogRequest>;
 export declare const LogResponse: MessageFns<LogResponse>;
 export declare const LogBatchRequest: MessageFns<LogBatchRequest>;
 export declare const LogBatchResponse: MessageFns<LogBatchResponse>;
-/** Logging Service definition */
-export interface LoggingService {
-    Log(request: LogRequest): Promise<LogResponse>;
-    LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
-}
-export declare const LoggingServiceServiceName = "mealplanner.api.LoggingService";
-export declare class LoggingServiceClientImpl implements LoggingService {
-    private readonly rpc;
-    private readonly service;
-    constructor(rpc: Rpc, opts?: {
-        service?: string;
-    });
-    Log(request: LogRequest): Promise<LogResponse>;
-    LogBatch(request: LogBatchRequest): Promise<LogBatchResponse>;
-}
-/** Service definition */
-export interface MealPlannerAPI {
-    /** Health endpoints */
-    HealthCheck(request: Empty): Promise<HealthCheckResponse>;
-    Reconnect(request: Empty): Promise<ReconnectResponse>;
-    /** Meal plan endpoints */
-    GetMealPlan(request: Empty): Promise<GetMealPlanResponse>;
-    GenerateMealPlan(request: Empty): Promise<GenerateMealPlanResponse>;
-    FinalizeMealPlan(request: FinalizeMealPlanRequest): Promise<FinalizeMealPlanResponse>;
-    GetMealPlanICS(request: Empty): Promise<MealPlanICSResponse>;
-    /** Shopping list endpoints */
-    GetShoppingList(request: GetShoppingListRequest): Promise<GetShoppingListResponse>;
-    /** Meals endpoints */
-    GetAllMeals(request: GetAllMealsRequest): Promise<GetAllMealsResponse>;
-    CreateMeal(request: CreateMealRequest): Promise<CreateMealResponse>;
-    SwapMeal(request: SwapMealRequest): Promise<SwapMealResponse>;
-    RemoveMeal(request: RemoveMealRequest): Promise<RemoveMealResponse>;
-    ReplaceMeal(request: ReplaceMealRequest): Promise<ReplaceMealResponse>;
-    UpdateMealIngredient(request: UpdateMealIngredientRequest): Promise<UpdateMealIngredientResponse>;
-    DeleteMealIngredient(request: DeleteMealIngredientRequest): Promise<DeleteMealIngredientResponse>;
-    DeleteMeal(request: DeleteMealRequest): Promise<DeleteMealResponse>;
-    /** Recipe steps endpoints */
-    GetSteps(request: GetStepsRequest): Promise<GetStepsResponse>;
-    AddStep(request: AddStepRequest): Promise<AddStepResponse>;
-    AddBulkSteps(request: AddBulkStepsRequest): Promise<AddBulkStepsResponse>;
-    UpdateStep(request: UpdateStepRequest): Promise<UpdateStepResponse>;
-    DeleteStep(request: DeleteStepRequest): Promise<DeleteStepResponse>;
-    ReorderSteps(request: ReorderStepsRequest): Promise<ReorderStepsResponse>;
-    DeleteAllSteps(request: DeleteAllStepsRequest): Promise<DeleteAllStepsResponse>;
-    /** Agent workflow endpoints */
-    StartAgentWorkflow(request: StartAgentWorkflowRequest): Promise<StartAgentWorkflowResponse>;
-    MessageAgent(request: MessageAgentRequest): Promise<MessageAgentResponse>;
-    GetWorkflowStatus(request: GetWorkflowStatusRequest): Promise<GetWorkflowStatusResponse>;
-    ListWorkflows(request: Empty): Promise<ListWorkflowsResponse>;
-    CancelWorkflow(request: CancelWorkflowRequest): Promise<CancelWorkflowResponse>;
-    /** Workflow management endpoints */
-    GetWorkflowState(request: GetWorkflowStateRequest): Promise<GetWorkflowStateResponse>;
-    AbandonWorkflow(request: AbandonWorkflowRequest): Promise<AbandonWorkflowResponse>;
-    AddMessage(request: AddMessageRequest): Promise<AddMessageResponse>;
-    UpdateSessionState(request: UpdateSessionStateRequest): Promise<UpdateSessionStateResponse>;
-    /** Checkpoint persistence endpoints */
-    GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
-    PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
-    ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
-}
-export declare const MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
-export declare class MealPlannerAPIClientImpl implements MealPlannerAPI {
-    private readonly rpc;
-    private readonly service;
-    constructor(rpc: Rpc, opts?: {
-        service?: string;
-    });
-    HealthCheck(request: Empty): Promise<HealthCheckResponse>;
-    Reconnect(request: Empty): Promise<ReconnectResponse>;
-    GetMealPlan(request: Empty): Promise<GetMealPlanResponse>;
-    GenerateMealPlan(request: Empty): Promise<GenerateMealPlanResponse>;
-    FinalizeMealPlan(request: FinalizeMealPlanRequest): Promise<FinalizeMealPlanResponse>;
-    GetMealPlanICS(request: Empty): Promise<MealPlanICSResponse>;
-    GetShoppingList(request: GetShoppingListRequest): Promise<GetShoppingListResponse>;
-    GetAllMeals(request: GetAllMealsRequest): Promise<GetAllMealsResponse>;
-    CreateMeal(request: CreateMealRequest): Promise<CreateMealResponse>;
-    SwapMeal(request: SwapMealRequest): Promise<SwapMealResponse>;
-    RemoveMeal(request: RemoveMealRequest): Promise<RemoveMealResponse>;
-    ReplaceMeal(request: ReplaceMealRequest): Promise<ReplaceMealResponse>;
-    UpdateMealIngredient(request: UpdateMealIngredientRequest): Promise<UpdateMealIngredientResponse>;
-    DeleteMealIngredient(request: DeleteMealIngredientRequest): Promise<DeleteMealIngredientResponse>;
-    DeleteMeal(request: DeleteMealRequest): Promise<DeleteMealResponse>;
-    GetSteps(request: GetStepsRequest): Promise<GetStepsResponse>;
-    AddStep(request: AddStepRequest): Promise<AddStepResponse>;
-    AddBulkSteps(request: AddBulkStepsRequest): Promise<AddBulkStepsResponse>;
-    UpdateStep(request: UpdateStepRequest): Promise<UpdateStepResponse>;
-    DeleteStep(request: DeleteStepRequest): Promise<DeleteStepResponse>;
-    ReorderSteps(request: ReorderStepsRequest): Promise<ReorderStepsResponse>;
-    DeleteAllSteps(request: DeleteAllStepsRequest): Promise<DeleteAllStepsResponse>;
-    StartAgentWorkflow(request: StartAgentWorkflowRequest): Promise<StartAgentWorkflowResponse>;
-    MessageAgent(request: MessageAgentRequest): Promise<MessageAgentResponse>;
-    GetWorkflowStatus(request: GetWorkflowStatusRequest): Promise<GetWorkflowStatusResponse>;
-    ListWorkflows(request: Empty): Promise<ListWorkflowsResponse>;
-    CancelWorkflow(request: CancelWorkflowRequest): Promise<CancelWorkflowResponse>;
-    GetWorkflowState(request: GetWorkflowStateRequest): Promise<GetWorkflowStateResponse>;
-    AbandonWorkflow(request: AbandonWorkflowRequest): Promise<AbandonWorkflowResponse>;
-    AddMessage(request: AddMessageRequest): Promise<AddMessageResponse>;
-    UpdateSessionState(request: UpdateSessionStateRequest): Promise<UpdateSessionStateResponse>;
-    GetCheckpoint(request: GetCheckpointRequest): Promise<GetCheckpointResponse>;
-    PutCheckpoint(request: PutCheckpointRequest): Promise<PutCheckpointResponse>;
-    ListCheckpoints(request: ListCheckpointsRequest): Promise<ListCheckpointsResponse>;
-}
-interface Rpc {
-    request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
-}
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 export type DeepPartial<T> = T extends Builtin ? T : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>> : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>> : T extends {} ? {
     [K in keyof T]?: DeepPartial<T[K]>;
