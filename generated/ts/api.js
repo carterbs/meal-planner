@@ -6,10 +6,9 @@
 // source: api.proto
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AddBulkStepsResponse = exports.AddBulkStepsRequest = exports.AddStepResponse = exports.AddStepRequest = exports.GetStepsResponse = exports.GetStepsRequest = exports.DeleteMealResponse = exports.DeleteMealRequest = exports.DeleteMealIngredientResponse = exports.DeleteMealIngredientRequest = exports.UpdateMealIngredientResponse = exports.UpdateMealIngredientRequest = exports.ReplaceMealResponse = exports.ReplaceMealRequest = exports.RemoveMealResponse = exports.RemoveMealRequest = exports.SwapMealResponse = exports.SwapMealRequest = exports.CreateMealResponse = exports.CreateMealRequest = exports.GetAllMealsResponse = exports.GetAllMealsRequest = exports.GetShoppingListResponse = exports.GetShoppingListRequest = exports.MealPlanICSResponse = exports.FinalizeMealPlanResponse = exports.FinalizeMealPlanRequest = exports.GenerateMealPlanResponse = exports.GetMealPlanResponse = exports.ReconnectResponse = exports.HealthCheckResponse = exports.WorkflowStatus = exports.AgentResponse = exports.AgentMessageRequest = exports.AgentResumeRequest = exports.AgentFeedbackRequest = exports.AgentStartRequest = exports.ShoppingList = exports.Message = exports.CheckpointResponse = exports.SaveCheckpointRequest = exports.MealPlanIdentifier = exports.SaveMealPlanRequest = exports.WeeklyMealPlan = exports.ShoppingListItem = exports.MealPlanEntry = exports.Meal = exports.Step = exports.Ingredient = exports.protobufPackage = void 0;
-exports.MealPlannerAPIClientImpl = exports.MealPlannerAPIServiceName = exports.LoggingServiceClientImpl = exports.LoggingServiceServiceName = exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry_FieldsEntry = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata = exports.AgentCheckpoint = exports.MealPlanningCheckpointState = exports.FeedbackEntryProto = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = exports.UpdateStepRequest = void 0;
+exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry_FieldsEntry = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata = exports.AgentCheckpoint = exports.MealPlanningCheckpointState = exports.FeedbackEntryProto = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = exports.UpdateStepRequest = void 0;
 /* eslint-disable */
 var wire_1 = require("@bufbuild/protobuf/wire");
-var empty_1 = require("./google/protobuf/empty");
 var timestamp_1 = require("./google/protobuf/timestamp");
 exports.protobufPackage = "mealplanner.api";
 function createBaseIngredient() {
@@ -2069,7 +2068,7 @@ exports.FinalizeMealPlanResponse = {
     },
 };
 function createBaseMealPlanICSResponse() {
-    return { icsData: new Uint8Array(0) };
+    return { icsData: Buffer.alloc(0) };
 }
 exports.MealPlanICSResponse = {
     encode: function (message, writer) {
@@ -2090,7 +2089,7 @@ exports.MealPlanICSResponse = {
                     if (tag !== 10) {
                         break;
                     }
-                    message.icsData = reader.bytes();
+                    message.icsData = Buffer.from(reader.bytes());
                     continue;
                 }
             }
@@ -2102,7 +2101,7 @@ exports.MealPlanICSResponse = {
         return message;
     },
     fromJSON: function (object) {
-        return { icsData: isSet(object.icsData) ? bytesFromBase64(object.icsData) : new Uint8Array(0) };
+        return { icsData: isSet(object.icsData) ? Buffer.from(bytesFromBase64(object.icsData)) : Buffer.alloc(0) };
     },
     toJSON: function (message) {
         var obj = {};
@@ -2117,7 +2116,7 @@ exports.MealPlanICSResponse = {
     fromPartial: function (object) {
         var _a;
         var message = createBaseMealPlanICSResponse();
-        message.icsData = (_a = object.icsData) !== null && _a !== void 0 ? _a : new Uint8Array(0);
+        message.icsData = (_a = object.icsData) !== null && _a !== void 0 ? _a : Buffer.alloc(0);
         return message;
     },
 };
@@ -6735,264 +6734,11 @@ exports.LogBatchResponse = {
         return message;
     },
 };
-exports.LoggingServiceServiceName = "mealplanner.api.LoggingService";
-var LoggingServiceClientImpl = /** @class */ (function () {
-    function LoggingServiceClientImpl(rpc, opts) {
-        this.service = (opts === null || opts === void 0 ? void 0 : opts.service) || exports.LoggingServiceServiceName;
-        this.rpc = rpc;
-        this.Log = this.Log.bind(this);
-        this.LogBatch = this.LogBatch.bind(this);
-    }
-    LoggingServiceClientImpl.prototype.Log = function (request) {
-        var data = exports.LogRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "Log", data);
-        return promise.then(function (data) { return exports.LogResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    LoggingServiceClientImpl.prototype.LogBatch = function (request) {
-        var data = exports.LogBatchRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "LogBatch", data);
-        return promise.then(function (data) { return exports.LogBatchResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    return LoggingServiceClientImpl;
-}());
-exports.LoggingServiceClientImpl = LoggingServiceClientImpl;
-exports.MealPlannerAPIServiceName = "mealplanner.api.MealPlannerAPI";
-var MealPlannerAPIClientImpl = /** @class */ (function () {
-    function MealPlannerAPIClientImpl(rpc, opts) {
-        this.service = (opts === null || opts === void 0 ? void 0 : opts.service) || exports.MealPlannerAPIServiceName;
-        this.rpc = rpc;
-        this.HealthCheck = this.HealthCheck.bind(this);
-        this.Reconnect = this.Reconnect.bind(this);
-        this.GetMealPlan = this.GetMealPlan.bind(this);
-        this.GenerateMealPlan = this.GenerateMealPlan.bind(this);
-        this.FinalizeMealPlan = this.FinalizeMealPlan.bind(this);
-        this.GetMealPlanICS = this.GetMealPlanICS.bind(this);
-        this.GetShoppingList = this.GetShoppingList.bind(this);
-        this.GetAllMeals = this.GetAllMeals.bind(this);
-        this.CreateMeal = this.CreateMeal.bind(this);
-        this.SwapMeal = this.SwapMeal.bind(this);
-        this.RemoveMeal = this.RemoveMeal.bind(this);
-        this.ReplaceMeal = this.ReplaceMeal.bind(this);
-        this.UpdateMealIngredient = this.UpdateMealIngredient.bind(this);
-        this.DeleteMealIngredient = this.DeleteMealIngredient.bind(this);
-        this.DeleteMeal = this.DeleteMeal.bind(this);
-        this.GetSteps = this.GetSteps.bind(this);
-        this.AddStep = this.AddStep.bind(this);
-        this.AddBulkSteps = this.AddBulkSteps.bind(this);
-        this.UpdateStep = this.UpdateStep.bind(this);
-        this.DeleteStep = this.DeleteStep.bind(this);
-        this.ReorderSteps = this.ReorderSteps.bind(this);
-        this.DeleteAllSteps = this.DeleteAllSteps.bind(this);
-        this.StartAgentWorkflow = this.StartAgentWorkflow.bind(this);
-        this.MessageAgent = this.MessageAgent.bind(this);
-        this.GetWorkflowStatus = this.GetWorkflowStatus.bind(this);
-        this.ListWorkflows = this.ListWorkflows.bind(this);
-        this.CancelWorkflow = this.CancelWorkflow.bind(this);
-        this.GetWorkflowState = this.GetWorkflowState.bind(this);
-        this.AbandonWorkflow = this.AbandonWorkflow.bind(this);
-        this.AddMessage = this.AddMessage.bind(this);
-        this.UpdateSessionState = this.UpdateSessionState.bind(this);
-        this.GetCheckpoint = this.GetCheckpoint.bind(this);
-        this.PutCheckpoint = this.PutCheckpoint.bind(this);
-        this.ListCheckpoints = this.ListCheckpoints.bind(this);
-    }
-    MealPlannerAPIClientImpl.prototype.HealthCheck = function (request) {
-        var data = empty_1.Empty.encode(request).finish();
-        var promise = this.rpc.request(this.service, "HealthCheck", data);
-        return promise.then(function (data) { return exports.HealthCheckResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.Reconnect = function (request) {
-        var data = empty_1.Empty.encode(request).finish();
-        var promise = this.rpc.request(this.service, "Reconnect", data);
-        return promise.then(function (data) { return exports.ReconnectResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.GetMealPlan = function (request) {
-        var data = empty_1.Empty.encode(request).finish();
-        var promise = this.rpc.request(this.service, "GetMealPlan", data);
-        return promise.then(function (data) { return exports.GetMealPlanResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.GenerateMealPlan = function (request) {
-        var data = empty_1.Empty.encode(request).finish();
-        var promise = this.rpc.request(this.service, "GenerateMealPlan", data);
-        return promise.then(function (data) { return exports.GenerateMealPlanResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.FinalizeMealPlan = function (request) {
-        var data = exports.FinalizeMealPlanRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "FinalizeMealPlan", data);
-        return promise.then(function (data) { return exports.FinalizeMealPlanResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.GetMealPlanICS = function (request) {
-        var data = empty_1.Empty.encode(request).finish();
-        var promise = this.rpc.request(this.service, "GetMealPlanICS", data);
-        return promise.then(function (data) { return exports.MealPlanICSResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.GetShoppingList = function (request) {
-        var data = exports.GetShoppingListRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "GetShoppingList", data);
-        return promise.then(function (data) { return exports.GetShoppingListResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.GetAllMeals = function (request) {
-        var data = exports.GetAllMealsRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "GetAllMeals", data);
-        return promise.then(function (data) { return exports.GetAllMealsResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.CreateMeal = function (request) {
-        var data = exports.CreateMealRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "CreateMeal", data);
-        return promise.then(function (data) { return exports.CreateMealResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.SwapMeal = function (request) {
-        var data = exports.SwapMealRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "SwapMeal", data);
-        return promise.then(function (data) { return exports.SwapMealResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.RemoveMeal = function (request) {
-        var data = exports.RemoveMealRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "RemoveMeal", data);
-        return promise.then(function (data) { return exports.RemoveMealResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.ReplaceMeal = function (request) {
-        var data = exports.ReplaceMealRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "ReplaceMeal", data);
-        return promise.then(function (data) { return exports.ReplaceMealResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.UpdateMealIngredient = function (request) {
-        var data = exports.UpdateMealIngredientRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "UpdateMealIngredient", data);
-        return promise.then(function (data) { return exports.UpdateMealIngredientResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.DeleteMealIngredient = function (request) {
-        var data = exports.DeleteMealIngredientRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "DeleteMealIngredient", data);
-        return promise.then(function (data) { return exports.DeleteMealIngredientResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.DeleteMeal = function (request) {
-        var data = exports.DeleteMealRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "DeleteMeal", data);
-        return promise.then(function (data) { return exports.DeleteMealResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.GetSteps = function (request) {
-        var data = exports.GetStepsRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "GetSteps", data);
-        return promise.then(function (data) { return exports.GetStepsResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.AddStep = function (request) {
-        var data = exports.AddStepRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "AddStep", data);
-        return promise.then(function (data) { return exports.AddStepResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.AddBulkSteps = function (request) {
-        var data = exports.AddBulkStepsRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "AddBulkSteps", data);
-        return promise.then(function (data) { return exports.AddBulkStepsResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.UpdateStep = function (request) {
-        var data = exports.UpdateStepRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "UpdateStep", data);
-        return promise.then(function (data) { return exports.UpdateStepResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.DeleteStep = function (request) {
-        var data = exports.DeleteStepRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "DeleteStep", data);
-        return promise.then(function (data) { return exports.DeleteStepResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.ReorderSteps = function (request) {
-        var data = exports.ReorderStepsRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "ReorderSteps", data);
-        return promise.then(function (data) { return exports.ReorderStepsResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.DeleteAllSteps = function (request) {
-        var data = exports.DeleteAllStepsRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "DeleteAllSteps", data);
-        return promise.then(function (data) { return exports.DeleteAllStepsResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.StartAgentWorkflow = function (request) {
-        var data = exports.StartAgentWorkflowRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "StartAgentWorkflow", data);
-        return promise.then(function (data) { return exports.StartAgentWorkflowResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.MessageAgent = function (request) {
-        var data = exports.MessageAgentRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "MessageAgent", data);
-        return promise.then(function (data) { return exports.MessageAgentResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.GetWorkflowStatus = function (request) {
-        var data = exports.GetWorkflowStatusRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "GetWorkflowStatus", data);
-        return promise.then(function (data) { return exports.GetWorkflowStatusResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.ListWorkflows = function (request) {
-        var data = empty_1.Empty.encode(request).finish();
-        var promise = this.rpc.request(this.service, "ListWorkflows", data);
-        return promise.then(function (data) { return exports.ListWorkflowsResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.CancelWorkflow = function (request) {
-        var data = exports.CancelWorkflowRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "CancelWorkflow", data);
-        return promise.then(function (data) { return exports.CancelWorkflowResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.GetWorkflowState = function (request) {
-        var data = exports.GetWorkflowStateRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "GetWorkflowState", data);
-        return promise.then(function (data) { return exports.GetWorkflowStateResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.AbandonWorkflow = function (request) {
-        var data = exports.AbandonWorkflowRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "AbandonWorkflow", data);
-        return promise.then(function (data) { return exports.AbandonWorkflowResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.AddMessage = function (request) {
-        var data = exports.AddMessageRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "AddMessage", data);
-        return promise.then(function (data) { return exports.AddMessageResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.UpdateSessionState = function (request) {
-        var data = exports.UpdateSessionStateRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "UpdateSessionState", data);
-        return promise.then(function (data) { return exports.UpdateSessionStateResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.GetCheckpoint = function (request) {
-        var data = exports.GetCheckpointRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "GetCheckpoint", data);
-        return promise.then(function (data) { return exports.GetCheckpointResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.PutCheckpoint = function (request) {
-        var data = exports.PutCheckpointRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "PutCheckpoint", data);
-        return promise.then(function (data) { return exports.PutCheckpointResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    MealPlannerAPIClientImpl.prototype.ListCheckpoints = function (request) {
-        var data = exports.ListCheckpointsRequest.encode(request).finish();
-        var promise = this.rpc.request(this.service, "ListCheckpoints", data);
-        return promise.then(function (data) { return exports.ListCheckpointsResponse.decode(new wire_1.BinaryReader(data)); });
-    };
-    return MealPlannerAPIClientImpl;
-}());
-exports.MealPlannerAPIClientImpl = MealPlannerAPIClientImpl;
 function bytesFromBase64(b64) {
-    if (globalThis.Buffer) {
-        return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
-    }
-    else {
-        var bin = globalThis.atob(b64);
-        var arr = new Uint8Array(bin.length);
-        for (var i = 0; i < bin.length; ++i) {
-            arr[i] = bin.charCodeAt(i);
-        }
-        return arr;
-    }
+    return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
 }
 function base64FromBytes(arr) {
-    if (globalThis.Buffer) {
-        return globalThis.Buffer.from(arr).toString("base64");
-    }
-    else {
-        var bin_1 = [];
-        arr.forEach(function (byte) {
-            bin_1.push(globalThis.String.fromCharCode(byte));
-        });
-        return globalThis.btoa(bin_1.join(""));
-    }
+    return globalThis.Buffer.from(arr).toString("base64");
 }
 function toTimestamp(date) {
     var seconds = Math.trunc(date.getTime() / 1000);
