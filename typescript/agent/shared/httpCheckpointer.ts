@@ -1,68 +1,93 @@
 import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
 
-// Import from package like UI does
+import { createClient } from '@connectrpc/connect';
+import { createConnectTransport } from '@connectrpc/connect-node';
+import { MealPlannerAPI } from '@mealplanner/generated/api_connect';
+
+// Generated protobuf types
 import type {
   AgentCheckpoint as AgentCheckpointType,
-  AgentCheckpointMetadata as AgentCheckpointMetadataType
-} from '@mealplanner/generated';
-import { AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated';
+  AgentCheckpointMetadata as AgentCheckpointMetadataType,
+} from '@mealplanner/generated/api_pb';
+
+import { AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated/api_pb'; 
 import { infoLog } from '../logging';
 
 export class HttpCheckpointSaver {
   private baseUrl: string;
+  private client: ReturnType<typeof createClient<typeof MealPlannerAPI>>;
 
-  constructor(baseUrl: string = 'http://localhost:8090') {
+  constructor(baseUrl: string = 'http://localhost:8080') {
     this.baseUrl = baseUrl;
+
+    const transport = createConnectTransport({
+      baseUrl: this.baseUrl,
+      httpVersion: '1.1',
+    });
+    this.client = createClient(MealPlannerAPI, transport);
   }
 
-  async getTuple(config: RunnableConfig): Promise<[AgentCheckpointType, AgentCheckpointMetadataType] | undefined> {
+  async getTuple(
+    config: RunnableConfig,
+  ): Promise<[AgentCheckpointType, AgentCheckpointMetadataType] | undefined> {
     const threadId = (config as any).configurable?.threadId;
     const checkpointNs = (config as any).configurable?.checkpoint_ns;
     if (!threadId) return undefined;
-    const url = `${this.baseUrl}/api/checkpoints/${threadId}${checkpointNs ? `?checkpoint_ns=${checkpointNs}` : ''}`;
-    const resp = await fetch(url);
-    if (!resp.ok) return undefined;
-    const data = await resp.json();
-    if (!data.found) return undefined;
 
-    // Convert JSON payload to generated protobuf types so field names use camelCase
-    const checkpoint = AgentCheckpoint.fromJSON(data.tuple.checkpoint);
-    infoLog(`[CHECKPOINT] Got checkpoint for thread ${threadId}: ${JSON.stringify(checkpoint)}`);
-    const metadataRaw = data.tuple.metadata;
-    const metadata = metadataRaw ? AgentCheckpointMetadata.fromJSON(metadataRaw) : AgentCheckpointMetadata.create({});
-    return [checkpoint, metadata];
+    try {
+      const response = (await this.client.getCheckpoint({
+        threadId,
+        checkpointNs: checkpointNs ?? '',
+      }));
+
+      if (!response.found || !response.tuple) return undefined;
+
+      const checkpoint = response.tuple.checkpoint ?? new AgentCheckpoint();
+      infoLog(
+        `[CHECKPOINT] Got checkpoint for thread ${threadId}: ${JSON.stringify(
+          checkpoint,
+        )}`,
+      );
+      const metadata =
+        response.tuple.metadata ?? new AgentCheckpointMetadata();
+      return [checkpoint, metadata];
+    } catch (e) {
+      infoLog(`[CHECKPOINT] getTuple failed: ${e}`);
+      return undefined;
+    }
   }
 
-  async put(config: RunnableConfig, checkpoint: AgentCheckpointType, metadata: AgentCheckpointMetadataType): Promise<RunnableConfig> {
+  async put(
+    config: RunnableConfig,
+    checkpoint: AgentCheckpointType,
+    metadata: AgentCheckpointMetadataType,
+  ): Promise<RunnableConfig> {
     const threadId = (config as any).configurable?.threadId || uuidv4();
     const checkpointNs = (config as any).configurable?.checkpoint_ns || uuidv4();
 
-    // Convert protobuf types to JSON for API
     try {
-      // log checkpoint
-      infoLog(`[CHECKPOINT] Saving checkpoint for thread ${threadId}: ${JSON.stringify(checkpoint)}`);
-      const resp = await fetch(`${this.baseUrl}/api/checkpoints`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          thread_id: threadId,
-          checkpoint_ns: checkpointNs,
-          workflow_type: 'meal_planning',
+      infoLog(
+        `[CHECKPOINT] Saving checkpoint for thread ${threadId}: ${JSON.stringify(
           checkpoint,
-          metadata,
-        }),
+        )}`,
+      );
+      await this.client.putCheckpoint({
+        threadId,
+        checkpointNs,
+        workflowType: 'meal_planning',
+        checkpoint,
+        metadata,
       });
-
-      if (!resp.ok) {
-        const errText = await resp.text();
-        infoLog(`[CHECKPOINT] Save failed: ${errText}`);
-        throw new Error(`Failed to save checkpoint: ${resp.statusText}`);
-      }
-      return { configurable: { ...(config as any).configurable, threadId, checkpoint_ns: checkpointNs } } as RunnableConfig;
+      return {
+        configurable: {
+          ...config.configurable,
+          threadId,
+          checkpoint_ns: checkpointNs,
+        },
+      } as RunnableConfig;
     } catch (e) {
       infoLog(`[CHECKPOINT] Save failed: ${e}`);
-      // log checkpoint lastPlanned
       if (checkpoint) {
         for (const day of checkpoint.state?.mealPlan?.days || []) {
           if (day.meal) {
@@ -72,48 +97,55 @@ export class HttpCheckpointSaver {
       }
       throw e;
     }
-
   }
 
-  async *list(_config: RunnableConfig, limit?: number): AsyncGenerator<[RunnableConfig, AgentCheckpointType, AgentCheckpointMetadataType]> {
-    const resp = await fetch(`${this.baseUrl}/api/checkpoints?limit=${limit || 100}`);
-    if (!resp.ok) return;
-    const data = await resp.json();
-    for (const entry of data.entries) {
-      // Convert from JSON to protobuf types
-      const checkpoint = AgentCheckpoint.fromJSON(entry.tuple.checkpoint);
-      const metadata = AgentCheckpointMetadata.fromJSON(entry.tuple.metadata);
-      yield [{ configurable: { threadId: entry.thread_id, checkpoint_ns: entry.checkpoint_ns } } as RunnableConfig, checkpoint, metadata];
+  async *list(
+    _config: RunnableConfig,
+    limit?: number,
+  ): AsyncGenerator<
+    [RunnableConfig, AgentCheckpointType, AgentCheckpointMetadataType]
+  > {
+    const response = (await this.client.listCheckpoints({
+      limit: limit ?? 100,
+    }));
+
+    for (const entry of response.entries) {
+      const checkpoint =
+        entry.tuple?.checkpoint ?? new AgentCheckpoint();
+      const metadata =
+        entry.tuple?.metadata ?? new AgentCheckpointMetadata();
+      yield [
+        {
+          configurable: {
+            threadId: entry.threadId,
+            checkpoint_ns: entry.checkpointNs,
+          },
+        } as RunnableConfig,
+        checkpoint,
+        metadata,
+      ];
     }
   }
 
   async getWorkflowStatus(threadId: string): Promise<any> {
-    const resp = await fetch(`${this.baseUrl}/api/workflows/${threadId}`);
-
-    // Attempt to parse JSON **only** if the response is OK (2xx). In error cases
-    // the backend may respond with a plain-text error, which would otherwise
-    // cause a JSON.parse failure and mask the real problem.
-    if (!resp.ok) {
-      const text = await resp.text();
+    try {
+      const resp = await this.client.getWorkflowStatus({ threadId });
       infoLog(
-        `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${resp.status} – ${text}`,
+        `[CHECKPOINT] Got workflow status for thread ${threadId}: ${JSON.stringify(
+          resp,
+        )}`,
+      );
+      return resp;
+    } catch (e) {
+      infoLog(
+        `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${e}`,
       );
       return null;
     }
-
-    const json = await resp.json();
-    infoLog(
-      `[CHECKPOINT] Got workflow status for thread ${threadId}: ${JSON.stringify(
-        json,
-      )}`,
-    );
-    return json;
   }
 
-  async listWorkflows(limit?: number): Promise<any[]> {
-    const resp = await fetch(`${this.baseUrl}/api/agent/workflows?limit=${limit || 100}`);
-    if (!resp.ok) return [];
-    const data = await resp.json();
-    return data.workflows || [];
+  async listWorkflows(): Promise<any[]> {
+    const resp = await this.client.listWorkflows({});
+    return resp.workflows || [];
   }
 }

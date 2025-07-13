@@ -14,7 +14,7 @@ export async function generateList(plan: number[]): Promise<GetShoppingListRespo
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(GetShoppingListRequest.fromJSON({ plan }))
+      body: JSON.stringify(new GetShoppingListRequest({ plan }))
     });
 
     if (!resp.ok) {

@@ -12,6 +12,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "@bufbuild/protobuf": "^1.10.0",
+    "@connectrpc/connect": "^1.6.0",
+    "@connectrpc/connect-node": "^1.6.0",
+    "@connectrpc/connect-web": "^1.6.0",
     "@mealplanner/generated": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.12.3",
     "cors": "^2.8.5",

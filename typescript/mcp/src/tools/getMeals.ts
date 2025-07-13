@@ -15,7 +15,7 @@ export async function doGetMeals(mealType?: string): Promise<Meal[]> {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   }
   const responseJson = await resp.json();
-  const data = GetAllMealsResponse.fromJSON(responseJson);
+  const data = GetAllMealsResponse.fromJson(responseJson);
   return data.meals;
 }
 

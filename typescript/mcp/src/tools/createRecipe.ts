@@ -25,7 +25,7 @@ export async function createRecipe(data: z.infer<typeof createRecipeArgs>) {
   // Convert effort level to numeric value
   const effortMap = { 'LOW': 1, 'MED': 3, 'HIGH': 5 };
   
-  const mealData: Meal = {
+  const mealData = new Meal({
     id: 0, // Will be assigned by backend
     name: data.name,
     effort: effortMap[data.effort],
@@ -35,36 +35,36 @@ export async function createRecipe(data: z.infer<typeof createRecipeArgs>) {
     ingredients: [],
     steps: [],
     lastPlanned: undefined,
-  };
+  });
   
-  const requestData: CreateMealRequest = {
+  const requestData = new CreateMealRequest({
     meal: mealData,
-  };
+  });
   
   const resp = await fetch(`${API}/api/meals`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(CreateMealRequest.toJSON(requestData))
+    body: JSON.stringify(requestData.toJson())
   });
   if (!resp.ok) throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   
   const responseJson = await resp.json();
-  const createResponse = CreateMealResponse.fromJSON(responseJson);
+  const createResponse = CreateMealResponse.fromJson(responseJson);
   if (!createResponse.meal) {
     throw new McpError(-32000, 'No meal returned from create request');
   }
   
   const created = createResponse.meal;
   const id = created.id;
-  const stepsRequestData: AddBulkStepsRequest = {
+  const stepsRequestData = new AddBulkStepsRequest({
     mealId: id,
     instructions: data.steps.map(step => step.text),
-  };
+  });
   
   const stepResp = await fetch(`${API}/api/meals/${id}/steps/bulk`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(AddBulkStepsRequest.toJSON(stepsRequestData))
+    body: JSON.stringify(stepsRequestData.toJson())
   });
   if (!stepResp.ok) throw new McpError(-32000, `BackendError: ${stepResp.statusText}`);
   if (data.ingredients) {

@@ -1,22 +1,27 @@
 {
   "name": "@mealplanner/generated",
   "version": "1.0.0",
-  "main": "api.js",
-  "types": "api.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "files": [
-    "api.ts",
-    "api.js",
-    "api.d.ts",
-    "google/protobuf"
+    "index.ts",
+    "index.js",
+    "index.d.ts",
+    "api_pb.ts",
+    "api_pb.js", 
+    "api_pb.d.ts",
+    "api_connect.ts",
+    "api_connect.js",
+    "api_connect.d.ts"
   ],
   "dependencies": {
-    "@bufbuild/protobuf": "^2.6.0",
+    "@bufbuild/protobuf": "^1.10.0",
     "protobufjs": "^7.0.0"
   },
   "peerDependencies": {
-    "@connectrpc/connect": "^1.0.0",
-    "@connectrpc/connect-node": "^1.0.0",
-    "@connectrpc/connect-web": "^1.0.0",
+    "@connectrpc/connect": "^1.6.0",
+    "@connectrpc/connect-node": "^1.6.0",
+    "@connectrpc/connect-web": "^1.6.0",
     "typescript": ">=4.0.0"
   }
 }

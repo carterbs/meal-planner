@@ -14,12 +14,12 @@ export async function doReplaceMeal(day: string, mealType: string, newMealId: nu
   const resp = await fetch(`${API}/api/mealplan/replace`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(ReplaceMealRequest.fromJSON({ day, mealType, newMealId }))
+    body: JSON.stringify(new ReplaceMealRequest({ day, newMealId }))
   });
   if (!resp.ok) {
     throw new McpError(-32000, `BackendError: ${resp.statusText}`);
   }
-  return ReplaceMealResponse.fromJSON(await resp.json());
+  return ReplaceMealResponse.fromJson(await resp.json());
 }
 
 export function registerReplaceMeal(server: McpServer) {
