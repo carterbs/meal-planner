@@ -24,7 +24,9 @@ const portsToKill = [
   8090, // backend
   5000, 
   3001, 
-  3000];
+  3000,
+  // grpc backend
+  50051];
 
 function killProcessOnPort(port) {
   try {
