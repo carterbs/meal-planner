@@ -65,27 +65,27 @@ export class MealPlanningWorkflow implements BaseWorkflow {
    * Convert any Meal.lastPlanned that is not already a Date into a Date so
    * that WeeklyMealPlan.toJSON() can safely call toISOString().
    */
-  private coerceDates(plan: WeeklyMealPlan | undefined): void {
-    if (!plan?.days) return;
-    for (const entry of plan.days) {
-      const meal: any = entry.meal;
-      if (!meal) continue;
-      if (meal.lastPlanned === null) {
-        meal.lastPlanned = undefined;
-        continue;
-      }
-      if (!meal.lastPlanned) continue;
-      if (meal.lastPlanned instanceof Date) continue;
+  // private coerceDates(plan: WeeklyMealPlan | undefined): void {
+  //   if (!plan?.days) return;
+  //   for (const entry of plan.days) {
+  //     const meal: any = entry.meal;
+  //     if (!meal) continue;
+  //     if (meal.lastPlanned === null) {
+  //       meal.lastPlanned = undefined;
+  //       continue;
+  //     }
+  //     if (!meal.lastPlanned) continue;
+  //     if (meal.lastPlanned instanceof Date) continue;
 
-      if (typeof meal.lastPlanned === 'string') {
-        meal.lastPlanned = new Date(meal.lastPlanned);
-      } else if (typeof meal.lastPlanned === 'object') {
-        const seconds = Number(meal.lastPlanned.seconds ?? 0);
-        const nanos = Number(meal.lastPlanned.nanos ?? 0);
-        meal.lastPlanned = new Date(seconds * 1000 + Math.round(nanos / 1_000_000));
-      }
-    }
-  }
+  //     if (typeof meal.lastPlanned === 'string') {
+  //       meal.lastPlanned = new Date(meal.lastPlanned);
+  //     } else if (typeof meal.lastPlanned === 'object') {
+  //       const seconds = Number(meal.lastPlanned.seconds ?? 0);
+  //       const nanos = Number(meal.lastPlanned.nanos ?? 0);
+  //       meal.lastPlanned = new Date(seconds * 1000 + Math.round(nanos / 1_000_000));
+  //     }
+  //   }
+  // }
 
   readonly type = WorkflowType.MEAL_PLANNING;
   readonly graph: any;
@@ -109,6 +109,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async saveCheckpoint(config: any, state: MealPlanningState): Promise<void> {
+    infoLog('MealPlanningWorkflow.saveCheckpoint called');
     // DEBUGGING: Log meal plan before checkpoint serialization (saveCheckpoint)
     if (state.meal_plan) {
       await infoLog("🔍 [SAVE-CHECKPOINT] mealPlan before checkpoint serialization:");
@@ -119,30 +120,45 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
     }
-    
+
     // Coerce dates before serialization (temporarily disabled for debugging)
     // if (state.meal_plan) {
     //   this.coerceDates(state.meal_plan);
     // }
-    
+
     const protoState: MealPlanningCheckpointState = {
       threadId: state.threadId,
       participants: state.participants,
       createdAt: state.created_at instanceof Date ? state.created_at : new Date(state.created_at as any),
       updatedAt: state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at as any),
       currentStep: state.current_step,
-      mealPlan: state.meal_plan ? WeeklyMealPlan.toJSON(state.meal_plan) as any : null,
+      mealPlan: state.meal_plan || undefined,
       feedbackHistory: state.feedback_history as any,
       iterationCount: state.iteration_count,
       shoppingList: state.shopping_list as any,
       isFinalized: state.is_finalized,
     };
-    const checkpoint = AgentCheckpoint.create({
-      state: protoState,
-      messages: [],
-      next: [],
-      step: 0,
-    });
+    infoLog(`🔍 [SAVE-CHECKPOINT] mealPlan before protoState serialization: ${JSON.stringify(protoState)}`);
+    let checkpoint: AgentCheckpoint;
+    try {
+
+      checkpoint = AgentCheckpoint.create({
+        state: protoState,
+        messages: [],
+        next: [],
+        step: 0,
+      });
+    } catch (e) {
+      // log every lastPlanned value
+      if (state.meal_plan) {
+        for (const day of state.meal_plan.days) {
+          if (day.meal) {
+            infoLog(`🔍 [SAVE-CHECKPOINT] lastPlanned: ${day.meal.lastPlanned}`);
+          }
+        }
+      }
+      throw e;
+    }
     const metadata = AgentCheckpointMetadata.create({
       source: 'workflow',
       step: 0,
@@ -151,6 +167,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   async initialize(): Promise<void> {
+    infoLog('MealPlanningWorkflow.initialize called');
     const isCodex = process.argv.includes('--codex');
     const isJsonMode = process.argv.includes('--json');
 
@@ -191,6 +208,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   async cleanup(): Promise<void> {
+    infoLog('MealPlanningWorkflow.cleanup called');
     if (this.client) {
       await this.client.close();
     }
@@ -204,6 +222,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private createGraph() {
     return {
       invoke: async (input: any, config: any) => {
+        infoLog('MealPlanningWorkflow.invoke called');
         infoLog(`${`🍽️ [MEAL-WORKFLOW] Invoking workflow; input:`} ${input}`);
         // Load checkpoint
         const tuple = await this.checkpointer.getTuple(config);
@@ -248,14 +267,14 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               }
             }
           }
-          
+
           const protoState: MealPlanningCheckpointState = {
             threadId: state.threadId,
             participants: state.participants,
             createdAt: state.created_at instanceof Date ? state.created_at : new Date(state.created_at as any),
             updatedAt: state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at as any),
             currentStep: state.current_step,
-            mealPlan: state.meal_plan ? WeeklyMealPlan.toJSON(state.meal_plan) as any : null,
+            mealPlan: state.meal_plan ?? undefined,
             feedbackHistory: state.feedback_history as any,
             iterationCount: state.iteration_count,
             shoppingList: state.shopping_list as any,
@@ -286,10 +305,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             // DEBUGGING: Log mealPlan before deserialization
             await infoLog("🔍 [CHECKPOINT] mealPlan before WeeklyMealPlan.fromJSON:");
             await infoLog(JSON.stringify(checkpoint.state.mealPlan, null, 2));
-            
+
             // this.coerceDates(checkpoint.state.mealPlan as any); // temporarily disabled for debugging
             deserializedMealPlan = WeeklyMealPlan.fromJSON(checkpoint.state.mealPlan as any);
-            
+
             // DEBUGGING: Log mealPlan after deserialization
             await infoLog("🔍 [CHECKPOINT] mealPlan after WeeklyMealPlan.fromJSON:");
             if (deserializedMealPlan.days) {
@@ -299,7 +318,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               }
             }
           }
-          
+
           state = {
             threadId: checkpoint.state.threadId,
             workflow_type: WorkflowType.MEAL_PLANNING,
@@ -374,14 +393,14 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                   }
                 }
               }
-              
+
               const protoState: MealPlanningCheckpointState = {
                 threadId: state.threadId,
                 participants: state.participants,
                 createdAt: state.created_at instanceof Date ? state.created_at : new Date(state.created_at as any),
                 updatedAt: state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at as any),
                 currentStep: state.current_step,
-                mealPlan: state.meal_plan ? WeeklyMealPlan.toJSON(state.meal_plan) as any : null,
+                mealPlan: state.meal_plan ?? undefined,
                 feedbackHistory: state.feedback_history as any,
                 iterationCount: state.iteration_count,
                 shoppingList: state.shopping_list as any,
@@ -417,8 +436,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   // Node implementations
   private async initiateNode(
-    state: MealPlanningState)
-    : Promise<Partial<MealPlanningState>> {
+    state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    infoLog('MealPlanningWorkflow.initiateNode called');
     infoLog(
       `🍽️ [MEAL-WORKFLOW] Initiating meal planning for thread ${state.threadId}`
     );
@@ -433,10 +452,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       updated_at: new Date()
     };
   }
+
   private async saveMealPlan(threadId: string, plan: WeeklyMealPlan) {
+    infoLog('MealPlanningWorkflow.saveMealPlan called');
     try {
       const backend = process.env.BACKEND_URL ?? 'http://localhost:8080';
-      
+
       // DEBUGGING: Log dayIndex values BEFORE coerceDates and serialization
       await infoLog("🔍 [AGENT] dayIndex values BEFORE saveMealPlan processing:");
       if (plan.days) {
@@ -445,8 +466,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(`🔍 [AGENT] SAVE BEFORE Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
         }
       }
-      
-      this.coerceDates(plan);
+
+      // this.coerceDates(plan);
       // Use the typed entries directly (they still contain Date objects)
       const entries = plan.days;
 
@@ -456,23 +477,21 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         entries,
       });
 
-      const body = SaveMealPlanRequest.toJSON(saveRequest) as SaveMealPlanRequest;
-      
       // DEBUGGING: Log dayIndex values in the serialized body
-      await infoLog("🔍 [AGENT] dayIndex values in SaveMealPlanRequest.toJSON body:");
-      if (body.entries) {
-        for (let i = 0; i < body.entries.length; i++) {
-          const entry = body.entries[i];
+      await infoLog("🔍 [AGENT] dayIndex values in saveRequest:");
+      if (saveRequest.entries) {
+        for (let i = 0; i < saveRequest.entries.length; i++) {
+          const entry = saveRequest.entries[i];
           await infoLog(`🔍 [AGENT] SAVE JSON Entry ${i}: dayIndex=${entry.dayIndex}, mealType=${entry.mealType}, meal=${entry.meal?.name || 'nil'}`);
         }
       }
-      
+
       debugLog("Full body for save request");
-      debug(JSON.stringify(body))
+      debug(JSON.stringify(saveRequest))
       await fetch(`${backend}/api/mealplan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(saveRequest)
       });
     } catch (err) {
       warnLog(`⚠️ [MEAL-WORKFLOW] Failed to persist meal plan ${err}`);
@@ -481,8 +500,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async generatePlanNode(
-    _state: MealPlanningState)
-    : Promise<Partial<MealPlanningState>> {
+    _state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    infoLog('MealPlanningWorkflow.generatePlanNode called');
     const reqId = uuidv4()
     infoLog(`🍽️ [MEAL-WORKFLOW] Generating initial meal plan: ${reqId}`);
 
@@ -515,7 +534,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
       await infoLog(`MEAL PLAN from generate------- req: ${reqId}`);
       await infoLog(JSON.stringify(generateResponse, null, 2));
-      
+
       // DEBUGGING: Log dayIndex values BEFORE fromJSON conversion
       await infoLog("🔍 [AGENT] dayIndex values BEFORE WeeklyMealPlan.fromJSON:");
       if (generateResponse.plan?.days) {
@@ -524,7 +543,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(`🔍 [AGENT] BEFORE Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
         }
       }
-      
+
       const mealPlan = WeeklyMealPlan.fromJSON(generateResponse.plan);
 
       // DEBUGGING: Log dayIndex values AFTER fromJSON conversion
@@ -552,8 +571,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async optimizePlanNode(
-    state: MealPlanningState)
-    : Promise<Partial<MealPlanningState>> {
+    state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    infoLog('MealPlanningWorkflow.optimizePlanNode called');
     infoLog(
       `🍽️ [MEAL-WORKFLOW] Optimizing meal plan (iteration ${state.iteration_count + 1})`
     );
@@ -586,8 +605,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   // New: apply feedback using LLM with feedback context
   private async applyFeedbackNode(
-    state: MealPlanningState & { feedback_to_apply?: FeedbackEntry[]; })
-    : Promise<Partial<MealPlanningState>> {
+    state: MealPlanningState & { feedback_to_apply?: FeedbackEntry[]; }): Promise<Partial<MealPlanningState>> {
+    infoLog('MealPlanningWorkflow.applyFeedbackNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Applying user feedback via LLM`);
     if (!state.meal_plan) {
       throw new Error('No meal plan to apply feedback to');
@@ -613,8 +632,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   // Analyze feedback using nano LLM. Returns { satisfied: boolean, reasoning: string }
   private async analyzeFeedbackNode(
-    feedbackEntries: FeedbackEntry[])
-    : Promise<{ satisfied: boolean; reasoning: string; }> {
+    feedbackEntries: FeedbackEntry[]): Promise<{ satisfied: boolean; reasoning: string; }> {
+    infoLog('MealPlanningWorkflow.analyzeFeedbackNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Analyzing feedback: ${feedbackEntries}`);
     const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
     const prompt = getAnalyzeFeedbackPrompt(latestFeedback.message);
@@ -644,8 +663,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private async applyFeedbackWithLLM(
     plan: GeneratedWeeklyMealPlan,
     feedback: string[],
-    threadId: string)
-    : Promise<{ mealPlan: GeneratedWeeklyMealPlan; userMessage: string; }> {
+    threadId: string): Promise<{ mealPlan: GeneratedWeeklyMealPlan; userMessage: string; }> {
+    infoLog('MealPlanningWorkflow.applyFeedbackWithLLM called');
     const t0 = Date.now();
     debugLog(
       `[FEEDBACK] applyFeedbackWithLLM start (feedbackCount=${feedback.length})`
@@ -789,8 +808,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async presentPlanNode(
-    state: MealPlanningState)
-    : Promise<Partial<MealPlanningState>> {
+    state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    infoLog('MealPlanningWorkflow.presentPlanNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Presenting meal plan to participants`);
 
     if (!state.meal_plan) {
@@ -810,8 +829,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async finalizePlanNode(
-    state: MealPlanningState)
-    : Promise<Partial<MealPlanningState>> {
+    state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    infoLog('MealPlanningWorkflow.finalizePlanNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Finalizing meal plan`);
 
     if (!state.meal_plan) {
@@ -839,8 +858,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async generateShoppingListNode(
-    state: MealPlanningState)
-    : Promise<Partial<MealPlanningState>> {
+    state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    infoLog('MealPlanningWorkflow.generateShoppingListNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Generating shopping list`);
 
     if (!state.meal_plan) {
@@ -1007,8 +1026,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private async completeNode(
-    state: MealPlanningState)
-    : Promise<Partial<MealPlanningState>> {
+    state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    infoLog('MealPlanningWorkflow.completeNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Meal planning workflow completed`);
 
     // Final validation
@@ -1026,6 +1045,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   private validatePlan(plan: GeneratedWeeklyMealPlan): string[] {
+    infoLog('MealPlanningWorkflow.validatePlan called');
     const issues: string[] = [];
 
     // Check consecutive high-effort meals
@@ -1068,8 +1088,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   private async optimizePlanWithLLM(
     plan: GeneratedWeeklyMealPlan,
-    issues: string[])
-    : Promise<GeneratedWeeklyMealPlan> {
+    issues: string[]): Promise<GeneratedWeeklyMealPlan> {
+    infoLog('MealPlanningWorkflow.optimizePlanWithLLM called');
     // Fetch available meals
     const mealsResp = await this.client.callTool({
       name: 'getMeals',

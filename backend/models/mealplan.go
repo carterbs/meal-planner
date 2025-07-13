@@ -126,6 +126,7 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 	m.Effort = effort
 	m.HasRedMeat = hasRedMeat
 	m.MealType = mealTypeScanned
+	m.LastPlanned = nil
 	if url.Valid {
 		m.Url = url.String
 	}
@@ -139,7 +140,7 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 	if lastPlanned.Valid {
 		m.LastPlanned = timestamppb.New(lastPlanned.Time)
 	}
-	// Leave m.LastPlanned as nil if lastPlanned is not valid
+
 	return &m, nil
 }
 
@@ -218,9 +219,11 @@ func getLastPlannedMealsByType(db *sql.DB, mealType string, limit int) ([]*Meal,
 		m.Effort = effort
 		m.HasRedMeat = hasRedMeat
 		m.MealType = mealTypeScanned
+		m.LastPlanned = nil
 		if lastPlanned.Valid {
 			m.LastPlanned = timestamppb.New(lastPlanned.Time)
 		}
+
 		if url.Valid {
 			m.Url = url.String
 		}
