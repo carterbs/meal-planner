@@ -58,7 +58,7 @@ async function createSession(): Promise<string> {
   console.log('--- Creating session ---');
 
   const startRequest: AgentStartRequest = {
-    workflowType: 'MEAL_PLANNING',
+    workflowType: 'meal_planning',
     participants: ['user'],
   };
 
@@ -73,9 +73,9 @@ async function createSession(): Promise<string> {
   if (!response.ok) {
     throw new Error(`Failed to create session: ${response.statusText}`);
   }
-
-  const sessionData = await response.json() as SessionResponse;
-  return sessionData.threadId;
+ 
+  const sessionData = await response.json();
+  return (sessionData as any).response.threadId;
 }
 
 async function sendMessage(threadId: string, message: string): Promise<void> {
@@ -176,6 +176,13 @@ async function main(): Promise<void> {
     // Fetch and check results
     console.log('--- Fetching state and checking results ---');
     const state = await getWorkflowState(threadId);
+    console.log('=== FULL STATE ===');
+    console.log(JSON.stringify(state, null, 2));
+
+    if (!state.entries) {
+      console.log('❌ No entries found in state - test cannot verify meal removal');
+      return;
+    }
 
     // Display Friday meals (dayIndex 4)
     console.log('=== FRIDAY MEALS (dayIndex 4) ===');
