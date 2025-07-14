@@ -19,6 +19,27 @@ export function debugLog(message: string, fields?: Record<string, string>) {
   return grpcDebugLog(message, fields);
 }
 
+// ---------------------------------------------------------------------------
+// Global error handlers – ensure any uncaught errors propagate to stderr so
+// the backend gRPC server can capture them when running with --json.
+// ---------------------------------------------------------------------------
+process.on('uncaughtException', (err) => {
+  try {
+    debugLog('[UNCAUGHT_EXCEPTION]', { message: err?.message || String(err) });
+  } catch {/* ignore */}
+  console.error('[UNCAUGHT_EXCEPTION]', err);
+  // Flush and exit with code 1 so backend can detect failure
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason: unknown) => {
+  try {
+    debugLog('[UNHANDLED_REJECTION]', { reason: String(reason) });
+  } catch {/* ignore */}
+  console.error('[UNHANDLED_REJECTION]', reason);
+  process.exit(1);
+});
+
 // Avoid emitting logs to stdout before JSON capture is set up
 if (!process.argv.includes('--json')) {
   debugLog('CLI starting...');
