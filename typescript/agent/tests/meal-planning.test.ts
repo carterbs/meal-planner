@@ -36,21 +36,24 @@ describe('MealPlanningWorkflow logic', () => {
       const { maxConsecutiveHighEffort } = VALIDATION_CRITERIA;
       const days = Array(maxConsecutiveHighEffort + 2)
         .fill(null)
-        .map((_, i) => new MealPlanEntry({
-          dayIndex: i,
-          mealType: 'dinner',
-          meal: new Meal({
-            id: i,
-            name: 'm',
-            effort: 4,
-            hasRedMeat: false,
-            lastPlanned: undefined,
-            url: '',
-            mealType: '',
-            ingredients: [],
-            steps: [],
-          }),
-        }));
+        .map(
+          (_, i) =>
+            new MealPlanEntry({
+              dayIndex: i,
+              mealType: 'dinner',
+              meal: new Meal({
+                id: i,
+                name: 'm',
+                effort: 4,
+                hasRedMeat: false,
+                lastPlanned: undefined,
+                url: '',
+                mealType: '',
+                ingredients: [],
+                steps: [],
+              }),
+            }),
+        );
       const issues = workflow.validatePlan(makePlan(days));
       expect(issues).toContain(
         `Too many consecutive high-effort meals (day ${maxConsecutiveHighEffort + 1})`,
@@ -61,21 +64,24 @@ describe('MealPlanningWorkflow logic', () => {
       const { maxRedMeatPerWeek } = VALIDATION_CRITERIA;
       const days = Array(maxRedMeatPerWeek + 1)
         .fill(null)
-        .map((_, i) => new MealPlanEntry({
-          dayIndex: i,
-          mealType: 'lunch',
-          meal: new Meal({
-            id: i,
-            name: 'm',
-            effort: 1,
-            hasRedMeat: true,
-            lastPlanned: undefined,
-            url: '',
-            mealType: '',
-            ingredients: [],
-            steps: [],
-          }),
-        }));
+        .map(
+          (_, i) =>
+            new MealPlanEntry({
+              dayIndex: i,
+              mealType: 'lunch',
+              meal: new Meal({
+                id: i,
+                name: 'm',
+                effort: 1,
+                hasRedMeat: true,
+                lastPlanned: undefined,
+                url: '',
+                mealType: '',
+                ingredients: [],
+                steps: [],
+              }),
+            }),
+        );
       const issues = workflow.validatePlan(makePlan(days));
       expect(issues).toContain(
         `Too many red meat meals: ${maxRedMeatPerWeek + 1} (max ${maxRedMeatPerWeek})`,

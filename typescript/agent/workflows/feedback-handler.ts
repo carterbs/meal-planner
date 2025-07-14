@@ -1,14 +1,11 @@
-import { infoLog, errorLog } from "../logging";
+import { infoLog, errorLog } from '../logging';
 
 import {
   FeedbackEntry,
   MealPlanningState,
-  WorkflowType } from
-'../shared/types';
+  WorkflowType,
+} from '../shared/types';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
-
-
-
 
 export interface FeedbackInput {
   threadId: string;
@@ -33,21 +30,21 @@ export class FeedbackHandler {
       const config = {
         configurable: {
           threadId: input.threadId,
-          workflow_type: WorkflowType.MEAL_PLANNING
-        }
+          workflow_type: WorkflowType.MEAL_PLANNING,
+        },
       };
 
       const tuple = await this.checkpointer.getTuple(config);
       if (!tuple) {
         errorLog(
-          `❌ [FEEDBACK] No workflow found for thread ${input.threadId}`
+          `❌ [FEEDBACK] No workflow found for thread ${input.threadId}`,
         );
         return false;
       }
 
       // Do NOT persist feedback. Only log receipt and return true.
       infoLog(
-        `💬 [FEEDBACK] (NO-OP) Received feedback from ${input.from} to workflow ${input.threadId}`
+        `💬 [FEEDBACK] (NO-OP) Received feedback from ${input.from} to workflow ${input.threadId}`,
       );
       return true;
     } catch (error) {
@@ -64,8 +61,8 @@ export class FeedbackHandler {
       const config = {
         configurable: {
           threadId: threadId,
-          workflow_type: WorkflowType.MEAL_PLANNING
-        }
+          workflow_type: WorkflowType.MEAL_PLANNING,
+        },
       };
 
       const tuple = await this.checkpointer.getTuple(config);
@@ -102,9 +99,9 @@ export class FeedbackHandler {
    * Get feedback for a specific meal plan version
    */
   async getFeedbackForVersion(
-  threadId: string,
-  version: number)
-  : Promise<FeedbackEntry[]> {
+    threadId: string,
+    version: number,
+  ): Promise<FeedbackEntry[]> {
     const allFeedback = await this.getFeedback(threadId);
     return allFeedback.filter((f) => f.meal_plan_version === version);
   }
@@ -117,11 +114,13 @@ export class FeedbackHandler {
       const config = {
         configurable: {
           threadId: threadId,
-          workflow_type: WorkflowType.MEAL_PLANNING
-        }
+          workflow_type: WorkflowType.MEAL_PLANNING,
+        },
       };
 
-      errorLog(`[FEEDBACK] Checking if workflow ${threadId} is awaiting feedback...`);
+      errorLog(
+        `[FEEDBACK] Checking if workflow ${threadId} is awaiting feedback...`,
+      );
       errorLog(`${`[FEEDBACK] Config:`} ${JSON.stringify(config)}`);
 
       let tuple;
@@ -160,7 +159,9 @@ export class FeedbackHandler {
 
       infoLog(`[FEEDBACK] Current step: ${state.current_step}`);
       infoLog(`[FEEDBACK] Current step type: ${typeof state.current_step}`);
-      infoLog(`[FEEDBACK] Checking if equals 'await_feedback': ${state.current_step === 'await_feedback'}`);
+      infoLog(
+        `[FEEDBACK] Checking if equals 'await_feedback': ${state.current_step === 'await_feedback'}`,
+      );
       infoLog(`${`[FEEDBACK] Full state:`} ${JSON.stringify(state, null, 2)}`);
       return state.current_step === 'await_feedback';
     } catch (error) {
@@ -179,9 +180,9 @@ export class FeedbackHandler {
    * Process feedback and determine required actions
    */
   async processFeedback(
-  threadId: string,
-  version: number)
-  : Promise<{
+    threadId: string,
+    version: number,
+  ): Promise<{
     requiresChanges: boolean;
     suggestions: string[];
     sentiment: 'positive' | 'negative' | 'neutral';
@@ -192,30 +193,31 @@ export class FeedbackHandler {
       return {
         requiresChanges: false,
         suggestions: [],
-        sentiment: 'neutral'
+        sentiment: 'neutral',
       };
     }
 
     // Simple feedback analysis
     const messages = feedback.map((f) => f.message.toLowerCase());
     const negativeKeywords = [
-    "don't like",
-    'change',
-    'different',
-    'no',
-    'not',
-    'replace',
-    'swap'];
+      "don't like",
+      'change',
+      'different',
+      'no',
+      'not',
+      'replace',
+      'swap',
+    ];
 
     const positiveKeywords = [
-    'good',
-    'great',
-    'like',
-    'love',
-    'perfect',
-    'yes',
-    'approve'];
-
+      'good',
+      'great',
+      'like',
+      'love',
+      'perfect',
+      'yes',
+      'approve',
+    ];
 
     let negativeCount = 0;
     let positiveCount = 0;
@@ -223,34 +225,34 @@ export class FeedbackHandler {
 
     for (const message of messages) {
       negativeCount += negativeKeywords.filter((keyword) =>
-      message.includes(keyword)
+        message.includes(keyword),
       ).length;
       positiveCount += positiveKeywords.filter((keyword) =>
-      message.includes(keyword)
+        message.includes(keyword),
       ).length;
 
       // Extract specific change requests
       if (
-      message.includes('change') ||
-      message.includes('replace') ||
-      message.includes('swap'))
-      {
+        message.includes('change') ||
+        message.includes('replace') ||
+        message.includes('swap')
+      ) {
         suggestions.push(`Consider addressing: "${message}"`);
       }
     }
 
     const requiresChanges = negativeCount > positiveCount;
     const sentiment =
-    negativeCount > positiveCount ?
-    'negative' :
-    positiveCount > negativeCount ?
-    'positive' :
-    'neutral';
+      negativeCount > positiveCount
+        ? 'negative'
+        : positiveCount > negativeCount
+          ? 'positive'
+          : 'neutral';
 
     return {
       requiresChanges,
       suggestions,
-      sentiment
+      sentiment,
     };
   }
 
@@ -269,7 +271,7 @@ export class FeedbackHandler {
     for (const entry of feedback) {
       const timestamp = entry.timestamp.toLocaleString();
       lines.push(
-        `\n👤 ${entry.from} (v${entry.meal_plan_version}) - ${timestamp}:`
+        `\n👤 ${entry.from} (v${entry.meal_plan_version}) - ${timestamp}:`,
       );
       lines.push(`   ${entry.message}`);
     }

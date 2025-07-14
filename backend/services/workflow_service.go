@@ -237,11 +237,11 @@ Note for tomorrow.it appears that by the first time we try to get a checkpoint. 
 // ListWorkflows returns a summary for the most recent N workflows.
 // If limit <= 0, all workflows are returned.
 func (s *workflowService) ListWorkflows(limit int) ([]models.WorkflowStatus, error) {
-    workflowServiceLogger.Debugw("ListWorkflows called", "limit", limit)
-    statuses, err := models.ListWorkflows(s.db, limit)
-    if err != nil {
-        workflowServiceLogger.Errorw("ListWorkflows failed", "error", err)
-        return nil, err
-    }
-    return statuses, nil
+	workflowServiceLogger.Debugw("ListWorkflows called", "limit", limit)
+	statuses, err := models.ListWorkflows(s.db, limit)
+	if err != nil {
+		workflowServiceLogger.Errorw("ListWorkflows failed", "error", err)
+		return nil, err
+	}
+	return statuses, nil
 }

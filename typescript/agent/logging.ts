@@ -2,11 +2,7 @@ import { writeFileSync, appendFileSync } from 'fs';
 import { join } from 'path';
 import { createClient } from '@connectrpc/connect';
 import { createGrpcTransport } from '@connectrpc/connect-node';
-import {
-  LoggingService,
-  LogEntry,
-  LogRequest
-} from '@mealplanner/generated';
+import { LoggingService, LogEntry, LogRequest } from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';
 
 let loggingClient: ReturnType<typeof createClient<typeof LoggingService>>;
@@ -25,7 +21,10 @@ export async function initLogging(_serviceName = 'agent') {
 
   try {
     // Test connection with a basic health check
-    logToFile('INFO', `Successfully connected to logging service at ${baseUrl}`);
+    logToFile(
+      'INFO',
+      `Successfully connected to logging service at ${baseUrl}`,
+    );
   } catch (error) {
     console.error(`[AGENT] Failed to connect to logging service: ${error}`);
     logToFile('ERROR', `Failed to connect to logging service: ${error}`);
@@ -43,11 +42,19 @@ function logToFile(level: string, message: string) {
   try {
     appendFileSync(debugLogPath, logEntry);
   } catch {
-    try {writeFileSync(debugLogPath, logEntry);} catch {/* ignore */}
+    try {
+      writeFileSync(debugLogPath, logEntry);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
-async function sendLog(level: string, message: string, fields: Record<string, string> = {}) {
+async function sendLog(
+  level: string,
+  message: string,
+  fields: Record<string, string> = {},
+) {
   await initLogging();
   const entry = new LogEntry({
     serviceName: 'agent',
@@ -56,7 +63,7 @@ async function sendLog(level: string, message: string, fields: Record<string, st
     timestamp: Timestamp.fromDate(new Date()),
     threadId: '',
     component: '',
-    fields
+    fields,
   });
 
   logToFile(level, message); // Always log to file for backup

@@ -26,7 +26,9 @@ export function debugLog(message: string, fields?: Record<string, string>) {
 process.on('uncaughtException', (err) => {
   try {
     debugLog('[UNCAUGHT_EXCEPTION]', { message: err?.message || String(err) });
-  } catch {/* ignore */}
+  } catch {
+    /* ignore */
+  }
   console.error('[UNCAUGHT_EXCEPTION]', err);
   // Flush and exit with code 1 so backend can detect failure
   process.exit(1);
@@ -35,7 +37,9 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason: unknown) => {
   try {
     debugLog('[UNHANDLED_REJECTION]', { reason: String(reason) });
-  } catch {/* ignore */}
+  } catch {
+    /* ignore */
+  }
   console.error('[UNHANDLED_REJECTION]', reason);
   process.exit(1);
 });
@@ -180,7 +184,7 @@ import { MessageGenerator } from './utils/messageGenerator';
 
 const program = new Command();
 
-// Global configuration  
+// Global configuration
 const config: LangGraphAgentConfig = {
   defaultParticipants: ['brad', 'shannon'],
 };
@@ -245,7 +249,7 @@ async function outputError(message: string, isJsonMode: boolean = false) {
   } else {
     debugLog(`❌ ${message}`);
   }
-  await new Promise(r => setTimeout(r, 200));  // give logging a moment
+  await new Promise((r) => setTimeout(r, 200)); // give logging a moment
   process.exit(1);
 }
 
@@ -317,7 +321,9 @@ function hasRecentFeedbackInResult(result: any): boolean {
     // Check if there's feedback within the last 30 seconds
     const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
     const hasRecent = feedbackHistory.some((feedback: any) => {
-      const feedbackTime = feedback.timestamp ? feedback.timestamp : new Date(0);
+      const feedbackTime = feedback.timestamp
+        ? feedback.timestamp
+        : new Date(0);
       return feedbackTime > thirtySecondsAgo;
     });
 
@@ -416,7 +422,10 @@ planCommand
         process.exit(0);
       }
     } catch (error) {
-      const errMsg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
+      const errMsg =
+        error instanceof Error
+          ? `${error.message}\n${error.stack}`
+          : String(error);
       debugLog(`Full error stack: ${errMsg}`);
       outputError(
         `Error starting meal planning session: ${errMsg}`,
