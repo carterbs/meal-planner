@@ -175,7 +175,7 @@ export class ConversationHandler {
         message:
           "Great! I'm glad you like the meal plan. Let me finalize it and generate your shopping list... 🛒",
         threadId,
-        currentStep: result.current_step,
+        currentStep: result.currentStep,
         nextAction: 'Finalizing plan and generating shopping list',
       };
     } else {
@@ -184,7 +184,7 @@ export class ConversationHandler {
         message:
           'Thanks for the feedback! Let me revise the meal plan based on your preferences... 🔄',
         threadId,
-        currentStep: result.current_step,
+        currentStep: result.currentStep,
         nextAction: 'Optimizing plan based on feedback',
       };
     }
@@ -248,10 +248,10 @@ export class ConversationHandler {
 
       return {
         success: true,
-        message: this.getStepMessage(result.current_step),
+        message: this.getStepMessage(result.currentStep ?? 'unknown'),
         threadId,
-        currentStep: result.current_step,
-        nextAction: this.getNextAction(result.current_step),
+        currentStep: result.currentStep,
+        nextAction: this.getNextAction(result.currentStep ?? 'unknown'),
       };
     } catch (error) {
       errorLog(

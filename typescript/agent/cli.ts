@@ -789,16 +789,19 @@ program
 
         if (
           result.success &&
-          (result.user_message || result.raw?.user_message)
+          ((result as any).user_message || (result.raw as any)?.user_message)
         ) {
-          message = result.user_message || result.raw?.user_message;
+          message =
+            (result as any).user_message || (result.raw as any)?.user_message;
           debugLog(`[RESUME] Using workflow-generated message: ${message}`);
         } else if (result.success && hasRecentFeedbackInResult(result)) {
           // Fallback to separate message generation if workflow didn't provide a message
           try {
             const messageGenerator = new MessageGenerator();
             const feedbackHistory =
-              result.feedback_history || result.raw?.feedback_history || [];
+              (result as any).feedback_history ||
+              (result.raw as any)?.feedback_history ||
+              [];
             const latestFeedback = feedbackHistory[feedbackHistory.length - 1];
 
             const contextualMessage =
@@ -807,10 +810,14 @@ program
                 workflowType: status.workflowType,
                 hasRecentFeedback: true,
                 feedbackSummary: latestFeedback?.message,
-                mealPlan: result.meal_plan || result.raw?.meal_plan,
-                shoppingList: result.shopping_list || result.raw?.shopping_list,
+                mealPlan:
+                  (result as any).meal_plan || (result.raw as any)?.meal_plan,
+                shoppingList:
+                  (result as any).shopping_list ||
+                  (result.raw as any)?.shopping_list,
                 iteration:
-                  result.iteration_count || result.raw?.iteration_count,
+                  (result as any).iteration_count ||
+                  (result.raw as any)?.iteration_count,
               });
             message = contextualMessage;
             debugLog(
