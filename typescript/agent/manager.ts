@@ -1,4 +1,4 @@
-import { infoLog, errorLog } from "./logging";
+import { infoLog, errorLog } from './logging';
 import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
 import { WorkflowType } from './shared/types';
@@ -20,9 +20,31 @@ export interface WorkflowSession {
 export interface WorkflowExecutionOptions {
   threadId?: string;
   participants?: string[];
-  input?: Record<string, any>;
+  input?: InputPayload;
   maxIterations?: number;
 }
+
+// ----------------- Compatibility Types & Aliases -----------------
+export type InputPayload = Record<string, unknown>;
+
+interface WorkflowStatusCompat {
+  threadId: string;
+  workflowType?: WorkflowType;
+  workflow_type?: WorkflowType;
+  createdAt?: string | number | Date;
+  created_at?: string | number | Date;
+  updatedAt?: string | number | Date;
+  updated_at?: string | number | Date;
+  currentStep?: string;
+  current_step?: string;
+}
+
+interface WorkflowGraphResult {
+  currentStep?: string;
+  current_step?: string;
+  [key: string]: unknown;
+}
+// ----------------------------------------------------------------
 
 export class WorkflowManager {
   private checkpointer: HttpCheckpointSaver;
@@ -49,9 +71,9 @@ export class WorkflowManager {
 
   // Start a new workflow session
   async startWorkflow(
-  type: WorkflowType,
-  options: WorkflowExecutionOptions = {})
-  : Promise<string> {
+    type: WorkflowType,
+    options: WorkflowExecutionOptions = {},
+  ): Promise<string> {
     if (!this.registry.isTypeSupported(type)) {
       throw new Error(`Unsupported workflow type: ${type}`);
     }
@@ -68,7 +90,7 @@ export class WorkflowManager {
         createdAt: new Date(),
         lastUpdated: new Date(),
         currentStep: 'initiate',
-        isActive: true
+        isActive: true,
       };
 
       this.activeSessions.set(threadId, session);
@@ -77,7 +99,7 @@ export class WorkflowManager {
       const workflow = await this.registry.getOrCreateWorkflow(
         type,
         threadId,
-        this.checkpointer
+        this.checkpointer,
       );
 
       // Actually invoke the workflow up to feedback pause with timeout
@@ -86,25 +108,25 @@ export class WorkflowManager {
         {
           configurable: {
             threadId: threadId,
-            workflow_type: type
-          }
-        }
+            workflow_type: type,
+          },
+        },
       );
-      
+
       // Add 10 second timeout for workflow startup
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Workflow startup timeout')), 30000);
       });
-      
+
       await Promise.race([workflowPromise, timeoutPromise]);
 
       infoLog(
-        `🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`
+        `🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`,
       );
       return threadId;
     } catch (error) {
       const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
+        error instanceof Error ? error.message : 'Unknown error';
       errorLog(`${`❌ [WORKFLOW] Error starting workflow ${type}:`} ${error}`);
       throw new Error(`Failed to start workflow: ${errorMessage}`);
     }
@@ -112,14 +134,14 @@ export class WorkflowManager {
 
   // Execute a step in a workflow
   async executeWorkflowStep(
-  threadId: string,
-  input: Record<string, any> = {})
-  : Promise<{
+    threadId: string,
+    input: InputPayload = {},
+  ): Promise<{
     success: boolean;
     message: string;
     currentStep?: string;
     threadId: string;
-    [key: string]: any;
+    [key: string]: unknown;
   }> {
     const session = this.activeSessions.get(threadId);
     if (!session) {
@@ -133,49 +155,54 @@ export class WorkflowManager {
     const workflow = await this.registry.getOrCreateWorkflow(
       session.workflowType,
       threadId,
-      this.checkpointer
+      this.checkpointer,
     );
 
     const config: RunnableConfig = {
       configurable: {
         threadId: threadId,
-        workflow_type: session.workflowType
-      }
+        workflow_type: session.workflowType,
+      },
     };
 
     try {
       // Execute the workflow step
       const result = await workflow.graph.invoke(input, config);
 
+      const stepResult = result as WorkflowGraphResult;
+
       // Update session
       session.lastUpdated = new Date();
-      session.currentStep = (result.currentStep || result.current_step) || session.currentStep;
+      session.currentStep =
+        stepResult.currentStep ??
+        stepResult.current_step ??
+        session.currentStep;
 
       // Check if workflow is complete
-      const isComplete = (result.currentStep || result.current_step) === 'complete';
+      const isComplete =
+        (stepResult.currentStep ?? stepResult.current_step) === 'complete';
       if (isComplete) {
         session.isActive = false;
         infoLog(
-          `✅ [WORKFLOW] Completed ${session.workflowType} workflow: ${threadId}`
+          `✅ [WORKFLOW] Completed ${session.workflowType} workflow: ${threadId}`,
         );
       }
 
       // Format the response
       return {
         success: true,
-        message: isComplete ?
-        'Workflow completed successfully' :
-        'Workflow step executed successfully',
+        message: isComplete
+          ? 'Workflow completed successfully'
+          : 'Workflow step executed successfully',
         currentStep: session.currentStep,
         threadId,
-        ...result
+        ...result,
       };
     } catch (error) {
       const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-      errorLog(`${
-      `❌ [WORKFLOW] Error executing step for ${threadId}:`} ${
-      error}`
+        error instanceof Error ? error.message : 'Unknown error';
+      errorLog(
+        `${`❌ [WORKFLOW] Error executing step for ${threadId}:`} ${error}`,
       );
 
       return {
@@ -183,21 +210,21 @@ export class WorkflowManager {
         message: `Error executing workflow step: ${errorMessage}`,
         currentStep: session.currentStep,
         threadId,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
 
   // Resume a paused workflow
   async resumeWorkflow(
-  threadId: string,
-  input: Record<string, any> = {})
-  : Promise<{
+    threadId: string,
+    input: InputPayload = {},
+  ): Promise<{
     success: boolean;
     message: string;
     currentStep?: string;
     threadId: string;
-    [key: string]: any;
+    [key: string]: unknown;
   }> {
     try {
       const resumeWorkflowStart = Date.now();
@@ -209,17 +236,31 @@ export class WorkflowManager {
         const getWorkflowStatusStart = Date.now();
         const status = await this.checkpointer.getWorkflowStatus(threadId);
         debugLog(
-          `[WORKFLOW] getWorkflowStatus took ${Date.now() - getWorkflowStatusStart}ms`, { rawStatus: JSON.stringify(status || {}) }
+          `[WORKFLOW] getWorkflowStatus took ${Date.now() - getWorkflowStatusStart}ms`,
+          { rawStatus: JSON.stringify(status || {}) },
         );
         if (status) {
+          const statusCompat = status as WorkflowStatusCompat;
           session = {
             threadId,
-            workflowType: (status.workflowType as WorkflowType) || (status.workflow_type as WorkflowType) || WorkflowType.MEAL_PLANNING,
+            workflowType:
+              statusCompat.workflowType ??
+              statusCompat.workflow_type ??
+              WorkflowType.MEAL_PLANNING,
             participants: ['brad'], // Default participant, could be enhanced
-            createdAt: status.createdAt || status.created_at,
-            lastUpdated: status.updatedAt || status.updated_at,
-            currentStep: status.currentStep || status.current_step,
-            isActive: (status.currentStep || status.current_step) !== 'complete'
+            createdAt: new Date(
+              statusCompat.createdAt ?? statusCompat.created_at ?? Date.now(),
+            ),
+            lastUpdated: new Date(
+              statusCompat.updatedAt ?? statusCompat.updated_at ?? Date.now(),
+            ),
+            currentStep:
+              statusCompat.currentStep ??
+              statusCompat.current_step ??
+              'unknown',
+            isActive:
+              (statusCompat.currentStep ?? statusCompat.current_step) !==
+              'complete',
           };
           this.activeSessions.set(threadId, session);
         }
@@ -229,7 +270,7 @@ export class WorkflowManager {
         return {
           success: false,
           message: `No workflow found for thread ID: ${threadId}`,
-          threadId
+          threadId,
         };
       }
 
@@ -238,38 +279,41 @@ export class WorkflowManager {
           success: false,
           message: `Workflow ${threadId} is already complete`,
           currentStep: session.currentStep,
-          threadId
+          threadId,
         };
       }
 
       infoLog(
-        `🔄 [WORKFLOW] Resuming ${session.workflowType} workflow: ${threadId}`
+        `🔄 [WORKFLOW] Resuming ${session.workflowType} workflow: ${threadId}`,
       );
       const executeWorkflowStepStart = Date.now();
-      debugLog('[WORKFLOW] Session state before execute', { session: JSON.stringify(session) });
+      debugLog('[WORKFLOW] Session state before execute', {
+        session: JSON.stringify(session),
+      });
       const result = await this.executeWorkflowStep(threadId, input);
-      debugLog('[WORKFLOW] resumeWorkflow result', { result: JSON.stringify(result) });
+      debugLog('[WORKFLOW] resumeWorkflow result', {
+        result: JSON.stringify(result),
+      });
       const executeWorkflowStepEnd = Date.now();
       debugLog(
-        `[WORKFLOW] executeWorkflowStep took ${executeWorkflowStepEnd - executeWorkflowStepStart}ms`
+        `[WORKFLOW] executeWorkflowStep took ${executeWorkflowStepEnd - executeWorkflowStepStart}ms`,
       );
       debugLog(
-        `[WORKFLOW] resumeWorkflow took ${Date.now() - resumeWorkflowStart}ms`
+        `[WORKFLOW] resumeWorkflow took ${Date.now() - resumeWorkflowStart}ms`,
       );
       return result;
     } catch (error) {
       const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-      errorLog(`${
-      `❌ [WORKFLOW] Error resuming workflow ${threadId}:`} ${
-      error}`
+        error instanceof Error ? error.message : 'Unknown error';
+      errorLog(
+        `${`❌ [WORKFLOW] Error resuming workflow ${threadId}:`} ${error}`,
       );
 
       return {
         success: false,
         message: `Error resuming workflow: ${errorMessage}`,
         threadId,
-        error: errorMessage
+        error: errorMessage,
       };
     }
   }
@@ -286,103 +330,156 @@ export class WorkflowManager {
     this.activeSessions.delete(threadId);
 
     infoLog(
-      `🛑 [WORKFLOW] Cancelled ${session.workflowType} workflow: ${threadId}`
+      `🛑 [WORKFLOW] Cancelled ${session.workflowType} workflow: ${threadId}`,
     );
     return true;
   }
 
   // Get workflow status
   async getWorkflowStatus(threadId: string): Promise<WorkflowSession | null> {
+    // First, check in-memory sessions
     const session = this.activeSessions.get(threadId);
     if (session) {
       return { ...session };
     }
 
-    // Try to load from database if not in memory
+    // Otherwise, query the backend
     const status = await this.checkpointer.getWorkflowStatus(threadId);
-    if (status) {
-      const session: WorkflowSession = {
-        threadId,
-        workflowType: (status.workflowType as WorkflowType) || (status.workflow_type as WorkflowType) || WorkflowType.MEAL_PLANNING,
-        participants: ['brad'], // Default, could be enhanced
-        createdAt: status.createdAt || status.created_at,
-        lastUpdated: status.updatedAt || status.updated_at,
-        currentStep: status.currentStep || status.current_step,
-        isActive: (status.currentStep || status.current_step) !== 'complete'
-      };
-      return session;
+    if (!status) {
+      return null;
     }
 
-    return null;
+    const statusCompat = status as WorkflowStatusCompat;
+    const newSession: WorkflowSession = {
+      threadId,
+      workflowType:
+        statusCompat.workflowType ??
+        statusCompat.workflow_type ??
+        WorkflowType.MEAL_PLANNING,
+      participants: ['brad'], // TODO: Replace with actual participants once supported
+      createdAt: new Date(
+        statusCompat.createdAt ?? statusCompat.created_at ?? Date.now(),
+      ),
+      lastUpdated: new Date(
+        statusCompat.updatedAt ?? statusCompat.updated_at ?? Date.now(),
+      ),
+      currentStep:
+        statusCompat.currentStep ?? statusCompat.current_step ?? 'unknown',
+      isActive:
+        (statusCompat.currentStep ?? statusCompat.current_step) !== 'complete',
+    };
+
+    this.activeSessions.set(threadId, newSession);
+    return newSession;
   }
 
-  // List all workflows
-  async listWorkflows(_type?: WorkflowType): Promise<WorkflowSession[]> {
-    const dbWorkflows = await this.checkpointer.listWorkflows();
+  /**
+   * List all workflows, optionally filtered by type.
+   */
+  async listWorkflows(type?: WorkflowType): Promise<WorkflowSession[]> {
     const sessions: WorkflowSession[] = [];
 
-    for (const dbWorkflow of dbWorkflows) {
-      const session = this.activeSessions.get(dbWorkflow.threadId);
-      if (session) {
-        sessions.push({ ...session });
-      } else {
-        // Create session from database data
-        const status = await this.checkpointer.getWorkflowStatus(
-          dbWorkflow.threadId
-        );
-        if (status) {
-          sessions.push({
-            threadId: dbWorkflow.threadId,
-            workflowType: (dbWorkflow.workflowType as WorkflowType) || (dbWorkflow.workflow_type as WorkflowType) || WorkflowType.MEAL_PLANNING,
-            participants: ['brad'], // Default, could be enhanced
-            createdAt: dbWorkflow.createdAt || dbWorkflow.created_at,
-            lastUpdated: dbWorkflow.updatedAt || dbWorkflow.updated_at,
-            currentStep: status.currentStep || status.current_step,
-            isActive: (status.currentStep || status.current_step) !== 'complete'
-          });
-        }
+    // In-memory sessions first
+    for (const s of this.activeSessions.values()) {
+      if (!type || s.workflowType === type) {
+        sessions.push({ ...s });
       }
     }
 
+    // Query backend for any additional workflows not in memory
+    const statuses = await this.checkpointer.listWorkflows();
+    for (const status of statuses) {
+      if (this.activeSessions.has(status.threadId)) {
+        continue; // already included
+      }
+
+      const statusCompat = status as WorkflowStatusCompat;
+      const workflowType: WorkflowType =
+        statusCompat.workflowType ??
+        statusCompat.workflow_type ??
+        WorkflowType.MEAL_PLANNING;
+
+      if (type && workflowType !== type) {
+        continue;
+      }
+
+      const isComplete =
+        (statusCompat.currentStep ?? statusCompat.current_step) === 'complete';
+
+      const sess: WorkflowSession = {
+        threadId: status.threadId,
+        workflowType,
+        participants: ['brad'],
+        createdAt: new Date(
+          statusCompat.createdAt ?? statusCompat.created_at ?? Date.now(),
+        ),
+        lastUpdated: new Date(
+          statusCompat.updatedAt ?? statusCompat.updated_at ?? Date.now(),
+        ),
+        currentStep:
+          statusCompat.currentStep ?? statusCompat.current_step ?? 'unknown',
+        isActive: !isComplete,
+      };
+      sessions.push(sess);
+    }
+
+    // Most recent first
     return sessions.sort(
-      (a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime()
+      (a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime(),
     );
   }
 
-  // Get active sessions count
+  /** Get number of active (in-memory) sessions */
   getActiveSessionCount(): number {
-    return Array.from(this.activeSessions.values()).filter((s) => s.isActive).
-    length;
+    return Array.from(this.activeSessions.values()).filter((s) => s.isActive)
+      .length;
   }
 
-  // Get supported workflow types
+  /** Return supported workflow types registered with the registry */
   getSupportedWorkflowTypes(): WorkflowType[] {
     return this.registry.getSupportedTypes();
   }
 
-  // Private method to load active sessions from database
+  /**
+   * Load active (non-completed) workflows from backend into memory.
+   */
   private async loadActiveSessions(): Promise<void> {
     try {
-      const workflows = await this.checkpointer.listWorkflows();
-      for (const workflow of workflows) {
-        const status = await this.checkpointer.getWorkflowStatus(
-          workflow.threadId
-        );
-        if (status && (status.currentStep || status.current_step) !== 'complete') {
-          const session: WorkflowSession = {
-            threadId: workflow.threadId,
-            workflowType: (workflow.workflowType as WorkflowType) || (workflow.workflow_type as WorkflowType) || WorkflowType.MEAL_PLANNING,
-            participants: ['brad'], // Default, could be enhanced
-            createdAt: workflow.createdAt || workflow.created_at,
-            lastUpdated: workflow.updatedAt || workflow.updated_at,
-            currentStep: status.currentStep || status.current_step,
-            isActive: true
-          };
-          this.activeSessions.set(workflow.threadId, session);
+      const statuses = await this.checkpointer.listWorkflows();
+      for (const status of statuses) {
+        const statusCompat = status as WorkflowStatusCompat;
+        const isComplete =
+          (statusCompat.currentStep ?? statusCompat.current_step) ===
+          'complete';
+        if (isComplete) {
+          continue;
         }
+
+        if (this.activeSessions.has(status.threadId)) {
+          continue;
+        }
+
+        const session: WorkflowSession = {
+          threadId: status.threadId,
+          workflowType:
+            statusCompat.workflowType ??
+            statusCompat.workflow_type ??
+            WorkflowType.MEAL_PLANNING,
+          participants: ['brad'],
+          createdAt: new Date(
+            statusCompat.createdAt ?? statusCompat.created_at ?? Date.now(),
+          ),
+          lastUpdated: new Date(
+            statusCompat.updatedAt ?? statusCompat.updated_at ?? Date.now(),
+          ),
+          currentStep:
+            statusCompat.currentStep ?? statusCompat.current_step ?? 'unknown',
+          isActive: true,
+        };
+        this.activeSessions.set(status.threadId, session);
       }
       infoLog(
-        `📚 [WORKFLOW] Loaded ${this.activeSessions.size} active sessions from database`
+        `📚 [WORKFLOW] Loaded ${this.activeSessions.size} active sessions from database`,
       );
     } catch (error) {
       errorLog(`❌ [WORKFLOW] Error loading active sessions: ${error}`);

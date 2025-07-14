@@ -101,8 +101,6 @@ func main() {
 
 	// Database health checking removed - handled by gRPC HealthCheck endpoint
 
-
-
 	// Start gRPC server (HTTP server removed as part of gRPC migration)
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
@@ -110,15 +108,15 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	
+
 	// Register our main service
 	mealPlannerService := &MealPlannerGRPCServer{}
 	apipb.RegisterMealPlannerAPIServer(grpcServer, mealPlannerService)
-	
+
 	// Register health check service
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
-	
+
 	// Set health status based on database connectivity
 	var healthStatus grpc_health_v1.HealthCheckResponse_ServingStatus
 	if connection != nil {
@@ -133,15 +131,15 @@ func main() {
 		healthStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
 		mainLogger.Warn("Health check: No database connection - service NOT_SERVING")
 	}
-	
+
 	healthServer.SetServingStatus("mealplanner.api.MealPlannerAPI", healthStatus)
 	healthServer.SetServingStatus("", healthStatus) // Overall server health
-	
+
 	// Start periodic health check monitoring in background
 	go func() {
 		ticker := time.NewTicker(30 * time.Second) // Check every 30 seconds
 		defer ticker.Stop()
-		
+
 		for range ticker.C {
 			var currentStatus grpc_health_v1.HealthCheckResponse_ServingStatus
 			if handlers.DB != nil {
@@ -155,13 +153,13 @@ func main() {
 				currentStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
 				mainLogger.Warn("Health check: No database connection")
 			}
-			
+
 			// Update health status if it changed
 			healthServer.SetServingStatus("mealplanner.api.MealPlannerAPI", currentStatus)
 			healthServer.SetServingStatus("", currentStatus)
 		}
 	}()
-	
+
 	mainLogger.Info("gRPC server starting on :50051 (HTTP server removed, health checks enabled)")
 	if err := grpcServer.Serve(lis); err != nil {
 		mainLogger.Fatalw("Error starting gRPC server", "error", err)

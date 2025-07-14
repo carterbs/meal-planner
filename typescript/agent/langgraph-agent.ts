@@ -64,7 +64,9 @@ export class LangGraphAgent {
         `🚀 [LANGGRAPH-AGENT] Initialized with ${supportedTypes.length} workflow types:${JSON.stringify(supportedTypes)}`,
       );
     } catch (error) {
-      debugLog(`❌[LANGGRAPH - AGENT] Initialization failed: ${JSON.stringify(error)}`);
+      debugLog(
+        `❌[LANGGRAPH - AGENT] Initialization failed: ${JSON.stringify(error)}`,
+      );
       throw error;
     }
   }
@@ -79,7 +81,9 @@ export class LangGraphAgent {
       this.isInitialized = false;
       debugLog(`🛑[LANGGRAPH - AGENT] Agent shut down successfully`);
     } catch (error) {
-      debugLog(`❌[LANGGRAPH - AGENT] Shutdown error: ${JSON.stringify(error)}`);
+      debugLog(
+        `❌[LANGGRAPH - AGENT] Shutdown error: ${JSON.stringify(error)}`,
+      );
       throw error;
     }
   }
@@ -248,8 +252,12 @@ export class LangGraphAgent {
       threadId: checkpoint.state.threadId,
       workflow_type: WorkflowType.MEAL_PLANNING,
       participants: checkpoint.state.participants,
-      created_at: checkpoint.state.createdAt ? checkpoint.state.createdAt.toDate() : new Date(),
-      updated_at: checkpoint.state.updatedAt ? checkpoint.state.updatedAt.toDate() : new Date(),
+      created_at: checkpoint.state.createdAt
+        ? checkpoint.state.createdAt.toDate()
+        : new Date(),
+      updated_at: checkpoint.state.updatedAt
+        ? checkpoint.state.updatedAt.toDate()
+        : new Date(),
       current_step: checkpoint.state.currentStep as any,
       meal_plan: checkpoint.state.mealPlan as any,
       feedback_history: checkpoint.state.feedbackHistory as any,
@@ -317,7 +325,9 @@ async function main() {
               spawnSync('pbcopy', ['-Prefer', 'html'], { input: html });
               debugLog(`✅ HTML table copied to clipboard (as HTML)`);
             } catch (err) {
-              debugLog(`⚠️ Failed to copy HTML to clipboard: ${JSON.stringify(err)}`);
+              debugLog(
+                `⚠️ Failed to copy HTML to clipboard: ${JSON.stringify(err)}`,
+              );
             }
           }
         }

@@ -85,17 +85,17 @@ func ParseCheckpointData(data []byte) (*CheckpointData, error) {
 		if err2 := json.Unmarshal(data, &raw); err2 == nil && raw.State != nil {
 			// Define a shadow struct with snake_case tags to map protojson output
 			type protoState struct {
-				ThreadID     string   `json:"thread_id"`
-				WorkflowType string   `json:"workflow_type"`
-				Participants []string `json:"participants"`
-				CurrentStep  string   `json:"current_step"`
-				MealPlan     any      `json:"meal_plan"`
-				FeedbackHistory any   `json:"feedback_history"`
-				IterationCount int    `json:"iteration_count"`
-				ShoppingList   any    `json:"shopping_list"`
-				IsFinalized    bool   `json:"is_finalized"`
-				CreatedAt      time.Time `json:"created_at"`
-				UpdatedAt      time.Time `json:"updated_at"`
+				ThreadID        string    `json:"thread_id"`
+				WorkflowType    string    `json:"workflow_type"`
+				Participants    []string  `json:"participants"`
+				CurrentStep     string    `json:"current_step"`
+				MealPlan        any       `json:"meal_plan"`
+				FeedbackHistory any       `json:"feedback_history"`
+				IterationCount  int       `json:"iteration_count"`
+				ShoppingList    any       `json:"shopping_list"`
+				IsFinalized     bool      `json:"is_finalized"`
+				CreatedAt       time.Time `json:"created_at"`
+				UpdatedAt       time.Time `json:"updated_at"`
 			}
 			var ps protoState
 			if err3 := json.Unmarshal(raw.State, &ps); err3 == nil && ps.ThreadID != "" {
@@ -103,7 +103,7 @@ func ParseCheckpointData(data []byte) (*CheckpointData, error) {
 				checkpoint.State.WorkflowType = ps.WorkflowType
 				checkpoint.State.Participants = ps.Participants
 				checkpoint.State.CurrentStep = ps.CurrentStep
-				checkpoint.State.MealPlan = nil // could map if needed
+				checkpoint.State.MealPlan = nil        // could map if needed
 				checkpoint.State.FeedbackHistory = nil // likewise
 				checkpoint.State.IterationCount = ps.IterationCount
 				checkpoint.State.ShoppingList = nil

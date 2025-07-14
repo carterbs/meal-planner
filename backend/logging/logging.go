@@ -9,15 +9,15 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	
+
 	logger "logging-service/client/go"
 )
 
 var (
-	Logger      *zap.SugaredLogger
-	loggerOnce  sync.Once
-	grpcLogger  *logger.LoggingClient
-	useGrpcLog  bool
+	Logger     *zap.SugaredLogger
+	loggerOnce sync.Once
+	grpcLogger *logger.LoggingClient
+	useGrpcLog bool
 )
 
 // GetLogger returns a named SugaredLogger, initializing the logger if necessary.
@@ -29,7 +29,7 @@ func GetLogger(name string) *zap.SugaredLogger {
 // GetGrpcLogger returns a logger that automatically sends logs to the gRPC service
 func GetGrpcLogger(name string) *zap.SugaredLogger {
 	InitLogger()
-	
+
 	if useGrpcLog && grpcLogger != nil {
 		// Create a logger with gRPC hook
 		config := zap.NewDevelopmentConfig()
@@ -56,7 +56,7 @@ func GetGrpcLogger(name string) *zap.SugaredLogger {
 		grpcLogger := zap.New(grpcCore)
 		return grpcLogger.Sugar().Named(name)
 	}
-	
+
 	return Logger.Named(name)
 }
 
@@ -68,7 +68,7 @@ func InitLogger() {
 		if loggingServiceAddr == "" {
 			loggingServiceAddr = "localhost:50052"
 		}
-		
+
 		// Try to connect to gRPC logging service
 		var err error
 		grpcLogger, err = logger.NewLoggingClient(loggingServiceAddr, "backend")
@@ -102,13 +102,13 @@ func InitLogger() {
 		config.EncoderConfig.ConsoleSeparator = " "
 
 		l, _ := config.Build()
-		
+
 		// If gRPC logging is available, wrap the logger with gRPC hook
 		if useGrpcLog && grpcLogger != nil {
 			grpcCore := NewGrpcHook(l.Core(), "backend")
 			l = zap.New(grpcCore)
 		}
-		
+
 		Logger = l.Sugar()
 	})
 }
