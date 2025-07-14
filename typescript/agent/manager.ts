@@ -80,8 +80,8 @@ export class WorkflowManager {
         this.checkpointer
       );
 
-      // Actually invoke the workflow up to feedback pause
-      await workflow.graph.invoke(
+      // Actually invoke the workflow up to feedback pause with timeout
+      const workflowPromise = workflow.graph.invoke(
         {},
         {
           configurable: {
@@ -90,6 +90,13 @@ export class WorkflowManager {
           }
         }
       );
+      
+      // Add 10 second timeout for workflow startup
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Workflow startup timeout')), 10000);
+      });
+      
+      await Promise.race([workflowPromise, timeoutPromise]);
 
       infoLog(
         `🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`
@@ -142,10 +149,10 @@ export class WorkflowManager {
 
       // Update session
       session.lastUpdated = new Date();
-      session.currentStep = result.current_step || session.currentStep;
+      session.currentStep = (result.currentStep || result.current_step) || session.currentStep;
 
       // Check if workflow is complete
-      const isComplete = result.current_step === 'complete';
+      const isComplete = (result.currentStep || result.current_step) === 'complete';
       if (isComplete) {
         session.isActive = false;
         infoLog(
@@ -202,17 +209,17 @@ export class WorkflowManager {
         const getWorkflowStatusStart = Date.now();
         const status = await this.checkpointer.getWorkflowStatus(threadId);
         debugLog(
-          `[WORKFLOW] getWorkflowStatus took ${Date.now() - getWorkflowStatusStart}ms`
+          `[WORKFLOW] getWorkflowStatus took ${Date.now() - getWorkflowStatusStart}ms`, { rawStatus: JSON.stringify(status || {}) }
         );
         if (status) {
           session = {
             threadId,
-            workflowType: status.workflow_type,
+            workflowType: (status.workflowType as WorkflowType) || (status.workflow_type as WorkflowType) || WorkflowType.MEAL_PLANNING,
             participants: ['brad'], // Default participant, could be enhanced
-            createdAt: status.created_at,
-            lastUpdated: status.updated_at,
-            currentStep: status.current_step,
-            isActive: status.current_step !== 'complete'
+            createdAt: status.createdAt || status.created_at,
+            lastUpdated: status.updatedAt || status.updated_at,
+            currentStep: status.currentStep || status.current_step,
+            isActive: (status.currentStep || status.current_step) !== 'complete'
           };
           this.activeSessions.set(threadId, session);
         }
@@ -239,7 +246,9 @@ export class WorkflowManager {
         `🔄 [WORKFLOW] Resuming ${session.workflowType} workflow: ${threadId}`
       );
       const executeWorkflowStepStart = Date.now();
+      debugLog('[WORKFLOW] Session state before execute', { session: JSON.stringify(session) });
       const result = await this.executeWorkflowStep(threadId, input);
+      debugLog('[WORKFLOW] resumeWorkflow result', { result: JSON.stringify(result) });
       const executeWorkflowStepEnd = Date.now();
       debugLog(
         `[WORKFLOW] executeWorkflowStep took ${executeWorkflowStepEnd - executeWorkflowStepStart}ms`
@@ -294,12 +303,12 @@ export class WorkflowManager {
     if (status) {
       const session: WorkflowSession = {
         threadId,
-        workflowType: status.workflow_type,
+        workflowType: (status.workflowType as WorkflowType) || (status.workflow_type as WorkflowType) || WorkflowType.MEAL_PLANNING,
         participants: ['brad'], // Default, could be enhanced
-        createdAt: status.created_at,
-        lastUpdated: status.updated_at,
-        currentStep: status.current_step,
-        isActive: status.current_step !== 'complete'
+        createdAt: status.createdAt || status.created_at,
+        lastUpdated: status.updatedAt || status.updated_at,
+        currentStep: status.currentStep || status.current_step,
+        isActive: (status.currentStep || status.current_step) !== 'complete'
       };
       return session;
     }
@@ -324,12 +333,12 @@ export class WorkflowManager {
         if (status) {
           sessions.push({
             threadId: dbWorkflow.threadId,
-            workflowType: dbWorkflow.workflow_type,
+            workflowType: (dbWorkflow.workflowType as WorkflowType) || (dbWorkflow.workflow_type as WorkflowType) || WorkflowType.MEAL_PLANNING,
             participants: ['brad'], // Default, could be enhanced
-            createdAt: dbWorkflow.created_at,
-            lastUpdated: dbWorkflow.updated_at,
-            currentStep: status.current_step,
-            isActive: status.current_step !== 'complete'
+            createdAt: dbWorkflow.createdAt || dbWorkflow.created_at,
+            lastUpdated: dbWorkflow.updatedAt || dbWorkflow.updated_at,
+            currentStep: status.currentStep || status.current_step,
+            isActive: (status.currentStep || status.current_step) !== 'complete'
           });
         }
       }
@@ -359,14 +368,14 @@ export class WorkflowManager {
         const status = await this.checkpointer.getWorkflowStatus(
           workflow.threadId
         );
-        if (status && status.current_step !== 'complete') {
+        if (status && (status.currentStep || status.current_step) !== 'complete') {
           const session: WorkflowSession = {
             threadId: workflow.threadId,
-            workflowType: workflow.workflow_type,
+            workflowType: (workflow.workflowType as WorkflowType) || (workflow.workflow_type as WorkflowType) || WorkflowType.MEAL_PLANNING,
             participants: ['brad'], // Default, could be enhanced
-            createdAt: workflow.created_at,
-            lastUpdated: workflow.updated_at,
-            currentStep: status.current_step,
+            createdAt: workflow.createdAt || workflow.created_at,
+            lastUpdated: workflow.updatedAt || workflow.updated_at,
+            currentStep: status.currentStep || status.current_step,
             isActive: true
           };
           this.activeSessions.set(workflow.threadId, session);
