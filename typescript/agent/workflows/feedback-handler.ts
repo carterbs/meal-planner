@@ -7,7 +7,6 @@ import {
   MealPlanningStep,
 } from '../shared/types';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
-import type { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
 
 export interface FeedbackInput {
   threadId: string;
@@ -84,13 +83,18 @@ export class FeedbackHandler {
         created_at: proto.createdAt ? proto.createdAt.toDate() : new Date(),
         updated_at: proto.updatedAt ? proto.updatedAt.toDate() : new Date(),
         current_step: proto.currentStep as MealPlanningStep,
-        meal_plan: proto.mealPlan as WeeklyMealPlan | null,
-        feedback_history: (proto.feedbackHistory ?? []) as unknown as FeedbackEntry[],
+        meal_plan: proto.mealPlan ?? null,
+        feedback_history: (proto.feedbackHistory ?? []).map((f): FeedbackEntry => ({
+          from: f.from,
+          message: f.message,
+          timestamp: f.timestamp ? f.timestamp.toDate() : new Date(),
+          meal_plan_version: f.mealPlanVersion,
+        })),
         iteration_count: proto.iterationCount,
-        shopping_list: (proto.shoppingList?.items ?? null) as unknown as ShoppingListItem[] | null,
+        shopping_list: proto.shoppingList?.items ?? null,
         is_finalized: proto.isFinalized,
       };
-      return state.feedback_history || [];
+      return state.feedback_history;
     } catch (error) {
       errorLog(`${`❌ [FEEDBACK] Error getting feedback:`} ${error}`);
       return [];
@@ -152,10 +156,15 @@ export class FeedbackHandler {
         created_at: proto.createdAt ? proto.createdAt.toDate() : new Date(),
         updated_at: proto.updatedAt ? proto.updatedAt.toDate() : new Date(),
         current_step: proto.currentStep as MealPlanningStep,
-        meal_plan: proto.mealPlan as WeeklyMealPlan | null,
-        feedback_history: (proto.feedbackHistory ?? []) as unknown as FeedbackEntry[],
+        meal_plan: proto.mealPlan ?? null,
+        feedback_history: (proto.feedbackHistory ?? []).map((f): FeedbackEntry => ({
+          from: f.from,
+          message: f.message,
+          timestamp: f.timestamp ? f.timestamp.toDate() : new Date(),
+          meal_plan_version: f.mealPlanVersion,
+        })),
         iteration_count: proto.iterationCount,
-        shopping_list: (proto.shoppingList?.items ?? null) as unknown as ShoppingListItem[] | null,
+        shopping_list: proto.shoppingList?.items ?? null,
         is_finalized: proto.isFinalized,
       };
 
