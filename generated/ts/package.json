@@ -8,15 +8,14 @@
     "index.js",
     "index.d.ts",
     "api_pb.ts",
-    "api_pb.js", 
+    "api_pb.js",
     "api_pb.d.ts",
     "api_connect.ts",
     "api_connect.js",
     "api_connect.d.ts"
   ],
   "dependencies": {
-    "@bufbuild/protobuf": "^1.10.0",
-    "protobufjs": "^7.0.0"
+    "@bufbuild/protobuf": "^1.10.0"
   },
   "peerDependencies": {
     "@connectrpc/connect": "^1.6.0",
