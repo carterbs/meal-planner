@@ -26,3 +26,8 @@ Thumbs.db
 .vscode/ 
 # Yarn install state
 .yarn/install-state.gz
+
+# Build artifacts
+api-gateway/api-gateway
+backend/mealplanner
+logging-service/loggingservice

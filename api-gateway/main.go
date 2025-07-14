@@ -92,6 +92,8 @@ func writeJSONResponse(w http.ResponseWriter, msg interface{}, err error) {
 		status := httpStatusFromGRPC(err)
 		w.WriteHeader(status)
 		errorResp := map[string]string{"error": err.Error()}
+		// Also log error to stdout for debugging visibility
+		log.Printf("[ERROR] %v", err)
 		json.NewEncoder(w).Encode(errorResp)
 		return
 	}

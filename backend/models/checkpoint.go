@@ -32,13 +32,37 @@ func GetWorkflowCheckpoint(db *sql.DB, threadID string) ([]byte, string, error) 
 
 // UpdateWorkflowCheckpoint upserts checkpoint_data for a thread under namespace "latest"
 func UpdateWorkflowCheckpoint(db *sql.DB, threadID string, data []byte) error {
-	const query = `
-		INSERT INTO workflow_checkpoints (thread_id, workflow_type, checkpoint_ns, checkpoint_data, created_at, updated_at)
-		VALUES ($1, '', 'latest', $2, NOW(), NOW())
-		ON CONFLICT (thread_id, checkpoint_ns)
-		DO UPDATE SET checkpoint_data = EXCLUDED.checkpoint_data, updated_at = NOW()`
-	_, err := db.Exec(query, threadID, data)
-	return err
+    // Extract workflow_type from the checkpoint JSON so that the `latest`
+    // row always has a non-empty workflow_type. This prevents downstream
+    // consumers (agent resume, listWorkflows, etc.) from seeing an empty
+    // value when they load the most-recent checkpoint.
+    var wfType string
+    var generic map[string]any
+    if err := json.Unmarshal(data, &generic); err == nil {
+        // First try nested state.workflow_type (canonical)
+        if st, ok := generic["state"].(map[string]any); ok {
+            if wt, ok := st["workflow_type"].(string); ok && wt != "" {
+                wfType = wt
+            }
+        }
+        // Fallback to top-level workflow_type if present (legacy)
+        if wfType == "" {
+            if wt, ok := generic["workflow_type"].(string); ok && wt != "" {
+                wfType = wt
+            }
+        }
+    }
+    if wfType == "" {
+        wfType = "meal_planning"
+    }
+
+    const query = `
+        INSERT INTO workflow_checkpoints (thread_id, workflow_type, checkpoint_ns, checkpoint_data, created_at, updated_at)
+        VALUES ($1, $2, 'latest', $3, NOW(), NOW())
+        ON CONFLICT (thread_id, checkpoint_ns)
+        DO UPDATE SET workflow_type = EXCLUDED.workflow_type, checkpoint_data = EXCLUDED.checkpoint_data, updated_at = NOW()`
+    _, err := db.Exec(query, threadID, wfType, data)
+    return err
 }
 
 // UpdateWorkflowCheckpointWithMessage appends a message to the checkpoint_data messages list

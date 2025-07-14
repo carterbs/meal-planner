@@ -233,3 +233,15 @@ func (s *workflowService) UpdateWorkflowCheckpoint(threadID string, data []byte)
 /**
 Note for tomorrow.it appears that by the first time we try to get a checkpoint. dayIndex is already 0 for the whole plan.
 **/
+
+// ListWorkflows returns a summary for the most recent N workflows.
+// If limit <= 0, all workflows are returned.
+func (s *workflowService) ListWorkflows(limit int) ([]models.WorkflowStatus, error) {
+    workflowServiceLogger.Debugw("ListWorkflows called", "limit", limit)
+    statuses, err := models.ListWorkflows(s.db, limit)
+    if err != nil {
+        workflowServiceLogger.Errorw("ListWorkflows failed", "error", err)
+        return nil, err
+    }
+    return statuses, nil
+}

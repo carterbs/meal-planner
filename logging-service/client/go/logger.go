@@ -21,17 +21,36 @@ type LoggingClient struct {
 }
 
 func NewLoggingClient(addr, serviceName string) (*LoggingClient, error) {
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, err
-	}
+    // Emit diagnostic logs to help troubleshoot connectivity issues to the centralized
+    // logging service. These will appear in standard output of the calling process
+    // (e.g. container logs) even before the structured logger is fully configured.
+    start := time.Now()
+    fmt.Printf("[LoggingClient] Attempting to connect to logging service at %s\n", addr)
 
-	client := pb.NewLoggingServiceClient(conn)
-	return &LoggingClient{
-		client:      client,
-		conn:        conn,
-		serviceName: serviceName,
-	}, nil
+    // Dial in blocking mode so we immediately know if the service is reachable. Use a
+    // short timeout so application start-up is not unduly delayed.
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    conn, err := grpc.DialContext(
+        ctx,
+        addr,
+        grpc.WithTransportCredentials(insecure.NewCredentials()),
+        grpc.WithBlock(),
+    )
+    if err != nil {
+        fmt.Printf("[LoggingClient] Failed to connect to logging service at %s: %v\n", addr, err)
+        return nil, err
+    }
+
+    fmt.Printf("[LoggingClient] Connected to logging service at %s (took %s)\n", addr, time.Since(start))
+
+    client := pb.NewLoggingServiceClient(conn)
+    return &LoggingClient{
+        client:      client,
+        conn:        conn,
+        serviceName: serviceName,
+    }, nil
 }
 
 func (c *LoggingClient) Close() error {
