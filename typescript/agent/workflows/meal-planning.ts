@@ -254,40 +254,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           infoLog(`🔍 [WORKFLOW] Final state before checkpoint: current_step=${state.current_step}`);
           infoLog(`${`🔍 [WORKFLOW] Full state:`} ${JSON.stringify(state, null, 2)}`);
 
-          // Fire-and-forget checkpoint save for feedback state - don't await to avoid hang
-          infoLog("🔍 [WORKFLOW] Starting background checkpoint save for feedback state");
-          setTimeout(async () => {
-            try {
-              const simplifiedState = new MealPlanningCheckpointState({
-                threadId: state.threadId,
-                participants: state.participants,
-                createdAt: Timestamp.fromDate(new Date()),
-                updatedAt: Timestamp.fromDate(new Date()),
-                currentStep: state.current_step,
-                mealPlan: undefined,
-                feedbackHistory: [],
-                iterationCount: 0,
-                shoppingList: undefined,
-                isFinalized: false,
-              });
-              const checkpoint = new AgentCheckpoint({
-                state: simplifiedState,
-                messages: [],
-                next: [],
-                step: 0,
-              });
-              const metadata = new AgentCheckpointMetadata({
-                source: 'workflow',
-                step: 0,
-              });
-              await this.checkpointer.put(config, checkpoint, metadata);
-              infoLog("🔍 [WORKFLOW] Background checkpoint save completed");
-            } catch (e) {
-              infoLog(`Background checkpoint save failed: ${e}`);
-            }
-          }, 100); // Small delay to let workflow return first
-          
-          infoLog("🔍 [WORKFLOW] Workflow returning immediately without waiting for checkpoint");
+          // Skip final checkpoint save to prevent hang - workflow state will be saved by backend
+          infoLog("🔍 [WORKFLOW] Skipping final checkpoint save to prevent timeout");
           return state;
         } else {
           // Resume run: feedback loop
