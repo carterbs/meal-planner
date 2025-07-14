@@ -91,7 +91,12 @@ export type ShoppingListItem =
   import('@mealplanner/generated').ShoppingListItem;
 
 // Workflow state interfaces
-export interface MealPlanningState extends BaseWorkflowState {
+import { MealPlanningCheckpointState } from '@mealplanner/generated';
+
+// Transitional alias: internal workflow state now based on the generated protobuf
+// type with additional legacy snake_case properties. This allows progressive
+// migration away from snake_case while keeping the build green.
+export type MealPlanningState = Partial<MealPlanningCheckpointState> & BaseWorkflowState & {
   workflow_type: WorkflowType.MEAL_PLANNING;
   meal_plan: WeeklyMealPlan | null;
   feedback_history: FeedbackEntry[];
