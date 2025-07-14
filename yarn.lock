@@ -3118,7 +3118,6 @@ __metadata:
   resolution: "@mealplanner/generated@workspace:generated/ts"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
-    protobufjs: "npm:^7.0.0"
   peerDependencies:
     "@connectrpc/connect": ^1.6.0
     "@connectrpc/connect-node": ^1.6.0
@@ -14133,7 +14132,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"protobufjs@npm:^7.0.0, protobufjs@npm:^7.2.5":
+"protobufjs@npm:^7.2.5":
   version: 7.5.3
   resolution: "protobufjs@npm:7.5.3"
   dependencies:
