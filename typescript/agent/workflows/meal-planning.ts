@@ -7,6 +7,7 @@ import {
   WeeklyMealPlan as GeneratedWeeklyMealPlan,
   Meal as GeneratedMeal,
   ShoppingListItem,
+  ShoppingList,
 } from '@mealplanner/generated';
 import type { ExtendedRunnableConfig } from '../shared/types';
 import {
@@ -152,22 +153,19 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       threadId: state.threadId,
       participants: state.participants,
       createdAt:
-        state.created_at instanceof Date
-          ? Timestamp.fromDate(state.created_at)
-          : state.created_at
-            ? Timestamp.fromDate(new Date(state.created_at as any))
-            : Timestamp.fromDate(new Date()),
+        Timestamp.fromDate(state.created_at instanceof Date ? state.created_at : new Date(state.created_at)),
       updatedAt:
-        state.updated_at instanceof Date
-          ? Timestamp.fromDate(state.updated_at)
-          : state.updated_at
-            ? Timestamp.fromDate(new Date(state.updated_at as any))
-            : Timestamp.fromDate(new Date()),
+        Timestamp.fromDate(state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at)),
       currentStep: state.current_step,
       mealPlan: cleanMealPlan,
-      feedbackHistory: state.feedback_history as any,
+      feedbackHistory: state.feedback_history.map((entry) => ({
+        from: entry.from,
+        message: entry.message,
+        timestamp: Timestamp.fromDate(entry.timestamp),
+        mealPlanVersion: entry.meal_plan_version,
+      })),
       iterationCount: state.iteration_count,
-      shoppingList: state.shopping_list as any,
+      shoppingList: state.shopping_list ? new ShoppingList({ items: state.shopping_list }) : undefined,
       isFinalized: state.is_finalized,
     });
     infoLog(

@@ -2,7 +2,6 @@ import { infoLog, errorLog } from '../logging';
 
 import {
   FeedbackEntry,
-  MealPlanningState,
   WorkflowType,
   MealPlanningStep,
 } from '../shared/types';
@@ -76,25 +75,13 @@ export class FeedbackHandler {
         return [];
       }
       const proto = checkpoint.state;
-      const state: MealPlanningState = {
-        threadId: proto.threadId,
-        workflow_type: WorkflowType.MEAL_PLANNING,
-        participants: proto.participants,
-        created_at: proto.createdAt ? proto.createdAt.toDate() : new Date(),
-        updated_at: proto.updatedAt ? proto.updatedAt.toDate() : new Date(),
-        current_step: proto.currentStep as MealPlanningStep,
-        meal_plan: proto.mealPlan ?? null,
-        feedback_history: (proto.feedbackHistory ?? []).map((f): FeedbackEntry => ({
+      const feedbackHistory = (proto.feedbackHistory ?? []).map((f): FeedbackEntry => ({
           from: f.from,
           message: f.message,
           timestamp: f.timestamp ? f.timestamp.toDate() : new Date(),
           meal_plan_version: f.mealPlanVersion,
-        })),
-        iteration_count: proto.iterationCount,
-        shopping_list: proto.shoppingList?.items ?? null,
-        is_finalized: proto.isFinalized,
-      };
-      return state.feedback_history;
+        }));
+      return feedbackHistory;
     } catch (error) {
       errorLog(`${`❌ [FEEDBACK] Error getting feedback:`} ${error}`);
       return [];
@@ -149,32 +136,13 @@ export class FeedbackHandler {
         return false;
       }
       const proto = checkpoint.state;
-      const state: MealPlanningState = {
-        threadId: proto.threadId,
-        workflow_type: WorkflowType.MEAL_PLANNING,
-        participants: proto.participants,
-        created_at: proto.createdAt ? proto.createdAt.toDate() : new Date(),
-        updated_at: proto.updatedAt ? proto.updatedAt.toDate() : new Date(),
-        current_step: proto.currentStep as MealPlanningStep,
-        meal_plan: proto.mealPlan ?? null,
-        feedback_history: (proto.feedbackHistory ?? []).map((f): FeedbackEntry => ({
-          from: f.from,
-          message: f.message,
-          timestamp: f.timestamp ? f.timestamp.toDate() : new Date(),
-          meal_plan_version: f.mealPlanVersion,
-        })),
-        iteration_count: proto.iterationCount,
-        shopping_list: proto.shoppingList?.items ?? null,
-        is_finalized: proto.isFinalized,
-      };
-
-      infoLog(`[FEEDBACK] Current step: ${state.current_step}`);
-      infoLog(`[FEEDBACK] Current step type: ${typeof state.current_step}`);
+      infoLog(`[FEEDBACK] Current step: ${proto.currentStep}`);
+      infoLog(`[FEEDBACK] Current step type: ${typeof proto.currentStep}`);
       infoLog(
-        `[FEEDBACK] Checking if equals 'await_feedback': ${state.current_step === 'await_feedback'}`,
+        `[FEEDBACK] Checking if equals 'await_feedback': ${proto.currentStep === MealPlanningStep.AWAIT_FEEDBACK}`,
       );
-      infoLog(`${`[FEEDBACK] Full state:`} ${JSON.stringify(state, null, 2)}`);
-      return state.current_step === 'await_feedback';
+      infoLog(`${`[FEEDBACK] Full state:`} ${JSON.stringify(proto, null, 2)}`);
+      return proto.currentStep === MealPlanningStep.AWAIT_FEEDBACK;
     } catch (error) {
       errorLog(`${`❌ [FEEDBACK] Error checking feedback status:`} ${error}`);
       errorLog(`${`[FEEDBACK] Error type:`} ${typeof error}`);
