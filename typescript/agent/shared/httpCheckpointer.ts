@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import { RunnableConfig } from '@langchain/core/runnables';
+import type { ExtendedRunnableConfig } from './types';
+import type { WorkflowStatus } from '@mealplanner/generated/api_pb';
 
 import { createClient } from '@connectrpc/connect';
 import { createGrpcTransport } from '@connectrpc/connect-node';
@@ -11,14 +12,19 @@ import type {
   AgentCheckpointMetadata as AgentCheckpointMetadataType,
 } from '@mealplanner/generated/api_pb';
 
-import { AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated/api_pb'; 
+import {
+  AgentCheckpoint,
+  AgentCheckpointMetadata,
+} from '@mealplanner/generated/api_pb';
 import { infoLog } from '../logging';
 
 export class HttpCheckpointSaver {
   private baseUrl: string;
   private client: ReturnType<typeof createClient<typeof MealPlannerAPI>>;
 
-  constructor(baseUrl: string = process.env.BACKEND_GRPC_URL || 'http://localhost:50051') {
+  constructor(
+    baseUrl: string = process.env.BACKEND_GRPC_URL || 'http://localhost:50051',
+  ) {
     this.baseUrl = baseUrl;
 
     const transport = createGrpcTransport({
@@ -29,17 +35,17 @@ export class HttpCheckpointSaver {
   }
 
   async getTuple(
-    config: RunnableConfig,
+    config: ExtendedRunnableConfig,
   ): Promise<[AgentCheckpointType, AgentCheckpointMetadataType] | undefined> {
-    const threadId = (config as any).configurable?.threadId;
-    const checkpointNs = (config as any).configurable?.checkpoint_ns;
+    const threadId = config.configurable?.threadId;
+    const checkpointNs = config.configurable?.checkpoint_ns;
     if (!threadId) return undefined;
 
     try {
-      const response = (await this.client.getCheckpoint({
+      const response = await this.client.getCheckpoint({
         threadId,
         checkpointNs: checkpointNs ?? '',
-      }));
+      });
 
       if (!response.found || !response.tuple) return undefined;
 
@@ -49,8 +55,7 @@ export class HttpCheckpointSaver {
           checkpoint,
         )}`,
       );
-      const metadata =
-        response.tuple.metadata ?? new AgentCheckpointMetadata();
+      const metadata = response.tuple.metadata ?? new AgentCheckpointMetadata();
       return [checkpoint, metadata];
     } catch (e) {
       infoLog(`[CHECKPOINT] getTuple failed: ${e}`);
@@ -59,12 +64,12 @@ export class HttpCheckpointSaver {
   }
 
   async put(
-    config: RunnableConfig,
+    config: ExtendedRunnableConfig,
     checkpoint: AgentCheckpointType,
     metadata: AgentCheckpointMetadataType,
-  ): Promise<RunnableConfig> {
-    const threadId = (config as any).configurable?.threadId || uuidv4();
-    const checkpointNs = (config as any).configurable?.checkpoint_ns || uuidv4();
+  ): Promise<ExtendedRunnableConfig> {
+    const threadId = config.configurable?.threadId ?? uuidv4();
+    const checkpointNs = config.configurable?.checkpoint_ns ?? uuidv4();
 
     try {
       infoLog(
@@ -86,11 +91,11 @@ export class HttpCheckpointSaver {
       }
       return {
         configurable: {
-          ...config.configurable,
+          ...(config.configurable ?? {}),
           threadId,
           checkpoint_ns: checkpointNs,
         },
-      } as RunnableConfig;
+      } as ExtendedRunnableConfig;
     } catch (e) {
       infoLog(`[CHECKPOINT] Save failed: ${e}`);
       if (checkpoint) {
@@ -105,27 +110,25 @@ export class HttpCheckpointSaver {
   }
 
   async *list(
-    _config: RunnableConfig,
+    _config: ExtendedRunnableConfig,
     limit?: number,
   ): AsyncGenerator<
-    [RunnableConfig, AgentCheckpointType, AgentCheckpointMetadataType]
+    [ExtendedRunnableConfig, AgentCheckpointType, AgentCheckpointMetadataType]
   > {
-    const response = (await this.client.listCheckpoints({
+    const response = await this.client.listCheckpoints({
       limit: limit ?? 100,
-    }));
+    });
 
     for (const entry of response.entries) {
-      const checkpoint =
-        entry.tuple?.checkpoint ?? new AgentCheckpoint();
-      const metadata =
-        entry.tuple?.metadata ?? new AgentCheckpointMetadata();
+      const checkpoint = entry.tuple?.checkpoint ?? new AgentCheckpoint();
+      const metadata = entry.tuple?.metadata ?? new AgentCheckpointMetadata();
       yield [
         {
           configurable: {
             threadId: entry.threadId,
             checkpoint_ns: entry.checkpointNs,
           },
-        } as RunnableConfig,
+        } as ExtendedRunnableConfig,
         checkpoint,
         metadata,
       ];
@@ -133,10 +136,10 @@ export class HttpCheckpointSaver {
   }
 
   // Returns the unwrapped WorkflowStatus object for convenience
-  async getWorkflowStatus(threadId: string): Promise<any> {
+  async getWorkflowStatus(threadId: string): Promise<WorkflowStatus | null> {
     try {
       const resp = await this.client.getWorkflowStatus({ threadId });
-      const status = (resp as any).status ?? resp; // Unwrap if server nests status field
+      const status = resp.status ?? null;
       infoLog(
         `[CHECKPOINT] Got workflow status for thread ${threadId}: ${JSON.stringify(
           status,
@@ -151,8 +154,8 @@ export class HttpCheckpointSaver {
     }
   }
 
-  async listWorkflows(): Promise<any[]> {
+  async listWorkflows(): Promise<WorkflowStatus[]> {
     const resp = await this.client.listWorkflows({});
-    return resp.workflows || [];
+    return resp.workflows ?? [];
   }
 }

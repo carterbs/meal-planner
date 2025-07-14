@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { RunnableConfig } from '@langchain/core/runnables';
 import { WeeklyMealPlan } from '@mealplanner/generated';
 // Core workflow types
 export enum WorkflowType {
@@ -120,6 +121,18 @@ export interface IngredientManagementState extends BaseWorkflowState {
   substitution_data: SubstitutionData | null;
   validation_errors: string[];
   current_step: IngredientManagementStep;
+}
+
+// Union type for all workflow states
+
+// Extended LangChain config including our checkpoint identifiers
+export interface ExtendedRunnableConfig extends RunnableConfig {
+  configurable?: {
+    threadId?: string;
+    checkpoint_ns?: string;
+    // allow other arbitrary metadata without using any
+    [key: string]: unknown;
+  };
 }
 
 // Union type for all workflow states
