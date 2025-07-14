@@ -677,6 +677,19 @@ func (gw *Gateway) startAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	// Try to unmarshal as direct AgentStartRequest first (for backward compatibility)
+	var agentReq apipb.AgentStartRequest
+	if err := protojson.Unmarshal(body, &agentReq); err == nil {
+		// Direct format - wrap it
+		req := &apipb.StartAgentWorkflowRequest{
+			Request: &agentReq,
+		}
+		resp, err := gw.client.StartAgentWorkflow(r.Context(), req)
+		writeJSONResponse(w, resp, err)
+		return
+	}
+	
+	// Try wrapped format
 	var req apipb.StartAgentWorkflowRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
@@ -694,6 +707,19 @@ func (gw *Gateway) messageAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	// Try to unmarshal as direct AgentMessageRequest first (for backward compatibility)
+	var agentReq apipb.AgentMessageRequest
+	if err := protojson.Unmarshal(body, &agentReq); err == nil {
+		// Direct format - wrap it
+		req := &apipb.MessageAgentRequest{
+			Request: &agentReq,
+		}
+		resp, err := gw.client.MessageAgent(r.Context(), req)
+		writeJSONResponse(w, resp, err)
+		return
+	}
+	
+	// Try wrapped format
 	var req apipb.MessageAgentRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
