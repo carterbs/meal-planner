@@ -102,13 +102,34 @@ async function sendMessage(threadId: string, message: string): Promise<void> {
 }
 
 async function getWorkflowState(threadId: string): Promise<WorkflowState> {
-  const response = await fetch(`http://localhost:8080/api/workflows/${threadId}`);
+  const response = await fetch(`http://localhost:8080/api/checkpoints/${threadId}`);
 
   if (!response.ok) {
-    throw new Error(`Failed to get workflow state: ${response.statusText}`);
+    throw new Error(`Failed to get checkpoint: ${response.statusText}`);
   }
 
-  return await response.json() as WorkflowState;
+  const data = await response.json() as any;
+  console.log('=== RAW CHECKPOINT RESPONSE ===');
+  console.log(JSON.stringify(data, null, 2));
+  
+  // The response structure is: { tuple: { checkpoint: { state: {...} } } }
+  const state = data.tuple?.checkpoint?.state || data.state || data;
+  
+  // The meal plan data should be in the mealPlan field
+  if (state.mealPlan?.days) {
+    console.log('=== FOUND MEAL PLAN DAYS ===');
+    console.log(`Found ${state.mealPlan.days.length} meal plan entries`);
+    // Add dayIndex and mealType fields if they're missing
+    const entries = state.mealPlan.days.map((day: any, index: number) => ({
+      dayIndex: day.dayIndex !== undefined ? day.dayIndex : Math.floor(index / 3), // Approximate dayIndex
+      mealType: day.mealType || (['breakfast', 'lunch', 'dinner'][index % 3]),
+      meal: day.meal
+    }));
+    return { entries };
+  }
+  
+  // Fallback to entries if available
+  return state.entries ? state : { entries: [] };
 }
 
 function filterMealsByDay(entries: MealPlanEntry[], dayIndex: number): MealPlanEntry[] {

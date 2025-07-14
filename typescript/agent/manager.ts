@@ -93,7 +93,7 @@ export class WorkflowManager {
       
       // Add 10 second timeout for workflow startup
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Workflow startup timeout')), 10000);
+        setTimeout(() => reject(new Error('Workflow startup timeout')), 30000);
       });
       
       await Promise.race([workflowPromise, timeoutPromise]);
