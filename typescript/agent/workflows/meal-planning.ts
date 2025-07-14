@@ -71,11 +71,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     for (const entry of plan.days) {
       const meal = entry.meal;
       if (!meal) continue;
-      // Always remove lastPlanned to avoid protobuf serialization issues
       delete meal.lastPlanned;
-      if ((meal as unknown as Record<string, unknown>)['last_planned']) {
-        delete (meal as unknown as Record<string, unknown>)['last_planned'];
-      }
     }
   }
 
@@ -863,7 +859,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 return new MealPlanEntry({
                   dayIndex: planDay.dayIndex,
                   mealType: planDay.mealType,
-                  meal: newMeal as GeneratedMeal,
+                  meal: newMeal,
                 });
               }
               return planDay;
@@ -1248,7 +1244,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 return new MealPlanEntry({
                   dayIndex: planDay.dayIndex,
                   mealType: planDay.mealType,
-                  meal: newMeal as GeneratedMeal,
+                  meal: newMeal,
                 });
               }
               return planDay;
