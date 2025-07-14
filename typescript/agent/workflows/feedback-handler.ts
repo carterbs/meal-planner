@@ -4,8 +4,10 @@ import {
   FeedbackEntry,
   MealPlanningState,
   WorkflowType,
+  MealPlanningStep,
 } from '../shared/types';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
+import type { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
 
 export interface FeedbackInput {
   threadId: string;
@@ -81,11 +83,11 @@ export class FeedbackHandler {
         participants: proto.participants,
         created_at: proto.createdAt ? proto.createdAt.toDate() : new Date(),
         updated_at: proto.updatedAt ? proto.updatedAt.toDate() : new Date(),
-        current_step: proto.currentStep as any,
-        meal_plan: proto.mealPlan as any,
-        feedback_history: proto.feedbackHistory as any,
+        current_step: proto.currentStep as MealPlanningStep,
+        meal_plan: proto.mealPlan as WeeklyMealPlan | null,
+        feedback_history: (proto.feedbackHistory ?? []) as unknown as FeedbackEntry[],
         iteration_count: proto.iterationCount,
-        shopping_list: proto.shoppingList as any,
+        shopping_list: (proto.shoppingList?.items ?? null) as unknown as ShoppingListItem[] | null,
         is_finalized: proto.isFinalized,
       };
       return state.feedback_history || [];
@@ -149,11 +151,11 @@ export class FeedbackHandler {
         participants: proto.participants,
         created_at: proto.createdAt ? proto.createdAt.toDate() : new Date(),
         updated_at: proto.updatedAt ? proto.updatedAt.toDate() : new Date(),
-        current_step: proto.currentStep as any,
-        meal_plan: proto.mealPlan as any,
-        feedback_history: proto.feedbackHistory as any,
+        current_step: proto.currentStep as MealPlanningStep,
+        meal_plan: proto.mealPlan as WeeklyMealPlan | null,
+        feedback_history: (proto.feedbackHistory ?? []) as unknown as FeedbackEntry[],
         iteration_count: proto.iterationCount,
-        shopping_list: proto.shoppingList as any,
+        shopping_list: (proto.shoppingList?.items ?? null) as unknown as ShoppingListItem[] | null,
         is_finalized: proto.isFinalized,
       };
 
