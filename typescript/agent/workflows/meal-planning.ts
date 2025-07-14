@@ -8,6 +8,7 @@ import {
   Meal as GeneratedMeal,
   ShoppingListItem,
   ShoppingList,
+  FeedbackEntryProto,
 } from '@mealplanner/generated';
 import type { ExtendedRunnableConfig } from '../shared/types';
 import {
@@ -158,7 +159,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         Timestamp.fromDate(state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at)),
       currentStep: state.current_step,
       mealPlan: cleanMealPlan,
-      feedbackHistory: state.feedback_history.map((entry) => ({
+      feedbackHistory: state.feedback_history.map((entry) => new FeedbackEntryProto({
         from: entry.from,
         message: entry.message,
         timestamp: Timestamp.fromDate(entry.timestamp),
