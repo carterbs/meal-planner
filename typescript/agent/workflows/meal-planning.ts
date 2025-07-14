@@ -117,6 +117,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       try {
         // Create a deep copy to avoid modifying original state
         cleanMealPlan = JSON.parse(JSON.stringify(state.meal_plan));
+        
+        // DEBUGGING: Check meal plan structure before coercing dates
+        infoLog("🔍 [SAVE-CHECKPOINT] cleanMealPlan after JSON.parse:");
+        if (cleanMealPlan.days) {
+          for (let i = 0; i < cleanMealPlan.days.length && i < 5; i++) {
+            const day = cleanMealPlan.days[i];
+            infoLog(`🔍 [SAVE-CHECKPOINT] cleanMealPlan Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+          }
+        }
+        
         this.coerceDates(cleanMealPlan);
       } catch (e) {
         infoLog(`Failed to clean meal plan for checkpoint: ${e}`);
@@ -309,7 +319,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               new Date(state.last_feedback_applied_at) :
               new Date(0);
             const newFeedback = allFeedback.filter(
-              (f) => f.timestamp ? f.timestamp > lastApplied : false
+              (f) => f.timestamp ? new Date(f.timestamp) > lastApplied : true
             );
 
             // 2. Analyze feedback to determine user satisfaction
@@ -359,13 +369,19 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 }
               }
 
+              // DEBUGGING: Check if meal_plan is properly set before final checkpoint
+              infoLog(`🔍 [FINAL-CHECKPOINT] About to save final checkpoint with meal_plan: ${state.meal_plan ? 'EXISTS' : 'NULL/UNDEFINED'}`);
+              if (state.meal_plan) {
+                infoLog(`🔍 [FINAL-CHECKPOINT] meal_plan has ${state.meal_plan.days?.length || 0} days`);
+              }
+
               const protoState = new MealPlanningCheckpointState({
                 threadId: state.threadId,
                 participants: state.participants,
                 createdAt: state.created_at instanceof Date ? Timestamp.fromDate(state.created_at) : (state.created_at ? Timestamp.fromDate(new Date(state.created_at as any)) : Timestamp.fromDate(new Date())),
                 updatedAt: state.updated_at instanceof Date ? Timestamp.fromDate(state.updated_at) : (state.updated_at ? Timestamp.fromDate(new Date(state.updated_at as any)) : Timestamp.fromDate(new Date())),
                 currentStep: state.current_step,
-                mealPlan: state.meal_plan ?? undefined,
+                mealPlan: state.meal_plan ?? (state as any).mealPlan ?? undefined,
                 feedbackHistory: state.feedback_history as any,
                 iterationCount: state.iteration_count,
                 shoppingList: state.shopping_list as any,
