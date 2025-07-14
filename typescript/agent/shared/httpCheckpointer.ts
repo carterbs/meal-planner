@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
 
 import { createClient } from '@connectrpc/connect';
-import { createConnectTransport } from '@connectrpc/connect-node';
+import { createGrpcTransport } from '@connectrpc/connect-node';
 import { MealPlannerAPI } from '@mealplanner/generated/api_connect';
 
 // Generated protobuf types
@@ -18,12 +18,12 @@ export class HttpCheckpointSaver {
   private baseUrl: string;
   private client: ReturnType<typeof createClient<typeof MealPlannerAPI>>;
 
-  constructor(baseUrl: string = 'http://localhost:8080') {
+  constructor(baseUrl: string = process.env.BACKEND_GRPC_URL || 'http://localhost:50051') {
     this.baseUrl = baseUrl;
 
-    const transport = createConnectTransport({
+    const transport = createGrpcTransport({
       baseUrl: this.baseUrl,
-      httpVersion: '1.1',
+      httpVersion: '2',
     });
     this.client = createClient(MealPlannerAPI, transport);
   }
@@ -72,13 +72,18 @@ export class HttpCheckpointSaver {
           checkpoint,
         )}`,
       );
-      await this.client.putCheckpoint({
-        threadId,
-        checkpointNs,
-        workflowType: 'meal_planning',
-        checkpoint,
-        metadata,
-      });
+      try {
+        await this.client.putCheckpoint({
+          threadId,
+          checkpointNs,
+          workflowType: 'meal_planning',
+          checkpoint,
+          metadata,
+        });
+      } catch (e) {
+        infoLog(`[CHECKPOINT] putCheckpoint failed (non-fatal): ${e}`);
+        // swallow the error so workflows continue even when persistence isn't available
+      }
       return {
         configurable: {
           ...config.configurable,
@@ -127,15 +132,17 @@ export class HttpCheckpointSaver {
     }
   }
 
+  // Returns the unwrapped WorkflowStatus object for convenience
   async getWorkflowStatus(threadId: string): Promise<any> {
     try {
       const resp = await this.client.getWorkflowStatus({ threadId });
+      const status = (resp as any).status ?? resp; // Unwrap if server nests status field
       infoLog(
         `[CHECKPOINT] Got workflow status for thread ${threadId}: ${JSON.stringify(
-          resp,
+          status,
         )}`,
       );
-      return resp;
+      return status;
     } catch (e) {
       infoLog(
         `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${e}`,

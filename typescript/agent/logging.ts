@@ -1,7 +1,7 @@
 import { writeFileSync, appendFileSync } from 'fs';
 import { join } from 'path';
 import { createClient } from '@connectrpc/connect';
-import { createConnectTransport } from '@connectrpc/connect-node';
+import { createGrpcTransport } from '@connectrpc/connect-node';
 import {
   LoggingService,
   LogEntry,
@@ -16,9 +16,9 @@ export async function initLogging(_serviceName = 'agent') {
   if (initialized) return;
   const baseUrl = process.env.LOGGING_SERVICE_ADDR || 'http://localhost:50052';
 
-  const transport = createConnectTransport({
+  const transport = createGrpcTransport({
     baseUrl,
-    httpVersion: '1.1',
+    httpVersion: '2',
   });
 
   loggingClient = createClient(LoggingService, transport);
