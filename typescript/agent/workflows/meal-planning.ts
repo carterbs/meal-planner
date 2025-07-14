@@ -153,10 +153,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const protoState = new MealPlanningCheckpointState({
       threadId: state.threadId,
       participants: state.participants,
-      createdAt:
-        Timestamp.fromDate(state.created_at instanceof Date ? state.created_at : new Date(state.created_at)),
-      updatedAt:
-        Timestamp.fromDate(state.updated_at instanceof Date ? state.updated_at : new Date(state.updated_at)),
+      createdAt: Timestamp.fromDate(new Date(state.created_at)),
+      updatedAt: Timestamp.fromDate(new Date(state.updated_at)),
       currentStep: state.current_step,
       mealPlan: cleanMealPlan,
       feedbackHistory: state.feedback_history.map((entry) => new FeedbackEntryProto({
@@ -315,9 +313,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             );
             await infoLog(JSON.stringify(checkpoint.state.mealPlan, null, 2));
 
-            this.coerceDates(checkpoint.state.mealPlan as any);
+            this.coerceDates(checkpoint.state.mealPlan);
             deserializedMealPlan = WeeklyMealPlan.fromJson(
-              checkpoint.state.mealPlan as any,
+              checkpoint.state.mealPlan.toJson(),
             );
 
             // DEBUGGING: Log mealPlan after deserialization
@@ -346,11 +344,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               : new Date(),
             current_step: checkpoint.state.currentStep as MealPlanningStep,
             meal_plan: deserializedMealPlan,
-            feedback_history: checkpoint.state.feedbackHistory as any,
+            feedback_history: checkpoint.state.feedbackHistory.map((f) => ({
+              from: f.from,
+              message: f.message,
+              timestamp: f.timestamp ? f.timestamp.toDate() : new Date(),
+              meal_plan_version: f.mealPlanVersion,
+            })),
             iteration_count: checkpoint.state.iterationCount,
-            shopping_list: checkpoint.state.shoppingList as any,
+            shopping_list: checkpoint.state.shoppingList?.items ?? null,
             is_finalized: checkpoint.state.isFinalized,
-          } as MealPlanningState;
+          };
           infoLog(
             `🔄 [MEAL-WORKFLOW] Resuming workflow at step ${state.current_step}`,
           );
@@ -430,24 +433,19 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               const protoState = new MealPlanningCheckpointState({
                 threadId: state.threadId,
                 participants: state.participants,
-                createdAt:
-                  state.created_at instanceof Date
-                    ? Timestamp.fromDate(state.created_at)
-                    : state.created_at
-                      ? Timestamp.fromDate(new Date(state.created_at as any))
-                      : Timestamp.fromDate(new Date()),
-                updatedAt:
-                  state.updated_at instanceof Date
-                    ? Timestamp.fromDate(state.updated_at)
-                    : state.updated_at
-                      ? Timestamp.fromDate(new Date(state.updated_at as any))
-                      : Timestamp.fromDate(new Date()),
+                createdAt: Timestamp.fromDate(state.created_at),
+                updatedAt: Timestamp.fromDate(state.updated_at),
                 currentStep: state.current_step,
                 mealPlan:
-                  state.meal_plan ?? (state as any).mealPlan ?? undefined,
-                feedbackHistory: state.feedback_history as any,
+                  state.meal_plan ?? undefined,
+                feedbackHistory: state.feedback_history.map((entry) => new FeedbackEntryProto({
+                 from: entry.from,
+                 message: entry.message,
+                 timestamp: Timestamp.fromDate(entry.timestamp),
+                 mealPlanVersion: entry.meal_plan_version,
+               })),
                 iterationCount: state.iteration_count,
-                shoppingList: state.shopping_list as any,
+                shoppingList: state.shopping_list ? new ShoppingList({ items: state.shopping_list }) : undefined,
                 isFinalized: state.is_finalized,
               });
               const checkpoint = new AgentCheckpoint({
