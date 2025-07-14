@@ -66,27 +66,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
    * Convert any Meal.lastPlanned that is not already a Date into a Date so
    * that WeeklyMealPlan.toJSON() can safely call toISOString().
    */
-  // private coerceDates(plan: WeeklyMealPlan | undefined): void {
-  //   if (!plan?.days) return;
-  //   for (const entry of plan.days) {
-  //     const meal: any = entry.meal;
-  //     if (!meal) continue;
-  //     if (meal.lastPlanned === null) {
-  //       meal.lastPlanned = undefined;
-  //       continue;
-  //     }
-  //     if (!meal.lastPlanned) continue;
-  //     if (meal.lastPlanned instanceof Date) continue;
-
-  //     if (typeof meal.lastPlanned === 'string') {
-  //       meal.lastPlanned = new Date(meal.lastPlanned);
-  //     } else if (typeof meal.lastPlanned === 'object') {
-  //       const seconds = Number(meal.lastPlanned.seconds ?? 0);
-  //       const nanos = Number(meal.lastPlanned.nanos ?? 0);
-  //       meal.lastPlanned = new Date(seconds * 1000 + Math.round(nanos / 1_000_000));
-  //     }
-  //   }
-  // }
+  private coerceDates(plan: WeeklyMealPlan | undefined): void {
+    if (!plan?.days) return;
+    for (const entry of plan.days) {
+      const meal: any = entry.meal;
+      if (!meal) continue;
+      // Always remove lastPlanned to avoid protobuf serialization issues
+      delete meal.lastPlanned;
+      delete meal.last_planned;
+    }
+  }
 
   readonly type = WorkflowType.MEAL_PLANNING;
   readonly graph: any;
@@ -122,18 +111,26 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       }
     }
 
-    // Coerce dates before serialization (temporarily disabled for debugging)
-    // if (state.meal_plan) {
-    //   this.coerceDates(state.meal_plan);
-    // }
+    // Deep copy and coerce dates before serialization to avoid modifying original state
+    let cleanMealPlan = undefined;
+    if (state.meal_plan) {
+      try {
+        // Create a deep copy to avoid modifying original state
+        cleanMealPlan = JSON.parse(JSON.stringify(state.meal_plan));
+        this.coerceDates(cleanMealPlan);
+      } catch (e) {
+        infoLog(`Failed to clean meal plan for checkpoint: ${e}`);
+        cleanMealPlan = undefined; // Skip meal plan if cleaning fails
+      }
+    }
 
     const protoState = new MealPlanningCheckpointState({
       threadId: state.threadId,
       participants: state.participants,
-      createdAt: state.created_at instanceof Date ? Timestamp.fromDate(state.created_at) : Timestamp.fromDate(new Date(state.created_at as any)),
-      updatedAt: state.updated_at instanceof Date ? Timestamp.fromDate(state.updated_at) : Timestamp.fromDate(new Date(state.updated_at as any)),
+      createdAt: state.created_at instanceof Date ? Timestamp.fromDate(state.created_at) : (state.created_at ? Timestamp.fromDate(new Date(state.created_at as any)) : Timestamp.fromDate(new Date())),
+      updatedAt: state.updated_at instanceof Date ? Timestamp.fromDate(state.updated_at) : (state.updated_at ? Timestamp.fromDate(new Date(state.updated_at as any)) : Timestamp.fromDate(new Date())),
       currentStep: state.current_step,
-      mealPlan: state.meal_plan || undefined,
+      mealPlan: cleanMealPlan,
       feedbackHistory: state.feedback_history as any,
       iterationCount: state.iteration_count,
       shoppingList: state.shopping_list as any,
@@ -257,41 +254,40 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           infoLog(`🔍 [WORKFLOW] Final state before checkpoint: current_step=${state.current_step}`);
           infoLog(`${`🔍 [WORKFLOW] Full state:`} ${JSON.stringify(state, null, 2)}`);
 
-          // Create checkpoint with new proto state
-          // DEBUGGING: Log meal plan before checkpoint serialization
-          if (state.meal_plan) {
-            await infoLog("🔍 [CHECKPOINT-SAVE] mealPlan before checkpoint serialization:");
-            if (state.meal_plan.days) {
-              for (let i = 0; i < state.meal_plan.days.length; i++) {
-                const day = state.meal_plan.days[i];
-                await infoLog(`🔍 [CHECKPOINT-SAVE] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
-              }
+          // Fire-and-forget checkpoint save for feedback state - don't await to avoid hang
+          infoLog("🔍 [WORKFLOW] Starting background checkpoint save for feedback state");
+          setTimeout(async () => {
+            try {
+              const simplifiedState = new MealPlanningCheckpointState({
+                threadId: state.threadId,
+                participants: state.participants,
+                createdAt: Timestamp.fromDate(new Date()),
+                updatedAt: Timestamp.fromDate(new Date()),
+                currentStep: state.current_step,
+                mealPlan: undefined,
+                feedbackHistory: [],
+                iterationCount: 0,
+                shoppingList: undefined,
+                isFinalized: false,
+              });
+              const checkpoint = new AgentCheckpoint({
+                state: simplifiedState,
+                messages: [],
+                next: [],
+                step: 0,
+              });
+              const metadata = new AgentCheckpointMetadata({
+                source: 'workflow',
+                step: 0,
+              });
+              await this.checkpointer.put(config, checkpoint, metadata);
+              infoLog("🔍 [WORKFLOW] Background checkpoint save completed");
+            } catch (e) {
+              infoLog(`Background checkpoint save failed: ${e}`);
             }
-          }
-
-          const protoState = new MealPlanningCheckpointState({
-            threadId: state.threadId,
-            participants: state.participants,
-            createdAt: state.created_at instanceof Date ? Timestamp.fromDate(state.created_at) : Timestamp.fromDate(new Date(state.created_at as any)),
-            updatedAt: state.updated_at instanceof Date ? Timestamp.fromDate(state.updated_at) : Timestamp.fromDate(new Date(state.updated_at as any)),
-            currentStep: state.current_step,
-            mealPlan: state.meal_plan ?? undefined,
-            feedbackHistory: state.feedback_history as any,
-            iterationCount: state.iteration_count,
-            shoppingList: state.shopping_list as any,
-            isFinalized: state.is_finalized,
-          });
-          const checkpoint = new AgentCheckpoint({
-            state: protoState,
-            messages: [],
-            next: [],
-            step: 0,
-          });
-          const metadata = new AgentCheckpointMetadata({
-            source: 'workflow',
-            step: 0,
-          });
-          await this.checkpointer.put(config, checkpoint, metadata);
+          }, 100); // Small delay to let workflow return first
+          
+          infoLog("🔍 [WORKFLOW] Workflow returning immediately without waiting for checkpoint");
           return state;
         } else {
           // Resume run: feedback loop
@@ -307,7 +303,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             await infoLog("🔍 [CHECKPOINT] mealPlan before WeeklyMealPlan.fromJson:");
             await infoLog(JSON.stringify(checkpoint.state.mealPlan, null, 2));
 
-            // this.coerceDates(checkpoint.state.mealPlan as any); // temporarily disabled for debugging
+            this.coerceDates(checkpoint.state.mealPlan as any);
             deserializedMealPlan = WeeklyMealPlan.fromJson(checkpoint.state.mealPlan as any);
 
             // DEBUGGING: Log mealPlan after deserialization
@@ -398,8 +394,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               const protoState = new MealPlanningCheckpointState({
                 threadId: state.threadId,
                 participants: state.participants,
-                createdAt: state.created_at instanceof Date ? Timestamp.fromDate(state.created_at) : Timestamp.fromDate(new Date(state.created_at as any)),
-                updatedAt: state.updated_at instanceof Date ? Timestamp.fromDate(state.updated_at) : Timestamp.fromDate(new Date(state.updated_at as any)),
+                createdAt: state.created_at instanceof Date ? Timestamp.fromDate(state.created_at) : (state.created_at ? Timestamp.fromDate(new Date(state.created_at as any)) : Timestamp.fromDate(new Date())),
+                updatedAt: state.updated_at instanceof Date ? Timestamp.fromDate(state.updated_at) : (state.updated_at ? Timestamp.fromDate(new Date(state.updated_at as any)) : Timestamp.fromDate(new Date())),
                 currentStep: state.current_step,
                 mealPlan: state.meal_plan ?? undefined,
                 feedbackHistory: state.feedback_history as any,
@@ -468,7 +464,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
 
-      // this.coerceDates(plan);
+      this.coerceDates(plan);
       // Use the typed entries directly (they still contain Date objects)
       const entries = plan.days;
 
