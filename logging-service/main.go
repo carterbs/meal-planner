@@ -205,6 +205,7 @@ func main() {
 
 	service.logger.Info("Starting logging service", zap.String("port", port))
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
-	}
+        fmt.Fprintf(os.Stderr, "[LOGGING-SERVICE] grpcServer.Serve returned error: %v\n", err)
+        log.Fatalf("Failed to serve: %v", err)
+    }
 }

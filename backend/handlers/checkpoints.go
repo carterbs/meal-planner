@@ -90,7 +90,7 @@ func PutCheckpoint(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	logger.Info("[PutCheckpoint] received checkpoint for thread " + req.ThreadID + " and checkpoint_ns " + req.CheckpointNS)
+	logger.Info("[PutCheckpoint] received checkpoint", "threadID", req.ThreadID, "checkpointNS", req.CheckpointNS, "incomingWorkflowType", req.WorkflowType)
 	if req.ThreadID == "" || req.CheckpointNS == "" {
 		logger.Error("[PutCheckpoint] thread_id and checkpoint_ns required")
 		http.Error(w, "thread_id and checkpoint_ns required", http.StatusBadRequest)
@@ -116,12 +116,34 @@ func PutCheckpoint(w http.ResponseWriter, r *http.Request) {
 		// Allow metadata to be empty / partial
 		mdMsg = apipb.AgentCheckpointMetadata{}
 	}
+	// Determine workflow type, fallback to meal_planning
+	workflowType := req.WorkflowType
+	if workflowType == "" {
+		workflowType = "meal_planning"
+	}
+
 	cpJSON, _ := protojson.Marshal(&cpMsg)
 	mdJSON, _ := protojson.Marshal(&mdMsg)
+
+	// this is asbsolute horseshit that needs to be removed, but until we have better proto coverage, it exists. this was previoulsy being saved as undefined.
+	var gen map[string]any
+	if err := json.Unmarshal(cpJSON, &gen); err == nil {
+		if st, ok := gen["state"].(map[string]any); ok {
+			if _, exists := st["workflow_type"]; !exists {
+				st["workflow_type"] = workflowType
+				gen["state"] = st
+				if patched, err := json.Marshal(gen); err == nil {
+					cpJSON = patched
+					logger.Debug("[PutCheckpoint] injected workflow_type into checkpoint state", "threadID", req.ThreadID, "workflowType", workflowType)
+				}
+			}
+		}
+	}
+
 	logger.Debug("[DEBUG] Marshaled checkpoint JSON: " + string(cpJSON))
 	logger.Debug("[DEBUG] Marshaled metadata JSON: " + string(mdJSON))
 
-	if err := Services.CheckpointService.PutCheckpoint(req.ThreadID, req.CheckpointNS, req.WorkflowType, cpJSON, mdJSON); err != nil {
+	if err := Services.CheckpointService.PutCheckpoint(req.ThreadID, req.CheckpointNS, workflowType, cpJSON, mdJSON); err != nil {
 		logger.Error("[PutCheckpoint] failed to save checkpoint: " + err.Error())
 		http.Error(w, "failed to save checkpoint: "+err.Error(), http.StatusInternalServerError)
 		return

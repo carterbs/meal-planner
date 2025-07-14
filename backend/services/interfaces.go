@@ -87,6 +87,8 @@ type WorkflowService interface {
 	AddMessage(threadID, sender, message string) (*models.ChatMessage, error)
 	AddAgentMessage(threadID, text, timestamp string) error
 	AddUserFeedback(threadID, from, message, timestamp string) error
+	// Listing
+	ListWorkflows(limit int) ([]models.WorkflowStatus, error)
 }
 
 // CheckpointService handles low level checkpoint persistence
