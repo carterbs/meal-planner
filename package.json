@@ -8,14 +8,15 @@
         "typescript/mcp",
         "typescript/shared",
         "generated/ts",
+        "generated/ts/gateway",
         "logging-service/client/ts"
     ],
     "scripts": {
-        "proto:gen": "./scripts/proto_gen.sh",
+        "generate_code": "./scripts/generate_code.sh",
         "start": "yarn kill:servers &&node scripts/start.js",
         "start:mcp": "node scripts/start-mcp.js",
         "stop:logging": "kill -9 $(lsof -t -i :50052)",
-        "test:e2e": "ts-node ./scripts/e2e_remove_friday.ts",
+        "test:e2e": "ts-node ./typescript/e2e/e2e_remove_friday.ts",
         "test:backend": "cd backend && make test",
         "test:mcp": "cd typescript/mcp && go test -v ./...",
         "test:frontend": "cd typescript/ui && yarn test",
@@ -35,6 +36,8 @@
     },
     "devDependencies": {
         "@bufbuild/protoc-gen-es": "^1.10.0",
+        "@hey-api/openapi-ts": "^0.78.3",
+        "@mealplanner/generated-gateway-client": "*",
         "@types/node": "^24.0.13",
         "chalk": "^4.1.2",
         "concurrently": "^7.6.0",

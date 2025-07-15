@@ -2,10 +2,17 @@
 
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
+import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
+import { postAgentStart, postAgentMessage, getCheckpointsByThreadId } from '@mealplanner/generated/dist/gateway/index.js';
 
 const execAsync = promisify(exec);
 // for debugging in vscode
 const skipBackend = false;
+
+// Create the API gateway client
+const gatewayClient = createClient(createConfig({
+  baseUrl: 'http://localhost:8080/api'
+}));
 
 interface SessionResponse {
   threadId: string;
@@ -41,8 +48,13 @@ async function waitForBackend(): Promise<void> {
 
   for (let i = 1; i <= 30; i++) {
     try {
-      const response = await fetch('http://localhost:8080/api/health');
-      if (response.ok) {
+      // Use the generated client for health check
+      const result = await gatewayClient.get({
+        url: '/health',
+        throwOnError: false
+      });
+
+      if (result.response.status === 200) {
         return;
       }
     } catch (error) {
@@ -57,79 +69,73 @@ async function waitForBackend(): Promise<void> {
 async function createSession(): Promise<string> {
   console.log('--- Creating session ---');
 
-  const startRequest: AgentStartRequest = {
+  const startRequest = {
     workflowType: 'meal_planning',
     participants: ['user'],
   };
 
-  const response = await fetch('http://localhost:8080/api/agent/start', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(startRequest),
+  const result = await postAgentStart({
+    client: gatewayClient,
+    body: startRequest,
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to create session: ${response.statusText}`);
+  if (!result.data || !result.data.response || !result.data.response.threadId) {
+    throw new Error(`Failed to create session: ${result.error || 'Unknown error'}`);
   }
- 
-  const sessionData = await response.json();
-  return (sessionData as any).response.threadId;
+
+  return result.data.response.threadId
 }
 
 async function sendMessage(threadId: string, message: string): Promise<void> {
   console.log('--- Sending message to remove Friday ---');
 
-  const messageRequest: AgentMessageRequest = {
+  const messageRequest = {
     threadId,
     message,
     from: 'user',
     interactive: false,
   };
 
-  const response = await fetch('http://localhost:8080/api/agent/message', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(messageRequest),
+  const result = await postAgentMessage({
+    client: gatewayClient,
+    body: messageRequest,
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to send message: ${response.statusText}`);
+  if (!result.data) {
+    throw new Error(`Failed to send message: ${result.error || 'Unknown error'}`);
   }
 }
 
 async function getWorkflowState(threadId: string): Promise<WorkflowState> {
-  const response = await fetch(`http://localhost:8080/api/checkpoints/${threadId}`);
+  const result = await getCheckpointsByThreadId({
+    client: gatewayClient,
+    path: { thread_id: threadId },
+  });
 
-  if (!response.ok) {
-    throw new Error(`Failed to get checkpoint: ${response.statusText}`);
+  if (!result.data) {
+    throw new Error(`Failed to get checkpoint: ${result.error || 'Unknown error'}`);
   }
 
-  const data = await response.json() as any;
+  const data = result.data;
   console.log('=== RAW CHECKPOINT RESPONSE ===');
   console.log(JSON.stringify(data, null, 2));
-  
+
   // The response structure is: { tuple: { checkpoint: { state: {...} } } }
-  const state = data.tuple?.checkpoint?.state || data.state || data;
-  
-  // The meal plan data should be in the mealPlan field
-  if (state.mealPlan?.days) {
-    console.log('=== FOUND MEAL PLAN DAYS ===');
-    console.log(`Found ${state.mealPlan.days.length} meal plan entries`);
-    // Add dayIndex and mealType fields if they're missing
-    const entries = state.mealPlan.days.map((day: any, index: number) => ({
-      dayIndex: day.dayIndex !== undefined ? day.dayIndex : Math.floor(index / 3), // Approximate dayIndex
-      mealType: day.mealType || (['breakfast', 'lunch', 'dinner'][index % 3]),
-      meal: day.meal
-    }));
-    return { entries };
+  const state = data.tuple?.checkpoint?.state;
+  if (!state || !state.mealPlan || !state.mealPlan.days) {
+    throw new Error('Failed to get checkpoint state');
   }
-  
-  // Fallback to entries if available
-  return state.entries ? state : { entries: [] };
+
+  // The meal plan data should be in the mealPlan field
+  console.log('=== FOUND MEAL PLAN DAYS ===');
+  console.log(`Found ${state.mealPlan.days.length} meal plan entries`);
+  // Add dayIndex and mealType fields if they're missing
+  const entries = state.mealPlan.days.map((day: any, index: number) => ({
+    dayIndex: day.dayIndex !== undefined ? day.dayIndex : Math.floor(index / 3), // Approximate dayIndex
+    mealType: day.mealType || (['breakfast', 'lunch', 'dinner'][index % 3]),
+    meal: day.meal
+  }));
+  return { entries };
 }
 
 function filterMealsByDay(entries: MealPlanEntry[], dayIndex: number): MealPlanEntry[] {
@@ -144,7 +150,7 @@ function checkMealsRemoved(entries: MealPlanEntry[], dayIndex: number): boolean 
 async function main(): Promise<void> {
   let backendProcess: any = null;
   let gatewayProcess: any = null;
-  
+
   // Cleanup function
   const cleanup = async () => {
     await sleep(2000); // let logs settle
@@ -154,14 +160,14 @@ async function main(): Promise<void> {
     if (gatewayProcess) {
       gatewayProcess.kill('SIGTERM');
     }
-    await execAsync('yarn kill:servers').catch(() => {});
+    await execAsync('yarn kill:servers').catch(() => { });
   };
-  
+
   // Handle process exit
   process.on('exit', cleanup);
   process.on('SIGINT', cleanup);
   process.on('SIGTERM', cleanup);
-  
+
   try {
     // Kill existing servers
     if (!skipBackend) {
