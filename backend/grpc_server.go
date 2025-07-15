@@ -452,7 +452,7 @@ func (s *MealPlannerGRPCServer) StartAgentWorkflow(ctx context.Context, req *api
 		WorkflowType: req.Request.WorkflowType,
 	}
 
-	ctxTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)
+	ctxTimeout, cancel := context.WithTimeout(ctx, 25*time.Second)
 	defer cancel()
 
 	resp, err := runAgentCLI(ctxTimeout, "plan", "start", "--participants", joinParticipants(startReq.Participants))
@@ -525,7 +525,7 @@ func (s *MealPlannerGRPCServer) MessageAgent(ctx context.Context, req *apipb.Mes
 		server.Services.WorkflowService.AddUserFeedback(req.Request.ThreadId, req.Request.From, req.Request.Message, t)
 	}
 
-	ctxTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)
+	ctxTimeout, cancel := context.WithTimeout(ctx, 25*time.Second)
 	defer cancel()
 
 	// Run feedback
