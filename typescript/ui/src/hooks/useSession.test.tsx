@@ -38,6 +38,7 @@ describe('useSession', () => {
     });
     expect(result.current.resumeData?.threadId).toBe('abc');
     expect(result.current.isResuming).toBe(false);
+    expect(result.current.resumeData?.currentStep).toBe('planning');
   });
 
   test('clears session when workflow complete', async () => {
