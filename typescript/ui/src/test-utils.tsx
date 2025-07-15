@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
-import { Meal, WeeklyMealPlan, Ingredient } from '@mealplanner/generated/api';
+import { Meal, WeeklyMealPlan, Ingredient } from './types';
 
 // Extended meal plan interface for the new structure
 interface ExtendedMealPlan {
@@ -16,7 +16,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 0,
       name: 'Test Meal 1',
       effort: 2,
-      lastPlanned: new Date('2024-02-15T00:00:00Z'),
+      
       hasRedMeat: false,
       mealType: 'breakfast',
       url: '',
@@ -30,7 +30,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 0,
       name: 'Test Meal 2',
       effort: 3,
-      lastPlanned: new Date('2024-02-15T00:00:00Z'),
+      
       hasRedMeat: true,
       mealType: 'dinner',
       url: '',
@@ -46,7 +46,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 0,
       name: 'Test Lunch Meal',
       effort: 1,
-      lastPlanned: new Date('2024-02-15T00:00:00Z'),
+      
       hasRedMeat: false,
       mealType: 'lunch',
       url: '',
@@ -57,7 +57,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 0,
       name: 'Test Dinner Meal',
       effort: 2,
-      lastPlanned: new Date('2024-02-15T00:00:00Z'),
+      
       hasRedMeat: false,
       mealType: 'dinner',
       url: '',
@@ -82,7 +82,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 5,
       name: 'Eating out',
       effort: 1,
-      lastPlanned: new Date('2024-02-15T00:00:00Z'),
+      
       hasRedMeat: false,
       mealType: 'dinner',
       url: '',
@@ -103,7 +103,7 @@ export const mockMealPlan: ExtendedMealPlan = {
 };
 
 // Keep the old mockMealPlan for backward compatibility with tests that still expect the old format
-export const mockMealPlanLegacy: WeeklyMealPlan = {
+export const mockMealPlanLegacy = {
   days: [
     {
       dayIndex: 0,
@@ -112,7 +112,7 @@ export const mockMealPlanLegacy: WeeklyMealPlan = {
         id: 0,
         name: 'Test Meal 1',
         effort: 2,
-        lastPlanned: new Date('2024-02-15T00:00:00Z'),
+        
         hasRedMeat: false,
         mealType: 'dinner',
         url: '',
@@ -129,7 +129,7 @@ export const mockMealPlanLegacy: WeeklyMealPlan = {
         id: 0,
         name: 'Test Meal 2',
         effort: 3,
-        lastPlanned: new Date('2024-02-15T00:00:00Z'),
+        
         hasRedMeat: true,
         mealType: 'dinner',
         url: '',
@@ -146,7 +146,7 @@ export const mockMealPlanLegacy: WeeklyMealPlan = {
         id: 0,
         name: 'Eating out',
         effort: 1,
-        lastPlanned: new Date('2024-02-15T00:00:00Z'),
+        
         hasRedMeat: false,
         mealType: 'dinner',
         url: '',
@@ -156,7 +156,7 @@ export const mockMealPlanLegacy: WeeklyMealPlan = {
     },
   ],
   shoppingList: [],
-};
+} as unknown as WeeklyMealPlan;
 
 export const mockAvailableMeals: Meal[] = [
   {
@@ -165,7 +165,7 @@ export const mockAvailableMeals: Meal[] = [
     steps: [],
     name: 'Available Test Meal',
     effort: 2,
-    lastPlanned: new Date('2024-02-15T00:00:00Z'),
+    
     hasRedMeat: false,
     mealType: 'breakfast',
     ingredients: [],
@@ -176,7 +176,7 @@ export const mockAvailableMeals: Meal[] = [
     steps: [],
     name: 'Another Available Meal',
     effort: 1,
-    lastPlanned: new Date('2024-02-15T00:00:00Z'),
+    
     hasRedMeat: true,
     mealType: 'breakfast',
     ingredients: [],
@@ -246,7 +246,7 @@ export const setupFetchMocks = (options?: {
         id: 0,
         name: 'Swapped Test Meal',
         effort: 1,
-        lastPlanned: new Date('2024-02-15T00:00:00Z'),
+        
         hasRedMeat: false,
         mealType: 'dinner',
         url: '',

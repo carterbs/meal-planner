@@ -1,7 +1,6 @@
-import { MainMealResponse } from '@mealplanner/generated/dist/gateway/types.gen';
-import { Ingredient } from '../types';
+import type { MainMealResponse, MainStepResponse } from '@mealplanner/generated/dist/gateway/types.gen';
 import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
-import { 
+import {
   getMeals as getMealsFromGateway,
   postMeals,
   deleteMealsByMealId,
@@ -10,6 +9,44 @@ import {
   postMealsByMealIdStepsBulk,
   deleteMealsByMealIdSteps
 } from '@mealplanner/generated/dist/gateway/index.js';
+import { Meal, Ingredient, Step } from '../types';
+
+
+// Create the API gateway client
+
+/**
+ * Map MainStepResponse to UI Step
+ */
+function mapStep(s: MainStepResponse): Step {
+  return {
+    id: s.id,
+    mealId: s.mealId,
+    stepNumber: s.stepNumber,
+    instruction: s.instruction || '',
+  };
+}
+
+/**
+ * Map MainMealResponse to UI Meal
+ */
+function mapMeal(m: MainMealResponse): Meal {
+  return {
+    id: m.id,
+    name: m.name || '',
+    effort: m.effort || 0,
+    hasRedMeat: m.hasRedMeat || false,
+    url: m.url || '',
+    mealType: m.mealType || '',
+    ingredients: (m.ingredients || []).map(i => ({
+      id: i.id,
+      mealId: i.mealId,
+      name: i.name || '',
+      quantity: i.quantity || 0,
+      unit: i.unit || '',
+    })),
+    steps: (m.steps || []).map(mapStep),
+  };
+}
 
 // Create the API gateway client
 const gatewayClient = createClient(createConfig({
@@ -19,7 +56,7 @@ const gatewayClient = createClient(createConfig({
 /**
  * Fetch all meals, optionally filtered by type
  */
-export async function getMeals(mealType?: string): Promise<MainMealResponse[]> {
+export async function getMeals(mealType?: string): Promise<Meal[]> {
   const query = mealType ? { type: mealType.toLowerCase() } : undefined;
 
   const result = await getMealsFromGateway({
@@ -31,13 +68,13 @@ export async function getMeals(mealType?: string): Promise<MainMealResponse[]> {
     throw new Error(`Failed to fetch meals: ${result.error || 'Unknown error'}`);
   }
 
-  return result.data.meals || [];
+  return (result.data.meals || []).map(mapMeal);
 }
 
 /**
  * Create a new meal
  */
-export async function createMeal(meal: Omit<MainMealResponse, 'id'>): Promise<MainMealResponse> {
+export async function createMeal(meal: Omit<MainMealResponse, 'id'>): Promise<Meal> {
   const mealData = {
     id: 0, // Will be assigned by backend
     ...meal,
@@ -56,7 +93,7 @@ export async function createMeal(meal: Omit<MainMealResponse, 'id'>): Promise<Ma
     throw new Error('No meal returned from create request');
   }
 
-  return result.data;
+  return mapMeal(result.data);
 }
 
 /**
@@ -82,22 +119,20 @@ export async function updateMealIngredient(
   mealId: number,
   ingredientId: number,
   ingredient: Ingredient,
-): Promise<MainMealResponse> {
+): Promise<Meal> {
   const result = await putMealsByMealIdIngredientsByIngredientId({
     client: gatewayClient,
     path: { mealId: mealId.toString(), ingredientId: ingredientId.toString() },
-    body: { meal_id: mealId, ingredient_id: ingredientId, ingredient },
+    body: { ingredient },
   });
 
   if (!result.data || result.error) {
     throw new Error(`Failed to update ingredient: ${result.error || 'Unknown error'}`);
   }
 
-  if (!result.data.meal) {
-    throw new Error('No meal returned from update request');
-  }
+  
 
-  return result.data.meal;
+  return mapMeal(result.data);
 }
 
 /**
@@ -106,22 +141,20 @@ export async function updateMealIngredient(
 export async function deleteMealIngredient(
   mealId: number,
   ingredientId: number,
-): Promise<MainMealResponse> {
+): Promise<Meal> {
   const result = await deleteMealsByMealIdIngredientsByIngredientId({
     client: gatewayClient,
-    path: { mealId, ingredientId },
-    body: { mealId, ingredientId },
+    path: { mealId: mealId.toString(), ingredientId: ingredientId.toString() },
+    
   });
 
   if (!result.data || result.error) {
     throw new Error(`Failed to delete ingredient: ${result.error || 'Unknown error'}`);
   }
 
-  if (!result.data.meal) {
-    throw new Error('No meal returned from delete request');
-  }
+  
 
-  return result.data.meal;
+  return mapMeal(result.data);
 }
 
 /**
@@ -133,15 +166,15 @@ export async function addBulkSteps(
 ): Promise<Step[]> {
   const result = await postMealsByMealIdStepsBulk({
     client: gatewayClient,
-    path: { mealId },
-    body: { mealId, instructions },
+    path: { mealId: mealId.toString() },
+    body: { instructions },
   });
 
   if (!result.data || result.error) {
     throw new Error(`Failed to add steps: ${result.error || 'Unknown error'}`);
   }
 
-  return result.data.steps || [];
+  return (result.data.steps || []).map(mapStep);
 }
 
 /**
@@ -150,8 +183,8 @@ export async function addBulkSteps(
 export async function deleteAllSteps(mealId: number): Promise<string> {
   const result = await deleteMealsByMealIdSteps({
     client: gatewayClient,
-    path: { mealId },
-    body: { mealId },
+    path: { mealId: mealId.toString() },
+    
   });
 
   if (!result.data || result.error) {

@@ -1,6 +1,7 @@
 
+import { AgentCheckpoint } from '@mealplanner/generated';
 import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
-import { postAgentStart, postAgentMessage, PostAgentMessageData, MainAgentMessageRequestBody } from '@mealplanner/generated/dist/gateway/index.js';
+import { postAgentStart, postAgentMessage, PostAgentMessageData, MainAgentMessageRequestBody, getCheckpointsByThreadId, MainCheckpointResponse } from '@mealplanner/generated/dist/gateway/index.js';
 
 // Create the API gateway client
 const gatewayClient = createClient(createConfig({
@@ -14,7 +15,7 @@ export interface SessionInfo {
 
 export interface StartSessionResult {
   session: SessionInfo;
-  initialState?: any;
+  initialState?: AgentCheckpoint;
   message?: string;
 }
 
@@ -121,4 +122,19 @@ export async function sendAgentMessage(
     message: agentResponse.message,
     initialState,
   };
+}
+
+// get agent checkpoint
+export async function getAgentCheckpoint(threadId: string) {
+  const result = await getCheckpointsByThreadId({
+    client: gatewayClient,
+    path: { thread_id: threadId },
+  });
+  if (!result.data || result.error || !result.data.tuple || !result.data.tuple.checkpoint) {
+    if (result.error) {
+      throw result.error;
+    }
+    throw new Error('Failed to get agent checkpoint');
+  }
+  return result.data.tuple.checkpoint;
 }

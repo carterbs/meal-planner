@@ -387,12 +387,14 @@ planCommand
         process.stderr.write(
           `[DEBUG CLI plan start] Failed to fetch initial workflow state: ${e}\n`,
         );
+        throw e;
       }
 
       const resultToOutput = {
         success: true,
         message: 'Meal planning session started',
         threadId: threadId,
+        currentStep: initialState.currentStep,
         initialState,
       };
       debugLog(

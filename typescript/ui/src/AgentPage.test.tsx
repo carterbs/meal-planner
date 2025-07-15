@@ -231,7 +231,7 @@ test('pressing Enter sends the message', async () => {
       Promise.resolve({
         response: {
           message: 'ok',
-          initialState: JSON.stringify({ meal_plan: { days: [] } }),
+          initialState: JSON.stringify({ state: { mealPlan: { days: [] } } }),
         },
       }),
   });
@@ -257,19 +257,21 @@ test('highlights changed meal plan entries', async () => {
           threadId: '123',
           currentStep: 'started',
           initialState: JSON.stringify({
-            meal_plan: {
-              days: [
-                {
-                  dayIndex: 0,
-                  mealType: 'breakfast',
-                  meal: {
-                    id: 0,
-                    mealId: 1,
-                    name: 'Eggs',
-                    effort: 1,
+            state: {
+              mealPlan: {
+                days: [
+                  {
+                    dayIndex: 0,
+                    mealType: 'breakfast',
+                    meal: {
+                      id: 0,
+                      mealId: 1,
+                      name: 'Eggs',
+                      effort: 1,
+                    },
                   },
-                },
-              ],
+                ],
+              },
             },
           }),
         },
@@ -290,14 +292,16 @@ test('highlights changed meal plan entries', async () => {
         response: {
           message: 'ok',
           initialState: JSON.stringify({
-            meal_plan: {
-              days: [
-                {
-                  dayIndex: 0,
-                  mealType: 'breakfast',
-                  meal: { id: 0, mealId: 2, name: 'Pancakes', effort: 1 },
-                },
-              ],
+            state: {
+              mealPlan: {
+                days: [
+                  {
+                    dayIndex: 0,
+                    mealType: 'breakfast',
+                    meal: { id: 0, mealId: 2, name: 'Pancakes', effort: 1 },
+                  },
+                ],
+              },
             },
           }),
         },

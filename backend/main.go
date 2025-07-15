@@ -100,7 +100,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 
 	// Register our main service
-	mealPlannerService := &MealPlannerGRPCServer{}
+	mealPlannerService := &MealPlannerAPIServer{}
 	apipb.RegisterMealPlannerAPIServer(grpcServer, mealPlannerService)
 
 	// Register health check service

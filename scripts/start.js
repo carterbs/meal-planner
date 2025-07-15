@@ -33,11 +33,53 @@ killProcessOnPort(8080);
 killProcessOnPort(8090);
 killProcessOnPort(5000);
 
+// Kill logging service port
+console.log(chalk.blue('🔍 Checking for existing processes on port 50052 (logging service)...'));
+killProcessOnPort(50052);
+
+// Start logging service
+console.log(chalk.blue('🚀 Starting logging service...'));
+const loggingProcess = spawn('go', ['run', 'main.go'], {
+  cwd: path.join(PROJECT_ROOT, 'logging-service'),
+  stdio: 'inherit',
+  shell: true,
+});
+
+// Handle logging process events
+loggingProcess.on('error', (error) => {
+  console.error(chalk.red('❌ Failed to start logging service:'), error.message);
+  process.exit(1);
+});
+loggingProcess.on('close', (code) => {
+  console.log(chalk.blue(`Logging service exited with code ${code}`));
+  process.exit(code);
+});
+
+// Build MCP server
+console.log(chalk.blue('🔨 Building MCP server...'));
+try {
+  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'typescript', 'mcp'), stdio: 'inherit' });
+  console.log(chalk.green('✅ MCP server built'));
+} catch (error) {
+  console.error(chalk.red('❌ Failed to build MCP server:'), error.message);
+  process.exit(1);
+}
+
+// Build agent
+console.log(chalk.blue('🔨 Building agent...'));
+try {
+  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'typescript', 'agent'), stdio: 'inherit' });
+  console.log(chalk.green('✅ Agent built'));
+} catch (error) {
+  console.error(chalk.red('❌ Failed to build agent:'), error.message);
+  process.exit(1);
+}
+
 // Step 2: Start the applications
 console.log(chalk.blue('🚀 Starting backend, API gateway, and frontend...'));
 
 // Start backend first (on 8090)
-const backendProcess = spawn('go', ['run', 'main.go'], {
+const backendProcess = spawn('go', ['run', '.'], {
   cwd: path.join(PROJECT_ROOT, 'backend'),
   stdio: 'inherit',
   shell: true,
@@ -46,7 +88,7 @@ const backendProcess = spawn('go', ['run', 'main.go'], {
 // Wait for backend to be ready, then start API gateway
 setTimeout(() => {
   // Start API gateway (on 8080)
-  const gatewayProcess = spawn('go', ['run', 'main.go'], {
+  const gatewayProcess = spawn('go', ['run', '.'], {
     cwd: path.join(PROJECT_ROOT, 'api-gateway'),
     stdio: 'inherit',
     shell: true,
@@ -100,6 +142,7 @@ backendProcess.on('close', (code) => {
 process.on('SIGINT', () => {
   console.log(chalk.blue('\n🛑 Stopping application servers...'));
   backendProcess.kill('SIGINT');
+  if (typeof loggingProcess !== 'undefined') loggingProcess.kill('SIGINT');
   if (typeof gatewayProcess !== 'undefined') gatewayProcess.kill('SIGINT');
   if (typeof frontendProcess !== 'undefined') frontendProcess.kill('SIGINT');
   console.log(chalk.green('✅ Application servers stopped.'));
