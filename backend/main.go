@@ -32,7 +32,6 @@ func main() {
 		fmt.Println()
 	}
 
-	seedFlag := flag.Bool("seed", false, "Seed the database using the CSV")
 	dummyFlag := flag.Bool("dummy", false, "Use in-memory dummy data instead of a database")
 	flag.Parse()
 
@@ -75,15 +74,6 @@ func main() {
 		// Run migrations (only if we have a connection)
 		if err := models.Migrate(connection); err != nil {
 			mainLogger.Errorw("Migration error", "error", err)
-		}
-
-		// Seed the DB only if the flag is provided and we have a connection
-		if *seedFlag {
-			if err := models.SeedDB(connection, "Meal_db.csv"); err != nil {
-				mainLogger.Errorw("Seeding error", "error", err)
-			} else {
-				mainLogger.Info("Database seeded successfully!")
-			}
 		}
 	}
 
