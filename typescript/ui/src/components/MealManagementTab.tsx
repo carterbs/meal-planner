@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Ingredient, Meal, Step } from '@mealplanner/generated';
+import { Ingredient, Meal, Step } from '../types';
 import {
   getMeals,
   updateMealIngredient,
@@ -209,7 +209,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     };
 
     // Save to backend
-    updateMealIngredient(selectedMeal.id, editedIngredient.id, editedIngredient)
+    updateMealIngredient(selectedMeal.id!, editedIngredient.id!, editedIngredient)
       .then((updatedMeal) => {
         // Update with the meal returned from backend
         setSelectedMeal(updatedMeal);
@@ -240,7 +240,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     };
 
     // Save to backend
-    deleteMealIngredient(selectedMeal.id, ingredientId)
+    deleteMealIngredient(selectedMeal.id!, ingredientId)
       .then((updatedMeal) => {
         // Update with the meal returned from backend
         setSelectedMeal(updatedMeal);
@@ -260,7 +260,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   const deleteMeal = (mealToDelete: Meal = selectedMeal!) => {
     if (!mealToDelete) return;
 
-    deleteMealApi(mealToDelete.id)
+    deleteMealApi(mealToDelete.id!)
       .then(() => {
         setMeals(meals.filter((m) => m.id !== mealToDelete.id));
         setSelectedMeal(null);
@@ -1008,7 +1008,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                                     <Button
                                       variant="outlined"
                                       color="error"
-                                      onClick={() => deleteIngredient(ing.id)}
+                                      onClick={() => deleteIngredient(ing.id!)}
                                       size="small"
                                       sx={{ borderRadius: 6 }}
                                     >
@@ -1064,7 +1064,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                                 color="primary"
                                 onClick={() =>
                                   handleSaveSteps(
-                                    selectedMeal.id,
+                                    selectedMeal.id!,
                                     selectedMeal.steps || [],
                                   )
                                 }

@@ -22,14 +22,22 @@ import {
   ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
 import MealPlanDisplay from './components/MealPlanDisplay';
-import { ShoppingListItem, WeeklyMealPlan } from '@mealplanner/generated';
-import { startAgentSession, sendAgentMessage, SessionInfo } from './api';
+import { ShoppingListItem } from './types';
+import { WeeklyMealPlan } from '@mealplanner/generated';
+import { startAgentSession, sendAgentMessage, getAgentCheckpoint, SessionInfo } from './api';
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
+import type { WorkflowState } from './hooks/useSession';
+import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
+import { postShoppinglist } from '@mealplanner/generated/dist/gateway/index.js';
+
 import type { SxProps, Theme } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
 import type { DayOfTheWeek } from '@meal-planner/shared';
 
+const gatewayClient = createClient(createConfig({
+  baseUrl: 'http://localhost:8080/api'
+}));
 // Style variables
 const styles = {
   appBar: {
@@ -356,22 +364,17 @@ const AgentPage: React.FC = () => {
     setIsWorking(true);
     try {
       const result = await startAgentSession(['user'], 'meal_planning');
-
       setSession(result.session);
       localStorage.setItem('sessionId', result.session.threadId);
 
       // Extract meal plan from initial state
-      if (result.initialState?.meal_plan) {
+      if (result.initialState?.state?.mealPlan) {
         console.log(
           'Setting meal plan from session start:',
-          result.initialState.meal_plan,
+          result.initialState.state.mealPlan,
         );
-        setMealPlan(result.initialState.meal_plan);
-      }
-
-      // Extract shopping list from initial state
-      if (result.initialState?.shopping_list) {
-        setShoppingList(result.initialState.shopping_list);
+        setMealPlan(result.initialState.state.mealPlan);
+        setShoppingList(result.initialState.state.mealPlan.shoppingList);
       }
 
       if (result.message) {
@@ -396,36 +399,31 @@ const AgentPage: React.FC = () => {
 
   useEffect(() => {
     if (resumeData) {
-      setSession({
-        threadId: resumeData.threadId,
-        currentStep: resumeData.current_step,
-      });
-      const plan =
-        resumeData.initialState?.meal_plan ||
-        resumeData.raw?.meal_plan ||
-        resumeData.meal_plan;
-      if (plan) {
-        setMealPlan(plan);
+
+      // Resume meal plan if available
+      if (resumeData.mealPlan?.days) {
+        setMealPlan(new WeeklyMealPlan({ days: resumeData.mealPlan.days }));
       }
-      const list =
-        resumeData.shopping_list ||
-        resumeData.raw?.shopping_list ||
-        resumeData.initialState?.shopping_list;
-      if (list) setShoppingList(list as ShoppingListItem[]);
+
+      // Resume shopping list if available
+      if (resumeData.shoppingList) {
+        const items = resumeData.shoppingList.map(i => ({
+          ingredient: i.ingredient ?? '',
+          quantity: i.quantity ?? '',
+          category: i.category ?? ''
+        }));
+        setShoppingList(items);
+      }
 
       // Set all previous messages from the session
       if (resumeData.messages && Array.isArray(resumeData.messages)) {
         const formattedMessages: ChatMessage[] = resumeData.messages.map(
-          (msg) => ({
-            sender:
-              msg.sender === 'user' ? ('user' as const) : ('agent' as const),
-            text: msg.text,
+          (msg: any) => ({
+            sender: msg.sender === 'user' ? 'user' : 'agent',
+            text: msg.content ?? '',
           }),
         );
         setMessages(formattedMessages);
-      } else if (resumeData.message) {
-        // Fallback to single message if messages array is not available
-        setMessages([{ sender: 'agent' as const, text: resumeData.message }]);
       }
     }
   }, [resumeData]);
@@ -448,19 +446,46 @@ const AgentPage: React.FC = () => {
         const message: ChatMessage = { sender: 'agent', text: result.message };
         setMessages((prev) => [...prev, message]);
       }
+      // fetch the latest checkpoint
+      const checkpoint = await getAgentCheckpoint(session.threadId);
+      if (!checkpoint || !checkpoint.state) {
+        throw new Error('Failed to get agent checkpoint');
+      }
+      const state = checkpoint.state;
+
+      // Update meal plan
+      if (state.mealPlan) {
+        const newPlan = new WeeklyMealPlan({ days: state.mealPlan.days ?? [] });
+        setMealPlan(newPlan);
+        applyHighlights(newPlan);
+        try {
+          const planIds = state.mealPlan.days?.map(d => d.meal?.id ?? 0) ?? [];
+          const shoppingRes = await postShoppinglist({ client: gatewayClient, body: { plan: planIds } });
+          if (shoppingRes.data && !shoppingRes.error) {
+            const items = (shoppingRes.data.items ?? []).map(i => ({
+              ingredient: i.ingredient ?? '',
+              quantity: i.quantity ?? '',
+              category: i.category ?? '',
+            }));
+            setShoppingList(items);
+          }
+        } catch (e) {
+          console.error('Failed to fetch shopping list', e);
+        }
+      }
 
       // Check for meal plan in initial state
-      if (result.initialState?.meal_plan) {
+      if (result.initialState?.state?.mealPlan) {
         console.log(
           'Applying highlights for new meal plan:',
-          result.initialState.meal_plan,
+          result.initialState.state.mealPlan,
         );
-        applyHighlights(result.initialState.meal_plan);
+        applyHighlights(result.initialState.state.mealPlan);
       }
 
       // Check for shopping list in initial state
-      if (result.initialState?.shopping_list) {
-        setShoppingList(result.initialState.shopping_list);
+      if (result.initialState?.mealPlan?.shoppingList) {
+        setShoppingList(result.initialState.mealPlan.shoppingList);
       }
     } catch (err) {
       console.error('Failed to send message', err);

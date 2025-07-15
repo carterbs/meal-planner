@@ -1,39 +1,49 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import MealPlanDisplay from './MealPlanDisplay';
-import { WeeklyMealPlan } from '../types';
+import type { WeeklyMealPlan } from '../types';
+import { WeeklyMealPlan as WeeklyMealPlanClass, MealPlanEntry, Meal } from '@mealplanner/generated';
+import { Timestamp } from '@bufbuild/protobuf';
 import '@testing-library/jest-dom';
 
 function buildPlan(): WeeklyMealPlan {
-  const days: WeeklyMealPlan['days'] = [];
+  const days: MealPlanEntry[] = [];
   for (let i = 0; i < 7; i++) {
     ['breakfast', 'lunch', 'dinner'].forEach((mt) => {
-      days.push({ dayIndex: i, mealType: mt, meal: undefined });
+          days.push(new MealPlanEntry({ dayIndex: i, mealType: mt, meal: undefined }));
     });
   }
-  days[0].meal = {
-    id: 1,
-    name: 'Eggs',
-    effort: 1,
-    hasRedMeat: false,
-    lastPlanned: new Date(),
-    url: '',
+  days[0] = new MealPlanEntry({
+    dayIndex: 0,
     mealType: 'breakfast',
-    ingredients: [],
-    steps: [],
-  };
-  days[2 * 3 + 2].meal = {
-    id: 2,
-    name: 'Steak',
-    effort: 3,
-    hasRedMeat: true,
-    lastPlanned: new Date(),
-    url: '',
+    meal: new Meal({
+      id: 1,
+      name: 'Eggs',
+      effort: 1,
+      hasRedMeat: false,
+      lastPlanned: Timestamp.fromDate(new Date()),
+      url: '',
+      mealType: 'breakfast',
+      ingredients: [],
+      steps: [],
+    }),
+  });
+  days[2 * 3 + 2] = new MealPlanEntry({
+    dayIndex: 2,
     mealType: 'dinner',
-    ingredients: [],
-    steps: [],
-  }; // Wednesday dinner
-  return { days, shoppingList: [] };
+    meal: new Meal({
+      id: 2,
+      name: 'Steak',
+      effort: 3,
+      hasRedMeat: true,
+      lastPlanned: Timestamp.fromDate(new Date()),
+      url: '',
+      mealType: 'dinner',
+      ingredients: [],
+      steps: [],
+    }),
+  }); // Wednesday dinner
+    return new WeeklyMealPlanClass({ days, shoppingList: [] });
 }
 
 describe('MealPlanDisplay', () => {

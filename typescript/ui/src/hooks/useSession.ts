@@ -1,19 +1,29 @@
 import { useEffect, useState } from 'react';
 import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
-import { getWorkflowsByThreadId, postWorkflowsByThreadIdAbandon } from '@mealplanner/generated/dist/gateway/index.js';
+import { getCheckpointsByThreadId, postWorkflowsByThreadIdAbandon, postShoppinglist } from '@mealplanner/generated/dist/gateway/index.js';
+import type { MainCheckpointResponse, MainMealPlanEntryResponse, MainShoppingListItemResponse } from '@mealplanner/generated/dist/gateway/types.gen';
 
 // Create the API gateway client
 const gatewayClient = createClient(createConfig({
   baseUrl: 'http://localhost:8080/api'
 }));
 
-export interface WorkflowState {
-  threadId: string;
-  workflow_type: string;
-  current_step: string;
-  status?: string;
-  [key: string]: any;
+
+
+// Shape of checkpoint.state
+interface CheckpointState {
+  currentStep?: string;
+  mealPlan?: { days?: MainMealPlanEntryResponse[] };
+  participants?: string[];
+  threadId?: string;
 }
+
+export interface WorkflowState extends CheckpointState {
+  threadId: string;
+  shoppingList?: MainShoppingListItemResponse[];
+  messages?: { content?: string; sender?: string }[];
+} // include threadId, messages & optional shoppingList for resumeData
+
 
 export default function useSession(startSession: () => Promise<void>) {
   const [isResuming, setIsResuming] = useState(false);
@@ -23,7 +33,7 @@ export default function useSession(startSession: () => Promise<void>) {
     const id = localStorage.getItem('sessionId');
     if (!id) return;
     setIsResuming(true);
-    getWorkflowsByThreadId({
+    getCheckpointsByThreadId({
       client: gatewayClient,
       path: { thread_id: id },
     })
@@ -33,15 +43,27 @@ export default function useSession(startSession: () => Promise<void>) {
         }
         return result.data;
       })
-      .then((wf: WorkflowState) => {
-        if (
-          wf.current_step &&
-          wf.current_step.toLowerCase() !== 'complete' &&
-          wf.status !== 'ABANDONED'
-        ) {
-          setResumeData(wf);
-        } else {
+      .then((cp) => {
+        // Extract checkpoint state
+        const state = cp.tuple?.checkpoint?.state;
+        if (!state) {
           localStorage.removeItem('sessionId');
+          return;
+        }
+        const data: WorkflowState = { ...state, threadId: id };
+        setResumeData(data);
+        // Fetch shopping list for resumed meal plan
+        if (state.mealPlan) {
+          postShoppinglist({ client: gatewayClient, body: { plan: state.mealPlan.days?.map(d => d.meal?.id ?? 0) ?? [] } })
+            .then(res => {
+              if (res.data && !res.error) {
+                const items = res.data.items ?? [];
+                setResumeData(prev => prev ? { ...prev, shoppingList: items } : prev);
+              }
+            })
+            .catch(() => {
+              // ignore shopping list errors
+            });
         }
       })
       .catch(() => {
@@ -56,7 +78,7 @@ export default function useSession(startSession: () => Promise<void>) {
       try {
         await postWorkflowsByThreadIdAbandon({
           client: gatewayClient,
-          path: { thread_id: existing },
+          path: { threadId: existing },
         });
       } catch {
         // ignore
