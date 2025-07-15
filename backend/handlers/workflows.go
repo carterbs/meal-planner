@@ -64,13 +64,10 @@ func GetWorkflowState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch additional details from checkpoint to include workflow metadata
-	var workflowType, currentStep string
+	workflowType := "meal_planning" // From request context, not stored in state
+	var currentStep string
 	if st, err := Services.WorkflowService.GetWorkflowState(threadID); err == nil {
-		workflowType = st.WorkflowType
 		currentStep = st.CurrentStep
-	}
-	if workflowType == "" {
-		workflowType = "meal_planning"
 	}
 
 	// Build and return response

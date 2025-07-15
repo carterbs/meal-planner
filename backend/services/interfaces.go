@@ -75,8 +75,8 @@ type WorkflowService interface {
 	// Existing methods
 	GetMealPlan(threadID string) (*apipb.WeeklyMealPlan, error)
 	UpdateMealPlan(threadID string, plan *apipb.WeeklyMealPlan) error
-	GetWorkflowState(threadID string) (*models.InternalWorkflowState, error)
-	UpdateWorkflowState(threadID string, state *models.InternalWorkflowState) error
+	GetWorkflowState(threadID string) (*apipb.MealPlanningCheckpointState, error)
+	UpdateWorkflowState(threadID string, state *apipb.MealPlanningCheckpointState) error
 
 	// New methods
 	GetWorkflowCheckpoint(threadID string) ([]byte, string, error)
