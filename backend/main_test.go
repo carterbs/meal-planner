@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"mealplanner/handlers"
+	"mealplanner/server"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,16 +14,16 @@ import (
 // TestReconnectEndpoint tests the database reconnection endpoint
 func TestReconnectEndpoint(t *testing.T) {
 	// Store original DB for restoration
-	originalDB := handlers.DB
+	originalDB := server.DB
 
 	t.Cleanup(func() {
 		// Restore original DB after test
-		handlers.DB = originalDB
+		server.DB = originalDB
 	})
 
 	t.Run("successful reconnection", func(t *testing.T) {
 		// Setup: Ensure the DB is nil to simulate disconnected state
-		handlers.DB = nil
+		server.DB = nil
 
 		// Set test environment variables
 		os.Setenv("DB_HOST", "testhost")
@@ -44,8 +44,8 @@ func TestReconnectEndpoint(t *testing.T) {
 		defer db.Close()
 
 		// We'll override the actual ConnectDB function with our test version
-		// by setting handlers.DB directly in our test
-		handlers.DB = db
+		// by setting server.DB directly in our test
+		server.DB = db
 
 		// Setup expected behavior for Migrate
 		mock.ExpectBegin()
@@ -63,7 +63,7 @@ func TestReconnectEndpoint(t *testing.T) {
 		}
 
 		// Verify the DB has been set (in a real scenario, this would be done by the endpoint)
-		if handlers.DB == nil {
+		if server.DB == nil {
 			t.Error("Expected DB connection to be set, but it's nil")
 		}
 	})
@@ -77,7 +77,7 @@ func TestReconnectEndpoint(t *testing.T) {
 		defer db.Close()
 
 		// Set the mock DB as the current connection
-		handlers.DB = db
+		server.DB = db
 
 		// Set up expectations - Ping should succeed
 		mock.ExpectPing()
@@ -98,7 +98,7 @@ func TestReconnectEndpoint(t *testing.T) {
 
 	t.Run("reconnection fails", func(t *testing.T) {
 		// Setup: Ensure the DB is nil to simulate disconnected state
-		handlers.DB = nil
+		server.DB = nil
 
 		// Set test environment variables
 		os.Setenv("DB_HOST", "nonexistenthost")
@@ -121,7 +121,7 @@ func TestReconnectEndpoint(t *testing.T) {
 		}
 
 		// DB should still be nil after a failed connection
-		if handlers.DB != nil {
+		if server.DB != nil {
 			t.Error("Expected DB connection to remain nil after failed connection")
 		}
 	})
@@ -135,7 +135,7 @@ func TestReconnectEndpoint(t *testing.T) {
 		defer db.Close()
 
 		// Set the mock DB as the current connection
-		handlers.DB = db
+		server.DB = db
 
 		// Set up expectations - Ping should fail
 		mock.ExpectPing().WillReturnError(sql.ErrConnDone)
