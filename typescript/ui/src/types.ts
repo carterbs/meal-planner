@@ -1,10 +1,38 @@
-// Re-export types from proto-generated package
+// UI types - plain TypeScript interfaces (no proto dependencies)
+export interface Ingredient {
+  id?: number;
+  mealId?: number;
+  quantity: number;
+  unit: string;
+  name: string;
+}
+
+export interface Step {
+  id?: number;
+  mealId?: number;
+  stepNumber?: number;
+  instruction: string;
+}
+
+export interface ShoppingListItem {
+  ingredient: string;
+  quantity: string;
+  category: string;
+}
+
+export interface Meal {
+  id?: number;
+  name: string;
+  effort: number;
+  hasRedMeat: boolean;
+  url: string;
+  mealType: string;
+  ingredients: Ingredient[];
+  steps: Step[];
+}
+
+// Re-export remaining types from proto-generated package
 export type {
-  Ingredient,
-  Step,
-  ShoppingListItem,
-  Meal,
-  PlanDay,
   WeeklyMealPlan,
   AgentStartRequest,
   AgentFeedbackRequest,

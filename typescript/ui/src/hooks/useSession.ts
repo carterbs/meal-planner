@@ -1,4 +1,11 @@
 import { useEffect, useState } from 'react';
+import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
+import { getWorkflowsByThreadId, postWorkflowsByThreadIdAbandon } from '@mealplanner/generated/dist/gateway/index.js';
+
+// Create the API gateway client
+const gatewayClient = createClient(createConfig({
+  baseUrl: 'http://localhost:8080/api'
+}));
 
 export interface WorkflowState {
   threadId: string;
@@ -16,8 +23,16 @@ export default function useSession(startSession: () => Promise<void>) {
     const id = localStorage.getItem('sessionId');
     if (!id) return;
     setIsResuming(true);
-    fetch(`/api/workflows/${id}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+    getWorkflowsByThreadId({
+      client: gatewayClient,
+      path: { thread_id: id },
+    })
+      .then((result) => {
+        if (!result.data || result.error) {
+          return Promise.reject(result.error);
+        }
+        return result.data;
+      })
       .then((wf: WorkflowState) => {
         if (
           wf.current_step &&
@@ -39,7 +54,10 @@ export default function useSession(startSession: () => Promise<void>) {
     const existing = localStorage.getItem('sessionId');
     if (existing) {
       try {
-        await fetch(`/api/workflows/${existing}/abandon`, { method: 'POST' });
+        await postWorkflowsByThreadIdAbandon({
+          client: gatewayClient,
+          path: { thread_id: existing },
+        });
       } catch {
         // ignore
       }

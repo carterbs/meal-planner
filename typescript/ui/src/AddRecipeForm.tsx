@@ -15,7 +15,7 @@ import {
   Alert,
   Divider,
 } from '@mui/material';
-import { Ingredient, Step, Meal } from '@mealplanner/generated';
+import { Ingredient, Step, Meal } from './types';
 import { createMeal } from './api';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RepeatIcon from '@mui/icons-material/Repeat';
@@ -25,7 +25,7 @@ interface AddRecipeFormProps {
   onRecipeAdded: () => void;
 }
 
-const initialMealState: Omit<Meal, 'id' | 'lastPlanned'> = {
+const initialMealState: Omit<Meal, 'id'> = {
   name: '',
   effort: 3,
   hasRedMeat: false,
@@ -36,8 +36,7 @@ const initialMealState: Omit<Meal, 'id' | 'lastPlanned'> = {
 };
 
 const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
-  const [meal, setMeal] =
-    useState<Omit<Meal, 'id' | 'mealId' | 'lastPlanned'>>(initialMealState);
+  const [meal, setMeal] = useState<Omit<Meal, 'id'>>(initialMealState);
   const [rawIngredients, setRawIngredients] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);

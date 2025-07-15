@@ -9,5 +9,4 @@ export type {
   Step,
   WeeklyMealPlan,
   ShoppingListItem,
-  PlanDay,
-} from '@mealplanner/generated';
+} from '../types';
