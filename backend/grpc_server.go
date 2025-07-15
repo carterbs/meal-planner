@@ -11,9 +11,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	apipb "mealplanner/generated/go"
-	"mealplanner/handlers"
 	"mealplanner/logging"
 	"mealplanner/models"
+	"mealplanner/server"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -90,18 +90,18 @@ func generateShoppingListForPlan(plan *apipb.WeeklyMealPlan) error {
 }
 
 func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
-	return handlers.Services.ShoppingListService.BuildShoppingList(mealIDs)
+	return server.Services.ShoppingListService.BuildShoppingList(mealIDs)
 }
 
 func (s *MealPlannerGRPCServer) HealthCheck(ctx context.Context, req *emptypb.Empty) (*apipb.HealthCheckResponse, error) {
-	if handlers.DB == nil {
+	if server.DB == nil {
 		return &apipb.HealthCheckResponse{
 			Status:  "error",
 			Message: "Database not connected. Make sure Docker is running and the database container is started.",
 		}, nil
 	}
 
-	if err := handlers.DB.Ping(); err != nil {
+	if err := server.DB.Ping(); err != nil {
 		return &apipb.HealthCheckResponse{
 			Status:  "error",
 			Message: "Database connection lost. Make sure Docker is running and the database container is started.",
@@ -116,14 +116,14 @@ func (s *MealPlannerGRPCServer) HealthCheck(ctx context.Context, req *emptypb.Em
 
 func (s *MealPlannerGRPCServer) Reconnect(ctx context.Context, req *emptypb.Empty) (*apipb.ReconnectResponse, error) {
 	// Check database connection
-	if handlers.DB == nil {
+	if server.DB == nil {
 		return &apipb.ReconnectResponse{
 			Status:  "error",
 			Message: "Database not connected. Make sure Docker is running and the database container is started.",
 		}, nil
 	}
 
-	if err := handlers.DB.Ping(); err == nil {
+	if err := server.DB.Ping(); err == nil {
 		return &apipb.ReconnectResponse{
 			Status:  "ok",
 			Message: "Database connection is already established and healthy",
@@ -141,15 +141,15 @@ func (s *MealPlannerGRPCServer) GetMealPlan(ctx context.Context, req *emptypb.Em
 	var plan *apipb.WeeklyMealPlan
 	var err error
 
-	plan, err = handlers.Services.MealPlanService.GetLastPlannedMeals()
+	plan, err = server.Services.MealPlanService.GetLastPlannedMeals()
 	if err != nil {
-		plan, err = handlers.Services.MealPlanService.GenerateWeeklyMealPlan()
+		plan, err = server.Services.MealPlanService.GenerateWeeklyMealPlan()
 		if err != nil {
 			return nil, fmt.Errorf("error generating meal plan: %w", err)
 		}
 	}
 
-	detailedPlan, err := handlers.Services.MealPlanService.PopulateMealDetails(plan)
+	detailedPlan, err := server.Services.MealPlanService.PopulateMealDetails(plan)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching meal details: %w", err)
 	}
@@ -162,12 +162,12 @@ func (s *MealPlannerGRPCServer) GetMealPlan(ctx context.Context, req *emptypb.Em
 }
 
 func (s *MealPlannerGRPCServer) GenerateMealPlan(ctx context.Context, req *emptypb.Empty) (*apipb.GenerateMealPlanResponse, error) {
-	plan, err := handlers.Services.MealPlanService.GenerateWeeklyMealPlan()
+	plan, err := server.Services.MealPlanService.GenerateWeeklyMealPlan()
 	if err != nil {
 		return nil, fmt.Errorf("error generating meal plan: %w", err)
 	}
 
-	detailedPlan, err := handlers.Services.MealPlanService.PopulateMealDetails(plan)
+	detailedPlan, err := server.Services.MealPlanService.PopulateMealDetails(plan)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching meal details: %w", err)
 	}
@@ -215,7 +215,7 @@ func (s *MealPlannerGRPCServer) GetShoppingList(ctx context.Context, req *apipb.
 }
 
 func (s *MealPlannerGRPCServer) GetAllMeals(ctx context.Context, req *apipb.GetAllMealsRequest) (*apipb.GetAllMealsResponse, error) {
-	meals, err := handlers.Services.MealService.GetAllMeals()
+	meals, err := server.Services.MealService.GetAllMeals()
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving meals: %w", err)
 	}
@@ -245,7 +245,7 @@ func (s *MealPlannerGRPCServer) CreateMeal(ctx context.Context, req *apipb.Creat
 		return nil, fmt.Errorf("meal name is required")
 	}
 
-	meal, err := handlers.Services.MealService.CreateMeal(req.Meal)
+	meal, err := server.Services.MealService.CreateMeal(req.Meal)
 	if err != nil {
 		return nil, fmt.Errorf("error creating meal: %w", err)
 	}
@@ -256,7 +256,7 @@ func (s *MealPlannerGRPCServer) CreateMeal(ctx context.Context, req *apipb.Creat
 }
 
 func (s *MealPlannerGRPCServer) SwapMeal(ctx context.Context, req *apipb.SwapMealRequest) (*apipb.SwapMealResponse, error) {
-	meal, err := handlers.Services.MealService.SwapMeal(int(req.MealId), req.MealType)
+	meal, err := server.Services.MealService.SwapMeal(int(req.MealId), req.MealType)
 	if err != nil {
 		return nil, fmt.Errorf("error swapping meal: %w", err)
 	}
@@ -268,12 +268,12 @@ func (s *MealPlannerGRPCServer) SwapMeal(ctx context.Context, req *apipb.SwapMea
 
 func (s *MealPlannerGRPCServer) RemoveMeal(ctx context.Context, req *apipb.RemoveMealRequest) (*apipb.RemoveMealResponse, error) {
 	// Get the current meal plan from the workflow
-	plan, err := handlers.Services.WorkflowService.GetMealPlan(req.ThreadId)
+	plan, err := server.Services.WorkflowService.GetMealPlan(req.ThreadId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting meal plan: %w", err)
 	}
 
-	err = handlers.Services.MealPlanService.RemoveMealFromPlan(plan, int(req.DayIndex), req.MealType)
+	err = server.Services.MealPlanService.RemoveMealFromPlan(plan, int(req.DayIndex), req.MealType)
 	if err != nil {
 		return nil, fmt.Errorf("error removing meal from plan: %w", err)
 	}
@@ -295,13 +295,13 @@ func (s *MealPlannerGRPCServer) UpdateMealIngredient(ctx context.Context, req *a
 		return nil, fmt.Errorf("ingredient is required")
 	}
 
-	err := handlers.Services.IngredientService.UpdateMealIngredient(int(req.MealId), req.Ingredient)
+	err := server.Services.IngredientService.UpdateMealIngredient(int(req.MealId), req.Ingredient)
 	if err != nil {
 		return nil, fmt.Errorf("error updating meal ingredient: %w", err)
 	}
 
 	// Get updated meal to return
-	meal, err := handlers.Services.MealService.GetMealByID(int(req.MealId))
+	meal, err := server.Services.MealService.GetMealByID(int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving updated meal: %w", err)
 	}
@@ -312,13 +312,13 @@ func (s *MealPlannerGRPCServer) UpdateMealIngredient(ctx context.Context, req *a
 }
 
 func (s *MealPlannerGRPCServer) DeleteMealIngredient(ctx context.Context, req *apipb.DeleteMealIngredientRequest) (*apipb.DeleteMealIngredientResponse, error) {
-	err := handlers.Services.IngredientService.DeleteMealIngredient(int(req.IngredientId))
+	err := server.Services.IngredientService.DeleteMealIngredient(int(req.IngredientId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting meal ingredient: %w", err)
 	}
 
 	// Get updated meal to return
-	meal, err := handlers.Services.MealService.GetMealByID(int(req.MealId))
+	meal, err := server.Services.MealService.GetMealByID(int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving updated meal: %w", err)
 	}
@@ -329,7 +329,7 @@ func (s *MealPlannerGRPCServer) DeleteMealIngredient(ctx context.Context, req *a
 }
 
 func (s *MealPlannerGRPCServer) DeleteMeal(ctx context.Context, req *apipb.DeleteMealRequest) (*apipb.DeleteMealResponse, error) {
-	err := handlers.Services.MealService.DeleteMeal(int(req.MealId))
+	err := server.Services.MealService.DeleteMeal(int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting meal: %w", err)
 	}
@@ -340,7 +340,7 @@ func (s *MealPlannerGRPCServer) DeleteMeal(ctx context.Context, req *apipb.Delet
 }
 
 func (s *MealPlannerGRPCServer) GetSteps(ctx context.Context, req *apipb.GetStepsRequest) (*apipb.GetStepsResponse, error) {
-	steps, err := handlers.Services.RecipeStepService.GetStepsForMeal(int(req.MealId))
+	steps, err := server.Services.RecipeStepService.GetStepsForMeal(int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error getting steps: %w", err)
 	}
@@ -357,7 +357,7 @@ func (s *MealPlannerGRPCServer) AddStep(ctx context.Context, req *apipb.AddStepR
 
 	// The service expects a protobuf Step
 	req.Step.MealId = req.MealId
-	createdStep, err := handlers.Services.RecipeStepService.AddStepToMeal(req.Step)
+	createdStep, err := server.Services.RecipeStepService.AddStepToMeal(req.Step)
 	if err != nil {
 		return nil, fmt.Errorf("error adding step: %w", err)
 	}
@@ -368,7 +368,7 @@ func (s *MealPlannerGRPCServer) AddStep(ctx context.Context, req *apipb.AddStepR
 }
 
 func (s *MealPlannerGRPCServer) AddBulkSteps(ctx context.Context, req *apipb.AddBulkStepsRequest) (*apipb.AddBulkStepsResponse, error) {
-	steps, err := handlers.Services.RecipeStepService.AddMultipleStepsToMeal(int(req.MealId), req.Instructions)
+	steps, err := server.Services.RecipeStepService.AddMultipleStepsToMeal(int(req.MealId), req.Instructions)
 	if err != nil {
 		return nil, fmt.Errorf("error adding bulk steps: %w", err)
 	}
@@ -387,7 +387,7 @@ func (s *MealPlannerGRPCServer) UpdateStep(ctx context.Context, req *apipb.Updat
 	req.Step.Id = req.StepId
 	req.Step.MealId = req.MealId
 
-	err := handlers.Services.RecipeStepService.UpdateStep(req.Step)
+	err := server.Services.RecipeStepService.UpdateStep(req.Step)
 	if err != nil {
 		return nil, fmt.Errorf("error updating step: %w", err)
 	}
@@ -398,7 +398,7 @@ func (s *MealPlannerGRPCServer) UpdateStep(ctx context.Context, req *apipb.Updat
 }
 
 func (s *MealPlannerGRPCServer) DeleteStep(ctx context.Context, req *apipb.DeleteStepRequest) (*apipb.DeleteStepResponse, error) {
-	err := handlers.Services.RecipeStepService.DeleteStep(int(req.StepId), int(req.MealId))
+	err := server.Services.RecipeStepService.DeleteStep(int(req.StepId), int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting step: %w", err)
 	}
@@ -414,7 +414,7 @@ func (s *MealPlannerGRPCServer) ReorderSteps(ctx context.Context, req *apipb.Reo
 		stepIds[i] = int(id)
 	}
 
-	err := handlers.Services.RecipeStepService.ReorderSteps(int(req.MealId), stepIds)
+	err := server.Services.RecipeStepService.ReorderSteps(int(req.MealId), stepIds)
 	if err != nil {
 		return nil, fmt.Errorf("error reordering steps: %w", err)
 	}
@@ -425,7 +425,7 @@ func (s *MealPlannerGRPCServer) ReorderSteps(ctx context.Context, req *apipb.Reo
 }
 
 func (s *MealPlannerGRPCServer) DeleteAllSteps(ctx context.Context, req *apipb.DeleteAllStepsRequest) (*apipb.DeleteAllStepsResponse, error) {
-	err := handlers.Services.RecipeStepService.DeleteAllStepsForMeal(int(req.MealId))
+	err := server.Services.RecipeStepService.DeleteAllStepsForMeal(int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting all steps: %w", err)
 	}
@@ -481,14 +481,14 @@ func (s *MealPlannerGRPCServer) StartAgentWorkflow(ctx context.Context, req *api
 				"step":  0,
 			}
 			if data, err := json.Marshal(checkpoint); err == nil {
-				handlers.Services.WorkflowService.UpdateWorkflowCheckpoint(resp.ThreadID, data)
+				server.Services.WorkflowService.UpdateWorkflowCheckpoint(resp.ThreadID, data)
 			}
 		}
 
 		// Add initial agent message if present
 		if resp.Message != "" {
 			t := time.Now().Format(time.RFC3339)
-			handlers.Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t)
+			server.Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t)
 		}
 	}
 
@@ -522,7 +522,7 @@ func (s *MealPlannerGRPCServer) MessageAgent(ctx context.Context, req *apipb.Mes
 	// Store user message in database
 	if req.Request.From == "user" && req.Request.Message != "" {
 		t := time.Now().Format(time.RFC3339)
-		handlers.Services.WorkflowService.AddUserFeedback(req.Request.ThreadId, req.Request.From, req.Request.Message, t)
+		server.Services.WorkflowService.AddUserFeedback(req.Request.ThreadId, req.Request.From, req.Request.Message, t)
 	}
 
 	ctxTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)
@@ -551,7 +551,7 @@ func (s *MealPlannerGRPCServer) MessageAgent(ctx context.Context, req *apipb.Mes
 	// Add agent response message
 	if resp.Message != "" {
 		t := time.Now().Format(time.RFC3339)
-		handlers.Services.WorkflowService.AddAgentMessage(req.Request.ThreadId, resp.Message, t)
+		server.Services.WorkflowService.AddAgentMessage(req.Request.ThreadId, resp.Message, t)
 	}
 
 	// Convert response to protobuf format
@@ -572,7 +572,7 @@ func (s *MealPlannerGRPCServer) GetWorkflowStatus(ctx context.Context, req *apip
 		return nil, fmt.Errorf("threadId required")
 	}
 
-	state, err := handlers.Services.WorkflowService.GetWorkflowState(req.ThreadId)
+	state, err := server.Services.WorkflowService.GetWorkflowState(req.ThreadId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow state: %w", err)
 	}
@@ -593,7 +593,7 @@ func (s *MealPlannerGRPCServer) GetWorkflowStatus(ctx context.Context, req *apip
 func (s *MealPlannerGRPCServer) ListWorkflows(ctx context.Context, req *emptypb.Empty) (*apipb.ListWorkflowsResponse, error) {
 	// Fetch latest 50 workflows (arbitrary default)
 	const defaultLimit = 50
-	statuses, err := handlers.Services.WorkflowService.ListWorkflows(defaultLimit)
+	statuses, err := server.Services.WorkflowService.ListWorkflows(defaultLimit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list workflows: %w", err)
 	}
@@ -615,7 +615,7 @@ func (s *MealPlannerGRPCServer) CancelWorkflow(ctx context.Context, req *apipb.C
 	}
 
 	// Mark workflow as ABANDONED in the DB
-	err := handlers.Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(req.ThreadId, "system", "ABANDONED")
+	err := server.Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(req.ThreadId, "system", "ABANDONED")
 	if err != nil {
 		return nil, fmt.Errorf("failed to abandon workflow: %w", err)
 	}
@@ -630,7 +630,7 @@ func (s *MealPlannerGRPCServer) GetWorkflowState(ctx context.Context, req *apipb
 		return nil, fmt.Errorf("threadId required")
 	}
 
-	state, err := handlers.Services.WorkflowService.GetWorkflowState(req.ThreadId)
+	state, err := server.Services.WorkflowService.GetWorkflowState(req.ThreadId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get workflow state: %w", err)
 	}
@@ -658,7 +658,7 @@ func (s *MealPlannerGRPCServer) AbandonWorkflow(ctx context.Context, req *apipb.
 		return nil, fmt.Errorf("threadId required")
 	}
 
-	err := handlers.Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(req.ThreadId, "system", "ABANDONED")
+	err := server.Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(req.ThreadId, "system", "ABANDONED")
 	if err != nil {
 		return nil, fmt.Errorf("failed to abandon workflow: %w", err)
 	}
@@ -679,7 +679,7 @@ func (s *MealPlannerGRPCServer) AddMessage(ctx context.Context, req *apipb.AddMe
 		return nil, fmt.Errorf("sender required")
 	}
 
-	_, err := handlers.Services.WorkflowService.AddMessage(req.ThreadId, req.Sender, req.Message)
+	_, err := server.Services.WorkflowService.AddMessage(req.ThreadId, req.Sender, req.Message)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add message: %w", err)
 	}
@@ -707,7 +707,7 @@ func (s *MealPlannerGRPCServer) UpdateSessionState(ctx context.Context, req *api
 		return nil, fmt.Errorf("failed to marshal state update: %w", err)
 	}
 
-	err = handlers.Services.WorkflowService.UpdateWorkflowCheckpoint(req.ThreadId, data)
+	err = server.Services.WorkflowService.UpdateWorkflowCheckpoint(req.ThreadId, data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update session state: %w", err)
 	}
@@ -722,7 +722,7 @@ func (s *MealPlannerGRPCServer) GetCheckpoint(ctx context.Context, req *apipb.Ge
 		return nil, fmt.Errorf("threadId required")
 	}
 
-	data, ns, err := handlers.Services.WorkflowService.GetWorkflowCheckpoint(req.ThreadId)
+	data, ns, err := server.Services.WorkflowService.GetWorkflowCheckpoint(req.ThreadId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get checkpoint: %w", err)
 	}
@@ -792,7 +792,7 @@ func (s *MealPlannerGRPCServer) PutCheckpoint(ctx context.Context, req *apipb.Pu
 	}
 
 	// Persist via checkpoint service – service is responsible for UPSERT logic.
-	if err := handlers.Services.CheckpointService.PutCheckpoint(req.ThreadId, ns, workflowType, checkpointData, metaDataBytes); err != nil {
+	if err := server.Services.CheckpointService.PutCheckpoint(req.ThreadId, ns, workflowType, checkpointData, metaDataBytes); err != nil {
 		return nil, fmt.Errorf("failed to put checkpoint: %w", err)
 	}
 	return &apipb.PutCheckpointResponse{
@@ -803,7 +803,7 @@ func (s *MealPlannerGRPCServer) PutCheckpoint(ctx context.Context, req *apipb.Pu
 }
 
 func (s *MealPlannerGRPCServer) ListCheckpoints(ctx context.Context, req *apipb.ListCheckpointsRequest) (*apipb.ListCheckpointsResponse, error) {
-	entries, err := handlers.Services.CheckpointService.ListCheckpoints(int(req.Limit), req.BeforeThreadId)
+	entries, err := server.Services.CheckpointService.ListCheckpoints(int(req.Limit), req.BeforeThreadId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list checkpoints: %w", err)
 	}

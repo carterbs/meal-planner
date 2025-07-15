@@ -10,9 +10,9 @@ import (
 
 	"mealplanner/db"
 	apipb "mealplanner/generated/go"
-	"mealplanner/handlers"
 	"mealplanner/logging"
 	"mealplanner/models"
+	"mealplanner/server"
 	"mealplanner/services"
 
 	"github.com/joho/godotenv"
@@ -87,14 +87,14 @@ func main() {
 		}
 	}
 
-	// Set database connection in handlers (might be nil if connection failed)
-	handlers.DB = connection
+	// Set database connection in server globals (might be nil if connection failed)
+	server.DB = connection
 
 	// Always initialize service container when not in dummy mode
 	if !*dummyFlag {
-		handlers.Services = services.NewServiceContainer(connection)
+		server.Services = services.NewServiceContainer(connection)
 		// Maintain backward compatibility for existing workflow service usage
-		handlers.WorkflowService = handlers.Services.WorkflowService
+		server.WorkflowService = server.Services.WorkflowService
 	}
 
 	// HTTP server removed - all HTTP traffic now goes through API Gateway
@@ -142,8 +142,8 @@ func main() {
 
 		for range ticker.C {
 			var currentStatus grpc_health_v1.HealthCheckResponse_ServingStatus
-			if handlers.DB != nil {
-				if err := handlers.DB.Ping(); err == nil {
+			if server.DB != nil {
+				if err := server.DB.Ping(); err == nil {
 					currentStatus = grpc_health_v1.HealthCheckResponse_SERVING
 				} else {
 					currentStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
