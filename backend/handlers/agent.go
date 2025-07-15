@@ -84,7 +84,10 @@ func StartAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+
+	// this is a very long timeout but mostly because start does too much
+	// sometimes calls to OAI take a while.
+	ctx, cancel := context.WithTimeout(r.Context(), 25*time.Second)
 	defer cancel()
 	resp, err := runAgentCLI(ctx, "plan", "start", "--participants", joinParticipants(req.Participants))
 	if err != nil {
