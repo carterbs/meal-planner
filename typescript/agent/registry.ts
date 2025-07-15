@@ -1,18 +1,24 @@
 import { infoLog } from './logging';
 import { WorkflowType } from './shared/types';
 import { HttpCheckpointSaver } from './shared/httpCheckpointer';
+import type { ExtendedRunnableConfig } from './shared/types';
+
+// Workflow graph interface
+export interface WorkflowGraph<I = unknown, O = unknown> {
+  invoke(input: I, config: ExtendedRunnableConfig): Promise<O>;
+}
 
 // Base workflow interface
-export interface BaseWorkflow {
+export interface BaseWorkflow<I = unknown, O = unknown> {
   readonly type: WorkflowType;
-  readonly graph: any; // Will be properly typed when we implement specific workflows
+  readonly graph: WorkflowGraph<I, O>;
   initialize(): Promise<void>;
   cleanup?(): Promise<void>;
 }
 
 // Workflow factory interface
-export interface WorkflowFactory {
-  create(checkpointer: HttpCheckpointSaver): Promise<BaseWorkflow>;
+export interface WorkflowFactory<I = unknown, O = unknown> {
+  create(checkpointer: HttpCheckpointSaver): Promise<BaseWorkflow<I, O>>;
   getType(): WorkflowType;
 }
 

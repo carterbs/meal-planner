@@ -1,7 +1,7 @@
 import { infoLog, errorLog } from './logging';
 import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
-import { WorkflowType } from './shared/types';
+import { MealPlanningStep, WorkflowType } from './shared/types';
 // Removed PostgreSQL dependencies - using HTTP checkpointer only
 import { HttpCheckpointSaver } from './shared/httpCheckpointer';
 import { WorkflowRegistry } from './registry';
@@ -10,9 +10,6 @@ import { debugLog } from './cli';
 export interface WorkflowSession {
   threadId: string;
   workflowType: WorkflowType;
-  participants: string[];
-  createdAt: Date;
-  lastUpdated: Date;
   currentStep: string;
   isActive: boolean;
 }
@@ -79,16 +76,12 @@ export class WorkflowManager {
     }
 
     const threadId = options.threadId || uuidv4();
-    const participants = options.participants || ['brad'];
 
     try {
       // Create workflow session
       const session: WorkflowSession = {
         threadId,
         workflowType: type,
-        participants,
-        createdAt: new Date(),
-        lastUpdated: new Date(),
         currentStep: 'initiate',
         isActive: true,
       };
@@ -108,7 +101,6 @@ export class WorkflowManager {
         {
           configurable: {
             threadId: threadId,
-            workflow_type: type,
           },
         },
       );
@@ -136,13 +128,7 @@ export class WorkflowManager {
   async executeWorkflowStep(
     threadId: string,
     input: InputPayload = {},
-  ): Promise<{
-    success: boolean;
-    message: string;
-    currentStep?: string;
-    threadId: string;
-    [key: string]: unknown;
-  }> {
+  ): Promise<{ success: boolean; message: string; currentStep?: string; threadId: string;[key: string]: unknown; }> {
     const session = this.activeSessions.get(threadId);
     if (!session) {
       throw new Error(`No active session found for thread ID: ${threadId}`);
@@ -172,15 +158,12 @@ export class WorkflowManager {
       const stepResult = result as WorkflowGraphResult;
 
       // Update session
-      session.lastUpdated = new Date();
-      session.currentStep =
-        stepResult.currentStep ??
-        stepResult.current_step ??
-        session.currentStep;
+      // todo use type guard to convert from string
+      session.currentStep = stepResult.currentStep as MealPlanningStep;
 
       // Check if workflow is complete
-      const isComplete =
-        (stepResult.currentStep ?? stepResult.current_step) === 'complete';
+      const isComplete = session.currentStep === 'complete';
+
       if (isComplete) {
         session.isActive = false;
         infoLog(
@@ -196,7 +179,6 @@ export class WorkflowManager {
           : 'Workflow step executed successfully',
         currentStep: session.currentStep,
         threadId,
-        ...result,
       };
     } catch (error) {
       const errorMessage =
@@ -240,27 +222,12 @@ export class WorkflowManager {
           { rawStatus: JSON.stringify(status || {}) },
         );
         if (status) {
-          const statusCompat = status as WorkflowStatusCompat;
           session = {
             threadId,
-            workflowType:
-              statusCompat.workflowType ??
-              statusCompat.workflow_type ??
-              WorkflowType.MEAL_PLANNING,
-            participants: ['brad'], // Default participant, could be enhanced
-            createdAt: new Date(
-              statusCompat.createdAt ?? statusCompat.created_at ?? Date.now(),
-            ),
-            lastUpdated: new Date(
-              statusCompat.updatedAt ?? statusCompat.updated_at ?? Date.now(),
-            ),
-            currentStep:
-              statusCompat.currentStep ??
-              statusCompat.current_step ??
-              'unknown',
-            isActive:
-              (statusCompat.currentStep ?? statusCompat.current_step) !==
-              'complete',
+            //todo add typeguard for going from string to WorkflowType
+            workflowType: status.workflowType as WorkflowType,
+            currentStep: status.currentStep,
+            isActive: status.currentStep !== 'complete',
           };
           this.activeSessions.set(threadId, session);
         }
@@ -349,24 +316,11 @@ export class WorkflowManager {
       return null;
     }
 
-    const statusCompat = status as WorkflowStatusCompat;
     const newSession: WorkflowSession = {
       threadId,
-      workflowType:
-        statusCompat.workflowType ??
-        statusCompat.workflow_type ??
-        WorkflowType.MEAL_PLANNING,
-      participants: ['brad'], // TODO: Replace with actual participants once supported
-      createdAt: new Date(
-        statusCompat.createdAt ?? statusCompat.created_at ?? Date.now(),
-      ),
-      lastUpdated: new Date(
-        statusCompat.updatedAt ?? statusCompat.updated_at ?? Date.now(),
-      ),
-      currentStep:
-        statusCompat.currentStep ?? statusCompat.current_step ?? 'unknown',
-      isActive:
-        (statusCompat.currentStep ?? statusCompat.current_step) !== 'complete',
+      workflowType: status.workflowType as WorkflowType,
+      currentStep: status.currentStep,
+      isActive: status.currentStep !== 'complete',
     };
 
     this.activeSessions.set(threadId, newSession);
@@ -396,7 +350,7 @@ export class WorkflowManager {
       const statusCompat = status as WorkflowStatusCompat;
       const workflowType: WorkflowType =
         statusCompat.workflowType ??
-        statusCompat.workflow_type ??
+        statusCompat.workflowType ??
         WorkflowType.MEAL_PLANNING;
 
       if (type && workflowType !== type) {
@@ -404,29 +358,19 @@ export class WorkflowManager {
       }
 
       const isComplete =
-        (statusCompat.currentStep ?? statusCompat.current_step) === 'complete';
+        (statusCompat.currentStep ?? statusCompat.currentStep) === 'complete';
 
       const sess: WorkflowSession = {
         threadId: status.threadId,
         workflowType,
-        participants: ['brad'],
-        createdAt: new Date(
-          statusCompat.createdAt ?? statusCompat.created_at ?? Date.now(),
-        ),
-        lastUpdated: new Date(
-          statusCompat.updatedAt ?? statusCompat.updated_at ?? Date.now(),
-        ),
-        currentStep:
-          statusCompat.currentStep ?? statusCompat.current_step ?? 'unknown',
+        currentStep: statusCompat.currentStep as MealPlanningStep,
         isActive: !isComplete,
       };
       sessions.push(sess);
     }
 
     // Most recent first
-    return sessions.sort(
-      (a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime(),
-    );
+    return sessions;
   }
 
   /** Get number of active (in-memory) sessions */
@@ -449,7 +393,7 @@ export class WorkflowManager {
       for (const status of statuses) {
         const statusCompat = status as WorkflowStatusCompat;
         const isComplete =
-          (statusCompat.currentStep ?? statusCompat.current_step) ===
+          (statusCompat.currentStep ?? statusCompat.currentStep) ===
           'complete';
         if (isComplete) {
           continue;
@@ -461,19 +405,8 @@ export class WorkflowManager {
 
         const session: WorkflowSession = {
           threadId: status.threadId,
-          workflowType:
-            statusCompat.workflowType ??
-            statusCompat.workflow_type ??
-            WorkflowType.MEAL_PLANNING,
-          participants: ['brad'],
-          createdAt: new Date(
-            statusCompat.createdAt ?? statusCompat.created_at ?? Date.now(),
-          ),
-          lastUpdated: new Date(
-            statusCompat.updatedAt ?? statusCompat.updated_at ?? Date.now(),
-          ),
-          currentStep:
-            statusCompat.currentStep ?? statusCompat.current_step ?? 'unknown',
+          workflowType: status.workflowType as WorkflowType,
+          currentStep: status.currentStep as MealPlanningStep,
           isActive: true,
         };
         this.activeSessions.set(status.threadId, session);

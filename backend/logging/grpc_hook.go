@@ -27,7 +27,19 @@ func (h *GrpcHook) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 	if useGrpcLog && grpcLogger != nil {
 		fieldMap := make(map[string]string)
 		for _, field := range fields {
-			fieldMap[field.Key] = fmt.Sprintf("%v", field.Interface)
+			// Extract value according to field type
+			var val interface{}
+			switch field.Type {
+			case zapcore.StringType:
+				val = field.String
+			case zapcore.Int64Type, zapcore.Uint64Type:
+				val = field.Integer
+			case zapcore.BoolType:
+				val = field.Integer != 0
+			default:
+				val = field.Interface
+			}
+			fieldMap[field.Key] = fmt.Sprintf("%v", val)
 		}
 
 		ctx := context.Background()

@@ -1,11 +1,11 @@
 import { infoLog, errorLog } from '../logging';
 
 import {
-  FeedbackEntry,
   WorkflowType,
   MealPlanningStep,
 } from '../shared/types';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
+import { FeedbackEntryProto } from '@mealplanner/generated';
 
 export interface FeedbackInput {
   threadId: string;
@@ -56,7 +56,7 @@ export class FeedbackHandler {
   /**
    * Get all feedback for a workflow
    */
-  async getFeedback(threadId: string): Promise<FeedbackEntry[]> {
+  async getFeedback(threadId: string): Promise<FeedbackEntryProto[]> {
     try {
       const config = {
         configurable: {
@@ -75,13 +75,7 @@ export class FeedbackHandler {
         return [];
       }
       const proto = checkpoint.state;
-      const feedbackHistory = (proto.feedbackHistory ?? []).map((f): FeedbackEntry => ({
-          from: f.from,
-          message: f.message,
-          timestamp: f.timestamp ? f.timestamp.toDate() : new Date(),
-          meal_plan_version: f.mealPlanVersion,
-        }));
-      return feedbackHistory;
+      return proto.feedbackHistory;
     } catch (error) {
       errorLog(`${`❌ [FEEDBACK] Error getting feedback:`} ${error}`);
       return [];
@@ -94,9 +88,9 @@ export class FeedbackHandler {
   async getFeedbackForVersion(
     threadId: string,
     version: number,
-  ): Promise<FeedbackEntry[]> {
+  ): Promise<FeedbackEntryProto[]> {
     const allFeedback = await this.getFeedback(threadId);
-    return allFeedback.filter((f) => f.meal_plan_version === version);
+    return allFeedback.filter((f) => f.mealPlanVersion === version);
   }
 
   /**
@@ -238,7 +232,7 @@ export class FeedbackHandler {
   /**
    * Format feedback for display
    */
-  formatFeedback(feedback: FeedbackEntry[]): string {
+  formatFeedback(feedback: FeedbackEntryProto[]): string {
     if (feedback.length === 0) {
       return 'No feedback received yet.';
     }
@@ -248,9 +242,9 @@ export class FeedbackHandler {
     lines.push('='.repeat(40));
 
     for (const entry of feedback) {
-      const timestamp = entry.timestamp.toLocaleString();
+      const timestamp = entry.timestamp?.toDate().toLocaleString() ?? 'Unknown';
       lines.push(
-        `\n👤 ${entry.from} (v${entry.meal_plan_version}) - ${timestamp}:`,
+        `\n👤 ${entry.from} (v${entry.mealPlanVersion}) - ${timestamp}:`,
       );
       lines.push(`   ${entry.message}`);
     }

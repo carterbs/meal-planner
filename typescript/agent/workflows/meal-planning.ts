@@ -26,7 +26,6 @@ import {
   MealPlanningStep,
   WorkflowType,
   VALIDATION_CRITERIA,
-  FeedbackEntry,
 } from '../shared/types';
 import { BaseWorkflow } from '../registry';
 import { debugLog } from '../cli';
@@ -60,6 +59,20 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
+  }
+
+  /**
+   * Helper to update proto state with partial updates
+   */
+  private updateState(
+    currentState: MealPlanningState,
+    updates: Partial<MealPlanningState>
+  ): MealPlanningState {
+    return new MealPlanningCheckpointState({
+      ...currentState,
+      ...updates,
+      updatedAt: Timestamp.fromDate(new Date()),
+    });
   }
 
   /**
@@ -107,13 +120,13 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   ): Promise<void> {
     infoLog('MealPlanningWorkflow.saveCheckpoint called');
     // DEBUGGING: Log meal plan before checkpoint serialization (saveCheckpoint)
-    if (state.meal_plan) {
+    if (state.mealPlan) {
       await infoLog(
         '🔍 [SAVE-CHECKPOINT] mealPlan before checkpoint serialization:',
       );
-      if (state.meal_plan.days) {
-        for (let i = 0; i < state.meal_plan.days.length; i++) {
-          const day = state.meal_plan.days[i];
+      if (state.mealPlan.days) {
+        for (let i = 0; i < state.mealPlan.days.length; i++) {
+          const day = state.mealPlan.days[i];
           await infoLog(
             `🔍 [SAVE-CHECKPOINT] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`,
           );
@@ -121,63 +134,21 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       }
     }
 
-    // Deep copy and coerce dates before serialization to avoid modifying original state
-    let cleanMealPlan = undefined;
-    if (state.meal_plan) {
-      try {
-        // Create a deep copy to avoid modifying original state
-        cleanMealPlan = JSON.parse(JSON.stringify(state.meal_plan));
-
-        // DEBUGGING: Check meal plan structure before coercing dates
-        infoLog('🔍 [SAVE-CHECKPOINT] cleanMealPlan after JSON.parse:');
-        if (cleanMealPlan.days) {
-          for (let i = 0; i < cleanMealPlan.days.length && i < 5; i++) {
-            const day = cleanMealPlan.days[i];
-            infoLog(
-              `🔍 [SAVE-CHECKPOINT] cleanMealPlan Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`,
-            );
-          }
-        }
-
-        this.coerceDates(cleanMealPlan);
-      } catch (e) {
-        infoLog(`Failed to clean meal plan for checkpoint: ${e}`);
-        cleanMealPlan = undefined; // Skip meal plan if cleaning fails
-      }
-    }
-
-    const protoState = new MealPlanningCheckpointState({
-      threadId: state.threadId,
-      participants: state.participants,
-      createdAt: Timestamp.fromDate(new Date(state.created_at)),
-      updatedAt: Timestamp.fromDate(new Date(state.updated_at)),
-      currentStep: state.current_step,
-      mealPlan: cleanMealPlan,
-      feedbackHistory: state.feedback_history.map((entry) => new FeedbackEntryProto({
-        from: entry.from,
-        message: entry.message,
-        timestamp: Timestamp.fromDate(entry.timestamp),
-        mealPlanVersion: entry.meal_plan_version,
-      })),
-      iterationCount: state.iteration_count,
-      shoppingList: state.shopping_list ? new ShoppingList({ items: state.shopping_list }) : undefined,
-      isFinalized: state.is_finalized,
-    });
     infoLog(
-      `🔍 [SAVE-CHECKPOINT] mealPlan before protoState serialization: ${JSON.stringify(protoState)}`,
+      `🔍 [SAVE-CHECKPOINT] mealPlan before checkpoint serialization: ${JSON.stringify(state)}`,
     );
     let checkpoint: AgentCheckpoint;
     try {
       checkpoint = new AgentCheckpoint({
-        state: protoState,
+        state: state,
         messages: [],
         next: [],
         step: 0,
       });
     } catch (e) {
       // log every lastPlanned value
-      if (state.meal_plan) {
-        for (const day of state.meal_plan.days) {
+      if (state.mealPlan) {
+        for (const day of state.mealPlan.days) {
           if (day.meal) {
             infoLog(
               `🔍 [SAVE-CHECKPOINT] lastPlanned: ${day.meal.lastPlanned}`,
@@ -208,12 +179,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       command: 'node',
       args: isJsonMode
         ? [
-            '/Users/bradcarter/Documents/Dev/meal-planner/typescript/mcp/dist/index.js',
-          ]
+          '/Users/bradcarter/Documents/Dev/meal-planner/typescript/mcp/dist/index.js',
+        ]
         : [
-            '/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js',
-            isCodex ? '--codex' : '',
-          ],
+          '/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js',
+          isCodex ? '--codex' : '',
+        ],
     });
 
     await this.client.connect(transport);
@@ -223,9 +194,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     this.llm = isCodex
       ? new FakeChatModel({})
       : new ChatOpenAI({
-          temperature: 0,
-          modelName: isTestMode ? 'gpt-4.1-nano' : 'gpt-4.1',
-        });
+        temperature: 0,
+        modelName: isTestMode ? 'gpt-4.1-nano' : 'gpt-4.1',
+      });
     // Initialize nano LLM for feedback analysis
     this.nanoLlm = new ChatOpenAI({
       temperature: 0,
@@ -257,40 +228,55 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         let state: MealPlanningState;
         if (!tuple) {
           // Initial run
-          state = {
+          state = new MealPlanningCheckpointState({
             threadId: config.configurable?.threadId ?? uuidv4(),
-            workflow_type: WorkflowType.MEAL_PLANNING,
             participants: ['brad'],
-            created_at: new Date(),
-            updated_at: new Date(),
-            current_step: MealPlanningStep.INITIATE,
-            meal_plan: null,
-            feedback_history: [],
-            iteration_count: 0,
-            shopping_list: null,
-            is_finalized: false,
-          };
+            createdAt: Timestamp.fromDate(new Date()),
+            updatedAt: Timestamp.fromDate(new Date()),
+            currentStep: MealPlanningStep.INITIATE,
+            mealPlan: undefined,
+            feedbackHistory: [],
+            iterationCount: 0,
+            shoppingList: undefined,
+            isFinalized: false,
+          });
           // Generate, optimize, present, pause for feedback
-          state = { ...state, ...(await this.initiateNode(state)) };
+          const initiateResult = await this.initiateNode(state);
+          infoLog(`Debuggyz - Initiated the workflow. Current Step: ${initiateResult.currentStep}`)
+          state = this.updateState(state, initiateResult);
           await this.saveCheckpoint(config, state);
-          state = { ...state, ...(await this.generatePlanNode(state)) };
+          infoLog(`Debuggyz - After updating state. Current Step: ${state.currentStep}`)
+
+          const generateResult = await this.generatePlanNode(state);
+          infoLog(`Debuggyz - Generated the plan. Current Step: ${generateResult.currentStep}`)
+          state = this.updateState(state, generateResult);
           await this.saveCheckpoint(config, state);
-          state = { ...state, ...(await this.optimizePlanNode(state)) };
+          infoLog(`Debuggyz - After updating state. Current Step: ${state.currentStep}`)
+
+          const optimizeResult = await this.optimizePlanNode(state);
+          infoLog(`Debuggyz - Optimized the plan. ${optimizeResult.currentStep}`)
+          state = this.updateState(state, optimizeResult);
           await this.saveCheckpoint(config, state);
-          state = { ...state, ...(await this.presentPlanNode(state)) };
+          infoLog(`Debuggyz - After updating state. Current Step: ${state.currentStep}`)
+
+          const presentResult = await this.presentPlanNode(state);
+          infoLog(`Debuggyz - Presenting the plan. Current Step: ${optimizeResult.currentStep}`)
+
+          state = this.updateState(state, presentResult);
           await this.saveCheckpoint(config, state);
+          infoLog(`Debuggyz - After updating state. Current Step: ${state.currentStep}`)
+
           // Pause: checkpoint state
           // Debug: log the final state before saving checkpoint
           infoLog(
-            `🔍 [WORKFLOW] Final state before checkpoint: current_step=${state.current_step}`,
+            `🔍 [WORKFLOW] Final state before checkpoint: current_step=${state.currentStep}`,
           );
           infoLog(
             `${`🔍 [WORKFLOW] Full state:`} ${JSON.stringify(state, null, 2)}`,
           );
-
-          // Skip final checkpoint save to prevent hang - workflow state will be saved by backend
+          await this.saveCheckpoint(config, state);
           infoLog(
-            '🔍 [WORKFLOW] Skipping final checkpoint save to prevent timeout',
+            `🔍 [WORKFLOW] Saved checkpoint for thread ${config.configurable?.threadId}`,
           );
           return state;
         } else {
@@ -328,41 +314,26 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             }
           }
 
-          state = {
-            threadId: checkpoint.state.threadId,
-            workflow_type: WorkflowType.MEAL_PLANNING,
-            participants: checkpoint.state.participants,
-            created_at: checkpoint.state.createdAt
-              ? checkpoint.state.createdAt.toDate()
-              : new Date(),
-            updated_at: checkpoint.state.updatedAt
-              ? checkpoint.state.updatedAt.toDate()
-              : new Date(),
-            current_step: checkpoint.state.currentStep as MealPlanningStep,
-            meal_plan: deserializedMealPlan,
-            feedback_history: checkpoint.state.feedbackHistory.map((f) => ({
-              from: f.from,
-              message: f.message,
-              timestamp: f.timestamp ? f.timestamp.toDate() : new Date(),
-              meal_plan_version: f.mealPlanVersion,
-            })),
-            iteration_count: checkpoint.state.iterationCount,
-            shopping_list: checkpoint.state.shoppingList?.items ?? null,
-            is_finalized: checkpoint.state.isFinalized,
-          };
+          // Use checkpoint state directly since it's already a proto
+          state = checkpoint.state;
+          // Update meal plan if we deserialized it
+          if (deserializedMealPlan) {
+            state = new MealPlanningCheckpointState({
+              ...state,
+              mealPlan: deserializedMealPlan,
+            });
+          }
           infoLog(
-            `🔄 [MEAL-WORKFLOW] Resuming workflow at step ${state.current_step}`,
+            `🔄 [MEAL-WORKFLOW] Resuming workflow at step ${state.currentStep}`,
           );
           // On resume, always: apply feedback (if any), re-optimize, present, and pause for feedback again until user is happy
           let feedbackSatisfied = false;
           while (!feedbackSatisfied) {
-            // 1. Gather all feedback newer than last_feedback_applied_at
-            const allFeedback = state.feedback_history || [];
-            const lastApplied = state.last_feedback_applied_at
-              ? new Date(state.last_feedback_applied_at)
-              : new Date(0);
-            const newFeedback = allFeedback.filter((f: FeedbackEntry) =>
-              f.timestamp ? new Date(f.timestamp) > lastApplied : true,
+            // 1. Gather all recent feedback (within last 5 minutes)
+            const allFeedback = state.feedbackHistory || [];
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const newFeedback = allFeedback.filter((f) =>
+              f.timestamp ? f.timestamp.toDate() > fiveMinutesAgo : true,
             );
 
             // 2. Analyze feedback to determine user satisfaction
@@ -373,7 +344,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
             // 3. If satisfied, finalize plan and break loop
             if (analyzeResult.satisfied) {
-              state.current_step = MealPlanningStep.FINALIZE_PLAN;
+              state = this.updateState(state, {
+                currentStep: MealPlanningStep.FINALIZE_PLAN
+              });
               feedbackSatisfied = true;
               break;
             }
@@ -381,34 +354,31 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             // 4. If there is new feedback and not satisfied, apply it
             if (newFeedback.length > 0) {
               // Apply feedback via LLM
-              state = {
-                ...state,
-                ...(await this.applyFeedbackNode({
-                  ...state,
-                  feedback_to_apply: newFeedback,
-                })),
-              };
-              state.last_feedback_applied_at = new Date(
-                newFeedback[newFeedback.length - 1].timestamp,
-              ).toISOString();
-              state = { ...state, ...(await this.optimizePlanNode(state)) };
+              const stateWithFeedback = Object.assign(state, { feedback_to_apply: newFeedback });
+              const feedbackResult = await this.applyFeedbackNode(stateWithFeedback);
+              state = this.updateState(state, feedbackResult);
+
+              // Feedback applied - continue processing
+              const optimizeResult = await this.optimizePlanNode(state);
+              state = this.updateState(state, optimizeResult);
               await this.saveCheckpoint(config, state);
             }
 
             // 5. Present the plan after feedback is processed/applied
-            state = { ...state, ...(await this.presentPlanNode(state)) };
+            const presentResult = await this.presentPlanNode(state);
+            state = this.updateState(state, presentResult);
             await this.saveCheckpoint(config, state);
             // 6. Pause for feedback after presenting the plan
-            if (state.current_step === MealPlanningStep.AWAIT_FEEDBACK) {
+            if (state.currentStep === MealPlanningStep.AWAIT_FEEDBACK) {
               // Create properly typed checkpoint
               // DEBUGGING: Log meal plan before checkpoint serialization (feedback loop)
-              if (state.meal_plan) {
+              if (state.mealPlan) {
                 await infoLog(
                   '🔍 [CHECKPOINT-SAVE-FEEDBACK] mealPlan before checkpoint serialization:',
                 );
-                if (state.meal_plan.days) {
-                  for (let i = 0; i < state.meal_plan.days.length; i++) {
-                    const day = state.meal_plan.days[i];
+                if (state.mealPlan.days) {
+                  for (let i = 0; i < state.mealPlan.days.length; i++) {
+                    const day = state.mealPlan.days[i];
                     await infoLog(
                       `🔍 [CHECKPOINT-SAVE-FEEDBACK] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`,
                     );
@@ -418,34 +388,17 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
               // DEBUGGING: Check if meal_plan is properly set before final checkpoint
               infoLog(
-                `🔍 [FINAL-CHECKPOINT] About to save final checkpoint with meal_plan: ${state.meal_plan ? 'EXISTS' : 'NULL/UNDEFINED'}`,
+                `🔍 [FINAL-CHECKPOINT] About to save final checkpoint with mealPlan: ${state.mealPlan ? 'EXISTS' : 'NULL/UNDEFINED'}`,
               );
-              if (state.meal_plan) {
+              if (state.mealPlan) {
                 infoLog(
-                  `🔍 [FINAL-CHECKPOINT] meal_plan has ${state.meal_plan.days?.length || 0} days`,
+                  `🔍 [FINAL-CHECKPOINT] meal_plan has ${state.mealPlan.days?.length || 0} days`,
                 );
               }
 
-              const protoState = new MealPlanningCheckpointState({
-                threadId: state.threadId,
-                participants: state.participants,
-                createdAt: Timestamp.fromDate(state.created_at),
-                updatedAt: Timestamp.fromDate(state.updated_at),
-                currentStep: state.current_step,
-                mealPlan:
-                  state.meal_plan ?? undefined,
-                feedbackHistory: state.feedback_history.map((entry) => new FeedbackEntryProto({
-                 from: entry.from,
-                 message: entry.message,
-                 timestamp: Timestamp.fromDate(entry.timestamp),
-                 mealPlanVersion: entry.meal_plan_version,
-               })),
-                iterationCount: state.iteration_count,
-                shoppingList: state.shopping_list ? new ShoppingList({ items: state.shopping_list }) : undefined,
-                isFinalized: state.is_finalized,
-              });
+              // State is already a proto object
               const checkpoint = new AgentCheckpoint({
-                state: protoState,
+                state: state,
                 messages: [],
                 next: [],
                 step: 0,
@@ -458,14 +411,21 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               return state;
             }
             // 7. If feedback is positive, break loop and finalize
-            if (state.current_step === MealPlanningStep.FINALIZE_PLAN) {
+            if (state.currentStep === MealPlanningStep.FINALIZE_PLAN) {
               feedbackSatisfied = true;
             }
           }
+          infoLog(`🔍 [WORKFLOW] Finalizing plan for thread ${config.configurable?.threadId}`);
           // Finalize, generate shopping list, complete
-          state = { ...state, ...(await this.finalizePlanNode(state)) };
-          state = { ...state, ...(await this.generateShoppingListNode(state)) };
-          state = { ...state, ...(await this.completeNode(state)) };
+          const finalizeResult = await this.finalizePlanNode(state);
+          state = this.updateState(state, finalizeResult);
+          infoLog(`🔍 [WORKFLOW] Generating shopping list for thread ${config.configurable?.threadId}`);
+          const shoppingResult = await this.generateShoppingListNode(state);
+          infoLog(`🔍 [WORKFLOW] Generated shopping list for thread ${config.configurable?.threadId}`);
+          state = this.updateState(state, shoppingResult);
+          infoLog(`🔍 [WORKFLOW] Completed workflow for thread ${config.configurable?.threadId}`);
+          const completeResult = await this.completeNode(state);
+          state = this.updateState(state, completeResult);
           return state;
         }
       },
@@ -482,13 +442,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     );
 
     return {
-      current_step: MealPlanningStep.GENERATE_PLAN,
-      meal_plan: null,
-      feedback_history: [],
-      iteration_count: 0,
-      shopping_list: null,
-      is_finalized: false,
-      updated_at: new Date(),
+      currentStep: MealPlanningStep.GENERATE_PLAN,
     };
   }
 
@@ -565,7 +519,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       if ((planResult as MCPToolResultType).isError) {
         const errorContent =
           Array.isArray((planResult as MCPToolResultType).content) &&
-          (planResult as MCPToolResultType).content[0]?.type === 'text'
+            (planResult as MCPToolResultType).content[0]?.type === 'text'
             ? (planResult as MCPToolResultType).content[0].text
             : 'Unknown error';
         throw new Error(`MCP tool error: ${errorContent}`);
@@ -573,7 +527,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
       const responseText =
         Array.isArray((planResult as MCPToolResultType).content) &&
-        (planResult as MCPToolResultType).content[0]?.type === 'text'
+          (planResult as MCPToolResultType).content[0]?.type === 'text'
           ? (planResult as MCPToolResultType).content[0].text
           : '{}';
 
@@ -616,9 +570,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       await this.saveMealPlan(_state.threadId, mealPlan);
 
       return {
-        current_step: MealPlanningStep.OPTIMIZE_PLAN,
-        meal_plan: mealPlan,
-        updated_at: new Date(),
+        currentStep: MealPlanningStep.OPTIMIZE_PLAN,
+        mealPlan: mealPlan,
       };
     } catch (error) {
       errorLog(`${` [MEAL-WORKFLOW] Error generating plan:`} ${error}`);
@@ -631,23 +584,23 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   ): Promise<Partial<MealPlanningState>> {
     infoLog('MealPlanningWorkflow.optimizePlanNode called');
     infoLog(
-      `🍽️ [MEAL-WORKFLOW] Optimizing meal plan (iteration ${state.iteration_count + 1})`,
+      `🍽️ [MEAL-WORKFLOW] Optimizing meal plan (iteration ${state.iterationCount + 1})`,
     );
 
     const threadId = state.threadId;
 
-    if (!state.meal_plan) {
+    if (!state.mealPlan) {
       throw new Error('No meal plan to optimize');
     }
 
-    const issues = this.validatePlan(state.meal_plan);
-    let optimizedPlan = state.meal_plan;
+    const issues = this.validatePlan(state.mealPlan);
+    let optimizedPlan = state.mealPlan;
 
     if (issues.length > 0) {
       infoLog(
         `${`📋 [MEAL-WORKFLOW] Found ${issues.length} issues:`} ${issues}`,
       );
-      optimizedPlan = await this.optimizePlanWithLLM(state.meal_plan, issues);
+      optimizedPlan = await this.optimizePlanWithLLM(state.mealPlan, issues);
     } else {
       infoLog(`✅ [MEAL-WORKFLOW] Plan is already valid`);
     }
@@ -655,20 +608,19 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     await this.saveMealPlan(threadId, optimizedPlan);
 
     return {
-      current_step: MealPlanningStep.PRESENT_PLAN,
-      meal_plan: optimizedPlan,
-      iteration_count: state.iteration_count + 1,
-      updated_at: new Date(),
+      currentStep: MealPlanningStep.PRESENT_PLAN,
+      mealPlan: optimizedPlan,
+      iterationCount: state.iterationCount + 1,
     };
   }
 
   // New: apply feedback using LLM with feedback context
   private async applyFeedbackNode(
-    state: MealPlanningState & { feedback_to_apply?: FeedbackEntry[] },
+    state: MealPlanningState & { feedback_to_apply?: FeedbackEntryProto[] },
   ): Promise<Partial<MealPlanningState>> {
     infoLog('MealPlanningWorkflow.applyFeedbackNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Applying user feedback via LLM`);
-    if (!state.meal_plan) {
+    if (!state.mealPlan) {
       throw new Error('No meal plan to apply feedback to');
     }
     // Gather ALL feedback from the entire session or use provided feedback_to_apply
@@ -678,21 +630,19 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const feedbackMessages = feedbackEntries.map((f) => f.message);
     // Call LLM to pick alternatives based on feedback
     const result = await this.applyFeedbackWithLLM(
-      state.meal_plan,
+      state.mealPlan,
       feedbackMessages,
       state.threadId,
     );
     await this.saveMealPlan(state.threadId, result.mealPlan);
     return {
-      meal_plan: result.mealPlan,
-      user_message: result.userMessage,
-      updated_at: new Date(),
+      mealPlan: result.mealPlan,
     };
   }
 
   // Analyze feedback using nano LLM. Returns { satisfied: boolean, reasoning: string }
   private async analyzeFeedbackNode(
-    feedbackEntries: FeedbackEntry[],
+    feedbackEntries: any[],
   ): Promise<{ satisfied: boolean; reasoning: string }> {
     infoLog('MealPlanningWorkflow.analyzeFeedbackNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Analyzing feedback: ${feedbackEntries}`);
@@ -892,19 +842,18 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     infoLog('MealPlanningWorkflow.presentPlanNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Presenting meal plan to participants`);
 
-    if (!state.meal_plan) {
+    if (!state.mealPlan) {
       throw new Error('No meal plan to present');
     }
 
     // Format plan for presentation
-    const planPresentation = this.formatPlanForPresentation(state.meal_plan);
+    const planPresentation = this.formatPlanForPresentation(state.mealPlan);
     infoLog(`📋 [MEAL-PLAN]\n${planPresentation}`);
 
     // Check if we have recent feedback that requires processing
 
     return {
-      current_step: MealPlanningStep.AWAIT_FEEDBACK,
-      updated_at: new Date(),
+      currentStep: MealPlanningStep.AWAIT_FEEDBACK,
     };
   }
 
@@ -914,7 +863,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     infoLog('MealPlanningWorkflow.finalizePlanNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Finalizing meal plan`);
 
-    if (!state.meal_plan) {
+    if (!state.mealPlan) {
       throw new Error('No meal plan to finalize');
     }
 
@@ -922,7 +871,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     try {
       await this.client.callTool({
         name: 'finalizeMealPlan',
-        arguments: { mealPlan: state.meal_plan },
+        arguments: { mealPlan: state.mealPlan },
       });
 
       infoLog(`✅ [MEAL-WORKFLOW] Meal plan saved successfully`);
@@ -932,9 +881,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     }
 
     return {
-      current_step: MealPlanningStep.GENERATE_SHOPPING_LIST,
-      is_finalized: true,
-      updated_at: new Date(),
+      currentStep: MealPlanningStep.GENERATE_SHOPPING_LIST,
+      isFinalized: true,
     };
   }
 
@@ -944,13 +892,13 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     infoLog('MealPlanningWorkflow.generateShoppingListNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Generating shopping list`);
 
-    if (!state.meal_plan) {
+    if (!state.mealPlan) {
       throw new Error('No meal plan for shopping list generation');
     }
 
     try {
       // Extract meal IDs from the meal plan
-      const mealIds = state.meal_plan.days
+      const mealIds = state.mealPlan.days
         .map((day) => day.meal?.id)
         .filter((id): id is number => id !== undefined)
         .filter((id, index, self) => self.indexOf(id) === index); // Deduplicate
@@ -1000,9 +948,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       if (!Array.isArray(shoppingList) || shoppingList.length === 0) {
         infoLog('\nNo items in shopping list');
         return {
-          current_step: MealPlanningStep.COMPLETE,
-          shopping_list: [],
-          updated_at: new Date(),
+          currentStep: MealPlanningStep.COMPLETE,
+          shoppingList: undefined,
         };
       }
       let shoppingListFormatted = '';
@@ -1086,10 +1033,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       }
 
       return {
-        current_step: MealPlanningStep.COMPLETE,
-        shopping_list: shoppingList,
-        shopping_list_formatted: shoppingListFormatted,
-        updated_at: new Date(),
+        currentStep: MealPlanningStep.COMPLETE,
+        shoppingList: shoppingList ? new ShoppingList({ items: shoppingList }) : undefined,
       };
     } catch (error) {
       errorLog(
@@ -1097,13 +1042,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       );
       // Continue with empty shopping list on error
       return {
-        current_step: MealPlanningStep.COMPLETE,
-        shopping_list: [],
-        _error:
-          error instanceof Error
-            ? error.message
-            : 'Failed to generate shopping list',
-        updated_at: new Date(),
+        currentStep: MealPlanningStep.COMPLETE,
+        shoppingList: undefined,
       };
     }
   }
@@ -1115,16 +1055,15 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     infoLog(`🍽️ [MEAL-WORKFLOW] Meal planning workflow completed`);
 
     // Final validation
-    const finalIssues = state.meal_plan
-      ? this.validatePlan(state.meal_plan)
+    const finalIssues = state.mealPlan
+      ? this.validatePlan(state.mealPlan)
       : [];
     if (finalIssues.length > 0) {
       warnLog(`${`⚠️ [MEAL-WORKFLOW] Final plan has issues:`} ${finalIssues}`);
     }
 
     return {
-      current_step: MealPlanningStep.COMPLETE,
-      updated_at: new Date(),
+      currentStep: MealPlanningStep.COMPLETE,
     };
   }
 

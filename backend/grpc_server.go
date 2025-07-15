@@ -760,7 +760,7 @@ func (s *MealPlannerGRPCServer) GetCheckpoint(ctx context.Context, req *apipb.Ge
 		Checkpoint: &checkpoint,
 		Metadata:   meta,
 	}
-	grpcServerLogger.Debugw("GetCheckpoint: returning checkpoint", "threadID", req.ThreadId, "ns", ns)
+	grpcServerLogger.Debugw("Debuggyz: GetCheckpoint: returning checkpoint", "threadID", req.ThreadId, "ns", ns, "currentStep", checkpoint.State.GetCurrentStep())
 	return &apipb.GetCheckpointResponse{
 		Tuple: checkpointTuple,
 		Found: true,
@@ -775,7 +775,7 @@ func (s *MealPlannerGRPCServer) PutCheckpoint(ctx context.Context, req *apipb.Pu
 		return nil, fmt.Errorf("checkpoint required")
 	}
 
-	grpcServerLogger.Debugw("PutCheckpoint called", "threadID", req.ThreadId, "incomingWorkflowType", req.WorkflowType)
+	grpcServerLogger.Debugw("Debuggyz: PutCheckpoint called", "threadID", req.ThreadId, "incomingWorkflowType", req.WorkflowType, "CurrentStep", req.Checkpoint.GetState().GetCurrentStep())
 	// Choose protojson options once for consistent naming / enums
 	marshalOpts := protojson.MarshalOptions{UseProtoNames: true}
 
@@ -790,21 +790,6 @@ func (s *MealPlannerGRPCServer) PutCheckpoint(ctx context.Context, req *apipb.Pu
 	checkpointData, err := marshalOpts.Marshal(req.Checkpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal checkpoint: %w", err)
-	}
-
-	// Inject `workflow_type` into the nested state object if it is missing.
-	var generic map[string]any
-	if err := json.Unmarshal(checkpointData, &generic); err == nil {
-		if stRaw, ok := generic["state"].(map[string]any); ok {
-			if _, exists := stRaw["workflow_type"]; !exists {
-				stRaw["workflow_type"] = workflowType
-				generic["state"] = stRaw
-				if patched, err := json.Marshal(generic); err == nil {
-					checkpointData = patched
-					grpcServerLogger.Debugw("Injected workflow_typez into checkpoint state", "threadID", req.ThreadId, "workflowType", workflowType)
-				}
-			}
-		}
 	}
 
 	// Metadata is optional – marshal when present.

@@ -147,6 +147,7 @@ async function main(): Promise<void> {
   
   // Cleanup function
   const cleanup = async () => {
+    await sleep(2000); // let logs settle
     if (backendProcess) {
       backendProcess.kill('SIGTERM');
     }
