@@ -399,6 +399,8 @@ const AgentPage: React.FC = () => {
 
   useEffect(() => {
     if (resumeData) {
+      // restore session after reload
+      setSession({ threadId: resumeData.threadId, currentStep: resumeData.currentStep ?? '' });
 
       // Resume meal plan if available
       if (resumeData.mealPlan?.days) {
@@ -436,11 +438,11 @@ const AgentPage: React.FC = () => {
     setIsWorking(true);
     try {
       const result = await sendAgentMessage(
-        session.threadId,
-        userMsg.text,
-        'user',
-        false,
-      );
+            session.threadId,
+            userMsg.text,
+            'user',
+            false,
+          );
 
       if (result.message) {
         const message: ChatMessage = { sender: 'agent', text: result.message };
