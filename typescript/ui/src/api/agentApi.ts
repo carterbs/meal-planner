@@ -1,11 +1,11 @@
-import {
-  StartAgentWorkflowRequest,
-  StartAgentWorkflowResponse,
-  MessageAgentRequest,
-  MessageAgentResponse,
-  AgentStartRequest,
-  AgentMessageRequest,
-} from '@mealplanner/generated';
+
+import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
+import { postAgentStart, postAgentMessage, PostAgentMessageData, MainAgentMessageRequestBody } from '@mealplanner/generated/dist/gateway/index.js';
+
+// Create the API gateway client
+const gatewayClient = createClient(createConfig({
+  baseUrl: 'http://localhost:8080/api'
+}));
 
 export interface SessionInfo {
   threadId: string;
@@ -30,29 +30,29 @@ export async function startAgentSession(
   participants: string[] = ['user'],
   workflowType: string = 'meal_planning',
 ): Promise<StartSessionResult> {
-  const requestData: AgentStartRequest = {
+  const requestData = {
     participants,
     workflowType,
   };
 
-  const response = await fetch('/api/agent/start', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(
-      StartAgentWorkflowRequest.toJSON({ request: requestData }),
-    ),
+  const result = await postAgentStart({
+    client: gatewayClient,
+    body: requestData,
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to start agent session: ${response.statusText}`);
+  if (!result.data || result.error) {
+    throw new Error(`Failed to start agent session: ${result.error || 'Unknown error'}`);
   }
 
-  const responseJson = await response.json();
-  const data = StartAgentWorkflowResponse.fromJSON(responseJson);
+  const data = result.data;
   const agentResponse = data.response;
 
   if (!agentResponse) {
     throw new Error('No response from agent');
+  }
+
+  if (!agentResponse.threadId || !agentResponse.currentStep) {
+    throw new Error('Invalid agent response - missing required fields');
   }
 
   const session: SessionInfo = {
@@ -85,25 +85,23 @@ export async function sendAgentMessage(
   from: string = 'user',
   interactive: boolean = false,
 ): Promise<SendMessageResult> {
-  const requestData: AgentMessageRequest = {
+  const requestData: MainAgentMessageRequestBody = {
     threadId,
     message,
     from,
     interactive,
   };
 
-  const response = await fetch('/api/agent/message', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(MessageAgentRequest.toJSON({ request: requestData })),
+  const result = await postAgentMessage({
+    client: gatewayClient,
+    body: requestData,
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to send message: ${response.statusText}`);
+  if (!result.data || result.error) {
+    throw new Error(`Failed to send message: ${result.error || 'Unknown error'}`);
   }
 
-  const responseJson = await response.json();
-  const data = MessageAgentResponse.fromJSON(responseJson);
+  const data = result.data;
   const agentResponse = data.response;
 
   if (!agentResponse) {

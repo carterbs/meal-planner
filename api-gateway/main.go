@@ -43,22 +43,66 @@ type HealthResponse struct {
 	Message string `json:"message"`
 }
 
+// Ingredient represents a meal ingredient
+type IngredientResponse struct {
+	Id       int32   `json:"id"`
+	MealId   int32   `json:"mealId"`
+	Quantity float64 `json:"quantity"`
+	Unit     string  `json:"unit"`
+	Name     string  `json:"name"`
+}
+
+// Step represents a cooking step
+type StepResponse struct {
+	Id          int32  `json:"id"`
+	MealId      int32  `json:"mealId"`
+	StepNumber  int32  `json:"stepNumber"`
+	Instruction string `json:"instruction"`
+}
+
+// ShoppingListItem represents a shopping list item
+type ShoppingListItemResponse struct {
+	Ingredient string `json:"ingredient"`
+	Quantity   string `json:"quantity"`
+	Category   string `json:"category"`
+}
+
+// MealPlanEntry represents a meal plan entry
+type MealPlanEntryResponse struct {
+	Meal     *MealResponse `json:"meal,omitempty"`
+	DayIndex int32         `json:"dayIndex"`
+	MealType string        `json:"mealType"`
+}
+
+// AgentStartRequest represents the request to start an agent workflow
+type AgentStartRequestBody struct {
+	Participants []string `json:"participants"`
+	WorkflowType string   `json:"workflowType"`
+}
+
+// AgentMessageRequest represents the request to send a message to an agent
+type AgentMessageRequestBody struct {
+	ThreadId    string `json:"threadId"`
+	Message     string `json:"message"`
+	From        string `json:"from"`
+	Interactive bool   `json:"interactive"`
+}
+
+// AgentResponse represents the response from agent operations
+type AgentResponseBody struct {
+	Success      bool   `json:"success"`
+	Message      string `json:"message"`
+	ThreadId     string `json:"threadId"`
+	CurrentStep  string `json:"currentStep"`
+	InitialState string `json:"initialState,omitempty"`
+}
+
 type AgentStartResponse struct {
-	Response struct {
-		Success     bool   `json:"success"`
-		Message     string `json:"message"`
-		ThreadId    string `json:"threadId"`
-		CurrentStep string `json:"currentStep"`
-	} `json:"response"`
+	Response AgentResponseBody `json:"response"`
 }
 
 type AgentMessageResponse struct {
-	Response struct {
-		Success     bool   `json:"success"`
-		Message     string `json:"message"`
-		ThreadId    string `json:"threadId"`
-		CurrentStep string `json:"currentStep"`
-	} `json:"response"`
+	Response AgentResponseBody `json:"response"`
 }
 
 type CheckpointResponse struct {
@@ -67,7 +111,7 @@ type CheckpointResponse struct {
 			State struct {
 				ThreadId string `json:"threadId"`
 				MealPlan struct {
-					Days []interface{} `json:"days"`
+					Days []MealPlanEntryResponse `json:"days"`
 				} `json:"mealPlan"`
 				Participants []string `json:"participants"`
 				CurrentStep  string   `json:"currentStep"`
@@ -79,20 +123,20 @@ type CheckpointResponse struct {
 
 type MealPlanResponse struct {
 	Plan struct {
-		Days         []interface{} `json:"days"`
-		ShoppingList []interface{} `json:"shoppingList"`
+		Days         []MealPlanEntryResponse     `json:"days"`
+		ShoppingList []ShoppingListItemResponse `json:"shoppingList"`
 	} `json:"plan"`
 }
 
 type MealResponse struct {
-	Id          int32         `json:"id"`
-	Name        string        `json:"name"`
-	Effort      int32         `json:"effort"`
-	HasRedMeat  bool          `json:"hasRedMeat"`
-	Url         string        `json:"url"`
-	MealType    string        `json:"mealType"`
-	Ingredients []interface{} `json:"ingredients"`
-	Steps       []interface{} `json:"steps"`
+	Id          int32                `json:"id"`
+	Name        string               `json:"name"`
+	Effort      int32                `json:"effort"`
+	HasRedMeat  bool                 `json:"hasRedMeat"`
+	Url         string               `json:"url"`
+	MealType    string               `json:"mealType"`
+	Ingredients []IngredientResponse `json:"ingredients"`
+	Steps       []StepResponse       `json:"steps"`
 }
 
 type MealsResponse struct {
@@ -100,22 +144,11 @@ type MealsResponse struct {
 }
 
 type ShoppingListResponse struct {
-	Items []struct {
-		Ingredient string `json:"ingredient"`
-		Quantity   string `json:"quantity"`
-		Category   string `json:"category"`
-	} `json:"items"`
+	Items []ShoppingListItemResponse `json:"items"`
 }
 
 type MessageResponse struct {
 	Message string `json:"message"`
-}
-
-type StepResponse struct {
-	Id          int32  `json:"id"`
-	MealId      int32  `json:"mealId"`
-	StepNumber  int32  `json:"stepNumber"`
-	Instruction string `json:"instruction"`
 }
 
 type StepsResponse struct {
@@ -135,26 +168,41 @@ type WorkflowsResponse struct {
 	Workflows []WorkflowStatusResponse `json:"workflows"`
 }
 
+type WorkflowMessageResponse struct {
+	ThreadId  string `json:"threadId"`
+	Sender    string `json:"sender"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"createdAt"`
+}
+
 type WorkflowStateResponse struct {
 	Plan struct {
-		Days []interface{} `json:"days"`
+		Days []MealPlanEntryResponse `json:"days"`
 	} `json:"plan"`
 	ShoppingList struct {
-		Items []interface{} `json:"items"`
+		Items []ShoppingListItemResponse `json:"items"`
 	} `json:"shoppingList"`
-	Messages []struct {
-		ThreadId  string `json:"threadId"`
-		Sender    string `json:"sender"`
-		Content   string `json:"content"`
-		CreatedAt string `json:"createdAt"`
-	} `json:"messages"`
+	Messages []WorkflowMessageResponse `json:"messages"`
+}
+
+type CheckpointTupleResponse struct {
+	Checkpoint struct {
+		State struct {
+			ThreadId string `json:"threadId"`
+			MealPlan struct {
+				Days []MealPlanEntryResponse `json:"days"`
+			} `json:"mealPlan"`
+			Participants []string `json:"participants"`
+			CurrentStep  string   `json:"currentStep"`
+		} `json:"state"`
+	} `json:"checkpoint"`
 }
 
 type CheckpointListResponse struct {
 	Entries []struct {
-		ThreadId     string      `json:"threadId"`
-		CheckpointNs string      `json:"checkpointNs"`
-		Tuple        interface{} `json:"tuple"`
+		ThreadId     string                  `json:"threadId"`
+		CheckpointNs string                  `json:"checkpointNs"`
+		Tuple        CheckpointTupleResponse `json:"tuple"`
 	} `json:"entries"`
 }
 
@@ -421,7 +469,7 @@ func (gw *Gateway) getMealPlan(w http.ResponseWriter, r *http.Request) {
 // @Tags mealplan
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Save meal plan request"
+// @Param request body apipb.SaveMealPlanRequest true "Save meal plan request"
 // @Success 200 {object} MessageResponse "Meal plan saved successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 501 {object} ErrorResponse "Not implemented"
@@ -462,7 +510,7 @@ func (gw *Gateway) generateMealPlan(w http.ResponseWriter, r *http.Request) {
 // @Tags mealplan
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Finalize meal plan request"
+// @Param request body apipb.FinalizeMealPlanRequest true "Finalize meal plan request"
 // @Success 200 {object} MessageResponse "Meal plan finalized successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -512,7 +560,7 @@ func (gw *Gateway) getMealPlanICS(w http.ResponseWriter, r *http.Request) {
 // @Tags shopping
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Shopping list request"
+// @Param request body apipb.GetShoppingListRequest true "Shopping list request"
 // @Success 200 {object} ShoppingListResponse "Shopping list retrieved successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -559,7 +607,7 @@ func (gw *Gateway) getAllMeals(w http.ResponseWriter, r *http.Request) {
 // @Tags meals
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Create meal request"
+// @Param request body apipb.CreateMealRequest true "Create meal request"
 // @Success 201 {object} MealResponse "Meal created successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -589,7 +637,7 @@ func (gw *Gateway) createMeal(w http.ResponseWriter, r *http.Request) {
 // @Tags meals
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Swap meal request"
+// @Param request body apipb.SwapMealRequest true "Swap meal request"
 // @Success 200 {object} MealResponse "Meal swapped successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -616,7 +664,7 @@ func (gw *Gateway) swapMeal(w http.ResponseWriter, r *http.Request) {
 // @Tags meals
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Remove meal request"
+// @Param request body apipb.RemoveMealRequest true "Remove meal request"
 // @Success 200 {object} MealPlanResponse "Meal removed successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -645,7 +693,7 @@ func (gw *Gateway) removeMeal(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param mealId path string true "Meal ID"
 // @Param ingredientId path string true "Ingredient ID"
-// @Param request body map[string]interface{} true "Update ingredient request"
+// @Param request body apipb.UpdateMealIngredientRequest true "Update ingredient request"
 // @Success 200 {object} MealResponse "Ingredient updated successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -756,7 +804,7 @@ func (gw *Gateway) deleteMeal(w http.ResponseWriter, r *http.Request) {
 // @Tags meals
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Replace meal request"
+// @Param request body apipb.ReplaceMealRequest true "Replace meal request"
 // @Success 200 {object} MealResponse "Meal replaced successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -812,7 +860,7 @@ func (gw *Gateway) getSteps(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param mealId path string true "Meal ID"
-// @Param request body map[string]interface{} true "Add step request"
+// @Param request body apipb.AddStepRequest true "Add step request"
 // @Success 200 {object} StepResponse "Step added successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -853,7 +901,7 @@ func (gw *Gateway) addStep(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param mealId path string true "Meal ID"
-// @Param request body map[string]interface{} true "Add bulk steps request"
+// @Param request body apipb.AddBulkStepsRequest true "Add bulk steps request"
 // @Success 200 {object} StepsResponse "Steps added successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -897,7 +945,7 @@ func (gw *Gateway) addBulkSteps(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param mealId path string true "Meal ID"
 // @Param stepId path string true "Step ID"
-// @Param request body map[string]interface{} true "Update step request"
+// @Param request body apipb.UpdateStepRequest true "Update step request"
 // @Success 200 {object} StepResponse "Step updated successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -982,7 +1030,7 @@ func (gw *Gateway) deleteStep(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param mealId path string true "Meal ID"
-// @Param request body map[string]interface{} true "Reorder steps request"
+// @Param request body apipb.ReorderStepsRequest true "Reorder steps request"
 // @Success 200 {object} MessageResponse "Steps reordered successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -1053,7 +1101,7 @@ func (gw *Gateway) deleteAllSteps(w http.ResponseWriter, r *http.Request) {
 // @Tags agent
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Agent start request"
+// @Param request body AgentStartRequestBody true "Agent start request"
 // @Success 200 {object} AgentStartResponse "Agent workflow started successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -1093,7 +1141,7 @@ func (gw *Gateway) startAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 // @Tags agent
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Agent message request"
+// @Param request body AgentMessageRequestBody true "Agent message request"
 // @Success 200 {object} AgentMessageResponse "Message sent successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -1232,7 +1280,7 @@ func (gw *Gateway) abandonWorkflow(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param threadId path string true "Thread ID"
-// @Param request body map[string]interface{} true "Add message request"
+// @Param request body apipb.AddMessageRequest true "Add message request"
 // @Success 200 {object} MessageResponse "Message added successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -1271,7 +1319,7 @@ func (gw *Gateway) addMessage(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param threadId path string true "Thread ID"
-// @Param request body map[string]interface{} true "Update session state request"
+// @Param request body apipb.UpdateSessionStateRequest true "Update session state request"
 // @Success 200 {object} MessageResponse "Session state updated successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -1339,7 +1387,7 @@ func (gw *Gateway) getCheckpoint(w http.ResponseWriter, r *http.Request) {
 // @Tags checkpoint
 // @Accept json
 // @Produce json
-// @Param request body map[string]interface{} true "Put checkpoint request"
+// @Param request body apipb.PutCheckpointRequest true "Put checkpoint request"
 // @Success 200 {object} MessageResponse "Checkpoint saved successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
