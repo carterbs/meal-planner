@@ -28,6 +28,6 @@ Thumbs.db
 .yarn/install-state.gz
 
 # Build artifacts
-api-gateway/api-gateway
-backend/mealplanner
-logging-service/loggingservice
+./api-gateway/api-gateway
+./backend/mealplanner
+./logging-service/loggingservice
