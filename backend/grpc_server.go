@@ -577,15 +577,10 @@ func (s *MealPlannerGRPCServer) GetWorkflowStatus(ctx context.Context, req *apip
 		return nil, fmt.Errorf("failed to get workflow state: %w", err)
 	}
 
-	// Ensure workflowType is never empty (backwards compatibility)
-	if state.WorkflowType == "" {
-		state.WorkflowType = "meal_planning"
-	}
-
-	// Convert internal state to protobuf format
+	// Convert state to protobuf format
 	status := &apipb.WorkflowStatus{
-		ThreadId:     state.ThreadID,
-		WorkflowType: state.WorkflowType,
+		ThreadId:     state.ThreadId,
+		WorkflowType: "meal_planning", // From request context, not stored in state
 		CurrentStep:  state.CurrentStep,
 		Participants: state.Participants,
 	}
@@ -640,20 +635,10 @@ func (s *MealPlannerGRPCServer) GetWorkflowState(ctx context.Context, req *apipb
 		return nil, fmt.Errorf("failed to get workflow state: %w", err)
 	}
 
-	// Convert shopping list items to protobuf format
-	shoppingListItems := make([]*apipb.ShoppingListItem, len(state.ShoppingList))
-	for i, item := range state.ShoppingList {
-		shoppingListItems[i] = &item // ShoppingListItem is an alias to apipb.ShoppingListItem
-	}
-
-	// Convert agent messages to protobuf format
-	messages := make([]*apipb.Message, len(state.AgentMessages))
-	for i, msg := range state.AgentMessages {
-		messages[i] = &apipb.Message{
-			Sender:    msg.Sender,
-			Content:   msg.Text,
-			CreatedAt: msg.Timestamp,
-		}
+	// Convert shopping list to protobuf format
+	var shoppingListItems []*apipb.ShoppingListItem
+	if state.ShoppingList != nil {
+		shoppingListItems = state.ShoppingList.Items
 	}
 
 	// Create shopping list wrapper
@@ -664,7 +649,7 @@ func (s *MealPlannerGRPCServer) GetWorkflowState(ctx context.Context, req *apipb
 	return &apipb.GetWorkflowStateResponse{
 		Plan:         state.MealPlan,
 		ShoppingList: shoppingList,
-		Messages:     messages,
+		Messages:     []*apipb.Message{},
 	}, nil
 }
 
