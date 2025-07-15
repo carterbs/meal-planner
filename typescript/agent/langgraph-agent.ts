@@ -228,43 +228,28 @@ export class LangGraphAgent {
 
   private ensureInitialized(): void {
     if (!this.isInitialized) {
-      throw new Error(
-        'Agent must be initialized before use. Call initialize() first.',
-      );
+      throw new Error('Agent must be initialized before use. Call initialize() first.');
     }
   }
 
   /**
-   * Retrieve raw workflow state from checkpoint
+   * Retrieve the serialized workflow state (generated protobuf type) for a given thread.
    */
   async getWorkflowState(threadId: string): Promise<MealPlanningState> {
     this.ensureInitialized();
-    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore – accessing private checkpointer
     const tuple = await this.workflowManager['checkpointer'].getTuple({
-      configurable: { threadId: threadId },
+      configurable: { threadId },
     });
-    if (!tuple) throw new Error(`No state found for thread ${threadId}`);
+    if (!tuple) {
+      throw new Error(`No state found for thread ${threadId}`);
+    }
     const [checkpoint] = tuple;
     if (!checkpoint.state) {
       throw new Error('Invalid checkpoint state format');
     }
-    return {
-      threadId: checkpoint.state.threadId,
-      workflow_type: WorkflowType.MEAL_PLANNING,
-      participants: checkpoint.state.participants,
-      created_at: checkpoint.state.createdAt
-        ? checkpoint.state.createdAt.toDate()
-        : new Date(),
-      updated_at: checkpoint.state.updatedAt
-        ? checkpoint.state.updatedAt.toDate()
-        : new Date(),
-      current_step: checkpoint.state.currentStep as any,
-      meal_plan: checkpoint.state.mealPlan as any,
-      feedback_history: checkpoint.state.feedbackHistory as any,
-      iteration_count: checkpoint.state.iterationCount,
-      shopping_list: checkpoint.state.shoppingList as any,
-      is_finalized: checkpoint.state.isFinalized,
-    } as MealPlanningState;
+    return checkpoint.state as MealPlanningState;
   }
 }
 
@@ -311,10 +296,10 @@ async function main() {
         await io.sendMessage('Session ended.', 'System');
         if (threadId) {
           const state = await agent.getWorkflowState(threadId);
-          if (state.meal_plan) {
+          if (state.mealPlan) {
             const { text, html } = formatMealPlan({
-              days: state.meal_plan.days,
-              shoppingList: (state.shopping_list ??
+              days: state.mealPlan.days,
+              shoppingList: (state.shoppingList ??
                 []) as GeneratedShoppingListItem[],
             } as GeneratedWeeklyMealPlan);
             await io.sendMessage(text, 'System');

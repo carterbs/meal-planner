@@ -308,7 +308,7 @@ function hasRecentFeedbackInResult(result: any): boolean {
   try {
     // Check both top level and raw for feedback_history
     const feedbackHistory =
-      result.feedback_history || result.raw?.feedback_history;
+      result.feedbackHistory || result.raw?.feedback_history;
     if (
       !feedbackHistory ||
       !Array.isArray(feedbackHistory) ||
@@ -393,7 +393,6 @@ planCommand
         success: true,
         message: 'Meal planning session started',
         threadId: threadId,
-        current_step: 'started',
         initialState,
       };
       debugLog(
@@ -538,8 +537,8 @@ planCommand
         // Get and display the final meal plan
         try {
           const state = await agent.getWorkflowState(threadId);
-          if (state.meal_plan) {
-            const { text, html } = formatMealPlan(state.meal_plan);
+          if (state.mealPlan) {
+            const { text, html } = formatMealPlan(state.mealPlan);
             debugLog('\n📋 Final Meal Plan:');
             debugLog(text);
 
@@ -553,9 +552,9 @@ planCommand
             }
           }
 
-          if (state.shopping_list && state.shopping_list.length > 0) {
+          if (state.shoppingList && state.shoppingList.items && state.shoppingList.items.length > 0) {
             debugLog('\n🛒 Shopping List:');
-            state.shopping_list.forEach((item) => {
+            state.shoppingList.items.forEach((item) => {
               debugLog(
                 `  • ${item.quantity} ${item.ingredient}${item.category ? ` (${item.category})` : ''}`,
               );
@@ -749,8 +748,7 @@ program
         }
 
         const io = new CLIHandler();
-        const participants = status.participants || ['brad'];
-        const user = participants[0];
+        const user = 'brad';
 
         try {
           await io.sendMessage(`Resuming workflow ${threadId}`, 'System');

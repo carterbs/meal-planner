@@ -73,9 +73,12 @@ export class HttpCheckpointSaver {
 
     try {
       infoLog(
-        `[CHECKPOINT] Saving checkpoint for thread ${threadId}: ${JSON.stringify(
+        `debugyyz: [CHECKPOINT] Saving checkpoint for thread ${threadId}: ${JSON.stringify(
           checkpoint,
         )}`,
+      );
+      infoLog(
+        `debugyyz: [CHECKPOINT] CurrentStep: ${checkpoint.state?.currentStep}`,
       );
       try {
         await this.client.putCheckpoint({
@@ -91,7 +94,6 @@ export class HttpCheckpointSaver {
       }
       return {
         configurable: {
-          ...(config.configurable ?? {}),
           threadId,
           checkpoint_ns: checkpointNs,
         },

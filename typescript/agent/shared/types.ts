@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { RunnableConfig } from '@langchain/core/runnables';
-import { WeeklyMealPlan } from '@mealplanner/generated';
 // Core workflow types
 export enum WorkflowType {
   MEAL_PLANNING = 'meal_planning',
@@ -51,15 +50,6 @@ export enum IngredientManagementStep {
   COMPLETE = 'complete',
 }
 
-// Data structures
-
-export interface FeedbackEntry {
-  from: string; // 'brad' or 'shannon'
-  message: string;
-  timestamp: Date;
-  meal_plan_version: number;
-}
-
 export interface RecipeData {
   id?: number;
   name: string;
@@ -90,26 +80,10 @@ export type InternalMeal = import('@mealplanner/generated').Meal;
 export type ShoppingListItem =
   import('@mealplanner/generated').ShoppingListItem;
 
-// Workflow state interfaces
+// Use proto as the single source of truth for meal planning state
 import { MealPlanningCheckpointState } from '@mealplanner/generated';
+export type MealPlanningState = MealPlanningCheckpointState;
 
-// Transitional alias: internal workflow state now based on the generated protobuf
-// type with additional legacy snake_case properties. This allows progressive
-// migration away from snake_case while keeping the build green.
-export type MealPlanningState = Partial<MealPlanningCheckpointState> & BaseWorkflowState & {
-  workflow_type: WorkflowType.MEAL_PLANNING;
-  meal_plan: WeeklyMealPlan | null;
-  feedback_history: FeedbackEntry[];
-  iteration_count: number;
-  shopping_list: ShoppingListItem[] | null;
-  is_finalized: boolean;
-  current_step: MealPlanningStep;
-  shopping_list_formatted?: string;
-  user_message?: string; // LLM-generated message about changes made
-  last_feedback_applied_at?: string;
-  feedback_to_apply?: FeedbackEntry[];
-  _error?: string; // For tracking errors during workflow execution
-}
 
 export interface RecipeManagementState extends BaseWorkflowState {
   workflow_type: WorkflowType.RECIPE_MANAGEMENT;
@@ -135,8 +109,6 @@ export interface ExtendedRunnableConfig extends RunnableConfig {
   configurable?: {
     threadId?: string;
     checkpoint_ns?: string;
-    // allow other arbitrary metadata without using any
-    [key: string]: unknown;
   };
 }
 
@@ -182,7 +154,7 @@ export const MealPlanningStateSchema = BaseWorkflowStateSchema.extend({
       from: z.string(),
       message: z.string(),
       timestamp: z.date(),
-      meal_plan_version: z.number(),
+      mealPlanVersion: z.number(),
     }),
   ),
   iteration_count: z.number(),
