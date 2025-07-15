@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -23,6 +24,143 @@ import (
 	logger "logging-service/client/go"
 	apipb "mealplanner/generated/go"
 )
+
+// @title Meal Planner API Gateway
+// @version 1.0
+// @description API Gateway for Meal Planner service
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host localhost:8080
+// @BasePath /api
+
+// Response structures for Swagger documentation
+type HealthResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type AgentStartResponse struct {
+	Response struct {
+		Success     bool   `json:"success"`
+		Message     string `json:"message"`
+		ThreadId    string `json:"threadId"`
+		CurrentStep string `json:"currentStep"`
+	} `json:"response"`
+}
+
+type AgentMessageResponse struct {
+	Response struct {
+		Success     bool   `json:"success"`
+		Message     string `json:"message"`
+		ThreadId    string `json:"threadId"`
+		CurrentStep string `json:"currentStep"`
+	} `json:"response"`
+}
+
+type CheckpointResponse struct {
+	Tuple struct {
+		Checkpoint struct {
+			State struct {
+				ThreadId string `json:"threadId"`
+				MealPlan struct {
+					Days []interface{} `json:"days"`
+				} `json:"mealPlan"`
+				Participants []string `json:"participants"`
+				CurrentStep  string   `json:"currentStep"`
+			} `json:"state"`
+		} `json:"checkpoint"`
+	} `json:"tuple"`
+	Found bool `json:"found"`
+}
+
+type MealPlanResponse struct {
+	Plan struct {
+		Days         []interface{} `json:"days"`
+		ShoppingList []interface{} `json:"shoppingList"`
+	} `json:"plan"`
+}
+
+type MealResponse struct {
+	Id          int32         `json:"id"`
+	Name        string        `json:"name"`
+	Effort      int32         `json:"effort"`
+	HasRedMeat  bool          `json:"hasRedMeat"`
+	Url         string        `json:"url"`
+	MealType    string        `json:"mealType"`
+	Ingredients []interface{} `json:"ingredients"`
+	Steps       []interface{} `json:"steps"`
+}
+
+type MealsResponse struct {
+	Meals []MealResponse `json:"meals"`
+}
+
+type ShoppingListResponse struct {
+	Items []struct {
+		Ingredient string `json:"ingredient"`
+		Quantity   string `json:"quantity"`
+		Category   string `json:"category"`
+	} `json:"items"`
+}
+
+type MessageResponse struct {
+	Message string `json:"message"`
+}
+
+type StepResponse struct {
+	Id          int32  `json:"id"`
+	MealId      int32  `json:"mealId"`
+	StepNumber  int32  `json:"stepNumber"`
+	Instruction string `json:"instruction"`
+}
+
+type StepsResponse struct {
+	Steps []StepResponse `json:"steps"`
+}
+
+type WorkflowStatusResponse struct {
+	Status struct {
+		ThreadId     string   `json:"threadId"`
+		WorkflowType string   `json:"workflowType"`
+		CurrentStep  string   `json:"currentStep"`
+		Participants []string `json:"participants"`
+	} `json:"status"`
+}
+
+type WorkflowsResponse struct {
+	Workflows []WorkflowStatusResponse `json:"workflows"`
+}
+
+type WorkflowStateResponse struct {
+	Plan struct {
+		Days []interface{} `json:"days"`
+	} `json:"plan"`
+	ShoppingList struct {
+		Items []interface{} `json:"items"`
+	} `json:"shoppingList"`
+	Messages []struct {
+		ThreadId  string `json:"threadId"`
+		Sender    string `json:"sender"`
+		Content   string `json:"content"`
+		CreatedAt string `json:"createdAt"`
+	} `json:"messages"`
+}
+
+type CheckpointListResponse struct {
+	Entries []struct {
+		ThreadId     string      `json:"threadId"`
+		CheckpointNs string      `json:"checkpointNs"`
+		Tuple        interface{} `json:"tuple"`
+	} `json:"entries"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
 
 var grpcLogger *logger.LoggingClient
 var mealPlannerClient apipb.MealPlannerAPIClient
@@ -42,12 +180,12 @@ func httpStatusFromGRPC(err error) int {
 	if err == nil {
 		return http.StatusOK
 	}
-	
+
 	st, ok := status.FromError(err)
 	if !ok {
 		return http.StatusInternalServerError
 	}
-	
+
 	switch st.Code() {
 	case codes.OK:
 		return http.StatusOK
@@ -87,7 +225,7 @@ func httpStatusFromGRPC(err error) int {
 // writeJSONResponse writes a protobuf message as JSON response
 func writeJSONResponse(w http.ResponseWriter, msg interface{}, err error) {
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	if err != nil {
 		status := httpStatusFromGRPC(err)
 		w.WriteHeader(status)
@@ -97,12 +235,12 @@ func writeJSONResponse(w http.ResponseWriter, msg interface{}, err error) {
 		json.NewEncoder(w).Encode(errorResp)
 		return
 	}
-	
+
 	if msg == nil {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-	
+
 	// Use protojson for consistent serialization
 	b, marshalErr := protojson.Marshal(msg.(proto.Message))
 	if marshalErr != nil {
@@ -111,7 +249,7 @@ func writeJSONResponse(w http.ResponseWriter, msg interface{}, err error) {
 		json.NewEncoder(w).Encode(errorResp)
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 }
@@ -123,7 +261,7 @@ func main() {
 	if loggingServiceAddr == "" {
 		loggingServiceAddr = "localhost:50052"
 	}
-	
+
 	var err error
 	grpcLogger, err = logger.NewLoggingClient(loggingServiceAddr, "api-gateway")
 	if err != nil {
@@ -135,7 +273,7 @@ func main() {
 	if backendAddr == "" {
 		backendAddr = "localhost:50051"
 	}
-	
+
 	conn, err := grpc.NewClient(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		if grpcLogger != nil {
@@ -144,18 +282,18 @@ func main() {
 		log.Fatal("Failed to connect to backend gRPC server:", err)
 	}
 	defer conn.Close()
-	
+
 	mealPlannerClient = apipb.NewMealPlannerAPIClient(conn)
 	gw := NewGateway(mealPlannerClient)
-	
+
 	// Set up HTTP routes with Chi router
 	r := chi.NewRouter()
-	
+
 	// Add middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
-	
+
 	// Enable CORS for development
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -169,21 +307,26 @@ func main() {
 			next.ServeHTTP(w, r)
 		})
 	})
-	
+
+	// Swagger UI
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
+
 	// Health endpoints
 	r.Get("/api/health", gw.healthCheck)
 	r.Post("/api/reconnect", gw.reconnect)
-	
+
 	// Meal plan endpoints
 	r.Get("/api/mealplan", gw.getMealPlan)
 	r.Post("/api/mealplan", gw.saveMealPlan)
 	r.Post("/api/mealplan/generate", gw.generateMealPlan)
 	r.Post("/api/mealplan/finalize", gw.finalizeMealPlan)
 	r.Get("/api/mealplan/ics", gw.getMealPlanICS)
-	
+
 	// Shopping list endpoints
 	r.Post("/api/shoppinglist", gw.getShoppingList)
-	
+
 	// Meals endpoints
 	r.Get("/api/meals", gw.getAllMeals)
 	r.Post("/api/meals", gw.createMeal)
@@ -193,7 +336,7 @@ func main() {
 	r.Delete("/api/meals/{mealId}/ingredients/{ingredientId}", gw.deleteMealIngredient)
 	r.Delete("/api/meals/{mealId}", gw.deleteMeal)
 	r.Post("/api/mealplan/replace", gw.replaceMeal)
-	
+
 	// Recipe steps endpoints
 	r.Get("/api/meals/{mealId}/steps", gw.getSteps)
 	r.Post("/api/meals/{mealId}/steps", gw.addStep)
@@ -202,7 +345,7 @@ func main() {
 	r.Delete("/api/meals/{mealId}/steps/{stepId}", gw.deleteStep)
 	r.Put("/api/meals/{mealId}/steps/reorder", gw.reorderSteps)
 	r.Delete("/api/meals/{mealId}/steps", gw.deleteAllSteps)
-	
+
 	// Agent workflow endpoints
 	r.Route("/api/agent", func(r chi.Router) {
 		r.Post("/start", gw.startAgentWorkflow)
@@ -211,18 +354,18 @@ func main() {
 		r.Get("/workflows", gw.listWorkflows)
 		r.Delete("/workflows/{threadId}", gw.cancelWorkflow)
 	})
-	
+
 	// Workflow management endpoints
 	r.Get("/api/workflows/{threadId}", gw.getWorkflowState)
 	r.Post("/api/workflows/{threadId}/abandon", gw.abandonWorkflow)
 	r.Post("/api/workflows/{threadId}/messages", gw.addMessage)
 	r.Put("/api/workflows/{threadId}/state", gw.updateSessionState)
-	
+
 	// Checkpoint persistence endpoints
 	r.Get("/api/checkpoints/{thread_id}", gw.getCheckpoint)
 	r.Post("/api/checkpoints", gw.putCheckpoint)
 	r.Get("/api/checkpoints", gw.listCheckpoints)
-	
+
 	if grpcLogger != nil {
 		grpcLogger.LogWithDetails(ctx, "INFO", "API Gateway starting on :8080, connecting to backend gRPC :50051", "", "api-gateway", nil)
 	}
@@ -231,62 +374,124 @@ func main() {
 }
 
 // Health endpoints
+
+// @Summary Health Check
+// @Description Check the health status of the API gateway and backend services
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {object} HealthResponse "Health check successful"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /health [get]
 func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
 	resp, err := gw.client.HealthCheck(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Reconnect
+// @Description Reconnect to backend services
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {object} HealthResponse "Reconnect successful"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /reconnect [post]
 func (gw *Gateway) reconnect(w http.ResponseWriter, r *http.Request) {
 	resp, err := gw.client.Reconnect(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
 // Meal plan endpoints
+
+// @Summary Get Meal Plan
+// @Description Get the current meal plan
+// @Tags mealplan
+// @Accept json
+// @Produce json
+// @Success 200 {object} MealPlanResponse "Meal plan retrieved successfully"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /mealplan [get]
 func (gw *Gateway) getMealPlan(w http.ResponseWriter, r *http.Request) {
 	resp, err := gw.client.GetMealPlan(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Save Meal Plan
+// @Description Save the current meal plan
+// @Tags mealplan
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Save meal plan request"
+// @Success 200 {object} MessageResponse "Meal plan saved successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 501 {object} ErrorResponse "Not implemented"
+// @Router /mealplan [post]
 func (gw *Gateway) saveMealPlan(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var req apipb.SaveMealPlanRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	// Note: SaveMealPlan is not in the gRPC service definition, so we'll need to handle this differently
 	// For now, return an error indicating this endpoint needs implementation
 	http.Error(w, "SaveMealPlan not yet implemented in gRPC service", http.StatusNotImplemented)
 }
 
+// @Summary Generate Meal Plan
+// @Description Generate a new meal plan
+// @Tags mealplan
+// @Accept json
+// @Produce json
+// @Success 200 {object} MealPlanResponse "Meal plan generated successfully"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /mealplan/generate [post]
 func (gw *Gateway) generateMealPlan(w http.ResponseWriter, r *http.Request) {
 	resp, err := gw.client.GenerateMealPlan(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Finalize Meal Plan
+// @Description Finalize the current meal plan
+// @Tags mealplan
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Finalize meal plan request"
+// @Success 200 {object} MessageResponse "Meal plan finalized successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /mealplan/finalize [post]
 func (gw *Gateway) finalizeMealPlan(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var req apipb.FinalizeMealPlanRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	resp, err := gw.client.FinalizeMealPlan(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Get Meal Plan ICS
+// @Description Get meal plan as ICS calendar file
+// @Tags mealplan
+// @Accept json
+// @Produce text/calendar
+// @Success 200 {file} binary "ICS calendar file"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /mealplan/ics [get]
 func (gw *Gateway) getMealPlanICS(w http.ResponseWriter, r *http.Request) {
 	resp, err := gw.client.GetMealPlanICS(r.Context(), &emptypb.Empty{})
 	if err != nil {
@@ -294,53 +499,84 @@ func (gw *Gateway) getMealPlanICS(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), status)
 		return
 	}
-	
+
 	w.Header().Set("Content-Type", "text/calendar")
 	w.Header().Set("Content-Disposition", "attachment; filename=mealplan.ics")
 	w.Write(resp.IcsData)
 }
 
 // Shopping list endpoints
+
+// @Summary Get Shopping List
+// @Description Get shopping list for meal plan
+// @Tags shopping
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Shopping list request"
+// @Success 200 {object} ShoppingListResponse "Shopping list retrieved successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /shoppinglist [post]
 func (gw *Gateway) getShoppingList(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var req apipb.GetShoppingListRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	resp, err := gw.client.GetShoppingList(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
 // Meals endpoints
+
+// @Summary Get All Meals
+// @Description Get all available meals
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param type query string false "Meal type filter"
+// @Success 200 {object} MealsResponse "Meals retrieved successfully"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals [get]
 func (gw *Gateway) getAllMeals(w http.ResponseWriter, r *http.Request) {
 	req := &apipb.GetAllMealsRequest{
 		Type: r.URL.Query().Get("type"),
 	}
-	
+
 	resp, err := gw.client.GetAllMeals(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Create Meal
+// @Description Create a new meal
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Create meal request"
+// @Success 201 {object} MealResponse "Meal created successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals [post]
 func (gw *Gateway) createMeal(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var req apipb.CreateMealRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	resp, err := gw.client.CreateMeal(r.Context(), &req)
 	if err == nil {
 		w.WriteHeader(http.StatusCreated)
@@ -348,200 +584,295 @@ func (gw *Gateway) createMeal(w http.ResponseWriter, r *http.Request) {
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Swap Meal
+// @Description Swap a meal with another
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Swap meal request"
+// @Success 200 {object} MealResponse "Meal swapped successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/swap [post]
 func (gw *Gateway) swapMeal(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var req apipb.SwapMealRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	resp, err := gw.client.SwapMeal(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Remove Meal
+// @Description Remove a meal from the plan
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Remove meal request"
+// @Success 200 {object} MealPlanResponse "Meal removed successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/remove [post]
 func (gw *Gateway) removeMeal(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var req apipb.RemoveMealRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	resp, err := gw.client.RemoveMeal(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Update Meal Ingredient
+// @Description Update an ingredient in a meal
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Param ingredientId path string true "Ingredient ID"
+// @Param request body map[string]interface{} true "Update ingredient request"
+// @Success 200 {object} MealResponse "Ingredient updated successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/ingredients/{ingredientId} [put]
 func (gw *Gateway) updateMealIngredient(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
 	ingredientIdStr := chi.URLParam(r, "ingredientId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	ingredientId, err := strconv.ParseInt(ingredientIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid ingredient ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var ingredient apipb.Ingredient
 	if err := protojson.Unmarshal(body, &ingredient); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.UpdateMealIngredientRequest{
 		MealId:       int32(mealId),
 		IngredientId: int32(ingredientId),
 		Ingredient:   &ingredient,
 	}
-	
+
 	resp, err := gw.client.UpdateMealIngredient(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Delete Meal Ingredient
+// @Description Delete an ingredient from a meal
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Param ingredientId path string true "Ingredient ID"
+// @Success 200 {object} MealResponse "Ingredient deleted successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/ingredients/{ingredientId} [delete]
 func (gw *Gateway) deleteMealIngredient(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
 	ingredientIdStr := chi.URLParam(r, "ingredientId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	ingredientId, err := strconv.ParseInt(ingredientIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid ingredient ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.DeleteMealIngredientRequest{
 		MealId:       int32(mealId),
 		IngredientId: int32(ingredientId),
 	}
-	
+
 	resp, err := gw.client.DeleteMealIngredient(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Delete Meal
+// @Description Delete a meal
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Success 200 {object} MessageResponse "Meal deleted successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId} [delete]
 func (gw *Gateway) deleteMeal(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.DeleteMealRequest{
 		MealId: int32(mealId),
 	}
-	
+
 	resp, err := gw.client.DeleteMeal(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Replace Meal
+// @Description Replace a meal in the plan
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Replace meal request"
+// @Success 200 {object} MealResponse "Meal replaced successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /mealplan/replace [post]
 func (gw *Gateway) replaceMeal(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var req apipb.ReplaceMealRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	resp, err := gw.client.ReplaceMeal(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
 // Recipe steps endpoints
+// @Summary Get Recipe Steps
+// @Description Get recipe steps for a meal
+// @Tags steps
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Success 200 {object} StepsResponse "Steps retrieved successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/steps [get]
 func (gw *Gateway) getSteps(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.GetStepsRequest{
 		MealId: int32(mealId),
 	}
-	
+
 	resp, err := gw.client.GetSteps(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Add Recipe Step
+// @Description Add a recipe step to a meal
+// @Tags steps
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Param request body map[string]interface{} true "Add step request"
+// @Success 200 {object} StepResponse "Step added successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/steps [post]
 func (gw *Gateway) addStep(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var step apipb.Step
 	if err := protojson.Unmarshal(body, &step); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.AddStepRequest{
 		MealId: int32(mealId),
 		Step:   &step,
 	}
-	
+
 	resp, err := gw.client.AddStep(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Add Bulk Recipe Steps
+// @Description Add multiple recipe steps to a meal
+// @Tags steps
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Param request body map[string]interface{} true "Add bulk steps request"
+// @Success 200 {object} StepsResponse "Steps added successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/steps/bulk [post]
 func (gw *Gateway) addBulkSteps(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var reqBody struct {
 		Instructions []string `json:"instructions"`
 	}
@@ -549,94 +880,128 @@ func (gw *Gateway) addBulkSteps(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.AddBulkStepsRequest{
 		MealId:       int32(mealId),
 		Instructions: reqBody.Instructions,
 	}
-	
+
 	resp, err := gw.client.AddBulkSteps(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Update Recipe Step
+// @Description Update a recipe step in a meal
+// @Tags steps
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Param stepId path string true "Step ID"
+// @Param request body map[string]interface{} true "Update step request"
+// @Success 200 {object} StepResponse "Step updated successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/steps/{stepId} [put]
 func (gw *Gateway) updateStep(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
 	stepIdStr := chi.URLParam(r, "stepId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	stepId, err := strconv.ParseInt(stepIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid step ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var step apipb.Step
 	if err := protojson.Unmarshal(body, &step); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.UpdateStepRequest{
 		MealId: int32(mealId),
 		StepId: int32(stepId),
 		Step:   &step,
 	}
-	
+
 	resp, err := gw.client.UpdateStep(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Delete Recipe Step
+// @Description Delete a recipe step from a meal
+// @Tags steps
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Param stepId path string true "Step ID"
+// @Success 200 {object} MessageResponse "Step deleted successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/steps/{stepId} [delete]
 func (gw *Gateway) deleteStep(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
 	stepIdStr := chi.URLParam(r, "stepId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	stepId, err := strconv.ParseInt(stepIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid step ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.DeleteStepRequest{
 		MealId: int32(mealId),
 		StepId: int32(stepId),
 	}
-	
+
 	resp, err := gw.client.DeleteStep(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Reorder Recipe Steps
+// @Description Reorder recipe steps in a meal
+// @Tags steps
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Param request body map[string]interface{} true "Reorder steps request"
+// @Success 200 {object} MessageResponse "Steps reordered successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/steps/reorder [put]
 func (gw *Gateway) reorderSteps(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var reqBody struct {
 		StepIds []int32 `json:"step_ids"`
 	}
@@ -644,41 +1009,62 @@ func (gw *Gateway) reorderSteps(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.ReorderStepsRequest{
 		MealId:  int32(mealId),
 		StepIds: reqBody.StepIds,
 	}
-	
+
 	resp, err := gw.client.ReorderSteps(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Delete All Recipe Steps
+// @Description Delete all recipe steps from a meal
+// @Tags steps
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Success 200 {object} MessageResponse "All steps deleted successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/steps [delete]
 func (gw *Gateway) deleteAllSteps(w http.ResponseWriter, r *http.Request) {
 	mealIdStr := chi.URLParam(r, "mealId")
-	
+
 	mealId, err := strconv.ParseInt(mealIdStr, 10, 32)
 	if err != nil {
 		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.DeleteAllStepsRequest{
 		MealId: int32(mealId),
 	}
-	
+
 	resp, err := gw.client.DeleteAllSteps(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
 // Agent workflow endpoints
+
+// @Summary Start Agent Workflow
+// @Description Start a new agent workflow for meal planning
+// @Tags agent
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Agent start request"
+// @Success 200 {object} AgentStartResponse "Agent workflow started successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /agent/start [post]
 func (gw *Gateway) startAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	// Try to unmarshal as direct AgentStartRequest first (for backward compatibility)
 	var agentReq apipb.AgentStartRequest
 	if err := protojson.Unmarshal(body, &agentReq); err == nil {
@@ -690,25 +1076,35 @@ func (gw *Gateway) startAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, resp, err)
 		return
 	}
-	
+
 	// Try wrapped format
 	var req apipb.StartAgentWorkflowRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	resp, err := gw.client.StartAgentWorkflow(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Message Agent
+// @Description Send a message to an existing agent workflow
+// @Tags agent
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Agent message request"
+// @Success 200 {object} AgentMessageResponse "Message sent successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /agent/message [post]
 func (gw *Gateway) messageAgent(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	// Try to unmarshal as direct AgentMessageRequest first (for backward compatibility)
 	var agentReq apipb.AgentMessageRequest
 	if err := protojson.Unmarshal(body, &agentReq); err == nil {
@@ -720,77 +1116,136 @@ func (gw *Gateway) messageAgent(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, resp, err)
 		return
 	}
-	
+
 	// Try wrapped format
 	var req apipb.MessageAgentRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	resp, err := gw.client.MessageAgent(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Get Workflow Status
+// @Description Get the status of an agent workflow
+// @Tags agent
+// @Accept json
+// @Produce json
+// @Param threadId path string true "Thread ID"
+// @Success 200 {object} WorkflowStatusResponse "Workflow status retrieved successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /agent/status/{threadId} [get]
 func (gw *Gateway) getWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 	threadId := chi.URLParam(r, "threadId")
-	
+
 	req := &apipb.GetWorkflowStatusRequest{
 		ThreadId: threadId,
 	}
-	
+
 	resp, err := gw.client.GetWorkflowStatus(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary List Workflows
+// @Description List all active workflows
+// @Tags agent
+// @Accept json
+// @Produce json
+// @Success 200 {object} WorkflowsResponse "Workflows listed successfully"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /agent/workflows [get]
 func (gw *Gateway) listWorkflows(w http.ResponseWriter, r *http.Request) {
 	resp, err := gw.client.ListWorkflows(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Cancel Workflow
+// @Description Cancel an active workflow
+// @Tags agent
+// @Accept json
+// @Produce json
+// @Param threadId path string true "Thread ID"
+// @Success 200 {object} MessageResponse "Workflow cancelled successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /agent/workflows/{threadId} [delete]
 func (gw *Gateway) cancelWorkflow(w http.ResponseWriter, r *http.Request) {
 	threadId := chi.URLParam(r, "threadId")
-	
+
 	req := &apipb.CancelWorkflowRequest{
 		ThreadId: threadId,
 	}
-	
+
 	resp, err := gw.client.CancelWorkflow(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
 // Workflow management endpoints
+// @Summary Get Workflow State
+// @Description Get the current state of a workflow
+// @Tags workflow
+// @Accept json
+// @Produce json
+// @Param threadId path string true "Thread ID"
+// @Success 200 {object} WorkflowStateResponse "Workflow state retrieved successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /workflows/{threadId} [get]
 func (gw *Gateway) getWorkflowState(w http.ResponseWriter, r *http.Request) {
 	threadId := chi.URLParam(r, "threadId")
-	
+
 	req := &apipb.GetWorkflowStateRequest{
 		ThreadId: threadId,
 	}
-	
+
 	resp, err := gw.client.GetWorkflowState(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Abandon Workflow
+// @Description Abandon a workflow
+// @Tags workflow
+// @Accept json
+// @Produce json
+// @Param threadId path string true "Thread ID"
+// @Success 200 {object} MessageResponse "Workflow abandoned successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /workflows/{threadId}/abandon [post]
 func (gw *Gateway) abandonWorkflow(w http.ResponseWriter, r *http.Request) {
 	threadId := chi.URLParam(r, "threadId")
-	
+
 	req := &apipb.AbandonWorkflowRequest{
 		ThreadId: threadId,
 	}
-	
+
 	resp, err := gw.client.AbandonWorkflow(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Add Message
+// @Description Add a message to a workflow
+// @Tags workflow
+// @Accept json
+// @Produce json
+// @Param threadId path string true "Thread ID"
+// @Param request body map[string]interface{} true "Add message request"
+// @Success 200 {object} MessageResponse "Message added successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /workflows/{threadId}/messages [post]
 func (gw *Gateway) addMessage(w http.ResponseWriter, r *http.Request) {
 	threadId := chi.URLParam(r, "threadId")
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var reqBody struct {
 		Sender  string `json:"sender"`
 		Message string `json:"message"`
@@ -799,26 +1254,37 @@ func (gw *Gateway) addMessage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.AddMessageRequest{
 		ThreadId: threadId,
 		Sender:   reqBody.Sender,
 		Message:  reqBody.Message,
 	}
-	
+
 	resp, err := gw.client.AddMessage(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Update Session State
+// @Description Update the state of a workflow session
+// @Tags workflow
+// @Accept json
+// @Produce json
+// @Param threadId path string true "Thread ID"
+// @Param request body map[string]interface{} true "Update session state request"
+// @Success 200 {object} MessageResponse "Session state updated successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /workflows/{threadId}/state [put]
 func (gw *Gateway) updateSessionState(w http.ResponseWriter, r *http.Request) {
 	threadId := chi.URLParam(r, "threadId")
-	
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var reqBody struct {
 		MealPlan     string `json:"meal_plan"`
 		ShoppingList string `json:"shopping_list"`
@@ -829,7 +1295,7 @@ func (gw *Gateway) updateSessionState(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	req := &apipb.UpdateSessionStateRequest{
 		ThreadId:     threadId,
 		MealPlan:     reqBody.MealPlan,
@@ -837,58 +1303,90 @@ func (gw *Gateway) updateSessionState(w http.ResponseWriter, r *http.Request) {
 		CurrentStep:  reqBody.CurrentStep,
 		Status:       reqBody.Status,
 	}
-	
+
 	resp, err := gw.client.UpdateSessionState(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
 // Checkpoint persistence endpoints
+
+// @Summary Get Checkpoint
+// @Description Get a checkpoint by thread ID
+// @Tags checkpoint
+// @Accept json
+// @Produce json
+// @Param thread_id path string true "Thread ID"
+// @Param checkpoint_ns query string false "Checkpoint namespace"
+// @Success 200 {object} CheckpointResponse "Checkpoint retrieved successfully"
+// @Failure 404 {object} ErrorResponse "Checkpoint not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /checkpoints/{thread_id} [get]
 func (gw *Gateway) getCheckpoint(w http.ResponseWriter, r *http.Request) {
 	threadId := chi.URLParam(r, "thread_id")
 	checkpointNs := r.URL.Query().Get("checkpoint_ns")
-	
+
 	req := &apipb.GetCheckpointRequest{
 		ThreadId:     threadId,
 		CheckpointNs: checkpointNs,
 	}
-	
+
 	resp, err := gw.client.GetCheckpoint(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Put Checkpoint
+// @Description Save a checkpoint
+// @Tags checkpoint
+// @Accept json
+// @Produce json
+// @Param request body map[string]interface{} true "Put checkpoint request"
+// @Success 200 {object} MessageResponse "Checkpoint saved successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /checkpoints [post]
 func (gw *Gateway) putCheckpoint(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	var req apipb.PutCheckpointRequest
 	if err := protojson.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	resp, err := gw.client.PutCheckpoint(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary List Checkpoints
+// @Description List all checkpoints
+// @Tags checkpoint
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit number of results"
+// @Param before_thread_id query string false "Before thread ID for pagination"
+// @Success 200 {object} CheckpointListResponse "Checkpoints listed successfully"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /checkpoints [get]
 func (gw *Gateway) listCheckpoints(w http.ResponseWriter, r *http.Request) {
 	limitStr := r.URL.Query().Get("limit")
 	beforeThreadId := r.URL.Query().Get("before_thread_id")
-	
+
 	var limit int32
 	if limitStr != "" {
 		if l, err := strconv.ParseInt(limitStr, 10, 32); err == nil {
 			limit = int32(l)
 		}
 	}
-	
+
 	req := &apipb.ListCheckpointsRequest{
 		Limit:          limit,
 		BeforeThreadId: beforeThreadId,
 	}
-	
+
 	resp, err := gw.client.ListCheckpoints(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }

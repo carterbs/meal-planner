@@ -1,0 +1,1261 @@
+basePath: /api
+definitions:
+  main.AgentMessageResponse:
+    properties:
+      response:
+        properties:
+          currentStep:
+            type: string
+          message:
+            type: string
+          success:
+            type: boolean
+          threadId:
+            type: string
+        type: object
+    type: object
+  main.AgentStartResponse:
+    properties:
+      response:
+        properties:
+          currentStep:
+            type: string
+          message:
+            type: string
+          success:
+            type: boolean
+          threadId:
+            type: string
+        type: object
+    type: object
+  main.CheckpointListResponse:
+    properties:
+      entries:
+        items:
+          properties:
+            checkpointNs:
+              type: string
+            threadId:
+              type: string
+            tuple: {}
+          type: object
+        type: array
+    type: object
+  main.CheckpointResponse:
+    properties:
+      found:
+        type: boolean
+      tuple:
+        properties:
+          checkpoint:
+            properties:
+              state:
+                properties:
+                  currentStep:
+                    type: string
+                  mealPlan:
+                    properties:
+                      days:
+                        items: {}
+                        type: array
+                    type: object
+                  participants:
+                    items:
+                      type: string
+                    type: array
+                  threadId:
+                    type: string
+                type: object
+            type: object
+        type: object
+    type: object
+  main.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  main.HealthResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  main.MealPlanResponse:
+    properties:
+      plan:
+        properties:
+          days:
+            items: {}
+            type: array
+          shoppingList:
+            items: {}
+            type: array
+        type: object
+    type: object
+  main.MealResponse:
+    properties:
+      effort:
+        type: integer
+      hasRedMeat:
+        type: boolean
+      id:
+        type: integer
+      ingredients:
+        items: {}
+        type: array
+      mealType:
+        type: string
+      name:
+        type: string
+      steps:
+        items: {}
+        type: array
+      url:
+        type: string
+    type: object
+  main.MealsResponse:
+    properties:
+      meals:
+        items:
+          $ref: '#/definitions/main.MealResponse'
+        type: array
+    type: object
+  main.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  main.ShoppingListResponse:
+    properties:
+      items:
+        items:
+          properties:
+            category:
+              type: string
+            ingredient:
+              type: string
+            quantity:
+              type: string
+          type: object
+        type: array
+    type: object
+  main.StepResponse:
+    properties:
+      id:
+        type: integer
+      instruction:
+        type: string
+      mealId:
+        type: integer
+      stepNumber:
+        type: integer
+    type: object
+  main.StepsResponse:
+    properties:
+      steps:
+        items:
+          $ref: '#/definitions/main.StepResponse'
+        type: array
+    type: object
+  main.WorkflowStateResponse:
+    properties:
+      messages:
+        items:
+          properties:
+            content:
+              type: string
+            createdAt:
+              type: string
+            sender:
+              type: string
+            threadId:
+              type: string
+          type: object
+        type: array
+      plan:
+        properties:
+          days:
+            items: {}
+            type: array
+        type: object
+      shoppingList:
+        properties:
+          items:
+            items: {}
+            type: array
+        type: object
+    type: object
+  main.WorkflowStatusResponse:
+    properties:
+      status:
+        properties:
+          currentStep:
+            type: string
+          participants:
+            items:
+              type: string
+            type: array
+          threadId:
+            type: string
+          workflowType:
+            type: string
+        type: object
+    type: object
+  main.WorkflowsResponse:
+    properties:
+      workflows:
+        items:
+          $ref: '#/definitions/main.WorkflowStatusResponse'
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API Gateway for Meal Planner service
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Meal Planner API Gateway
+  version: "1.0"
+paths:
+  /agent/message:
+    post:
+      consumes:
+      - application/json
+      description: Send a message to an existing agent workflow
+      parameters:
+      - description: Agent message request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message sent successfully
+          schema:
+            $ref: '#/definitions/main.AgentMessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Message Agent
+      tags:
+      - agent
+  /agent/start:
+    post:
+      consumes:
+      - application/json
+      description: Start a new agent workflow for meal planning
+      parameters:
+      - description: Agent start request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Agent workflow started successfully
+          schema:
+            $ref: '#/definitions/main.AgentStartResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Start Agent Workflow
+      tags:
+      - agent
+  /agent/status/{threadId}:
+    get:
+      consumes:
+      - application/json
+      description: Get the status of an agent workflow
+      parameters:
+      - description: Thread ID
+        in: path
+        name: threadId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workflow status retrieved successfully
+          schema:
+            $ref: '#/definitions/main.WorkflowStatusResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Workflow Status
+      tags:
+      - agent
+  /agent/workflows:
+    get:
+      consumes:
+      - application/json
+      description: List all active workflows
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workflows listed successfully
+          schema:
+            $ref: '#/definitions/main.WorkflowsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: List Workflows
+      tags:
+      - agent
+  /agent/workflows/{threadId}:
+    delete:
+      consumes:
+      - application/json
+      description: Cancel an active workflow
+      parameters:
+      - description: Thread ID
+        in: path
+        name: threadId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workflow cancelled successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Cancel Workflow
+      tags:
+      - agent
+  /checkpoints:
+    get:
+      consumes:
+      - application/json
+      description: List all checkpoints
+      parameters:
+      - description: Limit number of results
+        in: query
+        name: limit
+        type: integer
+      - description: Before thread ID for pagination
+        in: query
+        name: before_thread_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Checkpoints listed successfully
+          schema:
+            $ref: '#/definitions/main.CheckpointListResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: List Checkpoints
+      tags:
+      - checkpoint
+    post:
+      consumes:
+      - application/json
+      description: Save a checkpoint
+      parameters:
+      - description: Put checkpoint request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Checkpoint saved successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Put Checkpoint
+      tags:
+      - checkpoint
+  /checkpoints/{thread_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a checkpoint by thread ID
+      parameters:
+      - description: Thread ID
+        in: path
+        name: thread_id
+        required: true
+        type: string
+      - description: Checkpoint namespace
+        in: query
+        name: checkpoint_ns
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Checkpoint retrieved successfully
+          schema:
+            $ref: '#/definitions/main.CheckpointResponse'
+        "404":
+          description: Checkpoint not found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Checkpoint
+      tags:
+      - checkpoint
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check the health status of the API gateway and backend services
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Health check successful
+          schema:
+            $ref: '#/definitions/main.HealthResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Health Check
+      tags:
+      - health
+  /mealplan:
+    get:
+      consumes:
+      - application/json
+      description: Get the current meal plan
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meal plan retrieved successfully
+          schema:
+            $ref: '#/definitions/main.MealPlanResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Meal Plan
+      tags:
+      - mealplan
+    post:
+      consumes:
+      - application/json
+      description: Save the current meal plan
+      parameters:
+      - description: Save meal plan request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meal plan saved successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "501":
+          description: Not implemented
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Save Meal Plan
+      tags:
+      - mealplan
+  /mealplan/finalize:
+    post:
+      consumes:
+      - application/json
+      description: Finalize the current meal plan
+      parameters:
+      - description: Finalize meal plan request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meal plan finalized successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Finalize Meal Plan
+      tags:
+      - mealplan
+  /mealplan/generate:
+    post:
+      consumes:
+      - application/json
+      description: Generate a new meal plan
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meal plan generated successfully
+          schema:
+            $ref: '#/definitions/main.MealPlanResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Generate Meal Plan
+      tags:
+      - mealplan
+  /mealplan/ics:
+    get:
+      consumes:
+      - application/json
+      description: Get meal plan as ICS calendar file
+      produces:
+      - text/calendar
+      responses:
+        "200":
+          description: ICS calendar file
+          schema:
+            type: file
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Meal Plan ICS
+      tags:
+      - mealplan
+  /mealplan/replace:
+    post:
+      consumes:
+      - application/json
+      description: Replace a meal in the plan
+      parameters:
+      - description: Replace meal request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meal replaced successfully
+          schema:
+            $ref: '#/definitions/main.MealResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Replace Meal
+      tags:
+      - meals
+  /meals:
+    get:
+      consumes:
+      - application/json
+      description: Get all available meals
+      parameters:
+      - description: Meal type filter
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meals retrieved successfully
+          schema:
+            $ref: '#/definitions/main.MealsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get All Meals
+      tags:
+      - meals
+    post:
+      consumes:
+      - application/json
+      description: Create a new meal
+      parameters:
+      - description: Create meal request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Meal created successfully
+          schema:
+            $ref: '#/definitions/main.MealResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Create Meal
+      tags:
+      - meals
+  /meals/{mealId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meal deleted successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Delete Meal
+      tags:
+      - meals
+  /meals/{mealId}/ingredients/{ingredientId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an ingredient from a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      - description: Ingredient ID
+        in: path
+        name: ingredientId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ingredient deleted successfully
+          schema:
+            $ref: '#/definitions/main.MealResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Delete Meal Ingredient
+      tags:
+      - meals
+    put:
+      consumes:
+      - application/json
+      description: Update an ingredient in a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      - description: Ingredient ID
+        in: path
+        name: ingredientId
+        required: true
+        type: string
+      - description: Update ingredient request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ingredient updated successfully
+          schema:
+            $ref: '#/definitions/main.MealResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Update Meal Ingredient
+      tags:
+      - meals
+  /meals/{mealId}/steps:
+    delete:
+      consumes:
+      - application/json
+      description: Delete all recipe steps from a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: All steps deleted successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Delete All Recipe Steps
+      tags:
+      - steps
+    get:
+      consumes:
+      - application/json
+      description: Get recipe steps for a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Steps retrieved successfully
+          schema:
+            $ref: '#/definitions/main.StepsResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Recipe Steps
+      tags:
+      - steps
+    post:
+      consumes:
+      - application/json
+      description: Add a recipe step to a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      - description: Add step request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Step added successfully
+          schema:
+            $ref: '#/definitions/main.StepResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Add Recipe Step
+      tags:
+      - steps
+  /meals/{mealId}/steps/{stepId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a recipe step from a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      - description: Step ID
+        in: path
+        name: stepId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Step deleted successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Delete Recipe Step
+      tags:
+      - steps
+    put:
+      consumes:
+      - application/json
+      description: Update a recipe step in a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      - description: Step ID
+        in: path
+        name: stepId
+        required: true
+        type: string
+      - description: Update step request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Step updated successfully
+          schema:
+            $ref: '#/definitions/main.StepResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Update Recipe Step
+      tags:
+      - steps
+  /meals/{mealId}/steps/bulk:
+    post:
+      consumes:
+      - application/json
+      description: Add multiple recipe steps to a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      - description: Add bulk steps request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Steps added successfully
+          schema:
+            $ref: '#/definitions/main.StepsResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Add Bulk Recipe Steps
+      tags:
+      - steps
+  /meals/{mealId}/steps/reorder:
+    put:
+      consumes:
+      - application/json
+      description: Reorder recipe steps in a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      - description: Reorder steps request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Steps reordered successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Reorder Recipe Steps
+      tags:
+      - steps
+  /meals/remove:
+    post:
+      consumes:
+      - application/json
+      description: Remove a meal from the plan
+      parameters:
+      - description: Remove meal request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meal removed successfully
+          schema:
+            $ref: '#/definitions/main.MealPlanResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Remove Meal
+      tags:
+      - meals
+  /meals/swap:
+    post:
+      consumes:
+      - application/json
+      description: Swap a meal with another
+      parameters:
+      - description: Swap meal request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meal swapped successfully
+          schema:
+            $ref: '#/definitions/main.MealResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Swap Meal
+      tags:
+      - meals
+  /reconnect:
+    post:
+      consumes:
+      - application/json
+      description: Reconnect to backend services
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reconnect successful
+          schema:
+            $ref: '#/definitions/main.HealthResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Reconnect
+      tags:
+      - health
+  /shoppinglist:
+    post:
+      consumes:
+      - application/json
+      description: Get shopping list for meal plan
+      parameters:
+      - description: Shopping list request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Shopping list retrieved successfully
+          schema:
+            $ref: '#/definitions/main.ShoppingListResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Shopping List
+      tags:
+      - shopping
+  /workflows/{threadId}:
+    get:
+      consumes:
+      - application/json
+      description: Get the current state of a workflow
+      parameters:
+      - description: Thread ID
+        in: path
+        name: threadId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workflow state retrieved successfully
+          schema:
+            $ref: '#/definitions/main.WorkflowStateResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Workflow State
+      tags:
+      - workflow
+  /workflows/{threadId}/abandon:
+    post:
+      consumes:
+      - application/json
+      description: Abandon a workflow
+      parameters:
+      - description: Thread ID
+        in: path
+        name: threadId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workflow abandoned successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Abandon Workflow
+      tags:
+      - workflow
+  /workflows/{threadId}/messages:
+    post:
+      consumes:
+      - application/json
+      description: Add a message to a workflow
+      parameters:
+      - description: Thread ID
+        in: path
+        name: threadId
+        required: true
+        type: string
+      - description: Add message request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message added successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Add Message
+      tags:
+      - workflow
+  /workflows/{threadId}/state:
+    put:
+      consumes:
+      - application/json
+      description: Update the state of a workflow session
+      parameters:
+      - description: Thread ID
+        in: path
+        name: threadId
+        required: true
+        type: string
+      - description: Update session state request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session state updated successfully
+          schema:
+            $ref: '#/definitions/main.MessageResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Update Session State
+      tags:
+      - workflow
+swagger: "2.0"
