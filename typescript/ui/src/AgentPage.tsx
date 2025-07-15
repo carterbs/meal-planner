@@ -441,12 +441,18 @@ const AgentPage: React.FC = () => {
             session.threadId,
             userMsg.text,
             'user',
-            false,
+            true,
           );
 
-      if (result.message) {
-        const message: ChatMessage = { sender: 'agent', text: result.message };
-        setMessages((prev) => [...prev, message]);
+      if (result.initialState?.state?.messages) {
+        // render full conversation from checkpoint state
+        const formatted: ChatMessage[] = result.initialState.state.messages.map((msg: any) => ({
+          sender: msg.sender === 'user' ? 'user' : 'agent',
+          text: msg.content ?? '',
+        }));
+        setMessages(formatted);
+      } else if (result.message) {
+        setMessages((prev) => [...prev, { sender: 'agent', text: result.message ?? '' }]);
       }
       // fetch the latest checkpoint
       const checkpoint = await getAgentCheckpoint(session.threadId);
