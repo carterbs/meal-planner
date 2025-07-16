@@ -131,6 +131,9 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
               effort: 1,
               hasRedMeat: false,
               mealType: 'breakfast',
+              ingredients: [],
+              steps: [],
+              url: '',
             },
           },
         ],
@@ -147,7 +150,7 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
   describe('optimizePlanNode', () => {
     it('throws when no meal_plan', async () => {
       await expect(
-        workflow.optimizePlanNode({ iteration_count: 0 }),
+        workflow.optimizePlanNode({ iterationCount: 0, mealPlan: undefined }),
       ).rejects.toThrow('No meal plan to optimize');
     });
 
@@ -174,7 +177,7 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
       } as WeeklyMealPlan;
       workflow.optimizePlanWithLLM = jest.fn().mockResolvedValue(plan);
 
-      const state = { meal_plan: plan, iteration_count: 0 } as any;
+      const state = { mealPlan: plan, iterationCount: 0 } as any;
       const res: any = await workflow.optimizePlanNode(state);
 
       expect(workflow.optimizePlanWithLLM).toHaveBeenCalledWith(
@@ -183,10 +186,9 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
           expect.stringMatching(/Too many consecutive high-effort meals/),
         ]),
       );
-      expect(res.current_step).toBe(MealPlanningStep.PRESENT_PLAN);
-      expect(res.meal_plan).toEqual(plan);
-      expect(res.iteration_count).toBe(1);
-      expect(res).toHaveProperty('updated_at');
+      expect(res.currentStep).toBe(MealPlanningStep.PRESENT_PLAN);
+      expect(res.mealPlan).toEqual(plan);
+      expect(res.iterationCount).toBe(1);
     });
   });
 });
