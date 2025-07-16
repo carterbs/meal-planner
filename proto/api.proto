@@ -373,6 +373,14 @@ message AddMessageResponse {
   string message = 1;
 }
 
+message GetMessagesRequest {
+  string thread_id = 1;
+}
+
+message GetMessagesResponse {
+  repeated Message messages = 1;
+}
+
 message UpdateSessionStateRequest {
   string thread_id = 1;
   string meal_plan = 2; // JSON string
@@ -548,6 +556,7 @@ service MealPlannerAPI {
   rpc GetWorkflowState(GetWorkflowStateRequest) returns (GetWorkflowStateResponse);
   rpc AbandonWorkflow(AbandonWorkflowRequest) returns (AbandonWorkflowResponse);
   rpc AddMessage(AddMessageRequest) returns (AddMessageResponse);
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
   rpc UpdateSessionState(UpdateSessionStateRequest) returns (UpdateSessionStateResponse);
 
   // Checkpoint persistence endpoints

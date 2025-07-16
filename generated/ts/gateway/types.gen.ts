@@ -93,6 +93,10 @@ export type ApipbMealPlanningCheckpointState = {
     shopping_list?: ApipbShoppingList;
     thread_id?: string;
     updated_at?: TimestamppbTimestamp;
+    /**
+     * LLM-generated response to user feedback
+     */
+    user_message?: string;
 };
 
 export type ApipbMessage = {
@@ -258,6 +262,10 @@ export type MainErrorResponse = {
     error?: string;
 };
 
+export type MainGetMessagesResponse = {
+    messages?: Array<MainMessageResponse>;
+};
+
 export type MainHealthResponse = {
     message?: string;
     status?: string;
@@ -300,7 +308,10 @@ export type MainMealsResponse = {
 };
 
 export type MainMessageResponse = {
-    message?: string;
+    content?: string;
+    createdAt?: string;
+    sender?: string;
+    threadId?: string;
 };
 
 export type MainShoppingListItemResponse = {
@@ -1447,6 +1458,40 @@ export type PostWorkflowsByThreadIdAbandonResponses = {
 };
 
 export type PostWorkflowsByThreadIdAbandonResponse = PostWorkflowsByThreadIdAbandonResponses[keyof PostWorkflowsByThreadIdAbandonResponses];
+
+export type GetWorkflowsByThreadIdMessagesData = {
+    body?: never;
+    path: {
+        /**
+         * Thread ID
+         */
+        threadId: string;
+    };
+    query?: never;
+    url: '/workflows/{threadId}/messages';
+};
+
+export type GetWorkflowsByThreadIdMessagesErrors = {
+    /**
+     * Bad request
+     */
+    400: MainErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: MainErrorResponse;
+};
+
+export type GetWorkflowsByThreadIdMessagesError = GetWorkflowsByThreadIdMessagesErrors[keyof GetWorkflowsByThreadIdMessagesErrors];
+
+export type GetWorkflowsByThreadIdMessagesResponses = {
+    /**
+     * Messages retrieved successfully
+     */
+    200: MainGetMessagesResponse;
+};
+
+export type GetWorkflowsByThreadIdMessagesResponse = GetWorkflowsByThreadIdMessagesResponses[keyof GetWorkflowsByThreadIdMessagesResponses];
 
 export type PostWorkflowsByThreadIdMessagesData = {
     /**
