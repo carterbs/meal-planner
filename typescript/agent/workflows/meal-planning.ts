@@ -76,6 +76,29 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   }
 
   /**
+   * Add a message to the messages table via HTTP
+   */
+  private async addMessage(threadId: string, sender: string, message: string): Promise<void> {
+    try {
+      const backend = process.env.BACKEND_URL ?? 'http://localhost:8080';
+      
+      await fetch(`${backend}/api/workflows/${threadId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender,
+          message,
+        }),
+      });
+      
+      debugLog(`[MESSAGE] Added ${sender} message to thread ${threadId}`);
+    } catch (err) {
+      warnLog(`⚠️ [MESSAGE] Failed to add ${sender} message: ${err}`);
+      // Don't throw - message persistence shouldn't break the workflow
+    }
+  }
+
+  /**
    * Convert any Meal.lastPlanned that is not already a Date into a Date so
    * that WeeklyMealPlan.toJSON() can safely call toISOString().
    */
@@ -636,10 +659,20 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     );
 
     await this.saveMealPlan(state.threadId, result.mealPlan);
-    // CLAUDE-DO-IT-HERE.
-
+    
+    // Store user feedback messages in the database
+    for (const feedback of feedbackMessages) {
+      await this.addMessage(state.threadId, 'user', feedback);
+    }
+    
+    // Store the LLM's response message in the database
+    if (result.userMessage) {
+      await this.addMessage(state.threadId, 'agent', result.userMessage);
+    }
+    
     return {
-      mealPlan: result.mealPlan
+      mealPlan: result.mealPlan,
+      userMessage: result.userMessage,
     };
   }
 

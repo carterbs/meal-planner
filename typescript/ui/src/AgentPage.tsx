@@ -24,7 +24,7 @@ import {
 import MealPlanDisplay from './components/MealPlanDisplay';
 import { ShoppingListItem } from './types';
 import { WeeklyMealPlan } from '@mealplanner/generated';
-import { startAgentSession, sendAgentMessage, getAgentCheckpoint, SessionInfo } from './api';
+import { startAgentSession, sendAgentMessage, getAgentCheckpoint, getMessages, SessionInfo } from './api';
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
 import type { WorkflowState } from './hooks/useSession';
@@ -417,18 +417,25 @@ const AgentPage: React.FC = () => {
         setShoppingList(items);
       }
 
-      // Set all previous messages from the session
-      if (resumeData.messages && Array.isArray(resumeData.messages)) {
-        const formattedMessages: ChatMessage[] = resumeData.messages.map(
-          (msg: any) => ({
-            sender: msg.sender === 'user' ? 'user' : 'agent',
-            text: msg.content ?? '',
-          }),
-        );
-        setMessages(formattedMessages);
-      }
+      // Fetch messages from HTTP endpoint
+      fetchAndUpdateMessages(resumeData.threadId);
     }
   }, [resumeData]);
+
+  const fetchAndUpdateMessages = async (threadId: string) => {
+    try {
+      const messages = await getMessages(threadId);
+      const formattedMessages: ChatMessage[] = messages.map((msg: any) => ({
+        sender: msg.sender === 'user' ? 'user' : 'agent',
+        text: msg.content || msg.message || '',
+      }));
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+      // Fallback to empty messages if fetch fails
+      setMessages([]);
+    }
+  };
 
   const sendMessage = async () => {
     if (!session || !input.trim()) return;
@@ -444,33 +451,15 @@ const AgentPage: React.FC = () => {
             true,
           );
 
-      if (result.initialState?.state?.messages) {
-        // render full conversation from checkpoint state
-        const formatted: ChatMessage[] = result.initialState.state.messages.map((msg: any) => ({
-          sender: msg.sender === 'user' ? 'user' : 'agent',
-          text: msg.content ?? '',
-        }));
-        setMessages(formatted);
-      } else if (result.message) {
-        setMessages((prev) => [...prev, { sender: 'agent', text: result.message ?? '' }]);
-      }
-      // fetch the latest checkpoint
+      // Fetch messages from the HTTP endpoint after the agent has processed
+      await fetchAndUpdateMessages(session.threadId);
+      
+      // fetch the latest checkpoint for meal plan state
       const checkpoint = await getAgentCheckpoint(session.threadId);
       if (!checkpoint || !checkpoint.state) {
         throw new Error('Failed to get agent checkpoint');
       }
       const state = checkpoint.state;
-
-      // Update messages from checkpoint
-      if (checkpoint.messages && Array.isArray(checkpoint.messages)) {
-        const formattedMessages: ChatMessage[] = checkpoint.messages.map(
-          (msg: any) => ({
-            sender: msg.sender === 'user' ? 'user' : 'agent',
-            text: msg.content ?? '',
-          }),
-        );
-        setMessages(formattedMessages);
-      }
 
       // Update meal plan
       if (state.mealPlan) {
