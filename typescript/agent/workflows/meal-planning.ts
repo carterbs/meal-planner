@@ -630,12 +630,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   // Analyze feedback using nano LLM. Returns { satisfied: boolean, reasoning: string }
   private async analyzeFeedbackNode(
-    feedbackEntries: any[],
+    feedbackEntries: Message[],
   ): Promise<{ satisfied: boolean; reasoning: string }> {
     infoLog('MealPlanningWorkflow.analyzeFeedbackNode called');
-    infoLog(`🍽️ [MEAL-WORKFLOW] Analyzing feedback: ${feedbackEntries}`);
     const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
-    const prompt = getAnalyzeFeedbackPrompt(latestFeedback.message);
+    infoLog(`🍽️ [MEAL-WORKFLOW] Analyzing feedback: ${latestFeedback.content}`);
+    const prompt = getAnalyzeFeedbackPrompt(latestFeedback.content);
     const result = await this.nanoLlm.invoke([
       { role: 'user', content: prompt },
     ]);
@@ -703,6 +703,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       planDescription,
       mealOptions,
     );
+    infoLog(`🤖 [MEAL-WORKFLOW] Calling into the LLM`);
     const result = await this.llm.invoke([{ role: 'user', content: prompt }]);
     const llmResponse =
       typeof result.content === 'string'
