@@ -215,7 +215,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Workflow cancelled successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -302,7 +302,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Checkpoint saved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -454,7 +454,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal plan saved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -500,7 +500,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal plan finalized successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -821,7 +821,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -1067,7 +1067,7 @@ const docTemplate = `{
                     "200": {
                         "description": "All steps deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -1173,7 +1173,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Steps reordered successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -1282,7 +1282,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Step deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -1445,7 +1445,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Workflow abandoned successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -1540,7 +1540,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Message added successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -1593,7 +1593,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Session state updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MessageResponse"
+                            "$ref": "#/definitions/main.SimpleMessageResponse"
                         }
                     },
                     "400": {
@@ -1656,12 +1656,6 @@ const docTemplate = `{
         "apipb.AgentCheckpoint": {
             "type": "object",
             "properties": {
-                "messages": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/apipb.Message"
-                    }
-                },
                 "next": {
                     "type": "array",
                     "items": {
@@ -1843,28 +1837,6 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "$ref": "#/definitions/timestamppb.Timestamp"
-                },
-                "user_message": {
-                    "description": "LLM-generated response to user feedback",
-                    "type": "string"
-                }
-            }
-        },
-        "apipb.Message": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "sender": {
-                    "description": "\"user\" or \"agent\"",
-                    "type": "string"
-                },
-                "thread_id": {
-                    "type": "string"
                 }
             }
         },
@@ -2165,12 +2137,6 @@ const docTemplate = `{
                         "checkpoint": {
                             "type": "object",
                             "properties": {
-                                "messages": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/definitions/main.WorkflowMessageResponse"
-                                    }
-                                },
                                 "state": {
                                     "type": "object",
                                     "properties": {
@@ -2414,6 +2380,14 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/main.ShoppingListItemResponse"
                     }
+                }
+            }
+        },
+        "main.SimpleMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
                 }
             }
         },

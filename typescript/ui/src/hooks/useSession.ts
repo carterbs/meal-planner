@@ -21,8 +21,7 @@ interface CheckpointState {
 export interface WorkflowState extends CheckpointState {
   threadId: string;
   shoppingList?: MainShoppingListItemResponse[];
-  messages?: { content?: string; sender?: string }[];
-} // include threadId, messages & optional shoppingList for resumeData
+} // include threadId & optional shoppingList for resumeData
 
 
 export default function useSession(startSession: () => Promise<void>) {
@@ -51,13 +50,7 @@ export default function useSession(startSession: () => Promise<void>) {
           return;
         }
         
-        // Extract messages from checkpoint
-        const messages = cp.tuple?.checkpoint?.messages?.map(msg => ({
-          content: msg.content || '',
-          sender: msg.sender || '',
-        })) || [];
-        
-        const data: WorkflowState = { ...state, threadId: id, messages };
+        const data: WorkflowState = { ...state, threadId: id };
         setResumeData(data);
         // Fetch shopping list for resumed meal plan
         if (state.mealPlan) {

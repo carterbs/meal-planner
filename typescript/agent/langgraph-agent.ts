@@ -6,7 +6,7 @@ import {
   ConversationMessage,
   ConversationResponse,
 } from './workflows/conversation-handler';
-import { FeedbackHandler, FeedbackInput } from './workflows/feedback-handler';
+import { FeedbackHandler } from './workflows/feedback-handler';
 import { workflowFactories } from './workflows/factories';
 import { WorkflowType } from './shared/types';
 import { CLIHandler } from './io/cliHandler';
@@ -46,7 +46,6 @@ export class LangGraphAgent {
     );
     this.conversationHandler = new ConversationHandler(
       this.workflowManager,
-      this.feedbackHandler,
     );
   }
 
@@ -99,14 +98,6 @@ export class LangGraphAgent {
   }
 
   /**
-   * Add feedback to a workflow
-   */
-  async addFeedback(feedback: FeedbackInput): Promise<boolean> {
-    this.ensureInitialized();
-    return await this.feedbackHandler.addFeedback(feedback);
-  }
-
-  /**
    * Start a new workflow
    */
   async startWorkflow(
@@ -149,14 +140,6 @@ export class LangGraphAgent {
   async cancelWorkflow(threadId: string): Promise<boolean> {
     this.ensureInitialized();
     return await this.workflowManager.cancelWorkflow(threadId);
-  }
-
-  /**
-   * Get feedback for a workflow
-   */
-  async getFeedback(threadId: string) {
-    this.ensureInitialized();
-    return await this.feedbackHandler.getFeedback(threadId);
   }
 
   /**

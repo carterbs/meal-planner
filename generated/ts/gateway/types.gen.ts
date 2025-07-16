@@ -20,7 +20,6 @@ export type ApipbAddStepRequest = {
 };
 
 export type ApipbAgentCheckpoint = {
-    messages?: Array<ApipbMessage>;
     next?: Array<string>;
     state?: ApipbMealPlanningCheckpointState;
     step?: number;
@@ -93,20 +92,6 @@ export type ApipbMealPlanningCheckpointState = {
     shopping_list?: ApipbShoppingList;
     thread_id?: string;
     updated_at?: TimestamppbTimestamp;
-    /**
-     * LLM-generated response to user feedback
-     */
-    user_message?: string;
-};
-
-export type ApipbMessage = {
-    content?: string;
-    created_at?: string;
-    /**
-     * "user" or "agent"
-     */
-    sender?: string;
-    thread_id?: string;
 };
 
 export type ApipbPutCheckpointRequest = {
@@ -232,7 +217,6 @@ export type MainCheckpointResponse = {
     found?: boolean;
     tuple?: {
         checkpoint?: {
-            messages?: Array<MainWorkflowMessageResponse>;
             state?: {
                 currentStep?: string;
                 mealPlan?: {
@@ -322,6 +306,10 @@ export type MainShoppingListItemResponse = {
 
 export type MainShoppingListResponse = {
     items?: Array<MainShoppingListItemResponse>;
+};
+
+export type MainSimpleMessageResponse = {
+    message?: string;
 };
 
 export type MainStepResponse = {
@@ -533,7 +521,7 @@ export type DeleteAgentWorkflowsByThreadIdResponses = {
     /**
      * Workflow cancelled successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type DeleteAgentWorkflowsByThreadIdResponse = DeleteAgentWorkflowsByThreadIdResponses[keyof DeleteAgentWorkflowsByThreadIdResponses];
@@ -599,7 +587,7 @@ export type PostCheckpointsResponses = {
     /**
      * Checkpoint saved successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type PostCheckpointsResponse = PostCheckpointsResponses[keyof PostCheckpointsResponses];
@@ -720,7 +708,7 @@ export type PostMealplanResponses = {
     /**
      * Meal plan saved successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type PostMealplanResponse = PostMealplanResponses[keyof PostMealplanResponses];
@@ -752,7 +740,7 @@ export type PostMealplanFinalizeResponses = {
     /**
      * Meal plan finalized successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type PostMealplanFinalizeResponse = PostMealplanFinalizeResponses[keyof PostMealplanFinalizeResponses];
@@ -992,7 +980,7 @@ export type DeleteMealsByMealIdResponses = {
     /**
      * Meal deleted successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type DeleteMealsByMealIdResponse = DeleteMealsByMealIdResponses[keyof DeleteMealsByMealIdResponses];
@@ -1105,7 +1093,7 @@ export type DeleteMealsByMealIdStepsResponses = {
     /**
      * All steps deleted successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type DeleteMealsByMealIdStepsResponse = DeleteMealsByMealIdStepsResponses[keyof DeleteMealsByMealIdStepsResponses];
@@ -1250,7 +1238,7 @@ export type PutMealsByMealIdStepsReorderResponses = {
     /**
      * Steps reordered successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type PutMealsByMealIdStepsReorderResponse = PutMealsByMealIdStepsReorderResponses[keyof PutMealsByMealIdStepsReorderResponses];
@@ -1288,7 +1276,7 @@ export type DeleteMealsByMealIdStepsByStepIdResponses = {
     /**
      * Step deleted successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type DeleteMealsByMealIdStepsByStepIdResponse = DeleteMealsByMealIdStepsByStepIdResponses[keyof DeleteMealsByMealIdStepsByStepIdResponses];
@@ -1454,7 +1442,7 @@ export type PostWorkflowsByThreadIdAbandonResponses = {
     /**
      * Workflow abandoned successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type PostWorkflowsByThreadIdAbandonResponse = PostWorkflowsByThreadIdAbandonResponses[keyof PostWorkflowsByThreadIdAbandonResponses];
@@ -1525,7 +1513,7 @@ export type PostWorkflowsByThreadIdMessagesResponses = {
     /**
      * Message added successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type PostWorkflowsByThreadIdMessagesResponse = PostWorkflowsByThreadIdMessagesResponses[keyof PostWorkflowsByThreadIdMessagesResponses];
@@ -1562,7 +1550,7 @@ export type PutWorkflowsByThreadIdStateResponses = {
     /**
      * Session state updated successfully
      */
-    200: MainMessageResponse;
+    200: MainSimpleMessageResponse;
 };
 
 export type PutWorkflowsByThreadIdStateResponse = PutWorkflowsByThreadIdStateResponses[keyof PutWorkflowsByThreadIdStateResponses];

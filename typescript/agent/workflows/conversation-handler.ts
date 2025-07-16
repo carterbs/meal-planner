@@ -1,6 +1,5 @@
 import { infoLog, errorLog } from '../logging';
 import { WorkflowManager } from '../manager';
-import { FeedbackHandler } from './feedback-handler';
 import { WorkflowType, MealPlanningStep } from '../shared/types';
 
 export interface ConversationMessage {
@@ -20,14 +19,9 @@ export interface ConversationResponse {
 
 export class ConversationHandler {
   private workflowManager: WorkflowManager;
-  private feedbackHandler: FeedbackHandler;
 
-  constructor(
-    workflowManager: WorkflowManager,
-    feedbackHandler: FeedbackHandler,
-  ) {
+  constructor(workflowManager: WorkflowManager) {
     this.workflowManager = workflowManager;
-    this.feedbackHandler = feedbackHandler;
   }
 
   /**
@@ -147,19 +141,6 @@ export class ConversationHandler {
   ): Promise<ConversationResponse> {
     infoLog(`💬 [CONVERSATION] Processing feedback from ${from}: ${message}`);
 
-    // Add feedback to the workflow
-    const success = await this.feedbackHandler.addFeedback({
-      threadId,
-      from,
-      message,
-    });
-
-    if (!success) {
-      return {
-        success: false,
-        message: "Sorry, I couldn't process your feedback. Please try again.",
-      };
-    }
 
     // Resume the workflow to process the feedback
     const result = await this.workflowManager.resumeWorkflow(threadId, {

@@ -8,14 +8,13 @@ import {
   Meal as GeneratedMeal,
   ShoppingListItem,
   ShoppingList,
-  FeedbackEntryProto,
+  Message,
 } from '@mealplanner/generated';
 import type { ExtendedRunnableConfig } from '../shared/types';
 import {
   WeeklyMealPlan,
   AgentCheckpoint,
   AgentCheckpointMetadata,
-  SaveMealPlanRequest,
   MealPlanEntry,
 } from '@mealplanner/generated';
 import { MealPlanningCheckpointState } from '@mealplanner/generated';
@@ -43,8 +42,8 @@ import {
   getOptimizeMealPlanPrompt,
   getPantryStaplesCategorizationPrompt,
 } from './meal-planning-prompts';
-import { debug } from 'console';
 import { v4 as uuidv4 } from 'uuid';
+import { getBackendClient } from '../utils/getBackendClient';
 const DEBUG_LOGS = false;
 
 /**
@@ -80,21 +79,39 @@ export class MealPlanningWorkflow implements BaseWorkflow {
    */
   private async addMessage(threadId: string, sender: string, message: string): Promise<void> {
     try {
-      const backend = process.env.BACKEND_URL ?? 'http://localhost:8080';
-      
-      await fetch(`${backend}/api/workflows/${threadId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sender,
-          message,
-        }),
+      await getBackendClient().addMessage({
+        threadId,
+        sender,
+        message,
       });
-      
+
       debugLog(`[MESSAGE] Added ${sender} message to thread ${threadId}`);
     } catch (err) {
       warnLog(`⚠️ [MESSAGE] Failed to add ${sender} message: ${err}`);
       // Don't throw - message persistence shouldn't break the workflow
+    }
+  }
+
+  /**
+   * Get messages from the messages table via HTTP
+   */
+  private async getMessages(threadId: string): Promise<string[]> {
+    try {
+      const messages = await getBackendClient().getMessages({
+        threadId,
+      });
+
+      // Filter for user messages and extract just the message content
+      const userMessages = messages.messages
+        .filter((msg: any) => msg.sender === 'user')
+        .map((msg: any) => msg.content || msg.message || '')
+        .filter((content: string) => content.trim().length > 0);
+
+      debugLog(`[MESSAGE] Retrieved ${userMessages.length} user messages from thread ${threadId}`);
+      return userMessages;
+    } catch (err) {
+      warnLog(`⚠️ [MESSAGE] Failed to get messages: ${err}`);
+      return []; // Return empty array on error
     }
   }
 
@@ -125,7 +142,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private feedbackHandler: FeedbackHandler;
 
   constructor(checkpointer: HttpCheckpointSaver) {
-    this.saveMealPlan = this.saveMealPlan.bind(this);
     this.checkpointer = checkpointer;
     this.feedbackHandler = new FeedbackHandler(checkpointer);
     this.client = new Client({
@@ -164,7 +180,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     try {
       checkpoint = new AgentCheckpoint({
         state: state,
-        messages: [],
         next: [],
         step: 0,
       });
@@ -244,6 +259,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private createGraph() {
     return {
       invoke: async (input: unknown, config: ExtendedRunnableConfig) => {
+        debugger;
         infoLog('MealPlanningWorkflow.invoke called');
         infoLog(`${`🍽️ [MEAL-WORKFLOW] Invoking workflow; input:`} ${input}`);
         // Load checkpoint
@@ -351,14 +367,20 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           );
           // On resume, always: apply feedback (if any), re-optimize, present, and pause for feedback again until user is happy
           let feedbackSatisfied = false;
+          if (!checkpoint.state.updatedAt) {
+            throw new Error('Invalid checkpoint state format');
+          }
           while (!feedbackSatisfied) {
+            const lastUpdate = checkpoint.state.updatedAt.toDate();
             // 1. Gather all recent feedback (within last 5 minutes)
-            const allFeedback = state.feedbackHistory || [];
-            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-            const newFeedback = allFeedback.filter((f) =>
-              f.timestamp ? f.timestamp.toDate() > fiveMinutesAgo : true,
+            const allFeedback = await getBackendClient().getMessages({
+              threadId: state.threadId
+            })
+            const newFeedback = allFeedback.messages.filter((f) =>
+              f.createdAt ? new Date(f.createdAt) > lastUpdate : true,
             );
 
+            infoLog("New feedback?", { newFeedbackLength: newFeedback.length.toString(), allFeedbackLength: allFeedback.messages.length.toString() });
             // 2. Analyze feedback to determine user satisfaction
             let analyzeResult = { satisfied: false, reasoning: '' };
             if (newFeedback.length > 0) {
@@ -422,7 +444,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               // State is already a proto object
               const checkpoint = new AgentCheckpoint({
                 state: state,
-                messages: [],
                 next: [],
                 step: 0,
               });
@@ -467,58 +488,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return {
       currentStep: MealPlanningStep.GENERATE_PLAN,
     };
-  }
-
-  private async saveMealPlan(threadId: string, plan: WeeklyMealPlan) {
-    infoLog('MealPlanningWorkflow.saveMealPlan called');
-    try {
-      const backend = process.env.BACKEND_URL ?? 'http://localhost:8080';
-
-      // DEBUGGING: Log dayIndex values BEFORE coerceDates and serialization
-      await infoLog(
-        '🔍 [AGENT] dayIndex values BEFORE saveMealPlan processing:',
-      );
-      if (plan.days) {
-        for (let i = 0; i < plan.days.length; i++) {
-          const day = plan.days[i];
-          await infoLog(
-            `🔍 [AGENT] SAVE BEFORE Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`,
-          );
-        }
-      }
-
-      this.coerceDates(plan);
-      // Use the typed entries directly (they still contain Date objects)
-      const entries = plan.days;
-
-      const saveRequest = new SaveMealPlanRequest({
-        threadId,
-        version: 0,
-        entries,
-      });
-
-      // DEBUGGING: Log dayIndex values in the serialized body
-      await infoLog('🔍 [AGENT] dayIndex values in saveRequest:');
-      if (saveRequest.entries) {
-        for (let i = 0; i < saveRequest.entries.length; i++) {
-          const entry = saveRequest.entries[i];
-          await infoLog(
-            `🔍 [AGENT] SAVE JSON Entry ${i}: dayIndex=${entry.dayIndex}, mealType=${entry.mealType}, meal=${entry.meal?.name || 'nil'}`,
-          );
-        }
-      }
-
-      debugLog('Full body for save request');
-      debug(JSON.stringify(saveRequest));
-      await fetch(`${backend}/api/mealplan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(saveRequest),
-      });
-    } catch (err) {
-      warnLog(`⚠️ [MEAL-WORKFLOW] Failed to persist meal plan ${err}`);
-      throw err;
-    }
   }
 
   private async generatePlanNode(
@@ -588,10 +557,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
 
-      await infoLog(`MEAL PLAN from generate------- req: ${reqId}`);
-      await infoLog(JSON.stringify(mealPlan, null, 2));
-      await this.saveMealPlan(_state.threadId, mealPlan);
-
       return {
         currentStep: MealPlanningStep.OPTIMIZE_PLAN,
         mealPlan: mealPlan,
@@ -610,8 +575,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       `🍽️ [MEAL-WORKFLOW] Optimizing meal plan (iteration ${state.iterationCount + 1})`,
     );
 
-    const threadId = state.threadId;
-
     if (!state.mealPlan) {
       throw new Error('No meal plan to optimize');
     }
@@ -628,8 +591,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       infoLog(`✅ [MEAL-WORKFLOW] Plan is already valid`);
     }
 
-    await this.saveMealPlan(threadId, optimizedPlan);
-
     return {
       currentStep: MealPlanningStep.PRESENT_PLAN,
       mealPlan: optimizedPlan,
@@ -639,7 +600,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
   // New: apply feedback using LLM with feedback context
   private async applyFeedbackNode(
-    state: MealPlanningState & { feedback_to_apply?: FeedbackEntryProto[] },
+    state: MealPlanningState & { feedback_to_apply?: Message[] },
   ): Promise<Partial<MealPlanningState>> {
     infoLog('MealPlanningWorkflow.applyFeedbackNode called');
     infoLog(`🍽️ [MEAL-WORKFLOW] Applying user feedback via LLM`);
@@ -647,32 +608,23 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       throw new Error('No meal plan to apply feedback to');
     }
     // Gather ALL feedback from the entire session or use provided feedback_to_apply
-    const feedbackEntries =
-      state.feedback_to_apply ??
-      (await this.feedbackHandler.getFeedback(state.threadId));
-    const feedbackMessages = feedbackEntries.map((f) => f.message);
+    const feedbackMessages = state.feedback_to_apply
+      ? state.feedback_to_apply.map((f) => f.content)
+      : await this.getMessages(state.threadId);
     // Call LLM to pick alternatives based on feedback
+    
     const result = await this.applyFeedbackWithLLM(
       state.mealPlan,
-    feedbackMessages,
-      state.threadId,
+      feedbackMessages,
     );
 
-    await this.saveMealPlan(state.threadId, result.mealPlan);
-    
-    // Store user feedback messages in the database
-    for (const feedback of feedbackMessages) {
-      await this.addMessage(state.threadId, 'user', feedback);
-    }
-    
     // Store the LLM's response message in the database
     if (result.userMessage) {
       await this.addMessage(state.threadId, 'agent', result.userMessage);
     }
-    
+
     return {
       mealPlan: result.mealPlan,
-      userMessage: result.userMessage,
     };
   }
 
@@ -711,7 +663,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private async applyFeedbackWithLLM(
     plan: GeneratedWeeklyMealPlan,
     feedback: string[],
-    threadId: string,
   ): Promise<{ mealPlan: GeneratedWeeklyMealPlan; userMessage: string }> {
     infoLog('MealPlanningWorkflow.applyFeedbackWithLLM called');
     const t0 = Date.now();
@@ -854,11 +805,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
 
-      // Save the updated plan to backend after all local changes
-      await this.saveMealPlan(threadId, updatedPlan);
-      infoLog(
-        `🤖 [MEAL-WORKFLOW] Saved updated plan to backend after applying all changes`,
-      );
     } catch (error) {
       errorLog(
         `❌ [MEAL-WORKFLOW] Failed to parse LLM feedback response: ${error}`,
