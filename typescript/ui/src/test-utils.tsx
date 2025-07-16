@@ -289,5 +289,151 @@ export function customRender(
   return render(ui, { ...options });
 }
 
+// Shared test utilities for common testing patterns
+
+// Mock WebSocket for agent connection tests
+export const mockWebSocket = () => {
+  const mockWS = {
+    send: jest.fn(),
+    close: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    readyState: WebSocket.OPEN,
+  };
+  
+  (global as any).WebSocket = jest.fn(() => mockWS);
+  return mockWS;
+};
+
+// Mock clipboard API
+export const mockClipboard = () => {
+  const mockClipboard = {
+    writeText: jest.fn().mockResolvedValue(undefined),
+    write: jest.fn().mockResolvedValue(undefined),
+  };
+  
+  Object.defineProperty(navigator, 'clipboard', {
+    value: mockClipboard,
+    writable: true,
+  });
+  
+  return mockClipboard;
+};
+
+// Mock localStorage
+export const mockLocalStorage = () => {
+  const store: Record<string, string> = {};
+  
+  const mockStorage = {
+    getItem: jest.fn((key: string) => store[key] || null),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+    removeItem: jest.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      Object.keys(store).forEach(key => delete store[key]);
+    }),
+  };
+  
+  Object.defineProperty(window, 'localStorage', {
+    value: mockStorage,
+    writable: true,
+  });
+  
+  return { mockStorage, store };
+};
+
+// Shared user event utilities
+export const userEvents = {
+  clickElement: async (element: HTMLElement) => {
+    const userEvent = (await import('@testing-library/user-event')).default;
+    await userEvent.click(element);
+  },
+  
+  typeText: async (element: HTMLElement, text: string) => {
+    const userEvent = (await import('@testing-library/user-event')).default;
+    await userEvent.type(element, text);
+  },
+  
+  pressKey: async (element: HTMLElement, key: string) => {
+    const userEvent = (await import('@testing-library/user-event')).default;
+    await userEvent.type(element, `{${key}}`);
+  },
+  
+  hoverElement: async (element: HTMLElement) => {
+    const userEvent = (await import('@testing-library/user-event')).default;
+    await userEvent.hover(element);
+  },
+};
+
+// Mock session data for testing
+export const mockSessionData = {
+  threadId: 'test-thread-123',
+  currentStep: 'planning',
+  mealPlan: mockMealPlan,
+  shoppingList: mockShoppingList,
+};
+
+// Error simulation utilities
+export const errorUtils = {
+  networkError: () => new Error('Network Error'),
+  timeoutError: () => new Error('Request timeout'),
+  validationError: (field: string) => new Error(`Validation failed for ${field}`),
+};
+
+// Loading state utilities
+export const loadingUtils = {
+  simulateDelay: (ms: number = 100) => new Promise(resolve => setTimeout(resolve, ms)),
+  
+  mockLoadingFetch: (delay: number = 100) => {
+    return jest.fn().mockImplementation(() => 
+      new Promise(resolve => 
+        setTimeout(() => resolve({
+          ok: true,
+          json: () => Promise.resolve({}),
+        }), delay)
+      )
+    );
+  },
+};
+
+// Accessibility test utilities
+export const a11yUtils = {
+  hasAriaLabel: (element: HTMLElement, label: string) => 
+    element.getAttribute('aria-label') === label,
+    
+  hasAriaRole: (element: HTMLElement, role: string) => 
+    element.getAttribute('role') === role,
+    
+  isFocusable: (element: HTMLElement) => 
+    element.tabIndex >= 0 || ['INPUT', 'BUTTON', 'SELECT', 'TEXTAREA', 'A'].includes(element.tagName),
+};
+
+// Drag and drop test utilities
+export const dragDropUtils = {
+  mockDragEvent: (dataTransfer?: Partial<DataTransfer>) => ({
+    dataTransfer: {
+      setData: jest.fn(),
+      getData: jest.fn(),
+      ...dataTransfer,
+    },
+    preventDefault: jest.fn(),
+    stopPropagation: jest.fn(),
+  }),
+  
+  simulateDragDrop: async (source: HTMLElement, target: HTMLElement) => {
+    const userEvent = (await import('@testing-library/user-event')).default;
+    // This is a simplified drag-drop simulation
+    // In real tests, you might need more complex DnD library mocking
+    const dragStartEvent = new Event('dragstart', { bubbles: true });
+    const dropEvent = new Event('drop', { bubbles: true });
+    
+    source.dispatchEvent(dragStartEvent);
+    target.dispatchEvent(dropEvent);
+  },
+};
+
 // Re-export everything from testing-library
 export * from '@testing-library/react';

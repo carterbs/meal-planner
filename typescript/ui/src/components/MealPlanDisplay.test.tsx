@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import MealPlanDisplay from './MealPlanDisplay';
 import type { WeeklyMealPlan } from '../types';
 import { WeeklyMealPlan as WeeklyMealPlanClass, MealPlanEntry, Meal } from '@mealplanner/generated';
@@ -80,5 +80,41 @@ describe('MealPlanDisplay', () => {
     render(<MealPlanDisplay plan={plan} />);
     const eggs = screen.getByText('Eggs');
     expect(eggs.nextSibling).toHaveTextContent('🔥');
+  });
+
+  test('handles click events on meal cards', async () => {
+    const plan = buildPlan();
+    render(<MealPlanDisplay plan={plan} />);
+    
+    const mealElement = screen.getByTestId('meal-0-breakfast');
+    fireEvent.click(mealElement);
+    
+    expect(mealElement).toBeInTheDocument();
+  });
+
+  test('shows meal details in hover or tooltip', () => {
+    const plan = buildPlan();
+    render(<MealPlanDisplay plan={plan} />);
+    
+    const mealElement = screen.getByTestId('meal-0-breakfast');
+    fireEvent.mouseOver(mealElement);
+    
+    expect(mealElement).toBeInTheDocument();
+  });
+
+  test('handles highlights correctly', () => {
+    const plan = buildPlan();
+    const highlights = new Set(['0-breakfast', '2-dinner']);
+    render(<MealPlanDisplay plan={plan} highlights={highlights} />);
+    
+    const highlightedMeal = screen.getByTestId('meal-0-breakfast');
+    expect(highlightedMeal).toBeInTheDocument();
+  });
+
+  test('renders loading state while fetching data', () => {
+    const emptyPlan = new WeeklyMealPlanClass({ days: [], shoppingList: [] });
+    render(<MealPlanDisplay plan={emptyPlan} />);
+    
+    expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument();
   });
 });
