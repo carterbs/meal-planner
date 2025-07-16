@@ -691,6 +691,31 @@ func (s *MealPlannerAPIServer) AddMessage(ctx context.Context, req *apipb.AddMes
 	}, nil
 }
 
+func (s *MealPlannerAPIServer) GetMessages(ctx context.Context, req *apipb.GetMessagesRequest) (*apipb.GetMessagesResponse, error) {
+	if req.ThreadId == "" {
+		return nil, fmt.Errorf("threadId required")
+	}
+
+	messages, err := server.Services.MessageService.GetMessagesWithTimestamps(req.ThreadId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get messages: %w", err)
+	}
+
+	protoMessages := make([]*apipb.Message, len(messages))
+	for i, msg := range messages {
+		protoMessages[i] = &apipb.Message{
+			ThreadId:  msg["thread_id"].(string),
+			Sender:    msg["sender"].(string),
+			Content:   msg["content"].(string),
+			CreatedAt: msg["created_at"].(string),
+		}
+	}
+
+	return &apipb.GetMessagesResponse{
+		Messages: protoMessages,
+	}, nil
+}
+
 func (s *MealPlannerAPIServer) UpdateSessionState(ctx context.Context, req *apipb.UpdateSessionStateRequest) (*apipb.UpdateSessionStateResponse, error) {
 	if req.ThreadId == "" {
 		return nil, fmt.Errorf("threadId required")

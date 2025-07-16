@@ -151,6 +151,9 @@ definitions:
         type: string
       updated_at:
         $ref: '#/definitions/timestamppb.Timestamp'
+      user_message:
+        description: LLM-generated response to user feedback
+        type: string
     type: object
   apipb.Message:
     properties:
@@ -410,6 +413,13 @@ definitions:
       error:
         type: string
     type: object
+  main.GetMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/main.MessageResponse'
+        type: array
+    type: object
   main.HealthResponse:
     properties:
       message:
@@ -485,7 +495,13 @@ definitions:
     type: object
   main.MessageResponse:
     properties:
-      message:
+      content:
+        type: string
+      createdAt:
+        type: string
+      sender:
+        type: string
+      threadId:
         type: string
     type: object
   main.ShoppingListItemResponse:
@@ -1556,6 +1572,34 @@ paths:
       tags:
       - workflow
   /workflows/{threadId}/messages:
+    get:
+      consumes:
+      - application/json
+      description: Get all messages for a workflow thread
+      parameters:
+      - description: Thread ID
+        in: path
+        name: threadId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Messages retrieved successfully
+          schema:
+            $ref: '#/definitions/main.GetMessagesResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Messages
+      tags:
+      - workflow
     post:
       consumes:
       - application/json

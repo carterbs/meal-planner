@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddBulkStepsRequest, AddBulkStepsResponse, AddMessageRequest, AddMessageResponse, AddStepRequest, AddStepResponse, CancelWorkflowRequest, CancelWorkflowResponse, CreateMealRequest, CreateMealResponse, DeleteAllStepsRequest, DeleteAllStepsResponse, DeleteMealIngredientRequest, DeleteMealIngredientResponse, DeleteMealRequest, DeleteMealResponse, DeleteStepRequest, DeleteStepResponse, FinalizeMealPlanRequest, FinalizeMealPlanResponse, GenerateMealPlanResponse, GetAllMealsRequest, GetAllMealsResponse, GetCheckpointRequest, GetCheckpointResponse, GetMealPlanResponse, GetShoppingListRequest, GetShoppingListResponse, GetStepsRequest, GetStepsResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, HealthCheckResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, LogBatchRequest, LogBatchResponse, LogRequest, LogResponse, MealPlanICSResponse, MessageAgentRequest, MessageAgentResponse, PutCheckpointRequest, PutCheckpointResponse, ReconnectResponse, RemoveMealRequest, RemoveMealResponse, ReorderStepsRequest, ReorderStepsResponse, ReplaceMealRequest, ReplaceMealResponse, StartAgentWorkflowRequest, StartAgentWorkflowResponse, SwapMealRequest, SwapMealResponse, UpdateMealIngredientRequest, UpdateMealIngredientResponse, UpdateSessionStateRequest, UpdateSessionStateResponse, UpdateStepRequest, UpdateStepResponse } from "./api_pb.js";
+import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddBulkStepsRequest, AddBulkStepsResponse, AddMessageRequest, AddMessageResponse, AddStepRequest, AddStepResponse, CancelWorkflowRequest, CancelWorkflowResponse, CreateMealRequest, CreateMealResponse, DeleteAllStepsRequest, DeleteAllStepsResponse, DeleteMealIngredientRequest, DeleteMealIngredientResponse, DeleteMealRequest, DeleteMealResponse, DeleteStepRequest, DeleteStepResponse, FinalizeMealPlanRequest, FinalizeMealPlanResponse, GenerateMealPlanResponse, GetAllMealsRequest, GetAllMealsResponse, GetCheckpointRequest, GetCheckpointResponse, GetMealPlanResponse, GetMessagesRequest, GetMessagesResponse, GetShoppingListRequest, GetShoppingListResponse, GetStepsRequest, GetStepsResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, HealthCheckResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, LogBatchRequest, LogBatchResponse, LogRequest, LogResponse, MealPlanICSResponse, MessageAgentRequest, MessageAgentResponse, PutCheckpointRequest, PutCheckpointResponse, ReconnectResponse, RemoveMealRequest, RemoveMealResponse, ReorderStepsRequest, ReorderStepsResponse, ReplaceMealRequest, ReplaceMealResponse, StartAgentWorkflowRequest, StartAgentWorkflowResponse, SwapMealRequest, SwapMealResponse, UpdateMealIngredientRequest, UpdateMealIngredientResponse, UpdateSessionStateRequest, UpdateSessionStateResponse, UpdateStepRequest, UpdateStepResponse } from "./api_pb.js";
 import { Empty, MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -325,6 +325,15 @@ export const MealPlannerAPI = {
       name: "AddMessage",
       I: AddMessageRequest,
       O: AddMessageResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc mealplanner.api.MealPlannerAPI.GetMessages
+     */
+    getMessages: {
+      name: "GetMessages",
+      I: GetMessagesRequest,
+      O: GetMessagesResponse,
       kind: MethodKind.Unary,
     },
     /**

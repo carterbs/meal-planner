@@ -16,24 +16,21 @@ type sqlMessageService struct {
 
 // GetMessages retrieves messages via the messages table
 func (s *sqlMessageService) GetMessages(threadID string) ([]models.ChatMessage, error) {
-	msgs, err := models.GetMessagesForThread(s.db, threadID)
-	if err != nil {
-		return nil, err
-	}
-	var out []models.ChatMessage
-	for _, m := range msgs {
-		out = append(out, models.ChatMessage{Sender: m.Sender, Text: m.Content})
-	}
-	return out, nil
+	return models.GetMessages(s.db, threadID)
+}
+
+// GetMessagesWithTimestamps retrieves messages with timestamps via the messages table
+func (s *sqlMessageService) GetMessagesWithTimestamps(threadID string) ([]map[string]interface{}, error) {
+	return models.GetMessagesForProtobuf(s.db, threadID)
 }
 
 // AddMessage saves a new message into the messages table
 func (s *sqlMessageService) AddMessage(threadID, sender, message string) (models.ChatMessage, error) {
-	m, err := models.SaveMessage(s.db, threadID, sender, message)
+	err := models.AddMessage(s.db, threadID, sender, message)
 	if err != nil {
 		return models.ChatMessage{}, err
 	}
-	return models.ChatMessage{Sender: m.Sender, Text: m.Content}, nil
+	return models.ChatMessage{Sender: sender, Text: message}, nil
 }
 
 // UpdateWorkflowCheckpointWithMessage is unsupported in SQLMessageService

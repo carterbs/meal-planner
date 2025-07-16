@@ -31,6 +31,18 @@ func (s *messageService) GetMessages(threadID string) ([]models.ChatMessage, err
 	return messages, nil
 }
 
+// GetMessagesWithTimestamps retrieves chat messages with timestamps for a thread
+func (s *messageService) GetMessagesWithTimestamps(threadID string) ([]map[string]interface{}, error) {
+	messageServiceLogger.Debugw("Getting messages with timestamps for thread ID", "threadID", threadID)
+	messages, err := models.GetMessagesForProtobuf(s.db, threadID)
+	if err != nil {
+		messageServiceLogger.Errorw("Failed to get messages with timestamps for thread ID", "threadID", threadID, "error", err)
+		return nil, fmt.Errorf("failed to get messages with timestamps for thread ID %s: %w", threadID, err)
+	}
+	messageServiceLogger.Debugw("Retrieved messages with timestamps for thread ID", "count", len(messages), "threadID", threadID)
+	return messages, nil
+}
+
 // AddMessage adds a new message to a thread
 func (s *messageService) AddMessage(threadID, sender, message string) (models.ChatMessage, error) {
 	messageServiceLogger.Debugw("Adding message to thread ID", "threadID", threadID, "sender", sender)

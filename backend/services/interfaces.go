@@ -66,6 +66,7 @@ type ShoppingListService interface {
 // MessageService handles chat message operations
 type MessageService interface {
 	GetMessages(threadID string) ([]models.ChatMessage, error)
+	GetMessagesWithTimestamps(threadID string) ([]map[string]interface{}, error)
 	AddMessage(threadID, sender, message string) (models.ChatMessage, error)
 	UpdateWorkflowCheckpointWithMessage(threadID, sender, message string) error
 }

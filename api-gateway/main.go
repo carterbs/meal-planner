@@ -105,6 +105,19 @@ type AgentMessageResponse struct {
 	Response AgentResponseBody `json:"response"`
 }
 
+// MessageResponse represents a single message
+type MessageResponse struct {
+	ThreadId  string `json:"threadId"`
+	Sender    string `json:"sender"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"createdAt"`
+}
+
+// GetMessagesResponse represents the response from getting messages
+type GetMessagesResponse struct {
+	Messages []MessageResponse `json:"messages"`
+}
+
 type CheckpointResponse struct {
 	Tuple struct {
 		Checkpoint struct {
@@ -407,6 +420,7 @@ func main() {
 	// Workflow management endpoints
 	r.Get("/api/workflows/{threadId}", gw.getWorkflowState)
 	r.Post("/api/workflows/{threadId}/abandon", gw.abandonWorkflow)
+	r.Get("/api/workflows/{threadId}/messages", gw.getMessages)
 	r.Post("/api/workflows/{threadId}/messages", gw.addMessage)
 	r.Put("/api/workflows/{threadId}/state", gw.updateSessionState)
 
@@ -1311,6 +1325,31 @@ func (gw *Gateway) addMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := gw.client.AddMessage(r.Context(), req)
+	writeJSONResponse(w, resp, err)
+}
+
+// @Summary Get Messages
+// @Description Get all messages for a workflow thread
+// @Tags workflow
+// @Accept json
+// @Produce json
+// @Param threadId path string true "Thread ID"
+// @Success 200 {object} GetMessagesResponse "Messages retrieved successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /workflows/{threadId}/messages [get]
+func (gw *Gateway) getMessages(w http.ResponseWriter, r *http.Request) {
+	threadId := chi.URLParam(r, "threadId")
+	if threadId == "" {
+		http.Error(w, "threadId is required", http.StatusBadRequest)
+		return
+	}
+
+	req := &apipb.GetMessagesRequest{
+		ThreadId: threadId,
+	}
+
+	resp, err := gw.client.GetMessages(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 

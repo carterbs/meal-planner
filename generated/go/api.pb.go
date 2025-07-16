@@ -3710,6 +3710,94 @@ func (x *AddMessageResponse) GetMessage() string {
 	return ""
 }
 
+type GetMessagesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ThreadId      string                 `protobuf:"bytes,1,opt,name=thread_id,json=threadId,proto3" json:"thread_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMessagesRequest) Reset() {
+	*x = GetMessagesRequest{}
+	mi := &file_api_proto_msgTypes[72]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMessagesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMessagesRequest) ProtoMessage() {}
+
+func (x *GetMessagesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[72]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMessagesRequest.ProtoReflect.Descriptor instead.
+func (*GetMessagesRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{72}
+}
+
+func (x *GetMessagesRequest) GetThreadId() string {
+	if x != nil {
+		return x.ThreadId
+	}
+	return ""
+}
+
+type GetMessagesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMessagesResponse) Reset() {
+	*x = GetMessagesResponse{}
+	mi := &file_api_proto_msgTypes[73]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMessagesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMessagesResponse) ProtoMessage() {}
+
+func (x *GetMessagesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[73]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMessagesResponse.ProtoReflect.Descriptor instead.
+func (*GetMessagesResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{73}
+}
+
+func (x *GetMessagesResponse) GetMessages() []*Message {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
 type UpdateSessionStateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ThreadId      string                 `protobuf:"bytes,1,opt,name=thread_id,json=threadId,proto3" json:"thread_id,omitempty"`
@@ -3723,7 +3811,7 @@ type UpdateSessionStateRequest struct {
 
 func (x *UpdateSessionStateRequest) Reset() {
 	*x = UpdateSessionStateRequest{}
-	mi := &file_api_proto_msgTypes[72]
+	mi := &file_api_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3735,7 +3823,7 @@ func (x *UpdateSessionStateRequest) String() string {
 func (*UpdateSessionStateRequest) ProtoMessage() {}
 
 func (x *UpdateSessionStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[72]
+	mi := &file_api_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3748,7 +3836,7 @@ func (x *UpdateSessionStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSessionStateRequest.ProtoReflect.Descriptor instead.
 func (*UpdateSessionStateRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{72}
+	return file_api_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *UpdateSessionStateRequest) GetThreadId() string {
@@ -3795,7 +3883,7 @@ type UpdateSessionStateResponse struct {
 
 func (x *UpdateSessionStateResponse) Reset() {
 	*x = UpdateSessionStateResponse{}
-	mi := &file_api_proto_msgTypes[73]
+	mi := &file_api_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3807,7 +3895,7 @@ func (x *UpdateSessionStateResponse) String() string {
 func (*UpdateSessionStateResponse) ProtoMessage() {}
 
 func (x *UpdateSessionStateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[73]
+	mi := &file_api_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3820,7 +3908,7 @@ func (x *UpdateSessionStateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSessionStateResponse.ProtoReflect.Descriptor instead.
 func (*UpdateSessionStateResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{73}
+	return file_api_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *UpdateSessionStateResponse) GetMessage() string {
@@ -3843,7 +3931,7 @@ type FeedbackEntryProto struct {
 
 func (x *FeedbackEntryProto) Reset() {
 	*x = FeedbackEntryProto{}
-	mi := &file_api_proto_msgTypes[74]
+	mi := &file_api_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3855,7 +3943,7 @@ func (x *FeedbackEntryProto) String() string {
 func (*FeedbackEntryProto) ProtoMessage() {}
 
 func (x *FeedbackEntryProto) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[74]
+	mi := &file_api_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3868,7 +3956,7 @@ func (x *FeedbackEntryProto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FeedbackEntryProto.ProtoReflect.Descriptor instead.
 func (*FeedbackEntryProto) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{74}
+	return file_api_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *FeedbackEntryProto) GetFrom() string {
@@ -3912,13 +4000,14 @@ type MealPlanningCheckpointState struct {
 	IterationCount  int32                  `protobuf:"varint,8,opt,name=iteration_count,json=iterationCount,proto3" json:"iteration_count,omitempty"`
 	ShoppingList    *ShoppingList          `protobuf:"bytes,9,opt,name=shopping_list,json=shoppingList,proto3" json:"shopping_list,omitempty"`
 	IsFinalized     bool                   `protobuf:"varint,10,opt,name=is_finalized,json=isFinalized,proto3" json:"is_finalized,omitempty"`
+	UserMessage     string                 `protobuf:"bytes,11,opt,name=user_message,json=userMessage,proto3" json:"user_message,omitempty"` // LLM-generated response to user feedback
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *MealPlanningCheckpointState) Reset() {
 	*x = MealPlanningCheckpointState{}
-	mi := &file_api_proto_msgTypes[75]
+	mi := &file_api_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3930,7 +4019,7 @@ func (x *MealPlanningCheckpointState) String() string {
 func (*MealPlanningCheckpointState) ProtoMessage() {}
 
 func (x *MealPlanningCheckpointState) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[75]
+	mi := &file_api_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3943,7 +4032,7 @@ func (x *MealPlanningCheckpointState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MealPlanningCheckpointState.ProtoReflect.Descriptor instead.
 func (*MealPlanningCheckpointState) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{75}
+	return file_api_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *MealPlanningCheckpointState) GetThreadId() string {
@@ -4016,6 +4105,13 @@ func (x *MealPlanningCheckpointState) GetIsFinalized() bool {
 	return false
 }
 
+func (x *MealPlanningCheckpointState) GetUserMessage() string {
+	if x != nil {
+		return x.UserMessage
+	}
+	return ""
+}
+
 // LangGraph checkpoint persistence (strict)
 type AgentCheckpoint struct {
 	state         protoimpl.MessageState       `protogen:"open.v1"`
@@ -4029,7 +4125,7 @@ type AgentCheckpoint struct {
 
 func (x *AgentCheckpoint) Reset() {
 	*x = AgentCheckpoint{}
-	mi := &file_api_proto_msgTypes[76]
+	mi := &file_api_proto_msgTypes[78]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4041,7 +4137,7 @@ func (x *AgentCheckpoint) String() string {
 func (*AgentCheckpoint) ProtoMessage() {}
 
 func (x *AgentCheckpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[76]
+	mi := &file_api_proto_msgTypes[78]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4054,7 +4150,7 @@ func (x *AgentCheckpoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentCheckpoint.ProtoReflect.Descriptor instead.
 func (*AgentCheckpoint) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{76}
+	return file_api_proto_rawDescGZIP(), []int{78}
 }
 
 func (x *AgentCheckpoint) GetState() *MealPlanningCheckpointState {
@@ -4095,7 +4191,7 @@ type AgentCheckpointMetadata struct {
 
 func (x *AgentCheckpointMetadata) Reset() {
 	*x = AgentCheckpointMetadata{}
-	mi := &file_api_proto_msgTypes[77]
+	mi := &file_api_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4107,7 +4203,7 @@ func (x *AgentCheckpointMetadata) String() string {
 func (*AgentCheckpointMetadata) ProtoMessage() {}
 
 func (x *AgentCheckpointMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[77]
+	mi := &file_api_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4120,7 +4216,7 @@ func (x *AgentCheckpointMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentCheckpointMetadata.ProtoReflect.Descriptor instead.
 func (*AgentCheckpointMetadata) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{77}
+	return file_api_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *AgentCheckpointMetadata) GetSource() string {
@@ -4147,7 +4243,7 @@ type CheckpointTuple struct {
 
 func (x *CheckpointTuple) Reset() {
 	*x = CheckpointTuple{}
-	mi := &file_api_proto_msgTypes[78]
+	mi := &file_api_proto_msgTypes[80]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4159,7 +4255,7 @@ func (x *CheckpointTuple) String() string {
 func (*CheckpointTuple) ProtoMessage() {}
 
 func (x *CheckpointTuple) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[78]
+	mi := &file_api_proto_msgTypes[80]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4172,7 +4268,7 @@ func (x *CheckpointTuple) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckpointTuple.ProtoReflect.Descriptor instead.
 func (*CheckpointTuple) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{78}
+	return file_api_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *CheckpointTuple) GetCheckpoint() *AgentCheckpoint {
@@ -4199,7 +4295,7 @@ type GetCheckpointRequest struct {
 
 func (x *GetCheckpointRequest) Reset() {
 	*x = GetCheckpointRequest{}
-	mi := &file_api_proto_msgTypes[79]
+	mi := &file_api_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4211,7 +4307,7 @@ func (x *GetCheckpointRequest) String() string {
 func (*GetCheckpointRequest) ProtoMessage() {}
 
 func (x *GetCheckpointRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[79]
+	mi := &file_api_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4224,7 +4320,7 @@ func (x *GetCheckpointRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCheckpointRequest.ProtoReflect.Descriptor instead.
 func (*GetCheckpointRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{79}
+	return file_api_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *GetCheckpointRequest) GetThreadId() string {
@@ -4251,7 +4347,7 @@ type GetCheckpointResponse struct {
 
 func (x *GetCheckpointResponse) Reset() {
 	*x = GetCheckpointResponse{}
-	mi := &file_api_proto_msgTypes[80]
+	mi := &file_api_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4263,7 +4359,7 @@ func (x *GetCheckpointResponse) String() string {
 func (*GetCheckpointResponse) ProtoMessage() {}
 
 func (x *GetCheckpointResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[80]
+	mi := &file_api_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4276,7 +4372,7 @@ func (x *GetCheckpointResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCheckpointResponse.ProtoReflect.Descriptor instead.
 func (*GetCheckpointResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{80}
+	return file_api_proto_rawDescGZIP(), []int{82}
 }
 
 func (x *GetCheckpointResponse) GetTuple() *CheckpointTuple {
@@ -4306,7 +4402,7 @@ type PutCheckpointRequest struct {
 
 func (x *PutCheckpointRequest) Reset() {
 	*x = PutCheckpointRequest{}
-	mi := &file_api_proto_msgTypes[81]
+	mi := &file_api_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4318,7 +4414,7 @@ func (x *PutCheckpointRequest) String() string {
 func (*PutCheckpointRequest) ProtoMessage() {}
 
 func (x *PutCheckpointRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[81]
+	mi := &file_api_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4331,7 +4427,7 @@ func (x *PutCheckpointRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutCheckpointRequest.ProtoReflect.Descriptor instead.
 func (*PutCheckpointRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{81}
+	return file_api_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *PutCheckpointRequest) GetThreadId() string {
@@ -4380,7 +4476,7 @@ type PutCheckpointResponse struct {
 
 func (x *PutCheckpointResponse) Reset() {
 	*x = PutCheckpointResponse{}
-	mi := &file_api_proto_msgTypes[82]
+	mi := &file_api_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4392,7 +4488,7 @@ func (x *PutCheckpointResponse) String() string {
 func (*PutCheckpointResponse) ProtoMessage() {}
 
 func (x *PutCheckpointResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[82]
+	mi := &file_api_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4405,7 +4501,7 @@ func (x *PutCheckpointResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutCheckpointResponse.ProtoReflect.Descriptor instead.
 func (*PutCheckpointResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{82}
+	return file_api_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *PutCheckpointResponse) GetSuccess() bool {
@@ -4439,7 +4535,7 @@ type ListCheckpointsRequest struct {
 
 func (x *ListCheckpointsRequest) Reset() {
 	*x = ListCheckpointsRequest{}
-	mi := &file_api_proto_msgTypes[83]
+	mi := &file_api_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4451,7 +4547,7 @@ func (x *ListCheckpointsRequest) String() string {
 func (*ListCheckpointsRequest) ProtoMessage() {}
 
 func (x *ListCheckpointsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[83]
+	mi := &file_api_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4464,7 +4560,7 @@ func (x *ListCheckpointsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCheckpointsRequest.ProtoReflect.Descriptor instead.
 func (*ListCheckpointsRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{83}
+	return file_api_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *ListCheckpointsRequest) GetLimit() int32 {
@@ -4490,7 +4586,7 @@ type ListCheckpointsResponse struct {
 
 func (x *ListCheckpointsResponse) Reset() {
 	*x = ListCheckpointsResponse{}
-	mi := &file_api_proto_msgTypes[84]
+	mi := &file_api_proto_msgTypes[86]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4502,7 +4598,7 @@ func (x *ListCheckpointsResponse) String() string {
 func (*ListCheckpointsResponse) ProtoMessage() {}
 
 func (x *ListCheckpointsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[84]
+	mi := &file_api_proto_msgTypes[86]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4515,7 +4611,7 @@ func (x *ListCheckpointsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCheckpointsResponse.ProtoReflect.Descriptor instead.
 func (*ListCheckpointsResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{84}
+	return file_api_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *ListCheckpointsResponse) GetEntries() []*CheckpointEntry {
@@ -4536,7 +4632,7 @@ type CheckpointEntry struct {
 
 func (x *CheckpointEntry) Reset() {
 	*x = CheckpointEntry{}
-	mi := &file_api_proto_msgTypes[85]
+	mi := &file_api_proto_msgTypes[87]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4548,7 +4644,7 @@ func (x *CheckpointEntry) String() string {
 func (*CheckpointEntry) ProtoMessage() {}
 
 func (x *CheckpointEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[85]
+	mi := &file_api_proto_msgTypes[87]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4561,7 +4657,7 @@ func (x *CheckpointEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckpointEntry.ProtoReflect.Descriptor instead.
 func (*CheckpointEntry) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{85}
+	return file_api_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *CheckpointEntry) GetThreadId() string {
@@ -4601,7 +4697,7 @@ type LogEntry struct {
 
 func (x *LogEntry) Reset() {
 	*x = LogEntry{}
-	mi := &file_api_proto_msgTypes[86]
+	mi := &file_api_proto_msgTypes[88]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4613,7 +4709,7 @@ func (x *LogEntry) String() string {
 func (*LogEntry) ProtoMessage() {}
 
 func (x *LogEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[86]
+	mi := &file_api_proto_msgTypes[88]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4626,7 +4722,7 @@ func (x *LogEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogEntry.ProtoReflect.Descriptor instead.
 func (*LogEntry) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{86}
+	return file_api_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *LogEntry) GetServiceName() string {
@@ -4687,7 +4783,7 @@ type LogRequest struct {
 
 func (x *LogRequest) Reset() {
 	*x = LogRequest{}
-	mi := &file_api_proto_msgTypes[87]
+	mi := &file_api_proto_msgTypes[89]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4699,7 +4795,7 @@ func (x *LogRequest) String() string {
 func (*LogRequest) ProtoMessage() {}
 
 func (x *LogRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[87]
+	mi := &file_api_proto_msgTypes[89]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4712,7 +4808,7 @@ func (x *LogRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogRequest.ProtoReflect.Descriptor instead.
 func (*LogRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{87}
+	return file_api_proto_rawDescGZIP(), []int{89}
 }
 
 func (x *LogRequest) GetEntry() *LogEntry {
@@ -4732,7 +4828,7 @@ type LogResponse struct {
 
 func (x *LogResponse) Reset() {
 	*x = LogResponse{}
-	mi := &file_api_proto_msgTypes[88]
+	mi := &file_api_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4744,7 +4840,7 @@ func (x *LogResponse) String() string {
 func (*LogResponse) ProtoMessage() {}
 
 func (x *LogResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[88]
+	mi := &file_api_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4757,7 +4853,7 @@ func (x *LogResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogResponse.ProtoReflect.Descriptor instead.
 func (*LogResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{88}
+	return file_api_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *LogResponse) GetSuccess() bool {
@@ -4783,7 +4879,7 @@ type LogBatchRequest struct {
 
 func (x *LogBatchRequest) Reset() {
 	*x = LogBatchRequest{}
-	mi := &file_api_proto_msgTypes[89]
+	mi := &file_api_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4795,7 +4891,7 @@ func (x *LogBatchRequest) String() string {
 func (*LogBatchRequest) ProtoMessage() {}
 
 func (x *LogBatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[89]
+	mi := &file_api_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4808,7 +4904,7 @@ func (x *LogBatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogBatchRequest.ProtoReflect.Descriptor instead.
 func (*LogBatchRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{89}
+	return file_api_proto_rawDescGZIP(), []int{91}
 }
 
 func (x *LogBatchRequest) GetEntries() []*LogEntry {
@@ -4829,7 +4925,7 @@ type LogBatchResponse struct {
 
 func (x *LogBatchResponse) Reset() {
 	*x = LogBatchResponse{}
-	mi := &file_api_proto_msgTypes[90]
+	mi := &file_api_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4841,7 +4937,7 @@ func (x *LogBatchResponse) String() string {
 func (*LogBatchResponse) ProtoMessage() {}
 
 func (x *LogBatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[90]
+	mi := &file_api_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4854,7 +4950,7 @@ func (x *LogBatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogBatchResponse.ProtoReflect.Descriptor instead.
 func (*LogBatchResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{90}
+	return file_api_proto_rawDescGZIP(), []int{92}
 }
 
 func (x *LogBatchResponse) GetSuccess() bool {
@@ -5101,7 +5197,11 @@ const file_api_proto_rawDesc = "" +
 	"\x06sender\x18\x02 \x01(\tR\x06sender\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\".\n" +
 	"\x12AddMessageResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"\xb5\x01\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"1\n" +
+	"\x12GetMessagesRequest\x12\x1b\n" +
+	"\tthread_id\x18\x01 \x01(\tR\bthreadId\"K\n" +
+	"\x13GetMessagesResponse\x124\n" +
+	"\bmessages\x18\x01 \x03(\v2\x18.mealplanner.api.MessageR\bmessages\"\xb5\x01\n" +
 	"\x19UpdateSessionStateRequest\x12\x1b\n" +
 	"\tthread_id\x18\x01 \x01(\tR\bthreadId\x12\x1b\n" +
 	"\tmeal_plan\x18\x02 \x01(\tR\bmealPlan\x12#\n" +
@@ -5114,7 +5214,7 @@ const file_api_proto_rawDesc = "" +
 	"\x04from\x18\x01 \x01(\tR\x04from\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x128\n" +
 	"\ttimestamp\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12*\n" +
-	"\x11meal_plan_version\x18\x04 \x01(\x05R\x0fmealPlanVersion\"\x95\x04\n" +
+	"\x11meal_plan_version\x18\x04 \x01(\x05R\x0fmealPlanVersion\"\xb8\x04\n" +
 	"\x1bMealPlanningCheckpointState\x12\x1b\n" +
 	"\tthread_id\x18\x01 \x01(\tR\bthreadId\x12\"\n" +
 	"\fparticipants\x18\x02 \x03(\tR\fparticipants\x129\n" +
@@ -5128,7 +5228,8 @@ const file_api_proto_rawDesc = "" +
 	"\x0fiteration_count\x18\b \x01(\x05R\x0eiterationCount\x12B\n" +
 	"\rshopping_list\x18\t \x01(\v2\x1d.mealplanner.api.ShoppingListR\fshoppingList\x12!\n" +
 	"\fis_finalized\x18\n" +
-	" \x01(\bR\visFinalized\"\xb3\x01\n" +
+	" \x01(\bR\visFinalized\x12!\n" +
+	"\fuser_message\x18\v \x01(\tR\vuserMessage\"\xb3\x01\n" +
 	"\x0fAgentCheckpoint\x12B\n" +
 	"\x05state\x18\x01 \x01(\v2,.mealplanner.api.MealPlanningCheckpointStateR\x05state\x124\n" +
 	"\bmessages\x18\x02 \x03(\v2\x18.mealplanner.api.MessageR\bmessages\x12\x12\n" +
@@ -5194,7 +5295,7 @@ const file_api_proto_rawDesc = "" +
 	"\x06errors\x18\x03 \x03(\tR\x06errors2\xa3\x01\n" +
 	"\x0eLoggingService\x12@\n" +
 	"\x03Log\x12\x1b.mealplanner.api.LogRequest\x1a\x1c.mealplanner.api.LogResponse\x12O\n" +
-	"\bLogBatch\x12 .mealplanner.api.LogBatchRequest\x1a!.mealplanner.api.LogBatchResponse2\xee\x18\n" +
+	"\bLogBatch\x12 .mealplanner.api.LogBatchRequest\x1a!.mealplanner.api.LogBatchResponse2\xc8\x19\n" +
 	"\x0eMealPlannerAPI\x12K\n" +
 	"\vHealthCheck\x12\x16.google.protobuf.Empty\x1a$.mealplanner.api.HealthCheckResponse\x12G\n" +
 	"\tReconnect\x12\x16.google.protobuf.Empty\x1a\".mealplanner.api.ReconnectResponse\x12K\n" +
@@ -5231,7 +5332,8 @@ const file_api_proto_rawDesc = "" +
 	"\x10GetWorkflowState\x12(.mealplanner.api.GetWorkflowStateRequest\x1a).mealplanner.api.GetWorkflowStateResponse\x12d\n" +
 	"\x0fAbandonWorkflow\x12'.mealplanner.api.AbandonWorkflowRequest\x1a(.mealplanner.api.AbandonWorkflowResponse\x12U\n" +
 	"\n" +
-	"AddMessage\x12\".mealplanner.api.AddMessageRequest\x1a#.mealplanner.api.AddMessageResponse\x12m\n" +
+	"AddMessage\x12\".mealplanner.api.AddMessageRequest\x1a#.mealplanner.api.AddMessageResponse\x12X\n" +
+	"\vGetMessages\x12#.mealplanner.api.GetMessagesRequest\x1a$.mealplanner.api.GetMessagesResponse\x12m\n" +
 	"\x12UpdateSessionState\x12*.mealplanner.api.UpdateSessionStateRequest\x1a+.mealplanner.api.UpdateSessionStateResponse\x12^\n" +
 	"\rGetCheckpoint\x12%.mealplanner.api.GetCheckpointRequest\x1a&.mealplanner.api.GetCheckpointResponse\x12^\n" +
 	"\rPutCheckpoint\x12%.mealplanner.api.PutCheckpointRequest\x1a&.mealplanner.api.PutCheckpointResponse\x12d\n" +
@@ -5249,7 +5351,7 @@ func file_api_proto_rawDescGZIP() []byte {
 	return file_api_proto_rawDescData
 }
 
-var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 92)
+var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 94)
 var file_api_proto_goTypes = []any{
 	(*Ingredient)(nil),                   // 0: mealplanner.api.Ingredient
 	(*Step)(nil),                         // 1: mealplanner.api.Step
@@ -5323,31 +5425,33 @@ var file_api_proto_goTypes = []any{
 	(*AbandonWorkflowResponse)(nil),      // 69: mealplanner.api.AbandonWorkflowResponse
 	(*AddMessageRequest)(nil),            // 70: mealplanner.api.AddMessageRequest
 	(*AddMessageResponse)(nil),           // 71: mealplanner.api.AddMessageResponse
-	(*UpdateSessionStateRequest)(nil),    // 72: mealplanner.api.UpdateSessionStateRequest
-	(*UpdateSessionStateResponse)(nil),   // 73: mealplanner.api.UpdateSessionStateResponse
-	(*FeedbackEntryProto)(nil),           // 74: mealplanner.api.FeedbackEntryProto
-	(*MealPlanningCheckpointState)(nil),  // 75: mealplanner.api.MealPlanningCheckpointState
-	(*AgentCheckpoint)(nil),              // 76: mealplanner.api.AgentCheckpoint
-	(*AgentCheckpointMetadata)(nil),      // 77: mealplanner.api.AgentCheckpointMetadata
-	(*CheckpointTuple)(nil),              // 78: mealplanner.api.CheckpointTuple
-	(*GetCheckpointRequest)(nil),         // 79: mealplanner.api.GetCheckpointRequest
-	(*GetCheckpointResponse)(nil),        // 80: mealplanner.api.GetCheckpointResponse
-	(*PutCheckpointRequest)(nil),         // 81: mealplanner.api.PutCheckpointRequest
-	(*PutCheckpointResponse)(nil),        // 82: mealplanner.api.PutCheckpointResponse
-	(*ListCheckpointsRequest)(nil),       // 83: mealplanner.api.ListCheckpointsRequest
-	(*ListCheckpointsResponse)(nil),      // 84: mealplanner.api.ListCheckpointsResponse
-	(*CheckpointEntry)(nil),              // 85: mealplanner.api.CheckpointEntry
-	(*LogEntry)(nil),                     // 86: mealplanner.api.LogEntry
-	(*LogRequest)(nil),                   // 87: mealplanner.api.LogRequest
-	(*LogResponse)(nil),                  // 88: mealplanner.api.LogResponse
-	(*LogBatchRequest)(nil),              // 89: mealplanner.api.LogBatchRequest
-	(*LogBatchResponse)(nil),             // 90: mealplanner.api.LogBatchResponse
-	nil,                                  // 91: mealplanner.api.LogEntry.FieldsEntry
-	(*timestamppb.Timestamp)(nil),        // 92: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),                // 93: google.protobuf.Empty
+	(*GetMessagesRequest)(nil),           // 72: mealplanner.api.GetMessagesRequest
+	(*GetMessagesResponse)(nil),          // 73: mealplanner.api.GetMessagesResponse
+	(*UpdateSessionStateRequest)(nil),    // 74: mealplanner.api.UpdateSessionStateRequest
+	(*UpdateSessionStateResponse)(nil),   // 75: mealplanner.api.UpdateSessionStateResponse
+	(*FeedbackEntryProto)(nil),           // 76: mealplanner.api.FeedbackEntryProto
+	(*MealPlanningCheckpointState)(nil),  // 77: mealplanner.api.MealPlanningCheckpointState
+	(*AgentCheckpoint)(nil),              // 78: mealplanner.api.AgentCheckpoint
+	(*AgentCheckpointMetadata)(nil),      // 79: mealplanner.api.AgentCheckpointMetadata
+	(*CheckpointTuple)(nil),              // 80: mealplanner.api.CheckpointTuple
+	(*GetCheckpointRequest)(nil),         // 81: mealplanner.api.GetCheckpointRequest
+	(*GetCheckpointResponse)(nil),        // 82: mealplanner.api.GetCheckpointResponse
+	(*PutCheckpointRequest)(nil),         // 83: mealplanner.api.PutCheckpointRequest
+	(*PutCheckpointResponse)(nil),        // 84: mealplanner.api.PutCheckpointResponse
+	(*ListCheckpointsRequest)(nil),       // 85: mealplanner.api.ListCheckpointsRequest
+	(*ListCheckpointsResponse)(nil),      // 86: mealplanner.api.ListCheckpointsResponse
+	(*CheckpointEntry)(nil),              // 87: mealplanner.api.CheckpointEntry
+	(*LogEntry)(nil),                     // 88: mealplanner.api.LogEntry
+	(*LogRequest)(nil),                   // 89: mealplanner.api.LogRequest
+	(*LogResponse)(nil),                  // 90: mealplanner.api.LogResponse
+	(*LogBatchRequest)(nil),              // 91: mealplanner.api.LogBatchRequest
+	(*LogBatchResponse)(nil),             // 92: mealplanner.api.LogBatchResponse
+	nil,                                  // 93: mealplanner.api.LogEntry.FieldsEntry
+	(*timestamppb.Timestamp)(nil),        // 94: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),                // 95: google.protobuf.Empty
 }
 var file_api_proto_depIdxs = []int32{
-	92, // 0: mealplanner.api.Meal.last_planned:type_name -> google.protobuf.Timestamp
+	94, // 0: mealplanner.api.Meal.last_planned:type_name -> google.protobuf.Timestamp
 	0,  // 1: mealplanner.api.Meal.ingredients:type_name -> mealplanner.api.Ingredient
 	1,  // 2: mealplanner.api.Meal.steps:type_name -> mealplanner.api.Step
 	2,  // 3: mealplanner.api.MealPlanEntry.meal:type_name -> mealplanner.api.Meal
@@ -5384,102 +5488,105 @@ var file_api_proto_depIdxs = []int32{
 	5,  // 34: mealplanner.api.GetWorkflowStateResponse.plan:type_name -> mealplanner.api.WeeklyMealPlan
 	11, // 35: mealplanner.api.GetWorkflowStateResponse.shopping_list:type_name -> mealplanner.api.ShoppingList
 	10, // 36: mealplanner.api.GetWorkflowStateResponse.messages:type_name -> mealplanner.api.Message
-	92, // 37: mealplanner.api.FeedbackEntryProto.timestamp:type_name -> google.protobuf.Timestamp
-	92, // 38: mealplanner.api.MealPlanningCheckpointState.created_at:type_name -> google.protobuf.Timestamp
-	92, // 39: mealplanner.api.MealPlanningCheckpointState.updated_at:type_name -> google.protobuf.Timestamp
-	5,  // 40: mealplanner.api.MealPlanningCheckpointState.meal_plan:type_name -> mealplanner.api.WeeklyMealPlan
-	74, // 41: mealplanner.api.MealPlanningCheckpointState.feedback_history:type_name -> mealplanner.api.FeedbackEntryProto
-	11, // 42: mealplanner.api.MealPlanningCheckpointState.shopping_list:type_name -> mealplanner.api.ShoppingList
-	75, // 43: mealplanner.api.AgentCheckpoint.state:type_name -> mealplanner.api.MealPlanningCheckpointState
-	10, // 44: mealplanner.api.AgentCheckpoint.messages:type_name -> mealplanner.api.Message
-	76, // 45: mealplanner.api.CheckpointTuple.checkpoint:type_name -> mealplanner.api.AgentCheckpoint
-	77, // 46: mealplanner.api.CheckpointTuple.metadata:type_name -> mealplanner.api.AgentCheckpointMetadata
-	78, // 47: mealplanner.api.GetCheckpointResponse.tuple:type_name -> mealplanner.api.CheckpointTuple
-	76, // 48: mealplanner.api.PutCheckpointRequest.checkpoint:type_name -> mealplanner.api.AgentCheckpoint
-	77, // 49: mealplanner.api.PutCheckpointRequest.metadata:type_name -> mealplanner.api.AgentCheckpointMetadata
-	85, // 50: mealplanner.api.ListCheckpointsResponse.entries:type_name -> mealplanner.api.CheckpointEntry
-	78, // 51: mealplanner.api.CheckpointEntry.tuple:type_name -> mealplanner.api.CheckpointTuple
-	92, // 52: mealplanner.api.LogEntry.timestamp:type_name -> google.protobuf.Timestamp
-	91, // 53: mealplanner.api.LogEntry.fields:type_name -> mealplanner.api.LogEntry.FieldsEntry
-	86, // 54: mealplanner.api.LogRequest.entry:type_name -> mealplanner.api.LogEntry
-	86, // 55: mealplanner.api.LogBatchRequest.entries:type_name -> mealplanner.api.LogEntry
-	87, // 56: mealplanner.api.LoggingService.Log:input_type -> mealplanner.api.LogRequest
-	89, // 57: mealplanner.api.LoggingService.LogBatch:input_type -> mealplanner.api.LogBatchRequest
-	93, // 58: mealplanner.api.MealPlannerAPI.HealthCheck:input_type -> google.protobuf.Empty
-	93, // 59: mealplanner.api.MealPlannerAPI.Reconnect:input_type -> google.protobuf.Empty
-	93, // 60: mealplanner.api.MealPlannerAPI.GetMealPlan:input_type -> google.protobuf.Empty
-	93, // 61: mealplanner.api.MealPlannerAPI.GenerateMealPlan:input_type -> google.protobuf.Empty
-	22, // 62: mealplanner.api.MealPlannerAPI.FinalizeMealPlan:input_type -> mealplanner.api.FinalizeMealPlanRequest
-	93, // 63: mealplanner.api.MealPlannerAPI.GetMealPlanICS:input_type -> google.protobuf.Empty
-	25, // 64: mealplanner.api.MealPlannerAPI.GetShoppingList:input_type -> mealplanner.api.GetShoppingListRequest
-	27, // 65: mealplanner.api.MealPlannerAPI.GetAllMeals:input_type -> mealplanner.api.GetAllMealsRequest
-	29, // 66: mealplanner.api.MealPlannerAPI.CreateMeal:input_type -> mealplanner.api.CreateMealRequest
-	31, // 67: mealplanner.api.MealPlannerAPI.SwapMeal:input_type -> mealplanner.api.SwapMealRequest
-	33, // 68: mealplanner.api.MealPlannerAPI.RemoveMeal:input_type -> mealplanner.api.RemoveMealRequest
-	35, // 69: mealplanner.api.MealPlannerAPI.ReplaceMeal:input_type -> mealplanner.api.ReplaceMealRequest
-	37, // 70: mealplanner.api.MealPlannerAPI.UpdateMealIngredient:input_type -> mealplanner.api.UpdateMealIngredientRequest
-	39, // 71: mealplanner.api.MealPlannerAPI.DeleteMealIngredient:input_type -> mealplanner.api.DeleteMealIngredientRequest
-	41, // 72: mealplanner.api.MealPlannerAPI.DeleteMeal:input_type -> mealplanner.api.DeleteMealRequest
-	43, // 73: mealplanner.api.MealPlannerAPI.GetSteps:input_type -> mealplanner.api.GetStepsRequest
-	45, // 74: mealplanner.api.MealPlannerAPI.AddStep:input_type -> mealplanner.api.AddStepRequest
-	47, // 75: mealplanner.api.MealPlannerAPI.AddBulkSteps:input_type -> mealplanner.api.AddBulkStepsRequest
-	49, // 76: mealplanner.api.MealPlannerAPI.UpdateStep:input_type -> mealplanner.api.UpdateStepRequest
-	51, // 77: mealplanner.api.MealPlannerAPI.DeleteStep:input_type -> mealplanner.api.DeleteStepRequest
-	53, // 78: mealplanner.api.MealPlannerAPI.ReorderSteps:input_type -> mealplanner.api.ReorderStepsRequest
-	55, // 79: mealplanner.api.MealPlannerAPI.DeleteAllSteps:input_type -> mealplanner.api.DeleteAllStepsRequest
-	57, // 80: mealplanner.api.MealPlannerAPI.StartAgentWorkflow:input_type -> mealplanner.api.StartAgentWorkflowRequest
-	59, // 81: mealplanner.api.MealPlannerAPI.MessageAgent:input_type -> mealplanner.api.MessageAgentRequest
-	61, // 82: mealplanner.api.MealPlannerAPI.GetWorkflowStatus:input_type -> mealplanner.api.GetWorkflowStatusRequest
-	93, // 83: mealplanner.api.MealPlannerAPI.ListWorkflows:input_type -> google.protobuf.Empty
-	64, // 84: mealplanner.api.MealPlannerAPI.CancelWorkflow:input_type -> mealplanner.api.CancelWorkflowRequest
-	66, // 85: mealplanner.api.MealPlannerAPI.GetWorkflowState:input_type -> mealplanner.api.GetWorkflowStateRequest
-	68, // 86: mealplanner.api.MealPlannerAPI.AbandonWorkflow:input_type -> mealplanner.api.AbandonWorkflowRequest
-	70, // 87: mealplanner.api.MealPlannerAPI.AddMessage:input_type -> mealplanner.api.AddMessageRequest
-	72, // 88: mealplanner.api.MealPlannerAPI.UpdateSessionState:input_type -> mealplanner.api.UpdateSessionStateRequest
-	79, // 89: mealplanner.api.MealPlannerAPI.GetCheckpoint:input_type -> mealplanner.api.GetCheckpointRequest
-	81, // 90: mealplanner.api.MealPlannerAPI.PutCheckpoint:input_type -> mealplanner.api.PutCheckpointRequest
-	83, // 91: mealplanner.api.MealPlannerAPI.ListCheckpoints:input_type -> mealplanner.api.ListCheckpointsRequest
-	88, // 92: mealplanner.api.LoggingService.Log:output_type -> mealplanner.api.LogResponse
-	90, // 93: mealplanner.api.LoggingService.LogBatch:output_type -> mealplanner.api.LogBatchResponse
-	18, // 94: mealplanner.api.MealPlannerAPI.HealthCheck:output_type -> mealplanner.api.HealthCheckResponse
-	19, // 95: mealplanner.api.MealPlannerAPI.Reconnect:output_type -> mealplanner.api.ReconnectResponse
-	20, // 96: mealplanner.api.MealPlannerAPI.GetMealPlan:output_type -> mealplanner.api.GetMealPlanResponse
-	21, // 97: mealplanner.api.MealPlannerAPI.GenerateMealPlan:output_type -> mealplanner.api.GenerateMealPlanResponse
-	23, // 98: mealplanner.api.MealPlannerAPI.FinalizeMealPlan:output_type -> mealplanner.api.FinalizeMealPlanResponse
-	24, // 99: mealplanner.api.MealPlannerAPI.GetMealPlanICS:output_type -> mealplanner.api.MealPlanICSResponse
-	26, // 100: mealplanner.api.MealPlannerAPI.GetShoppingList:output_type -> mealplanner.api.GetShoppingListResponse
-	28, // 101: mealplanner.api.MealPlannerAPI.GetAllMeals:output_type -> mealplanner.api.GetAllMealsResponse
-	30, // 102: mealplanner.api.MealPlannerAPI.CreateMeal:output_type -> mealplanner.api.CreateMealResponse
-	32, // 103: mealplanner.api.MealPlannerAPI.SwapMeal:output_type -> mealplanner.api.SwapMealResponse
-	34, // 104: mealplanner.api.MealPlannerAPI.RemoveMeal:output_type -> mealplanner.api.RemoveMealResponse
-	36, // 105: mealplanner.api.MealPlannerAPI.ReplaceMeal:output_type -> mealplanner.api.ReplaceMealResponse
-	38, // 106: mealplanner.api.MealPlannerAPI.UpdateMealIngredient:output_type -> mealplanner.api.UpdateMealIngredientResponse
-	40, // 107: mealplanner.api.MealPlannerAPI.DeleteMealIngredient:output_type -> mealplanner.api.DeleteMealIngredientResponse
-	42, // 108: mealplanner.api.MealPlannerAPI.DeleteMeal:output_type -> mealplanner.api.DeleteMealResponse
-	44, // 109: mealplanner.api.MealPlannerAPI.GetSteps:output_type -> mealplanner.api.GetStepsResponse
-	46, // 110: mealplanner.api.MealPlannerAPI.AddStep:output_type -> mealplanner.api.AddStepResponse
-	48, // 111: mealplanner.api.MealPlannerAPI.AddBulkSteps:output_type -> mealplanner.api.AddBulkStepsResponse
-	50, // 112: mealplanner.api.MealPlannerAPI.UpdateStep:output_type -> mealplanner.api.UpdateStepResponse
-	52, // 113: mealplanner.api.MealPlannerAPI.DeleteStep:output_type -> mealplanner.api.DeleteStepResponse
-	54, // 114: mealplanner.api.MealPlannerAPI.ReorderSteps:output_type -> mealplanner.api.ReorderStepsResponse
-	56, // 115: mealplanner.api.MealPlannerAPI.DeleteAllSteps:output_type -> mealplanner.api.DeleteAllStepsResponse
-	58, // 116: mealplanner.api.MealPlannerAPI.StartAgentWorkflow:output_type -> mealplanner.api.StartAgentWorkflowResponse
-	60, // 117: mealplanner.api.MealPlannerAPI.MessageAgent:output_type -> mealplanner.api.MessageAgentResponse
-	62, // 118: mealplanner.api.MealPlannerAPI.GetWorkflowStatus:output_type -> mealplanner.api.GetWorkflowStatusResponse
-	63, // 119: mealplanner.api.MealPlannerAPI.ListWorkflows:output_type -> mealplanner.api.ListWorkflowsResponse
-	65, // 120: mealplanner.api.MealPlannerAPI.CancelWorkflow:output_type -> mealplanner.api.CancelWorkflowResponse
-	67, // 121: mealplanner.api.MealPlannerAPI.GetWorkflowState:output_type -> mealplanner.api.GetWorkflowStateResponse
-	69, // 122: mealplanner.api.MealPlannerAPI.AbandonWorkflow:output_type -> mealplanner.api.AbandonWorkflowResponse
-	71, // 123: mealplanner.api.MealPlannerAPI.AddMessage:output_type -> mealplanner.api.AddMessageResponse
-	73, // 124: mealplanner.api.MealPlannerAPI.UpdateSessionState:output_type -> mealplanner.api.UpdateSessionStateResponse
-	80, // 125: mealplanner.api.MealPlannerAPI.GetCheckpoint:output_type -> mealplanner.api.GetCheckpointResponse
-	82, // 126: mealplanner.api.MealPlannerAPI.PutCheckpoint:output_type -> mealplanner.api.PutCheckpointResponse
-	84, // 127: mealplanner.api.MealPlannerAPI.ListCheckpoints:output_type -> mealplanner.api.ListCheckpointsResponse
-	92, // [92:128] is the sub-list for method output_type
-	56, // [56:92] is the sub-list for method input_type
-	56, // [56:56] is the sub-list for extension type_name
-	56, // [56:56] is the sub-list for extension extendee
-	0,  // [0:56] is the sub-list for field type_name
+	10, // 37: mealplanner.api.GetMessagesResponse.messages:type_name -> mealplanner.api.Message
+	94, // 38: mealplanner.api.FeedbackEntryProto.timestamp:type_name -> google.protobuf.Timestamp
+	94, // 39: mealplanner.api.MealPlanningCheckpointState.created_at:type_name -> google.protobuf.Timestamp
+	94, // 40: mealplanner.api.MealPlanningCheckpointState.updated_at:type_name -> google.protobuf.Timestamp
+	5,  // 41: mealplanner.api.MealPlanningCheckpointState.meal_plan:type_name -> mealplanner.api.WeeklyMealPlan
+	76, // 42: mealplanner.api.MealPlanningCheckpointState.feedback_history:type_name -> mealplanner.api.FeedbackEntryProto
+	11, // 43: mealplanner.api.MealPlanningCheckpointState.shopping_list:type_name -> mealplanner.api.ShoppingList
+	77, // 44: mealplanner.api.AgentCheckpoint.state:type_name -> mealplanner.api.MealPlanningCheckpointState
+	10, // 45: mealplanner.api.AgentCheckpoint.messages:type_name -> mealplanner.api.Message
+	78, // 46: mealplanner.api.CheckpointTuple.checkpoint:type_name -> mealplanner.api.AgentCheckpoint
+	79, // 47: mealplanner.api.CheckpointTuple.metadata:type_name -> mealplanner.api.AgentCheckpointMetadata
+	80, // 48: mealplanner.api.GetCheckpointResponse.tuple:type_name -> mealplanner.api.CheckpointTuple
+	78, // 49: mealplanner.api.PutCheckpointRequest.checkpoint:type_name -> mealplanner.api.AgentCheckpoint
+	79, // 50: mealplanner.api.PutCheckpointRequest.metadata:type_name -> mealplanner.api.AgentCheckpointMetadata
+	87, // 51: mealplanner.api.ListCheckpointsResponse.entries:type_name -> mealplanner.api.CheckpointEntry
+	80, // 52: mealplanner.api.CheckpointEntry.tuple:type_name -> mealplanner.api.CheckpointTuple
+	94, // 53: mealplanner.api.LogEntry.timestamp:type_name -> google.protobuf.Timestamp
+	93, // 54: mealplanner.api.LogEntry.fields:type_name -> mealplanner.api.LogEntry.FieldsEntry
+	88, // 55: mealplanner.api.LogRequest.entry:type_name -> mealplanner.api.LogEntry
+	88, // 56: mealplanner.api.LogBatchRequest.entries:type_name -> mealplanner.api.LogEntry
+	89, // 57: mealplanner.api.LoggingService.Log:input_type -> mealplanner.api.LogRequest
+	91, // 58: mealplanner.api.LoggingService.LogBatch:input_type -> mealplanner.api.LogBatchRequest
+	95, // 59: mealplanner.api.MealPlannerAPI.HealthCheck:input_type -> google.protobuf.Empty
+	95, // 60: mealplanner.api.MealPlannerAPI.Reconnect:input_type -> google.protobuf.Empty
+	95, // 61: mealplanner.api.MealPlannerAPI.GetMealPlan:input_type -> google.protobuf.Empty
+	95, // 62: mealplanner.api.MealPlannerAPI.GenerateMealPlan:input_type -> google.protobuf.Empty
+	22, // 63: mealplanner.api.MealPlannerAPI.FinalizeMealPlan:input_type -> mealplanner.api.FinalizeMealPlanRequest
+	95, // 64: mealplanner.api.MealPlannerAPI.GetMealPlanICS:input_type -> google.protobuf.Empty
+	25, // 65: mealplanner.api.MealPlannerAPI.GetShoppingList:input_type -> mealplanner.api.GetShoppingListRequest
+	27, // 66: mealplanner.api.MealPlannerAPI.GetAllMeals:input_type -> mealplanner.api.GetAllMealsRequest
+	29, // 67: mealplanner.api.MealPlannerAPI.CreateMeal:input_type -> mealplanner.api.CreateMealRequest
+	31, // 68: mealplanner.api.MealPlannerAPI.SwapMeal:input_type -> mealplanner.api.SwapMealRequest
+	33, // 69: mealplanner.api.MealPlannerAPI.RemoveMeal:input_type -> mealplanner.api.RemoveMealRequest
+	35, // 70: mealplanner.api.MealPlannerAPI.ReplaceMeal:input_type -> mealplanner.api.ReplaceMealRequest
+	37, // 71: mealplanner.api.MealPlannerAPI.UpdateMealIngredient:input_type -> mealplanner.api.UpdateMealIngredientRequest
+	39, // 72: mealplanner.api.MealPlannerAPI.DeleteMealIngredient:input_type -> mealplanner.api.DeleteMealIngredientRequest
+	41, // 73: mealplanner.api.MealPlannerAPI.DeleteMeal:input_type -> mealplanner.api.DeleteMealRequest
+	43, // 74: mealplanner.api.MealPlannerAPI.GetSteps:input_type -> mealplanner.api.GetStepsRequest
+	45, // 75: mealplanner.api.MealPlannerAPI.AddStep:input_type -> mealplanner.api.AddStepRequest
+	47, // 76: mealplanner.api.MealPlannerAPI.AddBulkSteps:input_type -> mealplanner.api.AddBulkStepsRequest
+	49, // 77: mealplanner.api.MealPlannerAPI.UpdateStep:input_type -> mealplanner.api.UpdateStepRequest
+	51, // 78: mealplanner.api.MealPlannerAPI.DeleteStep:input_type -> mealplanner.api.DeleteStepRequest
+	53, // 79: mealplanner.api.MealPlannerAPI.ReorderSteps:input_type -> mealplanner.api.ReorderStepsRequest
+	55, // 80: mealplanner.api.MealPlannerAPI.DeleteAllSteps:input_type -> mealplanner.api.DeleteAllStepsRequest
+	57, // 81: mealplanner.api.MealPlannerAPI.StartAgentWorkflow:input_type -> mealplanner.api.StartAgentWorkflowRequest
+	59, // 82: mealplanner.api.MealPlannerAPI.MessageAgent:input_type -> mealplanner.api.MessageAgentRequest
+	61, // 83: mealplanner.api.MealPlannerAPI.GetWorkflowStatus:input_type -> mealplanner.api.GetWorkflowStatusRequest
+	95, // 84: mealplanner.api.MealPlannerAPI.ListWorkflows:input_type -> google.protobuf.Empty
+	64, // 85: mealplanner.api.MealPlannerAPI.CancelWorkflow:input_type -> mealplanner.api.CancelWorkflowRequest
+	66, // 86: mealplanner.api.MealPlannerAPI.GetWorkflowState:input_type -> mealplanner.api.GetWorkflowStateRequest
+	68, // 87: mealplanner.api.MealPlannerAPI.AbandonWorkflow:input_type -> mealplanner.api.AbandonWorkflowRequest
+	70, // 88: mealplanner.api.MealPlannerAPI.AddMessage:input_type -> mealplanner.api.AddMessageRequest
+	72, // 89: mealplanner.api.MealPlannerAPI.GetMessages:input_type -> mealplanner.api.GetMessagesRequest
+	74, // 90: mealplanner.api.MealPlannerAPI.UpdateSessionState:input_type -> mealplanner.api.UpdateSessionStateRequest
+	81, // 91: mealplanner.api.MealPlannerAPI.GetCheckpoint:input_type -> mealplanner.api.GetCheckpointRequest
+	83, // 92: mealplanner.api.MealPlannerAPI.PutCheckpoint:input_type -> mealplanner.api.PutCheckpointRequest
+	85, // 93: mealplanner.api.MealPlannerAPI.ListCheckpoints:input_type -> mealplanner.api.ListCheckpointsRequest
+	90, // 94: mealplanner.api.LoggingService.Log:output_type -> mealplanner.api.LogResponse
+	92, // 95: mealplanner.api.LoggingService.LogBatch:output_type -> mealplanner.api.LogBatchResponse
+	18, // 96: mealplanner.api.MealPlannerAPI.HealthCheck:output_type -> mealplanner.api.HealthCheckResponse
+	19, // 97: mealplanner.api.MealPlannerAPI.Reconnect:output_type -> mealplanner.api.ReconnectResponse
+	20, // 98: mealplanner.api.MealPlannerAPI.GetMealPlan:output_type -> mealplanner.api.GetMealPlanResponse
+	21, // 99: mealplanner.api.MealPlannerAPI.GenerateMealPlan:output_type -> mealplanner.api.GenerateMealPlanResponse
+	23, // 100: mealplanner.api.MealPlannerAPI.FinalizeMealPlan:output_type -> mealplanner.api.FinalizeMealPlanResponse
+	24, // 101: mealplanner.api.MealPlannerAPI.GetMealPlanICS:output_type -> mealplanner.api.MealPlanICSResponse
+	26, // 102: mealplanner.api.MealPlannerAPI.GetShoppingList:output_type -> mealplanner.api.GetShoppingListResponse
+	28, // 103: mealplanner.api.MealPlannerAPI.GetAllMeals:output_type -> mealplanner.api.GetAllMealsResponse
+	30, // 104: mealplanner.api.MealPlannerAPI.CreateMeal:output_type -> mealplanner.api.CreateMealResponse
+	32, // 105: mealplanner.api.MealPlannerAPI.SwapMeal:output_type -> mealplanner.api.SwapMealResponse
+	34, // 106: mealplanner.api.MealPlannerAPI.RemoveMeal:output_type -> mealplanner.api.RemoveMealResponse
+	36, // 107: mealplanner.api.MealPlannerAPI.ReplaceMeal:output_type -> mealplanner.api.ReplaceMealResponse
+	38, // 108: mealplanner.api.MealPlannerAPI.UpdateMealIngredient:output_type -> mealplanner.api.UpdateMealIngredientResponse
+	40, // 109: mealplanner.api.MealPlannerAPI.DeleteMealIngredient:output_type -> mealplanner.api.DeleteMealIngredientResponse
+	42, // 110: mealplanner.api.MealPlannerAPI.DeleteMeal:output_type -> mealplanner.api.DeleteMealResponse
+	44, // 111: mealplanner.api.MealPlannerAPI.GetSteps:output_type -> mealplanner.api.GetStepsResponse
+	46, // 112: mealplanner.api.MealPlannerAPI.AddStep:output_type -> mealplanner.api.AddStepResponse
+	48, // 113: mealplanner.api.MealPlannerAPI.AddBulkSteps:output_type -> mealplanner.api.AddBulkStepsResponse
+	50, // 114: mealplanner.api.MealPlannerAPI.UpdateStep:output_type -> mealplanner.api.UpdateStepResponse
+	52, // 115: mealplanner.api.MealPlannerAPI.DeleteStep:output_type -> mealplanner.api.DeleteStepResponse
+	54, // 116: mealplanner.api.MealPlannerAPI.ReorderSteps:output_type -> mealplanner.api.ReorderStepsResponse
+	56, // 117: mealplanner.api.MealPlannerAPI.DeleteAllSteps:output_type -> mealplanner.api.DeleteAllStepsResponse
+	58, // 118: mealplanner.api.MealPlannerAPI.StartAgentWorkflow:output_type -> mealplanner.api.StartAgentWorkflowResponse
+	60, // 119: mealplanner.api.MealPlannerAPI.MessageAgent:output_type -> mealplanner.api.MessageAgentResponse
+	62, // 120: mealplanner.api.MealPlannerAPI.GetWorkflowStatus:output_type -> mealplanner.api.GetWorkflowStatusResponse
+	63, // 121: mealplanner.api.MealPlannerAPI.ListWorkflows:output_type -> mealplanner.api.ListWorkflowsResponse
+	65, // 122: mealplanner.api.MealPlannerAPI.CancelWorkflow:output_type -> mealplanner.api.CancelWorkflowResponse
+	67, // 123: mealplanner.api.MealPlannerAPI.GetWorkflowState:output_type -> mealplanner.api.GetWorkflowStateResponse
+	69, // 124: mealplanner.api.MealPlannerAPI.AbandonWorkflow:output_type -> mealplanner.api.AbandonWorkflowResponse
+	71, // 125: mealplanner.api.MealPlannerAPI.AddMessage:output_type -> mealplanner.api.AddMessageResponse
+	73, // 126: mealplanner.api.MealPlannerAPI.GetMessages:output_type -> mealplanner.api.GetMessagesResponse
+	75, // 127: mealplanner.api.MealPlannerAPI.UpdateSessionState:output_type -> mealplanner.api.UpdateSessionStateResponse
+	82, // 128: mealplanner.api.MealPlannerAPI.GetCheckpoint:output_type -> mealplanner.api.GetCheckpointResponse
+	84, // 129: mealplanner.api.MealPlannerAPI.PutCheckpoint:output_type -> mealplanner.api.PutCheckpointResponse
+	86, // 130: mealplanner.api.MealPlannerAPI.ListCheckpoints:output_type -> mealplanner.api.ListCheckpointsResponse
+	94, // [94:131] is the sub-list for method output_type
+	57, // [57:94] is the sub-list for method input_type
+	57, // [57:57] is the sub-list for extension type_name
+	57, // [57:57] is the sub-list for extension extendee
+	0,  // [0:57] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_init() }
@@ -5495,7 +5602,7 @@ func file_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_rawDesc), len(file_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   92,
+			NumMessages:   94,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

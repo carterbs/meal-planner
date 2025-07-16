@@ -1464,6 +1464,48 @@ const docTemplate = `{
             }
         },
         "/workflows/{threadId}/messages": {
+            "get": {
+                "description": "Get all messages for a workflow thread",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "workflow"
+                ],
+                "summary": "Get Messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Thread ID",
+                        "name": "threadId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Messages retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/main.GetMessagesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Add a message to a workflow",
                 "consumes": [
@@ -1801,6 +1843,10 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "user_message": {
+                    "description": "LLM-generated response to user feedback",
+                    "type": "string"
                 }
             }
         },
@@ -2205,6 +2251,17 @@ const docTemplate = `{
                 }
             }
         },
+        "main.GetMessagesResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/main.MessageResponse"
+                    }
+                }
+            }
+        },
         "main.HealthResponse": {
             "type": "object",
             "properties": {
@@ -2321,7 +2378,16 @@ const docTemplate = `{
         "main.MessageResponse": {
             "type": "object",
             "properties": {
-                "message": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "sender": {
+                    "type": "string"
+                },
+                "threadId": {
                     "type": "string"
                 }
             }

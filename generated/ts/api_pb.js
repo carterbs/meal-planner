@@ -5,7 +5,7 @@
 // @ts-nocheck
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateStepRequest = exports.AddBulkStepsResponse = exports.AddBulkStepsRequest = exports.AddStepResponse = exports.AddStepRequest = exports.GetStepsResponse = exports.GetStepsRequest = exports.DeleteMealResponse = exports.DeleteMealRequest = exports.DeleteMealIngredientResponse = exports.DeleteMealIngredientRequest = exports.UpdateMealIngredientResponse = exports.UpdateMealIngredientRequest = exports.ReplaceMealResponse = exports.ReplaceMealRequest = exports.RemoveMealResponse = exports.RemoveMealRequest = exports.SwapMealResponse = exports.SwapMealRequest = exports.CreateMealResponse = exports.CreateMealRequest = exports.GetAllMealsResponse = exports.GetAllMealsRequest = exports.GetShoppingListResponse = exports.GetShoppingListRequest = exports.MealPlanICSResponse = exports.FinalizeMealPlanResponse = exports.FinalizeMealPlanRequest = exports.GenerateMealPlanResponse = exports.GetMealPlanResponse = exports.ReconnectResponse = exports.HealthCheckResponse = exports.WorkflowStatus = exports.AgentResponse = exports.AgentMessageRequest = exports.AgentResumeRequest = exports.AgentFeedbackRequest = exports.AgentStartRequest = exports.ShoppingList = exports.Message = exports.CheckpointResponse = exports.SaveCheckpointRequest = exports.MealPlanIdentifier = exports.SaveMealPlanRequest = exports.WeeklyMealPlan = exports.ShoppingListItem = exports.MealPlanEntry = exports.Meal = exports.Step = exports.Ingredient = void 0;
-exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata = exports.AgentCheckpoint = exports.MealPlanningCheckpointState = exports.FeedbackEntryProto = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = void 0;
+exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata = exports.AgentCheckpoint = exports.MealPlanningCheckpointState = exports.FeedbackEntryProto = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.GetMessagesResponse = exports.GetMessagesRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = void 0;
 const protobuf_1 = require("@bufbuild/protobuf");
 /**
  * @generated from message mealplanner.api.Ingredient
@@ -2586,6 +2586,68 @@ class AddMessageResponse extends protobuf_1.Message {
 }
 exports.AddMessageResponse = AddMessageResponse;
 /**
+ * @generated from message mealplanner.api.GetMessagesRequest
+ */
+class GetMessagesRequest extends protobuf_1.Message {
+    /**
+     * @generated from field: string thread_id = 1;
+     */
+    threadId = "";
+    constructor(data) {
+        super();
+        protobuf_1.proto3.util.initPartial(data, this);
+    }
+    static runtime = protobuf_1.proto3;
+    static typeName = "mealplanner.api.GetMessagesRequest";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    ]);
+    static fromBinary(bytes, options) {
+        return new GetMessagesRequest().fromBinary(bytes, options);
+    }
+    static fromJson(jsonValue, options) {
+        return new GetMessagesRequest().fromJson(jsonValue, options);
+    }
+    static fromJsonString(jsonString, options) {
+        return new GetMessagesRequest().fromJsonString(jsonString, options);
+    }
+    static equals(a, b) {
+        return protobuf_1.proto3.util.equals(GetMessagesRequest, a, b);
+    }
+}
+exports.GetMessagesRequest = GetMessagesRequest;
+/**
+ * @generated from message mealplanner.api.GetMessagesResponse
+ */
+class GetMessagesResponse extends protobuf_1.Message {
+    /**
+     * @generated from field: repeated mealplanner.api.Message messages = 1;
+     */
+    messages = [];
+    constructor(data) {
+        super();
+        protobuf_1.proto3.util.initPartial(data, this);
+    }
+    static runtime = protobuf_1.proto3;
+    static typeName = "mealplanner.api.GetMessagesResponse";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "messages", kind: "message", T: Message, repeated: true },
+    ]);
+    static fromBinary(bytes, options) {
+        return new GetMessagesResponse().fromBinary(bytes, options);
+    }
+    static fromJson(jsonValue, options) {
+        return new GetMessagesResponse().fromJson(jsonValue, options);
+    }
+    static fromJsonString(jsonString, options) {
+        return new GetMessagesResponse().fromJsonString(jsonString, options);
+    }
+    static equals(a, b) {
+        return protobuf_1.proto3.util.equals(GetMessagesResponse, a, b);
+    }
+}
+exports.GetMessagesResponse = GetMessagesResponse;
+/**
  * @generated from message mealplanner.api.UpdateSessionStateRequest
  */
 class UpdateSessionStateRequest extends protobuf_1.Message {
@@ -2767,6 +2829,12 @@ class MealPlanningCheckpointState extends protobuf_1.Message {
      * @generated from field: bool is_finalized = 10;
      */
     isFinalized = false;
+    /**
+     * LLM-generated response to user feedback
+     *
+     * @generated from field: string user_message = 11;
+     */
+    userMessage = "";
     constructor(data) {
         super();
         protobuf_1.proto3.util.initPartial(data, this);
@@ -2784,6 +2852,7 @@ class MealPlanningCheckpointState extends protobuf_1.Message {
         { no: 8, name: "iteration_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
         { no: 9, name: "shopping_list", kind: "message", T: ShoppingList },
         { no: 10, name: "is_finalized", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+        { no: 11, name: "user_message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     ]);
     static fromBinary(bytes, options) {
         return new MealPlanningCheckpointState().fromBinary(bytes, options);

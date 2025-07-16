@@ -328,6 +328,15 @@ exports.MealPlannerAPI = {
             kind: protobuf_1.MethodKind.Unary,
         },
         /**
+         * @generated from rpc mealplanner.api.MealPlannerAPI.GetMessages
+         */
+        getMessages: {
+            name: "GetMessages",
+            I: api_pb_js_1.GetMessagesRequest,
+            O: api_pb_js_1.GetMessagesResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
          * @generated from rpc mealplanner.api.MealPlannerAPI.UpdateSessionState
          */
         updateSessionState: {
