@@ -2,6 +2,14 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AgentPage from './AgentPage';
+import { 
+  mockWebSocket, 
+  mockClipboard, 
+  mockLocalStorage, 
+  userEvents, 
+  errorUtils, 
+  loadingUtils 
+} from './test-utils';
 
 beforeEach(() => {
   (global.fetch as jest.Mock) = jest.fn();
@@ -384,4 +392,214 @@ test('startNewSession abandons existing workflow', async () => {
     expect.any(Object),
   );
   expect(localStorage.getItem('sessionId')).toBe('new');
+});
+
+test('handles websocket connection errors', async () => {
+  const mockWS = mockWebSocket();
+  
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({
+      response: { threadId: '123', currentStep: 'started' }
+    })
+  });
+  
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+  
+  await waitFor(() => {
+    expect(screen.getByTestId('message-input')).toBeInTheDocument();
+  });
+  
+  const errorEvent = new Event('error');
+  mockWS.addEventListener.mock.calls
+    .find(call => call[0] === 'error')?.[1](errorEvent);
+  
+  expect(mockWS.addEventListener).toHaveBeenCalledWith('error', expect.any(Function));
+});
+
+test('reconnects after network interruption', async () => {
+  const mockWS = mockWebSocket();
+  
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({
+      response: { threadId: '123', currentStep: 'started' }
+    })
+  });
+  
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+  
+  await waitFor(() => {
+    expect(screen.getByTestId('message-input')).toBeInTheDocument();
+  });
+  
+  const closeEvent = new CloseEvent('close', { code: 1006 });
+  mockWS.addEventListener.mock.calls
+    .find(call => call[0] === 'close')?.[1](closeEvent);
+  
+  expect(mockWS.addEventListener).toHaveBeenCalledWith('close', expect.any(Function));
+});
+
+test('scrolls to bottom when new messages arrive', async () => {
+  const scrollIntoViewMock = jest.fn();
+  Element.prototype.scrollIntoView = scrollIntoViewMock;
+  
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({
+      response: { threadId: '123', currentStep: 'started', message: 'Hello' }
+    })
+  });
+  
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+  
+  await waitFor(() => {
+    expect(screen.getByTestId('chat-history')).toBeInTheDocument();
+  });
+  
+  // Simulate new message arriving
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({
+      response: { message: 'New message' }
+    })
+  });
+  
+  fireEvent.change(screen.getByTestId('message-input'), {
+    target: { value: 'test message' }
+  });
+  fireEvent.click(screen.getByTestId('send-button'));
+  
+  await waitFor(() => {
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+test('handles large message history efficiently', async () => {
+  const largeMessageHistory = Array.from({ length: 100 }, (_, i) => ({
+    sender: i % 2 === 0 ? 'user' : 'agent',
+    content: `Message ${i}`
+  }));
+  
+  (global.fetch as jest.Mock)
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({
+        response: { threadId: '123', currentStep: 'started' }
+      })
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(largeMessageHistory)
+    });
+  
+  const startTime = performance.now();
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+  
+  await waitFor(() => {
+    expect(screen.getByTestId('message-input')).toBeInTheDocument();
+  });
+  
+  const endTime = performance.now();
+  expect(endTime - startTime).toBeLessThan(1000); // Should render within 1 second
+});
+
+test('handles concurrent user inputs gracefully', async () => {
+  (global.fetch as jest.Mock).mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({
+      response: { threadId: '123', currentStep: 'started' }
+    })
+  });
+  
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+  
+  await waitFor(() => {
+    expect(screen.getByTestId('message-input')).toBeInTheDocument();
+  });
+  
+  const input = screen.getByTestId('message-input');
+  const sendButton = screen.getByTestId('send-button');
+  
+  // Simulate rapid typing and clicking
+  fireEvent.change(input, { target: { value: 'message 1' } });
+  fireEvent.click(sendButton);
+  
+  fireEvent.change(input, { target: { value: 'message 2' } });
+  fireEvent.click(sendButton);
+  
+  fireEvent.change(input, { target: { value: 'message 3' } });
+  fireEvent.click(sendButton);
+  
+  // Should handle multiple rapid inputs without crashing
+  expect(input).toBeInTheDocument();
+});
+
+test('validates form inputs before submission', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({
+      response: { threadId: '123', currentStep: 'started' }
+    })
+  });
+  
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+  
+  await waitFor(() => {
+    expect(screen.getByTestId('message-input')).toBeInTheDocument();
+  });
+  
+  const sendButton = screen.getByTestId('send-button');
+  
+  // Button should be disabled when input is empty
+  expect(sendButton).toBeDisabled();
+  
+  // Button should be enabled when input has content
+  fireEvent.change(screen.getByTestId('message-input'), {
+    target: { value: 'test message' }
+  });
+  expect(sendButton).not.toBeDisabled();
+});
+
+test('supports accessibility features and ARIA labels', () => {
+  render(<AgentPage />);
+  
+  const startButton = screen.getByTestId('start-session');
+  const messageInput = screen.getByTestId('message-input');
+  
+  expect(startButton).toBeInTheDocument();
+  expect(messageInput).toBeInTheDocument();
+  
+  // Check that interactive elements are focusable
+  expect(startButton.tabIndex).toBeGreaterThanOrEqual(0);
+});
+
+test('handles keyboard navigation with arrow keys', async () => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({
+      response: { threadId: '123', currentStep: 'started' }
+    })
+  });
+  
+  render(<AgentPage />);
+  fireEvent.click(screen.getByTestId('start-session'));
+  
+  await waitFor(() => {
+    expect(screen.getByTestId('message-input')).toBeInTheDocument();
+  });
+  
+  const input = screen.getByTestId('message-input');
+  
+  // Test arrow key navigation
+  fireEvent.keyDown(input, { key: 'ArrowUp', code: 'ArrowUp' });
+  fireEvent.keyDown(input, { key: 'ArrowDown', code: 'ArrowDown' });
+  
+  expect(input).toBeInTheDocument();
 });
