@@ -521,8 +521,10 @@ func (s *MealPlannerAPIServer) MessageAgent(ctx context.Context, req *apipb.Mess
 
 	// Store user message in database
 	if req.Request.From == "user" && req.Request.Message != "" {
-		t := time.Now().Format(time.RFC3339)
-		server.Services.WorkflowService.AddUserFeedback(req.Request.ThreadId, req.Request.From, req.Request.Message, t)
+		err := server.Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(req.Request.ThreadId, req.Request.From, req.Request.Message)
+		if err != nil {
+			grpcServerLogger.Warnw("MessageAgent: Failed to store user message", "error", err)
+		}
 	}
 
 	ctxTimeout, cancel := context.WithTimeout(ctx, 25*time.Second)
@@ -537,9 +539,7 @@ func (s *MealPlannerAPIServer) MessageAgent(ctx context.Context, req *apipb.Mess
 
 	// Run resume
 	resumeArgs := []string{"resume", req.Request.ThreadId}
-	if req.Request.Interactive {
-		resumeArgs = append(resumeArgs, "--interactive")
-	}
+	// Note: Don't use --interactive with --json as they are incompatible
 	grpcServerLogger.Debugw("MessageAgent: invoking resume", "threadID", req.Request.ThreadId, "args", resumeArgs)
 	resp, err := runAgentCLI(ctxTimeout, resumeArgs...)
 	if err != nil {
@@ -550,8 +550,10 @@ func (s *MealPlannerAPIServer) MessageAgent(ctx context.Context, req *apipb.Mess
 
 	// Add agent response message
 	if resp.Message != "" {
-		t := time.Now().Format(time.RFC3339)
-		server.Services.WorkflowService.AddAgentMessage(req.Request.ThreadId, resp.Message, t)
+		err := server.Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(req.Request.ThreadId, "agent", resp.Message)
+		if err != nil {
+			grpcServerLogger.Warnw("MessageAgent: Failed to store agent message", "error", err)
+		}
 	}
 
 	// Convert response to protobuf format
@@ -730,12 +732,36 @@ func (s *MealPlannerAPIServer) GetCheckpoint(ctx context.Context, req *apipb.Get
 		// Not found
 		return &apipb.GetCheckpointResponse{Found: false}, nil
 	}
-	// Unmarshal stored JSON back into protobuf AgentCheckpoint, discarding unknown fields
+	
+	// Unmarshal checkpoint data into protobuf AgentCheckpoint (without messages)
 	var checkpoint apipb.AgentCheckpoint
 	um := protojson.UnmarshalOptions{DiscardUnknown: true}
 	if err := um.Unmarshal(data, &checkpoint); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal stored checkpoint: %w", err)
 	}
+	
+	// Populate messages from the separate messages table
+	messagesData, err := models.GetMessagesForProtobuf(server.DB, req.ThreadId)
+	if err != nil {
+		grpcServerLogger.Warnw("GetCheckpoint: Failed to get messages from table", "threadID", req.ThreadId, "error", err)
+		// Continue without messages rather than failing
+		messagesData = []map[string]interface{}{}
+	}
+	
+	// Convert to protobuf Message format
+	var protoMessages []*apipb.Message
+	for _, msgData := range messagesData {
+		protoMessages = append(protoMessages, &apipb.Message{
+			ThreadId:  msgData["thread_id"].(string),
+			Sender:    msgData["sender"].(string),
+			Content:   msgData["content"].(string),
+			CreatedAt: msgData["created_at"].(string),
+		})
+	}
+	
+	// Populate the messages field with messages from the table
+	checkpoint.Messages = protoMessages
+	
 	// Metadata is currently not stored separately; return empty with step if available
 	meta := &apipb.AgentCheckpointMetadata{}
 	if checkpoint.Step != 0 {
@@ -745,7 +771,7 @@ func (s *MealPlannerAPIServer) GetCheckpoint(ctx context.Context, req *apipb.Get
 		Checkpoint: &checkpoint,
 		Metadata:   meta,
 	}
-	grpcServerLogger.Debugw("Debuggyz: GetCheckpoint: returning checkpoint", "threadID", req.ThreadId, "ns", ns, "currentStep", checkpoint.State.GetCurrentStep())
+	grpcServerLogger.Debugw("Debuggyz: GetCheckpoint: returning checkpoint", "threadID", req.ThreadId, "ns", ns, "currentStep", checkpoint.State.GetCurrentStep(), "messageCount", len(protoMessages))
 	return &apipb.GetCheckpointResponse{
 		Tuple: checkpointTuple,
 		Found: true,
@@ -770,6 +796,10 @@ func (s *MealPlannerAPIServer) PutCheckpoint(ctx context.Context, req *apipb.Put
 	if workflowType == "" {
 		workflowType = "meal_planning"
 	}
+
+	// Messages are now stored separately in the messages table
+	// Clear any messages from the checkpoint data before storing
+	req.Checkpoint.Messages = nil
 
 	// Marshal checkpoint to JSON first (canonical protojson output).
 	checkpointData, err := marshalOpts.Marshal(req.Checkpoint)

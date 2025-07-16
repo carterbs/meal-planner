@@ -2119,6 +2119,12 @@ const docTemplate = `{
                         "checkpoint": {
                             "type": "object",
                             "properties": {
+                                "messages": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/main.WorkflowMessageResponse"
+                                    }
+                                },
                                 "state": {
                                     "type": "object",
                                     "properties": {

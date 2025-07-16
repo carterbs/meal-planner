@@ -38,7 +38,6 @@ interface WorkflowStatusCompat {
 
 interface WorkflowGraphResult {
   currentStep?: string;
-  current_step?: string;
   [key: string]: unknown;
 }
 // ----------------------------------------------------------------
@@ -178,7 +177,7 @@ export class WorkflowManager {
           ? 'Workflow completed successfully'
           : 'Workflow step executed successfully',
         currentStep: session.currentStep,
-        threadId,
+        threadId
       };
     } catch (error) {
       const errorMessage =

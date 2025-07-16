@@ -65,65 +65,94 @@ func UpdateWorkflowCheckpoint(db *sql.DB, threadID string, data []byte) error {
 	return err
 }
 
-// UpdateWorkflowCheckpointWithMessage appends a message to the checkpoint_data messages list
-func UpdateWorkflowCheckpointWithMessage(db *sql.DB, threadID, sender, message string) error {
-	data, _, err := GetWorkflowCheckpoint(db, threadID)
+// AddMessage stores a message in the messages table
+func AddMessage(db *sql.DB, threadID, sender, content string) error {
+	const query = `
+		INSERT INTO messages (thread_id, sender, content, created_at)
+		VALUES ($1, $2, $3, NOW())`
+	
+	_, err := db.Exec(query, threadID, sender, content)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to insert message: %w", err)
 	}
-	// Unmarshal existing data
-	var m map[string]interface{}
-	if err := json.Unmarshal(data, &m); err != nil {
-		return fmt.Errorf("failed to unmarshal checkpoint: %w", err)
-	}
-	// Append to messages
-	msgs, ok := m["messages"].([]interface{})
-	if !ok {
-		msgs = []interface{}{}
-	}
-	msgs = append(msgs, map[string]interface{}{
-		"sender": sender,
-		"text":   message,
-		"time":   time.Now().Format(time.RFC3339),
-	})
-	m["messages"] = msgs
-	// Marshal back
-	newData, err := json.Marshal(m)
-	if err != nil {
-		return fmt.Errorf("failed to marshal checkpoint: %w", err)
-	}
-	// Upsert
-	return UpdateWorkflowCheckpoint(db, threadID, newData)
+	return nil
 }
 
-// GetMessages extracts chat messages from the latest checkpoint_data
+// GetMessages retrieves all messages for a thread
 func GetMessages(db *sql.DB, threadID string) ([]ChatMessage, error) {
-	data, _, err := GetWorkflowCheckpoint(db, threadID)
+	const query = `
+		SELECT sender, content FROM messages 
+		WHERE thread_id = $1 
+		ORDER BY created_at ASC`
+	
+	rows, err := db.Query(query, threadID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query messages: %w", err)
 	}
-	var m map[string]interface{}
-	if err := json.Unmarshal(data, &m); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal checkpoint: %w", err)
-	}
-	arr, ok := m["messages"].([]interface{})
-	if !ok {
-		return []ChatMessage{}, nil
-	}
-	var msgs []ChatMessage
-	for _, v := range arr {
-		if vm, ok := v.(map[string]interface{}); ok {
-			sender, _ := vm["sender"].(string)
-			text, _ := vm["text"].(string)
-			msgs = append(msgs, ChatMessage{Sender: sender, Text: text})
+	defer rows.Close()
+	
+	var messages []ChatMessage
+	for rows.Next() {
+		var msg ChatMessage
+		if err := rows.Scan(&msg.Sender, &msg.Text); err != nil {
+			return nil, fmt.Errorf("failed to scan message: %w", err)
 		}
+		messages = append(messages, msg)
 	}
-	return msgs, nil
+	
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating messages: %w", err)
+	}
+	
+	return messages, nil
 }
 
-// AddMessage appends a message and returns it
-func AddMessage(db *sql.DB, threadID, sender, message string) (ChatMessage, error) {
-	err := UpdateWorkflowCheckpointWithMessage(db, threadID, sender, message)
+// GetMessagesForProtobuf retrieves all messages for a thread in protobuf format
+func GetMessagesForProtobuf(db *sql.DB, threadID string) ([]map[string]interface{}, error) {
+	const query = `
+		SELECT sender, content, created_at FROM messages 
+		WHERE thread_id = $1 
+		ORDER BY created_at ASC`
+	
+	rows, err := db.Query(query, threadID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query messages: %w", err)
+	}
+	defer rows.Close()
+	
+	var messages []map[string]interface{}
+	for rows.Next() {
+		var sender, content string
+		var createdAt time.Time
+		
+		if err := rows.Scan(&sender, &content, &createdAt); err != nil {
+			return nil, fmt.Errorf("failed to scan message: %w", err)
+		}
+		
+		messages = append(messages, map[string]interface{}{
+			"thread_id":  threadID,
+			"sender":     sender,
+			"content":    content,
+			"created_at": createdAt.Format(time.RFC3339),
+		})
+	}
+	
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating messages: %w", err)
+	}
+	
+	return messages, nil
+}
+
+// UpdateWorkflowCheckpointWithMessage is deprecated - use AddMessage instead
+func UpdateWorkflowCheckpointWithMessage(db *sql.DB, threadID, sender, message string) error {
+	// Just add to messages table now
+	return AddMessage(db, threadID, sender, message)
+}
+
+// AddMessageLegacy appends a message and returns it (for backward compatibility)
+func AddMessageLegacy(db *sql.DB, threadID, sender, message string) (ChatMessage, error) {
+	err := AddMessage(db, threadID, sender, message)
 	if err != nil {
 		return ChatMessage{}, err
 	}

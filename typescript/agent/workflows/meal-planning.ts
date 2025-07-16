@@ -631,12 +631,15 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     // Call LLM to pick alternatives based on feedback
     const result = await this.applyFeedbackWithLLM(
       state.mealPlan,
-      feedbackMessages,
+    feedbackMessages,
       state.threadId,
     );
+
     await this.saveMealPlan(state.threadId, result.mealPlan);
+    // CLAUDE-DO-IT-HERE.
+
     return {
-      mealPlan: result.mealPlan,
+      mealPlan: result.mealPlan
     };
   }
 

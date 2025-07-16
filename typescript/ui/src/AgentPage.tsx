@@ -461,6 +461,17 @@ const AgentPage: React.FC = () => {
       }
       const state = checkpoint.state;
 
+      // Update messages from checkpoint
+      if (checkpoint.messages && Array.isArray(checkpoint.messages)) {
+        const formattedMessages: ChatMessage[] = checkpoint.messages.map(
+          (msg: any) => ({
+            sender: msg.sender === 'user' ? 'user' : 'agent',
+            text: msg.content ?? '',
+          }),
+        );
+        setMessages(formattedMessages);
+      }
+
       // Update meal plan
       if (state.mealPlan) {
         const newPlan = new WeeklyMealPlan({ days: state.mealPlan.days ?? [] });

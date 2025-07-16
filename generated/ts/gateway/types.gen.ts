@@ -228,6 +228,7 @@ export type MainCheckpointResponse = {
     found?: boolean;
     tuple?: {
         checkpoint?: {
+            messages?: Array<MainWorkflowMessageResponse>;
             state?: {
                 currentStep?: string;
                 mealPlan?: {
