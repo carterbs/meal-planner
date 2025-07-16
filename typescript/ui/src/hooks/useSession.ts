@@ -50,7 +50,14 @@ export default function useSession(startSession: () => Promise<void>) {
           localStorage.removeItem('sessionId');
           return;
         }
-        const data: WorkflowState = { ...state, threadId: id };
+        
+        // Extract messages from checkpoint
+        const messages = cp.tuple?.checkpoint?.messages?.map(msg => ({
+          content: msg.content || '',
+          sender: msg.sender || '',
+        })) || [];
+        
+        const data: WorkflowState = { ...state, threadId: id, messages };
         setResumeData(data);
         // Fetch shopping list for resumed meal plan
         if (state.mealPlan) {

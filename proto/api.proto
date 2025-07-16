@@ -407,6 +407,7 @@ message MealPlanningCheckpointState {
   int32 iteration_count = 8;
   ShoppingList shopping_list = 9;
   bool is_finalized = 10;
+  string user_message = 11; // LLM-generated response to user feedback
 }
 
 // LangGraph checkpoint persistence (strict)

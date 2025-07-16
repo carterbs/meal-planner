@@ -116,6 +116,7 @@ type CheckpointResponse struct {
 				Participants []string `json:"participants"`
 				CurrentStep  string   `json:"currentStep"`
 			} `json:"state"`
+			Messages []WorkflowMessageResponse `json:"messages"`
 		} `json:"checkpoint"`
 	} `json:"tuple"`
 	Found bool `json:"found"`

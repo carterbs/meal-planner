@@ -356,6 +356,10 @@ definitions:
         properties:
           checkpoint:
             properties:
+              messages:
+                items:
+                  $ref: '#/definitions/main.WorkflowMessageResponse'
+                type: array
               state:
                 properties:
                   currentStep:
