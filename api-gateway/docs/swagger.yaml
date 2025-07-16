@@ -28,10 +28,6 @@ definitions:
     type: object
   apipb.AgentCheckpoint:
     properties:
-      messages:
-        items:
-          $ref: '#/definitions/apipb.Message'
-        type: array
       next:
         items:
           type: string
@@ -151,21 +147,6 @@ definitions:
         type: string
       updated_at:
         $ref: '#/definitions/timestamppb.Timestamp'
-      user_message:
-        description: LLM-generated response to user feedback
-        type: string
-    type: object
-  apipb.Message:
-    properties:
-      content:
-        type: string
-      created_at:
-        type: string
-      sender:
-        description: '"user" or "agent"'
-        type: string
-      thread_id:
-        type: string
     type: object
   apipb.PutCheckpointRequest:
     properties:
@@ -359,10 +340,6 @@ definitions:
         properties:
           checkpoint:
             properties:
-              messages:
-                items:
-                  $ref: '#/definitions/main.WorkflowMessageResponse'
-                type: array
               state:
                 properties:
                   currentStep:
@@ -519,6 +496,11 @@ definitions:
         items:
           $ref: '#/definitions/main.ShoppingListItemResponse'
         type: array
+    type: object
+  main.SimpleMessageResponse:
+    properties:
+      message:
+        type: string
     type: object
   main.StepResponse:
     properties:
@@ -748,7 +730,7 @@ paths:
         "200":
           description: Workflow cancelled successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -805,7 +787,7 @@ paths:
         "200":
           description: Checkpoint saved successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -905,7 +887,7 @@ paths:
         "200":
           description: Meal plan saved successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -935,7 +917,7 @@ paths:
         "200":
           description: Meal plan finalized successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -1085,7 +1067,7 @@ paths:
         "200":
           description: Meal deleted successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -1187,7 +1169,7 @@ paths:
         "200":
           description: All steps deleted successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -1283,7 +1265,7 @@ paths:
         "200":
           description: Step deleted successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -1392,7 +1374,7 @@ paths:
         "200":
           description: Steps reordered successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -1559,7 +1541,7 @@ paths:
         "200":
           description: Workflow abandoned successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -1622,7 +1604,7 @@ paths:
         "200":
           description: Message added successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -1657,7 +1639,7 @@ paths:
         "200":
           description: Session state updated successfully
           schema:
-            $ref: '#/definitions/main.MessageResponse'
+            $ref: '#/definitions/main.SimpleMessageResponse'
         "400":
           description: Bad request
           schema:

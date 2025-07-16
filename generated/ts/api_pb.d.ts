@@ -1673,12 +1673,6 @@ export declare class MealPlanningCheckpointState extends Message$1<MealPlanningC
      * @generated from field: bool is_finalized = 10;
      */
     isFinalized: boolean;
-    /**
-     * LLM-generated response to user feedback
-     *
-     * @generated from field: string user_message = 11;
-     */
-    userMessage: string;
     constructor(data?: PartialMessage<MealPlanningCheckpointState>);
     static readonly runtime: typeof proto3;
     static readonly typeName = "mealplanner.api.MealPlanningCheckpointState";
@@ -1699,15 +1693,11 @@ export declare class AgentCheckpoint extends Message$1<AgentCheckpoint> {
      */
     state?: MealPlanningCheckpointState;
     /**
-     * @generated from field: repeated mealplanner.api.Message messages = 2;
-     */
-    messages: Message[];
-    /**
-     * @generated from field: repeated string next = 3;
+     * @generated from field: repeated string next = 2;
      */
     next: string[];
     /**
-     * @generated from field: int32 step = 4;
+     * @generated from field: int32 step = 3;
      */
     step: number;
     constructor(data?: PartialMessage<AgentCheckpoint>);

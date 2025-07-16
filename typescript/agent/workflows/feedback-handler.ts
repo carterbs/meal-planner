@@ -5,7 +5,6 @@ import {
   MealPlanningStep,
 } from '../shared/types';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
-import { FeedbackEntryProto } from '@mealplanner/generated';
 
 export interface FeedbackInput {
   threadId: string;
@@ -19,78 +18,6 @@ export class FeedbackHandler {
 
   constructor(checkpointer: HttpCheckpointSaver) {
     this.checkpointer = checkpointer;
-  }
-
-  /**
-   * Add feedback to a meal planning workflow
-   */
-  async addFeedback(input: FeedbackInput): Promise<boolean> {
-    try {
-      // Get current workflow state
-      const config = {
-        configurable: {
-          threadId: input.threadId,
-          workflow_type: WorkflowType.MEAL_PLANNING,
-        },
-      };
-
-      const tuple = await this.checkpointer.getTuple(config);
-      if (!tuple) {
-        errorLog(
-          `❌ [FEEDBACK] No workflow found for thread ${input.threadId}`,
-        );
-        return false;
-      }
-
-      // Do NOT persist feedback. Only log receipt and return true.
-      infoLog(
-        `💬 [FEEDBACK] (NO-OP) Received feedback from ${input.from} to workflow ${input.threadId}`,
-      );
-      return true;
-    } catch (error) {
-      errorLog(`${`❌ [FEEDBACK] Error adding feedback:`} ${error}`);
-      return false;
-    }
-  }
-
-  /**
-   * Get all feedback for a workflow
-   */
-  async getFeedback(threadId: string): Promise<FeedbackEntryProto[]> {
-    try {
-      const config = {
-        configurable: {
-          threadId: threadId,
-          workflow_type: WorkflowType.MEAL_PLANNING,
-        },
-      };
-
-      const tuple = await this.checkpointer.getTuple(config);
-      if (!tuple) {
-        return [];
-      }
-
-      const [checkpoint] = tuple;
-      if (!checkpoint.state) {
-        return [];
-      }
-      const proto = checkpoint.state;
-      return proto.feedbackHistory;
-    } catch (error) {
-      errorLog(`${`❌ [FEEDBACK] Error getting feedback:`} ${error}`);
-      return [];
-    }
-  }
-
-  /**
-   * Get feedback for a specific meal plan version
-   */
-  async getFeedbackForVersion(
-    threadId: string,
-    version: number,
-  ): Promise<FeedbackEntryProto[]> {
-    const allFeedback = await this.getFeedback(threadId);
-    return allFeedback.filter((f) => f.mealPlanVersion === version);
   }
 
   /**
@@ -147,108 +74,5 @@ export class FeedbackHandler {
       }
       return false;
     }
-  }
-
-  /**
-   * Process feedback and determine required actions
-   */
-  async processFeedback(
-    threadId: string,
-    version: number,
-  ): Promise<{
-    requiresChanges: boolean;
-    suggestions: string[];
-    sentiment: 'positive' | 'negative' | 'neutral';
-  }> {
-    const feedback = await this.getFeedbackForVersion(threadId, version);
-
-    if (feedback.length === 0) {
-      return {
-        requiresChanges: false,
-        suggestions: [],
-        sentiment: 'neutral',
-      };
-    }
-
-    // Simple feedback analysis
-    const messages = feedback.map((f) => f.message.toLowerCase());
-    const negativeKeywords = [
-      "don't like",
-      'change',
-      'different',
-      'no',
-      'not',
-      'replace',
-      'swap',
-    ];
-
-    const positiveKeywords = [
-      'good',
-      'great',
-      'like',
-      'love',
-      'perfect',
-      'yes',
-      'approve',
-    ];
-
-    let negativeCount = 0;
-    let positiveCount = 0;
-    const suggestions: string[] = [];
-
-    for (const message of messages) {
-      negativeCount += negativeKeywords.filter((keyword) =>
-        message.includes(keyword),
-      ).length;
-      positiveCount += positiveKeywords.filter((keyword) =>
-        message.includes(keyword),
-      ).length;
-
-      // Extract specific change requests
-      if (
-        message.includes('change') ||
-        message.includes('replace') ||
-        message.includes('swap')
-      ) {
-        suggestions.push(`Consider addressing: "${message}"`);
-      }
-    }
-
-    const requiresChanges = negativeCount > positiveCount;
-    const sentiment =
-      negativeCount > positiveCount
-        ? 'negative'
-        : positiveCount > negativeCount
-          ? 'positive'
-          : 'neutral';
-
-    return {
-      requiresChanges,
-      suggestions,
-      sentiment,
-    };
-  }
-
-  /**
-   * Format feedback for display
-   */
-  formatFeedback(feedback: FeedbackEntryProto[]): string {
-    if (feedback.length === 0) {
-      return 'No feedback received yet.';
-    }
-
-    const lines: string[] = [];
-    lines.push('💬 Feedback History:');
-    lines.push('='.repeat(40));
-
-    for (const entry of feedback) {
-      const timestamp = entry.timestamp?.toDate().toLocaleString() ?? 'Unknown';
-      lines.push(
-        `\n👤 ${entry.from} (v${entry.mealPlanVersion}) - ${timestamp}:`,
-      );
-      lines.push(`   ${entry.message}`);
-    }
-
-    return lines.join('\n');
   }
 }

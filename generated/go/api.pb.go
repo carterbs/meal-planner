@@ -4000,7 +4000,6 @@ type MealPlanningCheckpointState struct {
 	IterationCount  int32                  `protobuf:"varint,8,opt,name=iteration_count,json=iterationCount,proto3" json:"iteration_count,omitempty"`
 	ShoppingList    *ShoppingList          `protobuf:"bytes,9,opt,name=shopping_list,json=shoppingList,proto3" json:"shopping_list,omitempty"`
 	IsFinalized     bool                   `protobuf:"varint,10,opt,name=is_finalized,json=isFinalized,proto3" json:"is_finalized,omitempty"`
-	UserMessage     string                 `protobuf:"bytes,11,opt,name=user_message,json=userMessage,proto3" json:"user_message,omitempty"` // LLM-generated response to user feedback
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -4105,20 +4104,12 @@ func (x *MealPlanningCheckpointState) GetIsFinalized() bool {
 	return false
 }
 
-func (x *MealPlanningCheckpointState) GetUserMessage() string {
-	if x != nil {
-		return x.UserMessage
-	}
-	return ""
-}
-
 // LangGraph checkpoint persistence (strict)
 type AgentCheckpoint struct {
 	state         protoimpl.MessageState       `protogen:"open.v1"`
 	State         *MealPlanningCheckpointState `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	Messages      []*Message                   `protobuf:"bytes,2,rep,name=messages,proto3" json:"messages,omitempty"`
-	Next          []string                     `protobuf:"bytes,3,rep,name=next,proto3" json:"next,omitempty"`
-	Step          int32                        `protobuf:"varint,4,opt,name=step,proto3" json:"step,omitempty"`
+	Next          []string                     `protobuf:"bytes,2,rep,name=next,proto3" json:"next,omitempty"`
+	Step          int32                        `protobuf:"varint,3,opt,name=step,proto3" json:"step,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4156,13 +4147,6 @@ func (*AgentCheckpoint) Descriptor() ([]byte, []int) {
 func (x *AgentCheckpoint) GetState() *MealPlanningCheckpointState {
 	if x != nil {
 		return x.State
-	}
-	return nil
-}
-
-func (x *AgentCheckpoint) GetMessages() []*Message {
-	if x != nil {
-		return x.Messages
 	}
 	return nil
 }
@@ -5214,7 +5198,7 @@ const file_api_proto_rawDesc = "" +
 	"\x04from\x18\x01 \x01(\tR\x04from\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x128\n" +
 	"\ttimestamp\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12*\n" +
-	"\x11meal_plan_version\x18\x04 \x01(\x05R\x0fmealPlanVersion\"\xb8\x04\n" +
+	"\x11meal_plan_version\x18\x04 \x01(\x05R\x0fmealPlanVersion\"\x95\x04\n" +
 	"\x1bMealPlanningCheckpointState\x12\x1b\n" +
 	"\tthread_id\x18\x01 \x01(\tR\bthreadId\x12\"\n" +
 	"\fparticipants\x18\x02 \x03(\tR\fparticipants\x129\n" +
@@ -5228,13 +5212,11 @@ const file_api_proto_rawDesc = "" +
 	"\x0fiteration_count\x18\b \x01(\x05R\x0eiterationCount\x12B\n" +
 	"\rshopping_list\x18\t \x01(\v2\x1d.mealplanner.api.ShoppingListR\fshoppingList\x12!\n" +
 	"\fis_finalized\x18\n" +
-	" \x01(\bR\visFinalized\x12!\n" +
-	"\fuser_message\x18\v \x01(\tR\vuserMessage\"\xb3\x01\n" +
+	" \x01(\bR\visFinalized\"}\n" +
 	"\x0fAgentCheckpoint\x12B\n" +
-	"\x05state\x18\x01 \x01(\v2,.mealplanner.api.MealPlanningCheckpointStateR\x05state\x124\n" +
-	"\bmessages\x18\x02 \x03(\v2\x18.mealplanner.api.MessageR\bmessages\x12\x12\n" +
-	"\x04next\x18\x03 \x03(\tR\x04next\x12\x12\n" +
-	"\x04step\x18\x04 \x01(\x05R\x04step\"E\n" +
+	"\x05state\x18\x01 \x01(\v2,.mealplanner.api.MealPlanningCheckpointStateR\x05state\x12\x12\n" +
+	"\x04next\x18\x02 \x03(\tR\x04next\x12\x12\n" +
+	"\x04step\x18\x03 \x01(\x05R\x04step\"E\n" +
 	"\x17AgentCheckpointMetadata\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x12\n" +
 	"\x04step\x18\x02 \x01(\x05R\x04step\"\x99\x01\n" +
@@ -5496,97 +5478,96 @@ var file_api_proto_depIdxs = []int32{
 	76, // 42: mealplanner.api.MealPlanningCheckpointState.feedback_history:type_name -> mealplanner.api.FeedbackEntryProto
 	11, // 43: mealplanner.api.MealPlanningCheckpointState.shopping_list:type_name -> mealplanner.api.ShoppingList
 	77, // 44: mealplanner.api.AgentCheckpoint.state:type_name -> mealplanner.api.MealPlanningCheckpointState
-	10, // 45: mealplanner.api.AgentCheckpoint.messages:type_name -> mealplanner.api.Message
-	78, // 46: mealplanner.api.CheckpointTuple.checkpoint:type_name -> mealplanner.api.AgentCheckpoint
-	79, // 47: mealplanner.api.CheckpointTuple.metadata:type_name -> mealplanner.api.AgentCheckpointMetadata
-	80, // 48: mealplanner.api.GetCheckpointResponse.tuple:type_name -> mealplanner.api.CheckpointTuple
-	78, // 49: mealplanner.api.PutCheckpointRequest.checkpoint:type_name -> mealplanner.api.AgentCheckpoint
-	79, // 50: mealplanner.api.PutCheckpointRequest.metadata:type_name -> mealplanner.api.AgentCheckpointMetadata
-	87, // 51: mealplanner.api.ListCheckpointsResponse.entries:type_name -> mealplanner.api.CheckpointEntry
-	80, // 52: mealplanner.api.CheckpointEntry.tuple:type_name -> mealplanner.api.CheckpointTuple
-	94, // 53: mealplanner.api.LogEntry.timestamp:type_name -> google.protobuf.Timestamp
-	93, // 54: mealplanner.api.LogEntry.fields:type_name -> mealplanner.api.LogEntry.FieldsEntry
-	88, // 55: mealplanner.api.LogRequest.entry:type_name -> mealplanner.api.LogEntry
-	88, // 56: mealplanner.api.LogBatchRequest.entries:type_name -> mealplanner.api.LogEntry
-	89, // 57: mealplanner.api.LoggingService.Log:input_type -> mealplanner.api.LogRequest
-	91, // 58: mealplanner.api.LoggingService.LogBatch:input_type -> mealplanner.api.LogBatchRequest
-	95, // 59: mealplanner.api.MealPlannerAPI.HealthCheck:input_type -> google.protobuf.Empty
-	95, // 60: mealplanner.api.MealPlannerAPI.Reconnect:input_type -> google.protobuf.Empty
-	95, // 61: mealplanner.api.MealPlannerAPI.GetMealPlan:input_type -> google.protobuf.Empty
-	95, // 62: mealplanner.api.MealPlannerAPI.GenerateMealPlan:input_type -> google.protobuf.Empty
-	22, // 63: mealplanner.api.MealPlannerAPI.FinalizeMealPlan:input_type -> mealplanner.api.FinalizeMealPlanRequest
-	95, // 64: mealplanner.api.MealPlannerAPI.GetMealPlanICS:input_type -> google.protobuf.Empty
-	25, // 65: mealplanner.api.MealPlannerAPI.GetShoppingList:input_type -> mealplanner.api.GetShoppingListRequest
-	27, // 66: mealplanner.api.MealPlannerAPI.GetAllMeals:input_type -> mealplanner.api.GetAllMealsRequest
-	29, // 67: mealplanner.api.MealPlannerAPI.CreateMeal:input_type -> mealplanner.api.CreateMealRequest
-	31, // 68: mealplanner.api.MealPlannerAPI.SwapMeal:input_type -> mealplanner.api.SwapMealRequest
-	33, // 69: mealplanner.api.MealPlannerAPI.RemoveMeal:input_type -> mealplanner.api.RemoveMealRequest
-	35, // 70: mealplanner.api.MealPlannerAPI.ReplaceMeal:input_type -> mealplanner.api.ReplaceMealRequest
-	37, // 71: mealplanner.api.MealPlannerAPI.UpdateMealIngredient:input_type -> mealplanner.api.UpdateMealIngredientRequest
-	39, // 72: mealplanner.api.MealPlannerAPI.DeleteMealIngredient:input_type -> mealplanner.api.DeleteMealIngredientRequest
-	41, // 73: mealplanner.api.MealPlannerAPI.DeleteMeal:input_type -> mealplanner.api.DeleteMealRequest
-	43, // 74: mealplanner.api.MealPlannerAPI.GetSteps:input_type -> mealplanner.api.GetStepsRequest
-	45, // 75: mealplanner.api.MealPlannerAPI.AddStep:input_type -> mealplanner.api.AddStepRequest
-	47, // 76: mealplanner.api.MealPlannerAPI.AddBulkSteps:input_type -> mealplanner.api.AddBulkStepsRequest
-	49, // 77: mealplanner.api.MealPlannerAPI.UpdateStep:input_type -> mealplanner.api.UpdateStepRequest
-	51, // 78: mealplanner.api.MealPlannerAPI.DeleteStep:input_type -> mealplanner.api.DeleteStepRequest
-	53, // 79: mealplanner.api.MealPlannerAPI.ReorderSteps:input_type -> mealplanner.api.ReorderStepsRequest
-	55, // 80: mealplanner.api.MealPlannerAPI.DeleteAllSteps:input_type -> mealplanner.api.DeleteAllStepsRequest
-	57, // 81: mealplanner.api.MealPlannerAPI.StartAgentWorkflow:input_type -> mealplanner.api.StartAgentWorkflowRequest
-	59, // 82: mealplanner.api.MealPlannerAPI.MessageAgent:input_type -> mealplanner.api.MessageAgentRequest
-	61, // 83: mealplanner.api.MealPlannerAPI.GetWorkflowStatus:input_type -> mealplanner.api.GetWorkflowStatusRequest
-	95, // 84: mealplanner.api.MealPlannerAPI.ListWorkflows:input_type -> google.protobuf.Empty
-	64, // 85: mealplanner.api.MealPlannerAPI.CancelWorkflow:input_type -> mealplanner.api.CancelWorkflowRequest
-	66, // 86: mealplanner.api.MealPlannerAPI.GetWorkflowState:input_type -> mealplanner.api.GetWorkflowStateRequest
-	68, // 87: mealplanner.api.MealPlannerAPI.AbandonWorkflow:input_type -> mealplanner.api.AbandonWorkflowRequest
-	70, // 88: mealplanner.api.MealPlannerAPI.AddMessage:input_type -> mealplanner.api.AddMessageRequest
-	72, // 89: mealplanner.api.MealPlannerAPI.GetMessages:input_type -> mealplanner.api.GetMessagesRequest
-	74, // 90: mealplanner.api.MealPlannerAPI.UpdateSessionState:input_type -> mealplanner.api.UpdateSessionStateRequest
-	81, // 91: mealplanner.api.MealPlannerAPI.GetCheckpoint:input_type -> mealplanner.api.GetCheckpointRequest
-	83, // 92: mealplanner.api.MealPlannerAPI.PutCheckpoint:input_type -> mealplanner.api.PutCheckpointRequest
-	85, // 93: mealplanner.api.MealPlannerAPI.ListCheckpoints:input_type -> mealplanner.api.ListCheckpointsRequest
-	90, // 94: mealplanner.api.LoggingService.Log:output_type -> mealplanner.api.LogResponse
-	92, // 95: mealplanner.api.LoggingService.LogBatch:output_type -> mealplanner.api.LogBatchResponse
-	18, // 96: mealplanner.api.MealPlannerAPI.HealthCheck:output_type -> mealplanner.api.HealthCheckResponse
-	19, // 97: mealplanner.api.MealPlannerAPI.Reconnect:output_type -> mealplanner.api.ReconnectResponse
-	20, // 98: mealplanner.api.MealPlannerAPI.GetMealPlan:output_type -> mealplanner.api.GetMealPlanResponse
-	21, // 99: mealplanner.api.MealPlannerAPI.GenerateMealPlan:output_type -> mealplanner.api.GenerateMealPlanResponse
-	23, // 100: mealplanner.api.MealPlannerAPI.FinalizeMealPlan:output_type -> mealplanner.api.FinalizeMealPlanResponse
-	24, // 101: mealplanner.api.MealPlannerAPI.GetMealPlanICS:output_type -> mealplanner.api.MealPlanICSResponse
-	26, // 102: mealplanner.api.MealPlannerAPI.GetShoppingList:output_type -> mealplanner.api.GetShoppingListResponse
-	28, // 103: mealplanner.api.MealPlannerAPI.GetAllMeals:output_type -> mealplanner.api.GetAllMealsResponse
-	30, // 104: mealplanner.api.MealPlannerAPI.CreateMeal:output_type -> mealplanner.api.CreateMealResponse
-	32, // 105: mealplanner.api.MealPlannerAPI.SwapMeal:output_type -> mealplanner.api.SwapMealResponse
-	34, // 106: mealplanner.api.MealPlannerAPI.RemoveMeal:output_type -> mealplanner.api.RemoveMealResponse
-	36, // 107: mealplanner.api.MealPlannerAPI.ReplaceMeal:output_type -> mealplanner.api.ReplaceMealResponse
-	38, // 108: mealplanner.api.MealPlannerAPI.UpdateMealIngredient:output_type -> mealplanner.api.UpdateMealIngredientResponse
-	40, // 109: mealplanner.api.MealPlannerAPI.DeleteMealIngredient:output_type -> mealplanner.api.DeleteMealIngredientResponse
-	42, // 110: mealplanner.api.MealPlannerAPI.DeleteMeal:output_type -> mealplanner.api.DeleteMealResponse
-	44, // 111: mealplanner.api.MealPlannerAPI.GetSteps:output_type -> mealplanner.api.GetStepsResponse
-	46, // 112: mealplanner.api.MealPlannerAPI.AddStep:output_type -> mealplanner.api.AddStepResponse
-	48, // 113: mealplanner.api.MealPlannerAPI.AddBulkSteps:output_type -> mealplanner.api.AddBulkStepsResponse
-	50, // 114: mealplanner.api.MealPlannerAPI.UpdateStep:output_type -> mealplanner.api.UpdateStepResponse
-	52, // 115: mealplanner.api.MealPlannerAPI.DeleteStep:output_type -> mealplanner.api.DeleteStepResponse
-	54, // 116: mealplanner.api.MealPlannerAPI.ReorderSteps:output_type -> mealplanner.api.ReorderStepsResponse
-	56, // 117: mealplanner.api.MealPlannerAPI.DeleteAllSteps:output_type -> mealplanner.api.DeleteAllStepsResponse
-	58, // 118: mealplanner.api.MealPlannerAPI.StartAgentWorkflow:output_type -> mealplanner.api.StartAgentWorkflowResponse
-	60, // 119: mealplanner.api.MealPlannerAPI.MessageAgent:output_type -> mealplanner.api.MessageAgentResponse
-	62, // 120: mealplanner.api.MealPlannerAPI.GetWorkflowStatus:output_type -> mealplanner.api.GetWorkflowStatusResponse
-	63, // 121: mealplanner.api.MealPlannerAPI.ListWorkflows:output_type -> mealplanner.api.ListWorkflowsResponse
-	65, // 122: mealplanner.api.MealPlannerAPI.CancelWorkflow:output_type -> mealplanner.api.CancelWorkflowResponse
-	67, // 123: mealplanner.api.MealPlannerAPI.GetWorkflowState:output_type -> mealplanner.api.GetWorkflowStateResponse
-	69, // 124: mealplanner.api.MealPlannerAPI.AbandonWorkflow:output_type -> mealplanner.api.AbandonWorkflowResponse
-	71, // 125: mealplanner.api.MealPlannerAPI.AddMessage:output_type -> mealplanner.api.AddMessageResponse
-	73, // 126: mealplanner.api.MealPlannerAPI.GetMessages:output_type -> mealplanner.api.GetMessagesResponse
-	75, // 127: mealplanner.api.MealPlannerAPI.UpdateSessionState:output_type -> mealplanner.api.UpdateSessionStateResponse
-	82, // 128: mealplanner.api.MealPlannerAPI.GetCheckpoint:output_type -> mealplanner.api.GetCheckpointResponse
-	84, // 129: mealplanner.api.MealPlannerAPI.PutCheckpoint:output_type -> mealplanner.api.PutCheckpointResponse
-	86, // 130: mealplanner.api.MealPlannerAPI.ListCheckpoints:output_type -> mealplanner.api.ListCheckpointsResponse
-	94, // [94:131] is the sub-list for method output_type
-	57, // [57:94] is the sub-list for method input_type
-	57, // [57:57] is the sub-list for extension type_name
-	57, // [57:57] is the sub-list for extension extendee
-	0,  // [0:57] is the sub-list for field type_name
+	78, // 45: mealplanner.api.CheckpointTuple.checkpoint:type_name -> mealplanner.api.AgentCheckpoint
+	79, // 46: mealplanner.api.CheckpointTuple.metadata:type_name -> mealplanner.api.AgentCheckpointMetadata
+	80, // 47: mealplanner.api.GetCheckpointResponse.tuple:type_name -> mealplanner.api.CheckpointTuple
+	78, // 48: mealplanner.api.PutCheckpointRequest.checkpoint:type_name -> mealplanner.api.AgentCheckpoint
+	79, // 49: mealplanner.api.PutCheckpointRequest.metadata:type_name -> mealplanner.api.AgentCheckpointMetadata
+	87, // 50: mealplanner.api.ListCheckpointsResponse.entries:type_name -> mealplanner.api.CheckpointEntry
+	80, // 51: mealplanner.api.CheckpointEntry.tuple:type_name -> mealplanner.api.CheckpointTuple
+	94, // 52: mealplanner.api.LogEntry.timestamp:type_name -> google.protobuf.Timestamp
+	93, // 53: mealplanner.api.LogEntry.fields:type_name -> mealplanner.api.LogEntry.FieldsEntry
+	88, // 54: mealplanner.api.LogRequest.entry:type_name -> mealplanner.api.LogEntry
+	88, // 55: mealplanner.api.LogBatchRequest.entries:type_name -> mealplanner.api.LogEntry
+	89, // 56: mealplanner.api.LoggingService.Log:input_type -> mealplanner.api.LogRequest
+	91, // 57: mealplanner.api.LoggingService.LogBatch:input_type -> mealplanner.api.LogBatchRequest
+	95, // 58: mealplanner.api.MealPlannerAPI.HealthCheck:input_type -> google.protobuf.Empty
+	95, // 59: mealplanner.api.MealPlannerAPI.Reconnect:input_type -> google.protobuf.Empty
+	95, // 60: mealplanner.api.MealPlannerAPI.GetMealPlan:input_type -> google.protobuf.Empty
+	95, // 61: mealplanner.api.MealPlannerAPI.GenerateMealPlan:input_type -> google.protobuf.Empty
+	22, // 62: mealplanner.api.MealPlannerAPI.FinalizeMealPlan:input_type -> mealplanner.api.FinalizeMealPlanRequest
+	95, // 63: mealplanner.api.MealPlannerAPI.GetMealPlanICS:input_type -> google.protobuf.Empty
+	25, // 64: mealplanner.api.MealPlannerAPI.GetShoppingList:input_type -> mealplanner.api.GetShoppingListRequest
+	27, // 65: mealplanner.api.MealPlannerAPI.GetAllMeals:input_type -> mealplanner.api.GetAllMealsRequest
+	29, // 66: mealplanner.api.MealPlannerAPI.CreateMeal:input_type -> mealplanner.api.CreateMealRequest
+	31, // 67: mealplanner.api.MealPlannerAPI.SwapMeal:input_type -> mealplanner.api.SwapMealRequest
+	33, // 68: mealplanner.api.MealPlannerAPI.RemoveMeal:input_type -> mealplanner.api.RemoveMealRequest
+	35, // 69: mealplanner.api.MealPlannerAPI.ReplaceMeal:input_type -> mealplanner.api.ReplaceMealRequest
+	37, // 70: mealplanner.api.MealPlannerAPI.UpdateMealIngredient:input_type -> mealplanner.api.UpdateMealIngredientRequest
+	39, // 71: mealplanner.api.MealPlannerAPI.DeleteMealIngredient:input_type -> mealplanner.api.DeleteMealIngredientRequest
+	41, // 72: mealplanner.api.MealPlannerAPI.DeleteMeal:input_type -> mealplanner.api.DeleteMealRequest
+	43, // 73: mealplanner.api.MealPlannerAPI.GetSteps:input_type -> mealplanner.api.GetStepsRequest
+	45, // 74: mealplanner.api.MealPlannerAPI.AddStep:input_type -> mealplanner.api.AddStepRequest
+	47, // 75: mealplanner.api.MealPlannerAPI.AddBulkSteps:input_type -> mealplanner.api.AddBulkStepsRequest
+	49, // 76: mealplanner.api.MealPlannerAPI.UpdateStep:input_type -> mealplanner.api.UpdateStepRequest
+	51, // 77: mealplanner.api.MealPlannerAPI.DeleteStep:input_type -> mealplanner.api.DeleteStepRequest
+	53, // 78: mealplanner.api.MealPlannerAPI.ReorderSteps:input_type -> mealplanner.api.ReorderStepsRequest
+	55, // 79: mealplanner.api.MealPlannerAPI.DeleteAllSteps:input_type -> mealplanner.api.DeleteAllStepsRequest
+	57, // 80: mealplanner.api.MealPlannerAPI.StartAgentWorkflow:input_type -> mealplanner.api.StartAgentWorkflowRequest
+	59, // 81: mealplanner.api.MealPlannerAPI.MessageAgent:input_type -> mealplanner.api.MessageAgentRequest
+	61, // 82: mealplanner.api.MealPlannerAPI.GetWorkflowStatus:input_type -> mealplanner.api.GetWorkflowStatusRequest
+	95, // 83: mealplanner.api.MealPlannerAPI.ListWorkflows:input_type -> google.protobuf.Empty
+	64, // 84: mealplanner.api.MealPlannerAPI.CancelWorkflow:input_type -> mealplanner.api.CancelWorkflowRequest
+	66, // 85: mealplanner.api.MealPlannerAPI.GetWorkflowState:input_type -> mealplanner.api.GetWorkflowStateRequest
+	68, // 86: mealplanner.api.MealPlannerAPI.AbandonWorkflow:input_type -> mealplanner.api.AbandonWorkflowRequest
+	70, // 87: mealplanner.api.MealPlannerAPI.AddMessage:input_type -> mealplanner.api.AddMessageRequest
+	72, // 88: mealplanner.api.MealPlannerAPI.GetMessages:input_type -> mealplanner.api.GetMessagesRequest
+	74, // 89: mealplanner.api.MealPlannerAPI.UpdateSessionState:input_type -> mealplanner.api.UpdateSessionStateRequest
+	81, // 90: mealplanner.api.MealPlannerAPI.GetCheckpoint:input_type -> mealplanner.api.GetCheckpointRequest
+	83, // 91: mealplanner.api.MealPlannerAPI.PutCheckpoint:input_type -> mealplanner.api.PutCheckpointRequest
+	85, // 92: mealplanner.api.MealPlannerAPI.ListCheckpoints:input_type -> mealplanner.api.ListCheckpointsRequest
+	90, // 93: mealplanner.api.LoggingService.Log:output_type -> mealplanner.api.LogResponse
+	92, // 94: mealplanner.api.LoggingService.LogBatch:output_type -> mealplanner.api.LogBatchResponse
+	18, // 95: mealplanner.api.MealPlannerAPI.HealthCheck:output_type -> mealplanner.api.HealthCheckResponse
+	19, // 96: mealplanner.api.MealPlannerAPI.Reconnect:output_type -> mealplanner.api.ReconnectResponse
+	20, // 97: mealplanner.api.MealPlannerAPI.GetMealPlan:output_type -> mealplanner.api.GetMealPlanResponse
+	21, // 98: mealplanner.api.MealPlannerAPI.GenerateMealPlan:output_type -> mealplanner.api.GenerateMealPlanResponse
+	23, // 99: mealplanner.api.MealPlannerAPI.FinalizeMealPlan:output_type -> mealplanner.api.FinalizeMealPlanResponse
+	24, // 100: mealplanner.api.MealPlannerAPI.GetMealPlanICS:output_type -> mealplanner.api.MealPlanICSResponse
+	26, // 101: mealplanner.api.MealPlannerAPI.GetShoppingList:output_type -> mealplanner.api.GetShoppingListResponse
+	28, // 102: mealplanner.api.MealPlannerAPI.GetAllMeals:output_type -> mealplanner.api.GetAllMealsResponse
+	30, // 103: mealplanner.api.MealPlannerAPI.CreateMeal:output_type -> mealplanner.api.CreateMealResponse
+	32, // 104: mealplanner.api.MealPlannerAPI.SwapMeal:output_type -> mealplanner.api.SwapMealResponse
+	34, // 105: mealplanner.api.MealPlannerAPI.RemoveMeal:output_type -> mealplanner.api.RemoveMealResponse
+	36, // 106: mealplanner.api.MealPlannerAPI.ReplaceMeal:output_type -> mealplanner.api.ReplaceMealResponse
+	38, // 107: mealplanner.api.MealPlannerAPI.UpdateMealIngredient:output_type -> mealplanner.api.UpdateMealIngredientResponse
+	40, // 108: mealplanner.api.MealPlannerAPI.DeleteMealIngredient:output_type -> mealplanner.api.DeleteMealIngredientResponse
+	42, // 109: mealplanner.api.MealPlannerAPI.DeleteMeal:output_type -> mealplanner.api.DeleteMealResponse
+	44, // 110: mealplanner.api.MealPlannerAPI.GetSteps:output_type -> mealplanner.api.GetStepsResponse
+	46, // 111: mealplanner.api.MealPlannerAPI.AddStep:output_type -> mealplanner.api.AddStepResponse
+	48, // 112: mealplanner.api.MealPlannerAPI.AddBulkSteps:output_type -> mealplanner.api.AddBulkStepsResponse
+	50, // 113: mealplanner.api.MealPlannerAPI.UpdateStep:output_type -> mealplanner.api.UpdateStepResponse
+	52, // 114: mealplanner.api.MealPlannerAPI.DeleteStep:output_type -> mealplanner.api.DeleteStepResponse
+	54, // 115: mealplanner.api.MealPlannerAPI.ReorderSteps:output_type -> mealplanner.api.ReorderStepsResponse
+	56, // 116: mealplanner.api.MealPlannerAPI.DeleteAllSteps:output_type -> mealplanner.api.DeleteAllStepsResponse
+	58, // 117: mealplanner.api.MealPlannerAPI.StartAgentWorkflow:output_type -> mealplanner.api.StartAgentWorkflowResponse
+	60, // 118: mealplanner.api.MealPlannerAPI.MessageAgent:output_type -> mealplanner.api.MessageAgentResponse
+	62, // 119: mealplanner.api.MealPlannerAPI.GetWorkflowStatus:output_type -> mealplanner.api.GetWorkflowStatusResponse
+	63, // 120: mealplanner.api.MealPlannerAPI.ListWorkflows:output_type -> mealplanner.api.ListWorkflowsResponse
+	65, // 121: mealplanner.api.MealPlannerAPI.CancelWorkflow:output_type -> mealplanner.api.CancelWorkflowResponse
+	67, // 122: mealplanner.api.MealPlannerAPI.GetWorkflowState:output_type -> mealplanner.api.GetWorkflowStateResponse
+	69, // 123: mealplanner.api.MealPlannerAPI.AbandonWorkflow:output_type -> mealplanner.api.AbandonWorkflowResponse
+	71, // 124: mealplanner.api.MealPlannerAPI.AddMessage:output_type -> mealplanner.api.AddMessageResponse
+	73, // 125: mealplanner.api.MealPlannerAPI.GetMessages:output_type -> mealplanner.api.GetMessagesResponse
+	75, // 126: mealplanner.api.MealPlannerAPI.UpdateSessionState:output_type -> mealplanner.api.UpdateSessionStateResponse
+	82, // 127: mealplanner.api.MealPlannerAPI.GetCheckpoint:output_type -> mealplanner.api.GetCheckpointResponse
+	84, // 128: mealplanner.api.MealPlannerAPI.PutCheckpoint:output_type -> mealplanner.api.PutCheckpointResponse
+	86, // 129: mealplanner.api.MealPlannerAPI.ListCheckpoints:output_type -> mealplanner.api.ListCheckpointsResponse
+	93, // [93:130] is the sub-list for method output_type
+	56, // [56:93] is the sub-list for method input_type
+	56, // [56:56] is the sub-list for extension type_name
+	56, // [56:56] is the sub-list for extension extendee
+	0,  // [0:56] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_init() }

@@ -3371,13 +3371,6 @@ export class MealPlanningCheckpointState extends Message$1<MealPlanningCheckpoin
    */
   isFinalized = false;
 
-  /**
-   * LLM-generated response to user feedback
-   *
-   * @generated from field: string user_message = 11;
-   */
-  userMessage = "";
-
   constructor(data?: PartialMessage<MealPlanningCheckpointState>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3396,7 +3389,6 @@ export class MealPlanningCheckpointState extends Message$1<MealPlanningCheckpoin
     { no: 8, name: "iteration_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 9, name: "shopping_list", kind: "message", T: ShoppingList },
     { no: 10, name: "is_finalized", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 11, name: "user_message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanningCheckpointState {
@@ -3428,17 +3420,12 @@ export class AgentCheckpoint extends Message$1<AgentCheckpoint> {
   state?: MealPlanningCheckpointState;
 
   /**
-   * @generated from field: repeated mealplanner.api.Message messages = 2;
-   */
-  messages: Message[] = [];
-
-  /**
-   * @generated from field: repeated string next = 3;
+   * @generated from field: repeated string next = 2;
    */
   next: string[] = [];
 
   /**
-   * @generated from field: int32 step = 4;
+   * @generated from field: int32 step = 3;
    */
   step = 0;
 
@@ -3451,9 +3438,8 @@ export class AgentCheckpoint extends Message$1<AgentCheckpoint> {
   static readonly typeName = "mealplanner.api.AgentCheckpoint";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "state", kind: "message", T: MealPlanningCheckpointState },
-    { no: 2, name: "messages", kind: "message", T: Message, repeated: true },
-    { no: 3, name: "next", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 4, name: "step", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "next", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "step", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AgentCheckpoint {

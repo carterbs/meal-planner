@@ -8,3 +8,8 @@ If on main, create a new branch. Once on a feature branch, commit code with a de
 ### /commit-push-pr
 Run /commit, then push the branch and create the PR using the `gh` cli. 
 
+## Code Generation Guidelines
+- When generating swagger annotations, be very specific. I don't want unknowns in the generated code.
+
+## Development notes
+- when accessing the database, use docker-exec. the pass is mealpass, the user is mealuser. the database container is meal-planner-db-1

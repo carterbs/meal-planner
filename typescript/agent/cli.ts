@@ -181,6 +181,7 @@ import { CLIHandler } from './io/cliHandler';
 import { formatMealPlan } from './utils/formatMealPlan';
 import { spawnSync } from 'child_process';
 import { MessageGenerator } from './utils/messageGenerator';
+import { getBackendClient } from './utils/getBackendClient';
 
 const program = new Command();
 
@@ -467,43 +468,40 @@ planCommand
         return;
       }
 
-      const success = await agent.addFeedback({
+      // Add message using the http client
+
+      const client = getBackendClient();
+      await client.addMessage({
         threadId,
-        from: options.from,
         message,
-      });
+        sender: options.from,
+      })
 
-      if (success) {
-        outputResult(
-          {
-            success: true,
-            message: `Feedback added successfully from ${options.from}`,
-          },
-          isJsonMode,
-        );
 
-        if (isJsonMode) {
-          debugLog('Shutting down agent and cleaning up connections...');
-          if (agent) {
-            try {
-              await agent.shutdown();
-              debugLog('Agent shutdown complete');
-            } catch (shutdownError) {
-              debugLog(`Error during agent shutdown: ${shutdownError}`);
-            }
+      outputResult(
+        {
+          success: true,
+          message: `Feedback added successfully from ${options.from}`,
+        },
+        isJsonMode,
+      );
+
+      if (isJsonMode) {
+        debugLog('Shutting down agent and cleaning up connections...');
+        if (agent) {
+          try {
+            await agent.shutdown();
+            debugLog('Agent shutdown complete');
+          } catch (shutdownError) {
+            debugLog(`Error during agent shutdown: ${shutdownError}`);
           }
-          debugLog('Flushing filtered output and exiting process');
-          flushFilteredOutput();
-          process.exit(0);
-        } else {
-          debugLog(
-            `   Use: meal-agent resume ${threadId} to continue the workflow`,
-          );
         }
+        debugLog('Flushing filtered output and exiting process');
+        flushFilteredOutput();
+        process.exit(0);
       } else {
-        outputError(
-          'Failed to add feedback. Check thread ID and try again.',
-          isJsonMode,
+        debugLog(
+          `   Use: meal-agent resume ${threadId} to continue the workflow`,
         );
       }
     } catch (error) {
