@@ -20,5 +20,6 @@ protoc -I=proto proto/*.proto \
   --connect-es_out=target=ts:./generated/ts
   
 pushd ./generated/ts
-    npx tsc 
+    rm -rf ./gateway/dist
+    npx tsc --outDir ./gateway/dist
 popd

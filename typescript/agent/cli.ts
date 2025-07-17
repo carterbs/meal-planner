@@ -8,7 +8,7 @@ import { join } from 'path';
 const CURRENT_DIR =
   typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
-const envPath = join(CURRENT_DIR, '../../../', 'backend', '.env');
+const envPath = join(CURRENT_DIR, '..', '.env');
 // In built version, we're in dist/ so go up one level to agent/
 
 // Import the new logging system
