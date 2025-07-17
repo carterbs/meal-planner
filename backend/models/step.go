@@ -3,19 +3,18 @@ package models
 import (
 	"database/sql"
 	"errors"
-	"log"
+
+	apipb "mealplanner/generated/go"
+	"mealplanner/logging"
 )
 
-// Step represents a single instruction step in a recipe
-type Step struct {
-	ID          int    `json:"id"`
-	MealID      int    `json:"mealId"`
-	StepNumber  int    `json:"stepNumber"`
-	Instruction string `json:"instruction"`
-}
+var stepModelLogger = logging.GetGrpcLogger("step-model")
+
+// Step is an alias to the generated protobuf type
+type Step = apipb.Step
 
 // GetStepsForMeal retrieves all steps for a given meal ID, ordered by step number
-func GetStepsForMeal(db *sql.DB, mealID int) ([]Step, error) {
+func GetStepsForMeal(db *sql.DB, mealID int) ([]*Step, error) {
 	rows, err := db.Query(`
 		SELECT id, meal_id, step_number, instruction 
 		FROM recipe_steps 
@@ -23,23 +22,30 @@ func GetStepsForMeal(db *sql.DB, mealID int) ([]Step, error) {
 		ORDER BY step_number
 	`, mealID)
 	if err != nil {
-		log.Printf("GetStepsForMeal: error executing query for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("GetStepsForMeal: error executing query", "mealID", mealID, "error", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var steps []Step
+	var steps []*Step
 	for rows.Next() {
-		var step Step
-		if err := rows.Scan(&step.ID, &step.MealID, &step.StepNumber, &step.Instruction); err != nil {
-			log.Printf("GetStepsForMeal: error scanning row for mealID=%d: %v", mealID, err)
+		var id, mealID, stepNumber int32
+		var instruction string
+		if err := rows.Scan(&id, &mealID, &stepNumber, &instruction); err != nil {
+			stepModelLogger.Errorw("GetStepsForMeal: error scanning row", "mealID", mealID, "error", err)
 			return nil, err
+		}
+		step := &apipb.Step{
+			Id:          id,
+			MealId:      mealID,
+			StepNumber:  stepNumber,
+			Instruction: instruction,
 		}
 		steps = append(steps, step)
 	}
 
 	if err := rows.Err(); err != nil {
-		log.Printf("GetStepsForMeal: error in row iteration for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("GetStepsForMeal: error in row iteration", "mealID", mealID, "error", err)
 		return nil, err
 	}
 
@@ -47,12 +53,12 @@ func GetStepsForMeal(db *sql.DB, mealID int) ([]Step, error) {
 }
 
 // AddStepToMeal adds a new step to a meal
-func AddStepToMeal(db *sql.DB, step Step) (*Step, error) {
+func AddStepToMeal(db *sql.DB, step *Step) (*Step, error) {
 	// Check if meal exists
 	var mealExists bool
-	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM meals WHERE id = $1)", step.MealID).Scan(&mealExists)
+	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM meals WHERE id = $1)", step.GetMealId()).Scan(&mealExists)
 	if err != nil {
-		log.Printf("AddStepToMeal: error checking meal existence for mealID=%d: %v", step.MealID, err)
+		stepModelLogger.Errorw("AddStepToMeal: error checking meal existence", "mealID", step.GetMealId(), "error", err)
 		return nil, err
 	}
 	if !mealExists {
@@ -60,43 +66,47 @@ func AddStepToMeal(db *sql.DB, step Step) (*Step, error) {
 	}
 
 	// If no step number is provided, find the next available one
-	if step.StepNumber <= 0 {
+	if step.GetStepNumber() <= 0 {
+		var nextStepNumber int32
 		err := db.QueryRow(`
 			SELECT COALESCE(MAX(step_number), 0) + 1 
 			FROM recipe_steps 
 			WHERE meal_id = $1
-		`, step.MealID).Scan(&step.StepNumber)
+		`, step.GetMealId()).Scan(&nextStepNumber)
 		if err != nil {
-			log.Printf("AddStepToMeal: error determining next step number for mealID=%d: %v", step.MealID, err)
+			stepModelLogger.Errorw("AddStepToMeal: error determining next step number", "mealID", step.GetMealId(), "error", err)
 			return nil, err
 		}
+		step.StepNumber = nextStepNumber
 	}
 
 	// Insert the new step
+	var id int32
 	err = db.QueryRow(`
 		INSERT INTO recipe_steps (meal_id, step_number, instruction) 
 		VALUES ($1, $2, $3) 
 		RETURNING id
-	`, step.MealID, step.StepNumber, step.Instruction).Scan(&step.ID)
+	`, step.GetMealId(), step.GetStepNumber(), step.GetInstruction()).Scan(&id)
 	if err != nil {
-		log.Printf("AddStepToMeal: error inserting step for mealID=%d: %v", step.MealID, err)
+		stepModelLogger.Errorw("AddStepToMeal: error inserting step", "mealID", step.GetMealId(), "error", err)
 		return nil, err
 	}
+	step.Id = id
 
-	return &step, nil
+	return step, nil
 }
 
 // AddMultipleStepsToMeal adds multiple steps to a meal in a single transaction
-func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]Step, error) {
+func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]*Step, error) {
 	if len(instructions) == 0 {
-		return []Step{}, nil
+		return []*Step{}, nil
 	}
 
 	// Check if meal exists
 	var mealExists bool
 	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM meals WHERE id = $1)", mealID).Scan(&mealExists)
 	if err != nil {
-		log.Printf("AddMultipleStepsToMeal: error checking meal existence for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("AddMultipleStepsToMeal: error checking meal existence", "mealID", mealID, "error", err)
 		return nil, err
 	}
 	if !mealExists {
@@ -106,7 +116,7 @@ func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]St
 	// Start a transaction
 	tx, err := db.Begin()
 	if err != nil {
-		log.Printf("AddMultipleStepsToMeal: error starting transaction for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("AddMultipleStepsToMeal: error starting transaction", "mealID", mealID, "error", err)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -119,7 +129,7 @@ func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]St
 		WHERE meal_id = $1
 	`, mealID).Scan(&nextStepNumber)
 	if err != nil {
-		log.Printf("AddMultipleStepsToMeal: error determining next step number for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("AddMultipleStepsToMeal: error determining next step number", "mealID", mealID, "error", err)
 		return nil, err
 	}
 
@@ -130,33 +140,35 @@ func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]St
 		RETURNING id
 	`)
 	if err != nil {
-		log.Printf("AddMultipleStepsToMeal: error preparing statement for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("AddMultipleStepsToMeal: error preparing statement", "mealID", mealID, "error", err)
 		return nil, err
 	}
 	defer stmt.Close()
 
 	// Insert each step
-	steps := make([]Step, len(instructions))
+	steps := make([]*Step, len(instructions))
 	for i, instruction := range instructions {
 		stepNumber := nextStepNumber + i
-		step := Step{
-			MealID:      mealID,
-			StepNumber:  stepNumber,
+		step := &Step{
+			MealId:      int32(mealID),
+			StepNumber:  int32(stepNumber),
 			Instruction: instruction,
 		}
 
-		err = stmt.QueryRow(step.MealID, step.StepNumber, step.Instruction).Scan(&step.ID)
+		var stepID int32
+		err = stmt.QueryRow(step.GetMealId(), step.GetStepNumber(), step.GetInstruction()).Scan(&stepID)
 		if err != nil {
-			log.Printf("AddMultipleStepsToMeal: error inserting step %d for mealID=%d: %v", i, mealID, err)
+			stepModelLogger.Errorw("AddMultipleStepsToMeal: error inserting step", "stepIndex", i, "mealID", mealID, "error", err)
 			return nil, err
 		}
 
+		step.Id = stepID
 		steps[i] = step
 	}
 
 	// Commit the transaction
 	if err = tx.Commit(); err != nil {
-		log.Printf("AddMultipleStepsToMeal: error committing transaction for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("AddMultipleStepsToMeal: error committing transaction", "mealID", mealID, "error", err)
 		return nil, err
 	}
 
@@ -164,8 +176,8 @@ func AddMultipleStepsToMeal(db *sql.DB, mealID int, instructions []string) ([]St
 }
 
 // UpdateStep updates an existing recipe step
-func UpdateStep(db *sql.DB, step Step) error {
-	if step.ID == 0 {
+func UpdateStep(db *sql.DB, step *Step) error {
+	if step.GetId() == 0 {
 		return errors.New("step ID not provided")
 	}
 
@@ -173,15 +185,15 @@ func UpdateStep(db *sql.DB, step Step) error {
 		UPDATE recipe_steps 
 		SET step_number = $1, instruction = $2 
 		WHERE id = $3 AND meal_id = $4
-	`, step.StepNumber, step.Instruction, step.ID, step.MealID)
+	`, step.GetStepNumber(), step.GetInstruction(), step.GetId(), step.GetMealId())
 	if err != nil {
-		log.Printf("UpdateStep: error executing update for stepID=%d, mealID=%d: %v", step.ID, step.MealID, err)
+		stepModelLogger.Errorw("UpdateStep: error executing update", "stepID", step.GetId(), "mealID", step.GetMealId(), "error", err)
 		return err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("UpdateStep: error getting rows affected for stepID=%d: %v", step.ID, err)
+		stepModelLogger.Errorw("UpdateStep: error getting rows affected", "stepID", step.GetId(), "error", err)
 		return err
 	}
 	if rowsAffected == 0 {
@@ -195,13 +207,13 @@ func UpdateStep(db *sql.DB, step Step) error {
 func DeleteStep(db *sql.DB, stepID int, mealID int) error {
 	result, err := db.Exec("DELETE FROM recipe_steps WHERE id = $1 AND meal_id = $2", stepID, mealID)
 	if err != nil {
-		log.Printf("DeleteStep: error executing delete for stepID=%d, mealID=%d: %v", stepID, mealID, err)
+		stepModelLogger.Errorw("DeleteStep: error executing delete", "stepID", stepID, "mealID", mealID, "error", err)
 		return err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("DeleteStep: error getting rows affected for stepID=%d: %v", stepID, err)
+		stepModelLogger.Errorw("DeleteStep: error getting rows affected", "stepID", stepID, "error", err)
 		return err
 	}
 	if rowsAffected == 0 {
@@ -221,7 +233,7 @@ func ReorderSteps(db *sql.DB, mealID int, stepIDs []int) error {
 	// Start a transaction
 	tx, err := db.Begin()
 	if err != nil {
-		log.Printf("ReorderSteps: error starting transaction for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("ReorderSteps: error starting transaction", "mealID", mealID, "error", err)
 		return err
 	}
 	defer tx.Rollback()
@@ -234,7 +246,7 @@ func ReorderSteps(db *sql.DB, mealID int, stepIDs []int) error {
 		WHERE id = $1 AND meal_id = $2
 	`)
 	if err != nil {
-		log.Printf("ReorderSteps: error preparing first statement for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("ReorderSteps: error preparing first statement", "mealID", mealID, "error", err)
 		return err
 	}
 	defer stmt1.Close()
@@ -243,7 +255,7 @@ func ReorderSteps(db *sql.DB, mealID int, stepIDs []int) error {
 	for _, stepID := range stepIDs {
 		_, err := stmt1.Exec(stepID, mealID)
 		if err != nil {
-			log.Printf("ReorderSteps: error setting negative step number for stepID=%d, mealID=%d: %v", stepID, mealID, err)
+			stepModelLogger.Errorw("ReorderSteps: error setting negative step number", "stepID", stepID, "mealID", mealID, "error", err)
 			return err
 		}
 	}
@@ -255,7 +267,7 @@ func ReorderSteps(db *sql.DB, mealID int, stepIDs []int) error {
 		WHERE id = $2 AND meal_id = $3
 	`)
 	if err != nil {
-		log.Printf("ReorderSteps: error preparing second statement for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("ReorderSteps: error preparing second statement", "mealID", mealID, "error", err)
 		return err
 	}
 	defer stmt2.Close()
@@ -265,14 +277,14 @@ func ReorderSteps(db *sql.DB, mealID int, stepIDs []int) error {
 		stepNumber := i + 1 // steps are 1-indexed
 		_, err := stmt2.Exec(stepNumber, stepID, mealID)
 		if err != nil {
-			log.Printf("ReorderSteps: error updating step number for stepID=%d, mealID=%d: %v", stepID, mealID, err)
+			stepModelLogger.Errorw("ReorderSteps: error updating step number", "stepID", stepID, "mealID", mealID, "error", err)
 			return err
 		}
 	}
 
 	// Commit the transaction
 	if err = tx.Commit(); err != nil {
-		log.Printf("ReorderSteps: error committing transaction for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("ReorderSteps: error committing transaction", "mealID", mealID, "error", err)
 		return err
 	}
 
@@ -283,7 +295,7 @@ func ReorderSteps(db *sql.DB, mealID int, stepIDs []int) error {
 func DeleteAllStepsForMeal(db *sql.DB, mealID int) error {
 	_, err := db.Exec("DELETE FROM recipe_steps WHERE meal_id = $1", mealID)
 	if err != nil {
-		log.Printf("DeleteAllStepsForMeal: error executing delete for mealID=%d: %v", mealID, err)
+		stepModelLogger.Errorw("DeleteAllStepsForMeal: error executing delete", "mealID", mealID, "error", err)
 		return err
 	}
 	return nil

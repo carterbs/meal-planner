@@ -18,11 +18,23 @@ func Migrate(db *sql.DB) error {
 		unit TEXT,
 		name TEXT NOT NULL
 	)`
-	if _, err := db.Exec(mealTable); err != nil {
-		return err
+
+	tables := []string{mealTable, ingredientTable}
+	indexes := []string{}
+
+	// Create tables
+	for _, table := range tables {
+		if _, err := db.Exec(table); err != nil {
+			return err
+		}
 	}
-	if _, err := db.Exec(ingredientTable); err != nil {
-		return err
+
+	// Create indexes
+	for _, index := range indexes {
+		if _, err := db.Exec(index); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }

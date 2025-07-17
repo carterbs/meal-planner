@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allowedTools": [
+      "Edit",
+      "Bash(git status)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(gh pr create*)",
+      "Bash(gh pr*)",
+      "Bash(gh issue*)",
+      "Read",
+      "Write",
+      "Glob",
+      "Grep",
+      "LS"
+    ]
+  }
+}

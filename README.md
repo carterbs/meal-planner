@@ -1,200 +1,98 @@
-# Meal Planner
+# Meal Planner Monorepo
 
-A full-stack application for planning weekly meals, generating shopping lists, and managing recipes.
+This repository contains a personal meal planning application composed of several services written in Go and TypeScript.  All projects are managed in a single Yarn workspace.
 
-## Overview
+## Repository Structure
 
-The Meal Planner helps users:
-- Generate weekly meal plans based on cooking effort preferences
-- Limit red meat consumption
-- Avoid repeating meals from recent weeks
-- Create shopping lists for planned meals
-- Manage a collection of recipes with step-by-step instructions
-- Export your meal plan to calendar formats
+- **backend/** – Go REST API and business logic. Contains handlers, models, migrations and dummy data for offline use.
+- **typescript/**
+  - **ui/** – React application for the user interface.
+  - **agent/** – LangGraph agent CLI for meal planning workflows.
+  - **mcp/** – Express based MCP server used by the agent.
+  - **shared/** – Reusable TypeScript types and utilities shared across packages.
+- **scripts/** – Node and shell helpers for starting servers, running tests and database management.
+- **db-backups/** – Example PostgreSQL backup files.
+- **docker-compose.yml** – Local development services (PostgreSQL & pgAdmin).
+- **codex-setup.sh** – Install and setup script used by Codex environments.
 
-## Technology Stack
+## Architecture Overview
 
-- **Backend**: Go with PostgreSQL database
-- **Frontend**: React TypeScript with Material UI
+The system is split into a Go backend and several TypeScript packages.  The backend exposes REST endpoints on port `8080` and persists data in PostgreSQL.  The React UI communicates directly with the backend during development.  The LangGraph agent is a command line tool that orchestrates meal plan generation and communicates with the backend or MCP server.  The MCP server exposes a Model Context Protocol API that proxies backend calls for the agent.  Shared TypeScript code lives in `typescript/shared` and is published to the workspace so all packages share a single set of types.
 
-## Getting Started
-
-### Prerequisites
-
-- Docker and Docker Compose
-- Node.js and Yarn
-- Go 1.20 or higher
-
-### Installation
-
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd meal-planner
+```
+[React UI]  --->  [Go Backend]  --->  [PostgreSQL]
+        ^              ^
+        |              |
+    [Agent CLI] ----> [MCP Server]
 ```
 
-2. Start the database using Docker
-```bash
-docker-compose up -d
-```
+## Development Setup
 
-3. Install dependencies and start the application
-```bash
-yarn
-yarn start
-```
+1. **Install dependencies**
+   ```bash
+   yarn install
+   (cd typescript && yarn install)
+   (cd backend && go mod download)
+   ```
+2. **Build shared package** (required for tests)
+   ```bash
+   yarn workspace @meal-planner/shared build
+   ```
+3. **Start the development servers**
+   - Simple mode:
+     ```bash
+     cd backend && go run main.go --dummy
+     ```
+     ```bash
+     cd typescript/ui && yarn start
+     ```
+   - Full environment (starts Docker and both servers):
+     ```bash
+     yarn dev
+     ```
 
-The weekly plan can be exported as a calendar file from `/api/mealplan/ics` or by clicking the **Add to Google Calendar** button in the Meal Plan tab.
+The `docker-compose.yml` file launches a PostgreSQL container and pgAdmin for local development.
 
-4. Optional: Seed the database with sample data
-```bash
-cd backend
-go run main.go --seed
-```
+## Root Package Scripts
 
-5. **Optional:** Run the backend using in-memory dummy data (no database needed)
-```bash
-cd backend
-go run main.go --dummy
-```
-
-## Project Structure
-
-- `backend/` - Go backend server
-- `frontend/` - React TypeScript frontend
-- `docs/` - Project documentation
-- `scripts/` - Utility scripts for development
-
-## Documentation
-
-Comprehensive documentation is available in the [docs](./docs) directory:
-
-- [Complete System Overview](./docs/MealPlannerSummary.md) - Detailed documentation of both backend and frontend
-
-## Development
-
-Start the development servers:
-
-```bash
-# Start both frontend and backend servers
-yarn start
-
-# Start only the backend server
-cd backend
-go run main.go
-
-# Start the backend with dummy data
-go run main.go --dummy
-
-# Start only the frontend server
-cd frontend
-yarn start
-```
+| Script            | Description                                                  |
+|-------------------|--------------------------------------------------------------|
+| `yarn start`      | Runs `scripts/start.js` which launches the Go backend and React frontend together. |
+| `yarn start:mcp`  | Builds and launches the MCP server alongside the backend.    |
+| `yarn dev`        | Starts Docker containers if necessary and then runs `yarn start`. |
+| `yarn meal-agent` | Builds and runs the CLI agent from `typescript/agent`.       |
+| `yarn test`       | Executes backend, frontend and agent test suites with a summary. |
+| `yarn test:backend` | Run Go tests only.                                         |
+| `yarn test:frontend` | Run React tests only.                                     |
+| `yarn test:agent` | Run agent unit tests.                                        |
+| `yarn build:agent` | Compile the agent TypeScript sources.                       |
+| `yarn db:backup`  | Create a database backup using `scripts/backup-db.js`.       |
+| `yarn db:restore` | Restore the database from a backup file.                     |
+| `yarn kill:servers` | Kill processes started by the helper scripts.              |
+| `yarn format`     | Run Prettier across the TypeScript workspaces.               |
 
 ## Testing
 
-To run all tests for both the frontend and backend simultaneously:
+Run the full test suite from the repository root:
 
 ```bash
+yarn workspace @meal-planner/shared build   # ensure shared types are compiled
 yarn test
 ```
 
-To run only backend tests:
+`yarn test` aggregates results for backend Go tests, frontend React tests and agent tests. Individual suites can be executed via `yarn test:backend`, `yarn test:frontend`, or `yarn test:agent`.
 
-```bash
-yarn test:backend
-```
+## Environment Configuration
 
-To run only frontend tests:
+- Go 1.22+ and Node.js 22 are expected. Versions are set in `codex-setup.sh`.
+- Local development requires Docker for the PostgreSQL database. The backend can also run with the `--dummy` flag to use in-memory data.
+- Environment variables for database configuration can be set in a `.env` file at the repository root.
 
-```bash
-yarn test:frontend
-```
+## Contributing Workflow
 
-To run tests with a concise, easy-to-read summary report:
+1. Install dependencies with `yarn` and run `yarn test` to verify a clean state.
+2. Make code or documentation changes.
+3. Format code with `yarn format` and ensure `yarn test` passes.
+4. Commit your changes following the guidelines in `CLAUDE.md` and `AGENTS.md`.
 
-```bash
-yarn test:summary
-```
-
-## Database Management
-
-This project includes utility scripts for backing up and restoring the PostgreSQL database. The scripts use Docker Compose to interact with the `db` service and save backups in the `db-backups/` directory.
-
-#### Prerequisites
-
-Make sure the Docker containers are running:
-
-```bash
-docker-compose up -d
-```
-
-#### Backup
-
-Create a timestamped SQL dump (stored in `db-backups/`, max 7 retained):
-
-```bash
-yarn db:backup
-```
-
-List existing backups:
-
-```bash
-ls db-backups
-```
-
-#### Restore
-
-Restore from a backup (interactive selection):
-
-```bash
-yarn db:restore
-```
-
-Or specify a backup file:
-
-```bash
-yarn db:restore backup-2023-05-01T12-00-00-000Z.sql
-```
-
-**Warning:** Restoring will overwrite the current database!
-
-## Troubleshooting
-
-### Database Connection Issues
-
-If you're experiencing database connection problems, here are the most common solutions:
-
-#### Issue: Backend can't connect to database
-**Symptoms:** API calls fail, health endpoint returns database connection errors
-
-**Solution:** The backend needs database credentials as environment variables. You have two options:
-
-**Option 1: Create a `.env` file (Recommended)**
-Create a `.env` file in the project root with:
-```bash
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=mealuser
-DB_PASSWORD=mealpass
-DB_NAME=mealplanner
-```
-
-#### Issue: Database container exists but won't connect
-Check container logs:
-```bash
-docker logs meal-planner_db_1
-```
-
-Test direct database connection:
-```bash
-PGPASSWORD=mealpass docker exec meal-planner_db_1 psql -U mealuser -d mealplanner -c "SELECT 1;"
-```
-
-#### Verify Everything Works
-Test the backend health endpoint:
-```bash
-curl http://localhost:8080/api/health
-```
-
-Should return: `{"status":"ok","message":"Database connection is healthy"}`
+For additional design notes and high-level feature descriptions see `docs/MealPlannerSummary.md` if available.

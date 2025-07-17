@@ -3,23 +3,56 @@
     "version": "1.0.0",
     "private": true,
     "workspaces": [
-        "frontend",
-        "backend/mcp"
+        "typescript/ui",
+        "typescript/agent",
+        "typescript/mcp",
+        "typescript/shared",
+        "generated/ts",
+        "generated/ts/gateway",
+        "logging-service/client/ts"
     ],
     "scripts": {
-        "start": "node scripts/start.js",
+        "generate_code": "./scripts/generate_code.sh",
+        "start": "yarn kill:servers &&node scripts/start.js",
         "start:mcp": "node scripts/start-mcp.js",
-        "test:backend": "cd backend && go test -v ./...",
-        "test:frontend": "cd frontend && yarn test",
+        "stop:logging": "kill -9 $(lsof -t -i :50052)",
+        "test:e2e": "ts-node ./typescript/e2e/e2e_remove_friday.ts",
+        "test:backend": "cd backend && make test",
+        "test:mcp": "cd typescript/mcp && go test -v ./...",
+        "test:frontend": "cd typescript/ui && yarn test",
+        "test:agent": "cd typescript/agent && yarn test",
+        "build:agent": "cd typescript/agent && yarn build",
         "test": "node scripts/test-summary.js",
         "db:backup": "node scripts/backup-db.js",
         "db:restore": "node scripts/restore-db.js",
-        "dev": "node scripts/dev-start.js"
+        "dev": "node scripts/dev-start.js",
+        "meal-agent": "./scripts/meal-agent.sh",
+        "kill:servers": "node scripts/kill-servers.js",
+        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\" && gofmt -w backend/"
+    },
+    "resolutions": {
+        "react": "18.2.0",
+        "react-dom": "18.2.0"
     },
     "devDependencies": {
+        "@bufbuild/protoc-gen-es": "^1.10.0",
+        "@hey-api/openapi-ts": "^0.78.3",
+        "@mealplanner/generated-gateway-client": "*",
+        "@types/node": "^24.0.13",
         "chalk": "^4.1.2",
         "concurrently": "^7.6.0",
+        "prettier": "^3.6.2",
+        "ts-node": "^10.9.2",
+        "ts-proto": "^2.7.5",
+        "typescript": "^5.8.3",
         "wait-on": "^7.1.0"
     },
-    "packageManager": "yarn@4.9.1"
+    "packageManager": "yarn@4.9.1",
+    "dependencies": {
+        "@bufbuild/protobuf": "^1.10.0",
+        "@connectrpc/connect": "^1.6.0",
+        "@connectrpc/connect-node": "^1.6.0",
+        "@connectrpc/connect-web": "^1.6.0",
+        "@connectrpc/protoc-gen-connect-es": "^1.6.1"
+    }
 }

@@ -27,38 +27,102 @@ function killProcessOnPort(port) {
   }
 }
 
-// Step 1: Kill any existing processes on ports 8000 and 5000
-console.log(chalk.blue('🔍 Checking for existing processes on ports 8000 and 5000...'));
-killProcessOnPort(8000);
+// Step 1: Kill any existing processes on ports 8080, 8090, and 5000
+console.log(chalk.blue('🔍 Checking for existing processes on ports 8080, 8090, and 5000...'));
+killProcessOnPort(8080);
+killProcessOnPort(8090);
 killProcessOnPort(5000);
 
-// Step 2: Start the applications
-console.log(chalk.blue('🚀 Starting frontend and backend applications...'));
+// Kill logging service port
+console.log(chalk.blue('🔍 Checking for existing processes on port 50052 (logging service)...'));
+killProcessOnPort(50052);
 
-// Start backend first
-const backendProcess = spawn('go', ['run', 'main.go'], {
+// Start logging service
+console.log(chalk.blue('🚀 Starting logging service...'));
+const loggingProcess = spawn('go', ['run', 'main.go'], {
+  cwd: path.join(PROJECT_ROOT, 'logging-service'),
+  stdio: 'inherit',
+  shell: true,
+});
+
+// Handle logging process events
+loggingProcess.on('error', (error) => {
+  console.error(chalk.red('❌ Failed to start logging service:'), error.message);
+  process.exit(1);
+});
+loggingProcess.on('close', (code) => {
+  console.log(chalk.blue(`Logging service exited with code ${code}`));
+  process.exit(code);
+});
+
+// Build MCP server
+console.log(chalk.blue('🔨 Building MCP server...'));
+try {
+  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'typescript', 'mcp'), stdio: 'inherit' });
+  console.log(chalk.green('✅ MCP server built'));
+} catch (error) {
+  console.error(chalk.red('❌ Failed to build MCP server:'), error.message);
+  process.exit(1);
+}
+
+// Build agent
+console.log(chalk.blue('🔨 Building agent...'));
+try {
+  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'typescript', 'agent'), stdio: 'inherit' });
+  console.log(chalk.green('✅ Agent built'));
+} catch (error) {
+  console.error(chalk.red('❌ Failed to build agent:'), error.message);
+  process.exit(1);
+}
+
+// Step 2: Start the applications
+console.log(chalk.blue('🚀 Starting backend, API gateway, and frontend...'));
+
+// Start backend first (on 8090)
+const backendProcess = spawn('go', ['run', '.'], {
   cwd: path.join(PROJECT_ROOT, 'backend'),
   stdio: 'inherit',
   shell: true,
 });
 
-// Wait for backend to be ready (give it a few seconds)
+// Wait for backend to be ready, then start API gateway
 setTimeout(() => {
-  // Then start frontend
-  const frontendProcess = spawn('yarn', ['start'], {
-    cwd: path.join(PROJECT_ROOT, 'frontend'),
+  // Start API gateway (on 8080)
+  const gatewayProcess = spawn('go', ['run', '.'], {
+    cwd: path.join(PROJECT_ROOT, 'api-gateway'),
     stdio: 'inherit',
     shell: true,
   });
 
-  // Handle frontend process events
-  frontendProcess.on('error', (error) => {
-    console.error(chalk.red('❌ Failed to start frontend:'), error.message);
+  // Wait a bit more for gateway, then start frontend
+  setTimeout(() => {
+    // Then start frontend
+    const frontendProcess = spawn('yarn', ['start'], {
+      cwd: path.join(PROJECT_ROOT, 'typescript/ui'),
+      stdio: 'inherit',
+      shell: true,
+    });
+
+    // Handle frontend process events
+    frontendProcess.on('error', (error) => {
+      console.error(chalk.red('❌ Failed to start frontend:'), error.message);
+      process.exit(1);
+    });
+
+    frontendProcess.on('close', (code) => {
+      console.log(chalk.blue(`Frontend exited with code ${code}`));
+      process.exit(code);
+    });
+  }, 2000); // Wait 2 seconds for gateway to initialize
+
+  // Handle gateway process events
+  gatewayProcess.on('error', (error) => {
+    console.error(chalk.red('❌ Failed to start API gateway:'), error.message);
     process.exit(1);
   });
 
-  frontendProcess.on('close', (code) => {
-    console.log(chalk.blue(`Frontend exited with code ${code}`));
+  gatewayProcess.on('close', (code) => {
+    console.log(chalk.blue(`API gateway exited with code ${code}`));
     process.exit(code);
   });
 }, 3000); // Wait 3 seconds for backend to initialize
@@ -78,7 +142,9 @@ backendProcess.on('close', (code) => {
 process.on('SIGINT', () => {
   console.log(chalk.blue('\n🛑 Stopping application servers...'));
   backendProcess.kill('SIGINT');
-  frontendProcess.kill('SIGINT');
+  if (typeof loggingProcess !== 'undefined') loggingProcess.kill('SIGINT');
+  if (typeof gatewayProcess !== 'undefined') gatewayProcess.kill('SIGINT');
+  if (typeof frontendProcess !== 'undefined') frontendProcess.kill('SIGINT');
   console.log(chalk.green('✅ Application servers stopped.'));
   process.exit(0);
 });

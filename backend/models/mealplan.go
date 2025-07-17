@@ -6,85 +6,85 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	apipb "mealplanner/generated/go"
+	"mealplanner/logging"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type DayMealPlan struct {
-	Breakfast *Meal `json:"Breakfast"`
-	Lunch     *Meal `json:"Lunch"`
-	Dinner    *Meal `json:"Dinner"`
-}
+// PlanDay is an alias to the generated protobuf type
+type PlanDay = apipb.MealPlanEntry
 
-type WeeklyMealPlan struct {
-	Monday    DayMealPlan `json:"Monday"`
-	Tuesday   DayMealPlan `json:"Tuesday"`
-	Wednesday DayMealPlan `json:"Wednesday"`
-	Thursday  DayMealPlan `json:"Thursday"`
-	Friday    DayMealPlan `json:"Friday"`
-	Saturday  DayMealPlan `json:"Saturday"`
-	Sunday    DayMealPlan `json:"Sunday"`
-}
+// WeeklyMealPlan is an alias to the generated protobuf type
+type WeeklyMealPlan = apipb.WeeklyMealPlan
+
+var mealPlanServiceLogger = logging.GetGrpcLogger("meal-plan-service")
 
 // GenerateWeeklyMealPlan generates a weekly plan with breakfast, lunch, and dinner.
 func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
-	plan := &WeeklyMealPlan{}
+	plan := &WeeklyMealPlan{Days: make([]*PlanDay, 0, 21)}
 	redMeatUsed := false
 	threeWeeksAgo := time.Now().AddDate(0, 0, -21)
 
-	days := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"}
+	dayNames := DaysOfTheWeek
+	mealTypes := []string{"breakfast", "lunch", "dinner"}
 
-	for _, day := range days {
-		var dayPlan DayMealPlan
-		var err error
+	for i, day := range dayNames {
+		for _, mealType := range mealTypes {
+			var minEffort, maxEffort int
+			switch mealType {
+			case "breakfast":
+				minEffort, maxEffort = 0, 2
+			case "lunch":
+				minEffort, maxEffort = 0, 2
+			case "dinner":
+				minEffort, maxEffort = 3, 5
+				if day == "Monday" {
+					minEffort, maxEffort = 0, 2
+				} else if day == "Sunday" {
+					minEffort, maxEffort = 4, 10
+				}
+			}
 
-		// Breakfast: Low effort
-		dayPlan.Breakfast, err = pickMeal(db, 0, 2, false, threeWeeksAgo, "breakfast")
-		if err != nil {
-			return nil, fmt.Errorf("failed picking breakfast for %s: %w", day, err)
-		}
+			meal, err := pickMeal(db, minEffort, maxEffort, redMeatUsed, threeWeeksAgo, mealType)
+			if err != nil {
+				return nil, fmt.Errorf("failed picking %s for %s: %w", mealType, day, err)
+			}
+			if mealType == "dinner" && meal != nil && meal.GetHasRedMeat() {
+				redMeatUsed = true
+			}
+			//log the day that we're adding to the plan
+			if meal != nil {
+				mealPlanServiceLogger.Debugw("Adding meal to plan with dayIndex", "dayIndex", int32(i), "mealName", meal.Name)
+			} else {
+				mealPlanServiceLogger.Debugw("Adding nil meal to plan with dayIndex", "dayIndex", int32(i))
+			}
 
-		// Lunch: Low effort
-		dayPlan.Lunch, err = pickMeal(db, 0, 2, false, threeWeeksAgo, "lunch")
-		if err != nil {
-			return nil, fmt.Errorf("failed picking lunch for %s: %w", day, err)
-		}
-
-		// Dinner: Existing logic
-		minEffort, maxEffort := 3, 5 // Default for Tue-Thu, Sat
-		if day == "Monday" {
-			minEffort, maxEffort = 0, 2
-		} else if day == "Sunday" {
-			minEffort, maxEffort = 6, 100
-		}
-
-		dayPlan.Dinner, err = pickMeal(db, minEffort, maxEffort, redMeatUsed, threeWeeksAgo, "dinner")
-		if err != nil {
-			// If we fail to get a dinner, it might be because of red meat restriction.
-			// The old logic would just fail. Here we can be more robust if needed, but for now, we fail.
-			return nil, fmt.Errorf("failed picking dinner for %s: %w", day, err)
-		}
-		if dayPlan.Dinner != nil && dayPlan.Dinner.RedMeat {
-			redMeatUsed = true
-		}
-
-		switch day {
-		case "Monday":
-			plan.Monday = dayPlan
-		case "Tuesday":
-			plan.Tuesday = dayPlan
-		case "Wednesday":
-			plan.Wednesday = dayPlan
-		case "Thursday":
-			plan.Thursday = dayPlan
-		case "Saturday":
-			plan.Saturday = dayPlan
-		case "Sunday":
-			plan.Sunday = dayPlan
+			plan.Days = append(plan.Days, &apipb.MealPlanEntry{Meal: meal, DayIndex: int32(i), MealType: mealType})
 		}
 	}
 
-	// Friday: Fixed "Eating out" value for dinner
-	plan.Friday.Dinner = &Meal{
-		MealName: "Eating out",
+	// Overwrite Friday dinner to "Eating out"
+	for idx := range plan.Days {
+		if plan.Days[idx].DayIndex == 4 && plan.Days[idx].MealType == "dinner" {
+			plan.Days[idx].Meal = &Meal{Name: "Eating out"}
+			break
+		}
+	}
+
+	// log dayIndex for the 8th meal
+	mealPlanServiceLogger.Debugw("In the model, 8th meal", "dayIndex", plan.Days[7].DayIndex)
+
+	// DEBUGGING: Log all dayIndex values after generation
+	mealPlanServiceLogger.Infow("🔍 [BACKEND] GenerateWeeklyMealPlan complete - dayIndex values:")
+	for i, day := range plan.Days {
+		mealPlanServiceLogger.Infow("🔍 [BACKEND] Meal entry", "index", i, "dayIndex", day.DayIndex, "mealType", day.MealType, "mealName", func() string {
+			if day.Meal != nil {
+				return day.Meal.Name
+			}
+			return "nil"
+		}())
 	}
 
 	return plan, nil
@@ -92,7 +92,7 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 
 // buildPickMealQuery returns the SQL query for selecting a meal.
 // It appends an extra condition if excludeRedMeat is true.
-func buildPickMealQuery(excludeRedMeat bool, mealType string) string {
+func buildPickMealQuery(excludeRedMeat bool, _ string) string {
 	columns := strings.Join(MealColumns, ", ")
 	query := "SELECT " + columns + " FROM meals WHERE relative_effort BETWEEN $1 AND $2 AND (last_planned IS NULL OR last_planned < $3) AND meal_type = $4"
 	if excludeRedMeat {
@@ -112,11 +112,23 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 
 	row := db.QueryRow(query, minEffort, maxEffort, cutoff, mealType)
 	var m Meal
+	var id int32
+	var name string
+	var effort int32
 	var lastPlanned sql.NullTime
+	var hasRedMeat bool
 	var url sql.NullString
-	err := row.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url, &m.MealType)
+	var mealTypeScanned string
+	err := row.Scan(&id, &name, &effort, &lastPlanned, &hasRedMeat, &url, &mealTypeScanned)
+
+	m.Id = id
+	m.Name = name
+	m.Effort = effort
+	m.HasRedMeat = hasRedMeat
+	m.MealType = mealTypeScanned
+	m.LastPlanned = nil
 	if url.Valid {
-		m.URL = url.String
+		m.Url = url.String
 	}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -126,18 +138,17 @@ func pickMeal(db *sql.DB, minEffort, maxEffort int, excludeRedMeat bool, cutoff 
 		return nil, err
 	}
 	if lastPlanned.Valid {
-		m.LastPlanned = lastPlanned.Time
-	} else {
-		m.LastPlanned = time.Time{}
+		m.LastPlanned = timestamppb.New(lastPlanned.Time)
 	}
+
 	return &m, nil
 }
 
 // GetLastPlannedMeals retrieves the most recently planned meals to reconstruct the last meal plan
 func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
-	plan := &WeeklyMealPlan{}
-	// Friday is handled separately as "Eating out" for dinner
-	weekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"}
+	plan := &WeeklyMealPlan{Days: make([]*PlanDay, 0, 21)}
+	// Friday is now included for breakfast and lunch, but dinner is always "Eating out"
+	weekdays := DaysOfTheWeek
 	numMealsNeeded := len(weekdays)
 
 	lastBreakfasts, err := getLastPlannedMealsByType(db, "breakfast", numMealsNeeded)
@@ -160,24 +171,16 @@ func GetLastPlannedMeals(db *sql.DB) (*WeeklyMealPlan, error) {
 		return nil, errors.New("not enough recently planned meals to reconstruct a full plan")
 	}
 
-	dayMap := map[string]*DayMealPlan{
-		"Monday":    &plan.Monday,
-		"Tuesday":   &plan.Tuesday,
-		"Wednesday": &plan.Wednesday,
-		"Thursday":  &plan.Thursday,
-		"Saturday":  &plan.Saturday,
-		"Sunday":    &plan.Sunday,
+	for i := range weekdays {
+		plan.Days = append(plan.Days, &apipb.MealPlanEntry{DayIndex: int32(i), MealType: "breakfast", Meal: lastBreakfasts[i]}, &apipb.MealPlanEntry{DayIndex: int32(i), MealType: "lunch", Meal: lastLunches[i]}, &apipb.MealPlanEntry{DayIndex: int32(i), MealType: "dinner", Meal: lastDinners[i]})
 	}
 
-	for i, day := range weekdays {
-		dayPlan := dayMap[day]
-		dayPlan.Breakfast = lastBreakfasts[i]
-		dayPlan.Lunch = lastLunches[i]
-		dayPlan.Dinner = lastDinners[i]
+	for idx := range plan.Days {
+		if plan.Days[idx].DayIndex == 4 && plan.Days[idx].MealType == "dinner" {
+			plan.Days[idx].Meal = &Meal{Name: "Eating out"}
+			break
+		}
 	}
-
-	// Handle Friday "Eating out"
-	plan.Friday.Dinner = &Meal{MealName: "Eating out"}
 
 	return plan, nil
 }
@@ -199,17 +202,30 @@ func getLastPlannedMealsByType(db *sql.DB, mealType string, limit int) ([]*Meal,
 	var meals []*Meal
 	for rows.Next() {
 		var m Meal
+		var id int32
+		var name string
+		var effort int32
 		var lastPlanned sql.NullTime
+		var hasRedMeat bool
 		var url sql.NullString
-		err := rows.Scan(&m.ID, &m.MealName, &m.RelativeEffort, &lastPlanned, &m.RedMeat, &url, &m.MealType)
+		var mealTypeScanned string
+		err := rows.Scan(&id, &name, &effort, &lastPlanned, &hasRedMeat, &url, &mealTypeScanned)
 		if err != nil {
 			return nil, err
 		}
+
+		m.Id = id
+		m.Name = name
+		m.Effort = effort
+		m.HasRedMeat = hasRedMeat
+		m.MealType = mealTypeScanned
+		m.LastPlanned = nil
 		if lastPlanned.Valid {
-			m.LastPlanned = lastPlanned.Time
+			m.LastPlanned = timestamppb.New(lastPlanned.Time)
 		}
+
 		if url.Valid {
-			m.URL = url.String
+			m.Url = url.String
 		}
 		meals = append(meals, &m)
 	}
@@ -227,15 +243,15 @@ func getLastPlannedMealsByType(db *sql.DB, mealType string, limit int) ([]*Meal,
 // Each meal becomes an all-day event with the meal name as the title.
 func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 	monday = monday.UTC().Truncate(24 * time.Hour)
-	weekDays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
-	dayPlans := map[string]DayMealPlan{
-		"Monday":    plan.Monday,
-		"Tuesday":   plan.Tuesday,
-		"Wednesday": plan.Wednesday,
-		"Thursday":  plan.Thursday,
-		"Friday":    plan.Friday,
-		"Saturday":  plan.Saturday,
-		"Sunday":    plan.Sunday,
+	weekDays := DaysOfTheWeek
+	// Build lookup maps for quick access
+	mealsByDay := make(map[int]map[string]*Meal)
+	for _, pd := range plan.Days {
+		dayIdx := int(pd.DayIndex)
+		if _, ok := mealsByDay[dayIdx]; !ok {
+			mealsByDay[dayIdx] = make(map[string]*Meal)
+		}
+		mealsByDay[dayIdx][strings.Title(pd.MealType)] = pd.Meal
 	}
 
 	var b strings.Builder
@@ -243,16 +259,13 @@ func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 	b.WriteString("VERSION:2.0\r\n")
 	b.WriteString("PRODID:-//Meal Planner//EN\r\n")
 
-	for i, day := range weekDays {
-		dayPlan := dayPlans[day]
-		meals := map[string]*Meal{
-			"Breakfast": dayPlan.Breakfast,
-			"Lunch":     dayPlan.Lunch,
-			"Dinner":    dayPlan.Dinner,
+	for i := range weekDays {
+		meals := mealsByDay[i]
+		if meals == nil {
+			continue
 		}
-
 		for mealType, meal := range meals {
-			if meal == nil || meal.MealName == "" {
+			if meal == nil || meal.GetName() == "" {
 				continue
 			}
 
@@ -265,7 +278,7 @@ func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 			case "Dinner":
 				startHour, startMinute = 18, 30
 			default:
-				continue // Should not happen for known meal types
+				continue
 			}
 
 			eventDate := monday.AddDate(0, 0, i)
@@ -274,12 +287,12 @@ func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 
 			b.WriteString("BEGIN:VEVENT\r\n")
 			b.WriteString("DTSTAMP:" + time.Now().UTC().Format("20060102T150405Z") + "\r\n")
-			b.WriteString("UID:" + fmt.Sprintf("%d-%s-%s@mealplanner", meal.ID, mealType, startTime.Format("20060102T150405Z")) + "\r\n")
+			b.WriteString("UID:" + fmt.Sprintf("%d-%s-%s@mealplanner", meal.GetId(), mealType, startTime.Format("20060102T150405Z")) + "\r\n")
 			b.WriteString("DTSTART:" + startTime.Format("20060102T150405Z") + "\r\n")
 			b.WriteString("DTEND:" + endTime.Format("20060102T150405Z") + "\r\n")
-			b.WriteString("SUMMARY:" + escapeICSString(fmt.Sprintf("%s: %s", meal.MealName, mealType)) + "\r\n")
-			if meal.URL != "" {
-				b.WriteString("URL:" + meal.URL + "\r\n")
+			b.WriteString("SUMMARY:" + escapeICSString(fmt.Sprintf("%s: %s", meal.GetName(), mealType)) + "\r\n")
+			if meal.GetUrl() != "" {
+				b.WriteString("URL:" + meal.GetUrl() + "\r\n")
 			}
 			b.WriteString("END:VEVENT\r\n")
 		}
@@ -293,4 +306,48 @@ func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
 func escapeICSString(s string) string {
 	replacer := strings.NewReplacer(",", "\\,", ";", "\\;", "\n", "\\n")
 	return replacer.Replace(s)
+}
+
+// RemoveMealFromPlan sets the specified meal slot to nil in the weekly plan.
+// dayIndex should be 0=Monday .. 6=Sunday. mealType should be breakfast, lunch, or dinner.
+func RemoveMealFromPlan(plan *WeeklyMealPlan, dayIndex int, mealType string) error {
+	if plan == nil {
+		return errors.New("plan is nil")
+	}
+	if dayIndex < 0 || dayIndex > 6 {
+		return fmt.Errorf("invalid dayIndex %d", dayIndex)
+	}
+	mealType = strings.ToLower(mealType)
+	if mealType != "breakfast" && mealType != "lunch" && mealType != "dinner" {
+		return fmt.Errorf("invalid mealType %s", mealType)
+	}
+
+	for i := range plan.Days {
+		d := plan.Days[i]
+		if int(d.DayIndex) == dayIndex && d.MealType == mealType {
+			if d.Meal == nil {
+				return errors.New("meal already empty")
+			}
+			d.Meal = nil
+			return nil
+		}
+	}
+	return fmt.Errorf("meal not found for dayIndex %d and mealType %s", dayIndex, mealType)
+}
+
+// BuildShoppingListFromPlan aggregates all ingredients referenced in the plan's
+// meals and returns them as ShoppingListItem entries.
+// The plan's Meal objects must include ingredient details.
+func BuildShoppingListFromPlan(plan *WeeklyMealPlan) []*ShoppingListItem {
+	if plan == nil {
+		return nil
+	}
+	meals := []*Meal{}
+	for _, d := range plan.Days {
+		if d.Meal != nil {
+			meals = append(meals, d.Meal)
+		}
+	}
+	ingredients := GenerateShoppingListFromMeals(meals)
+	return ConvertIngredientsToShoppingItems(ingredients)
 }
