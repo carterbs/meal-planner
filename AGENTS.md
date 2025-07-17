@@ -10,6 +10,7 @@ This repository contains a Go backend, React/TypeScript frontend, and TypeScript
 - **Scope**: These instructions apply to the entire directory tree rooted at this folder
 - **Precedence**: Direct system/developer/user instructions take precedence over these guidelines
 - **Compliance**: All code changes must follow these instructions for every file touched
+- **Testing** If you start working on a test, and yarn:test fails, you should abort the task. Do not stop your task until tests are passing.
 
 ### Required Validation Checks
 After making any code changes, you MUST run these validation commands and ensure they pass:
@@ -28,13 +29,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
 - Follow existing code patterns and architectural conventions
 
 ## Repository layout
-- `backend/` – Go API server and database migrations
-- `backend/mcp/` – TypeScript MCP server (port 3001)
-- `frontend/` – React application
-- `scripts/` – Node scripts for development and database management
-- `docs/` – Project documentation
-- `db-backups/` – PostgreSQL backups
-- `docker-compose.yml` – PostgreSQL and pgAdmin services
+- TBD
 
 ## Development workflow
 1. Start the development environment with:
@@ -43,7 +38,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
    ```
    Start the frontend with
    ```bash
-   cd frontend && yarn start
+   cd typescript/ui && yarn start
    ```
 
 ## Testing
@@ -69,7 +64,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
 
 ## Documentation
 - High level architecture and features are described in `docs/MealPlannerSummary.md`.
-- The frontend test strategy is documented in `frontend/TEST-IMPROVEMENTS.md`.
+- The frontend test strategy is documented in `typescript/frontend/TEST-IMPROVEMENTS.md`.
 
 ## When making changes
 - Keep Go and TypeScript code well tested. Add unit tests in the appropriate `*_test.go` or `.test.tsx` files.

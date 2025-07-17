@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 )
 
@@ -40,21 +41,21 @@ func Load(csvPath string) error {
 		m, ok := mealMap[name]
 		if !ok {
 			m = &models.Meal{
-				ID:             len(mealMap) + 1,
-				MealName:       name,
-				RelativeEffort: effort,
-				RedMeat:        isRedMeat(name),
-				Ingredients:    []models.Ingredient{},
-				Steps:          []models.Step{},
+				Id:          int32(len(mealMap) + 1),
+				Name:        name,
+				Effort:      int32(effort),
+				HasRedMeat:  isRedMeat(name),
+				Ingredients: []*models.Ingredient{},
+				Steps:       []*models.Step{},
 			}
 			mealMap[name] = m
 			meals = append(meals, m)
 		}
 		qty, unit, ingName := parseIngredient(ingredientField)
 		qtyF, _ := strconv.ParseFloat(qty, 64)
-		m.Ingredients = append(m.Ingredients, models.Ingredient{
-			ID:       len(m.Ingredients) + 1,
-			MealID:   m.ID,
+		m.Ingredients = append(m.Ingredients, &models.Ingredient{
+			Id:       int32(len(m.Ingredients) + 1),
+			MealId:   m.Id,
 			Quantity: qtyF,
 			Unit:     unit,
 			Name:     ingName,
@@ -73,7 +74,7 @@ func GetMealsByIDs(ids []int) ([]*models.Meal, error) {
 	var out []*models.Meal
 	for _, id := range ids {
 		for _, m := range meals {
-			if m.ID == id {
+			if m.GetId() == int32(id) {
 				out = append(out, m)
 				break
 			}
@@ -90,13 +91,13 @@ func SwapMeal(currentID int) (*models.Meal, error) {
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < 10; i++ {
 		m := meals[rand.Intn(len(meals))]
-		if m.ID != currentID {
+		if m.GetId() != int32(currentID) {
 			return m, nil
 		}
 	}
 	// fallback to first different meal
 	for _, m := range meals {
-		if m.ID != currentID {
+		if m.GetId() != int32(currentID) {
 			return m, nil
 		}
 	}
@@ -112,8 +113,8 @@ func GenerateWeeklyMealPlan() (map[string]*models.Meal, error) {
 	pick := func(min, max int) *models.Meal {
 		filtered := make([]*models.Meal, 0)
 		for _, m := range meals {
-			if m.RelativeEffort >= min && m.RelativeEffort <= max {
-				if redUsed && m.RedMeat {
+			if m.GetEffort() >= int32(min) && m.GetEffort() <= int32(max) {
+				if redUsed && m.GetHasRedMeat() {
 					continue
 				}
 				filtered = append(filtered, m)
@@ -123,7 +124,7 @@ func GenerateWeeklyMealPlan() (map[string]*models.Meal, error) {
 			return nil
 		}
 		m := filtered[rand.Intn(len(filtered))]
-		if m.RedMeat {
+		if m.GetHasRedMeat() {
 			redUsed = true
 		}
 		return m
@@ -133,15 +134,15 @@ func GenerateWeeklyMealPlan() (map[string]*models.Meal, error) {
 	plan["Tuesday"] = pick(3, 5)
 	plan["Wednesday"] = pick(3, 5)
 	plan["Thursday"] = pick(3, 5)
-	plan["Friday"] = &models.Meal{MealName: "Eating out"}
+	plan["Friday"] = &models.Meal{Name: "Eating out"}
 	plan["Saturday"] = pick(3, 5)
-	plan["Sunday"] = pick(6, 100)
+	plan["Sunday"] = pick(4, 10)
 
 	return plan, nil
 }
 
 // GenerateWeeklyMealPlanStruct creates a meal plan using the new WeeklyMealPlan struct format
-func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
+func GenerateWeeklyMealPlanStruct() (*apipb.WeeklyMealPlan, error) {
 	rand.Seed(time.Now().UnixNano())
 	redUsed := false
 
@@ -154,23 +155,23 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 			switch mealType {
 			case "breakfast":
 				// Breakfast should be low effort meals
-				validForMealType = m.RelativeEffort <= 2
+				validForMealType = m.GetEffort() <= 2
 			case "lunch":
 				// Lunch should be low to medium effort meals
-				validForMealType = m.RelativeEffort <= 3
+				validForMealType = m.GetEffort() <= 3
 			case "dinner":
 				// Dinner can be any effort level
 				validForMealType = true
 			default:
 				validForMealType = true
 			}
-			
+
 			if !validForMealType {
 				continue
 			}
-			
-			if m.RelativeEffort >= min && m.RelativeEffort <= max {
-				if mealType == "dinner" && redUsed && m.RedMeat {
+
+			if m.GetEffort() >= int32(min) && m.GetEffort() <= int32(max) {
+				if mealType == "dinner" && redUsed && m.GetHasRedMeat() {
 					continue
 				}
 				filtered = append(filtered, m)
@@ -180,7 +181,7 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 			return nil
 		}
 		m := filtered[rand.Intn(len(filtered))]
-		if mealType == "dinner" && m.RedMeat {
+		if mealType == "dinner" && m.GetHasRedMeat() {
 			redUsed = true
 		}
 		// Create a copy with the meal type set
@@ -189,42 +190,31 @@ func GenerateWeeklyMealPlanStruct() (*models.WeeklyMealPlan, error) {
 		return &mealCopy
 	}
 
-	plan := &models.WeeklyMealPlan{
-		Monday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(0, 2, "dinner"),
-		},
-		Tuesday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(3, 5, "dinner"),
-		},
-		Wednesday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(3, 5, "dinner"),
-		},
-		Thursday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(3, 5, "dinner"),
-		},
-		Friday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    &models.Meal{MealName: "Eating out"},
-		},
-		Saturday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(3, 5, "dinner"),
-		},
-		Sunday: models.DayMealPlan{
-			Breakfast: pick(0, 2, "breakfast"),
-			Lunch:     pick(0, 2, "lunch"),
-			Dinner:    pick(6, 100, "dinner"),
-		},
+	dayNames := models.DaysOfTheWeek
+	mealTypes := []string{"breakfast", "lunch", "dinner"}
+
+	plan := &apipb.WeeklyMealPlan{Days: make([]*apipb.MealPlanEntry, 0, 21)}
+	for i, day := range dayNames {
+		for _, mt := range mealTypes {
+			minEffort, maxEffort := 0, 2
+			if mt == "dinner" {
+				minEffort, maxEffort = 3, 5
+				if day == "Monday" {
+					minEffort, maxEffort = 0, 2
+				} else if day == "Sunday" {
+					minEffort, maxEffort = 4, 10
+				}
+			}
+			meal := pick(minEffort, maxEffort, mt)
+			plan.Days = append(plan.Days, &apipb.MealPlanEntry{DayIndex: int32(i), MealType: mt, Meal: meal})
+		}
+	}
+
+	for idx := range plan.Days {
+		if plan.Days[idx].DayIndex == 4 && plan.Days[idx].MealType == "dinner" {
+			plan.Days[idx].Meal = &models.Meal{Name: "Eating out"}
+			break
+		}
 	}
 
 	return plan, nil

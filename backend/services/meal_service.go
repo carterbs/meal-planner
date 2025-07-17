@@ -1,0 +1,150 @@
+package services
+
+import (
+	"context"
+	"fmt"
+
+	"mealplanner/logging"
+	"mealplanner/models"
+	"mealplanner/repositories"
+)
+
+type mealService struct {
+	mealRepo       repositories.MealRepository
+	ingredientRepo repositories.IngredientRepository
+}
+
+var mealServiceLogger = logging.GetGrpcLogger("meal-service")
+
+// NewMealService creates a new meal service instance
+func NewMealService(mealRepo repositories.MealRepository, ingredientRepo repositories.IngredientRepository) MealService {
+	return &mealService{
+		mealRepo:       mealRepo,
+		ingredientRepo: ingredientRepo,
+	}
+}
+
+// GetAllMeals retrieves all meals from the database
+func (s *mealService) GetAllMeals() ([]*models.Meal, error) {
+	meals, err := s.mealRepo.GetAllMeals(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all meals: %w", err)
+	}
+	return meals, nil
+}
+
+// GetMealsByIDs retrieves meals by their IDs
+func (s *mealService) GetMealsByIDs(ids []int) ([]*models.Meal, error) {
+	meals, err := s.mealRepo.GetMealsByIDs(context.Background(), ids)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get meals by IDs %v: %w", ids, err)
+	}
+	return meals, nil
+}
+
+// CreateMeal creates a new meal in the database
+func (s *mealService) CreateMeal(meal *models.Meal) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Creating meal", "mealName", meal.GetName())
+	result, err := s.mealRepo.CreateMeal(context.Background(), meal)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to create meal", "mealName", meal.GetName(), "error", err)
+		return nil, fmt.Errorf("failed to create meal: %w", err)
+	}
+	mealServiceLogger.Debugw("Successfully created meal", "mealName", result.GetName(), "mealID", result.GetId())
+	return result, nil
+}
+
+// UpdateMeal updates an existing meal in the database
+func (s *mealService) UpdateMeal(meal *models.Meal) error {
+	err := s.mealRepo.UpdateMeal(context.Background(), meal)
+	if err != nil {
+		return fmt.Errorf("failed to update meal: %w", err)
+	}
+	return nil
+}
+
+// DeleteMeal deletes a meal from the database
+func (s *mealService) DeleteMeal(id int) error {
+	mealServiceLogger.Debugw("Deleting meal", "mealID", id)
+	err := s.mealRepo.DeleteMeal(context.Background(), id)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to delete meal", "mealID", id, "error", err)
+		return fmt.Errorf("failed to delete meal with ID %d: %w", id, err)
+	}
+	mealServiceLogger.Debugw("Successfully deleted meal", "mealID", id)
+	return nil
+}
+
+// SwapMeal swaps a meal with a random alternative meal of the same type
+func (s *mealService) SwapMeal(mealID int, mealType string) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Swapping meal", "mealID", mealID, "mealType", mealType)
+	meal, err := s.mealRepo.SwapMeal(context.Background(), mealID, mealType)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to swap meal", "mealID", mealID, "error", err)
+		return nil, fmt.Errorf("failed to swap meal ID %d: %w", mealID, err)
+	}
+	mealServiceLogger.Debugw("Successfully swapped meal", "oldMealID", mealID, "newMealID", meal.GetId())
+	return meal, nil
+}
+
+// GetMealByID retrieves a single meal by its ID
+func (s *mealService) GetMealByID(id int) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Getting meal by ID", "mealID", id)
+	meal, err := s.mealRepo.GetMealByID(context.Background(), id)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to get meal by ID", "mealID", id, "error", err)
+		return nil, fmt.Errorf("failed to get meal with ID %d: %w", id, err)
+	}
+	mealServiceLogger.Debugw("Successfully retrieved meal", "mealID", id, "mealName", meal.GetName())
+	return meal, nil
+}
+
+// UpdateMealIngredient updates a specific ingredient for a meal
+func (s *mealService) UpdateMealIngredient(mealID int, ingredient *models.Ingredient) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Updating meal ingredient", "mealID", mealID, "ingredientID", ingredient.GetId())
+	err := s.ingredientRepo.UpdateMealIngredient(context.Background(), mealID, ingredient)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to update meal ingredient", "mealID", mealID, "ingredientID", ingredient.GetId(), "error", err)
+		return nil, fmt.Errorf("failed to update ingredient for meal ID %d: %w", mealID, err)
+	}
+
+	// Return the updated meal
+	meal, err := s.GetMealByID(mealID)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to get updated meal after ingredient update", "mealID", mealID, "error", err)
+		return nil, fmt.Errorf("failed to get updated meal: %w", err)
+	}
+	mealServiceLogger.Debugw("Successfully updated meal ingredient", "mealID", mealID, "ingredientID", ingredient.GetId())
+	return meal, nil
+}
+
+// DeleteMealIngredient deletes a specific ingredient from a meal
+func (s *mealService) DeleteMealIngredient(mealID, ingredientID int) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Deleting meal ingredient", "mealID", mealID, "ingredientID", ingredientID)
+	err := s.ingredientRepo.DeleteMealIngredient(context.Background(), ingredientID)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to delete meal ingredient", "mealID", mealID, "ingredientID", ingredientID, "error", err)
+		return nil, fmt.Errorf("failed to delete ingredient %d from meal %d: %w", ingredientID, mealID, err)
+	}
+
+	// Return the updated meal
+	meal, err := s.GetMealByID(mealID)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to get updated meal after ingredient deletion", "mealID", mealID, "error", err)
+		return nil, fmt.Errorf("failed to get updated meal: %w", err)
+	}
+	mealServiceLogger.Debugw("Successfully deleted meal ingredient", "mealID", mealID, "ingredientID", ingredientID)
+	return meal, nil
+}
+
+// UpdateLastPlannedDates updates the last planned dates for multiple meals
+func (s *mealService) UpdateLastPlannedDates(mealIDs []int) error {
+	mealServiceLogger.Debugw("Updating last planned dates for meals", "mealIDs", mealIDs)
+	err := s.mealRepo.UpdateLastPlannedDates(context.Background(), mealIDs)
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to update last planned dates for meals", "mealIDs", mealIDs, "error", err)
+		return fmt.Errorf("failed to update last planned dates for meal IDs %v: %w", mealIDs, err)
+	}
+	mealServiceLogger.Debugw("Successfully updated last planned dates for meals", "mealCount", len(mealIDs))
+	return nil
+}

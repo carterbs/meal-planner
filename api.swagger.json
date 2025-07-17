@@ -1,0 +1,810 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "LoggingService"
+    },
+    {
+      "name": "MealPlannerAPI"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "apiAbandonWorkflowResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiAddBulkStepsResponse": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiStep"
+          }
+        }
+      }
+    },
+    "apiAddMessageResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiAddStepResponse": {
+      "type": "object",
+      "properties": {
+        "step": {
+          "$ref": "#/definitions/apiStep"
+        }
+      }
+    },
+    "apiAgentCheckpoint": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/apiMealPlanningCheckpointState"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiMessage"
+          }
+        },
+        "next": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "step": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "LangGraph checkpoint persistence (strict)"
+    },
+    "apiAgentCheckpointMetadata": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "step": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "apiAgentMessageRequest": {
+      "type": "object",
+      "properties": {
+        "threadId": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "interactive": {
+          "type": "boolean"
+        }
+      }
+    },
+    "apiAgentResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "threadId": {
+          "type": "string"
+        },
+        "currentStep": {
+          "type": "string"
+        },
+        "initialState": {
+          "type": "string",
+          "title": "JSON string"
+        },
+        "raw": {
+          "type": "string",
+          "title": "JSON string"
+        }
+      }
+    },
+    "apiAgentStartRequest": {
+      "type": "object",
+      "properties": {
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workflowType": {
+          "type": "string"
+        }
+      }
+    },
+    "apiCancelWorkflowResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "apiCheckpointEntry": {
+      "type": "object",
+      "properties": {
+        "threadId": {
+          "type": "string"
+        },
+        "checkpointNs": {
+          "type": "string"
+        },
+        "tuple": {
+          "$ref": "#/definitions/apiCheckpointTuple"
+        }
+      }
+    },
+    "apiCheckpointTuple": {
+      "type": "object",
+      "properties": {
+        "checkpoint": {
+          "$ref": "#/definitions/apiAgentCheckpoint"
+        },
+        "metadata": {
+          "$ref": "#/definitions/apiAgentCheckpointMetadata"
+        }
+      }
+    },
+    "apiCreateMealResponse": {
+      "type": "object",
+      "properties": {
+        "meal": {
+          "$ref": "#/definitions/apiMeal"
+        }
+      }
+    },
+    "apiDeleteAllStepsResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiDeleteMealIngredientResponse": {
+      "type": "object",
+      "properties": {
+        "meal": {
+          "$ref": "#/definitions/apiMeal"
+        }
+      }
+    },
+    "apiDeleteMealResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiDeleteStepResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiFeedbackEntryProto": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "title": "\"user\" or agent id"
+        },
+        "message": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "mealPlanVersion": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "Feedback entry reused inside MealPlanningState and checkpoints"
+    },
+    "apiFinalizeMealPlanResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiGenerateMealPlanResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/apiWeeklyMealPlan"
+        }
+      }
+    },
+    "apiGetAllMealsResponse": {
+      "type": "object",
+      "properties": {
+        "meals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiMeal"
+          }
+        }
+      }
+    },
+    "apiGetCheckpointResponse": {
+      "type": "object",
+      "properties": {
+        "tuple": {
+          "$ref": "#/definitions/apiCheckpointTuple"
+        },
+        "found": {
+          "type": "boolean"
+        }
+      }
+    },
+    "apiGetMealPlanResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/apiWeeklyMealPlan"
+        }
+      },
+      "title": "Meal plan endpoints"
+    },
+    "apiGetShoppingListResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiShoppingListItem"
+          }
+        }
+      }
+    },
+    "apiGetStepsResponse": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiStep"
+          }
+        }
+      }
+    },
+    "apiGetWorkflowStateResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/apiWeeklyMealPlan"
+        },
+        "shoppingList": {
+          "$ref": "#/definitions/apiShoppingList"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiMessage"
+          }
+        }
+      }
+    },
+    "apiGetWorkflowStatusResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/apiWorkflowStatus"
+        }
+      }
+    },
+    "apiHealthCheckResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "title": "Health endpoints"
+    },
+    "apiIngredient": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "mealId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "quantity": {
+          "type": "number",
+          "format": "double"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "apiListCheckpointsResponse": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiCheckpointEntry"
+          }
+        }
+      }
+    },
+    "apiListWorkflowsResponse": {
+      "type": "object",
+      "properties": {
+        "workflows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiWorkflowStatus"
+          }
+        }
+      }
+    },
+    "apiLogBatchResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "processed": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "apiLogEntry": {
+      "type": "object",
+      "properties": {
+        "serviceName": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "title": "DEBUG, INFO, WARN, ERROR"
+        },
+        "message": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "threadId": {
+          "type": "string",
+          "title": "optional correlation ID"
+        },
+        "component": {
+          "type": "string",
+          "title": "optional component/module name"
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "structured fields"
+        }
+      },
+      "title": "Logging Service Messages"
+    },
+    "apiLogResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiMeal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "effort": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "lastPlanned": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hasRedMeat": {
+          "type": "boolean"
+        },
+        "url": {
+          "type": "string"
+        },
+        "mealType": {
+          "type": "string"
+        },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiIngredient"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiStep"
+          }
+        }
+      }
+    },
+    "apiMealPlanEntry": {
+      "type": "object",
+      "properties": {
+        "meal": {
+          "$ref": "#/definitions/apiMeal"
+        },
+        "dayIndex": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "mealType": {
+          "type": "string"
+        }
+      }
+    },
+    "apiMealPlanICSResponse": {
+      "type": "object",
+      "properties": {
+        "icsData": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "apiMealPlanningCheckpointState": {
+      "type": "object",
+      "properties": {
+        "threadId": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "currentStep": {
+          "type": "string"
+        },
+        "mealPlan": {
+          "$ref": "#/definitions/apiWeeklyMealPlan"
+        },
+        "feedbackHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiFeedbackEntryProto"
+          }
+        },
+        "iterationCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "shoppingList": {
+          "$ref": "#/definitions/apiShoppingList"
+        },
+        "isFinalized": {
+          "type": "boolean"
+        }
+      },
+      "title": "Strictly-typed state for the meal-planning workflow"
+    },
+    "apiMessage": {
+      "type": "object",
+      "properties": {
+        "threadId": {
+          "type": "string"
+        },
+        "sender": {
+          "type": "string",
+          "title": "\"user\" or \"agent\""
+        },
+        "content": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "apiMessageAgentResponse": {
+      "type": "object",
+      "properties": {
+        "response": {
+          "$ref": "#/definitions/apiAgentResponse"
+        }
+      }
+    },
+    "apiPutCheckpointResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "threadId": {
+          "type": "string"
+        },
+        "checkpointNs": {
+          "type": "string"
+        }
+      }
+    },
+    "apiReconnectResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiRemoveMealResponse": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/apiWeeklyMealPlan"
+        }
+      }
+    },
+    "apiReorderStepsResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiReplaceMealResponse": {
+      "type": "object",
+      "properties": {
+        "meal": {
+          "$ref": "#/definitions/apiMeal"
+        }
+      }
+    },
+    "apiShoppingList": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiShoppingListItem"
+          }
+        }
+      }
+    },
+    "apiShoppingListItem": {
+      "type": "object",
+      "properties": {
+        "ingredient": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        }
+      }
+    },
+    "apiStartAgentWorkflowResponse": {
+      "type": "object",
+      "properties": {
+        "response": {
+          "$ref": "#/definitions/apiAgentResponse"
+        }
+      }
+    },
+    "apiStep": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "mealId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "stepNumber": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "instruction": {
+          "type": "string"
+        }
+      }
+    },
+    "apiSwapMealResponse": {
+      "type": "object",
+      "properties": {
+        "meal": {
+          "$ref": "#/definitions/apiMeal"
+        }
+      }
+    },
+    "apiUpdateMealIngredientResponse": {
+      "type": "object",
+      "properties": {
+        "meal": {
+          "$ref": "#/definitions/apiMeal"
+        }
+      }
+    },
+    "apiUpdateSessionStateResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "apiUpdateStepResponse": {
+      "type": "object",
+      "properties": {
+        "step": {
+          "$ref": "#/definitions/apiStep"
+        }
+      }
+    },
+    "apiWeeklyMealPlan": {
+      "type": "object",
+      "properties": {
+        "days": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiMealPlanEntry"
+          }
+        },
+        "shoppingList": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/apiShoppingListItem"
+          }
+        }
+      }
+    },
+    "apiWorkflowStatus": {
+      "type": "object",
+      "properties": {
+        "threadId": {
+          "type": "string"
+        },
+        "workflowType": {
+          "type": "string"
+        },
+        "currentStep": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

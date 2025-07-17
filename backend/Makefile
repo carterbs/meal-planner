@@ -4,7 +4,7 @@
 
 # Run all tests
  test:
-	go test ./...
+	go test ./... -v
 
 # Generate coverage profile and display function-level coverage
  coverage:
