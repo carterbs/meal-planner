@@ -5,21 +5,20 @@ import {
   TextField,
   Typography,
   Paper,
-  AppBar,
-  Toolbar,
   Avatar,
   ThemeProvider,
   CssBaseline,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   createTheme,
+  Menu,
+  MenuItem,
+  IconButton,
 } from '@mui/material';
 import {
   RestaurantMenu as RestaurantMenuIcon,
   ExitToApp as ExitToAppIcon,
   ExpandMore as ExpandMoreIcon,
   ShoppingCart as ShoppingCartIcon,
+  IosShare as ShareIcon,
 } from '@mui/icons-material';
 import MealPlanDisplay from './components/MealPlanDisplay';
 import { ShoppingListItem } from './types';
@@ -38,16 +37,65 @@ import type { DayOfTheWeek } from '@meal-planner/shared';
 const gatewayClient = createClient(createConfig({
   baseUrl: 'http://localhost:8080/api'
 }));
-// Style variables
-const styles = {
+
+// Color scheme definitions
+const colorSchemes = {
+  sageAndCream: {
+    name: 'Sage & Cream',
+    mainBg: '#fefcf7',
+    chatBg: '#fefcf7',
+    cardBg: '#e8f0e5',
+    headerBg: '#e8f0e5',
+    headerText: '#4a6741',
+    accent: '#4a6741',
+    accent2: '#c9e0c2',
+    border: '#d4d9d1',
+    text: '#3a3a3a',
+    userMsgBg: '#f4f7f2',
+    aiMsgBg: '#f4f7f2',
+  },
+  earthyNeutrals: {
+    name: 'Earthy Neutrals',
+    mainBg: '#F7F5F2',
+    chatBg: '#ffffff',
+    cardBg: '#f7f4f2',
+    headerBg: '#f7f4f2',
+    headerText: '#3a3a3a',
+    accent: '#c9e0c2',
+    accent2: '#9aaf94',
+    apricot: '#FFB347',
+    border: '#e0e4e0',
+    text: '#3a3a3a',
+    userMsgBg: '#c9e0c2',
+    aiMsgBg: '#f7f4f2',
+  },
+  naturalLinen: {
+    name: 'Natural Linen',
+    mainBg: '#faf9f6',
+    chatBg: '#faf9f6',
+    cardBg: '#f0f4f0',
+    headerBg: '#f0f4f0',
+    headerText: '#3a3a3a',
+    accent: '#6b8c5d',
+    accent2: '#c9e0c2',
+    border: '#d4d9d1',
+    text: '#3a3a3a',
+    userMsgBg: '#E8F4EC',
+    aiMsgBg: '#eef2ee',
+  },
+};
+// Style variables - now a function that takes colors
+const getStyles = (colors: typeof colorSchemes.earthyNeutrals) => ({
   appBar: {
     backgroundColor: 'primary.main',
     color: 'primary.contrastText',
   } as SxProps<Theme>,
   mainContainer: {
     display: 'flex',
-    flexDirection: 'column',
-    minHeight: '100vh',
+    flexDirection: 'row',
+    height: '100vh',
+    width: '100vw',
+    overflow: 'hidden',
   } as SxProps<Theme>,
   contentContainer: {
     display: 'flex',
@@ -57,23 +105,29 @@ const styles = {
     height: '100%',
     width: '100%',
     maxWidth: '100vw',
-    overflow: 'hidden',
   } as SxProps<Theme>,
   chatContainer: {
-    width: '35%',
-    minWidth: '400px',
+    width: '400px',
     display: 'flex',
     flexDirection: 'column',
     borderRadius: 0,
-    borderRight: (theme: Theme) => `1px solid ${theme.palette.divider}`,
-    backgroundColor: 'background.paper',
+    height: '100vh',
+  } as SxProps<Theme>,
+  chatHeader: {
+    backgroundColor: colors.headerBg,
+    color: colors.headerText,
+    minHeight: '64px',
+    display: 'flex',
+    alignItems: 'center',
+    px: 2,
   } as SxProps<Theme>,
   chatMessages: {
-    flexGrow: 1,
+    flex: 1,
     overflowY: 'auto',
     p: 2,
     display: 'flex',
     flexDirection: 'column',
+    minHeight: 0,
     '&::-webkit-scrollbar': {
       width: '6px',
     },
@@ -118,11 +172,11 @@ const styles = {
   messageBubble: (isUser: boolean) =>
     ({
       p: 2,
-      borderRadius: '18px',
-      borderTopLeftRadius: isUser ? '18px' : '4px',
-      borderTopRightRadius: isUser ? '4px' : '18px',
-      bgcolor: isUser ? 'primary.main' : 'grey.100',
-      color: isUser ? 'primary.contrastText' : 'text.primary',
+      borderRadius: '12px',
+      borderTopLeftRadius: isUser ? '12px' : '4px',
+      borderTopRightRadius: isUser ? '4px' : '12px',
+      bgcolor: isUser ? colors.userMsgBg : colors.aiMsgBg,
+      color: colors.text,
       boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
       position: 'relative',
       maxWidth: '100%',
@@ -132,9 +186,9 @@ const styles = {
   avatar: {
     width: 32,
     height: 32,
-    bgcolor: 'grey.300',
-    color: 'grey.700',
-    fontSize: '0.75rem',
+    bgcolor: colors.cardBg,
+    color: colors.text,
+    fontSize: '0.6rem',
     fontWeight: 'bold',
     flexShrink: 0,
     display: 'flex',
@@ -144,8 +198,8 @@ const styles = {
   } as SxProps<Theme>,
   chatInputContainer: {
     p: 2,
-    borderTop: (theme: Theme) => `1px solid ${theme.palette.divider}`,
-    backgroundColor: 'background.paper',
+    backgroundColor: colors.chatBg,
+    flexShrink: 0,
   } as SxProps<Theme>,
   inputContainer: {
     display: 'flex',
@@ -156,21 +210,28 @@ const styles = {
   } as SxProps<Theme>,
   mealPlanContainer: {
     flex: 1,
-    overflow: 'auto',
-    p: 3,
-    backgroundColor: 'background.default',
+    overflow: 'hidden',
+    p: 1.5,
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
   } as SxProps<Theme>,
   mealPlanPaper: {
-    p: 3,
-    minHeight: '100%',
-    backgroundColor: 'background.paper',
+    pt: 1,
+    px: 2,
+    pb: 1.5,
+    flex: 1,
     borderRadius: 2,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
   } as SxProps<Theme>,
   sectionHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    mb: 3,
+    mb: 1,
+    pb: 1,
   } as SxProps<Theme>,
   sectionTitle: {
     fontWeight: 600,
@@ -189,6 +250,7 @@ const styles = {
     fontSize: 64,
     mb: 2,
     opacity: 0.3,
+    color: colors.apricot,
   } as SxProps<Theme>,
   shoppingListItem: {
     display: 'block',
@@ -198,7 +260,7 @@ const styles = {
   checkbox: {
     marginRight: '8px',
   } as React.CSSProperties,
-};
+});
 
 // Custom theme with earthy colors
 const theme = createTheme({
@@ -216,18 +278,27 @@ const theme = createTheme({
       contrastText: '#ffffff',
     },
     background: {
-      default: '#f8f5ed', // Warm off-white
+      default: '#ffffff', // White
       paper: '#ffffff',
     },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     h5: {
       fontWeight: 600,
       letterSpacing: '0.5px',
+      fontSize: '18px',
+    },
+    h6: {
+      fontWeight: 600,
+      fontSize: '18px',
     },
     body1: {
       lineHeight: 1.6,
+      fontSize: '14px',
+    },
+    body2: {
+      fontSize: '14px',
     },
   },
   components: {
@@ -321,7 +392,13 @@ const AgentPage: React.FC = () => {
     null,
   );
   const [highlights, setHighlights] = useState<Set<string>>(new Set());
+  const [currentTab, setCurrentTab] = useState(0);
+  const [shareMenuAnchor, setShareMenuAnchor] = useState<null | HTMLElement>(null);
+  const currentColorScheme = 'earthyNeutrals';
   const chatRef = useRef<HTMLDivElement | null>(null);
+  
+  const colors = colorSchemes[currentColorScheme];
+  const styles = getStyles(colors);
 
   useEffect(() => {
     const el = chatRef.current;
@@ -535,40 +612,50 @@ const AgentPage: React.FC = () => {
     }
   };
 
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  };
+
+  const handleShareMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setShareMenuAnchor(event.currentTarget);
+  };
+
+  const handleShareMenuClose = () => {
+    setShareMenuAnchor(null);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={styles.mainContainer}>
-        {/* Header */}
-        <AppBar position="static" elevation={0} sx={styles.appBar}>
-          <Toolbar>
-            <RestaurantMenuIcon sx={{ mr: 2 }} />
+        {/* Left Side - Chat */}
+        <Paper elevation={0} sx={{...styles.chatContainer, boxShadow: 'none'}}>
+          {/* Chat Header */}
+          <Box sx={styles.chatHeader}>
+            <RestaurantMenuIcon sx={{ mr: 2, color: colors.accent2 }} />
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Meal Planning Assistant
+              Meal Planner
             </Typography>
+            
             {session ? (
               <Button
-                color="inherit"
                 onClick={handleLogout}
-                startIcon={<ExitToAppIcon />}
+                size="small"
+                sx={{ color: colors.accent2 }}
               >
-                End Session
+                <ExitToAppIcon />
               </Button>
             ) : (
               <Button
-                color="inherit"
                 onClick={startNewSession}
                 data-testid="start-session"
+                size="small"
+                sx={{ color: colors.apricot }}
               >
                 Start Session
               </Button>
             )}
-          </Toolbar>
-        </AppBar>
-
-        <Box sx={styles.contentContainer}>
-          {/* Left Side - Chat */}
-          <Paper elevation={0} sx={styles.chatContainer}>
+          </Box>
             <Box
               ref={chatRef}
               data-testid="chat-history"
@@ -637,150 +724,164 @@ const AgentPage: React.FC = () => {
                 />
                 <Button
                   variant="contained"
-                  color="primary"
                   data-testid="send-button"
                   onClick={sendMessage}
                   disabled={!input.trim() || isWorking}
-                  sx={styles.sendButton}
+                  sx={{
+                    ...styles.sendButton,
+                    backgroundColor: colors.apricot,
+                    color: '#ffffff',
+                    '&:hover': {
+                      backgroundColor: '#ff9f2b',
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#cccccc',
+                    },
+                  }}
                 >
                   Send
                 </Button>
               </Box>
             </Box>
-          </Paper>
+        </Paper>
 
-          {/* Right Side - Meal Plan */}
-          <Box sx={styles.mealPlanContainer}>
-            <Paper elevation={0} sx={styles.mealPlanPaper}>
-              {mealPlan ? (
+        {/* Right Side - Meal Plan */}
+        <Box sx={styles.mealPlanContainer}>
+            <Paper elevation={0} sx={{...styles.mealPlanPaper, boxShadow: 'none'}}>
+              {mealPlan || (shoppingList && shoppingList.length > 0) ? (
                 <>
                   <Box sx={styles.sectionHeader}>
-                    <Typography variant="h5" sx={styles.sectionTitle}>
-                      Weekly Meal Plan
-                    </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Button
-                        variant="outlined"
+                        onClick={() => setCurrentTab(0)}
+                        variant={currentTab === 0 ? 'contained' : 'outlined'}
                         size="small"
-                        onClick={copyMealPlan}
-                        data-testid="copy-meal-plan"
-                      >
-                        Copy Plan
-                      </Button>
-                    </Box>
-                  </Box>
-                  <MealPlanDisplay plan={mealPlan} highlights={highlights} />
-
-                  {/* Shopping List Accordion */}
-                  {shoppingList && shoppingList.length > 0 && (
-                    <Accordion
-                      elevation={0}
-                      sx={{
-                        mt: 3,
-                        '&:before': { display: 'none' },
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
                         sx={{
-                          bgcolor: 'grey.50',
-                          borderBottom: '1px solid',
-                          borderColor: 'divider',
-                          '&.Mui-expanded': {
-                            minHeight: '48px',
-                            margin: 0,
-                          },
-                          '& .MuiAccordionSummary-content': {
-                            margin: '12px 0',
-                            '&.Mui-expanded': {
-                              margin: '12px 0',
-                            },
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          borderRadius: '20px',
+                          px: 2,
+                          py: 0.5,
+                          backgroundColor: currentTab === 0 ? colors.accent2 : 'transparent',
+                          borderColor: colors.accent2,
+                          color: currentTab === 0 ? '#ffffff' : colors.accent2,
+                          '&:hover': {
+                            backgroundColor: currentTab === 0 ? colors.accent2 : `${colors.accent2}10`,
                           },
                         }}
                       >
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <ShoppingCartIcon fontSize="small" color="action" />
-                          <Typography variant="subtitle1">
-                            Shopping List
-                          </Typography>
-                        </Box>
-                      </AccordionSummary>
-                      <AccordionDetails sx={{ p: 0 }}>
-                        <Box sx={{ p: 2, pt: 1 }}>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'flex-end',
-                              mb: 1,
-                            }}
-                          >
-                            <Button
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                copyShoppingList();
-                              }}
-                              data-testid="copy-shopping-list"
-                            >
-                              Copy List
-                            </Button>
-                          </Box>
-                          <Box component="div" sx={{ p: 0, m: 0 }}>
-                            {shoppingList.map((item, index) => (
-                              <Box
-                                component="div"
-                                key={index}
-                                sx={styles.shoppingListItem}
-                              >
-                                {Number(item.quantity) > 0
-                                  ? `${item.quantity} `
-                                  : ''}
-                                {item.ingredient}
-                                {item.category && ` (${item.category})`}
-                              </Box>
-                            ))}
-                          </Box>
-                        </Box>
-                      </AccordionDetails>
-                    </Accordion>
-                  )}
-                </>
-              ) : shoppingList && shoppingList.length > 0 ? (
-                <>
-                  <Box sx={styles.sectionHeader}>
-                    <Typography variant="h5" sx={styles.sectionTitle}>
-                      Shopping List
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={copyShoppingList}
-                      data-testid="copy-shopping-list"
-                    >
-                      Copy List
-                    </Button>
-                  </Box>
-                  <Box sx={{ mt: 2 }}>
-                    <Box component="div" sx={{ p: 0, m: 0 }}>
-                      {shoppingList.map((item, index) => (
-                        <Box
-                          component="div"
-                          key={index}
-                          sx={styles.shoppingListItem}
-                        >
-                          {Number(item.quantity) > 0 ? `${item.quantity} ` : ''}
-                          {item.ingredient}
-                          {item.category && ` (${item.category})`}
-                        </Box>
-                      ))}
+                        Meal Plan
+                      </Button>
+                      <Button
+                        onClick={() => setCurrentTab(1)}
+                        variant={currentTab === 1 ? 'contained' : 'outlined'}
+                        size="small"
+                        disabled={!shoppingList || shoppingList.length === 0}
+                        sx={{
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          borderRadius: '20px',
+                          px: 2,
+                          py: 0.5,
+                          backgroundColor: currentTab === 1 ? colors.accent2 : 'transparent',
+                          borderColor: colors.accent2,
+                          color: currentTab === 1 ? '#ffffff' : colors.accent2,
+                          '&:hover': {
+                            backgroundColor: currentTab === 1 ? colors.accent2 : `${colors.accent2}10`,
+                          },
+                          '&:disabled': {
+                            borderColor: '#cccccc',
+                            color: '#cccccc',
+                          },
+                        }}
+                      >
+                        Shopping List
+                      </Button>
                     </Box>
+                    <IconButton
+                      onClick={handleShareMenuOpen}
+                      size="small"
+                      data-testid="share-menu-button"
+                      sx={{
+                        color: colors.accent2,
+                        '&:hover': {
+                          color: colors.accent,
+                          backgroundColor: 'unset',
+                        },
+                      }}
+                    >
+                      <ShareIcon />
+                    </IconButton>
+                    <Menu
+                      anchorEl={shareMenuAnchor}
+                      open={Boolean(shareMenuAnchor)}
+                      onClose={handleShareMenuClose}
+                      sx={{
+                        '& .MuiPaper-root': {
+                          backgroundColor: colors.cardBg,
+                        },
+                      }}
+                    >
+                      {mealPlan && (
+                        <MenuItem
+                          onClick={() => {
+                            copyMealPlan();
+                            handleShareMenuClose();
+                          }}
+                          data-testid="copy-meal-plan"
+                        >
+                          Copy Meal Plan
+                        </MenuItem>
+                      )}
+                      {shoppingList && shoppingList.length > 0 && (
+                        <MenuItem
+                          onClick={() => {
+                            copyShoppingList();
+                            handleShareMenuClose();
+                          }}
+                          data-testid="copy-shopping-list"
+                        >
+                          Copy Shopping List
+                        </MenuItem>
+                      )}
+                    </Menu>
                   </Box>
+
+                  {/* Tab Content */}
+                  {currentTab === 0 && mealPlan && (
+                    <MealPlanDisplay plan={mealPlan} highlights={highlights} colors={colors} />
+                  )}
+                  
+                  {currentTab === 1 && shoppingList && shoppingList.length > 0 && (
+                    <Box sx={{ mt: 2, flex: 1, overflow: 'auto' }}>
+                      <Box component="div" sx={{ p: 0, m: 0 }}>
+                        {shoppingList.map((item, index) => (
+                          <Box
+                            component="div"
+                            key={index}
+                            sx={styles.shoppingListItem}
+                          >
+                            {Number(item.quantity) > 0 ? `${item.quantity} ` : ''}
+                            {item.ingredient}
+                            {item.category && ` (${item.category})`}
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {currentTab === 0 && !mealPlan && (
+                    <Box sx={styles.emptyState}>
+                      <RestaurantMenuIcon sx={styles.restaurantIcon} />
+                      <Typography variant="h6" color="text.secondary">
+                        No meal plan generated yet
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
+                        Start a conversation with the assistant to generate a
+                        personalized meal plan.
+                      </Typography>
+                    </Box>
+                  )}
                 </>
               ) : (
                 <Box sx={styles.emptyState}>
@@ -795,7 +896,6 @@ const AgentPage: React.FC = () => {
                 </Box>
               )}
             </Paper>
-          </Box>
         </Box>
       </Box>
     </ThemeProvider>
