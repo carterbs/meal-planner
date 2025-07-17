@@ -1,6 +1,5 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { VALIDATION_CRITERIA } from '../shared/types';
-import { WeeklyMealPlan, MealPlanEntry } from '@mealplanner/generated';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
 import { TestMockFactory, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
@@ -16,7 +15,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
   beforeEach(() => {
     setupConsoleMocks();
     
-    mockCheckpointer = TestMockFactory.createMockCheckpointer() as jest.Mocked<HttpCheckpointSaver>;
+    mockCheckpointer = TestMockFactory.createMockCheckpointer() as any;
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;
   });
 
@@ -72,7 +71,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
     });
 
     it('calculates consecutive high-effort meals across meal types', () => {
-      const { maxConsecutiveHighEffort } = VALIDATION_CRITERIA;
+      // const { maxConsecutiveHighEffort } = VALIDATION_CRITERIA;
       
       // Create meals that span different meal types but are consecutive in days
       const consecutiveHighEffortMeals = [
@@ -103,7 +102,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
 
       // Should detect consecutive high-effort meals
       expect(issues.length).toBeGreaterThan(0);
-      expect(issues.some(issue => issue.includes('consecutive high-effort meals'))).toBe(true);
+      expect(issues.some((issue: any) => issue.includes('consecutive high-effort meals'))).toBe(true);
     });
 
     it('validates red meat count with mixed meal types', () => {
@@ -126,7 +125,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
       const issues = workflow.validatePlan(plan);
 
       expect(issues.length).toBeGreaterThan(0);
-      expect(issues.some(issue => issue.includes('Too many red meat meals'))).toBe(true);
+      expect(issues.some((issue: any) => issue.includes('Too many red meat meals'))).toBe(true);
     });
 
     it('handles empty meal plan gracefully', () => {
@@ -155,7 +154,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
       const issues = workflow.validatePlan(plan);
 
       // Should not flag as over limit
-      expect(issues.some(issue => issue.includes('Too many red meat meals'))).toBe(false);
+      expect(issues.some((issue: any) => issue.includes('Too many red meat meals'))).toBe(false);
     });
 
     it('validates plan with high-effort meals at limit', () => {
@@ -177,7 +176,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
       const issues = workflow.validatePlan(plan);
 
       // Should not flag as over limit
-      expect(issues.some(issue => issue.includes('consecutive high-effort meals'))).toBe(false);
+      expect(issues.some((issue: any) => issue.includes('consecutive high-effort meals'))).toBe(false);
     });
 
     it('handles duplicate meals with different meal types', () => {
@@ -204,7 +203,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
       const issues = workflow.validatePlan(planWithDuplicates);
 
       expect(issues.length).toBeGreaterThan(0);
-      expect(issues.some(issue => issue.includes('Duplicate meals found: 1'))).toBe(true);
+      expect(issues.some((issue: any) => issue.includes('Duplicate meals found: 1'))).toBe(true);
     });
 
     it('handles meals with zero effort', () => {
@@ -225,7 +224,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
       const issues = workflow.validatePlan(plan);
 
       // Zero effort meals should not be considered high-effort
-      expect(issues.some(issue => issue.includes('consecutive high-effort meals'))).toBe(false);
+      expect(issues.some((issue: any) => issue.includes('consecutive high-effort meals'))).toBe(false);
     });
 
     it('handles meals with negative effort', () => {
@@ -241,7 +240,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
       const issues = workflow.validatePlan(plan);
 
       // Should not crash and should not be considered high-effort
-      expect(issues.some(issue => issue.includes('consecutive high-effort meals'))).toBe(false);
+      expect(issues.some((issue: any) => issue.includes('consecutive high-effort meals'))).toBe(false);
     });
 
     it('handles meals with boundary effort values', () => {
@@ -262,7 +261,7 @@ describe('MealPlanningWorkflow Validation Edge Cases', () => {
       const issues = workflow.validatePlan(plan);
 
       // Only effort > 3 should be considered high-effort
-      expect(issues.some(issue => issue.includes('consecutive high-effort meals'))).toBe(false);
+      expect(issues.some((issue: any) => issue.includes('consecutive high-effort meals'))).toBe(false);
     });
 
     it('handles plan with meals spanning all days of week', () => {

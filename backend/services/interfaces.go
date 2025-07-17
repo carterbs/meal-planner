@@ -3,6 +3,7 @@ package services
 import (
 	apipb "mealplanner/generated/go"
 	"mealplanner/models"
+	"mealplanner/repositories"
 )
 
 // MealService handles meal CRUD operations and business logic
@@ -59,8 +60,8 @@ type MealPlanService interface {
 // ShoppingListService handles shopping list operations
 type ShoppingListService interface {
 	BuildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error)
-	GenerateShoppingListFromMeals(meals []*models.Meal) []*models.Ingredient
-	ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) []*apipb.ShoppingListItem
+	GenerateShoppingListFromMeals(meals []*models.Meal) ([]*apipb.ShoppingListItem, error)
+	ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) ([]*apipb.ShoppingListItem, error)
 }
 
 // MessageService handles chat message operations
@@ -96,7 +97,7 @@ type WorkflowService interface {
 type CheckpointService interface {
 	GetCheckpoint(threadID, checkpointNS string) (checkpoint []byte, metadata []byte, found bool, err error)
 	PutCheckpoint(threadID, checkpointNS, workflowType string, checkpoint []byte, metadata []byte) error
-	ListCheckpoints(limit int, before string) ([]CheckpointRecord, error)
+	ListCheckpoints(limit int, before string) ([]repositories.CheckpointRecord, error)
 }
 
 // CheckpointRecord represents a checkpoint entry

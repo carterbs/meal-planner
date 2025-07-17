@@ -1,7 +1,6 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
-import { MealPlanningStep } from '../shared/types';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
-import { TestMockFactory, TestAssertionHelpers, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
+import { TestMockFactory, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
 // Mock external dependencies
 jest.mock('../utils/getBackendClient');
@@ -19,7 +18,7 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
   beforeEach(() => {
     setupConsoleMocks();
     
-    mockCheckpointer = TestMockFactory.createMockCheckpointer() as jest.Mocked<HttpCheckpointSaver>;
+    mockCheckpointer = TestMockFactory.createMockCheckpointer() as any;
     mockClient = TestMockFactory.createMockMCPClient();
     mockLLM = TestMockFactory.createMockLLM();
     mockNanoLLM = TestMockFactory.createMockLLM();

@@ -5,7 +5,18 @@ import { Step } from './types';
 import { setupFetchMocks, cleanupFetchMocks } from './test-utils';
 import '@testing-library/jest-dom';
 
-// No need to mock the StepsEditor component - we should use the real component
+// Mock the gateway functions
+jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
+  postMeals: jest.fn(),
+}));
+
+// Mock the client creation
+jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
+  createClient: jest.fn(() => ({})),
+  createConfig: jest.fn(() => ({})),
+}));
+
+import { postMeals } from '@mealplanner/generated/dist/gateway/index.js';
 
 beforeEach(() => {
   setupFetchMocks();
@@ -17,6 +28,11 @@ afterEach(() => {
 
 describe('AddRecipeForm', () => {
   const mockOnRecipeAdded = jest.fn();
+  const mockPostMeals = postMeals as jest.MockedFunction<typeof postMeals>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   test('renders the Add New Recipe form', () => {
     render(<AddRecipeForm onRecipeAdded={mockOnRecipeAdded} />);
@@ -65,25 +81,20 @@ describe('AddRecipeForm', () => {
   });
 
   test('handles adding a recipe', async () => {
-    // Mock the fetch for adding a recipe
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            meal: {
-              id: 0,
-              name: 'New Recipe',
-              effort: 3,
-              hasRedMeat: false,
-              url: '',
-              mealType: 'dinner',
-              ingredients: [],
-              steps: [],
-            },
-          }),
-      }),
-    );
+    // Mock the gateway API call
+    mockPostMeals.mockResolvedValueOnce({
+      data: {
+        id: 1,
+        name: 'New Recipe',
+        effort: 3,
+        hasRedMeat: false,
+        url: '',
+        mealType: 'dinner',
+        ingredients: [],
+        steps: [],
+      },
+      error: null,
+    } as any);
 
     render(<AddRecipeForm onRecipeAdded={mockOnRecipeAdded} />);
 
@@ -104,20 +115,37 @@ describe('AddRecipeForm', () => {
       expect(screen.getByText('Processed Ingredients:')).toBeInTheDocument();
     });
 
-    // Set effort level - find the Effort Level section and then find the slider
-    // We don't use getByLabelText since the Slider doesn't use standard label association
-    const effortLevelSection = screen.getByText('Effort Level');
-    // The slider is in the same Grid item as the 'Effort Level' text
-    const slider = effortLevelSection
-      .closest('.MuiGrid-item')
-      ?.querySelector('.MuiSlider-root');
-    expect(slider).toBeInTheDocument();
-
-    // We can't easily set the slider value directly in tests, so we'll skip this step
-    // The form will submit with the default effort level
-
     // Submit the form
     fireEvent.click(screen.getByText('Add Recipe'));
+
+    // Verify the API was called correctly
+    await waitFor(() => {
+      expect(mockPostMeals).toHaveBeenCalledWith({
+        client: {},
+        body: {
+          meal: expect.objectContaining({
+            name: 'New Recipe',
+            effort: 3,
+            hasRedMeat: false,
+            url: '',
+            mealType: 'dinner',
+            ingredients: expect.arrayContaining([
+              expect.objectContaining({
+                name: 'flour',
+                quantity: 1,
+                unit: 'cup',
+              }),
+              expect.objectContaining({
+                name: 'sugar',
+                quantity: 2,
+                unit: 'tbsp',
+              }),
+            ]),
+            steps: [],
+          }),
+        },
+      });
+    });
 
     // Verify the callback was called
     await waitFor(() => {

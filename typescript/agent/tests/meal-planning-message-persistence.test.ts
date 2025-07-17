@@ -15,7 +15,7 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
   beforeEach(() => {
     setupConsoleMocks();
     
-    mockCheckpointer = TestMockFactory.createMockCheckpointer() as jest.Mocked<HttpCheckpointSaver>;
+    mockCheckpointer = TestMockFactory.createMockCheckpointer() as any;
     mockBackendClient = TestMockFactory.createMockBackendClient();
     
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;
@@ -91,17 +91,14 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
       const threadId = 'test-thread-123';
       const mockMessages = [
         TestMockFactory.createMockMessage({
-          id: 'msg1',
           sender: 'user',
           content: 'First user message',
         }),
         TestMockFactory.createMockMessage({
-          id: 'msg2',
           sender: 'agent',
           content: 'Agent response',
         }),
         TestMockFactory.createMockMessage({
-          id: 'msg3',
           sender: 'user',
           content: 'Second user message',
         }),
@@ -196,17 +193,14 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
       const threadId = 'test-thread-content-fields';
       const mockMessages = [
         {
-          id: 'msg1',
           sender: 'user',
           content: 'Message with content field',
         },
         {
-          id: 'msg2',
           sender: 'user',
           message: 'Message with message field',
         },
         {
-          id: 'msg3',
           sender: 'user',
           content: null,
           message: 'Fallback to message field',
@@ -257,7 +251,7 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
 
   describe('message persistence integration', () => {
     it('persists agent response messages during feedback application', async () => {
-      const threadId = 'test-thread-feedback';
+      // const threadId = 'test-thread-feedback';
       const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();
       const mockFeedback = ['Please change dinner on Monday'];
 

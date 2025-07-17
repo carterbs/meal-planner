@@ -1,12 +1,13 @@
+
 package main
 
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-chi/chi/v5"
@@ -80,9 +81,10 @@ func TestHTTPMessageEndpoints(t *testing.T) {
 
 	t.Run("GET /api/workflows/{threadId}/messages", func(t *testing.T) {
 		// Set up mock expectations for successful message retrieval
+		time1, _ := time.Parse(time.RFC3339, "2023-01-01T12:00:00Z")
 		rows := sqlmock.NewRows([]string{"sender", "content", "created_at"}).
-			AddRow("user", "Hello via HTTP!", "2023-01-01T12:00:00Z").
-			AddRow("agent", "Hi there from HTTP!", "2023-01-01T12:01:00Z")
+			AddRow("user", "Hello via HTTP!", time1).
+			AddRow("agent", "Hi there from HTTP!", time1.Add(1*time.Minute))
 
 		mock.ExpectQuery("SELECT sender, content, created_at FROM messages").
 			WithArgs("test-thread-456").
@@ -134,6 +136,11 @@ func TestHTTPMessageEndpoints(t *testing.T) {
 	})
 
 	t.Run("POST with missing fields", func(t *testing.T) {
+		// Expect Exec but return error due to validation or database failure
+		mock.ExpectExec("INSERT INTO messages").
+			WithArgs("test-thread-123", "", "Hello via HTTP!").
+			WillReturnError(assert.AnError)
+
 		// Create request body with missing sender
 		reqBody := map[string]string{
 			"message": "Hello via HTTP!",

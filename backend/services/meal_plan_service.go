@@ -1,29 +1,30 @@
 package services
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
 	"mealplanner/models"
+	"mealplanner/repositories"
 )
 
 type mealPlanService struct {
-	db *sql.DB
+	repo repositories.MealPlanRepository
 }
 
 var mealPlanServiceLogger = logging.GetGrpcLogger("meal-plan-service")
 
 // NewMealPlanService creates a new meal plan service instance
-func NewMealPlanService(db *sql.DB) MealPlanService {
-	return &mealPlanService{db: db}
+func NewMealPlanService(repo repositories.MealPlanRepository) MealPlanService {
+	return &mealPlanService{repo: repo}
 }
 
 // GenerateWeeklyMealPlan generates a new weekly meal plan
 func (s *mealPlanService) GenerateWeeklyMealPlan() (*apipb.WeeklyMealPlan, error) {
 	mealPlanServiceLogger.Info("Generating new weekly meal plan")
-	plan, err := models.GenerateWeeklyMealPlan(s.db)
+	plan, err := s.repo.GenerateWeeklyMealPlan(context.Background())
 	if err != nil {
 		mealPlanServiceLogger.Errorw("Failed to generate weekly meal plan", "error", err)
 		return nil, fmt.Errorf("failed to generate weekly meal plan: %w", err)
@@ -35,7 +36,7 @@ func (s *mealPlanService) GenerateWeeklyMealPlan() (*apipb.WeeklyMealPlan, error
 // GetLastPlannedMeals retrieves the most recently planned meals
 func (s *mealPlanService) GetLastPlannedMeals() (*apipb.WeeklyMealPlan, error) {
 	mealPlanServiceLogger.Info("Retrieving last planned meals")
-	plan, err := models.GetLastPlannedMeals(s.db)
+	plan, err := s.repo.GetLastPlannedMeals(context.Background())
 	if err != nil {
 		mealPlanServiceLogger.Errorw("Failed to get last planned meals", "error", err)
 		return nil, fmt.Errorf("failed to get last planned meals: %w", err)
@@ -52,54 +53,21 @@ func (s *mealPlanService) PopulateMealDetails(plan *apipb.WeeklyMealPlan) (*apip
 
 	mealPlanServiceLogger.Debugw("Populating meal details for plan", "mealSlotCount", len(plan.Days))
 
-	// Extract meal IDs from the plan
-	mealIDs := make([]int, 0)
-	for _, d := range plan.Days {
-		if d.Meal != nil && int(d.Meal.GetId()) != 0 {
-			mealIDs = append(mealIDs, int(d.Meal.GetId()))
-		}
-	}
-
-	if len(mealIDs) == 0 {
-		mealPlanServiceLogger.Debug("No meals to populate, returning original plan")
-		return plan, nil
-	}
-
-	// Get meals with full details
-	mealsWithIngredients, err := models.GetMealsByIDs(s.db, mealIDs)
+	// Delegate to the repository layer which has the database connection
+	populatedPlan, err := s.repo.PopulateMealDetails(context.Background(), plan)
 	if err != nil {
-		mealPlanServiceLogger.Errorw("Failed to get meals by IDs", "error", err)
-		return nil, fmt.Errorf("failed to get meals by IDs: %w", err)
+		mealPlanServiceLogger.Errorw("Failed to populate meal details", "error", err)
+		return nil, fmt.Errorf("failed to populate meal details: %w", err)
 	}
 
-	// Create a map for quick lookup
-	mealMap := make(map[int]*models.Meal)
-	for _, meal := range mealsWithIngredients {
-		mealMap[int(meal.GetId())] = meal
-	}
-
-	// Create a copy of the plan with populated meal details
-	populatedPlan := *plan
-	populatedPlan.Days = make([]*apipb.MealPlanEntry, len(plan.Days))
-	copy(populatedPlan.Days, plan.Days)
-
-	for i := range populatedPlan.Days {
-		d := populatedPlan.Days[i]
-		if d.Meal != nil {
-			if fullMeal, ok := mealMap[int(d.Meal.GetId())]; ok {
-				d.Meal = fullMeal
-			}
-		}
-	}
-
-	mealPlanServiceLogger.Debugw("Successfully populated meal details", "mealCount", len(mealIDs))
-	return &populatedPlan, nil
+	mealPlanServiceLogger.Debugw("Successfully populated meal details")
+	return populatedPlan, nil
 }
 
 // RemoveMealFromPlan removes a meal from a specific day and meal type
 func (s *mealPlanService) RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error {
 	mealPlanServiceLogger.Debugw("Removing meal from plan", "dayIndex", dayIndex, "mealType", mealType)
-	err := models.RemoveMealFromPlan(plan, dayIndex, mealType)
+	err := s.repo.RemoveMealFromPlan(context.Background(), plan, dayIndex, mealType)
 	if err != nil {
 		mealPlanServiceLogger.Errorw("Failed to remove meal from plan", "error", err)
 		return fmt.Errorf("failed to remove meal from plan: %w", err)
@@ -110,15 +78,15 @@ func (s *mealPlanService) RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayInde
 
 // SaveMealPlan persists a meal plan
 func (s *mealPlanService) SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
-	return models.SaveMealPlan(s.db, threadID, version, entries)
+	return s.repo.SaveMealPlan(context.Background(), threadID, version, entries)
 }
 
 // GetLatestMealPlan retrieves the latest meal plan identifier
 func (s *mealPlanService) GetLatestMealPlan(threadID string) (*models.MealPlanIdentifier, error) {
-	return models.GetLatestMealPlan(s.db, threadID)
+	return s.repo.GetLatestMealPlan(context.Background(), threadID)
 }
 
 // GetMealPlanItems retrieves entries for a meal plan
 func (s *mealPlanService) GetMealPlanItems(mealPlanID int) ([]models.MealPlanEntry, error) {
-	return models.GetMealPlanItems(s.db, mealPlanID)
+	return s.repo.GetMealPlanItems(context.Background(), mealPlanID)
 }

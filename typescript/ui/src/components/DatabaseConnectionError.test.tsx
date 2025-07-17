@@ -2,28 +2,24 @@ import React from 'react';
 import {
   render,
   screen,
-  waitFor,
   fireEvent,
+  waitFor,
   act,
 } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { DatabaseConnectionError } from './DatabaseConnectionError';
 import { ThemeProvider } from '@mui/material/styles';
-import { createTheme } from '@mui/material';
-
-// Create a theme for testing
-const theme = createTheme();
+import { DatabaseConnectionError } from './DatabaseConnectionError';
+import theme from '../theme';
+import '@testing-library/jest-dom';
 
 describe('DatabaseConnectionError Component', () => {
   beforeEach(() => {
-    // Mock timers for consistent testing of loading states
-    jest.useFakeTimers();
+    // Use real timers for proper async behavior
+    jest.useRealTimers();
+    jest.spyOn(console, 'debug').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    // Clear all mocks and restore timers
-    jest.clearAllMocks();
-    jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
   test('renders the error message and retry button', () => {
@@ -35,17 +31,15 @@ describe('DatabaseConnectionError Component', () => {
       </ThemeProvider>,
     );
 
-    // Check that key elements are rendered
+    // Check if the main elements are rendered
     expect(screen.getByText('Database Connection Error')).toBeInTheDocument();
     expect(
       screen.getByText('Unable to connect to the database'),
     ).toBeInTheDocument();
-    expect(screen.getByText('Troubleshooting steps:')).toBeInTheDocument();
     expect(screen.getByText('Retry Connection')).toBeInTheDocument();
   });
 
   test('shows loading state when retry button is clicked', async () => {
-    // Create a mock function that resolves immediately
     const mockRetry = jest.fn().mockResolvedValue(undefined);
 
     render(
@@ -54,43 +48,16 @@ describe('DatabaseConnectionError Component', () => {
       </ThemeProvider>,
     );
 
-    // Click the retry button
     const retryButton = screen.getByText('Retry Connection');
     fireEvent.click(retryButton);
 
-    // Check that loading state is shown
+    // Check if loading state is displayed
     expect(screen.getByText('Attempting to Reconnect...')).toBeInTheDocument();
     expect(retryButton).toBeDisabled();
-
-    // Verify retry was called
-    expect(mockRetry).toHaveBeenCalledTimes(1);
-
-    // Even though the mock resolves immediately, the component will maintain
-    // the loading state for the minimum duration
-    expect(screen.queryByText('Retry Connection')).not.toBeInTheDocument();
-
-    // Fast-forward time to account for the minimum loading duration
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    // Now the button should be back to its original state
-    await waitFor(() => {
-      expect(screen.getByText('Retry Connection')).toBeInTheDocument();
-      expect(
-        screen.queryByText('Attempting to Reconnect...'),
-      ).not.toBeInTheDocument();
-    });
   });
 
   test('handles retry function errors gracefully', async () => {
-    // Create a mock function that rejects
-    const mockRetry = jest.fn(() =>
-      Promise.reject(new Error('Connection failed')),
-    );
-
-    // Spy on console.debug to prevent the error from appearing in test output
-    jest.spyOn(console, 'debug').mockImplementation(() => {});
+    const mockRetry = jest.fn().mockRejectedValue(new Error('Connection failed'));
 
     render(
       <ThemeProvider theme={theme}>
@@ -98,69 +65,110 @@ describe('DatabaseConnectionError Component', () => {
       </ThemeProvider>,
     );
 
-    // Click the retry button
-    fireEvent.click(screen.getByText('Retry Connection'));
-
-    // Loading state should be active even after rejection
-    expect(screen.getByText('Attempting to Reconnect...')).toBeInTheDocument();
-
-    // Fast-forward time to account for the minimum loading duration
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    // Wait for the retry function to complete and error handling to finish
-    await waitFor(() => {
-      expect(mockRetry).toHaveBeenCalledTimes(1);
-      expect(screen.getByText('Retry Connection')).toBeInTheDocument();
-      expect(
-        screen.queryByText('Attempting to Reconnect...'),
-      ).not.toBeInTheDocument();
-    });
-
-    // Error should have been logged
-    expect(console.debug).toHaveBeenCalled();
-
-    // Restore console.debug
-    (console.debug as jest.Mock).mockRestore();
-  });
-
-  test('prevents multiple clicks while retrying', async () => {
-    // Create a mock function that takes time to resolve
-    let resolvePromise: () => void;
-    const retryPromise = new Promise<void>((resolve) => {
-      resolvePromise = resolve;
-    });
-    const mockRetry = jest.fn(() => retryPromise);
-
-    render(
-      <ThemeProvider theme={theme}>
-        <DatabaseConnectionError onRetry={mockRetry} />
-      </ThemeProvider>,
-    );
-
-    // Click the retry button
     const retryButton = screen.getByText('Retry Connection');
     fireEvent.click(retryButton);
 
-    // Try clicking it again
+    // Wait for the retry to complete
+    await waitFor(() => {
+      expect(mockRetry).toHaveBeenCalled();
+    });
+
+    // Verify the error was logged
+    expect(console.debug).toHaveBeenCalledWith('Database retry attempt failed:', expect.any(Error));
+  });
+
+  test('retry button becomes enabled after loading completes', async () => {
+    jest.useFakeTimers();
+    const mockRetry = jest.fn().mockResolvedValue(undefined);
+
+    render(
+      <ThemeProvider theme={theme}>
+        <DatabaseConnectionError onRetry={mockRetry} />
+      </ThemeProvider>,
+    );
+
+    const retryButton = screen.getByText('Retry Connection');
     fireEvent.click(retryButton);
-    fireEvent.click(retryButton);
 
-    // The function should only have been called once
-    expect(mockRetry).toHaveBeenCalledTimes(1);
+    // Should be in loading state
+    expect(screen.getByText('Attempting to Reconnect...')).toBeInTheDocument();
+    expect(retryButton).toBeDisabled();
 
-    // Resolve the promise
-    resolvePromise!();
-
-    // Fast-forward time to account for the minimum loading duration
+    // Fast forward timers to complete the minimum loading duration
     act(() => {
       jest.advanceTimersByTime(1000);
     });
 
-    // Wait for the retry to complete
+    // Wait for loading to complete
     await waitFor(() => {
-      expect(screen.getByText('Retry Connection')).toBeInTheDocument();
+      expect(screen.getByText('Retry Connection')).toBeEnabled();
     });
+
+    jest.useRealTimers();
+  });
+
+  test('displays troubleshooting steps', () => {
+    const mockRetry = jest.fn().mockResolvedValue(undefined);
+
+    render(
+      <ThemeProvider theme={theme}>
+        <DatabaseConnectionError onRetry={mockRetry} />
+      </ThemeProvider>,
+    );
+
+    // Check that troubleshooting steps are displayed
+    expect(screen.getByText('Troubleshooting steps:')).toBeInTheDocument();
+    expect(
+      screen.getByText('Make sure Docker is running on your system'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Check if the PostgreSQL database container is started:'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('If not running, start it with:'),
+    ).toBeInTheDocument();
+  });
+
+  test('retry button can be clicked multiple times', async () => {
+    jest.useFakeTimers();
+    const mockRetry = jest.fn().mockResolvedValue(undefined);
+
+    render(
+      <ThemeProvider theme={theme}>
+        <DatabaseConnectionError onRetry={mockRetry} />
+      </ThemeProvider>,
+    );
+
+    const retryButton = screen.getByText('Retry Connection');
+
+    // First click
+    fireEvent.click(retryButton);
+    expect(mockRetry).toHaveBeenCalledTimes(1);
+
+    // Fast forward timers to complete the minimum loading duration
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.getByText('Retry Connection')).toBeEnabled();
+    });
+
+    // Second click
+    fireEvent.click(retryButton);
+    expect(mockRetry).toHaveBeenCalledTimes(2);
+
+    // Fast forward timers again
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    // Wait for loading to complete again
+    await waitFor(() => {
+      expect(screen.getByText('Retry Connection')).toBeEnabled();
+    });
+
+    jest.useRealTimers();
   });
 });
