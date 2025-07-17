@@ -1,6 +1,6 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { MealPlanningStep } from '../shared/types';
-import { WeeklyMealPlan, ShoppingList } from '@mealplanner/generated';
+import { ShoppingList } from '@mealplanner/generated';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
 import { TestMockFactory, TestAssertionHelpers, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
@@ -19,7 +19,7 @@ describe('MealPlanningWorkflow Core Node Tests', () => {
   beforeEach(() => {
     setupConsoleMocks();
     
-    mockCheckpointer = TestMockFactory.createMockCheckpointer() as jest.Mocked<HttpCheckpointSaver>;
+    mockCheckpointer = TestMockFactory.createMockCheckpointer() as any;
     mockClient = TestMockFactory.createMockMCPClient();
     mockLLM = TestMockFactory.createMockLLM();
     mockNanoLLM = TestMockFactory.createMockLLM();

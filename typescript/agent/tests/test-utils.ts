@@ -1,4 +1,4 @@
-import { WeeklyMealPlan, MealPlanEntry, Meal, ShoppingListItem, Message } from '@mealplanner/generated';
+import { WeeklyMealPlan, MealPlanEntry, Meal, ShoppingListItem, Message, Ingredient, Step } from '@mealplanner/generated';
 import { MealPlanningCheckpointState } from '@mealplanner/generated';
 import { MealPlanningState, MealPlanningStep } from '../shared/types';
 import { Timestamp } from '@bufbuild/protobuf';
@@ -13,8 +13,14 @@ export class TestMockFactory {
       lastPlanned: undefined,
       url: 'https://test.com',
       mealType: 'dinner',
-      ingredients: ['ingredient1', 'ingredient2'],
-      steps: ['step1', 'step2'],
+      ingredients: [
+        new Ingredient({ id: 1, mealId: 1, quantity: 1, unit: 'cup', name: 'ingredient1' }),
+        new Ingredient({ id: 2, mealId: 1, quantity: 2, unit: 'tbsp', name: 'ingredient2' })
+      ],
+      steps: [
+        new Step({ id: 1, mealId: 1, stepNumber: 1, instruction: 'step1' }),
+        new Step({ id: 2, mealId: 1, stepNumber: 2, instruction: 'step2' })
+      ],
       ...overrides,
     });
   }
@@ -62,7 +68,6 @@ export class TestMockFactory {
 
   static createMockMessage(overrides: Partial<Message> = {}): Message {
     return new Message({
-      id: 'msg-123',
       threadId: 'test-thread-123',
       sender: 'user',
       content: 'Test message',
@@ -94,6 +99,9 @@ export class TestMockFactory {
     return {
       getTuple: jest.fn().mockResolvedValue(null),
       put: jest.fn().mockResolvedValue(undefined),
+      list: jest.fn().mockResolvedValue([]),
+      getWorkflowStatus: jest.fn().mockResolvedValue(null),
+      listWorkflows: jest.fn().mockResolvedValue([]),
     };
   }
 

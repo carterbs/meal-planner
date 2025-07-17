@@ -1,6 +1,6 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { MealPlanningStep } from '../shared/types';
-import { AgentCheckpoint, AgentCheckpointMetadata, WeeklyMealPlan } from '@mealplanner/generated';
+import { AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
 import { TestMockFactory, TestAssertionHelpers, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
@@ -19,7 +19,7 @@ describe('MealPlanningWorkflow State Management Tests', () => {
   beforeEach(() => {
     setupConsoleMocks();
     
-    mockCheckpointer = TestMockFactory.createMockCheckpointer() as jest.Mocked<HttpCheckpointSaver>;
+    mockCheckpointer = TestMockFactory.createMockCheckpointer() as any;
     mockClient = TestMockFactory.createMockMCPClient();
     mockLLM = TestMockFactory.createMockLLM();
     mockConfig = TestMockFactory.createMockExtendedRunnableConfig();
@@ -171,7 +171,7 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         step: 0,
       });
 
-      mockCheckpointer.getTuple.mockResolvedValue([mockCheckpoint, null]);
+      mockCheckpointer.getTuple.mockResolvedValue([mockCheckpoint, {} as any]);
 
       // Mock the backend client to return messages
       const mockBackendClient = TestMockFactory.createMockBackendClient();
@@ -207,7 +207,7 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         step: 0,
       });
 
-      mockCheckpointer.getTuple.mockResolvedValue([invalidCheckpoint, null]);
+      mockCheckpointer.getTuple.mockResolvedValue([invalidCheckpoint, {} as any]);
 
       await expect(workflow.graph.invoke({}, mockConfig)).rejects.toThrow('Invalid checkpoint state format');
     });
@@ -223,7 +223,7 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         step: 0,
       });
 
-      mockCheckpointer.getTuple.mockResolvedValue([mockCheckpoint, null]);
+      mockCheckpointer.getTuple.mockResolvedValue([mockCheckpoint, {} as any]);
 
       await expect(workflow.graph.invoke({}, mockConfig)).rejects.toThrow('Invalid checkpoint state format');
     });
@@ -231,7 +231,7 @@ describe('MealPlanningWorkflow State Management Tests', () => {
 
   describe('initial state creation', () => {
     it('creates initial state when no checkpoint exists', async () => {
-      mockCheckpointer.getTuple.mockResolvedValue(null);
+      mockCheckpointer.getTuple.mockResolvedValue(undefined);
 
       // Mock MCP client responses for the workflow
       mockClient.callTool.mockResolvedValue({
@@ -251,7 +251,7 @@ describe('MealPlanningWorkflow State Management Tests', () => {
     });
 
     it('generates unique thread ID when none provided', async () => {
-      mockCheckpointer.getTuple.mockResolvedValue(null);
+      mockCheckpointer.getTuple.mockResolvedValue(undefined);
       
       const configWithoutThreadId = {
         configurable: {},

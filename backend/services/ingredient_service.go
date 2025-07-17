@@ -1,28 +1,29 @@
 package services
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 
 	"mealplanner/logging"
 	"mealplanner/models"
+	"mealplanner/repositories"
 )
 
 type ingredientService struct {
-	db *sql.DB
+	ingredientRepo repositories.IngredientRepository
 }
 
 var ingredientServiceLogger = logging.GetGrpcLogger("ingredient-service")
 
 // NewIngredientService creates a new ingredient service instance
-func NewIngredientService(db *sql.DB) IngredientService {
-	return &ingredientService{db: db}
+func NewIngredientService(ingredientRepo repositories.IngredientRepository) IngredientService {
+	return &ingredientService{ingredientRepo: ingredientRepo}
 }
 
 // UpdateMealIngredient updates an ingredient for a specific meal
 func (s *ingredientService) UpdateMealIngredient(mealID int, ingredient *models.Ingredient) error {
 	ingredientServiceLogger.Debugw("Updating ingredient for meal", "ingredientID", ingredient.GetId(), "mealID", mealID)
-	err := models.UpdateMealIngredient(s.db, mealID, ingredient)
+	err := s.ingredientRepo.UpdateMealIngredient(context.Background(), mealID, ingredient)
 	if err != nil {
 		ingredientServiceLogger.Errorw("Failed to update ingredient for meal", "ingredientID", ingredient.GetId(), "mealID", mealID, "error", err)
 		return fmt.Errorf("failed to update ingredient ID %d for meal ID %d: %w", ingredient.GetId(), mealID, err)
@@ -34,7 +35,7 @@ func (s *ingredientService) UpdateMealIngredient(mealID int, ingredient *models.
 // DeleteMealIngredient deletes an ingredient by its ID
 func (s *ingredientService) DeleteMealIngredient(ingredientID int) error {
 	ingredientServiceLogger.Debugw("Deleting ingredient", "ingredientID", ingredientID)
-	err := models.DeleteMealIngredient(s.db, ingredientID)
+	err := s.ingredientRepo.DeleteMealIngredient(context.Background(), ingredientID)
 	if err != nil {
 		ingredientServiceLogger.Errorw("Failed to delete ingredient", "ingredientID", ingredientID, "error", err)
 		return fmt.Errorf("failed to delete ingredient ID %d: %w", ingredientID, err)

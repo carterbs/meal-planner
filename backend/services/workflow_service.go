@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -11,17 +12,22 @@ import (
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
 	"mealplanner/models"
+	"mealplanner/repositories"
 )
 
 type workflowService struct {
-	db *sql.DB
+	workflowRepo repositories.WorkflowRepository
+	mealPlanRepo repositories.MealPlanRepository
 }
 
 var workflowServiceLogger = logging.GetGrpcLogger("workflow-service")
 
 // NewWorkflowService creates a new instance of the workflow service
-func NewWorkflowService(db *sql.DB) WorkflowService {
-	return &workflowService{db: db}
+func NewWorkflowService(workflowRepo repositories.WorkflowRepository, mealPlanRepo repositories.MealPlanRepository) WorkflowService {
+	return &workflowService{
+		workflowRepo: workflowRepo,
+		mealPlanRepo: mealPlanRepo,
+	}
 }
 
 // GetMealPlan retrieves the meal plan for a specific workflow thread
@@ -46,7 +52,7 @@ func (s *workflowService) UpdateMealPlan(threadID string, plan *apipb.WeeklyMeal
 
 	// 1. Determine the next version number.
 	var version int
-	if latest, err := models.GetLatestMealPlan(s.db, threadID); err == nil {
+	if latest, err := s.mealPlanRepo.GetLatestMealPlan(context.Background(), threadID); err == nil {
 		version = latest.Version + 1
 	} else if err == sql.ErrNoRows {
 		version = 1
@@ -65,7 +71,7 @@ func (s *workflowService) UpdateMealPlan(threadID string, plan *apipb.WeeklyMeal
 	}
 
 	if version > 0 {
-		if _, err := models.SaveMealPlan(s.db, threadID, version, entries); err != nil {
+		if _, err := s.mealPlanRepo.SaveMealPlan(context.Background(), threadID, version, entries); err != nil {
 			workflowServiceLogger.Warnw("Failed to persist updated meal plan", "error", err)
 		}
 	}
@@ -83,7 +89,7 @@ func (s *workflowService) UpdateMealPlan(threadID string, plan *apipb.WeeklyMeal
 
 // GetWorkflowState retrieves the complete workflow state for a thread
 func (s *workflowService) GetWorkflowState(threadID string) (*apipb.MealPlanningCheckpointState, error) {
-	checkpointData, _, err := models.GetWorkflowCheckpoint(s.db, threadID)
+	checkpointData, _, err := s.workflowRepo.GetWorkflowCheckpoint(context.Background(), threadID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get checkpoint: %w", err)
 	}
@@ -108,7 +114,7 @@ func (s *workflowService) GetWorkflowState(threadID string) (*apipb.MealPlanning
 // UpdateWorkflowState updates the complete workflow state for a thread
 func (s *workflowService) UpdateWorkflowState(threadID string, state *apipb.MealPlanningCheckpointState) error {
 	// Get the existing checkpoint structure to preserve the wrapper
-	checkpointData, _, err := models.GetWorkflowCheckpoint(s.db, threadID)
+	checkpointData, _, err := s.workflowRepo.GetWorkflowCheckpoint(context.Background(), threadID)
 	if err != nil {
 		return fmt.Errorf("failed to get existing checkpoint: %w", err)
 	}
@@ -134,7 +140,7 @@ func (s *workflowService) UpdateWorkflowState(threadID string, state *apipb.Meal
 	}
 
 	// Save to database
-	if err := models.UpdateWorkflowCheckpoint(s.db, threadID, finalCheckpointBytes); err != nil {
+	if err := s.workflowRepo.UpdateWorkflowCheckpoint(context.Background(), threadID, finalCheckpointBytes); err != nil {
 		return fmt.Errorf("failed to update checkpoint: %w", err)
 	}
 
@@ -144,7 +150,7 @@ func (s *workflowService) UpdateWorkflowState(threadID string, state *apipb.Meal
 // GetWorkflowCheckpoint retrieves the raw checkpoint data for a thread
 func (s *workflowService) GetWorkflowCheckpoint(threadID string) ([]byte, string, error) {
 	workflowServiceLogger.Debugw("Getting workflow checkpoint for thread ID", "threadID", threadID)
-	data, ns, err := models.GetWorkflowCheckpoint(s.db, threadID)
+	data, ns, err := s.workflowRepo.GetWorkflowCheckpoint(context.Background(), threadID)
 	if err != nil {
 		workflowServiceLogger.Errorw("Failed to get workflow checkpoint for thread ID", "threadID", threadID, "error", err)
 		return nil, "", fmt.Errorf("failed to get workflow checkpoint for thread ID %s: %w", threadID, err)
@@ -201,7 +207,7 @@ func (s *workflowService) AddAgentMessage(threadID, text, timestamp string) erro
 // AddMessage adds a message to the messages table
 func (s *workflowService) AddMessage(threadID, sender, message string) (*models.ChatMessage, error) {
 	workflowServiceLogger.Debugw("Adding message to messages table", "threadID", threadID, "sender", sender)
-	err := models.AddMessage(s.db, threadID, sender, message)
+	err := s.workflowRepo.AddMessage(context.Background(), threadID, sender, message)
 	if err != nil {
 		workflowServiceLogger.Errorw("Failed to add message", "threadID", threadID, "sender", sender, "error", err)
 		return nil, fmt.Errorf("failed to add message for thread ID %s: %w", threadID, err)
@@ -214,7 +220,7 @@ func (s *workflowService) AddMessage(threadID, sender, message string) (*models.
 // UpdateWorkflowCheckpointWithMessage adds a message to the messages table
 func (s *workflowService) UpdateWorkflowCheckpointWithMessage(threadID, sender, message string) error {
 	workflowServiceLogger.Debugw("Adding message to messages table", "threadID", threadID, "sender", sender, "message", message)
-	err := models.AddMessage(s.db, threadID, sender, message)
+	err := s.workflowRepo.AddMessage(context.Background(), threadID, sender, message)
 	if err != nil {
 		workflowServiceLogger.Errorw("Failed to add message", "threadID", threadID, "error", err)
 		return fmt.Errorf("failed to add message for thread ID %s: %w", threadID, err)
@@ -226,7 +232,7 @@ func (s *workflowService) UpdateWorkflowCheckpointWithMessage(threadID, sender, 
 // UpdateWorkflowCheckpoint updates the raw checkpoint data for a thread
 func (s *workflowService) UpdateWorkflowCheckpoint(threadID string, data []byte) error {
 	workflowServiceLogger.Debugw("Updating workflow checkpoint for thread ID", "threadID", threadID)
-	err := models.UpdateWorkflowCheckpoint(s.db, threadID, data)
+	err := s.workflowRepo.UpdateWorkflowCheckpoint(context.Background(), threadID, data)
 	if err != nil {
 		workflowServiceLogger.Errorw("Failed to update workflow checkpoint for thread ID", "threadID", threadID, "error", err)
 		return fmt.Errorf("failed to update workflow checkpoint for thread ID %s: %w", threadID, err)
@@ -243,7 +249,7 @@ Note for tomorrow.it appears that by the first time we try to get a checkpoint. 
 // If limit <= 0, all workflows are returned.
 func (s *workflowService) ListWorkflows(limit int) ([]models.WorkflowStatus, error) {
 	workflowServiceLogger.Debugw("ListWorkflows called", "limit", limit)
-	statuses, err := models.ListWorkflows(s.db, limit)
+	statuses, err := s.workflowRepo.ListWorkflows(context.Background(), limit)
 	if err != nil {
 		workflowServiceLogger.Errorw("ListWorkflows failed", "error", err)
 		return nil, err

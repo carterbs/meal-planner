@@ -35,7 +35,7 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 	cmd.Stderr = &stderrBuffer
 
 	err := cmd.Run()
-	grpcServerLogger.Debugw("runAgentCLI: command executed", "args", args, "stdout", stdoutBuffer.String(), "stderr", stderrBuffer.String())
+	// grpcServerLogger.Debugw("runAgentCLI: command executed", "args", args, "stdout", stdoutBuffer.String(), "stderr", stderrBuffer.String())
 	if err != nil {
 		errMsg := "agent CLI execution failed: " + err.Error()
 		if stderrBuffer.Len() > 0 {
@@ -44,8 +44,8 @@ func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, err
 		grpcServerLogger.Errorw("runAgentCLI error", "args", args, "stderr", stderrBuffer.String(), "error", err)
 		return models.AgentResponse{}, fmt.Errorf("%s", errMsg)
 	}
-
-	grpcServerLogger.Debugw("runAgentCLI stdout", "args", args, "stdout", stdoutBuffer.String())
+	// enable if yo uwant very verbose and very long
+	// grpcServerLogger.Debugw("runAgentCLI stdout", "args", args, "stdout", stdoutBuffer.String())
 	if stderrBuffer.Len() > 0 {
 		grpcServerLogger.Debugw("runAgentCLI stderr (non-error)", "args", args, "stderr", stderrBuffer.String())
 	}

@@ -1,27 +1,28 @@
 package services
 
 import (
-	"database/sql"
-	"fmt"
+    "context"
+    "fmt"
 
-	"mealplanner/logging"
-	"mealplanner/models"
+    "mealplanner/logging"
+    "mealplanner/models"
+    "mealplanner/repositories"
 )
 
 type recipeStepService struct {
-	db *sql.DB
+    repo repositories.RecipeStepRepository
 }
 
 var recipeStepServiceLogger = logging.GetGrpcLogger("recipe-step-service")
 
 // NewRecipeStepService creates a new recipe step service instance
-func NewRecipeStepService(db *sql.DB) RecipeStepService {
-	return &recipeStepService{db: db}
+func NewRecipeStepService(repo repositories.RecipeStepRepository) RecipeStepService {
+    return &recipeStepService{repo: repo}
 }
 
 // GetStepsForMeal retrieves all steps for a given meal
 func (s *recipeStepService) GetStepsForMeal(mealID int) ([]*models.Step, error) {
-	steps, err := models.GetStepsForMeal(s.db, mealID)
+	steps, err := s.repo.GetStepsForMeal(context.Background(), mealID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get steps for meal ID %d: %w", mealID, err)
 	}
@@ -31,7 +32,7 @@ func (s *recipeStepService) GetStepsForMeal(mealID int) ([]*models.Step, error) 
 // AddStepToMeal adds a new step to a meal
 func (s *recipeStepService) AddStepToMeal(step *models.Step) (*models.Step, error) {
 	recipeStepServiceLogger.Debugw("Adding step to meal", "mealID", step.GetMealId())
-	result, err := models.AddStepToMeal(s.db, step)
+	result, err := s.repo.AddStepToMeal(context.Background(), step)
 	if err != nil {
 		recipeStepServiceLogger.Errorw("Failed to add step to meal", "mealID", step.GetMealId(), "error", err)
 		return nil, fmt.Errorf("failed to add step to meal ID %d: %w", step.GetMealId(), err)
@@ -43,7 +44,7 @@ func (s *recipeStepService) AddStepToMeal(step *models.Step) (*models.Step, erro
 // AddMultipleStepsToMeal adds multiple steps to a meal in a single transaction
 func (s *recipeStepService) AddMultipleStepsToMeal(mealID int, instructions []string) ([]*models.Step, error) {
 	recipeStepServiceLogger.Debugw("Adding multiple steps to meal", "stepCount", len(instructions), "mealID", mealID)
-	steps, err := models.AddMultipleStepsToMeal(s.db, mealID, instructions)
+	steps, err := s.repo.AddMultipleStepsToMeal(context.Background(), mealID, instructions)
 	if err != nil {
 		recipeStepServiceLogger.Errorw("Failed to add multiple steps to meal", "mealID", mealID, "error", err)
 		return nil, fmt.Errorf("failed to add multiple steps to meal ID %d: %w", mealID, err)
@@ -55,7 +56,7 @@ func (s *recipeStepService) AddMultipleStepsToMeal(mealID int, instructions []st
 // UpdateStep updates an existing recipe step
 func (s *recipeStepService) UpdateStep(step *models.Step) error {
 	recipeStepServiceLogger.Debugw("Updating step", "stepID", step.GetId(), "mealID", step.GetMealId())
-	err := models.UpdateStep(s.db, step)
+	err := s.repo.UpdateStep(context.Background(), step)
 	if err != nil {
 		recipeStepServiceLogger.Errorw("Failed to update step", "stepID", step.GetId(), "mealID", step.GetMealId(), "error", err)
 		return fmt.Errorf("failed to update step ID %d for meal ID %d: %w", step.GetId(), step.GetMealId(), err)
@@ -67,7 +68,7 @@ func (s *recipeStepService) UpdateStep(step *models.Step) error {
 // DeleteStep deletes a recipe step
 func (s *recipeStepService) DeleteStep(stepID, mealID int) error {
 	recipeStepServiceLogger.Debugw("Deleting step from meal", "stepID", stepID, "mealID", mealID)
-	err := models.DeleteStep(s.db, stepID, mealID)
+	err := s.repo.DeleteStep(context.Background(), stepID, mealID)
 	if err != nil {
 		recipeStepServiceLogger.Errorw("Failed to delete step from meal", "stepID", stepID, "mealID", mealID, "error", err)
 		return fmt.Errorf("failed to delete step ID %d from meal ID %d: %w", stepID, mealID, err)
@@ -79,7 +80,7 @@ func (s *recipeStepService) DeleteStep(stepID, mealID int) error {
 // ReorderSteps reorders the steps for a meal
 func (s *recipeStepService) ReorderSteps(mealID int, stepIDs []int) error {
 	recipeStepServiceLogger.Debugw("Reordering steps for meal", "stepCount", len(stepIDs), "mealID", mealID)
-	err := models.ReorderSteps(s.db, mealID, stepIDs)
+	err := s.repo.ReorderSteps(context.Background(), mealID, stepIDs)
 	if err != nil {
 		recipeStepServiceLogger.Errorw("Failed to reorder steps for meal", "mealID", mealID, "error", err)
 		return fmt.Errorf("failed to reorder steps for meal ID %d: %w", mealID, err)
@@ -91,7 +92,7 @@ func (s *recipeStepService) ReorderSteps(mealID int, stepIDs []int) error {
 // DeleteAllStepsForMeal deletes all steps for a given meal
 func (s *recipeStepService) DeleteAllStepsForMeal(mealID int) error {
 	recipeStepServiceLogger.Debugw("Deleting all steps for meal", "mealID", mealID)
-	err := models.DeleteAllStepsForMeal(s.db, mealID)
+	err := s.repo.DeleteAllStepsForMeal(context.Background(), mealID)
 	if err != nil {
 		recipeStepServiceLogger.Errorw("Failed to delete all steps for meal", "mealID", mealID, "error", err)
 		return fmt.Errorf("failed to delete all steps for meal ID %d: %w", mealID, err)

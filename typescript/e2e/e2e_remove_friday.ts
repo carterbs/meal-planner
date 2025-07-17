@@ -148,12 +148,16 @@ function checkMealsRemoved(entries: MealPlanEntry[], dayIndex: number): boolean 
 }
 
 async function main(): Promise<void> {
+  let loggingProcess: any = null;
   let backendProcess: any = null;
   let gatewayProcess: any = null;
 
   // Cleanup function
   const cleanup = async () => {
     await sleep(2000); // let logs settle
+    if (loggingProcess) {
+      loggingProcess.kill('SIGTERM');
+    }
     if (backendProcess) {
       backendProcess.kill('SIGTERM');
     }
@@ -173,6 +177,16 @@ async function main(): Promise<void> {
     if (!skipBackend) {
       await execAsync('yarn kill:servers');
     }
+
+    // Start logging service first
+    console.log('--- Starting logging service ---');
+    loggingProcess = spawn('go', ['run', '.'], {
+      cwd: 'logging-service',
+      stdio: 'inherit',
+    });
+
+    // Give logging service time to start
+    await sleep(2000);
 
     // Start backend
     console.log('--- Starting backend ---');
