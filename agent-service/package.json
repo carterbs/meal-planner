@@ -1,12 +1,16 @@
 {
-  "name": "meal-planner-agent",
+  "name": "meal-planner-agent-service",
   "version": "1.0.0",
   "type": "commonjs",
   "scripts": {
     "build": "tsc",
     "start": "node --env-file=.env dist/langgraph-agent.js",
     "cli": "node --env-file=.env dist/cli.js",
-    "test": "jest"
+    "dev": "tsx --env-file=.env langgraph-agent.ts",
+    "dev:cli": "tsx --env-file=.env cli.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.0",
@@ -18,7 +22,7 @@
     "@langchain/core": "^0.2.0",
     "@langchain/langgraph": "^0.0.20",
     "@langchain/openai": "^0.1.0",
-    "@mealplanner/generated": "*",
+    "@mealplanner/generated": "file:../generated/ts",
     "@modelcontextprotocol/sdk": "1.12.3",
     "commander": "^14.0.0",
     "dotenv": "^16.5.0",

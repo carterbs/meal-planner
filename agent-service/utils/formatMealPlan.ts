@@ -1,5 +1,5 @@
 import type { WeeklyMealPlan } from '@mealplanner/generated';
-import { DAYS_OF_THE_WEEK as WEEK_DAYS } from '@meal-planner/shared';
+import { DAYS_OF_THE_WEEK as WEEK_DAYS } from '../shared/days';
 
 /**
  * Formats a WeeklyMealPlan into HTML and plain-text tables.

@@ -28,7 +28,7 @@ type MealPlannerAPIServer struct {
 func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, error) {
 	grpcServerLogger.Debugw("runAgentCLI: executing agent CLI", "args", args)
 
-	allArgs := append([]string{"../typescript/agent/dist/cli.js", "--json"}, args...)
+	allArgs := append([]string{"../agent-service/dist/cli.js", "--json"}, args...)
 	cmd := exec.CommandContext(ctx, "node", allArgs...)
 	var stdoutBuffer, stderrBuffer bytes.Buffer
 	cmd.Stdout = &stdoutBuffer
