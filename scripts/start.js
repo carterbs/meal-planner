@@ -65,13 +65,13 @@ try {
   process.exit(1);
 }
 
-// Build agent
-console.log(chalk.blue('🔨 Building agent...'));
+// Build agent service
+console.log(chalk.blue('🔨 Building agent service...'));
 try {
-  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'typescript', 'agent'), stdio: 'inherit' });
-  console.log(chalk.green('✅ Agent built'));
+  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'agent-service'), stdio: 'inherit' });
+  console.log(chalk.green('✅ Agent service built'));
 } catch (error) {
-  console.error(chalk.red('❌ Failed to build agent:'), error.message);
+  console.error(chalk.red('❌ Failed to build agent service:'), error.message);
   process.exit(1);
 }
 

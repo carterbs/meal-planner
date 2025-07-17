@@ -9,7 +9,8 @@
         "typescript/shared",
         "generated/ts",
         "generated/ts/gateway",
-        "logging-service/client/ts"
+        "logging-service/client/ts",
+        "agent-service"
     ],
     "scripts": {
         "generate_code": "./scripts/generate_code.sh",
@@ -20,8 +21,8 @@
         "test:backend": "cd backend && make test",
         "test:mcp": "cd typescript/mcp && go test -v ./...",
         "test:frontend": "cd typescript/ui && yarn test",
-        "test:agent": "cd typescript/agent && yarn test",
-        "build:agent": "cd typescript/agent && yarn build",
+        "test:agent": "cd agent-service && yarn test",
+        "build:agent": "cd agent-service && yarn build",
         "build:mcp": "cd typescript/mcp && yarn build",
         "test": "node scripts/test-summary.js",
         "db:backup": "node scripts/backup-db.js",

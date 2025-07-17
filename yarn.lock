@@ -3151,6 +3151,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mealplanner/generated@file:../generated/ts::locator=meal-planner-agent-service%40workspace%3Aagent-service":
+  version: 1.0.0
+  resolution: "@mealplanner/generated@file:../generated/ts#../generated/ts::hash=934c2f&locator=meal-planner-agent-service%40workspace%3Aagent-service"
+  dependencies:
+    "@bufbuild/protobuf": "npm:^1.10.0"
+  peerDependencies:
+    "@connectrpc/connect": ^1.6.0
+    "@connectrpc/connect-node": ^1.6.0
+    "@connectrpc/connect-web": ^1.6.0
+    typescript: ">=4.0.0"
+  checksum: 10c0/38237b6e42ad532f5bebed0ad8eef38b75a55c4080f7d50adfad303bc87a89392a5bd0d70198fef0823f4e95a2b9886e64ed1ad9c43e2fa90ab6a401a3bf8841
+  languageName: node
+  linkType: hard
+
 "@mealplanner/generated@npm:*, @mealplanner/generated@workspace:*, @mealplanner/generated@workspace:generated/ts":
   version: 0.0.0-use.local
   resolution: "@mealplanner/generated@workspace:generated/ts"
@@ -12244,6 +12258,35 @@ __metadata:
   checksum: 10c0/a935c4530b938407481f7d0ccb82119ae618d9c673d2ee78bb10dcba8bd0ccbe2e2c7fe850ddc60b67e08f4c9d97f50b900993f6c2f2926e64a52ed6baa00b3a
   languageName: node
   linkType: hard
+
+"meal-planner-agent-service@workspace:agent-service":
+  version: 0.0.0-use.local
+  resolution: "meal-planner-agent-service@workspace:agent-service"
+  dependencies:
+    "@bufbuild/protobuf": "npm:^1.10.0"
+    "@connectrpc/connect": "npm:^1.6.0"
+    "@connectrpc/connect-node": "npm:^1.6.0"
+    "@connectrpc/connect-web": "npm:^1.6.0"
+    "@grpc/grpc-js": "npm:^1.9.0"
+    "@grpc/proto-loader": "npm:^0.7.8"
+    "@langchain/core": "npm:^0.2.0"
+    "@langchain/langgraph": "npm:^0.0.20"
+    "@langchain/openai": "npm:^0.1.0"
+    "@mealplanner/generated": "file:../generated/ts"
+    "@modelcontextprotocol/sdk": "npm:1.12.3"
+    "@types/jest": "npm:^29.5.4"
+    "@types/node": "npm:^20.0.0"
+    "@types/uuid": "npm:^9.0.0"
+    commander: "npm:^14.0.0"
+    dotenv: "npm:^16.5.0"
+    jest: "npm:^30.0.0"
+    ts-jest: "npm:^29.1.1"
+    tsx: "npm:^4.0.0"
+    typescript: "npm:^5.0.0"
+    uuid: "npm:^9.0.0"
+    zod: "npm:^3.22.0"
+  languageName: unknown
+  linkType: soft
 
 "meal-planner-agent@workspace:typescript/agent":
   version: 0.0.0-use.local
