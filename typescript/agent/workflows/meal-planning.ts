@@ -1,6 +1,8 @@
 import { infoLog, warnLog, errorLog } from '../logging';
 import { ChatOpenAI } from '@langchain/openai';
 import { FakeChatModel } from '@langchain/core/utils/testing';
+import { existsSync } from 'fs';
+import { join, dirname } from 'path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import {
@@ -45,6 +47,26 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { getBackendClient } from '../utils/getBackendClient';
 const DEBUG_LOGS = false;
+
+// Helper function to find repo root
+function findRepoRoot(): string {
+  let currentDir = process.cwd();
+
+  // If we're in a compiled version, start from the actual source location
+  if (currentDir.includes('/dist/')) {
+    currentDir = dirname(dirname(currentDir));
+  }
+
+  while (currentDir !== '/') {
+    if (existsSync(join(currentDir, 'package.json')) && existsSync(join(currentDir, '.git'))) {
+      return currentDir;
+    }
+    currentDir = dirname(currentDir);
+  }
+
+  // Fallback: assume we're already in the repo root
+  return process.cwd();
+}
 
 /**
  * Meal planning workflow
@@ -213,14 +235,15 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     // Otherwise, start the full server stack
     infoLog(`🍽️ [MEAL-WORKFLOW] Starting to initialize meal planning workflow`);
 
+    const repoRoot = findRepoRoot();
     const transport = new StdioClientTransport({
       command: 'node',
       args: isJsonMode
         ? [
-          '/Users/bradcarter/Documents/Dev/meal-planner/typescript/mcp/dist/index.js',
+          join(repoRoot, 'typescript/mcp/dist/index.js'),
         ]
         : [
-          '/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js',
+          join(repoRoot, 'scripts/start-mcp.js'),
           isCodex ? '--codex' : '',
         ],
     });
@@ -612,7 +635,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       ? state.feedback_to_apply.map((f) => f.content)
       : await this.getMessages(state.threadId);
     // Call LLM to pick alternatives based on feedback
-    
+
     const result = await this.applyFeedbackWithLLM(
       state.mealPlan,
       feedbackMessages,

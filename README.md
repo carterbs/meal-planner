@@ -34,11 +34,35 @@ The system is split into a Go backend and several TypeScript packages.  The back
    (cd typescript && yarn install)
    (cd backend && go mod download)
    ```
-2. **Build shared package** (required for tests)
+
+2. **Install code generation tools**
+   ```bash
+   cd backend && make tools
+   ```
+
+3. **Generate code** (Protocol Buffers, OpenAPI, etc.)
+   ```bash
+   yarn generate_code
+   ```
+
+4. **Start Docker services** (PostgreSQL database)
+   ```bash
+   docker compose up -d
+   ```
+
+5. **Restore sample database**
+   ```bash
+   ./scripts/restore-db.js
+   ```
+
+6. **Build TypeScript packages** (required for tests and services)
    ```bash
    yarn workspace @meal-planner/shared build
+   yarn build:agent
+   yarn build:mcp
    ```
-3. **Start the development servers**
+
+7. **Start the development servers**
    - Simple mode:
      ```bash
      cd backend && go run main.go --dummy
@@ -57,6 +81,7 @@ The `docker-compose.yml` file launches a PostgreSQL container and pgAdmin for lo
 
 | Script            | Description                                                  |
 |-------------------|--------------------------------------------------------------|
+| `yarn generate_code` | Generate Protocol Buffer, OpenAPI, and TypeScript client code from definitions. |
 | `yarn start`      | Runs `scripts/start.js` which launches the Go backend and React frontend together. |
 | `yarn start:mcp`  | Builds and launches the MCP server alongside the backend.    |
 | `yarn dev`        | Starts Docker containers if necessary and then runs `yarn start`. |

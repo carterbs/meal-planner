@@ -1,6 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import './utils/logger.js'; // Import logger to override console methods
 import { initLogging, infoLog, errorLog } from './logging.js';
 import { registerWeeklyMealPlan } from './resources/weeklyMealPlan.js';
 import { registerRecipes } from './resources/recipes.js';
@@ -41,7 +40,7 @@ async function main() {
   } catch (error) {
     errorLog('Failed to initialize logging: ' + String(error));
   }
-  
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('MealPlanner MCP server running on stdio');

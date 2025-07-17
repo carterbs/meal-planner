@@ -1,7 +1,7 @@
 import { writeFileSync, appendFileSync } from 'fs';
 import { join } from 'path';
 import { createClient } from '@connectrpc/connect';
-import { createConnectTransport } from '@connectrpc/connect-node';
+import { createGrpcTransport } from '@connectrpc/connect-node';
 import {
   LoggingService,
   LogEntry,
@@ -9,27 +9,42 @@ import {
 } from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';
 
-let loggingClient: ReturnType<typeof createClient<typeof LoggingService>>;
+let loggingClient: ReturnType<typeof createClient<typeof LoggingService>> | null = null;
 let initialized = false;
+let loggingServiceAvailable = false;
 
 export async function initLogging(_serviceName = 'mcp-server') {
   if (initialized) return;
   const baseUrl = process.env.LOGGING_SERVICE_ADDR || 'http://localhost:50052';
 
-  const transport = createConnectTransport({
-    baseUrl,
-    httpVersion: '1.1',
-  });
-
-  loggingClient = createClient(LoggingService, transport);
-
   try {
+    const transport = createGrpcTransport({
+      baseUrl,
+      httpVersion: '2',
+    });
+
+    loggingClient = createClient(LoggingService, transport);
+
     // Test connection with a basic health check
+    await loggingClient.log(new LogRequest({
+      entry: new LogEntry({
+        serviceName: 'mcp-server',
+        level: 'INFO',
+        message: 'Testing logging service connection',
+        timestamp: Timestamp.fromDate(new Date()),
+        threadId: '',
+        component: '',
+        fields: {}
+      })
+    }));
+
+    loggingServiceAvailable = true;
     logToFile('INFO', `Successfully connected to logging service at ${baseUrl}`);
   } catch (error) {
-    console.error(`[MCP] Failed to connect to logging service: ${error}`);
-    logToFile('ERROR', `Failed to connect to logging service: ${error}`);
-    throw error;
+    console.error(`[MCP] Logging service not available at ${baseUrl}, falling back to file-only logging`);
+    logToFile('WARN', `Logging service not available: ${error}. Using file-only logging.`);
+    loggingClient = null;
+    loggingServiceAvailable = false;
   }
 
   initialized = true;
