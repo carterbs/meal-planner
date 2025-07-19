@@ -359,7 +359,7 @@ func main() {
 	}
 	defer agentConn.Close()
 
-	agentClient = agentpb.NewAgentServiceClient(agentConn)
+	agentClient := agentpb.NewAgentServiceClient(agentConn)
 	gw := NewGateway(mealPlannerClient, agentClient)
 
 	// Set up HTTP routes with Chi router
