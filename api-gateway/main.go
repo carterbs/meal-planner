@@ -408,6 +408,7 @@ func main() {
 	r.Get("/api/meals", gw.getAllMeals)
 	r.Post("/api/meals", gw.createMeal)
 	r.Post("/api/meals/swap", gw.swapMeal)
+	r.Post("/api/meals/{mealId}/ingredients", gw.createMealIngredient)
 	r.Put("/api/meals/{mealId}/ingredients/{ingredientId}", gw.updateMealIngredient)
 	r.Delete("/api/meals/{mealId}/ingredients/{ingredientId}", gw.deleteMealIngredient)
 	r.Delete("/api/meals/{mealId}", gw.deleteMeal)
@@ -759,6 +760,46 @@ func (gw *Gateway) swapMeal(w http.ResponseWriter, r *http.Request) {
 	writeJSONResponse(w, resp, err)
 }
 
+// @Summary Create Meal Ingredient
+// @Description Add a new ingredient to a meal
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param mealId path string true "Meal ID"
+// @Param request body apipb.CreateMealIngredientRequest true "Create ingredient request"
+// @Success 200 {object} apipb.CreateMealIngredientResponse "Ingredient created successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId}/ingredients [post]
+func (gw *Gateway) createMealIngredient(w http.ResponseWriter, r *http.Request) {
+	mealId, err := strconv.Atoi(chi.URLParam(r, "mealId"))
+	if err != nil {
+		http.Error(w, "Invalid meal ID", http.StatusBadRequest)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var createReq apipb.CreateMealIngredientRequest
+	if err := protojson.Unmarshal(body, &createReq); err != nil {
+		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Override the meal ID from URL path parameter to ensure consistency
+	req := &apipb.CreateMealIngredientRequest{
+		MealId:     int32(mealId),
+		Ingredient: createReq.Ingredient,
+	}
+
+	resp, err := gw.backend.CreateMealIngredient(r.Context(), req)
+	writeJSONResponse(w, resp, err)
+}
+
 // @Summary Update Meal Ingredient
 // @Description Update an ingredient in a meal
 // @Tags meals
@@ -793,16 +834,17 @@ func (gw *Gateway) updateMealIngredient(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var ingredient apipb.Ingredient
-	if err := protojson.Unmarshal(body, &ingredient); err != nil {
+	var updateReq apipb.UpdateMealIngredientRequest
+	if err := protojson.Unmarshal(body, &updateReq); err != nil {
 		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// Override the IDs from URL path parameters to ensure consistency
 	req := &apipb.UpdateMealIngredientRequest{
 		MealId:       int32(mealId),
 		IngredientId: int32(ingredientId),
-		Ingredient:   &ingredient,
+		Ingredient:   updateReq.Ingredient,
 	}
 
 	resp, err := gw.backend.UpdateMealIngredient(r.Context(), req)

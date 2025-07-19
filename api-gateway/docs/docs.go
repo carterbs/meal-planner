@@ -372,7 +372,7 @@ const docTemplate = `{
         },
         "/health": {
             "get": {
-                "description": "Check the health status of the API gateway and backend services",
+                "description": "Check the health status of the API gateway and all backend services",
                 "consumes": [
                     "application/json"
                 ],
@@ -776,6 +776,59 @@ const docTemplate = `{
                         "description": "Meal deleted successfully",
                         "schema": {
                             "$ref": "#/definitions/main.SimpleMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/meals/{mealId}/ingredients": {
+            "post": {
+                "description": "Add a new ingredient to a meal",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meals"
+                ],
+                "summary": "Create Meal Ingredient",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Meal ID",
+                        "name": "mealId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Create ingredient request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/_go.CreateMealIngredientRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ingredient created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/_go.CreateMealIngredientResponse"
                         }
                     },
                     "400": {
@@ -1635,6 +1688,25 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.CreateMealIngredientRequest": {
+            "type": "object",
+            "properties": {
+                "ingredient": {
+                    "$ref": "#/definitions/_go.Ingredient"
+                },
+                "meal_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "_go.CreateMealIngredientResponse": {
+            "type": "object",
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            }
+        },
         "_go.CreateMealRequest": {
             "type": "object",
             "properties": {
@@ -2173,6 +2245,12 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
+                },
+                "services": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "boolean"
+                    }
                 },
                 "status": {
                     "type": "string"

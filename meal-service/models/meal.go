@@ -221,6 +221,26 @@ func UpdateMealIngredient(db *sql.DB, mealID int, ingredient *Ingredient) error 
 	return nil
 }
 
+// CreateMealIngredient creates a new ingredient for a meal
+func CreateMealIngredient(db *sql.DB, mealID int, ingredient *Ingredient) error {
+	var ingredientID int
+	err := db.QueryRow(
+		"INSERT INTO ingredients (meal_id, quantity, unit, name) VALUES ($1, $2, $3, $4) RETURNING id",
+		mealID, ingredient.GetQuantity(), ingredient.GetUnit(), ingredient.GetName(),
+	).Scan(&ingredientID)
+	if err != nil {
+		mealModelLogger.Errorw("CreateMealIngredient: error inserting ingredient", "mealID", mealID, "error", err)
+		return err
+	}
+	
+	// Update the ingredient with the new ID
+	ingredient.Id = int32(ingredientID)
+	ingredient.MealId = int32(mealID)
+	
+	mealModelLogger.Debugw("CreateMealIngredient: created ingredient", "ingredientID", ingredientID, "mealID", mealID)
+	return nil
+}
+
 // DeleteMealIngredient deletes an ingredient by its ID.
 func DeleteMealIngredient(db *sql.DB, ingredientID int) error {
 	result, err := db.Exec("DELETE FROM ingredients WHERE id = $1", ingredientID)

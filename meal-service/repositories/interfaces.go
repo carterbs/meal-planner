@@ -30,6 +30,7 @@ type MealRepository interface {
 // IngredientRepository handles ingredient-related database operations
 type IngredientRepository interface {
 	// Ingredient management
+	CreateMealIngredient(ctx context.Context, mealID int, ingredient *models.Ingredient) error
 	UpdateMealIngredient(ctx context.Context, mealID int, ingredient *models.Ingredient) error
 	DeleteMealIngredient(ctx context.Context, ingredientID int) error
 	
