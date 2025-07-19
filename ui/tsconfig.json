@@ -7,8 +7,9 @@
   },
   "include": [
     "src",
-    "../shared/ts",
+    "../../shared/ts",
     "src/test-utils.tsx",
-    "src/setupTests.js"
-, "../shared/days.ts"  ]
+    "src/setupTests.js",
+    "../../shared/days.ts"
+  ]
 }

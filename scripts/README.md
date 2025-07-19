@@ -93,7 +93,7 @@ yarn db:restore [backup-file]
 ```
 
 ## Agent CLI
-The meal planning agent found in `typescript/agent` can be executed via the `meal-agent.sh` wrapper mentioned above or directly with `node`. It relies on environment variables or an `.env` file for database access. Build the agent using:
+The meal planning agent found in `agent-service` can be executed via the `meal-agent.sh` wrapper mentioned above or directly with `node`. It relies on environment variables or an `.env` file for database access. Build the agent using:
 
 ```bash
 yarn build:agent

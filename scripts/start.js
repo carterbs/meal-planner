@@ -107,7 +107,7 @@ agentProcess = spawn('yarn', ['start:grpc'], {
 setTimeout(() => {
   console.log(chalk.blue('🚀 Starting frontend...'));
   frontendProcess = spawn('yarn', ['start'], {
-    cwd: path.join(PROJECT_ROOT, 'typescript/ui'),
+    cwd: path.join(PROJECT_ROOT, 'ui'),
     stdio: 'inherit',
     shell: true,
   });

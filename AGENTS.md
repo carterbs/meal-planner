@@ -38,7 +38,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
    ```
    Start the frontend with
    ```bash
-   cd typescript/ui && yarn start
+   cd ui && yarn start
    ```
 
 ## Testing

@@ -78,7 +78,7 @@ The server is stateless aside from logs and connects to the backend via HTTP, so
 
 ## Integration with AI Agents
 
-The `MealPlanningWorkflow` in `typescript/agent/workflows/meal-planning.ts` initializes a client:
+The `MealPlanningWorkflow` in `agent-service/workflows/meal-planning.ts` initializes a client:
 
 ```ts
 const client = new Client({ name: 'meal-planner-workflow', version: '1.0.0' });
@@ -86,7 +86,7 @@ const transport = new StdioClientTransport({ command: 'node', args: ['scripts/st
 await client.connect(transport);
 ```
 
-Once connected, the workflow can call MCP tools using `callMCPTool` from `typescript/agent/shared/mcp-types.ts` to generate plans, modify meals, and produce shopping lists.
+Once connected, the workflow can call MCP tools using `callMCPTool` from `agent-service/shared/mcp-types.ts` to generate plans, modify meals, and produce shopping lists.
 
 ## Testing Strategy
 

@@ -22,6 +22,6 @@
         "baseUrl": "./src"
     },
     "references": [
-        { "path": "../generated/ts/tsconfig.json" }
+        { "path": "generated/ts/tsconfig.json" }
     ]
 }
