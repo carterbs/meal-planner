@@ -57,9 +57,9 @@ async function main() {
   // Parse JSON bodies
   app.use(express.json());
   
-  // Create MCP transport
+  // Create MCP transport in stateless mode to allow multiple workflow sessions
   const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: () => randomUUID(),
+    sessionIdGenerator: undefined, // Stateless mode
     enableJsonResponse: false, // Use SSE streaming
   });
   
