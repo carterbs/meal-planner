@@ -7,7 +7,7 @@ const effortIcons = {
   easy: '🙂',
   medium: '😅',
   hard: '😫',
-  veryHard: '🥵'
+  veryHard: '🥵',
 };
 
 const getEffortIcon = (effort: number) => {
@@ -85,7 +85,7 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
             >
               {day}
             </Box>
-            
+
             {/* Card with meals */}
             <Box
               sx={{
@@ -104,85 +104,85 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                   gap: 0.5,
                 }}
               >
-              {entries.map((e) => {
-                const key = `${e.dayIndex}-${e.mealType}`;
-                const isHighlighted = highlights?.has(key);
-                const isEmpty = !e.meal;
-                return (
-                  <Box
-                    key={e.mealType}
-                    data-testid={`meal-${key}`}
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: '80px 1fr auto',
-                      alignItems: 'center',
-                      gap: 1,
-                      py: 0,
-                      borderBottom: '1px solid rgba(0,0,0,0.05)',
-                      '&:last-child': {
-                        borderBottom: 'none',
-                      },
-                    }}
-                  >
+                {entries.map((e) => {
+                  const key = `${e.dayIndex}-${e.mealType}`;
+                  const isHighlighted = highlights?.has(key);
+                  const isEmpty = !e.meal;
+                  return (
                     <Box
+                      key={e.mealType}
+                      data-testid={`meal-${key}`}
                       sx={{
-                        fontSize: '1rem',
-                        fontWeight: 400,
-                        color: activeColors.text,
-                        opacity: 0.5,
-                        fontVariant: 'small-caps',
-                        letterSpacing: '0.5px',
+                        display: 'grid',
+                        gridTemplateColumns: '80px 1fr auto',
+                        alignItems: 'center',
+                        gap: 1,
+                        py: 0,
+                        borderBottom: '1px solid rgba(0,0,0,0.05)',
+                        '&:last-child': {
+                          borderBottom: 'none',
+                        },
                       }}
                     >
-                      {e.mealType}
-                    </Box>
-                    <Box
-                      component="span"
-                      sx={{
-                        fontSize: '0.875rem',
-                        color: isEmpty ? '#a0a0a0' : activeColors.text,
-                        fontStyle: isEmpty ? 'italic' : 'normal',
-                        ...(isHighlighted && {
-                          backgroundColor: `${activeColors.accent}25`,
-                          borderLeft: `2px solid ${activeColors.accent}`,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          transition: 'all 2s ease-out',
-                          animation: 'highlightFade 5s forwards',
-                          '@keyframes highlightFade': {
-                            '0%': {
-                              backgroundColor: `${activeColors.accent}40`,
-                              borderLeft: `2px solid ${activeColors.accent}`,
-                            },
-                            '50%': {
-                              backgroundColor: `${activeColors.accent}25`,
-                              borderLeft: `2px solid ${activeColors.accent}`,
-                            },
-                            '100%': {
-                              backgroundColor: 'transparent',
-                              borderLeft: '2px solid transparent',
-                            },
-                          },
-                        }),
-                      }}
-                    >
-                      {e.meal ? e.meal.name : '---'}
-                    </Box>
-                    {e.meal && (
                       <Box
                         sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.3,
-                          fontSize: '1.2rem',
+                          fontSize: '1rem',
+                          fontWeight: 400,
+                          color: activeColors.text,
+                          opacity: 0.5,
+                          fontVariant: 'small-caps',
+                          letterSpacing: '0.5px',
                         }}
                       >
-                        {getEffortIcon(e.meal.effort)}
+                        {e.mealType}
                       </Box>
-                    )}
-                  </Box>
-                );
-              })}
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: '0.875rem',
+                          color: isEmpty ? '#a0a0a0' : activeColors.text,
+                          fontStyle: isEmpty ? 'italic' : 'normal',
+                          ...(isHighlighted && {
+                            backgroundColor: `${activeColors.accent}25`,
+                            borderLeft: `2px solid ${activeColors.accent}`,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            transition: 'all 2s ease-out',
+                            animation: 'highlightFade 5s forwards',
+                            '@keyframes highlightFade': {
+                              '0%': {
+                                backgroundColor: `${activeColors.accent}40`,
+                                borderLeft: `2px solid ${activeColors.accent}`,
+                              },
+                              '50%': {
+                                backgroundColor: `${activeColors.accent}25`,
+                                borderLeft: `2px solid ${activeColors.accent}`,
+                              },
+                              '100%': {
+                                backgroundColor: 'transparent',
+                                borderLeft: '2px solid transparent',
+                              },
+                            },
+                          }),
+                        }}
+                      >
+                        {e.meal ? e.meal.name : '---'}
+                      </Box>
+                      {e.meal && (
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.3,
+                            fontSize: '1.2rem',
+                          }}
+                        >
+                          {getEffortIcon(e.meal.effort)}
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
               </Box>
             </Box>
           </Box>

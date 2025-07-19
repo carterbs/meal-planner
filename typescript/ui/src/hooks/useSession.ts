@@ -1,14 +1,25 @@
 import { useEffect, useState } from 'react';
-import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
-import { getCheckpointsByThreadId, postWorkflowsByThreadIdAbandon, postShoppinglist } from '@mealplanner/generated/dist/gateway/index.js';
-import type { MainCheckpointResponse, MainMealPlanEntryResponse, MainShoppingListItemResponse } from '@mealplanner/generated/dist/gateway/types.gen';
+import {
+  createClient,
+  createConfig,
+} from '@mealplanner/generated/dist/gateway/client/index.js';
+import {
+  getCheckpointsByThreadId,
+  postWorkflowsByThreadIdAbandon,
+  postShoppinglist,
+} from '@mealplanner/generated/dist/gateway/index.js';
+import type {
+  MainCheckpointResponse,
+  MainMealPlanEntryResponse,
+  MainShoppingListItemResponse,
+} from '@mealplanner/generated/dist/gateway/types.gen';
 
 // Create the API gateway client
-const gatewayClient = createClient(createConfig({
-  baseUrl: 'http://localhost:8080/api'
-}));
-
-
+const gatewayClient = createClient(
+  createConfig({
+    baseUrl: 'http://localhost:8080/api',
+  }),
+);
 
 // Shape of checkpoint.state
 interface CheckpointState {
@@ -22,7 +33,6 @@ export interface WorkflowState extends CheckpointState {
   threadId: string;
   shoppingList?: MainShoppingListItemResponse[];
 } // include threadId & optional shoppingList for resumeData
-
 
 export default function useSession(startSession: () => Promise<void>) {
   const [isResuming, setIsResuming] = useState(false);
@@ -49,16 +59,23 @@ export default function useSession(startSession: () => Promise<void>) {
           localStorage.removeItem('sessionId');
           return;
         }
-        
+
         const data: WorkflowState = { ...state, threadId: id };
         setResumeData(data);
         // Fetch shopping list for resumed meal plan
         if (state.mealPlan) {
-          postShoppinglist({ client: gatewayClient, body: { plan: state.mealPlan.days?.map(d => d.meal?.id ?? 0) ?? [] } })
-            .then(res => {
+          postShoppinglist({
+            client: gatewayClient,
+            body: {
+              plan: state.mealPlan.days?.map((d) => d.meal?.id ?? 0) ?? [],
+            },
+          })
+            .then((res) => {
               if (res.data && !res.error) {
                 const items = res.data.items ?? [];
-                setResumeData(prev => prev ? { ...prev, shoppingList: items } : prev);
+                setResumeData((prev) =>
+                  prev ? { ...prev, shoppingList: items } : prev,
+                );
               }
             })
             .catch(() => {
