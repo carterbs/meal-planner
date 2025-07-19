@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { initLogging, infoLog, errorLog } from './logging.js';
 import { registerWeeklyMealPlan } from './resources/weeklyMealPlan.js';
 import { registerRecipes } from './resources/recipes.js';
@@ -14,7 +14,9 @@ import { registerDeleteRecipe } from './tools/deleteRecipe.js';
 import { registerGetMeals } from './tools/getMeals.js';
 import { registerGetCurrentMealPlan } from './tools/getCurrentMealPlan.js';
 import { registerRemoveMeal } from './tools/removeMeal.js';
-
+import { randomUUID } from 'crypto';
+import express from 'express';
+import cors from 'cors';
 
 const server = new McpServer({ name: 'mealplanner-mcp', version: '1.0.0' });
 
@@ -41,10 +43,52 @@ async function main() {
     errorLog('Failed to initialize logging: ' + String(error));
   }
 
-  const transport = new StdioServerTransport();
+  const port = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT) : 3001;
+  
+  // Create Express app
+  const app = express();
+  
+  // Enable CORS for development
+  app.use(cors({
+    origin: true,
+    credentials: true,
+  }));
+  
+  // Parse JSON bodies
+  app.use(express.json());
+  
+  // Create MCP transport
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => randomUUID(),
+    enableJsonResponse: false, // Use SSE streaming
+  });
+  
+  // Connect MCP server to transport
   await server.connect(transport);
-  console.error('MealPlanner MCP server running on stdio');
-  await infoLog('MCP server successfully started and connected via stdio');
+  
+  // Handle all MCP requests at /mcp endpoint
+  app.all('/mcp', async (req, res) => {
+    try {
+      await transport.handleRequest(req, res, req.body);
+    } catch (error) {
+      errorLog(`Error handling MCP request: ${error}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.json({ status: 'ok', service: 'mealplanner-mcp' });
+  });
+  
+  // Start the server
+  app.listen(port, () => {
+    console.error(`MealPlanner MCP server running on http://localhost:${port}`);
+    console.error(`MCP endpoint: http://localhost:${port}/mcp`);
+    console.error(`Health check: http://localhost:${port}/health`);
+  });
+  
+  await infoLog(`MCP server successfully started and connected via HTTP on port ${port}`);
 }
 
 main().catch((error) => {

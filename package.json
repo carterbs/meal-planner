@@ -16,6 +16,7 @@
         "generate_code": "./scripts/generate_code.sh",
         "start": "yarn kill:servers &&node scripts/start.js",
         "start:mcp": "node scripts/start-mcp.js",
+        "start:agent": "cd agent-service && yarn start",
         "stop:logging": "kill -9 $(lsof -t -i :50052)",
         "test:e2e": "ts-node ./typescript/e2e/e2e_remove_friday.ts",
         "test:backend": "cd meal-service && make test",
