@@ -19,8 +19,12 @@ import {
   ExpandMore as ExpandMoreIcon,
   ShoppingCart as ShoppingCartIcon,
   IosShare as ShareIcon,
+  MenuBook as MenuBookIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import MealPlanDisplay from './components/MealPlanDisplay';
+import { MealManagementTab } from './components/MealManagementTab';
+import { Toast } from './components/Toast';
 import { ShoppingListItem } from './types';
 import { WeeklyMealPlan } from '@mealplanner/generated';
 import {
@@ -407,6 +411,8 @@ const AgentPage: React.FC = () => {
   const [shareMenuAnchor, setShareMenuAnchor] = useState<null | HTMLElement>(
     null,
   );
+  const [showMealLibrary, setShowMealLibrary] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const currentColorScheme = 'earthyNeutrals';
   const chatRef = useRef<HTMLDivElement | null>(null);
 
@@ -623,6 +629,11 @@ const AgentPage: React.FC = () => {
     navigator.clipboard.writeText(text);
   };
 
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 2000);
+  };
+
   const handleKeyPress: React.KeyboardEventHandler<HTMLDivElement> = (
     event,
   ) => {
@@ -647,7 +658,20 @@ const AgentPage: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={styles.mainContainer}>
+      {showMealLibrary ? (
+        <Box sx={{ position: 'relative', height: '100vh' }}>
+          <Button
+            onClick={() => setShowMealLibrary(false)}
+            size="small"
+            sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1, color: colors.accent2 }}
+            data-testid="close-meal-library"
+          >
+            <ArrowBackIcon />
+          </Button>
+          <MealManagementTab showToast={showToast} />
+        </Box>
+      ) : (
+        <Box sx={styles.mainContainer}>
         {/* Left Side - Chat */}
         <Paper
           elevation={0}
@@ -678,6 +702,14 @@ const AgentPage: React.FC = () => {
                 Start Session
               </Button>
             )}
+            <Button
+              onClick={() => setShowMealLibrary(true)}
+              size="small"
+              sx={{ color: colors.accent2 }}
+              data-testid="open-meal-library"
+            >
+              <MenuBookIcon />
+            </Button>
           </Box>
           <Box
             ref={chatRef}
@@ -939,6 +971,8 @@ const AgentPage: React.FC = () => {
           </Paper>
         </Box>
       </Box>
+      )}
+      <Toast message={toast} />
     </ThemeProvider>
   );
 };

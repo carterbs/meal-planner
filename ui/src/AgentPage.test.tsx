@@ -491,3 +491,13 @@ test('handles keyboard navigation with arrow keys', async () => {
 
   expect(input).toBeInTheDocument();
 });
+
+test('opens and closes meal library', () => {
+  render(<AgentPage />);
+
+  fireEvent.click(screen.getByTestId('open-meal-library'));
+  expect(screen.getAllByTestId('meal-management-tab').length).toBeGreaterThan(0);
+
+  fireEvent.click(screen.getByTestId('close-meal-library'));
+  expect(screen.queryByTestId('meal-management-tab')).not.toBeInTheDocument();
+});

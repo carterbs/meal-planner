@@ -1,6 +1,7 @@
 import type {
   MainMealResponse,
   MainStepResponse,
+  MainIngredientResponse,
 } from '@mealplanner/generated/dist/gateway/types.gen';
 import {
   createClient,
@@ -10,6 +11,7 @@ import {
   getMeals as getMealsFromGateway,
   postMeals,
   deleteMealsByMealId,
+  postMealsByMealIdIngredients,
   putMealsByMealIdIngredientsByIngredientId,
   deleteMealsByMealIdIngredientsByIngredientId,
   postMealsByMealIdStepsBulk,
@@ -133,12 +135,16 @@ export async function deleteMeal(mealId: number): Promise<string> {
 export async function updateMealIngredient(
   mealId: number,
   ingredientId: number,
-  ingredient: Ingredient,
+  ingredient: MainIngredientResponse,
 ): Promise<Meal> {
   const result = await putMealsByMealIdIngredientsByIngredientId({
     client: gatewayClient,
     path: { mealId: mealId.toString(), ingredientId: ingredientId.toString() },
-    body: { ingredient },
+    body: { 
+      ingredient,
+      ingredient_id: ingredientId,
+      meal_id: mealId,
+    },
   });
 
   if (!result.data || result.error) {
@@ -148,6 +154,35 @@ export async function updateMealIngredient(
   }
 
   return mapMeal(result.data);
+}
+
+/**
+ * Create a new ingredient for a meal
+ */
+export async function createMealIngredient(
+  mealId: number,
+  ingredient: MainIngredientResponse,
+): Promise<Meal> {
+  const result = await postMealsByMealIdIngredients({
+    client: gatewayClient,
+    path: { mealId: mealId.toString() },
+    body: { 
+      ingredient,
+      meal_id: mealId,
+    },
+  });
+
+  if (!result.data || result.error) {
+    throw new Error(
+      `Failed to create ingredient: ${result.error || 'Unknown error'}`,
+    );
+  }
+
+  if (!result.data.meal) {
+    throw new Error('No meal returned from create ingredient request');
+  }
+
+  return mapMeal(result.data.meal);
 }
 
 /**

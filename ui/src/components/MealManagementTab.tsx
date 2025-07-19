@@ -3,6 +3,7 @@ import { Ingredient, Meal, Step } from '../types';
 import {
   getMeals,
   updateMealIngredient,
+  createMealIngredient,
   deleteMealIngredient,
   deleteMeal as deleteMealApi,
   replaceAllSteps,
@@ -150,10 +151,10 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   const addIngredient = () => {
     if (!selectedMeal) return;
 
-    // Create a default new ingredient
+    // Create a default new ingredient with a negative temporary ID to indicate it's new
     const newIngredient: Ingredient = {
-      id: Date.now(), // Temporary ID for the UI
-      mealId: 0, // Will be set by backend
+      id: -Date.now(), // Negative temporary ID for new ingredients
+      mealId: selectedMeal.id || 0,
       name: '',
       quantity: 0,
       unit: '',
@@ -199,21 +200,25 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     if (!selectedMeal || editingIngredientIndex === null || !editedIngredient)
       return;
 
-    // Update the ingredient in the selectedMeal
-    const updatedIngredients = [...selectedMeal.ingredients];
-    updatedIngredients[editingIngredientIndex] = editedIngredient;
-
-    const updatedMeal = {
-      ...selectedMeal,
-      ingredients: updatedIngredients,
+    // Check if this is a new ingredient (negative ID)
+    const isNewIngredient = editedIngredient.id! < 0;
+    
+    // Create the ingredient data for the API using the MainIngredientResponse format
+    const ingredientForApi = {
+      id: isNewIngredient ? 0 : editedIngredient.id!,
+      mealId: selectedMeal.id!,
+      name: editedIngredient.name,
+      quantity: editedIngredient.quantity,
+      unit: editedIngredient.unit,
     };
 
+    // Use different endpoints for creating vs updating ingredients
+    const apiCall = isNewIngredient
+      ? createMealIngredient(selectedMeal.id!, ingredientForApi)
+      : updateMealIngredient(selectedMeal.id!, editedIngredient.id!, ingredientForApi);
+
     // Save to backend
-    updateMealIngredient(
-      selectedMeal.id!,
-      editedIngredient.id!,
-      editedIngredient,
-    )
+    apiCall
       .then((updatedMeal) => {
         // Update with the meal returned from backend
         setSelectedMeal(updatedMeal);
@@ -223,11 +228,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
         setEditingIngredientIndex(null);
         setEditedIngredient(null);
-        showToast('Ingredient updated successfully');
+        showToast(isNewIngredient ? 'Ingredient added successfully' : 'Ingredient updated successfully');
       })
       .catch((err) => {
-        console.error('Error updating ingredient:', err);
-        showToast('Error updating ingredient');
+        console.error('Error saving ingredient:', err);
+        showToast('Error saving ingredient');
       });
   };
 
@@ -235,15 +240,28 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   const deleteIngredient = (ingredientId: number) => {
     if (!selectedMeal) return;
 
-    const updatedIngredients = selectedMeal.ingredients.filter(
-      (i) => i.id !== ingredientId,
-    );
-    const updatedMeal = {
-      ...selectedMeal,
-      ingredients: updatedIngredients,
-    };
+    // Check if this is a new ingredient (negative ID) that hasn't been saved yet
+    const isNewIngredient = ingredientId < 0;
+    
+    if (isNewIngredient) {
+      // For new ingredients, just remove from UI without API call
+      const updatedIngredients = selectedMeal.ingredients.filter(
+        (i) => i.id !== ingredientId,
+      );
+      const updatedMeal = {
+        ...selectedMeal,
+        ingredients: updatedIngredients,
+      };
+      
+      setSelectedMeal(updatedMeal);
+      setMeals((prev) =>
+        prev.map((m) => (m.id === selectedMeal.id ? updatedMeal : m)),
+      );
+      showToast('Ingredient removed');
+      return;
+    }
 
-    // Save to backend
+    // For existing ingredients, delete from backend
     deleteMealIngredient(selectedMeal.id!, ingredientId)
       .then((updatedMeal) => {
         // Update with the meal returned from backend
@@ -392,45 +410,35 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   // Render the main menu with options
   const renderMainView = () => {
     return (
-      <Box sx={{ py: 3 }} data-testid="meal-management-tab">
+      <Box sx={{ py: 4, px: 3 }} data-testid="meal-management-tab">
         <Typography
           variant="h4"
           gutterBottom
           sx={{
-            fontFamily: 'Playfair Display, serif',
-            fontWeight: 700,
+            fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+            fontWeight: 600,
             mb: 4,
-            color: theme.palette.text.primary,
-            position: 'relative',
-            display: 'inline-block',
-            '&:after': {
-              content: '""',
-              position: 'absolute',
-              left: 0,
-              bottom: -8,
-              width: '40%',
-              height: 3,
-              background: `linear-gradient(to right, ${theme.palette.primary.main}, transparent)`,
-              borderRadius: 2,
-            },
+            color: '#3a3a3a',
+            fontSize: '2rem',
           }}
         >
           Meal Library
         </Typography>
-        <Grid container spacing={5} sx={{ mt: 1 }}>
+        <Grid container spacing={4} sx={{ mt: 1 }}>
           <Grid item xs={12} md={6}>
             <Card
               sx={{
-                height: '100%',
+                height: '200px',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: 3,
+                borderRadius: 2,
                 overflow: 'hidden',
-                transition: 'all 0.3s ease',
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                transition: 'all 0.2s ease',
+                border: '1px solid #e0e4e0',
+                backgroundColor: '#ffffff',
                 '&:hover': {
-                  transform: 'translateY(-8px)',
-                  boxShadow: `0 12px 30px ${alpha(theme.palette.primary.main, 0.15)}`,
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                 },
               }}
             >
@@ -441,51 +449,49 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   flexDirection: 'column',
                   height: '100%',
                   alignItems: 'center',
-                  padding: 5,
-                  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.15)} 100%)`,
+                  padding: 3,
+                  backgroundColor: '#ffffff',
                 }}
               >
                 <Box
                   sx={{
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    bgcolor: '#c9e0c2',
                     borderRadius: '50%',
-                    p: 3,
-                    mb: 3,
+                    p: 2,
+                    mb: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.2)}`,
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                   }}
                 >
                   <MenuBookIcon
                     sx={{
-                      fontSize: 64,
-                      color: theme.palette.primary.main,
+                      fontSize: 48,
+                      color: '#6b8c5d',
                     }}
                   />
                 </Box>
                 <Typography
-                  variant="h5"
+                  variant="h6"
                   component="div"
                   gutterBottom
                   sx={{
-                    fontFamily: 'Playfair Display, serif',
-                    fontWeight: 700,
-                    color: theme.palette.primary.dark,
-                    mb: 2,
+                    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                    fontWeight: 600,
+                    color: '#3a3a3a',
+                    mb: 1,
                   }}
                 >
                   Browse Meals
                 </Typography>
                 <Typography
-                  variant="body1"
+                  variant="body2"
                   color="text.secondary"
                   align="center"
                   sx={{
-                    fontWeight: 500,
+                    fontSize: '14px',
                     maxWidth: '80%',
-                    lineHeight: 1.6,
+                    lineHeight: 1.5,
                   }}
                 >
                   View, search, and manage your saved recipes
@@ -496,16 +502,17 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
           <Grid item xs={12} md={6}>
             <Card
               sx={{
-                height: '100%',
+                height: '200px',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: 3,
+                borderRadius: 2,
                 overflow: 'hidden',
-                transition: 'all 0.3s ease',
-                border: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`,
+                transition: 'all 0.2s ease',
+                border: '1px solid #e0e4e0',
+                backgroundColor: '#ffffff',
                 '&:hover': {
-                  transform: 'translateY(-8px)',
-                  boxShadow: `0 12px 30px ${alpha(theme.palette.secondary.main, 0.15)}`,
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                 },
               }}
             >
@@ -516,51 +523,49 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   flexDirection: 'column',
                   height: '100%',
                   alignItems: 'center',
-                  padding: 5,
-                  background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.light, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.15)} 100%)`,
+                  padding: 3,
+                  backgroundColor: '#ffffff',
                 }}
               >
                 <Box
                   sx={{
-                    bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                    bgcolor: '#FFB347',
                     borderRadius: '50%',
-                    p: 3,
-                    mb: 3,
+                    p: 2,
+                    mb: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: `0 8px 20px ${alpha(theme.palette.secondary.main, 0.2)}`,
-                    border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
                   }}
                 >
                   <AddIcon
                     sx={{
-                      fontSize: 64,
-                      color: theme.palette.secondary.main,
+                      fontSize: 48,
+                      color: '#ffffff',
                     }}
                   />
                 </Box>
                 <Typography
-                  variant="h5"
+                  variant="h6"
                   component="div"
                   gutterBottom
                   sx={{
-                    fontFamily: 'Playfair Display, serif',
-                    fontWeight: 700,
-                    color: theme.palette.secondary.dark,
-                    mb: 2,
+                    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                    fontWeight: 600,
+                    color: '#3a3a3a',
+                    mb: 1,
                   }}
                 >
                   Add New Recipe
                 </Typography>
                 <Typography
-                  variant="body1"
+                  variant="body2"
                   color="text.secondary"
                   align="center"
                   sx={{
-                    fontWeight: 500,
+                    fontSize: '14px',
                     maxWidth: '80%',
-                    lineHeight: 1.6,
+                    lineHeight: 1.5,
                   }}
                 >
                   Create a new recipe to add to your meal library
@@ -579,7 +584,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
       <Fade in={true}>
         <Box
           sx={{
-            py: 2,
+            py: 3,
+            px: 3,
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
@@ -589,14 +595,21 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
             <IconButton
               onClick={() => setCurrentView('main')}
               aria-label="back to main menu"
+              sx={{
+                color: '#6b8c5d',
+                '&:hover': {
+                  backgroundColor: 'rgba(107, 140, 93, 0.1)',
+                },
+              }}
             >
               <ArrowBackIcon />
             </IconButton>
             <Typography
               variant="h5"
               sx={{
-                fontFamily: 'Playfair Display, serif',
-                fontWeight: 700,
+                fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                fontWeight: 600,
+                color: '#3a3a3a',
               }}
             >
               Browse Meals
@@ -668,13 +681,14 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                 sx={{
                   flexGrow: 1,
                   width: '100%',
-                  boxShadow: 'none',
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  border: '1px solid #e0e4e0',
                   borderRadius: 2,
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
                   minHeight: '500px',
+                  backgroundColor: '#ffffff',
                 }}
               >
                 <DataGrid
@@ -701,17 +715,18 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                     flexGrow: 1,
                     '& .MuiDataGrid-row:hover': {
                       cursor: 'pointer',
-                      backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                      backgroundColor: '#f7f4f2',
                       boxShadow: 'none',
                       transition: 'background-color 0.2s ease',
                     },
                     '& .MuiDataGrid-row.Mui-selected': {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                      backgroundColor: '#c9e0c2',
                     },
                     '& .MuiDataGrid-cell': {
                       textDecoration: 'none',
-                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                      borderBottom: '1px solid #e0e4e0',
                       padding: '12px 16px',
+                      fontSize: '14px',
                     },
                     '& .MuiDataGrid-row:focus, & .MuiDataGrid-cell:focus': {
                       outline: 'none',
@@ -721,18 +736,19 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                     },
                     border: 'none',
                     '& .MuiDataGrid-columnHeaders': {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                      backgroundColor: '#f7f4f2',
+                      borderBottom: '1px solid #e0e4e0',
                       '& .MuiDataGrid-columnHeader': {
                         padding: '12px 16px',
                       },
                       '& .MuiDataGrid-columnHeaderTitle': {
                         fontWeight: 600,
-                        color: theme.palette.text.primary,
+                        color: '#3a3a3a',
+                        fontSize: '14px',
                       },
                     },
                     '& .MuiDataGrid-footerContainer': {
-                      borderTop: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                      borderTop: '1px solid #e0e4e0',
                     },
                   }}
                 />
@@ -775,9 +791,10 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   variant="outlined"
                   sx={{
                     borderRadius: 2,
-                    borderColor: alpha(theme.palette.primary.main, 0.1),
-                    boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}`,
+                    borderColor: '#e0e4e0',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                     height: '100%',
+                    backgroundColor: '#ffffff',
                   }}
                 >
                   <CardContent sx={{ p: 3 }}>
@@ -785,10 +802,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                       variant="h5"
                       gutterBottom
                       sx={{
-                        fontFamily: 'Playfair Display, serif',
-                        fontWeight: 700,
-                        color: theme.palette.primary.dark,
+                        fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                        fontWeight: 600,
+                        color: '#3a3a3a',
                         mb: 2,
+                        fontSize: '18px',
                       }}
                     >
                       {selectedMeal.name}
@@ -1035,58 +1053,60 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                       </Typography>
                     )}
 
-                    {/* Recipe Steps section */}
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="h6" gutterBottom>
-                        Recipe Steps
-                      </Typography>
+                    {/* Recipe Steps section - only show if there are steps or in edit mode */}
+                    {(selectedMeal?.steps && selectedMeal.steps.length > 0) || editMode ? (
+                      <Box sx={{ mt: 3 }}>
+                        <Typography variant="h6" gutterBottom>
+                          Recipe Steps
+                        </Typography>
 
-                      {selectedMeal ? (
-                        <>
-                          <StepsEditor
-                            steps={selectedMeal.steps || []}
-                            onChange={(updatedSteps) => {
-                              if (editMode) {
-                                setSelectedMeal({
-                                  ...selectedMeal,
-                                  steps: updatedSteps,
-                                });
-                              }
-                            }}
-                            readOnly={!editMode}
-                          />
-                          {editMode && (
-                            <Box
-                              sx={{
-                                mt: 2,
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                              }}
-                            >
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() =>
-                                  handleSaveSteps(
-                                    selectedMeal.id!,
-                                    selectedMeal.steps || [],
-                                  )
+                        {selectedMeal ? (
+                          <>
+                            <StepsEditor
+                              steps={selectedMeal.steps || []}
+                              onChange={(updatedSteps) => {
+                                if (editMode) {
+                                  setSelectedMeal({
+                                    ...selectedMeal,
+                                    steps: updatedSteps,
+                                  });
                                 }
-                                disabled={loading}
+                              }}
+                              readOnly={!editMode}
+                            />
+                            {editMode && (
+                              <Box
+                                sx={{
+                                  mt: 2,
+                                  display: 'flex',
+                                  justifyContent: 'flex-end',
+                                }}
                               >
-                                Save Steps
-                              </Button>
-                            </Box>
-                          )}
-                        </>
-                      ) : (
-                        <StepsEditor
-                          steps={[]}
-                          readOnly={true}
-                          onChange={() => {}}
-                        />
-                      )}
-                    </Box>
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  onClick={() =>
+                                    handleSaveSteps(
+                                      selectedMeal.id!,
+                                      selectedMeal.steps || [],
+                                    )
+                                  }
+                                  disabled={loading}
+                                >
+                                  Save Steps
+                                </Button>
+                              </Box>
+                            )}
+                          </>
+                        ) : (
+                          <StepsEditor
+                            steps={[]}
+                            readOnly={true}
+                            onChange={() => {}}
+                          />
+                        )}
+                      </Box>
+                    ) : null}
                   </CardContent>
                 </Card>
               </Grid>
@@ -1101,15 +1121,30 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   const renderAddView = () => {
     return (
       <Fade in={true}>
-        <Box sx={{ py: 2 }}>
+        <Box sx={{ py: 3, px: 3 }}>
           <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
             <IconButton
               onClick={() => setCurrentView('main')}
               aria-label="back to main menu"
+              sx={{
+                color: '#6b8c5d',
+                '&:hover': {
+                  backgroundColor: 'rgba(107, 140, 93, 0.1)',
+                },
+              }}
             >
               <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h5">Add New Recipe</Typography>
+            <Typography 
+              variant="h5"
+              sx={{
+                fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                fontWeight: 600,
+                color: '#3a3a3a',
+              }}
+            >
+              Add New Recipe
+            </Typography>
           </Stack>
           <AddRecipeForm onRecipeAdded={handleRecipeAdded} />
         </Box>
@@ -1118,7 +1153,14 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   };
 
   return (
-    <Box data-testid="meal-management-tab">
+    <Box 
+      data-testid="meal-management-tab"
+      sx={{
+        backgroundColor: '#F7F5F2', // earthyNeutrals mainBg
+        minHeight: '100vh',
+        color: '#3a3a3a', // earthyNeutrals text
+      }}
+    >
       {currentView === 'main' && renderMainView()}
       {currentView === 'browse' && renderBrowseView()}
       {currentView === 'add' && renderAddView()}

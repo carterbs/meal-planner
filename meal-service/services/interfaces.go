@@ -28,6 +28,7 @@ type MealService interface {
 
 // IngredientService handles ingredient management operations
 type IngredientService interface {
+	CreateMealIngredient(mealID int, ingredient *models.Ingredient) error
 	UpdateMealIngredient(mealID int, ingredient *models.Ingredient) error
 	DeleteMealIngredient(ingredientID int) error
 }
