@@ -458,13 +458,13 @@ const AgentPage: React.FC = () => {
       localStorage.setItem('sessionId', result.session.threadId);
 
       // Extract meal plan from initial state
-      if (result.initialState?.state?.mealPlan) {
+      if (result.initialState?.mealPlan) {
         console.log(
           'Setting meal plan from session start:',
-          result.initialState.state.mealPlan,
+          result.initialState.mealPlan,
         );
-        setMealPlan(result.initialState.state.mealPlan);
-        setShoppingList(result.initialState.state.mealPlan.shoppingList);
+        setMealPlan(result.initialState.mealPlan);
+        setShoppingList(result.initialState.mealPlan.shoppingList);
       }
 
       if (result.message) {

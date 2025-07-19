@@ -1,4 +1,4 @@
-import { AgentCheckpoint } from '@mealplanner/generated';
+import { AgentCheckpoint, MealPlanningCheckpointState } from '@mealplanner/generated';
 import {
   createClient,
   createConfig,
@@ -29,7 +29,7 @@ export interface SessionInfo {
 
 export interface StartSessionResult {
   session: SessionInfo;
-  initialState?: AgentCheckpoint;
+  initialState?: MealPlanningCheckpointState;
   message?: string;
 }
 
@@ -77,6 +77,7 @@ export async function startAgentSession(
     currentStep: agentResponse.currentStep,
   };
 
+  debugger
   let initialState;
   if (agentResponse.initialState) {
     try {
