@@ -20,17 +20,6 @@ type MealPlannerAPIServer struct {
 	apipb.UnimplementedMealPlannerAPIServer
 }
 
-// joinParticipants converts a slice of participants to a comma-separated string
-func joinParticipants(p []string) string {
-	if len(p) == 0 {
-		return ""
-	}
-	s := p[0]
-	for _, v := range p[1:] {
-		s += "," + v
-	}
-	return s
-}
 
 func generateShoppingListForPlan(plan *apipb.WeeklyMealPlan) error {
 	mealIDs := make([]int, 0)
