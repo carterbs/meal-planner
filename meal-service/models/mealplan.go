@@ -76,15 +76,17 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 	// log dayIndex for the 8th meal
 	mealPlanServiceLogger.Debugw("In the model, 8th meal", "dayIndex", plan.Days[7].DayIndex)
 
-	// DEBUGGING: Log all dayIndex values after generation
-	mealPlanServiceLogger.Infow("🔍 [BACKEND] GenerateWeeklyMealPlan complete - dayIndex values:")
-	for i, day := range plan.Days {
-		mealPlanServiceLogger.Infow("🔍 [BACKEND] Meal entry", "index", i, "dayIndex", day.DayIndex, "mealType", day.MealType, "mealName", func() string {
-			if day.Meal != nil {
-				return day.Meal.Name
-			}
-			return "nil"
-		}())
+	if logging.IsVerbose() {
+		// DEBUGGING: Log all dayIndex values after generation
+		mealPlanServiceLogger.Infow("🔍 [BACKEND] GenerateWeeklyMealPlan complete - dayIndex values:")
+		for i, day := range plan.Days {
+			mealPlanServiceLogger.Infow("🔍 [BACKEND] Meal entry", "index", i, "dayIndex", day.DayIndex, "mealType", day.MealType, "mealName", func() string {
+				if day.Meal != nil {
+					return day.Meal.Name
+				}
+				return "nil"
+			}())
+		}
 	}
 
 	return plan, nil
@@ -239,8 +241,6 @@ func getLastPlannedMealsByType(db *sql.DB, mealType string, limit int) ([]*Meal,
 	return meals, nil
 }
 
-
-
 // RemoveMealFromPlan sets the specified meal slot to nil in the weekly plan.
 // dayIndex should be 0=Monday .. 6=Sunday. mealType should be breakfast, lunch, or dinner.
 func RemoveMealFromPlan(plan *WeeklyMealPlan, dayIndex int, mealType string) error {
@@ -267,4 +267,3 @@ func RemoveMealFromPlan(plan *WeeklyMealPlan, dayIndex int, mealType string) err
 	}
 	return fmt.Errorf("meal not found for dayIndex %d and mealType %s", dayIndex, mealType)
 }
-

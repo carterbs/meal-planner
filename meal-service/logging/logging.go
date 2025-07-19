@@ -17,7 +17,21 @@ var (
 	loggerOnce sync.Once
 	grpcLogger *logger.LoggingClient
 	useGrpcLog bool
+	verbose    bool
 )
+
+// IsVerbose returns true if verbose logging is enabled.
+func IsVerbose() bool {
+	InitLogger()
+	return verbose
+}
+
+// ResetForTest clears the logger so it can be reinitialized. For use in tests only.
+func ResetForTest() {
+	Logger = nil
+	loggerOnce = sync.Once{}
+	verbose = false
+}
 
 // GetLogger returns a named SugaredLogger, initializing the logger if necessary.
 func GetLogger(name string) *zap.SugaredLogger {
@@ -63,6 +77,11 @@ func GetGrpcLogger(name string) *zap.SugaredLogger {
 // InitLogger initializes the global structured logger (zap) for the application.
 func InitLogger() {
 	loggerOnce.Do(func() {
+		// Determine if verbose logging is enabled via env var
+		if v := strings.ToLower(os.Getenv("VERBOSE_MEAL_PLAN_LOGS")); v == "true" || v == "1" {
+			verbose = true
+		}
+
 		// Check if we should use gRPC logging
 		loggingServiceAddr := os.Getenv("LOGGING_SERVICE_ADDR")
 		if loggingServiceAddr == "" {
