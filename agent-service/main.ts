@@ -17,6 +17,7 @@ import {
     ResumeWorkflowRequest,
     ResumeWorkflowResponse
 } from '@mealplanner/generated/agent_pb';
+import * as apipb from '@mealplanner/generated/api_pb';
 
 // Initialize agent instance
 let agentInstance: LangGraphAgent | null = null;
@@ -221,6 +222,70 @@ function resumeWorkflow(call: grpc.ServerUnaryCall<ResumeWorkflowRequest, Resume
     })();
 }
 
+// StartAgentWorkflow implementation - wraps PlanStart for API gateway
+function startAgentWorkflow(call: grpc.ServerUnaryCall<apipb.StartAgentWorkflowRequest, apipb.StartAgentWorkflowResponse>, callback: grpc.sendUnaryData<apipb.StartAgentWorkflowResponse>): void {
+    (async () => {
+        try {
+            const request = call.request.request;
+            if (!request) {
+                return callback(new Error('request is required'));
+            }
+            if (!request.participants || request.participants.length === 0) {
+                return callback(new Error('participants required'));
+            }
+
+            const agent = await initializeAgent();
+            const threadId = await agent.startWorkflow(WorkflowType.MEAL_PLANNING, request.participants);
+            const state = await agent.getWorkflowState(threadId);
+
+            const resp = new apipb.AgentResponse({
+                success: true,
+                message: 'Workflow started',
+                threadId,
+                currentStep: state.currentStep,
+                initialState: state.toJsonString(),
+            });
+
+            callback(null, new apipb.StartAgentWorkflowResponse({ response: resp }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error starting workflow: ${errMsg}`));
+        }
+    })();
+}
+
+// MessageAgent implementation - wraps PlanFeedback and ResumeWorkflow
+function messageAgent(call: grpc.ServerUnaryCall<apipb.MessageAgentRequest, apipb.MessageAgentResponse>, callback: grpc.sendUnaryData<apipb.MessageAgentResponse>): void {
+    (async () => {
+        try {
+            const request = call.request.request;
+            if (!request) {
+                return callback(new Error('request is required'));
+            }
+            const { threadId, message, from } = request;
+            if (!threadId) return callback(new Error('threadId required'));
+            if (!message) return callback(new Error('message required'));
+            if (!from) return callback(new Error('from required'));
+
+            const agent = await initializeAgent();
+            const repo = new MessageRepository();
+            await repo.addMessage(threadId, from, message);
+
+            const result = await agent.resumeWorkflow(threadId, {});
+            const resp = new apipb.AgentResponse({
+                success: result.success,
+                message: result.message || '',
+                threadId,
+                currentStep: result.currentStep || '',
+            });
+            callback(null, new apipb.MessageAgentResponse({ response: resp }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error messaging agent: ${errMsg}`));
+        }
+    })();
+}
+
 // Load the protobuf definition
 const PROTO_PATH = path.join(__dirname, '../../proto/agent.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
@@ -261,6 +326,8 @@ function startServer(): void {
         planFeedback,
         planFinalize,
         resumeWorkflow,
+        startAgentWorkflow,
+        messageAgent,
     });
 
     // Bind and start the server

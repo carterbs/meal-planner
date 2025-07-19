@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	apipb "mealplanner/generated/go"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,10 +20,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AgentService_PlanStart_FullMethodName      = "/agent.AgentService/PlanStart"
-	AgentService_PlanFeedback_FullMethodName   = "/agent.AgentService/PlanFeedback"
-	AgentService_PlanFinalize_FullMethodName   = "/agent.AgentService/PlanFinalize"
-	AgentService_ResumeWorkflow_FullMethodName = "/agent.AgentService/ResumeWorkflow"
+	AgentService_PlanStart_FullMethodName          = "/agent.AgentService/PlanStart"
+	AgentService_PlanFeedback_FullMethodName       = "/agent.AgentService/PlanFeedback"
+	AgentService_PlanFinalize_FullMethodName       = "/agent.AgentService/PlanFinalize"
+	AgentService_ResumeWorkflow_FullMethodName     = "/agent.AgentService/ResumeWorkflow"
+	AgentService_StartAgentWorkflow_FullMethodName = "/agent.AgentService/StartAgentWorkflow"
+	AgentService_MessageAgent_FullMethodName       = "/agent.AgentService/MessageAgent"
 )
 
 // AgentServiceClient is the client API for AgentService service.
@@ -37,6 +40,8 @@ type AgentServiceClient interface {
 	PlanFinalize(ctx context.Context, in *PlanFinalizeRequest, opts ...grpc.CallOption) (*PlanFinalizeResponse, error)
 	// Workflow management
 	ResumeWorkflow(ctx context.Context, in *ResumeWorkflowRequest, opts ...grpc.CallOption) (*ResumeWorkflowResponse, error)
+	StartAgentWorkflow(ctx context.Context, in *apipb.StartAgentWorkflowRequest, opts ...grpc.CallOption) (*apipb.StartAgentWorkflowResponse, error)
+	MessageAgent(ctx context.Context, in *apipb.MessageAgentRequest, opts ...grpc.CallOption) (*apipb.MessageAgentResponse, error)
 }
 
 type agentServiceClient struct {
@@ -87,6 +92,26 @@ func (c *agentServiceClient) ResumeWorkflow(ctx context.Context, in *ResumeWorkf
 	return out, nil
 }
 
+func (c *agentServiceClient) StartAgentWorkflow(ctx context.Context, in *apipb.StartAgentWorkflowRequest, opts ...grpc.CallOption) (*apipb.StartAgentWorkflowResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(apipb.StartAgentWorkflowResponse)
+	err := c.cc.Invoke(ctx, AgentService_StartAgentWorkflow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) MessageAgent(ctx context.Context, in *apipb.MessageAgentRequest, opts ...grpc.CallOption) (*apipb.MessageAgentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(apipb.MessageAgentResponse)
+	err := c.cc.Invoke(ctx, AgentService_MessageAgent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AgentServiceServer is the server API for AgentService service.
 // All implementations must embed UnimplementedAgentServiceServer
 // for forward compatibility.
@@ -99,6 +124,8 @@ type AgentServiceServer interface {
 	PlanFinalize(context.Context, *PlanFinalizeRequest) (*PlanFinalizeResponse, error)
 	// Workflow management
 	ResumeWorkflow(context.Context, *ResumeWorkflowRequest) (*ResumeWorkflowResponse, error)
+	StartAgentWorkflow(context.Context, *apipb.StartAgentWorkflowRequest) (*apipb.StartAgentWorkflowResponse, error)
+	MessageAgent(context.Context, *apipb.MessageAgentRequest) (*apipb.MessageAgentResponse, error)
 	mustEmbedUnimplementedAgentServiceServer()
 }
 
@@ -120,6 +147,12 @@ func (UnimplementedAgentServiceServer) PlanFinalize(context.Context, *PlanFinali
 }
 func (UnimplementedAgentServiceServer) ResumeWorkflow(context.Context, *ResumeWorkflowRequest) (*ResumeWorkflowResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResumeWorkflow not implemented")
+}
+func (UnimplementedAgentServiceServer) StartAgentWorkflow(context.Context, *apipb.StartAgentWorkflowRequest) (*apipb.StartAgentWorkflowResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartAgentWorkflow not implemented")
+}
+func (UnimplementedAgentServiceServer) MessageAgent(context.Context, *apipb.MessageAgentRequest) (*apipb.MessageAgentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MessageAgent not implemented")
 }
 func (UnimplementedAgentServiceServer) mustEmbedUnimplementedAgentServiceServer() {}
 func (UnimplementedAgentServiceServer) testEmbeddedByValue()                      {}
@@ -214,6 +247,42 @@ func _AgentService_ResumeWorkflow_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AgentService_StartAgentWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(apipb.StartAgentWorkflowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).StartAgentWorkflow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_StartAgentWorkflow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).StartAgentWorkflow(ctx, req.(*apipb.StartAgentWorkflowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_MessageAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(apipb.MessageAgentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).MessageAgent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_MessageAgent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).MessageAgent(ctx, req.(*apipb.MessageAgentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AgentService_ServiceDesc is the grpc.ServiceDesc for AgentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -236,6 +305,14 @@ var AgentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResumeWorkflow",
 			Handler:    _AgentService_ResumeWorkflow_Handler,
+		},
+		{
+			MethodName: "StartAgentWorkflow",
+			Handler:    _AgentService_StartAgentWorkflow_Handler,
+		},
+		{
+			MethodName: "MessageAgent",
+			Handler:    _AgentService_MessageAgent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

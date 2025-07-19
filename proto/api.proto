@@ -543,9 +543,7 @@ service MealPlannerAPI {
   rpc ReorderSteps(ReorderStepsRequest) returns (ReorderStepsResponse);
   rpc DeleteAllSteps(DeleteAllStepsRequest) returns (DeleteAllStepsResponse);
 
-  // Agent workflow endpoints
-  rpc StartAgentWorkflow(StartAgentWorkflowRequest) returns (StartAgentWorkflowResponse);
-  rpc MessageAgent(MessageAgentRequest) returns (MessageAgentResponse);
+  // Agent workflow endpoints handled by the agent service
   rpc GetWorkflowStatus(GetWorkflowStatusRequest) returns (GetWorkflowStatusResponse);
   rpc ListWorkflows(google.protobuf.Empty) returns (ListWorkflowsResponse);
   rpc CancelWorkflow(CancelWorkflowRequest) returns (CancelWorkflowResponse);

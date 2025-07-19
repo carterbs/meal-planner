@@ -22,23 +22,35 @@ jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
   createConfig: jest.fn(() => ({})),
 }));
 
-import { 
-  getMeals, 
-  postMeals, 
-  deleteMealsByMealId, 
-  putMealsByMealIdIngredientsByIngredientId, 
+import {
+  getMeals,
+  postMeals,
+  deleteMealsByMealId,
+  putMealsByMealIdIngredientsByIngredientId,
   deleteMealsByMealIdIngredientsByIngredientId,
   postMealsByMealIdStepsBulk,
-  deleteMealsByMealIdSteps
+  deleteMealsByMealIdSteps,
 } from '@mealplanner/generated/dist/gateway/index.js';
 
 const mockGetMeals = getMeals as jest.MockedFunction<typeof getMeals>;
 const mockPostMeals = postMeals as jest.MockedFunction<typeof postMeals>;
-const mockDeleteMeal = deleteMealsByMealId as jest.MockedFunction<typeof deleteMealsByMealId>;
-const mockUpdateIngredient = putMealsByMealIdIngredientsByIngredientId as jest.MockedFunction<typeof putMealsByMealIdIngredientsByIngredientId>;
-const mockDeleteIngredient = deleteMealsByMealIdIngredientsByIngredientId as jest.MockedFunction<typeof deleteMealsByMealIdIngredientsByIngredientId>;
-const mockPostStepsBulk = postMealsByMealIdStepsBulk as jest.MockedFunction<typeof postMealsByMealIdStepsBulk>;
-const mockDeleteSteps = deleteMealsByMealIdSteps as jest.MockedFunction<typeof deleteMealsByMealIdSteps>;
+const mockDeleteMeal = deleteMealsByMealId as jest.MockedFunction<
+  typeof deleteMealsByMealId
+>;
+const mockUpdateIngredient =
+  putMealsByMealIdIngredientsByIngredientId as jest.MockedFunction<
+    typeof putMealsByMealIdIngredientsByIngredientId
+  >;
+const mockDeleteIngredient =
+  deleteMealsByMealIdIngredientsByIngredientId as jest.MockedFunction<
+    typeof deleteMealsByMealIdIngredientsByIngredientId
+  >;
+const mockPostStepsBulk = postMealsByMealIdStepsBulk as jest.MockedFunction<
+  typeof postMealsByMealIdStepsBulk
+>;
+const mockDeleteSteps = deleteMealsByMealIdSteps as jest.MockedFunction<
+  typeof deleteMealsByMealIdSteps
+>;
 
 // We still need to mock the DataGrid component as it's complex and has virtual scrolling behavior
 jest.mock('@mui/x-data-grid', () => ({
@@ -47,10 +59,11 @@ jest.mock('@mui/x-data-grid', () => ({
       {rows &&
         rows.length > 0 &&
         rows.map((row: any, index: number) => (
-          <div key={`meal-${row.id || index}`} data-testid={`meal-row-${row.id || index}`}>
-            <button
-              onClick={() => onRowClick && onRowClick({ id: row.id })}
-            >
+          <div
+            key={`meal-${row.id || index}`}
+            data-testid={`meal-row-${row.id || index}`}
+          >
+            <button onClick={() => onRowClick && onRowClick({ id: row.id })}>
               {row.name}
             </button>
           </div>
@@ -124,37 +137,37 @@ describe('MealManagementTab', () => {
       data: { meals: mockGatewayMeals },
       error: null,
     } as any);
-    
+
     mockPostMeals.mockResolvedValue({
       data: mockGatewayMeals[0],
       error: null,
     } as any);
-    
+
     mockDeleteMeal.mockResolvedValue({
       data: {},
       error: null,
     } as any);
-    
+
     mockUpdateIngredient.mockResolvedValue({
       data: {},
       error: null,
     } as any);
-    
+
     mockDeleteIngredient.mockResolvedValue({
       data: {},
       error: null,
     } as any);
-    
+
     mockPostStepsBulk.mockResolvedValue({
       data: {},
       error: null,
     } as any);
-    
+
     mockDeleteSteps.mockResolvedValue({
       data: {},
       error: null,
     } as any);
-    
+
     mockShowToast.mockClear();
   });
 
