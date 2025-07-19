@@ -1,6 +1,6 @@
 import { infoLog } from './logging';
 import { WorkflowType } from './shared/types';
-import { HttpCheckpointSaver } from './shared/httpCheckpointer';
+import { DbCheckpointSaver } from './shared/dbCheckpointer';
 import type { ExtendedRunnableConfig } from './shared/types';
 
 // Workflow graph interface
@@ -18,7 +18,7 @@ export interface BaseWorkflow<I = unknown, O = unknown> {
 
 // Workflow factory interface
 export interface WorkflowFactory<I = unknown, O = unknown> {
-  create(checkpointer: HttpCheckpointSaver): Promise<BaseWorkflow<I, O>>;
+  create(checkpointer: DbCheckpointSaver): Promise<BaseWorkflow<I, O>>;
   getType(): WorkflowType;
 }
 
@@ -33,7 +33,7 @@ export class WorkflowRegistry {
 
   async createWorkflow(
     type: WorkflowType,
-    checkpointer: HttpCheckpointSaver,
+    checkpointer: DbCheckpointSaver,
   ): Promise<BaseWorkflow> {
     infoLog(`Creating workflow of type: ${type}`);
     const factory = this.factories.get(type);
@@ -50,7 +50,7 @@ export class WorkflowRegistry {
   async getOrCreateWorkflow(
     type: WorkflowType,
     threadId: string,
-    checkpointer: HttpCheckpointSaver,
+    checkpointer: DbCheckpointSaver,
   ): Promise<BaseWorkflow> {
     const key = `${type}:${threadId}`;
 

@@ -1,6 +1,6 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { VALIDATION_CRITERIA } from '../shared/types';
-import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
+import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 import { TestMockFactory, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
 // Mock external dependencies
@@ -10,7 +10,7 @@ jest.mock('../cli');
 
 describe('MealPlanningWorkflow Validation Edge Cases', () => {
   let workflow: any;
-  let mockCheckpointer: jest.Mocked<HttpCheckpointSaver>;
+  let mockCheckpointer: jest.Mocked<DbCheckpointSaver>;
 
   beforeEach(() => {
     setupConsoleMocks();

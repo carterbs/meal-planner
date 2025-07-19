@@ -1,11 +1,11 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { MealPlanningStep } from '../shared/types';
 import { WeeklyMealPlan } from '@mealplanner/generated';
-import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
+import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 
 describe('MealPlanningWorkflow LLM integration and edge cases', () => {
   let workflow: any;
-  const mockCheckpointer = {} as HttpCheckpointSaver;
+  const mockCheckpointer = {} as DbCheckpointSaver;
 
   beforeAll(() => {
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;

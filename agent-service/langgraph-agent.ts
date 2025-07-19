@@ -219,6 +219,7 @@ export class LangGraphAgent {
    * Retrieve the serialized workflow state (generated protobuf type) for a given thread.
    */
   async getWorkflowState(threadId: string): Promise<MealPlanningState> {
+    debugLog(`🔄 Getting workflow state for thread ${threadId}`);
     this.ensureInitialized();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore – accessing private checkpointer

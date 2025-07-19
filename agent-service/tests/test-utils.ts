@@ -97,6 +97,14 @@ export class TestMockFactory {
 
   static createMockCheckpointer() {
     return {
+      checkpointRepo: {
+        getCheckpoint: jest.fn().mockResolvedValue({ checkpoint: null, metadata: null, found: false }),
+        putCheckpoint: jest.fn().mockResolvedValue(undefined),
+        listCheckpoints: jest.fn().mockResolvedValue([]),
+        getWorkflowCheckpoint: jest.fn().mockResolvedValue({ data: null, ns: null }),
+        updateWorkflowCheckpoint: jest.fn().mockResolvedValue(undefined),
+        listWorkflows: jest.fn().mockResolvedValue([]),
+      },
       getTuple: jest.fn().mockResolvedValue(null),
       put: jest.fn().mockResolvedValue(undefined),
       list: jest.fn().mockResolvedValue([]),
