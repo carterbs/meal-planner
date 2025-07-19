@@ -5,9 +5,7 @@ import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 import { TestMockFactory, TestAssertionHelpers, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
 // Mock external dependencies
-jest.mock('../utils/getBackendClient');
 jest.mock('../logging');
-jest.mock('../cli');
 
 describe('MealPlanningWorkflow State Management Tests', () => {
   let workflow: any;
@@ -183,10 +181,6 @@ describe('MealPlanningWorkflow State Management Tests', () => {
           }),
         ],
       });
-
-      // Mock getBackendClient to return our mock
-      const { getBackendClient } = require('../utils/getBackendClient');
-      getBackendClient.mockReturnValue(mockBackendClient);
 
       // Mock the LLM to return satisfaction
       mockLLM.invoke.mockResolvedValue({
