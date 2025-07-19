@@ -23,20 +23,31 @@ import {
 import MealPlanDisplay from './components/MealPlanDisplay';
 import { ShoppingListItem } from './types';
 import { WeeklyMealPlan } from '@mealplanner/generated';
-import { startAgentSession, sendAgentMessage, getAgentCheckpoint, getMessages, SessionInfo } from './api';
+import {
+  startAgentSession,
+  sendAgentMessage,
+  getAgentCheckpoint,
+  getMessages,
+  SessionInfo,
+} from './api';
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
 import type { WorkflowState } from './hooks/useSession';
-import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
+import {
+  createClient,
+  createConfig,
+} from '@mealplanner/generated/dist/gateway/client/index.js';
 import { postShoppinglist } from '@mealplanner/generated/dist/gateway/index.js';
 
 import type { SxProps, Theme } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
 import type { DayOfTheWeek } from '@meal-planner/shared';
 
-const gatewayClient = createClient(createConfig({
-  baseUrl: 'http://localhost:8080/api'
-}));
+const gatewayClient = createClient(
+  createConfig({
+    baseUrl: 'http://localhost:8080/api',
+  }),
+);
 
 // Color scheme definitions
 const colorSchemes = {
@@ -393,10 +404,12 @@ const AgentPage: React.FC = () => {
   );
   const [highlights, setHighlights] = useState<Set<string>>(new Set());
   const [currentTab, setCurrentTab] = useState(0);
-  const [shareMenuAnchor, setShareMenuAnchor] = useState<null | HTMLElement>(null);
+  const [shareMenuAnchor, setShareMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
   const currentColorScheme = 'earthyNeutrals';
   const chatRef = useRef<HTMLDivElement | null>(null);
-  
+
   const colors = colorSchemes[currentColorScheme];
   const styles = getStyles(colors);
 
@@ -477,7 +490,10 @@ const AgentPage: React.FC = () => {
   useEffect(() => {
     if (resumeData) {
       // restore session after reload
-      setSession({ threadId: resumeData.threadId, currentStep: resumeData.currentStep ?? '' });
+      setSession({
+        threadId: resumeData.threadId,
+        currentStep: resumeData.currentStep ?? '',
+      });
 
       // Resume meal plan if available
       if (resumeData.mealPlan?.days) {
@@ -486,10 +502,10 @@ const AgentPage: React.FC = () => {
 
       // Resume shopping list if available
       if (resumeData.shoppingList) {
-        const items = resumeData.shoppingList.map(i => ({
+        const items = resumeData.shoppingList.map((i) => ({
           ingredient: i.ingredient ?? '',
           quantity: i.quantity ?? '',
-          category: i.category ?? ''
+          category: i.category ?? '',
         }));
         setShoppingList(items);
       }
@@ -522,15 +538,15 @@ const AgentPage: React.FC = () => {
     setIsWorking(true);
     try {
       const result = await sendAgentMessage(
-            session.threadId,
-            userMsg.text,
-            'user',
-            true,
-          );
+        session.threadId,
+        userMsg.text,
+        'user',
+        true,
+      );
 
       // Fetch messages from the HTTP endpoint after the agent has processed
       await fetchAndUpdateMessages(session.threadId);
-      
+
       // fetch the latest checkpoint for meal plan state
       const checkpoint = await getAgentCheckpoint(session.threadId);
       if (!checkpoint || !checkpoint.state) {
@@ -544,10 +560,14 @@ const AgentPage: React.FC = () => {
         setMealPlan(newPlan);
         applyHighlights(newPlan);
         try {
-          const planIds = state.mealPlan.days?.map(d => d.meal?.id ?? 0) ?? [];
-          const shoppingRes = await postShoppinglist({ client: gatewayClient, body: { plan: planIds } });
+          const planIds =
+            state.mealPlan.days?.map((d) => d.meal?.id ?? 0) ?? [];
+          const shoppingRes = await postShoppinglist({
+            client: gatewayClient,
+            body: { plan: planIds },
+          });
           if (shoppingRes.data && !shoppingRes.error) {
-            const items = (shoppingRes.data.items ?? []).map(i => ({
+            const items = (shoppingRes.data.items ?? []).map((i) => ({
               ingredient: i.ingredient ?? '',
               quantity: i.quantity ?? '',
               category: i.category ?? '',
@@ -629,14 +649,17 @@ const AgentPage: React.FC = () => {
       <CssBaseline />
       <Box sx={styles.mainContainer}>
         {/* Left Side - Chat */}
-        <Paper elevation={0} sx={{...styles.chatContainer, boxShadow: 'none'}}>
+        <Paper
+          elevation={0}
+          sx={{ ...styles.chatContainer, boxShadow: 'none' }}
+        >
           {/* Chat Header */}
           <Box sx={styles.chatHeader}>
             <RestaurantMenuIcon sx={{ mr: 2, color: colors.accent2 }} />
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               Meal Planner
             </Typography>
-            
+
             {session ? (
               <Button
                 onClick={handleLogout}
@@ -656,203 +679,216 @@ const AgentPage: React.FC = () => {
               </Button>
             )}
           </Box>
-            <Box
-              ref={chatRef}
-              data-testid="chat-history"
-              sx={styles.chatMessages}
-            >
-              {messages.length === 0 && !isWorking ? (
-                <Box sx={styles.welcomeMessage}>
-                  <RestaurantMenuIcon sx={styles.restaurantIcon} />
-                  <Typography variant="h6" color="text.secondary">
-                    Welcome to Meal Planning Assistant
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
-                    Start by telling me about your dietary preferences, and I'll
-                    help you create a personalized meal plan.
-                  </Typography>
-                </Box>
-              ) : (
-                <>
-                  {messages.map((message, index) => (
-                    <Box
-                      key={index}
-                      sx={styles.messageContainer(message.sender === 'user')}
-                    >
-                      <Box
-                        sx={styles.messageContent(message.sender === 'user')}
-                      >
-                        <Avatar sx={styles.avatar}>
-                          {message.sender === 'agent' ? 'AI' : 'You'}
-                        </Avatar>
-                        <Box
-                          sx={styles.messageBubble(message.sender === 'user')}
+          <Box
+            ref={chatRef}
+            data-testid="chat-history"
+            sx={styles.chatMessages}
+          >
+            {messages.length === 0 && !isWorking ? (
+              <Box sx={styles.welcomeMessage}>
+                <RestaurantMenuIcon sx={styles.restaurantIcon} />
+                <Typography variant="h6" color="text.secondary">
+                  Welcome to Meal Planning Assistant
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
+                  Start by telling me about your dietary preferences, and I'll
+                  help you create a personalized meal plan.
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                {messages.map((message, index) => (
+                  <Box
+                    key={index}
+                    sx={styles.messageContainer(message.sender === 'user')}
+                  >
+                    <Box sx={styles.messageContent(message.sender === 'user')}>
+                      <Avatar sx={styles.avatar}>
+                        {message.sender === 'agent' ? 'AI' : 'You'}
+                      </Avatar>
+                      <Box sx={styles.messageBubble(message.sender === 'user')}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            lineHeight: 1.5,
+                            fontSize: '0.9375rem',
+                            wordBreak: 'break-word',
+                            whiteSpace: 'pre-wrap',
+                          }}
                         >
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              lineHeight: 1.5,
-                              fontSize: '0.9375rem',
-                              wordBreak: 'break-word',
-                              whiteSpace: 'pre-wrap',
-                            }}
-                          >
-                            {message.text}
-                          </Typography>
-                        </Box>
+                          {message.text}
+                        </Typography>
                       </Box>
                     </Box>
-                  ))}
-                  {isWorking && <TypingIndicator />}
-                </>
-              )}
-            </Box>
+                  </Box>
+                ))}
+                {isWorking && <TypingIndicator />}
+              </>
+            )}
+          </Box>
 
-            {/* Chat Input */}
-            <Box sx={styles.chatInputContainer}>
-              <Box sx={styles.inputContainer}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  placeholder="Type your message..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  disabled={isWorking}
-                  inputProps={{ 'data-testid': 'message-input' }}
-                />
-                <Button
-                  variant="contained"
-                  data-testid="send-button"
-                  onClick={sendMessage}
-                  disabled={!input.trim() || isWorking}
-                  sx={{
-                    ...styles.sendButton,
-                    backgroundColor: colors.apricot,
-                    color: '#ffffff',
-                    '&:hover': {
-                      backgroundColor: '#ff9f2b',
-                    },
-                    '&:disabled': {
-                      backgroundColor: '#cccccc',
-                    },
-                  }}
-                >
-                  Send
-                </Button>
-              </Box>
+          {/* Chat Input */}
+          <Box sx={styles.chatInputContainer}>
+            <Box sx={styles.inputContainer}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                placeholder="Type your message..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isWorking}
+                inputProps={{ 'data-testid': 'message-input' }}
+              />
+              <Button
+                variant="contained"
+                data-testid="send-button"
+                onClick={sendMessage}
+                disabled={!input.trim() || isWorking}
+                sx={{
+                  ...styles.sendButton,
+                  backgroundColor: colors.apricot,
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#ff9f2b',
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#cccccc',
+                  },
+                }}
+              >
+                Send
+              </Button>
             </Box>
+          </Box>
         </Paper>
 
         {/* Right Side - Meal Plan */}
         <Box sx={styles.mealPlanContainer}>
-            <Paper elevation={0} sx={{...styles.mealPlanPaper, boxShadow: 'none'}}>
-              {mealPlan || (shoppingList && shoppingList.length > 0) ? (
-                <>
-                  <Box sx={styles.sectionHeader}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button
-                        onClick={() => setCurrentTab(0)}
-                        variant={currentTab === 0 ? 'contained' : 'outlined'}
-                        size="small"
-                        sx={{
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
-                          borderRadius: '20px',
-                          px: 2,
-                          py: 0.5,
-                          backgroundColor: currentTab === 0 ? colors.accent2 : 'transparent',
-                          borderColor: colors.accent2,
-                          color: currentTab === 0 ? '#ffffff' : colors.accent2,
-                          '&:hover': {
-                            backgroundColor: currentTab === 0 ? colors.accent2 : `${colors.accent2}10`,
-                          },
-                        }}
-                      >
-                        Meal Plan
-                      </Button>
-                      <Button
-                        onClick={() => setCurrentTab(1)}
-                        variant={currentTab === 1 ? 'contained' : 'outlined'}
-                        size="small"
-                        disabled={!shoppingList || shoppingList.length === 0}
-                        sx={{
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
-                          borderRadius: '20px',
-                          px: 2,
-                          py: 0.5,
-                          backgroundColor: currentTab === 1 ? colors.accent2 : 'transparent',
-                          borderColor: colors.accent2,
-                          color: currentTab === 1 ? '#ffffff' : colors.accent2,
-                          '&:hover': {
-                            backgroundColor: currentTab === 1 ? colors.accent2 : `${colors.accent2}10`,
-                          },
-                          '&:disabled': {
-                            borderColor: '#cccccc',
-                            color: '#cccccc',
-                          },
-                        }}
-                      >
-                        Shopping List
-                      </Button>
-                    </Box>
-                    <IconButton
-                      onClick={handleShareMenuOpen}
+          <Paper
+            elevation={0}
+            sx={{ ...styles.mealPlanPaper, boxShadow: 'none' }}
+          >
+            {mealPlan || (shoppingList && shoppingList.length > 0) ? (
+              <>
+                <Box sx={styles.sectionHeader}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      onClick={() => setCurrentTab(0)}
+                      variant={currentTab === 0 ? 'contained' : 'outlined'}
                       size="small"
-                      data-testid="share-menu-button"
                       sx={{
-                        color: colors.accent2,
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        borderRadius: '20px',
+                        px: 2,
+                        py: 0.5,
+                        backgroundColor:
+                          currentTab === 0 ? colors.accent2 : 'transparent',
+                        borderColor: colors.accent2,
+                        color: currentTab === 0 ? '#ffffff' : colors.accent2,
                         '&:hover': {
-                          color: colors.accent,
-                          backgroundColor: 'unset',
+                          backgroundColor:
+                            currentTab === 0
+                              ? colors.accent2
+                              : `${colors.accent2}10`,
                         },
                       }}
                     >
-                      <ShareIcon />
-                    </IconButton>
-                    <Menu
-                      anchorEl={shareMenuAnchor}
-                      open={Boolean(shareMenuAnchor)}
-                      onClose={handleShareMenuClose}
+                      Meal Plan
+                    </Button>
+                    <Button
+                      onClick={() => setCurrentTab(1)}
+                      variant={currentTab === 1 ? 'contained' : 'outlined'}
+                      size="small"
+                      disabled={!shoppingList || shoppingList.length === 0}
                       sx={{
-                        '& .MuiPaper-root': {
-                          backgroundColor: colors.cardBg,
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        borderRadius: '20px',
+                        px: 2,
+                        py: 0.5,
+                        backgroundColor:
+                          currentTab === 1 ? colors.accent2 : 'transparent',
+                        borderColor: colors.accent2,
+                        color: currentTab === 1 ? '#ffffff' : colors.accent2,
+                        '&:hover': {
+                          backgroundColor:
+                            currentTab === 1
+                              ? colors.accent2
+                              : `${colors.accent2}10`,
+                        },
+                        '&:disabled': {
+                          borderColor: '#cccccc',
+                          color: '#cccccc',
                         },
                       }}
                     >
-                      {mealPlan && (
-                        <MenuItem
-                          onClick={() => {
-                            copyMealPlan();
-                            handleShareMenuClose();
-                          }}
-                          data-testid="copy-meal-plan"
-                        >
-                          Copy Meal Plan
-                        </MenuItem>
-                      )}
-                      {shoppingList && shoppingList.length > 0 && (
-                        <MenuItem
-                          onClick={() => {
-                            copyShoppingList();
-                            handleShareMenuClose();
-                          }}
-                          data-testid="copy-shopping-list"
-                        >
-                          Copy Shopping List
-                        </MenuItem>
-                      )}
-                    </Menu>
+                      Shopping List
+                    </Button>
                   </Box>
+                  <IconButton
+                    onClick={handleShareMenuOpen}
+                    size="small"
+                    data-testid="share-menu-button"
+                    sx={{
+                      color: colors.accent2,
+                      '&:hover': {
+                        color: colors.accent,
+                        backgroundColor: 'unset',
+                      },
+                    }}
+                  >
+                    <ShareIcon />
+                  </IconButton>
+                  <Menu
+                    anchorEl={shareMenuAnchor}
+                    open={Boolean(shareMenuAnchor)}
+                    onClose={handleShareMenuClose}
+                    sx={{
+                      '& .MuiPaper-root': {
+                        backgroundColor: colors.cardBg,
+                      },
+                    }}
+                  >
+                    {mealPlan && (
+                      <MenuItem
+                        onClick={() => {
+                          copyMealPlan();
+                          handleShareMenuClose();
+                        }}
+                        data-testid="copy-meal-plan"
+                      >
+                        Copy Meal Plan
+                      </MenuItem>
+                    )}
+                    {shoppingList && shoppingList.length > 0 && (
+                      <MenuItem
+                        onClick={() => {
+                          copyShoppingList();
+                          handleShareMenuClose();
+                        }}
+                        data-testid="copy-shopping-list"
+                      >
+                        Copy Shopping List
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </Box>
 
-                  {/* Tab Content */}
-                  {currentTab === 0 && mealPlan && (
-                    <MealPlanDisplay plan={mealPlan} highlights={highlights} colors={colors} />
-                  )}
-                  
-                  {currentTab === 1 && shoppingList && shoppingList.length > 0 && (
+                {/* Tab Content */}
+                {currentTab === 0 && mealPlan && (
+                  <MealPlanDisplay
+                    plan={mealPlan}
+                    highlights={highlights}
+                    colors={colors}
+                  />
+                )}
+
+                {currentTab === 1 &&
+                  shoppingList &&
+                  shoppingList.length > 0 && (
                     <Box sx={{ mt: 2, flex: 1, overflow: 'auto' }}>
                       <Box component="div" sx={{ p: 0, m: 0 }}>
                         {shoppingList.map((item, index) => (
@@ -861,7 +897,9 @@ const AgentPage: React.FC = () => {
                             key={index}
                             sx={styles.shoppingListItem}
                           >
-                            {Number(item.quantity) > 0 ? `${item.quantity} ` : ''}
+                            {Number(item.quantity) > 0
+                              ? `${item.quantity} `
+                              : ''}
                             {item.ingredient}
                             {item.category && ` (${item.category})`}
                           </Box>
@@ -870,32 +908,35 @@ const AgentPage: React.FC = () => {
                     </Box>
                   )}
 
-                  {currentTab === 0 && !mealPlan && (
-                    <Box sx={styles.emptyState}>
-                      <RestaurantMenuIcon sx={styles.restaurantIcon} />
-                      <Typography variant="h6" color="text.secondary">
-                        No meal plan generated yet
-                      </Typography>
-                      <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
-                        Start a conversation with the assistant to generate a
-                        personalized meal plan.
-                      </Typography>
-                    </Box>
-                  )}
-                </>
-              ) : (
-                <Box sx={styles.emptyState}>
-                  <RestaurantMenuIcon sx={styles.restaurantIcon} />
-                  <Typography variant="h6" color="text.secondary">
-                    No meal plan generated yet
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
-                    Start a conversation with the assistant to generate a
-                    personalized meal plan.
-                  </Typography>
-                </Box>
-              )}
-            </Paper>
+                {currentTab === 0 && !mealPlan && (
+                  <Box sx={styles.emptyState}>
+                    <RestaurantMenuIcon sx={styles.restaurantIcon} />
+                    <Typography variant="h6" color="text.secondary">
+                      No meal plan generated yet
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ mt: 1, maxWidth: '500px' }}
+                    >
+                      Start a conversation with the assistant to generate a
+                      personalized meal plan.
+                    </Typography>
+                  </Box>
+                )}
+              </>
+            ) : (
+              <Box sx={styles.emptyState}>
+                <RestaurantMenuIcon sx={styles.restaurantIcon} />
+                <Typography variant="h6" color="text.secondary">
+                  No meal plan generated yet
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
+                  Start a conversation with the assistant to generate a
+                  personalized meal plan.
+                </Typography>
+              </Box>
+            )}
+          </Paper>
         </Box>
       </Box>
     </ThemeProvider>

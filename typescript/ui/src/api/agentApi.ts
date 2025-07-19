@@ -1,12 +1,26 @@
-
 import { AgentCheckpoint } from '@mealplanner/generated';
-import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
-import { postAgentStart, postAgentMessage, PostAgentMessageData, MainAgentMessageRequestBody, getCheckpointsByThreadId, MainCheckpointResponse, getWorkflowsByThreadIdMessages, GetWorkflowsByThreadIdMessagesData, GetWorkflowsByThreadIdMessagesResponses } from '@mealplanner/generated/dist/gateway/index.js';
+import {
+  createClient,
+  createConfig,
+} from '@mealplanner/generated/dist/gateway/client/index.js';
+import {
+  postAgentStart,
+  postAgentMessage,
+  PostAgentMessageData,
+  MainAgentMessageRequestBody,
+  getCheckpointsByThreadId,
+  MainCheckpointResponse,
+  getWorkflowsByThreadIdMessages,
+  GetWorkflowsByThreadIdMessagesData,
+  GetWorkflowsByThreadIdMessagesResponses,
+} from '@mealplanner/generated/dist/gateway/index.js';
 
 // Create the API gateway client
-const gatewayClient = createClient(createConfig({
-  baseUrl: 'http://localhost:8080/api'
-}));
+const gatewayClient = createClient(
+  createConfig({
+    baseUrl: 'http://localhost:8080/api',
+  }),
+);
 
 export interface SessionInfo {
   threadId: string;
@@ -42,7 +56,9 @@ export async function startAgentSession(
   });
 
   if (!result.data || result.error) {
-    throw new Error(`Failed to start agent session: ${result.error || 'Unknown error'}`);
+    throw new Error(
+      `Failed to start agent session: ${result.error || 'Unknown error'}`,
+    );
   }
 
   const data = result.data;
@@ -99,7 +115,9 @@ export async function sendAgentMessage(
   });
 
   if (!result.data || result.error) {
-    throw new Error(`Failed to send message: ${result.error || 'Unknown error'}`);
+    throw new Error(
+      `Failed to send message: ${result.error || 'Unknown error'}`,
+    );
   }
 
   const data = result.data;
@@ -130,7 +148,12 @@ export async function getAgentCheckpoint(threadId: string) {
     client: gatewayClient,
     path: { thread_id: threadId },
   });
-  if (!result.data || result.error || !result.data.tuple || !result.data.tuple.checkpoint) {
+  if (
+    !result.data ||
+    result.error ||
+    !result.data.tuple ||
+    !result.data.tuple.checkpoint
+  ) {
     if (result.error) {
       throw result.error;
     }
@@ -147,13 +170,13 @@ export async function getMessages(threadId: string) {
     client: gatewayClient,
     path: { threadId },
   });
-  
+
   if (!result.data || result.error) {
     if (result.error) {
       throw result.error;
     }
     throw new Error('Failed to get messages');
   }
-  
+
   return result.data.messages || [];
 }

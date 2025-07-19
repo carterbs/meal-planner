@@ -16,11 +16,22 @@ jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
   createConfig: jest.fn(() => ({})),
 }));
 
-import { getCheckpointsByThreadId, postWorkflowsByThreadIdAbandon, postShoppinglist } from '@mealplanner/generated/dist/gateway/index.js';
+import {
+  getCheckpointsByThreadId,
+  postWorkflowsByThreadIdAbandon,
+  postShoppinglist,
+} from '@mealplanner/generated/dist/gateway/index.js';
 
-const mockGetCheckpoints = getCheckpointsByThreadId as jest.MockedFunction<typeof getCheckpointsByThreadId>;
-const mockAbandonWorkflow = postWorkflowsByThreadIdAbandon as jest.MockedFunction<typeof postWorkflowsByThreadIdAbandon>;
-const mockShoppingList = postShoppinglist as jest.MockedFunction<typeof postShoppinglist>;
+const mockGetCheckpoints = getCheckpointsByThreadId as jest.MockedFunction<
+  typeof getCheckpointsByThreadId
+>;
+const mockAbandonWorkflow =
+  postWorkflowsByThreadIdAbandon as jest.MockedFunction<
+    typeof postWorkflowsByThreadIdAbandon
+  >;
+const mockShoppingList = postShoppinglist as jest.MockedFunction<
+  typeof postShoppinglist
+>;
 
 // Helper component for renderHook with React 18
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -33,18 +44,18 @@ describe('useSession', () => {
     jest.useRealTimers();
     localStorage.clear();
     jest.clearAllMocks();
-    
+
     // Set up default mock implementations that return promises
     mockGetCheckpoints.mockResolvedValue({
       data: { tuple: null },
       error: null,
     } as any);
-    
+
     mockAbandonWorkflow.mockResolvedValue({
       data: null,
       error: null,
     } as any);
-    
+
     mockShoppingList.mockResolvedValue({
       data: { items: [] },
       error: null,
@@ -79,7 +90,7 @@ describe('useSession', () => {
 
     const startSession = jest.fn();
     const { result } = renderHook(() => useSession(startSession), { wrapper });
-    
+
     // Wait for the hook to complete its async operations
     await waitFor(() => {
       expect(result.current.resumeData?.threadId).toBe('abc');
@@ -103,7 +114,7 @@ describe('useSession', () => {
     } as any);
 
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-    
+
     // Wait for the hook to complete its async operations
     await waitFor(() => {
       expect(localStorage.getItem('sessionId')).toBeNull();
@@ -120,7 +131,7 @@ describe('useSession', () => {
     } as any);
 
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-    
+
     // Wait for the hook to complete its async operations
     await waitFor(() => {
       expect(result.current.resumeData).toBeUndefined();
@@ -134,7 +145,7 @@ describe('useSession', () => {
     mockGetCheckpoints.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-    
+
     // Wait for the hook to complete its async operations
     await waitFor(() => {
       expect(result.current.resumeData).toBeUndefined();
@@ -222,10 +233,13 @@ describe('useSession', () => {
     } as any);
 
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-    
+
     // Wait for the hook to complete its async operations
     await waitFor(() => {
-      expect(result.current.resumeData?.shoppingList).toEqual(['item1', 'item2']);
+      expect(result.current.resumeData?.shoppingList).toEqual([
+        'item1',
+        'item2',
+      ]);
     });
   });
 
@@ -251,7 +265,7 @@ describe('useSession', () => {
     } as any);
 
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-    
+
     // Wait for the hook to complete its async operations
     await waitFor(() => {
       expect(result.current.resumeData?.threadId).toBe('shopping-error');
@@ -278,7 +292,7 @@ describe('useSession', () => {
     } as any);
 
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-    
+
     // Wait for the hook to complete its async operations
     await waitFor(() => {
       expect(result.current.resumeData?.threadId).toBe('rejected');
@@ -305,14 +319,16 @@ describe('useSession', () => {
     } as any);
 
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-    
+
     // Wait for the hook to complete its async operations
     await waitFor(() => {
       expect(result.current.resumeData?.threadId).toBe('finalized');
     });
 
     expect(result.current.resumeData?.currentStep).toBe('finalized');
-    expect(result.current.resumeData?.mealPlan).toEqual({ days: ['Monday', 'Tuesday'] });
+    expect(result.current.resumeData?.mealPlan).toEqual({
+      days: ['Monday', 'Tuesday'],
+    });
   });
 
   test('handles multiple session operations', async () => {
@@ -341,7 +357,7 @@ describe('useSession', () => {
     } as any);
 
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-    
+
     // Wait for initial load
     await waitFor(() => {
       expect(result.current.resumeData?.threadId).toBe('multi');
@@ -349,8 +365,10 @@ describe('useSession', () => {
 
     // Test start new session which abandons existing
     const startSession = jest.fn();
-    const { result: newResult } = renderHook(() => useSession(startSession), { wrapper });
-    
+    const { result: newResult } = renderHook(() => useSession(startSession), {
+      wrapper,
+    });
+
     act(() => {
       newResult.current.startNewSession();
     });
@@ -387,7 +405,7 @@ describe('useSession', () => {
     } as any);
 
     const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-    
+
     // Wait for the hook to complete its async operations
     await waitFor(() => {
       expect(result.current.resumeData?.threadId).toBe('transition');
