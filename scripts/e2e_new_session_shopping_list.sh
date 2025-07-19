@@ -12,7 +12,7 @@ echo "--- Killing existing backend processes ---"
 lsof -ti:8080 | xargs -r kill -9 2>/dev/null || true
 
 echo "--- Starting backend ---"
-pushd backend > /dev/null
+pushd meal-service > /dev/null
 go run . &
 BACKEND_PID=$!
 popd > /dev/null
