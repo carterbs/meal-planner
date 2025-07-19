@@ -209,7 +209,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     };
 
     // Save to backend
-    updateMealIngredient(selectedMeal.id!, editedIngredient.id!, editedIngredient)
+    updateMealIngredient(
+      selectedMeal.id!,
+      editedIngredient.id!,
+      editedIngredient,
+    )
       .then((updatedMeal) => {
         // Update with the meal returned from backend
         setSelectedMeal(updatedMeal);

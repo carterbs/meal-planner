@@ -8,7 +8,7 @@ export type ShoppingList = ShoppingListItem[];
 
 export async function generateList(plan: number[]): Promise<GetShoppingListResponse> {
   try {
-    infoLog(`🛒 [MCP] Generating shopping list for plan: ${plan}`);
+    await infoLog(`🛒 [MCP] Generating shopping list for plan: ${plan}`);
     const resp = await fetch(`${API}/api/shoppinglist`, {
       method: 'POST',
       headers: {
@@ -26,7 +26,7 @@ export async function generateList(plan: number[]): Promise<GetShoppingListRespo
     }
 
     const data = await resp.json();
-    infoLog(`🛒 [MCP] Received shopping list data: ${JSON.stringify(data, null, 2)}`);
+    await infoLog(`🛒 [MCP] Received shopping list data: ${JSON.stringify(data, null, 2)}`);
 
     return data;
   } catch (error) {

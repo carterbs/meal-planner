@@ -7,13 +7,6 @@ import (
 	"mealplanner/models"
 )
 
-// CheckpointRecord represents a checkpoint record for listing
-type CheckpointRecord struct {
-	ThreadID     string
-	CheckpointNS string
-	Checkpoint   []byte
-	Metadata     []byte
-}
 
 // MealRepository handles meal-related database operations
 type MealRepository interface {
@@ -70,26 +63,6 @@ type MealPlanRepository interface {
 	PopulateMealDetails(ctx context.Context, plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error)
 }
 
-// WorkflowRepository handles workflow and checkpoint-related database operations
-type WorkflowRepository interface {
-	// Checkpoint operations
-	GetWorkflowCheckpoint(ctx context.Context, threadID string) ([]byte, string, error)
-	UpdateWorkflowCheckpoint(ctx context.Context, threadID string, data []byte) error
-	ListWorkflows(ctx context.Context, limit int) ([]models.WorkflowStatus, error)
-	
-	// Message operations
-	AddMessage(ctx context.Context, threadID string, sender string, message string) error
-	GetMessages(ctx context.Context, threadID string) ([]models.ChatMessage, error)
-	GetMessagesForProtobuf(ctx context.Context, threadID string) ([]map[string]interface{}, error)
-}
-
-// CheckpointRepository handles checkpoint-specific database operations
-type CheckpointRepository interface {
-	// Checkpoint CRUD
-	GetCheckpoint(ctx context.Context, threadID string, ns string) (checkpoint []byte, metadata []byte, found bool, err error)
-	PutCheckpoint(ctx context.Context, threadID string, ns string, workflowType string, checkpoint []byte, metadata []byte) error
-	ListCheckpoints(ctx context.Context, limit int, before string) ([]CheckpointRecord, error)
-}
 
 // ShoppingListRepository handles shopping list generation (if needed for future extensions)
 type ShoppingListRepository interface {

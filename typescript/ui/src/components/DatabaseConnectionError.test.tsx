@@ -57,7 +57,9 @@ describe('DatabaseConnectionError Component', () => {
   });
 
   test('handles retry function errors gracefully', async () => {
-    const mockRetry = jest.fn().mockRejectedValue(new Error('Connection failed'));
+    const mockRetry = jest
+      .fn()
+      .mockRejectedValue(new Error('Connection failed'));
 
     render(
       <ThemeProvider theme={theme}>
@@ -74,7 +76,10 @@ describe('DatabaseConnectionError Component', () => {
     });
 
     // Verify the error was logged
-    expect(console.debug).toHaveBeenCalledWith('Database retry attempt failed:', expect.any(Error));
+    expect(console.debug).toHaveBeenCalledWith(
+      'Database retry attempt failed:',
+      expect.any(Error),
+    );
   });
 
   test('retry button becomes enabled after loading completes', async () => {
@@ -122,7 +127,9 @@ describe('DatabaseConnectionError Component', () => {
       screen.getByText('Make sure Docker is running on your system'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Check if the PostgreSQL database container is started:'),
+      screen.getByText(
+        'Check if the PostgreSQL database container is started:',
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText('If not running, start it with:'),

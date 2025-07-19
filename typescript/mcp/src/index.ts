@@ -36,7 +36,7 @@ registerRemoveMeal(server);
 async function main() {
   try {
     await initLogging('mcp-server');
-    infoLog('MCP server starting up');
+    await infoLog('MCP server starting up');
   } catch (error) {
     errorLog('Failed to initialize logging: ' + String(error));
   }
@@ -44,7 +44,7 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('MealPlanner MCP server running on stdio');
-  infoLog('MCP server successfully started and connected via stdio');
+  await infoLog('MCP server successfully started and connected via stdio');
 }
 
 main().catch((error) => {

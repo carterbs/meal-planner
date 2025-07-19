@@ -239,74 +239,7 @@ func getLastPlannedMealsByType(db *sql.DB, mealType string, limit int) ([]*Meal,
 	return meals, nil
 }
 
-// MealPlanToICS generates an iCalendar representation of the meal plan starting from the provided monday date.
-// Each meal becomes an all-day event with the meal name as the title.
-func MealPlanToICS(plan *WeeklyMealPlan, monday time.Time) string {
-	monday = monday.UTC().Truncate(24 * time.Hour)
-	weekDays := DaysOfTheWeek
-	// Build lookup maps for quick access
-	mealsByDay := make(map[int]map[string]*Meal)
-	for _, pd := range plan.Days {
-		dayIdx := int(pd.DayIndex)
-		if _, ok := mealsByDay[dayIdx]; !ok {
-			mealsByDay[dayIdx] = make(map[string]*Meal)
-		}
-		mealsByDay[dayIdx][strings.Title(pd.MealType)] = pd.Meal
-	}
 
-	var b strings.Builder
-	b.WriteString("BEGIN:VCALENDAR\r\n")
-	b.WriteString("VERSION:2.0\r\n")
-	b.WriteString("PRODID:-//Meal Planner//EN\r\n")
-
-	for i := range weekDays {
-		meals := mealsByDay[i]
-		if meals == nil {
-			continue
-		}
-		for mealType, meal := range meals {
-			if meal == nil || meal.GetName() == "" {
-				continue
-			}
-
-			var startHour, startMinute int
-			switch mealType {
-			case "Breakfast":
-				startHour, startMinute = 7, 0
-			case "Lunch":
-				startHour, startMinute = 12, 0
-			case "Dinner":
-				startHour, startMinute = 18, 30
-			default:
-				continue
-			}
-
-			eventDate := monday.AddDate(0, 0, i)
-			startTime := time.Date(eventDate.Year(), eventDate.Month(), eventDate.Day(), startHour, startMinute, 0, 0, time.UTC)
-			endTime := startTime.Add(30 * time.Minute)
-
-			b.WriteString("BEGIN:VEVENT\r\n")
-			b.WriteString("DTSTAMP:" + time.Now().UTC().Format("20060102T150405Z") + "\r\n")
-			b.WriteString("UID:" + fmt.Sprintf("%d-%s-%s@mealplanner", meal.GetId(), mealType, startTime.Format("20060102T150405Z")) + "\r\n")
-			b.WriteString("DTSTART:" + startTime.Format("20060102T150405Z") + "\r\n")
-			b.WriteString("DTEND:" + endTime.Format("20060102T150405Z") + "\r\n")
-			b.WriteString("SUMMARY:" + escapeICSString(fmt.Sprintf("%s: %s", meal.GetName(), mealType)) + "\r\n")
-			if meal.GetUrl() != "" {
-				b.WriteString("URL:" + meal.GetUrl() + "\r\n")
-			}
-			b.WriteString("END:VEVENT\r\n")
-		}
-	}
-
-	b.WriteString("END:VCALENDAR\r\n")
-	return b.String()
-}
-
-// escapeICSString escapes commas and semicolons in strings to conform to the iCalendar format.
-func escapeICSString(s string) string {
-	replacer := strings.NewReplacer(",", "\\,", ";", "\\;", "\n", "\\n")
-	return replacer.Replace(s)
-}
 
 // RemoveMealFromPlan sets the specified meal slot to nil in the weekly plan.
 // dayIndex should be 0=Monday .. 6=Sunday. mealType should be breakfast, lunch, or dinner.
@@ -335,19 +268,3 @@ func RemoveMealFromPlan(plan *WeeklyMealPlan, dayIndex int, mealType string) err
 	return fmt.Errorf("meal not found for dayIndex %d and mealType %s", dayIndex, mealType)
 }
 
-// BuildShoppingListFromPlan aggregates all ingredients referenced in the plan's
-// meals and returns them as ShoppingListItem entries.
-// The plan's Meal objects must include ingredient details.
-func BuildShoppingListFromPlan(plan *WeeklyMealPlan) []*ShoppingListItem {
-	if plan == nil {
-		return nil
-	}
-	meals := []*Meal{}
-	for _, d := range plan.Days {
-		if d.Meal != nil {
-			meals = append(meals, d.Meal)
-		}
-	}
-	ingredients := GenerateShoppingListFromMeals(meals)
-	return ConvertIngredientsToShoppingItems(ingredients)
-}

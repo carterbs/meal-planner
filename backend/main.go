@@ -83,13 +83,7 @@ func main() {
 	// Always initialize service container when not in dummy mode
 	if !*dummyFlag {
 		server.Services = services.NewServiceContainer(connection)
-		// Maintain backward compatibility for existing workflow service usage
-		server.WorkflowService = server.Services.WorkflowService
 	}
-
-	// HTTP server removed - all HTTP traffic now goes through API Gateway
-
-	// Database health checking removed - handled by gRPC HealthCheck endpoint
 
 	// Start gRPC server (HTTP server removed as part of gRPC migration)
 	lis, err := net.Listen("tcp", ":50051")
@@ -109,17 +103,25 @@ func main() {
 
 	// Set health status based on database connectivity
 	var healthStatus grpc_health_v1.HealthCheckResponse_ServingStatus
+	dbHealthy := false
+
+	// Check database health
 	if connection != nil {
 		if err := connection.Ping(); err == nil {
-			healthStatus = grpc_health_v1.HealthCheckResponse_SERVING
-			mainLogger.Info("Health check: Database connected - service SERVING")
+			dbHealthy = true
 		} else {
-			healthStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
-			mainLogger.Warn("Health check: Database ping failed - service NOT_SERVING")
+			mainLogger.Warn("Health check: Database ping failed")
 		}
 	} else {
+		mainLogger.Warn("Health check: No database connection")
+	}
+
+	if dbHealthy {
+		healthStatus = grpc_health_v1.HealthCheckResponse_SERVING
+		mainLogger.Info("Health check: Database connected - service SERVING")
+	} else {
 		healthStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
-		mainLogger.Warn("Health check: No database connection - service NOT_SERVING")
+		mainLogger.Warn("Health check: Database not connected - service NOT_SERVING")
 	}
 
 	healthServer.SetServingStatus("mealplanner.api.MealPlannerAPI", healthStatus)
@@ -132,16 +134,24 @@ func main() {
 
 		for range ticker.C {
 			var currentStatus grpc_health_v1.HealthCheckResponse_ServingStatus
+			dbHealthy := false
+
+			// Check database health
 			if server.DB != nil {
 				if err := server.DB.Ping(); err == nil {
-					currentStatus = grpc_health_v1.HealthCheckResponse_SERVING
+					dbHealthy = true
 				} else {
-					currentStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
 					mainLogger.Warnw("Health check: Database ping failed", "error", err)
 				}
 			} else {
-				currentStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
 				mainLogger.Warn("Health check: No database connection")
+			}
+
+			if dbHealthy {
+				currentStatus = grpc_health_v1.HealthCheckResponse_SERVING
+			} else {
+				currentStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
+				mainLogger.Warn("Health check: Database not connected")
 			}
 
 			// Update health status if it changed

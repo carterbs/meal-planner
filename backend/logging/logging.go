@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -113,10 +112,3 @@ func InitLogger() {
 	})
 }
 
-// GrpcLog sends a log message to the gRPC logging service
-func GrpcLog(level, component, message string, fields map[string]string) {
-	if useGrpcLog && grpcLogger != nil {
-		ctx := context.Background()
-		grpcLogger.LogWithDetails(ctx, level, message, "", component, fields)
-	}
-}

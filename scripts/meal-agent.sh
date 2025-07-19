@@ -8,7 +8,7 @@ set -e
 # Get the directory of this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-AGENT_DIR="$PROJECT_ROOT/agent"
+AGENT_DIR="$PROJECT_ROOT/agent-service"
 
 # Check if we're in the right directory structure
 if [ ! -d "$AGENT_DIR" ]; then

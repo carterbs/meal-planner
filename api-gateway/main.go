@@ -23,6 +23,7 @@ import (
 
 	logger "logging-service/client/go"
 	apipb "mealplanner/generated/go"
+	agentpb "mealplanner/generated/go/agent"
 )
 
 // @title Meal Planner API Gateway
@@ -228,12 +229,13 @@ var mealPlannerClient apipb.MealPlannerAPIClient
 
 // Gateway represents the API Gateway server
 type Gateway struct {
-	client apipb.MealPlannerAPIClient
+	backend apipb.MealPlannerAPIClient
+	agent   agentpb.AgentServiceClient
 }
 
 // NewGateway creates a new Gateway instance
-func NewGateway(client apipb.MealPlannerAPIClient) *Gateway {
-	return &Gateway{client: client}
+func NewGateway(backend apipb.MealPlannerAPIClient, agent agentpb.AgentServiceClient) *Gateway {
+	return &Gateway{backend: backend, agent: agent}
 }
 
 // httpStatusFromGRPC converts gRPC status codes to HTTP status codes
@@ -345,7 +347,20 @@ func main() {
 	defer conn.Close()
 
 	mealPlannerClient = apipb.NewMealPlannerAPIClient(conn)
-	gw := NewGateway(mealPlannerClient)
+
+	// Connect to agent gRPC service
+	agentAddr := os.Getenv("AGENT_GRPC_ADDR")
+	if agentAddr == "" {
+		agentAddr = "localhost:50053"
+	}
+	agentConn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal("Failed to connect to agent gRPC server:", err)
+	}
+	defer agentConn.Close()
+
+	agentClient := agentpb.NewAgentServiceClient(agentConn)
+	gw := NewGateway(mealPlannerClient, agentClient)
 
 	// Set up HTTP routes with Chi router
 	r := chi.NewRouter()
@@ -392,7 +407,6 @@ func main() {
 	r.Get("/api/meals", gw.getAllMeals)
 	r.Post("/api/meals", gw.createMeal)
 	r.Post("/api/meals/swap", gw.swapMeal)
-	r.Post("/api/meals/remove", gw.removeMeal)
 	r.Put("/api/meals/{mealId}/ingredients/{ingredientId}", gw.updateMealIngredient)
 	r.Delete("/api/meals/{mealId}/ingredients/{ingredientId}", gw.deleteMealIngredient)
 	r.Delete("/api/meals/{mealId}", gw.deleteMeal)
@@ -446,7 +460,7 @@ func main() {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /health [get]
 func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.client.HealthCheck(r.Context(), &emptypb.Empty{})
+	resp, err := gw.backend.HealthCheck(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
@@ -459,7 +473,7 @@ func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /reconnect [post]
 func (gw *Gateway) reconnect(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.client.Reconnect(r.Context(), &emptypb.Empty{})
+	resp, err := gw.backend.Reconnect(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
@@ -474,7 +488,7 @@ func (gw *Gateway) reconnect(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /mealplan [get]
 func (gw *Gateway) getMealPlan(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.client.GetMealPlan(r.Context(), &emptypb.Empty{})
+	resp, err := gw.backend.GetMealPlan(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
@@ -515,7 +529,7 @@ func (gw *Gateway) saveMealPlan(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /mealplan/generate [post]
 func (gw *Gateway) generateMealPlan(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.client.GenerateMealPlan(r.Context(), &emptypb.Empty{})
+	resp, err := gw.backend.GenerateMealPlan(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
@@ -542,7 +556,7 @@ func (gw *Gateway) finalizeMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := gw.client.FinalizeMealPlan(r.Context(), &req)
+	resp, err := gw.backend.FinalizeMealPlan(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -555,7 +569,7 @@ func (gw *Gateway) finalizeMealPlan(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /mealplan/ics [get]
 func (gw *Gateway) getMealPlanICS(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.client.GetMealPlanICS(r.Context(), &emptypb.Empty{})
+	resp, err := gw.backend.GetMealPlanICS(r.Context(), &emptypb.Empty{})
 	if err != nil {
 		status := httpStatusFromGRPC(err)
 		http.Error(w, err.Error(), status)
@@ -592,7 +606,7 @@ func (gw *Gateway) getShoppingList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := gw.client.GetShoppingList(r.Context(), &req)
+	resp, err := gw.backend.GetShoppingList(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -612,7 +626,7 @@ func (gw *Gateway) getAllMeals(w http.ResponseWriter, r *http.Request) {
 		Type: r.URL.Query().Get("type"),
 	}
 
-	resp, err := gw.client.GetAllMeals(r.Context(), req)
+	resp, err := gw.backend.GetAllMeals(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -639,7 +653,7 @@ func (gw *Gateway) createMeal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := gw.client.CreateMeal(r.Context(), &req)
+	resp, err := gw.backend.CreateMeal(r.Context(), &req)
 	if err == nil {
 		w.WriteHeader(http.StatusCreated)
 	}
@@ -669,34 +683,7 @@ func (gw *Gateway) swapMeal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := gw.client.SwapMeal(r.Context(), &req)
-	writeJSONResponse(w, resp, err)
-}
-
-// @Summary Remove Meal
-// @Description Remove a meal from the plan
-// @Tags meals
-// @Accept json
-// @Produce json
-// @Param request body apipb.RemoveMealRequest true "Remove meal request"
-// @Success 200 {object} MealPlanResponse "Meal removed successfully"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /meals/remove [post]
-func (gw *Gateway) removeMeal(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	var req apipb.RemoveMealRequest
-	if err := protojson.Unmarshal(body, &req); err != nil {
-		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	resp, err := gw.client.RemoveMeal(r.Context(), &req)
+	resp, err := gw.backend.SwapMeal(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -746,7 +733,7 @@ func (gw *Gateway) updateMealIngredient(w http.ResponseWriter, r *http.Request) 
 		Ingredient:   &ingredient,
 	}
 
-	resp, err := gw.client.UpdateMealIngredient(r.Context(), req)
+	resp, err := gw.backend.UpdateMealIngredient(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -782,7 +769,7 @@ func (gw *Gateway) deleteMealIngredient(w http.ResponseWriter, r *http.Request) 
 		IngredientId: int32(ingredientId),
 	}
 
-	resp, err := gw.client.DeleteMealIngredient(r.Context(), req)
+	resp, err := gw.backend.DeleteMealIngredient(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -809,7 +796,7 @@ func (gw *Gateway) deleteMeal(w http.ResponseWriter, r *http.Request) {
 		MealId: int32(mealId),
 	}
 
-	resp, err := gw.client.DeleteMeal(r.Context(), req)
+	resp, err := gw.backend.DeleteMeal(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -836,7 +823,7 @@ func (gw *Gateway) replaceMeal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := gw.client.ReplaceMeal(r.Context(), &req)
+	resp, err := gw.backend.ReplaceMeal(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -864,7 +851,7 @@ func (gw *Gateway) getSteps(w http.ResponseWriter, r *http.Request) {
 		MealId: int32(mealId),
 	}
 
-	resp, err := gw.client.GetSteps(r.Context(), req)
+	resp, err := gw.backend.GetSteps(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -905,7 +892,7 @@ func (gw *Gateway) addStep(w http.ResponseWriter, r *http.Request) {
 		Step:   &step,
 	}
 
-	resp, err := gw.client.AddStep(r.Context(), req)
+	resp, err := gw.backend.AddStep(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -948,7 +935,7 @@ func (gw *Gateway) addBulkSteps(w http.ResponseWriter, r *http.Request) {
 		Instructions: reqBody.Instructions,
 	}
 
-	resp, err := gw.client.AddBulkSteps(r.Context(), req)
+	resp, err := gw.backend.AddBulkSteps(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -998,7 +985,7 @@ func (gw *Gateway) updateStep(w http.ResponseWriter, r *http.Request) {
 		Step:   &step,
 	}
 
-	resp, err := gw.client.UpdateStep(r.Context(), req)
+	resp, err := gw.backend.UpdateStep(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1034,7 +1021,7 @@ func (gw *Gateway) deleteStep(w http.ResponseWriter, r *http.Request) {
 		StepId: int32(stepId),
 	}
 
-	resp, err := gw.client.DeleteStep(r.Context(), req)
+	resp, err := gw.backend.DeleteStep(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1077,7 +1064,7 @@ func (gw *Gateway) reorderSteps(w http.ResponseWriter, r *http.Request) {
 		StepIds: reqBody.StepIds,
 	}
 
-	resp, err := gw.client.ReorderSteps(r.Context(), req)
+	resp, err := gw.backend.ReorderSteps(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1104,7 +1091,7 @@ func (gw *Gateway) deleteAllSteps(w http.ResponseWriter, r *http.Request) {
 		MealId: int32(mealId),
 	}
 
-	resp, err := gw.client.DeleteAllSteps(r.Context(), req)
+	resp, err := gw.backend.DeleteAllSteps(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1134,7 +1121,7 @@ func (gw *Gateway) startAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		req := &apipb.StartAgentWorkflowRequest{
 			Request: &agentReq,
 		}
-		resp, err := gw.client.StartAgentWorkflow(r.Context(), req)
+		resp, err := gw.agent.StartAgentWorkflow(r.Context(), req)
 		writeJSONResponse(w, resp, err)
 		return
 	}
@@ -1146,7 +1133,7 @@ func (gw *Gateway) startAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := gw.client.StartAgentWorkflow(r.Context(), &req)
+	resp, err := gw.agent.StartAgentWorkflow(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1174,7 +1161,7 @@ func (gw *Gateway) messageAgent(w http.ResponseWriter, r *http.Request) {
 		req := &apipb.MessageAgentRequest{
 			Request: &agentReq,
 		}
-		resp, err := gw.client.MessageAgent(r.Context(), req)
+		resp, err := gw.agent.MessageAgent(r.Context(), req)
 		writeJSONResponse(w, resp, err)
 		return
 	}
@@ -1186,7 +1173,7 @@ func (gw *Gateway) messageAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := gw.client.MessageAgent(r.Context(), &req)
+	resp, err := gw.agent.MessageAgent(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1207,7 +1194,7 @@ func (gw *Gateway) getWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.client.GetWorkflowStatus(r.Context(), req)
+	resp, err := gw.agent.GetWorkflowStatus(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1220,7 +1207,7 @@ func (gw *Gateway) getWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /agent/workflows [get]
 func (gw *Gateway) listWorkflows(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.client.ListWorkflows(r.Context(), &emptypb.Empty{})
+	resp, err := gw.agent.ListWorkflows(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1241,7 +1228,7 @@ func (gw *Gateway) cancelWorkflow(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.client.CancelWorkflow(r.Context(), req)
+	resp, err := gw.agent.CancelWorkflow(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1263,7 +1250,7 @@ func (gw *Gateway) getWorkflowState(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.client.GetWorkflowState(r.Context(), req)
+	resp, err := gw.agent.GetWorkflowState(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1284,7 +1271,7 @@ func (gw *Gateway) abandonWorkflow(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.client.AbandonWorkflow(r.Context(), req)
+	resp, err := gw.agent.AbandonWorkflow(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1323,7 +1310,7 @@ func (gw *Gateway) addMessage(w http.ResponseWriter, r *http.Request) {
 		Message:  reqBody.Message,
 	}
 
-	resp, err := gw.client.AddMessage(r.Context(), req)
+	resp, err := gw.agent.AddMessage(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1348,7 +1335,7 @@ func (gw *Gateway) getMessages(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.client.GetMessages(r.Context(), req)
+	resp, err := gw.agent.GetMessages(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1391,7 +1378,7 @@ func (gw *Gateway) updateSessionState(w http.ResponseWriter, r *http.Request) {
 		Status:       reqBody.Status,
 	}
 
-	resp, err := gw.client.UpdateSessionState(r.Context(), req)
+	resp, err := gw.agent.UpdateSessionState(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1417,7 +1404,7 @@ func (gw *Gateway) getCheckpoint(w http.ResponseWriter, r *http.Request) {
 		CheckpointNs: checkpointNs,
 	}
 
-	resp, err := gw.client.GetCheckpoint(r.Context(), req)
+	resp, err := gw.agent.GetCheckpoint(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1444,7 +1431,7 @@ func (gw *Gateway) putCheckpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := gw.client.PutCheckpoint(r.Context(), &req)
+	resp, err := gw.agent.PutCheckpoint(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1474,6 +1461,6 @@ func (gw *Gateway) listCheckpoints(w http.ResponseWriter, r *http.Request) {
 		BeforeThreadId: beforeThreadId,
 	}
 
-	resp, err := gw.client.ListCheckpoints(r.Context(), req)
+	resp, err := gw.agent.ListCheckpoints(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }

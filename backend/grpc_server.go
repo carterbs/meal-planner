@@ -1,18 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"os/exec"
-	"time"
-
-	"google.golang.org/protobuf/encoding/protojson"
 
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
-	"mealplanner/models"
 	"mealplanner/server"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -22,51 +15,6 @@ var grpcServerLogger = logging.GetGrpcLogger("grpc-server")
 
 type MealPlannerAPIServer struct {
 	apipb.UnimplementedMealPlannerAPIServer
-}
-
-// runAgentCLI executes the agent CLI and returns the parsed response
-func runAgentCLI(ctx context.Context, args ...string) (models.AgentResponse, error) {
-	grpcServerLogger.Debugw("runAgentCLI: executing agent CLI", "args", args)
-
-	allArgs := append([]string{"../typescript/agent/dist/cli.js", "--json"}, args...)
-	cmd := exec.CommandContext(ctx, "node", allArgs...)
-	var stdoutBuffer, stderrBuffer bytes.Buffer
-	cmd.Stdout = &stdoutBuffer
-	cmd.Stderr = &stderrBuffer
-
-	err := cmd.Run()
-	// grpcServerLogger.Debugw("runAgentCLI: command executed", "args", args, "stdout", stdoutBuffer.String(), "stderr", stderrBuffer.String())
-	if err != nil {
-		errMsg := "agent CLI execution failed: " + err.Error()
-		if stderrBuffer.Len() > 0 {
-			errMsg += "\nStderr: " + stderrBuffer.String()
-		}
-		grpcServerLogger.Errorw("runAgentCLI error", "args", args, "stderr", stderrBuffer.String(), "error", err)
-		return models.AgentResponse{}, fmt.Errorf("%s", errMsg)
-	}
-	// enable if yo uwant very verbose and very long
-	// grpcServerLogger.Debugw("runAgentCLI stdout", "args", args, "stdout", stdoutBuffer.String())
-	if stderrBuffer.Len() > 0 {
-		grpcServerLogger.Debugw("runAgentCLI stderr (non-error)", "args", args, "stderr", stderrBuffer.String())
-	}
-
-	var resp models.AgentResponse
-	if err := json.Unmarshal(stdoutBuffer.Bytes(), &resp); err != nil {
-		return models.AgentResponse{}, fmt.Errorf("failed to unmarshal agent response: %v", err)
-	}
-	return resp, nil
-}
-
-// joinParticipants converts a slice of participants to a comma-separated string
-func joinParticipants(p []string) string {
-	if len(p) == 0 {
-		return ""
-	}
-	s := p[0]
-	for _, v := range p[1:] {
-		s += "," + v
-	}
-	return s
 }
 
 func generateShoppingListForPlan(plan *apipb.WeeklyMealPlan) error {
@@ -94,6 +42,9 @@ func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
 }
 
 func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Empty) (*apipb.HealthCheckResponse, error) {
+	dbHealthy := false
+
+	// Check database health
 	if server.DB == nil {
 		return &apipb.HealthCheckResponse{
 			Status:  "error",
@@ -107,10 +58,18 @@ func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Emp
 			Message: "Database connection lost. Make sure Docker is running and the database container is started.",
 		}, nil
 	}
+	dbHealthy = true
+
+	if dbHealthy {
+		return &apipb.HealthCheckResponse{
+			Status:  "ok",
+			Message: "Database connected",
+		}, nil
+	}
 
 	return &apipb.HealthCheckResponse{
-		Status:  "ok",
-		Message: "Database connection is healthy",
+		Status:  "error",
+		Message: "Database connection is not healthy",
 	}, nil
 }
 
@@ -266,23 +225,6 @@ func (s *MealPlannerAPIServer) SwapMeal(ctx context.Context, req *apipb.SwapMeal
 	}, nil
 }
 
-func (s *MealPlannerAPIServer) RemoveMeal(ctx context.Context, req *apipb.RemoveMealRequest) (*apipb.RemoveMealResponse, error) {
-	// Get the current meal plan from the workflow
-	plan, err := server.Services.WorkflowService.GetMealPlan(req.ThreadId)
-	if err != nil {
-		return nil, fmt.Errorf("error getting meal plan: %w", err)
-	}
-
-	err = server.Services.MealPlanService.RemoveMealFromPlan(plan, int(req.DayIndex), req.MealType)
-	if err != nil {
-		return nil, fmt.Errorf("error removing meal from plan: %w", err)
-	}
-
-	return &apipb.RemoveMealResponse{
-		Plan: plan,
-	}, nil
-}
-
 func (s *MealPlannerAPIServer) ReplaceMeal(ctx context.Context, req *apipb.ReplaceMealRequest) (*apipb.ReplaceMealResponse, error) {
 	// For now, return a simple success response as replace logic needs to be implemented
 	return &apipb.ReplaceMealResponse{
@@ -432,417 +374,5 @@ func (s *MealPlannerAPIServer) DeleteAllSteps(ctx context.Context, req *apipb.De
 
 	return &apipb.DeleteAllStepsResponse{
 		Message: "All steps deleted successfully",
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) StartAgentWorkflow(ctx context.Context, req *apipb.StartAgentWorkflowRequest) (*apipb.StartAgentWorkflowResponse, error) {
-	if req.Request == nil {
-		return nil, fmt.Errorf("request is required")
-	}
-	if len(req.Request.Participants) == 0 {
-		return nil, fmt.Errorf("participants required")
-	}
-	if req.Request.WorkflowType == "" {
-		return nil, fmt.Errorf("workflow_type required")
-	}
-
-	// Convert to models format for CLI execution
-	startReq := models.AgentStartRequest{
-		Participants: req.Request.Participants,
-		WorkflowType: req.Request.WorkflowType,
-	}
-
-	ctxTimeout, cancel := context.WithTimeout(ctx, 25*time.Second)
-	defer cancel()
-
-	resp, err := runAgentCLI(ctxTimeout, "plan", "start", "--participants", joinParticipants(startReq.Participants))
-	if err != nil {
-		grpcServerLogger.Errorw("MessageAgent: agent CLI feedback failed", "error", err)
-		return nil, fmt.Errorf("agent CLI feedback failed: %w", err)
-	}
-
-	// Convert response to protobuf format
-	pbResp := &apipb.AgentResponse{
-		Success:     resp.Success,
-		Message:     resp.Message,
-		ThreadId:    resp.ThreadID,
-		CurrentStep: resp.CurrentStep,
-	}
-	// Initialize workflow checkpoint if thread ID returned
-	var stateMap map[string]interface{}
-	if resp.ThreadID != "" {
-		if resp.InitialState != nil {
-			if b, err := json.Marshal(resp.InitialState); err == nil {
-				_ = json.Unmarshal(b, &stateMap)
-			}
-			if stateMap == nil {
-				stateMap = map[string]interface{}{}
-			}
-			// Remove deprecated fields
-			delete(stateMap, "workflow_type")
-			delete(stateMap, "channel_values")
-
-			checkpoint := map[string]interface{}{
-				"state": stateMap,
-				"next":  []interface{}{},
-				"step":  0,
-			}
-			if data, err := json.Marshal(checkpoint); err == nil {
-				server.Services.WorkflowService.UpdateWorkflowCheckpoint(resp.ThreadID, data)
-				pbResp.InitialState = string(data)
-			}
-		}
-
-		// Add initial agent message if present
-		if resp.Message != "" {
-			t := time.Now().Format(time.RFC3339)
-			server.Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t)
-		}
-	}
-
-	return &apipb.StartAgentWorkflowResponse{
-		Response: pbResp,
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) MessageAgent(ctx context.Context, req *apipb.MessageAgentRequest) (*apipb.MessageAgentResponse, error) {
-	if req.Request == nil {
-		return nil, fmt.Errorf("request is required")
-	}
-	if req.Request.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-	if req.Request.Message == "" {
-		return nil, fmt.Errorf("message required")
-	}
-	if req.Request.From == "" {
-		return nil, fmt.Errorf("from required")
-	}
-
-	ctxTimeout, cancel := context.WithTimeout(ctx, 25*time.Second)
-	defer cancel()
-
-	// Run feedback
-	_, err := runAgentCLI(ctxTimeout, "plan", "feedback", req.Request.ThreadId, req.Request.Message, "--from", req.Request.From)
-	if err != nil {
-		grpcServerLogger.Errorw("MessageAgent: agent CLI feedback failed", "error", err)
-		return nil, fmt.Errorf("agent CLI feedback failed: %w", err)
-	}
-
-	// Run resume
-	resumeArgs := []string{"resume", req.Request.ThreadId}
-	// Note: Don't use --interactive with --json as they are incompatible
-	grpcServerLogger.Debugw("MessageAgent: invoking resume", "threadID", req.Request.ThreadId, "args", resumeArgs)
-	resp, err := runAgentCLI(ctxTimeout, resumeArgs...)
-	if err != nil {
-		grpcServerLogger.Errorw("MessageAgent: agent CLI resume failed", "args", resumeArgs, "error", err)
-		return nil, fmt.Errorf("agent CLI resume failed: %w", err)
-	}
-	grpcServerLogger.Debugw("MessageAgent: resume response", "threadID", req.Request.ThreadId, "success", resp.Success, "message", resp.Message, "currentStep", resp.CurrentStep)
-
-	// Convert response to protobuf format
-	pbResp := &apipb.AgentResponse{
-		Success:     resp.Success,
-		Message:     resp.Message,
-		ThreadId:    resp.ThreadID,
-		CurrentStep: resp.CurrentStep,
-	}
-
-	return &apipb.MessageAgentResponse{
-		Response: pbResp,
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) GetWorkflowStatus(ctx context.Context, req *apipb.GetWorkflowStatusRequest) (*apipb.GetWorkflowStatusResponse, error) {
-	if req.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-
-	state, err := server.Services.WorkflowService.GetWorkflowState(req.ThreadId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get workflow state: %w", err)
-	}
-
-	// Convert state to protobuf format
-	status := &apipb.WorkflowStatus{
-		ThreadId:     state.ThreadId,
-		WorkflowType: "meal_planning", // From request context, not stored in state
-		CurrentStep:  state.CurrentStep,
-		Participants: state.Participants,
-	}
-
-	return &apipb.GetWorkflowStatusResponse{
-		Status: status,
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) ListWorkflows(ctx context.Context, req *emptypb.Empty) (*apipb.ListWorkflowsResponse, error) {
-	// Fetch latest 50 workflows (arbitrary default)
-	const defaultLimit = 50
-	statuses, err := server.Services.WorkflowService.ListWorkflows(defaultLimit)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list workflows: %w", err)
-	}
-	pbStatuses := make([]*apipb.WorkflowStatus, len(statuses))
-	for i, st := range statuses {
-		pbStatuses[i] = &apipb.WorkflowStatus{
-			ThreadId:     st.ThreadID,
-			WorkflowType: st.WorkflowType,
-			CurrentStep:  st.CurrentStep,
-			Participants: st.Participants,
-		}
-	}
-	return &apipb.ListWorkflowsResponse{Workflows: pbStatuses}, nil
-}
-
-func (s *MealPlannerAPIServer) CancelWorkflow(ctx context.Context, req *apipb.CancelWorkflowRequest) (*apipb.CancelWorkflowResponse, error) {
-	if req.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-
-	// Mark workflow as ABANDONED in the DB
-	err := server.Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(req.ThreadId, "system", "ABANDONED")
-	if err != nil {
-		return nil, fmt.Errorf("failed to abandon workflow: %w", err)
-	}
-
-	return &apipb.CancelWorkflowResponse{
-		Status: "ABANDONED",
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) GetWorkflowState(ctx context.Context, req *apipb.GetWorkflowStateRequest) (*apipb.GetWorkflowStateResponse, error) {
-	if req.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-
-	state, err := server.Services.WorkflowService.GetWorkflowState(req.ThreadId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get workflow state: %w", err)
-	}
-
-	// Convert shopping list to protobuf format
-	var shoppingListItems []*apipb.ShoppingListItem
-	if state.ShoppingList != nil {
-		shoppingListItems = state.ShoppingList.Items
-	}
-
-	// Create shopping list wrapper
-	shoppingList := &apipb.ShoppingList{
-		Items: shoppingListItems,
-	}
-
-	return &apipb.GetWorkflowStateResponse{
-		Plan:         state.MealPlan,
-		ShoppingList: shoppingList,
-		Messages:     []*apipb.Message{},
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) AbandonWorkflow(ctx context.Context, req *apipb.AbandonWorkflowRequest) (*apipb.AbandonWorkflowResponse, error) {
-	if req.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-
-	err := server.Services.WorkflowService.UpdateWorkflowCheckpointWithMessage(req.ThreadId, "system", "ABANDONED")
-	if err != nil {
-		return nil, fmt.Errorf("failed to abandon workflow: %w", err)
-	}
-
-	return &apipb.AbandonWorkflowResponse{
-		Message: "Workflow abandoned successfully",
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) AddMessage(ctx context.Context, req *apipb.AddMessageRequest) (*apipb.AddMessageResponse, error) {
-	if req.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-	if req.Message == "" {
-		return nil, fmt.Errorf("message required")
-	}
-	if req.Sender == "" {
-		return nil, fmt.Errorf("sender required")
-	}
-
-	_, err := server.Services.WorkflowService.AddMessage(req.ThreadId, req.Sender, req.Message)
-	if err != nil {
-		return nil, fmt.Errorf("failed to add message: %w", err)
-	}
-
-	return &apipb.AddMessageResponse{
-		Message: "Message added successfully",
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) GetMessages(ctx context.Context, req *apipb.GetMessagesRequest) (*apipb.GetMessagesResponse, error) {
-	if req.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-
-	messages, err := server.Services.MessageService.GetMessagesWithTimestamps(req.ThreadId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get messages: %w", err)
-	}
-
-	protoMessages := make([]*apipb.Message, len(messages))
-	for i, msg := range messages {
-		protoMessages[i] = &apipb.Message{
-			ThreadId:  msg["thread_id"].(string),
-			Sender:    msg["sender"].(string),
-			Content:   msg["content"].(string),
-			CreatedAt: msg["created_at"].(string),
-		}
-	}
-
-	return &apipb.GetMessagesResponse{
-		Messages: protoMessages,
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) UpdateSessionState(ctx context.Context, req *apipb.UpdateSessionStateRequest) (*apipb.UpdateSessionStateResponse, error) {
-	if req.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-
-	// Create state update map
-	stateUpdate := map[string]interface{}{
-		"meal_plan":     req.MealPlan,
-		"shopping_list": req.ShoppingList,
-		"current_step":  req.CurrentStep,
-		"status":        req.Status,
-	}
-
-	data, err := json.Marshal(stateUpdate)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal state update: %w", err)
-	}
-
-	err = server.Services.WorkflowService.UpdateWorkflowCheckpoint(req.ThreadId, data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update session state: %w", err)
-	}
-
-	return &apipb.UpdateSessionStateResponse{
-		Message: "Session state updated successfully",
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) GetCheckpoint(ctx context.Context, req *apipb.GetCheckpointRequest) (*apipb.GetCheckpointResponse, error) {
-	if req.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-
-	data, ns, err := server.Services.WorkflowService.GetWorkflowCheckpoint(req.ThreadId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get checkpoint: %w", err)
-	}
-	if data == nil || len(data) == 0 {
-		// Not found
-		return &apipb.GetCheckpointResponse{Found: false}, nil
-	}
-
-	// Unmarshal checkpoint data into protobuf AgentCheckpoint (without messages)
-	var checkpoint apipb.AgentCheckpoint
-	um := protojson.UnmarshalOptions{DiscardUnknown: true}
-	if err := um.Unmarshal(data, &checkpoint); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal stored checkpoint: %w", err)
-	}
-
-	// Metadata is currently not stored separately; return empty with step if available
-	meta := &apipb.AgentCheckpointMetadata{}
-	if checkpoint.Step != 0 {
-		meta.Step = checkpoint.Step
-	}
-	checkpointTuple := &apipb.CheckpointTuple{
-		Checkpoint: &checkpoint,
-		Metadata:   meta,
-	}
-	grpcServerLogger.Debugw("Debuggyz: GetCheckpoint: returning checkpoint", "threadID", req.ThreadId, "ns", ns, "currentStep", checkpoint.State.GetCurrentStep())
-	return &apipb.GetCheckpointResponse{
-		Tuple: checkpointTuple,
-		Found: true,
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) PutCheckpoint(ctx context.Context, req *apipb.PutCheckpointRequest) (*apipb.PutCheckpointResponse, error) {
-	if req.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-	if req.Checkpoint == nil {
-		return nil, fmt.Errorf("checkpoint required")
-	}
-
-	grpcServerLogger.Debugw("Debuggyz: PutCheckpoint called", "threadID", req.ThreadId, "incomingWorkflowType", req.WorkflowType, "CurrentStep", req.Checkpoint.GetState().GetCurrentStep())
-	// Choose protojson options once for consistent naming / enums
-	marshalOpts := protojson.MarshalOptions{UseProtoNames: true}
-
-	// Ensure workflowType is always populated – fall back to MEAL_PLANNING for
-	// older agents that don't send it explicitly.
-	workflowType := req.WorkflowType
-	if workflowType == "" {
-		workflowType = "meal_planning"
-	}
-
-	// Messages are now stored separately in the messages table
-
-	// Marshal checkpoint to JSON first (canonical protojson output).
-	checkpointData, err := marshalOpts.Marshal(req.Checkpoint)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal checkpoint: %w", err)
-	}
-
-	// Metadata is optional – marshal when present.
-	var metaDataBytes []byte
-	if req.Metadata != nil {
-		metaDataBytes, err = marshalOpts.Marshal(req.Metadata)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal checkpoint metadata: %w", err)
-		}
-	}
-
-	ns := req.CheckpointNs
-	if ns == "" {
-		ns = "latest"
-	}
-
-	// Persist via checkpoint service – service is responsible for UPSERT logic.
-	if err := server.Services.CheckpointService.PutCheckpoint(req.ThreadId, ns, workflowType, checkpointData, metaDataBytes); err != nil {
-		return nil, fmt.Errorf("failed to put checkpoint: %w", err)
-	}
-	return &apipb.PutCheckpointResponse{
-		Success:      true,
-		ThreadId:     req.ThreadId,
-		CheckpointNs: ns,
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) ListCheckpoints(ctx context.Context, req *apipb.ListCheckpointsRequest) (*apipb.ListCheckpointsResponse, error) {
-	entries, err := server.Services.CheckpointService.ListCheckpoints(int(req.Limit), req.BeforeThreadId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list checkpoints: %w", err)
-	}
-
-	// Convert service records to protobuf format
-	pbEntries := make([]*apipb.CheckpointEntry, len(entries))
-	for i, entry := range entries {
-		// Unmarshal stored bytes back to proto objects when possible
-		var cp apipb.AgentCheckpoint
-		_ = protojson.Unmarshal(entry.Checkpoint, &cp) // ignore error, fallback to empty
-		var meta apipb.AgentCheckpointMetadata
-		_ = protojson.Unmarshal(entry.Metadata, &meta)
-
-		pbEntries[i] = &apipb.CheckpointEntry{
-			ThreadId:     entry.ThreadID,
-			CheckpointNs: entry.CheckpointNS,
-			Tuple: &apipb.CheckpointTuple{
-				Checkpoint: &cp,
-				Metadata:   &meta,
-			},
-		}
-	}
-
-	return &apipb.ListCheckpointsResponse{
-		Entries: pbEntries,
 	}, nil
 }
