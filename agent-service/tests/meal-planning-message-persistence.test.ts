@@ -3,26 +3,21 @@ import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 import { TestMockFactory, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
 // Mock external dependencies
-jest.mock('../utils/getBackendClient');
 jest.mock('../logging');
-jest.mock('../cli');
 
 describe('MealPlanningWorkflow Message Persistence Tests', () => {
   let workflow: any;
   let mockCheckpointer: jest.Mocked<DbCheckpointSaver>;
-  let mockBackendClient: any;
+  let mockMessageRepo: any;
 
   beforeEach(() => {
     setupConsoleMocks();
     
     mockCheckpointer = TestMockFactory.createMockCheckpointer() as any;
-    mockBackendClient = TestMockFactory.createMockBackendClient();
+    mockMessageRepo = TestMockFactory.createMockMessageRepository();
     
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;
-    
-    // Mock getBackendClient to return our mock
-    const { getBackendClient } = require('../utils/getBackendClient');
-    getBackendClient.mockReturnValue(mockBackendClient);
+    workflow.messageRepo = mockMessageRepo;
   });
 
   afterEach(() => {
@@ -37,11 +32,7 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
       
       await workflow.addMessage(threadId, 'agent', message);
 
-      expect(mockBackendClient.addMessage).toHaveBeenCalledWith({
-        threadId,
-        sender: 'agent',
-        message,
-      });
+      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith(threadId, 'agent', message);
     });
 
     it('adds user messages to thread successfully', async () => {
@@ -50,39 +41,31 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
       
       await workflow.addMessage(threadId, 'user', message);
 
-      expect(mockBackendClient.addMessage).toHaveBeenCalledWith({
-        threadId,
-        sender: 'user',
-        message,
-      });
+      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith(threadId, 'user', message);
     });
 
     it('handles message API errors gracefully', async () => {
       const threadId = 'test-thread-789';
       const message = 'Test message';
       
-      mockBackendClient.addMessage.mockRejectedValue(new Error('API Error'));
+      mockMessageRepo.addMessage.mockRejectedValue(new Error('API Error'));
 
       // Should not throw error
       await expect(workflow.addMessage(threadId, 'agent', message)).resolves.not.toThrow();
       
-      expect(mockBackendClient.addMessage).toHaveBeenCalledWith({
-        threadId,
-        sender: 'agent',
-        message,
-      });
+      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith(threadId, 'agent', message);
     });
 
     it('continues workflow when message persistence fails', async () => {
       const threadId = 'test-thread-error';
       const message = 'Test message';
       
-      mockBackendClient.addMessage.mockRejectedValue(new Error('Network error'));
+      mockMessageRepo.addMessage.mockRejectedValue(new Error('Network error'));
 
       // Should resolve without throwing
       await workflow.addMessage(threadId, 'agent', message);
       
-      expect(mockBackendClient.addMessage).toHaveBeenCalled();
+      expect(mockMessageRepo.addMessage).toHaveBeenCalled();
     });
   });
 
@@ -90,56 +73,29 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
     it('retrieves user messages from thread', async () => {
       const threadId = 'test-thread-123';
       const mockMessages = [
-        TestMockFactory.createMockMessage({
-          sender: 'user',
-          content: 'First user message',
-        }),
-        TestMockFactory.createMockMessage({
-          sender: 'agent',
-          content: 'Agent response',
-        }),
-        TestMockFactory.createMockMessage({
-          sender: 'user',
-          content: 'Second user message',
-        }),
+        { sender: 'user', text: 'First user message', created_at: new Date().toISOString() },
+        { sender: 'agent', text: 'Agent response', created_at: new Date().toISOString() },
+        { sender: 'user', text: 'Second user message', created_at: new Date().toISOString() },
       ];
 
-      mockBackendClient.getMessages.mockResolvedValue({
-        messages: mockMessages,
-      });
+      mockMessageRepo.getMessages.mockResolvedValue(mockMessages);
 
       const result = await workflow.getMessages(threadId);
 
-      expect(mockBackendClient.getMessages).toHaveBeenCalledWith({
-        threadId,
-      });
+      expect(mockMessageRepo.getMessages).toHaveBeenCalledWith(threadId);
       expect(result).toEqual(['First user message', 'Second user message']);
     });
 
     it('filters messages by sender type', async () => {
       const threadId = 'test-thread-filter';
       const mockMessages = [
-        TestMockFactory.createMockMessage({
-          sender: 'user',
-          content: 'User message 1',
-        }),
-        TestMockFactory.createMockMessage({
-          sender: 'agent',
-          content: 'Agent message 1',
-        }),
-        TestMockFactory.createMockMessage({
-          sender: 'user',
-          content: 'User message 2',
-        }),
-        TestMockFactory.createMockMessage({
-          sender: 'system',
-          content: 'System message',
-        }),
+        { sender: 'user', text: 'User message 1', created_at: new Date().toISOString() },
+        { sender: 'agent', text: 'Agent message 1', created_at: new Date().toISOString() },
+        { sender: 'user', text: 'User message 2', created_at: new Date().toISOString() },
+        { sender: 'system', text: 'System message', created_at: new Date().toISOString() },
       ];
 
-      mockBackendClient.getMessages.mockResolvedValue({
-        messages: mockMessages,
-      });
+      mockMessageRepo.getMessages.mockResolvedValue(mockMessages);
 
       const result = await workflow.getMessages(threadId);
 
@@ -149,83 +105,51 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
     it('handles message API errors gracefully', async () => {
       const threadId = 'test-thread-error';
       
-      mockBackendClient.getMessages.mockRejectedValue(new Error('API Error'));
+      mockMessageRepo.getMessages.mockRejectedValue(new Error('API Error'));
 
       const result = await workflow.getMessages(threadId);
 
       expect(result).toEqual([]);
-      expect(mockBackendClient.getMessages).toHaveBeenCalledWith({
-        threadId,
-      });
+      expect(mockMessageRepo.getMessages).toHaveBeenCalledWith(threadId);
     });
 
     it('filters out empty messages', async () => {
       const threadId = 'test-thread-empty';
       const mockMessages = [
-        TestMockFactory.createMockMessage({
-          sender: 'user',
-          content: 'Valid message',
-        }),
-        TestMockFactory.createMockMessage({
-          sender: 'user',
-          content: '',
-        }),
-        TestMockFactory.createMockMessage({
-          sender: 'user',
-          content: '   ',
-        }),
-        TestMockFactory.createMockMessage({
-          sender: 'user',
-          content: 'Another valid message',
-        }),
+        { sender: 'user', text: 'Valid message', created_at: new Date().toISOString() },
+        { sender: 'user', text: '', created_at: new Date().toISOString() },
+        { sender: 'user', text: '   ', created_at: new Date().toISOString() },
+        { sender: 'user', text: 'Another valid message', created_at: new Date().toISOString() },
       ];
 
-      mockBackendClient.getMessages.mockResolvedValue({
-        messages: mockMessages,
-      });
+      mockMessageRepo.getMessages.mockResolvedValue(mockMessages);
 
       const result = await workflow.getMessages(threadId);
 
       expect(result).toEqual(['Valid message', 'Another valid message']);
     });
 
-    it('handles messages with different content field names', async () => {
-      const threadId = 'test-thread-content-fields';
+    it('handles messages with text field', async () => {
+      const threadId = 'test-thread-text-field';
       const mockMessages = [
-        {
-          sender: 'user',
-          content: 'Message with content field',
-        },
-        {
-          sender: 'user',
-          message: 'Message with message field',
-        },
-        {
-          sender: 'user',
-          content: null,
-          message: 'Fallback to message field',
-        },
+        { sender: 'user', text: 'Message with text field', created_at: new Date().toISOString() },
+        { sender: 'user', text: 'Another message', created_at: new Date().toISOString() },
       ];
 
-      mockBackendClient.getMessages.mockResolvedValue({
-        messages: mockMessages,
-      });
+      mockMessageRepo.getMessages.mockResolvedValue(mockMessages);
 
       const result = await workflow.getMessages(threadId);
 
       expect(result).toEqual([
-        'Message with content field',
-        'Message with message field', 
-        'Fallback to message field'
+        'Message with text field',
+        'Another message'
       ]);
     });
 
     it('returns empty array when no messages exist', async () => {
       const threadId = 'test-thread-empty';
       
-      mockBackendClient.getMessages.mockResolvedValue({
-        messages: [],
-      });
+      mockMessageRepo.getMessages.mockResolvedValue([]);
 
       const result = await workflow.getMessages(threadId);
 
@@ -235,13 +159,11 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
     it('handles malformed message responses', async () => {
       const threadId = 'test-thread-malformed';
       
-      mockBackendClient.getMessages.mockResolvedValue({
-        messages: [
-          { id: 'msg1', sender: 'user', content: 'Valid message' },
-          { id: 'msg2', sender: 'user' }, // Missing content - will result in empty string
-          { id: 'msg3', sender: 'agent', content: 'Agent message' }, // Will be filtered out by sender
-        ],
-      });
+      mockMessageRepo.getMessages.mockResolvedValue([
+        { id: 'msg1', sender: 'user', text: 'Valid message', created_at: new Date().toISOString() },
+        { id: 'msg2', sender: 'user', text: '', created_at: new Date().toISOString() }, // Empty text - will be filtered out
+        { id: 'msg3', sender: 'agent', text: 'Agent message', created_at: new Date().toISOString() }, // Will be filtered out by sender
+      ]);
 
       const result = await workflow.getMessages(threadId);
 
@@ -281,12 +203,12 @@ describe('MealPlanningWorkflow Message Persistence Tests', () => {
     it('handles message persistence failures during workflow execution', async () => {
       const threadId = 'test-thread-persistence-fail';
       
-      mockBackendClient.addMessage.mockRejectedValue(new Error('Database connection failed'));
+      mockMessageRepo.addMessage.mockRejectedValue(new Error('Database connection failed'));
 
       // Should not affect the workflow execution
       await workflow.addMessage(threadId, 'agent', 'Test message');
       
-      expect(mockBackendClient.addMessage).toHaveBeenCalled();
+      expect(mockMessageRepo.addMessage).toHaveBeenCalled();
     });
   });
 });

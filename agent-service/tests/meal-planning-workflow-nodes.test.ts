@@ -5,9 +5,7 @@ import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 import { TestMockFactory, TestAssertionHelpers, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
 // Mock external dependencies
-jest.mock('../utils/getBackendClient');
 jest.mock('../logging');
-jest.mock('../cli');
 
 describe('MealPlanningWorkflow Core Node Tests', () => {
   let workflow: any;

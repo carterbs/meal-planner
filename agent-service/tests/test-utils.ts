@@ -122,6 +122,16 @@ export class TestMockFactory {
     };
   }
 
+  static createMockMessageRepository() {
+    return {
+      addMessage: jest.fn().mockResolvedValue(undefined),
+      getMessages: jest.fn().mockResolvedValue([
+        { sender: 'user', text: 'Test message', created_at: new Date().toISOString() }
+      ]),
+      getMessagesForProtobuf: jest.fn().mockResolvedValue([this.createMockMessage()]),
+    };
+  }
+
   static createMockExtendedRunnableConfig() {
     return {
       configurable: {

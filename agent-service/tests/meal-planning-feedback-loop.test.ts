@@ -3,9 +3,7 @@ import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 import { TestMockFactory, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
 // Mock external dependencies
-jest.mock('../utils/getBackendClient');
 jest.mock('../logging');
-jest.mock('../cli');
 
 describe('MealPlanningWorkflow Feedback Loop Tests', () => {
   let workflow: any;
@@ -13,7 +11,7 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
   let mockClient: any;
   let mockLLM: any;
   let mockNanoLLM: any;
-  let mockBackendClient: any;
+  let mockMessageRepo: any;
 
   beforeEach(() => {
     setupConsoleMocks();
@@ -22,16 +20,13 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
     mockClient = TestMockFactory.createMockMCPClient();
     mockLLM = TestMockFactory.createMockLLM();
     mockNanoLLM = TestMockFactory.createMockLLM();
-    mockBackendClient = TestMockFactory.createMockBackendClient();
+    mockMessageRepo = TestMockFactory.createMockMessageRepository();
 
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;
     workflow.client = mockClient;
     workflow.llm = mockLLM;
     workflow.nanoLlm = mockNanoLLM;
-    
-    // Mock getBackendClient to return our mock
-    const { getBackendClient } = require('../utils/getBackendClient');
-    getBackendClient.mockReturnValue(mockBackendClient);
+    workflow.messageRepo = mockMessageRepo;
   });
 
   afterEach(() => {
@@ -145,11 +140,7 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
       const result = await workflow.applyFeedbackNode(stateWithFeedback);
 
       expect(result.mealPlan).toBeDefined();
-      expect(mockBackendClient.addMessage).toHaveBeenCalledWith({
-        threadId: 'test-thread',
-        sender: 'agent',
-        message: 'I\'ve updated Monday dinner as requested!',
-      });
+      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith('test-thread', 'agent', 'I\'ve updated Monday dinner as requested!');
     });
 
     it('applies feedback with meal removals', async () => {
@@ -308,11 +299,7 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
       const result = await workflow.applyFeedbackNode(stateWithFeedback);
 
       expect(result.mealPlan).toBeDefined();
-      expect(mockBackendClient.addMessage).toHaveBeenCalledWith({
-        threadId: 'test-thread',
-        sender: 'agent',
-        message: 'I\'ve changed Monday dinner to a lighter option!',
-      });
+      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith('test-thread', 'agent', 'I\'ve changed Monday dinner to a lighter option!');
     });
 
     it('handles feedback analysis for satisfied user', async () => {
@@ -402,11 +389,7 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
       const result = await workflow.applyFeedbackNode(stateWithFeedback);
 
       expect(result.mealPlan).toBeDefined();
-      expect(mockBackendClient.addMessage).toHaveBeenCalledWith({
-        threadId: 'test-thread',
-        sender: 'agent',
-        message: 'I\'ve removed breakfast meals and updated Tuesday lunch!',
-      });
+      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith('test-thread', 'agent', 'I\'ve removed breakfast meals and updated Tuesday lunch!');
     });
   });
 });
