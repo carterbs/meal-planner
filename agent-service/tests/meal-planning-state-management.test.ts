@@ -1,7 +1,7 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { MealPlanningStep } from '../shared/types';
 import { AgentCheckpoint, AgentCheckpointMetadata } from '@mealplanner/generated';
-import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
+import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 import { TestMockFactory, TestAssertionHelpers, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
 // Mock external dependencies
@@ -11,7 +11,7 @@ jest.mock('../cli');
 
 describe('MealPlanningWorkflow State Management Tests', () => {
   let workflow: any;
-  let mockCheckpointer: jest.Mocked<HttpCheckpointSaver>;
+  let mockCheckpointer: jest.Mocked<DbCheckpointSaver>;
   let mockClient: any;
   let mockLLM: any;
   let mockConfig: any;

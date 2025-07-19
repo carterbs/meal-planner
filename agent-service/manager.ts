@@ -2,8 +2,8 @@ import { infoLog, errorLog } from './logging';
 import { v4 as uuidv4 } from 'uuid';
 import { RunnableConfig } from '@langchain/core/runnables';
 import { MealPlanningStep, WorkflowType } from './shared/types';
-// Removed PostgreSQL dependencies - using HTTP checkpointer only
-import { HttpCheckpointSaver } from './shared/httpCheckpointer';
+// Updated to use direct database access instead of HTTP
+import { DbCheckpointSaver } from './shared/dbCheckpointer';
 import { WorkflowRegistry } from './registry';
 import { debugLog } from './logging';
 
@@ -43,17 +43,17 @@ interface WorkflowGraphResult {
 // ----------------------------------------------------------------
 
 export class WorkflowManager {
-  private checkpointer: HttpCheckpointSaver;
+  private checkpointer: DbCheckpointSaver;
   private registry: WorkflowRegistry;
   private activeSessions = new Map<string, WorkflowSession>();
 
   constructor(registry: WorkflowRegistry) {
-    this.checkpointer = new HttpCheckpointSaver();
+    this.checkpointer = new DbCheckpointSaver();
     this.registry = registry;
   }
 
   // Public getter for checkpointer
-  getCheckpointer(): HttpCheckpointSaver {
+  getCheckpointer(): DbCheckpointSaver {
     return this.checkpointer;
   }
 
@@ -111,7 +111,7 @@ export class WorkflowManager {
 
       await Promise.race([workflowPromise, timeoutPromise]);
 
-      infoLog(
+      await infoLog(
         `🚀 [WORKFLOW] Started ${type} workflow with thread ID: ${threadId}`,
       );
       return threadId;
@@ -165,7 +165,7 @@ export class WorkflowManager {
 
       if (isComplete) {
         session.isActive = false;
-        infoLog(
+        await infoLog(
           `✅ [WORKFLOW] Completed ${session.workflowType} workflow: ${threadId}`,
         );
       }
@@ -249,7 +249,7 @@ export class WorkflowManager {
         };
       }
 
-      infoLog(
+      await infoLog(
         `🔄 [WORKFLOW] Resuming ${session.workflowType} workflow: ${threadId}`,
       );
       const executeWorkflowStepStart = Date.now();
@@ -295,7 +295,7 @@ export class WorkflowManager {
     await this.registry.cleanupWorkflow(session.workflowType, threadId);
     this.activeSessions.delete(threadId);
 
-    infoLog(
+    await infoLog(
       `🛑 [WORKFLOW] Cancelled ${session.workflowType} workflow: ${threadId}`,
     );
     return true;
@@ -410,7 +410,7 @@ export class WorkflowManager {
         };
         this.activeSessions.set(status.threadId, session);
       }
-      infoLog(
+      await infoLog(
         `📚 [WORKFLOW] Loaded ${this.activeSessions.size} active sessions from database`,
       );
     } catch (error) {

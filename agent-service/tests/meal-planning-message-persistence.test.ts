@@ -1,5 +1,5 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
-import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
+import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 import { TestMockFactory, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
 
 // Mock external dependencies
@@ -9,7 +9,7 @@ jest.mock('../cli');
 
 describe('MealPlanningWorkflow Message Persistence Tests', () => {
   let workflow: any;
-  let mockCheckpointer: jest.Mocked<HttpCheckpointSaver>;
+  let mockCheckpointer: jest.Mocked<DbCheckpointSaver>;
   let mockBackendClient: any;
 
   beforeEach(() => {

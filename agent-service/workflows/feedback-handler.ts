@@ -4,7 +4,7 @@ import {
   WorkflowType,
   MealPlanningStep,
 } from '../shared/types';
-import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
+import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 
 export interface FeedbackInput {
   threadId: string;
@@ -14,9 +14,9 @@ export interface FeedbackInput {
 }
 
 export class FeedbackHandler {
-  private checkpointer: HttpCheckpointSaver;
+  private checkpointer: DbCheckpointSaver;
 
-  constructor(checkpointer: HttpCheckpointSaver) {
+  constructor(checkpointer: DbCheckpointSaver) {
     this.checkpointer = checkpointer;
   }
 

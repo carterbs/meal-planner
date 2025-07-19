@@ -5,7 +5,7 @@ import * as protoLoader from '@grpc/proto-loader';
 import * as path from 'path';
 import { LangGraphAgent } from './langgraph-agent';
 import { debugLog } from './logging';
-import { getBackendClient } from './utils/getBackendClient';
+import { MessageRepository } from './database/messages';
 import { WorkflowType, MealPlanningState } from './shared/types';
 import {
     PlanStartRequest,
@@ -101,13 +101,9 @@ function planFeedback(call: grpc.ServerUnaryCall<PlanFeedbackRequest, PlanFeedba
                 return callback(new Error('This workflow is not currently awaiting feedback.'));
             }
 
-            // Add message using the http client
-            const client = getBackendClient();
-            await client.addMessage({
-                threadId: threadId,
-                message,
-                sender: from,
-            });
+            // Add message directly to database
+            const messageRepo = new MessageRepository();
+            await messageRepo.addMessage(threadId, from, message);
 
             const response = new PlanFeedbackResponse({
                 success: true,
