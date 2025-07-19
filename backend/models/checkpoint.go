@@ -144,17 +144,4 @@ func GetMessagesForProtobuf(db *sql.DB, threadID string) ([]map[string]interface
 	return messages, nil
 }
 
-// UpdateWorkflowCheckpointWithMessage is deprecated - use AddMessage instead
-func UpdateWorkflowCheckpointWithMessage(db *sql.DB, threadID, sender, message string) error {
-	// Just add to messages table now
-	return AddMessage(db, threadID, sender, message)
-}
 
-// AddMessageLegacy appends a message and returns it (for backward compatibility)
-func AddMessageLegacy(db *sql.DB, threadID, sender, message string) (ChatMessage, error) {
-	err := AddMessage(db, threadID, sender, message)
-	if err != nil {
-		return ChatMessage{}, err
-	}
-	return ChatMessage{Sender: sender, Text: message}, nil
-}
