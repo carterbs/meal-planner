@@ -1,6 +1,3 @@
-## Move ui into the root of the repo
-✅ Delete the typescript folder as a thing.
-
 ## Clean up logging
 The verbose logging is useful when debugging e2e tests. Figure out how to make it minimal in most cases. Maybe move some infos to debugs
 
