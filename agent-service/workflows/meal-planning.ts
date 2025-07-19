@@ -52,7 +52,7 @@ const DEBUG_LOGS = false;
  */
 export class MealPlanningWorkflow implements BaseWorkflow {
   private messageRepo: MessageRepository;
-
+  private isConnectedToMCP: boolean = false;
   /**
    * Helper to extract JSON from LLM responses (removes markdown code fences, whitespace, etc)
    */
@@ -142,8 +142,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     this.messageRepo = new MessageRepository();
     this.checkpointer = checkpointer;
     this.feedbackHandler = new FeedbackHandler(checkpointer);
+    // Create a unique client name to avoid conflicts between workflow instances
+    const clientId = Math.random().toString(36).substring(7);
     this.client = new Client({
-      name: 'meal-planner-workflow',
+      name: `meal-planner-workflow-${clientId}`,
       version: '1.0.0',
     });
 
@@ -201,6 +203,23 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     await this.checkpointer.put(config, checkpoint, metadata);
   }
 
+  async ensureMCPClient(): Promise<void> {
+    await infoLog(`ensureMCPClient called - isConnectedToMCP: ${this.isConnectedToMCP}`);
+    if (this.isConnectedToMCP) {
+      await infoLog('MCP client already connected, skipping initialization');
+      return;
+    }
+    
+    await infoLog('Connecting to MCP client...');
+    this.isConnectedToMCP = true;
+    const mcpPort = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT) : 3001;
+    const transport = new StreamableHTTPClientTransport(
+      new URL(`http://localhost:${mcpPort}/mcp`)
+    );
+    await this.client.connect(transport);
+    await infoLog('MCP client connected successfully');
+  }
+
   async initialize(): Promise<void> {
     await infoLog('MealPlanningWorkflow.initialize called');
     const isCodex = process.argv.includes('--codex');
@@ -210,12 +229,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     // No longer launch MCP server as child process since agent is now a long-running service
     await infoLog(`🍽️ [MEAL-WORKFLOW] Starting to initialize meal planning workflow`);
 
-    const mcpPort = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT) : 3001;
-    const transport = new StreamableHTTPClientTransport(
-      new URL(`http://localhost:${mcpPort}/mcp`)
-    );
-
-    await this.client.connect(transport);
+    await this.ensureMCPClient();
 
     // Initialize LLM
     const isTestMode = process.env.NODE_ENV === 'test';
