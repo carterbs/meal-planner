@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import AgentPage from './AgentPage';
+import App from './App';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
@@ -23,7 +23,7 @@ try {
     <React.StrictMode>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AgentPage />
+        <App />
       </ThemeProvider>
     </React.StrictMode>,
   );

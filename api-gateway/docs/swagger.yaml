@@ -392,6 +392,10 @@ definitions:
     properties:
       message:
         type: string
+      services:
+        additionalProperties:
+          type: boolean
+        type: object
       status:
         type: string
     type: object
@@ -827,7 +831,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Check the health status of the API gateway and backend services
+      description: Check the health status of the API gateway and all backend services
       produces:
       - application/json
       responses:

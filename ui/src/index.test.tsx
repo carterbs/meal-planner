@@ -91,7 +91,7 @@ describe('index.tsx', () => {
     const cssBaseline = themeProvider.props.children[0];
     const app = themeProvider.props.children[1];
     expect(cssBaseline.type.name).toBe('CssBaseline');
-    expect(app.type.name).toBe('AgentPage');
+    expect(app.type.name).toBe('App');
   });
 
   it('renders agent page when path starts with /agent', () => {
@@ -106,7 +106,7 @@ describe('index.tsx', () => {
     const renderCall = mockRender.mock.calls[0][0];
     const themeProvider = renderCall.props.children;
     const page = themeProvider.props.children[1];
-    expect(page.type.name).toBe('AgentPage');
+    expect(page.type.name).toBe('App');
   });
 
   it('handles missing root element gracefully', () => {

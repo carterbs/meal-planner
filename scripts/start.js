@@ -63,6 +63,14 @@ try {
 // Step 2: Start services in the correct order (matching e2e test)
 let loggingProcess, backendProcess, gatewayProcess, mcpProcess, agentProcess, frontendProcess;
 
+// Start frontend immediately - health check will handle service readiness
+console.log(chalk.blue('🚀 Starting frontend...'));
+frontendProcess = spawn('yarn', ['start'], {
+  cwd: path.join(PROJECT_ROOT, 'ui'),
+  stdio: 'inherit',
+  shell: true,
+});
+
 // Start logging service first
 console.log(chalk.blue('🚀 Starting logging service...'));
 loggingProcess = spawn('go', ['run', '.'], {
@@ -103,26 +111,16 @@ agentProcess = spawn('yarn', ['start:grpc'], {
   shell: true,
 });
 
-// Wait a bit for all services to initialize, then start frontend
-setTimeout(() => {
-  console.log(chalk.blue('🚀 Starting frontend...'));
-  frontendProcess = spawn('yarn', ['start'], {
-    cwd: path.join(PROJECT_ROOT, 'ui'),
-    stdio: 'inherit',
-    shell: true,
-  });
+// Handle frontend process events
+frontendProcess.on('error', (error) => {
+  console.error(chalk.red('❌ Failed to start frontend:'), error.message);
+  process.exit(1);
+});
 
-  // Handle frontend process events
-  frontendProcess.on('error', (error) => {
-    console.error(chalk.red('❌ Failed to start frontend:'), error.message);
-    process.exit(1);
-  });
-
-  frontendProcess.on('close', (code) => {
-    console.log(chalk.blue(`Frontend exited with code ${code}`));
-    process.exit(code);
-  });
-}, 5000); // Wait 5 seconds for all backend services to initialize
+frontendProcess.on('close', (code) => {
+  console.log(chalk.blue(`Frontend exited with code ${code}`));
+  process.exit(code);
+});
 
 // Handle process events
 loggingProcess.on('error', (error) => {
