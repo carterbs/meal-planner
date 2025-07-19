@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "mealplanner/generated/go/agent";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "api.proto";
+
+// Agent Service - provides gRPC endpoints for all CLI commands
+service AgentService {
+  // Plan commands
+  rpc PlanStart(PlanStartRequest) returns (PlanStartResponse);
+  rpc PlanFeedback(PlanFeedbackRequest) returns (PlanFeedbackResponse);
+  rpc PlanFinalize(PlanFinalizeRequest) returns (PlanFinalizeResponse);
+  
+  // Workflow management
+  rpc ResumeWorkflow(ResumeWorkflowRequest) returns (ResumeWorkflowResponse);
+
+  // High level workflow endpoints for API gateway
+  rpc StartAgentWorkflow(mealplanner.api.StartAgentWorkflowRequest) returns (mealplanner.api.StartAgentWorkflowResponse);
+  rpc MessageAgent(mealplanner.api.MessageAgentRequest) returns (mealplanner.api.MessageAgentResponse);
+  
+  // Workflow management endpoints
+  rpc GetWorkflowStatus(mealplanner.api.GetWorkflowStatusRequest) returns (mealplanner.api.GetWorkflowStatusResponse);
+  rpc ListWorkflows(google.protobuf.Empty) returns (mealplanner.api.ListWorkflowsResponse);
+  rpc CancelWorkflow(mealplanner.api.CancelWorkflowRequest) returns (mealplanner.api.CancelWorkflowResponse);
+  rpc GetWorkflowState(mealplanner.api.GetWorkflowStateRequest) returns (mealplanner.api.GetWorkflowStateResponse);
+  rpc AbandonWorkflow(mealplanner.api.AbandonWorkflowRequest) returns (mealplanner.api.AbandonWorkflowResponse);
+  
+  // Message management endpoints
+  rpc GetMessages(mealplanner.api.GetMessagesRequest) returns (mealplanner.api.GetMessagesResponse);
+  rpc AddMessage(mealplanner.api.AddMessageRequest) returns (mealplanner.api.AddMessageResponse);
+  rpc UpdateSessionState(mealplanner.api.UpdateSessionStateRequest) returns (mealplanner.api.UpdateSessionStateResponse);
+  
+  // Checkpoint management endpoints
+  rpc GetCheckpoint(mealplanner.api.GetCheckpointRequest) returns (mealplanner.api.GetCheckpointResponse);
+  rpc PutCheckpoint(mealplanner.api.PutCheckpointRequest) returns (mealplanner.api.PutCheckpointResponse);
+  rpc ListCheckpoints(mealplanner.api.ListCheckpointsRequest) returns (mealplanner.api.ListCheckpointsResponse);
+}
+
+// Plan Start
+message PlanStartRequest {
+  repeated string participants = 1;
+}
+
+message PlanStartResponse {
+  bool success = 1;
+  string message = 2;
+  string thread_id = 3;
+  string current_step = 4;
+  bytes initial_state = 5; // JSON-encoded state
+}
+
+// Plan Feedback
+message PlanFeedbackRequest {
+  string thread_id = 1;
+  string message = 2;
+  string from = 3;
+}
+
+message PlanFeedbackResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Plan Finalize
+message PlanFinalizeRequest {
+  string thread_id = 1;
+}
+
+message PlanFinalizeResponse {
+  bool success = 1;
+  string message = 2;
+  bytes final_state = 3; // JSON-encoded state
+}
+
+// Resume Workflow
+message ResumeWorkflowRequest {
+  string thread_id = 1;
+  map<string, string> input = 2; // Additional input parameters
+}
+
+message ResumeWorkflowResponse {
+  bool success = 1;
+  string message = 2;
+  string current_step = 3;
+  bytes state = 4; // JSON-encoded state
+}

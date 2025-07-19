@@ -49,6 +49,7 @@ async function waitForBackend(): Promise<void> {
   for (let i = 1; i <= 30; i++) {
     try {
       // Use the generated client for health check
+      console.log('--- Checking BE health ---');
       const result = await gatewayClient.get({
         url: '/health',
         throwOnError: false
@@ -80,6 +81,8 @@ async function createSession(): Promise<string> {
   });
 
   if (!result.data || !result.data.response || !result.data.response.threadId) {
+    console.log('--- Failed to create session ---');
+    console.log(JSON.stringify(result, null, 2));
     throw new Error(`Failed to create session: ${result.error || 'Unknown error'}`);
   }
 
@@ -96,10 +99,16 @@ async function sendMessage(threadId: string, message: string): Promise<void> {
     interactive: false,
   };
 
+  console.log('=== SENDING MESSAGE ===');
+  console.log('Request:', JSON.stringify(messageRequest, null, 2));
+  
   const result = await postAgentMessage({
     client: gatewayClient,
     body: messageRequest,
   });
+
+  console.log('=== MESSAGE RESULT ===');
+  console.log('Result:', JSON.stringify(result, null, 2));
 
   if (!result.data) {
     throw new Error(`Failed to send message: ${result.error || 'Unknown error'}`);
@@ -151,6 +160,7 @@ async function main(): Promise<void> {
   let loggingProcess: any = null;
   let backendProcess: any = null;
   let gatewayProcess: any = null;
+  let agentProcess: any = null;
 
   // Cleanup function
   const cleanup = async () => {
@@ -163,6 +173,9 @@ async function main(): Promise<void> {
     }
     if (gatewayProcess) {
       gatewayProcess.kill('SIGTERM');
+    }
+    if (agentProcess) {
+      agentProcess.kill('SIGTERM');
     }
     await execAsync('yarn kill:servers').catch(() => { });
   };
@@ -197,6 +210,10 @@ async function main(): Promise<void> {
         cwd: 'backend',
         stdio: 'inherit',
       });
+      
+      // Give backend extra time to fully start
+      console.log('--- Waiting 5s for backend to fully initialize ---');
+      await sleep(5000);
     }
 
     // Start API gateway
@@ -206,14 +223,30 @@ async function main(): Promise<void> {
       stdio: 'inherit',
     });
 
+    // Start agent service
+    console.log('--- Starting agent service ---');
+    agentProcess = spawn('yarn', ['start:grpc'], {
+      cwd: 'agent-service',
+      stdio: 'inherit',
+    });
+
     // Wait for backend to be ready
     await waitForBackend();
 
     // Create session and get thread ID
+    console.log('=== CREATING SESSION ===');
     const threadId = await createSession();
+    console.log('=== SESSION CREATED ===', threadId);
 
     // Send message to remove Friday meals
-    await sendMessage(threadId, "remove all of friday's meals");
+    console.log('=== ABOUT TO SEND MESSAGE ===');
+    try {
+      await sendMessage(threadId, "remove all of friday's meals");
+      console.log('=== MESSAGE SENT SUCCESSFULLY ===');
+    } catch (error) {
+      console.error('=== ERROR SENDING MESSAGE ===', error);
+      throw error;
+    }
 
     // Fetch and check results
     console.log('--- Fetching state and checking results ---');

@@ -37,10 +37,22 @@ killProcessOnPort(5000);
 console.log(chalk.blue('🔍 Checking for existing processes on port 50052 (logging service)...'));
 killProcessOnPort(50052);
 
+// Kill agent service port
+console.log(chalk.blue('🔍 Checking for existing processes on port 50053 (agent service)...'));
+killProcessOnPort(50053);
+
 // Start logging service
 console.log(chalk.blue('🚀 Starting logging service...'));
 const loggingProcess = spawn('go', ['run', 'main.go'], {
   cwd: path.join(PROJECT_ROOT, 'logging-service'),
+  stdio: 'inherit',
+  shell: true,
+});
+
+// Start agent service
+console.log(chalk.blue('🚀 Starting agent service...'));
+const agentProcess = spawn('yarn', ['start:grpc'], {
+  cwd: path.join(PROJECT_ROOT, 'agent-service'),
   stdio: 'inherit',
   shell: true,
 });
@@ -55,6 +67,16 @@ loggingProcess.on('close', (code) => {
   process.exit(code);
 });
 
+// Handle agent process events
+agentProcess.on('error', (error) => {
+  console.error(chalk.red('❌ Failed to start agent service:'), error.message);
+  process.exit(1);
+});
+agentProcess.on('close', (code) => {
+  console.log(chalk.blue(`Agent service exited with code ${code}`));
+  process.exit(code);
+});
+
 // Build MCP server
 console.log(chalk.blue('🔨 Building MCP server...'));
 try {
@@ -65,13 +87,13 @@ try {
   process.exit(1);
 }
 
-// Build agent
-console.log(chalk.blue('🔨 Building agent...'));
+// Build agent service
+console.log(chalk.blue('🔨 Building agent service...'));
 try {
-  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'typescript', 'agent'), stdio: 'inherit' });
-  console.log(chalk.green('✅ Agent built'));
+  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'agent-service'), stdio: 'inherit' });
+  console.log(chalk.green('✅ Agent service built'));
 } catch (error) {
-  console.error(chalk.red('❌ Failed to build agent:'), error.message);
+  console.error(chalk.red('❌ Failed to build agent service:'), error.message);
   process.exit(1);
 }
 
@@ -143,6 +165,7 @@ process.on('SIGINT', () => {
   console.log(chalk.blue('\n🛑 Stopping application servers...'));
   backendProcess.kill('SIGINT');
   if (typeof loggingProcess !== 'undefined') loggingProcess.kill('SIGINT');
+  if (typeof agentProcess !== 'undefined') agentProcess.kill('SIGINT');
   if (typeof gatewayProcess !== 'undefined') gatewayProcess.kill('SIGINT');
   if (typeof frontendProcess !== 'undefined') frontendProcess.kill('SIGINT');
   console.log(chalk.green('✅ Application servers stopped.'));

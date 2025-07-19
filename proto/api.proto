@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package mealplanner.api;
 
-option go_package = "mealplanner/generated/go/apipb";
+option go_package = "mealplanner/generated/go";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
@@ -196,16 +196,6 @@ message SwapMealRequest {
 
 message SwapMealResponse {
   Meal meal = 1;
-}
-
-message RemoveMealRequest {
-  string thread_id = 1;
-  int32 day_index = 2;
-  string meal_type = 3;
-}
-
-message RemoveMealResponse {
-  WeeklyMealPlan plan = 1;
 }
 
 message ReplaceMealRequest {
@@ -528,7 +518,6 @@ service MealPlannerAPI {
   rpc GetAllMeals(GetAllMealsRequest) returns (GetAllMealsResponse);
   rpc CreateMeal(CreateMealRequest) returns (CreateMealResponse);
   rpc SwapMeal(SwapMealRequest) returns (SwapMealResponse);
-  rpc RemoveMeal(RemoveMealRequest) returns (RemoveMealResponse);
   rpc ReplaceMeal(ReplaceMealRequest) returns (ReplaceMealResponse);
   rpc UpdateMealIngredient(UpdateMealIngredientRequest) returns (UpdateMealIngredientResponse);
   rpc DeleteMealIngredient(DeleteMealIngredientRequest) returns (DeleteMealIngredientResponse);
@@ -543,9 +532,7 @@ service MealPlannerAPI {
   rpc ReorderSteps(ReorderStepsRequest) returns (ReorderStepsResponse);
   rpc DeleteAllSteps(DeleteAllStepsRequest) returns (DeleteAllStepsResponse);
 
-  // Agent workflow endpoints
-  rpc StartAgentWorkflow(StartAgentWorkflowRequest) returns (StartAgentWorkflowResponse);
-  rpc MessageAgent(MessageAgentRequest) returns (MessageAgentResponse);
+  // Agent workflow endpoints handled by the agent service
   rpc GetWorkflowStatus(GetWorkflowStatusRequest) returns (GetWorkflowStatusResponse);
   rpc ListWorkflows(google.protobuf.Empty) returns (ListWorkflowsResponse);
   rpc CancelWorkflow(CancelWorkflowRequest) returns (CancelWorkflowResponse);

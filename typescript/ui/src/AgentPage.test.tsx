@@ -2,13 +2,13 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AgentPage from './AgentPage';
-import { 
-  mockWebSocket, 
-  mockClipboard, 
-  mockLocalStorage, 
-  userEvents, 
-  errorUtils, 
-  loadingUtils 
+import {
+  mockWebSocket,
+  mockClipboard,
+  mockLocalStorage,
+  userEvents,
+  errorUtils,
+  loadingUtils,
 } from './test-utils';
 
 // Mock the generated gateway functions
@@ -32,11 +32,17 @@ jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
 }));
 
 // Import the mocked functions
-import { postAgentStart, postAgentMessage, getCheckpointsByThreadId, getWorkflowsByThreadIdMessages, postWorkflowsByThreadIdAbandon } from '@mealplanner/generated/dist/gateway/index.js';
+import {
+  postAgentStart,
+  postAgentMessage,
+  getCheckpointsByThreadId,
+  getWorkflowsByThreadIdMessages,
+  postWorkflowsByThreadIdAbandon,
+} from '@mealplanner/generated/dist/gateway/index.js';
 
 beforeEach(() => {
   (global.fetch as jest.Mock) = jest.fn();
-  
+
   // Setup default mocks for the generated functions
   (postAgentStart as jest.Mock).mockResolvedValue({
     data: {
@@ -65,7 +71,7 @@ beforeEach(() => {
       },
     },
   });
-  
+
   (postAgentMessage as jest.Mock).mockResolvedValue({
     data: {
       response: {
@@ -73,7 +79,7 @@ beforeEach(() => {
       },
     },
   });
-  
+
   (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({
     data: {
       tuple: {
@@ -83,11 +89,11 @@ beforeEach(() => {
       },
     },
   });
-  
+
   (getWorkflowsByThreadIdMessages as jest.Mock).mockResolvedValue({
     data: [],
   });
-  
+
   (postWorkflowsByThreadIdAbandon as jest.Mock).mockResolvedValue({
     data: { status: 'ABANDONED' },
   });
@@ -167,6 +173,10 @@ test('copies meal plan to clipboard', async () => {
     expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument(),
   );
 
+  // Open share menu first
+  fireEvent.click(screen.getByTestId('share-menu-button'));
+  
+  // Then click copy meal plan
   fireEvent.click(screen.getByTestId('copy-meal-plan'));
   expect(write).toHaveBeenCalled();
 });
@@ -355,29 +365,30 @@ test('shows typing indicator when agent is working', async () => {
 test('handles large message history efficiently', async () => {
   const largeMessageHistory = Array.from({ length: 100 }, (_, i) => ({
     sender: i % 2 === 0 ? 'user' : 'agent',
-    content: `Message ${i}`
+    content: `Message ${i}`,
   }));
-  
+
   (global.fetch as jest.Mock)
     .mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({
-        response: { threadId: '123', currentStep: 'started' }
-      })
+      json: () =>
+        Promise.resolve({
+          response: { threadId: '123', currentStep: 'started' },
+        }),
     })
     .mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve(largeMessageHistory)
+      json: () => Promise.resolve(largeMessageHistory),
     });
-  
+
   const startTime = performance.now();
   render(<AgentPage />);
   fireEvent.click(screen.getByTestId('start-session'));
-  
+
   await waitFor(() => {
     expect(screen.getByTestId('message-input')).toBeInTheDocument();
   });
-  
+
   const endTime = performance.now();
   expect(endTime - startTime).toBeLessThan(1000); // Should render within 1 second
 });
@@ -385,31 +396,32 @@ test('handles large message history efficiently', async () => {
 test('handles concurrent user inputs gracefully', async () => {
   (global.fetch as jest.Mock).mockResolvedValue({
     ok: true,
-    json: () => Promise.resolve({
-      response: { threadId: '123', currentStep: 'started' }
-    })
+    json: () =>
+      Promise.resolve({
+        response: { threadId: '123', currentStep: 'started' },
+      }),
   });
-  
+
   render(<AgentPage />);
   fireEvent.click(screen.getByTestId('start-session'));
-  
+
   await waitFor(() => {
     expect(screen.getByTestId('message-input')).toBeInTheDocument();
   });
-  
+
   const input = screen.getByTestId('message-input');
   const sendButton = screen.getByTestId('send-button');
-  
+
   // Simulate rapid typing and clicking
   fireEvent.change(input, { target: { value: 'message 1' } });
   fireEvent.click(sendButton);
-  
+
   fireEvent.change(input, { target: { value: 'message 2' } });
   fireEvent.click(sendButton);
-  
+
   fireEvent.change(input, { target: { value: 'message 3' } });
   fireEvent.click(sendButton);
-  
+
   // Should handle multiple rapid inputs without crashing
   expect(input).toBeInTheDocument();
 });
@@ -417,39 +429,40 @@ test('handles concurrent user inputs gracefully', async () => {
 test('validates form inputs before submission', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
     ok: true,
-    json: () => Promise.resolve({
-      response: { threadId: '123', currentStep: 'started' }
-    })
+    json: () =>
+      Promise.resolve({
+        response: { threadId: '123', currentStep: 'started' },
+      }),
   });
-  
+
   render(<AgentPage />);
   fireEvent.click(screen.getByTestId('start-session'));
-  
+
   await waitFor(() => {
     expect(screen.getByTestId('message-input')).toBeInTheDocument();
   });
-  
+
   const sendButton = screen.getByTestId('send-button');
-  
+
   // Button should be disabled when input is empty
   expect(sendButton).toBeDisabled();
-  
+
   // Button should be enabled when input has content
   fireEvent.change(screen.getByTestId('message-input'), {
-    target: { value: 'test message' }
+    target: { value: 'test message' },
   });
   expect(sendButton).not.toBeDisabled();
 });
 
 test('supports accessibility features and ARIA labels', () => {
   render(<AgentPage />);
-  
+
   const startButton = screen.getByTestId('start-session');
   const messageInput = screen.getByTestId('message-input');
-  
+
   expect(startButton).toBeInTheDocument();
   expect(messageInput).toBeInTheDocument();
-  
+
   // Check that interactive elements are focusable
   expect(startButton.tabIndex).toBeGreaterThanOrEqual(0);
 });
@@ -457,23 +470,24 @@ test('supports accessibility features and ARIA labels', () => {
 test('handles keyboard navigation with arrow keys', async () => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
     ok: true,
-    json: () => Promise.resolve({
-      response: { threadId: '123', currentStep: 'started' }
-    })
+    json: () =>
+      Promise.resolve({
+        response: { threadId: '123', currentStep: 'started' },
+      }),
   });
-  
+
   render(<AgentPage />);
   fireEvent.click(screen.getByTestId('start-session'));
-  
+
   await waitFor(() => {
     expect(screen.getByTestId('message-input')).toBeInTheDocument();
   });
-  
+
   const input = screen.getByTestId('message-input');
-  
+
   // Test arrow key navigation
   fireEvent.keyDown(input, { key: 'ArrowUp', code: 'ArrowUp' });
   fireEvent.keyDown(input, { key: 'ArrowDown', code: 'ArrowDown' });
-  
+
   expect(input).toBeInTheDocument();
 });

@@ -1,6 +1,6 @@
 basePath: /api
 definitions:
-  apipb.AddBulkStepsRequest:
+  _go.AddBulkStepsRequest:
     properties:
       instructions:
         items:
@@ -9,7 +9,7 @@ definitions:
       meal_id:
         type: integer
     type: object
-  apipb.AddMessageRequest:
+  _go.AddMessageRequest:
     properties:
       message:
         type: string
@@ -19,37 +19,37 @@ definitions:
       thread_id:
         type: string
     type: object
-  apipb.AddStepRequest:
+  _go.AddStepRequest:
     properties:
       meal_id:
         type: integer
       step:
-        $ref: '#/definitions/apipb.Step'
+        $ref: '#/definitions/_go.Step'
     type: object
-  apipb.AgentCheckpoint:
+  _go.AgentCheckpoint:
     properties:
       next:
         items:
           type: string
         type: array
       state:
-        $ref: '#/definitions/apipb.MealPlanningCheckpointState'
+        $ref: '#/definitions/_go.MealPlanningCheckpointState'
       step:
         type: integer
     type: object
-  apipb.AgentCheckpointMetadata:
+  _go.AgentCheckpointMetadata:
     properties:
       source:
         type: string
       step:
         type: integer
     type: object
-  apipb.CreateMealRequest:
+  _go.CreateMealRequest:
     properties:
       meal:
-        $ref: '#/definitions/apipb.Meal'
+        $ref: '#/definitions/_go.Meal'
     type: object
-  apipb.FeedbackEntryProto:
+  _go.FeedbackEntryProto:
     properties:
       from:
         description: '"user" or agent id'
@@ -61,12 +61,12 @@ definitions:
       timestamp:
         $ref: '#/definitions/timestamppb.Timestamp'
     type: object
-  apipb.FinalizeMealPlanRequest:
+  _go.FinalizeMealPlanRequest:
     properties:
       plan:
-        $ref: '#/definitions/apipb.WeeklyMealPlan'
+        $ref: '#/definitions/_go.WeeklyMealPlan'
     type: object
-  apipb.GetShoppingListRequest:
+  _go.GetShoppingListRequest:
     properties:
       plan:
         description: meal IDs
@@ -74,7 +74,7 @@ definitions:
           type: integer
         type: array
     type: object
-  apipb.Ingredient:
+  _go.Ingredient:
     properties:
       id:
         type: integer
@@ -87,7 +87,7 @@ definitions:
       unit:
         type: string
     type: object
-  apipb.Meal:
+  _go.Meal:
     properties:
       effort:
         type: integer
@@ -97,7 +97,7 @@ definitions:
         type: integer
       ingredients:
         items:
-          $ref: '#/definitions/apipb.Ingredient'
+          $ref: '#/definitions/_go.Ingredient'
         type: array
       last_planned:
         $ref: '#/definitions/timestamppb.Timestamp'
@@ -107,21 +107,21 @@ definitions:
         type: string
       steps:
         items:
-          $ref: '#/definitions/apipb.Step'
+          $ref: '#/definitions/_go.Step'
         type: array
       url:
         type: string
     type: object
-  apipb.MealPlanEntry:
+  _go.MealPlanEntry:
     properties:
       day_index:
         type: integer
       meal:
-        $ref: '#/definitions/apipb.Meal'
+        $ref: '#/definitions/_go.Meal'
       meal_type:
         type: string
     type: object
-  apipb.MealPlanningCheckpointState:
+  _go.MealPlanningCheckpointState:
     properties:
       created_at:
         $ref: '#/definitions/timestamppb.Timestamp'
@@ -129,48 +129,39 @@ definitions:
         type: string
       feedback_history:
         items:
-          $ref: '#/definitions/apipb.FeedbackEntryProto'
+          $ref: '#/definitions/_go.FeedbackEntryProto'
         type: array
       is_finalized:
         type: boolean
       iteration_count:
         type: integer
       meal_plan:
-        $ref: '#/definitions/apipb.WeeklyMealPlan'
+        $ref: '#/definitions/_go.WeeklyMealPlan'
       participants:
         items:
           type: string
         type: array
       shopping_list:
-        $ref: '#/definitions/apipb.ShoppingList'
+        $ref: '#/definitions/_go.ShoppingList'
       thread_id:
         type: string
       updated_at:
         $ref: '#/definitions/timestamppb.Timestamp'
     type: object
-  apipb.PutCheckpointRequest:
+  _go.PutCheckpointRequest:
     properties:
       checkpoint:
-        $ref: '#/definitions/apipb.AgentCheckpoint'
+        $ref: '#/definitions/_go.AgentCheckpoint'
       checkpoint_ns:
         type: string
       metadata:
-        $ref: '#/definitions/apipb.AgentCheckpointMetadata'
+        $ref: '#/definitions/_go.AgentCheckpointMetadata'
       thread_id:
         type: string
       workflow_type:
         type: string
     type: object
-  apipb.RemoveMealRequest:
-    properties:
-      day_index:
-        type: integer
-      meal_type:
-        type: string
-      thread_id:
-        type: string
-    type: object
-  apipb.ReorderStepsRequest:
+  _go.ReorderStepsRequest:
     properties:
       meal_id:
         type: integer
@@ -179,32 +170,32 @@ definitions:
           type: integer
         type: array
     type: object
-  apipb.ReplaceMealRequest:
+  _go.ReplaceMealRequest:
     properties:
       day:
         type: string
       new_meal_id:
         type: integer
     type: object
-  apipb.SaveMealPlanRequest:
+  _go.SaveMealPlanRequest:
     properties:
       entries:
         items:
-          $ref: '#/definitions/apipb.MealPlanEntry'
+          $ref: '#/definitions/_go.MealPlanEntry'
         type: array
       thread_id:
         type: string
       version:
         type: integer
     type: object
-  apipb.ShoppingList:
+  _go.ShoppingList:
     properties:
       items:
         items:
-          $ref: '#/definitions/apipb.ShoppingListItem'
+          $ref: '#/definitions/_go.ShoppingListItem'
         type: array
     type: object
-  apipb.ShoppingListItem:
+  _go.ShoppingListItem:
     properties:
       category:
         type: string
@@ -213,7 +204,7 @@ definitions:
       quantity:
         type: string
     type: object
-  apipb.Step:
+  _go.Step:
     properties:
       id:
         type: integer
@@ -224,23 +215,23 @@ definitions:
       step_number:
         type: integer
     type: object
-  apipb.SwapMealRequest:
+  _go.SwapMealRequest:
     properties:
       meal_id:
         type: integer
       meal_type:
         type: string
     type: object
-  apipb.UpdateMealIngredientRequest:
+  _go.UpdateMealIngredientRequest:
     properties:
       ingredient:
-        $ref: '#/definitions/apipb.Ingredient'
+        $ref: '#/definitions/_go.Ingredient'
       ingredient_id:
         type: integer
       meal_id:
         type: integer
     type: object
-  apipb.UpdateSessionStateRequest:
+  _go.UpdateSessionStateRequest:
     properties:
       current_step:
         type: string
@@ -255,24 +246,24 @@ definitions:
       thread_id:
         type: string
     type: object
-  apipb.UpdateStepRequest:
+  _go.UpdateStepRequest:
     properties:
       meal_id:
         type: integer
       step:
-        $ref: '#/definitions/apipb.Step'
+        $ref: '#/definitions/_go.Step'
       step_id:
         type: integer
     type: object
-  apipb.WeeklyMealPlan:
+  _go.WeeklyMealPlan:
     properties:
       days:
         items:
-          $ref: '#/definitions/apipb.MealPlanEntry'
+          $ref: '#/definitions/_go.MealPlanEntry'
         type: array
       shopping_list:
         items:
-          $ref: '#/definitions/apipb.ShoppingListItem'
+          $ref: '#/definitions/_go.ShoppingListItem'
         type: array
     type: object
   main.AgentMessageRequestBody:
@@ -780,7 +771,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.PutCheckpointRequest'
+          $ref: '#/definitions/_go.PutCheckpointRequest'
       produces:
       - application/json
       responses:
@@ -880,7 +871,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.SaveMealPlanRequest'
+          $ref: '#/definitions/_go.SaveMealPlanRequest'
       produces:
       - application/json
       responses:
@@ -910,7 +901,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.FinalizeMealPlanRequest'
+          $ref: '#/definitions/_go.FinalizeMealPlanRequest'
       produces:
       - application/json
       responses:
@@ -978,7 +969,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.ReplaceMealRequest'
+          $ref: '#/definitions/_go.ReplaceMealRequest'
       produces:
       - application/json
       responses:
@@ -1031,7 +1022,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.CreateMealRequest'
+          $ref: '#/definitions/_go.CreateMealRequest'
       produces:
       - application/json
       responses:
@@ -1133,7 +1124,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.UpdateMealIngredientRequest'
+          $ref: '#/definitions/_go.UpdateMealIngredientRequest'
       produces:
       - application/json
       responses:
@@ -1224,7 +1215,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.AddStepRequest'
+          $ref: '#/definitions/_go.AddStepRequest'
       produces:
       - application/json
       responses:
@@ -1297,7 +1288,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.UpdateStepRequest'
+          $ref: '#/definitions/_go.UpdateStepRequest'
       produces:
       - application/json
       responses:
@@ -1332,7 +1323,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.AddBulkStepsRequest'
+          $ref: '#/definitions/_go.AddBulkStepsRequest'
       produces:
       - application/json
       responses:
@@ -1367,7 +1358,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.ReorderStepsRequest'
+          $ref: '#/definitions/_go.ReorderStepsRequest'
       produces:
       - application/json
       responses:
@@ -1386,36 +1377,6 @@ paths:
       summary: Reorder Recipe Steps
       tags:
       - steps
-  /meals/remove:
-    post:
-      consumes:
-      - application/json
-      description: Remove a meal from the plan
-      parameters:
-      - description: Remove meal request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/apipb.RemoveMealRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Meal removed successfully
-          schema:
-            $ref: '#/definitions/main.MealPlanResponse'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/main.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/main.ErrorResponse'
-      summary: Remove Meal
-      tags:
-      - meals
   /meals/swap:
     post:
       consumes:
@@ -1427,7 +1388,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.SwapMealRequest'
+          $ref: '#/definitions/_go.SwapMealRequest'
       produces:
       - application/json
       responses:
@@ -1476,7 +1437,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.GetShoppingListRequest'
+          $ref: '#/definitions/_go.GetShoppingListRequest'
       produces:
       - application/json
       responses:
@@ -1597,7 +1558,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.AddMessageRequest'
+          $ref: '#/definitions/_go.AddMessageRequest'
       produces:
       - application/json
       responses:
@@ -1632,7 +1593,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/apipb.UpdateSessionStateRequest'
+          $ref: '#/definitions/_go.UpdateSessionStateRequest'
       produces:
       - application/json
       responses:

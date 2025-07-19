@@ -294,7 +294,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.PutCheckpointRequest"
+                            "$ref": "#/definitions/_go.PutCheckpointRequest"
                         }
                     }
                 ],
@@ -446,7 +446,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.SaveMealPlanRequest"
+                            "$ref": "#/definitions/_go.SaveMealPlanRequest"
                         }
                     }
                 ],
@@ -492,7 +492,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.FinalizeMealPlanRequest"
+                            "$ref": "#/definitions/_go.FinalizeMealPlanRequest"
                         }
                     }
                 ],
@@ -596,7 +596,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.ReplaceMealRequest"
+                            "$ref": "#/definitions/_go.ReplaceMealRequest"
                         }
                     }
                 ],
@@ -677,7 +677,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.CreateMealRequest"
+                            "$ref": "#/definitions/_go.CreateMealRequest"
                         }
                     }
                 ],
@@ -686,52 +686,6 @@ const docTemplate = `{
                         "description": "Meal created successfully",
                         "schema": {
                             "$ref": "#/definitions/main.MealResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/meals/remove": {
-            "post": {
-                "description": "Remove a meal from the plan",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "meals"
-                ],
-                "summary": "Remove Meal",
-                "parameters": [
-                    {
-                        "description": "Remove meal request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/apipb.RemoveMealRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Meal removed successfully",
-                        "schema": {
-                            "$ref": "#/definitions/main.MealPlanResponse"
                         }
                     },
                     "400": {
@@ -769,7 +723,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.SwapMealRequest"
+                            "$ref": "#/definitions/_go.SwapMealRequest"
                         }
                     }
                 ],
@@ -873,7 +827,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.UpdateMealIngredientRequest"
+                            "$ref": "#/definitions/_go.UpdateMealIngredientRequest"
                         }
                     }
                 ],
@@ -1017,7 +971,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.AddStepRequest"
+                            "$ref": "#/definitions/_go.AddStepRequest"
                         }
                     }
                 ],
@@ -1112,7 +1066,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.AddBulkStepsRequest"
+                            "$ref": "#/definitions/_go.AddBulkStepsRequest"
                         }
                     }
                 ],
@@ -1165,7 +1119,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.ReorderStepsRequest"
+                            "$ref": "#/definitions/_go.ReorderStepsRequest"
                         }
                     }
                 ],
@@ -1225,7 +1179,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.UpdateStepRequest"
+                            "$ref": "#/definitions/_go.UpdateStepRequest"
                         }
                     }
                 ],
@@ -1349,7 +1303,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.GetShoppingListRequest"
+                            "$ref": "#/definitions/_go.GetShoppingListRequest"
                         }
                     }
                 ],
@@ -1532,7 +1486,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.AddMessageRequest"
+                            "$ref": "#/definitions/_go.AddMessageRequest"
                         }
                     }
                 ],
@@ -1585,7 +1539,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apipb.UpdateSessionStateRequest"
+                            "$ref": "#/definitions/_go.UpdateSessionStateRequest"
                         }
                     }
                 ],
@@ -1613,7 +1567,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "apipb.AddBulkStepsRequest": {
+        "_go.AddBulkStepsRequest": {
             "type": "object",
             "properties": {
                 "instructions": {
@@ -1627,7 +1581,7 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.AddMessageRequest": {
+        "_go.AddMessageRequest": {
             "type": "object",
             "properties": {
                 "message": {
@@ -1642,18 +1596,18 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.AddStepRequest": {
+        "_go.AddStepRequest": {
             "type": "object",
             "properties": {
                 "meal_id": {
                     "type": "integer"
                 },
                 "step": {
-                    "$ref": "#/definitions/apipb.Step"
+                    "$ref": "#/definitions/_go.Step"
                 }
             }
         },
-        "apipb.AgentCheckpoint": {
+        "_go.AgentCheckpoint": {
             "type": "object",
             "properties": {
                 "next": {
@@ -1663,14 +1617,14 @@ const docTemplate = `{
                     }
                 },
                 "state": {
-                    "$ref": "#/definitions/apipb.MealPlanningCheckpointState"
+                    "$ref": "#/definitions/_go.MealPlanningCheckpointState"
                 },
                 "step": {
                     "type": "integer"
                 }
             }
         },
-        "apipb.AgentCheckpointMetadata": {
+        "_go.AgentCheckpointMetadata": {
             "type": "object",
             "properties": {
                 "source": {
@@ -1681,15 +1635,15 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.CreateMealRequest": {
+        "_go.CreateMealRequest": {
             "type": "object",
             "properties": {
                 "meal": {
-                    "$ref": "#/definitions/apipb.Meal"
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
-        "apipb.FeedbackEntryProto": {
+        "_go.FeedbackEntryProto": {
             "type": "object",
             "properties": {
                 "from": {
@@ -1707,15 +1661,15 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.FinalizeMealPlanRequest": {
+        "_go.FinalizeMealPlanRequest": {
             "type": "object",
             "properties": {
                 "plan": {
-                    "$ref": "#/definitions/apipb.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
                 }
             }
         },
-        "apipb.GetShoppingListRequest": {
+        "_go.GetShoppingListRequest": {
             "type": "object",
             "properties": {
                 "plan": {
@@ -1727,7 +1681,7 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.Ingredient": {
+        "_go.Ingredient": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1747,7 +1701,7 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.Meal": {
+        "_go.Meal": {
             "type": "object",
             "properties": {
                 "effort": {
@@ -1762,7 +1716,7 @@ const docTemplate = `{
                 "ingredients": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/apipb.Ingredient"
+                        "$ref": "#/definitions/_go.Ingredient"
                     }
                 },
                 "last_planned": {
@@ -1777,7 +1731,7 @@ const docTemplate = `{
                 "steps": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/apipb.Step"
+                        "$ref": "#/definitions/_go.Step"
                     }
                 },
                 "url": {
@@ -1785,21 +1739,21 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.MealPlanEntry": {
+        "_go.MealPlanEntry": {
             "type": "object",
             "properties": {
                 "day_index": {
                     "type": "integer"
                 },
                 "meal": {
-                    "$ref": "#/definitions/apipb.Meal"
+                    "$ref": "#/definitions/_go.Meal"
                 },
                 "meal_type": {
                     "type": "string"
                 }
             }
         },
-        "apipb.MealPlanningCheckpointState": {
+        "_go.MealPlanningCheckpointState": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -1811,7 +1765,7 @@ const docTemplate = `{
                 "feedback_history": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/apipb.FeedbackEntryProto"
+                        "$ref": "#/definitions/_go.FeedbackEntryProto"
                     }
                 },
                 "is_finalized": {
@@ -1821,7 +1775,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "meal_plan": {
-                    "$ref": "#/definitions/apipb.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
                 },
                 "participants": {
                     "type": "array",
@@ -1830,7 +1784,7 @@ const docTemplate = `{
                     }
                 },
                 "shopping_list": {
-                    "$ref": "#/definitions/apipb.ShoppingList"
+                    "$ref": "#/definitions/_go.ShoppingList"
                 },
                 "thread_id": {
                     "type": "string"
@@ -1840,17 +1794,17 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.PutCheckpointRequest": {
+        "_go.PutCheckpointRequest": {
             "type": "object",
             "properties": {
                 "checkpoint": {
-                    "$ref": "#/definitions/apipb.AgentCheckpoint"
+                    "$ref": "#/definitions/_go.AgentCheckpoint"
                 },
                 "checkpoint_ns": {
                     "type": "string"
                 },
                 "metadata": {
-                    "$ref": "#/definitions/apipb.AgentCheckpointMetadata"
+                    "$ref": "#/definitions/_go.AgentCheckpointMetadata"
                 },
                 "thread_id": {
                     "type": "string"
@@ -1860,21 +1814,7 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.RemoveMealRequest": {
-            "type": "object",
-            "properties": {
-                "day_index": {
-                    "type": "integer"
-                },
-                "meal_type": {
-                    "type": "string"
-                },
-                "thread_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "apipb.ReorderStepsRequest": {
+        "_go.ReorderStepsRequest": {
             "type": "object",
             "properties": {
                 "meal_id": {
@@ -1888,7 +1828,7 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.ReplaceMealRequest": {
+        "_go.ReplaceMealRequest": {
             "type": "object",
             "properties": {
                 "day": {
@@ -1899,13 +1839,13 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.SaveMealPlanRequest": {
+        "_go.SaveMealPlanRequest": {
             "type": "object",
             "properties": {
                 "entries": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/apipb.MealPlanEntry"
+                        "$ref": "#/definitions/_go.MealPlanEntry"
                     }
                 },
                 "thread_id": {
@@ -1916,18 +1856,18 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.ShoppingList": {
+        "_go.ShoppingList": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/apipb.ShoppingListItem"
+                        "$ref": "#/definitions/_go.ShoppingListItem"
                     }
                 }
             }
         },
-        "apipb.ShoppingListItem": {
+        "_go.ShoppingListItem": {
             "type": "object",
             "properties": {
                 "category": {
@@ -1941,7 +1881,7 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.Step": {
+        "_go.Step": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1958,7 +1898,7 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.SwapMealRequest": {
+        "_go.SwapMealRequest": {
             "type": "object",
             "properties": {
                 "meal_id": {
@@ -1969,11 +1909,11 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.UpdateMealIngredientRequest": {
+        "_go.UpdateMealIngredientRequest": {
             "type": "object",
             "properties": {
                 "ingredient": {
-                    "$ref": "#/definitions/apipb.Ingredient"
+                    "$ref": "#/definitions/_go.Ingredient"
                 },
                 "ingredient_id": {
                     "type": "integer"
@@ -1983,7 +1923,7 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.UpdateSessionStateRequest": {
+        "_go.UpdateSessionStateRequest": {
             "type": "object",
             "properties": {
                 "current_step": {
@@ -2005,33 +1945,33 @@ const docTemplate = `{
                 }
             }
         },
-        "apipb.UpdateStepRequest": {
+        "_go.UpdateStepRequest": {
             "type": "object",
             "properties": {
                 "meal_id": {
                     "type": "integer"
                 },
                 "step": {
-                    "$ref": "#/definitions/apipb.Step"
+                    "$ref": "#/definitions/_go.Step"
                 },
                 "step_id": {
                     "type": "integer"
                 }
             }
         },
-        "apipb.WeeklyMealPlan": {
+        "_go.WeeklyMealPlan": {
             "type": "object",
             "properties": {
                 "days": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/apipb.MealPlanEntry"
+                        "$ref": "#/definitions/_go.MealPlanEntry"
                     }
                 },
                 "shopping_list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/apipb.ShoppingListItem"
+                        "$ref": "#/definitions/_go.ShoppingListItem"
                     }
                 }
             }
