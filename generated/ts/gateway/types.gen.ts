@@ -246,6 +246,9 @@ export type MainGetMessagesResponse = {
 
 export type MainHealthResponse = {
     message?: string;
+    services?: {
+        [key: string]: boolean;
+    };
     status?: string;
 };
 
