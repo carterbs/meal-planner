@@ -10,6 +10,14 @@ let initialized = false;
 
 export async function initLogging(_serviceName = 'agent') {
   if (initialized) return;
+  
+  // Skip logging service connection during unit tests
+  if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID) {
+    console.log('[AGENT] Skipping logging service connection during unit tests');
+    initialized = true;
+    return;
+  }
+  
   const baseUrl = process.env.LOGGING_SERVICE_ADDR || 'http://localhost:50052';
 
   // Retry logic for connecting to logging service
@@ -89,7 +97,10 @@ async function sendLog(
   logToFile(level, message); // Always log to file for backup
 
   if (!loggingClient) {
-    console.error(`[AGENT] No logging client available`);
+    // Only log error if not in test environment
+    if (!(process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID)) {
+      console.error(`[AGENT] No logging client available`);
+    }
     return;
   }
   try {
