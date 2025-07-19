@@ -2,7 +2,7 @@ import { infoLog, warnLog, errorLog } from '../logging';
 import { ChatOpenAI } from '@langchain/openai';
 import { FakeChatModel } from '@langchain/core/utils/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import {
   WeeklyMealPlan as GeneratedWeeklyMealPlan,
   Meal as GeneratedMeal,
@@ -43,29 +43,9 @@ import {
 } from './meal-planning-prompts';
 import { v4 as uuidv4 } from 'uuid';
 import { MessageRepository } from '../database/messages';
-import { dirname, join } from 'path';
-import { existsSync } from 'fs';
 const DEBUG_LOGS = false;
 
-// Helper function to find repo root
-function findRepoRoot(): string {
-  let currentDir = process.cwd();
 
-  // If we're in a compiled version, start from the actual source location
-  if (currentDir.includes('/dist/')) {
-    currentDir = dirname(dirname(currentDir));
-  }
-
-  while (currentDir !== '/') {
-    if (existsSync(join(currentDir, 'package.json')) && existsSync(join(currentDir, '.git'))) {
-      return currentDir;
-    }
-    currentDir = dirname(currentDir);
-  }
-
-  // Fallback: assume we're already in the repo root
-  return process.cwd();
-}
 
 /**
  * Meal planning workflow
@@ -226,16 +206,14 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const isCodex = process.argv.includes('--codex');
 
     // Connect to MCP server
-    // Always connect to the already-running MCP server (launched independently by yarn start:grpc)
+    // Always connect to the already-running MCP server (launched independently by yarn start:mcp)
     // No longer launch MCP server as child process since agent is now a long-running service
     await infoLog(`🍽️ [MEAL-WORKFLOW] Starting to initialize meal planning workflow`);
 
-    const transport = new StdioClientTransport({
-      command: 'node',
-      args: [
-        join(findRepoRoot(), 'typescript/mcp/dist/index.js'),
-      ],
-    });
+    const mcpPort = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT) : 3001;
+    const transport = new StreamableHTTPClientTransport(
+      new URL(`http://localhost:${mcpPort}/mcp`)
+    );
 
     await this.client.connect(transport);
 

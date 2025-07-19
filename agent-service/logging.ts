@@ -12,27 +12,47 @@ export async function initLogging(_serviceName = 'agent') {
   if (initialized) return;
   const baseUrl = process.env.LOGGING_SERVICE_ADDR || 'http://localhost:50052';
 
-  const transport = createGrpcTransport({
-    baseUrl,
-    httpVersion: '2',
-  });
+  // Retry logic for connecting to logging service
+  const maxRetries = 30; // 30 attempts
+  const retryDelay = 2000; // 2 seconds between attempts
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[AGENT] Attempting to connect to logging service (attempt ${attempt}/${maxRetries})...`);
+      
+      const transport = createGrpcTransport({
+        baseUrl,
+        httpVersion: '2',
+      });
 
-  loggingClient = createClient(LoggingService, transport);
+      loggingClient = createClient(LoggingService, transport);
 
-  try {
-    // Test connection with a basic health check
-    logToFile(
-      'INFO',
-      `Successfully connected to logging service at ${baseUrl}`,
-    );
-  } catch (error) {
-    console.error(`[AGENT] Failed to connect to logging service: ${error}`);
-    logToFile('ERROR', `Failed to connect to logging service: ${error}`);
-    throw error;
+      // Test connection with a basic health check
+      logToFile(
+        'INFO',
+        `Successfully connected to logging service at ${baseUrl}`,
+      );
+      
+      console.log(`[AGENT] Successfully connected to logging service at ${baseUrl}`);
+      initialized = true;
+      sendLog('INFO', 'Agent logging initialized');
+      return;
+      
+    } catch (error) {
+      console.error(`[AGENT] Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${error}`);
+      logToFile('ERROR', `Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${error}`);
+      
+      if (attempt === maxRetries) {
+        console.error(`[AGENT] Failed to connect to logging service after ${maxRetries} attempts. Continuing without logging service.`);
+        // Don't throw error, just continue without logging service
+        initialized = true;
+        return;
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
   }
-
-  initialized = true;
-  sendLog('INFO', 'Agent logging initialized');
 }
 
 function logToFile(level: string, message: string) {

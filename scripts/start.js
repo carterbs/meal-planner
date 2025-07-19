@@ -41,53 +41,16 @@ killProcessOnPort(50052);
 console.log(chalk.blue('🔍 Checking for existing processes on port 50053 (agent service)...'));
 killProcessOnPort(50053);
 
-// Start logging service
-console.log(chalk.blue('🚀 Starting logging service...'));
-const loggingProcess = spawn('go', ['run', 'main.go'], {
-  cwd: path.join(PROJECT_ROOT, 'logging-service'),
-  stdio: 'inherit',
-  shell: true,
-});
-
-// Start agent service
-console.log(chalk.blue('🚀 Starting agent service...'));
-const agentProcess = spawn('yarn', ['start:grpc'], {
-  cwd: path.join(PROJECT_ROOT, 'agent-service'),
-  stdio: 'inherit',
-  shell: true,
-});
-
-// Handle logging process events
-loggingProcess.on('error', (error) => {
-  console.error(chalk.red('❌ Failed to start logging service:'), error.message);
-  process.exit(1);
-});
-loggingProcess.on('close', (code) => {
-  console.log(chalk.blue(`Logging service exited with code ${code}`));
-  process.exit(code);
-});
-
-// Handle agent process events
-agentProcess.on('error', (error) => {
-  console.error(chalk.red('❌ Failed to start agent service:'), error.message);
-  process.exit(1);
-});
-agentProcess.on('close', (code) => {
-  console.log(chalk.blue(`Agent service exited with code ${code}`));
-  process.exit(code);
-});
-
-// Build MCP server
+// Build services first
 console.log(chalk.blue('🔨 Building MCP server...'));
 try {
-  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'typescript', 'mcp'), stdio: 'inherit' });
+  execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'mcp-service'), stdio: 'inherit' });
   console.log(chalk.green('✅ MCP server built'));
 } catch (error) {
   console.error(chalk.red('❌ Failed to build MCP server:'), error.message);
   process.exit(1);
 }
 
-// Build agent service
 console.log(chalk.blue('🔨 Building agent service...'));
 try {
   execSync('yarn build', { cwd: path.join(PROJECT_ROOT, 'agent-service'), stdio: 'inherit' });
@@ -97,77 +60,125 @@ try {
   process.exit(1);
 }
 
-// Step 2: Start the applications
-console.log(chalk.blue('🚀 Starting backend, API gateway, and frontend...'));
+// Step 2: Start services in the correct order (matching e2e test)
+let loggingProcess, backendProcess, gatewayProcess, mcpProcess, agentProcess, frontendProcess;
 
-// Start backend first (on 8090)
-const backendProcess = spawn('go', ['run', '.'], {
+// Start logging service first
+console.log(chalk.blue('🚀 Starting logging service...'));
+loggingProcess = spawn('go', ['run', '.'], {
+  cwd: path.join(PROJECT_ROOT, 'logging-service'),
+  stdio: 'inherit',
+  shell: true,
+});
+
+// Start backend
+console.log(chalk.blue('🚀 Starting backend...'));
+backendProcess = spawn('go', ['run', '.'], {
   cwd: path.join(PROJECT_ROOT, 'meal-service'),
   stdio: 'inherit',
   shell: true,
 });
 
-// Wait for backend to be ready, then start API gateway
+// Start API gateway
+console.log(chalk.blue('🚀 Starting API gateway...'));
+gatewayProcess = spawn('go', ['run', '.'], {
+  cwd: path.join(PROJECT_ROOT, 'api-gateway'),
+  stdio: 'inherit',
+  shell: true,
+});
+
+// Start MCP server
+console.log(chalk.blue('🚀 Starting MCP server...'));
+mcpProcess = spawn('yarn', ['start:mcp'], {
+  cwd: PROJECT_ROOT,
+  stdio: 'inherit',
+  shell: true,
+});
+
+// Start agent service
+console.log(chalk.blue('🚀 Starting agent service...'));
+agentProcess = spawn('yarn', ['start:grpc'], {
+  cwd: PROJECT_ROOT,
+  stdio: 'inherit',
+  shell: true,
+});
+
+// Wait a bit for all services to initialize, then start frontend
 setTimeout(() => {
-  // Start API gateway (on 8080)
-  const gatewayProcess = spawn('go', ['run', '.'], {
-    cwd: path.join(PROJECT_ROOT, 'api-gateway'),
+  console.log(chalk.blue('🚀 Starting frontend...'));
+  frontendProcess = spawn('yarn', ['start'], {
+    cwd: path.join(PROJECT_ROOT, 'typescript/ui'),
     stdio: 'inherit',
     shell: true,
   });
 
-  // Wait a bit more for gateway, then start frontend
-  setTimeout(() => {
-    // Then start frontend
-    const frontendProcess = spawn('yarn', ['start'], {
-      cwd: path.join(PROJECT_ROOT, 'typescript/ui'),
-      stdio: 'inherit',
-      shell: true,
-    });
-
-    // Handle frontend process events
-    frontendProcess.on('error', (error) => {
-      console.error(chalk.red('❌ Failed to start frontend:'), error.message);
-      process.exit(1);
-    });
-
-    frontendProcess.on('close', (code) => {
-      console.log(chalk.blue(`Frontend exited with code ${code}`));
-      process.exit(code);
-    });
-  }, 2000); // Wait 2 seconds for gateway to initialize
-
-  // Handle gateway process events
-  gatewayProcess.on('error', (error) => {
-    console.error(chalk.red('❌ Failed to start API gateway:'), error.message);
+  // Handle frontend process events
+  frontendProcess.on('error', (error) => {
+    console.error(chalk.red('❌ Failed to start frontend:'), error.message);
     process.exit(1);
   });
 
-  gatewayProcess.on('close', (code) => {
-    console.log(chalk.blue(`API gateway exited with code ${code}`));
+  frontendProcess.on('close', (code) => {
+    console.log(chalk.blue(`Frontend exited with code ${code}`));
     process.exit(code);
   });
-}, 3000); // Wait 3 seconds for backend to initialize
+}, 5000); // Wait 5 seconds for all backend services to initialize
 
-// Handle backend process events
+// Handle process events
+loggingProcess.on('error', (error) => {
+  console.error(chalk.red('❌ Failed to start logging service:'), error.message);
+  process.exit(1);
+});
+loggingProcess.on('close', (code) => {
+  console.log(chalk.blue(`Logging service exited with code ${code}`));
+  process.exit(code);
+});
+
 backendProcess.on('error', (error) => {
   console.error(chalk.red('❌ Failed to start backend:'), error.message);
   process.exit(1);
 });
-
 backendProcess.on('close', (code) => {
   console.log(chalk.blue(`Backend exited with code ${code}`));
+  process.exit(code);
+});
+
+gatewayProcess.on('error', (error) => {
+  console.error(chalk.red('❌ Failed to start API gateway:'), error.message);
+  process.exit(1);
+});
+gatewayProcess.on('close', (code) => {
+  console.log(chalk.blue(`API gateway exited with code ${code}`));
+  process.exit(code);
+});
+
+mcpProcess.on('error', (error) => {
+  console.error(chalk.red('❌ Failed to start MCP server:'), error.message);
+  process.exit(1);
+});
+mcpProcess.on('close', (code) => {
+  console.log(chalk.blue(`MCP server exited with code ${code}`));
+  process.exit(code);
+});
+
+agentProcess.on('error', (error) => {
+  console.error(chalk.red('❌ Failed to start agent service:'), error.message);
+  process.exit(1);
+});
+agentProcess.on('close', (code) => {
+  console.log(chalk.blue(`Agent service exited with code ${code}`));
   process.exit(code);
 });
 
 // Handle CTRL+C gracefully
 process.on('SIGINT', () => {
   console.log(chalk.blue('\n🛑 Stopping application servers...'));
-  backendProcess.kill('SIGINT');
-  if (typeof loggingProcess !== 'undefined') loggingProcess.kill('SIGINT');
-  if (typeof agentProcess !== 'undefined') agentProcess.kill('SIGINT');
-  if (typeof gatewayProcess !== 'undefined') gatewayProcess.kill('SIGINT');
-  if (typeof frontendProcess !== 'undefined') frontendProcess.kill('SIGINT');
+  if (loggingProcess) loggingProcess.kill('SIGINT');
+  if (backendProcess) backendProcess.kill('SIGINT');
+  if (gatewayProcess) gatewayProcess.kill('SIGINT');
+  if (mcpProcess) mcpProcess.kill('SIGINT');
+  if (agentProcess) agentProcess.kill('SIGINT');
+  if (frontendProcess) frontendProcess.kill('SIGINT');
   console.log(chalk.green('✅ Application servers stopped.'));
   process.exit(0);
 });

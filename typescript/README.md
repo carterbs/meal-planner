@@ -19,7 +19,7 @@ typescript/
 
 - **ui** – React application located in `typescript/ui`. It communicates with the Go backend through the MCP server and reuses code from `shared`.
 - **agent** – Node.js LangGraph agent found in `typescript/agent`. It also imports utilities from `shared` and interacts with the backend.
-- **mcp** – Express server in `typescript/mcp` implementing the [Model Context Protocol](https://github.com/modelcontextprotocol/sdk). Acts as a bridge between the TypeScript packages and the Go backend.
+- **mcp** – Express server in `mcp-service` implementing the [Model Context Protocol](https://github.com/modelcontextprotocol/sdk). Acts as a bridge between the TypeScript packages and the Go backend.
 - **shared** – Reusable TypeScript types and helper functions consumed by `ui`, `agent`, and `mcp`.
 
 ## Build and Development
@@ -30,7 +30,7 @@ The repository uses Yarn v4 workspaces for dependency management. All packages a
 "workspaces": [
   "typescript/ui",
   "typescript/agent",
-  "typescript/mcp",
+          "mcp-service",
   "typescript/shared"
 ]
 ```
@@ -94,7 +94,7 @@ Example from `typescript/ui/tsconfig.json`:
 
 - React unit tests live in `typescript/ui/src`.
 - Agent tests are located in `typescript/agent/tests`.
-- MCP server tests reside in `typescript/mcp/tests`.
+- MCP server tests reside in `mcp-service/tests`.
 - Execute all suites with `yarn test` at the repository root.
 
 ## Production Build

@@ -40,8 +40,9 @@ import (
 
 // Response structures for Swagger documentation
 type HealthResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
+	Status   string          `json:"status"`
+	Message  string          `json:"message"`
+	Services map[string]bool `json:"services,omitempty"`
 }
 
 // Ingredient represents a meal ingredient
@@ -452,7 +453,7 @@ func main() {
 // Health endpoints
 
 // @Summary Health Check
-// @Description Check the health status of the API gateway and backend services
+// @Description Check the health status of the API gateway and all backend services
 // @Tags health
 // @Accept json
 // @Produce json
@@ -460,8 +461,79 @@ func main() {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /health [get]
 func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.backend.HealthCheck(r.Context(), &emptypb.Empty{})
-	writeJSONResponse(w, resp, err)
+	log.Printf("🔍 Starting comprehensive health check...")
+	services := make(map[string]bool)
+
+	// Check backend service
+	log.Printf("🔍 Checking backend service...")
+	backendResp, backendErr := gw.backend.HealthCheck(r.Context(), &emptypb.Empty{})
+	if backendErr != nil {
+		log.Printf("❌ Backend health check failed: %v", backendErr)
+	} else if backendResp == nil {
+		log.Printf("❌ Backend health check returned nil response")
+	} else {
+		log.Printf("✅ Backend health check passed")
+	}
+	services["backend"] = backendErr == nil && backendResp != nil
+
+	// Check agent service
+	log.Printf("🔍 Checking agent service...")
+	agentResp, agentErr := gw.agent.ListWorkflows(r.Context(), &emptypb.Empty{})
+	if agentErr != nil {
+		log.Printf("❌ Agent health check failed: %v", agentErr)
+	} else if agentResp == nil {
+		log.Printf("❌ Agent health check returned nil response")
+	} else {
+		log.Printf("✅ Agent health check passed")
+	}
+	services["agent"] = agentErr == nil && agentResp != nil
+
+	// Check MCP service
+	log.Printf("🔍 Checking MCP service...")
+	mcpHealthy := false
+	if mcpResp, err := http.Get("http://localhost:3001/health"); err != nil {
+		log.Printf("❌ MCP health check failed: %v", err)
+	} else {
+		defer mcpResp.Body.Close()
+		mcpHealthy = mcpResp.StatusCode == 200
+		if mcpHealthy {
+			log.Printf("✅ MCP health check passed (status: %d)", mcpResp.StatusCode)
+		} else {
+			log.Printf("❌ MCP health check failed (status: %d)", mcpResp.StatusCode)
+		}
+	}
+	services["mcp"] = mcpHealthy
+
+	// Determine overall health
+	allHealthy := services["backend"] && services["agent"] && services["mcp"]
+
+	log.Printf("📊 Health check summary:")
+	log.Printf("  - Backend: %v", services["backend"])
+	log.Printf("  - Agent: %v", services["agent"])
+	log.Printf("  - MCP: %v", services["mcp"])
+	log.Printf("  - Overall: %v", allHealthy)
+
+	response := &HealthResponse{
+		Status:   "ok",
+		Message:  "All services healthy",
+		Services: services,
+	}
+
+	if !allHealthy {
+		response.Status = "degraded"
+		response.Message = "Some services are unhealthy"
+		w.WriteHeader(http.StatusServiceUnavailable)
+		log.Printf("⚠️ Returning degraded health status")
+	} else {
+		log.Printf("✅ Returning healthy status")
+	}
+
+	// Handle regular Go structs (not protobuf messages)
+	w.Header().Set("Content-Type", "application/json")
+	if !allHealthy {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // @Summary Reconnect

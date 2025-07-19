@@ -57,8 +57,8 @@ func NewLoggingService() *LoggingService {
 }
 
 func (s *LoggingService) Log(ctx context.Context, req *pb.LogRequest) (*pb.LogResponse, error) {
-	fmt.Println("[LOGGING-SERVICE] Received Log request")
-	
+	// fmt.Println("[LOGGING-SERVICE] Received Log request")
+
 	if req.Entry == nil {
 		fmt.Println("[LOGGING-SERVICE] ERROR: log entry is nil")
 		return &pb.LogResponse{
@@ -67,8 +67,8 @@ func (s *LoggingService) Log(ctx context.Context, req *pb.LogRequest) (*pb.LogRe
 		}, status.Error(codes.InvalidArgument, "log entry is required")
 	}
 
-	fmt.Printf("[LOGGING-SERVICE] Processing log entry from service: %s, level: %s, message: %s\n", 
-		req.Entry.ServiceName, req.Entry.Level, req.Entry.Message)
+	// fmt.Printf("[LOGGING-SERVICE] Processing log entry from service: %s, level: %s, message: %s\n",
+	// 	req.Entry.ServiceName, req.Entry.Level, req.Entry.Message)
 
 	if err := s.writeLogEntry(req.Entry); err != nil {
 		fmt.Printf("[LOGGING-SERVICE] ERROR: Failed to write log entry: %v\n", err)
@@ -79,10 +79,10 @@ func (s *LoggingService) Log(ctx context.Context, req *pb.LogRequest) (*pb.LogRe
 		}, status.Error(codes.Internal, "failed to write log")
 	}
 
-	fmt.Println("[LOGGING-SERVICE] Log entry written successfully")
+	// fmt.Println("[LOGGING-SERVICE] Log entry written successfully")
 	return &pb.LogResponse{
 		Success: true,
-		Message: "log entry written successfully",
+		Message: "ok",
 	}, nil
 }
 
@@ -133,7 +133,7 @@ func (s *LoggingService) writeLogEntry(entry *pb.LogEntry) error {
 		"thread_id": entry.ThreadId,
 		"fields":    entry.Fields,
 	}
-	fmt.Println("Log entry:", entry.ServiceName, entry.Message)
+	// fmt.Println("Log entry:", entry.ServiceName, entry.Message)
 	// Convert to JSON
 	jsonData, err := json.Marshal(logData)
 	if err != nil {
@@ -171,19 +171,17 @@ func main() {
 
 	// Add unary interceptor for debugging
 	unaryInterceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		fmt.Printf("[LOGGING-SERVICE] Received gRPC call: %s\n", info.FullMethod)
+		// fmt.Printf("[LOGGING-SERVICE] Received gRPC call: %s\n", info.FullMethod)
 		resp, err := handler(ctx, req)
 		if err != nil {
 			fmt.Printf("[LOGGING-SERVICE] gRPC call failed: %v\n", err)
-		} else {
-			fmt.Printf("[LOGGING-SERVICE] gRPC call succeeded\n")
 		}
 		return resp, err
 	}
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(unaryInterceptor))
 	pb.RegisterLoggingServiceServer(grpcServer, service)
-	
+
 	fmt.Printf("[LOGGING-SERVICE] Registered LoggingService server on port %s\n", port)
 	fmt.Println("[LOGGING-SERVICE] Available methods:")
 	for serviceName, serviceInfo := range grpcServer.GetServiceInfo() {
@@ -205,7 +203,7 @@ func main() {
 
 	service.logger.Info("Starting logging service", zap.String("port", port))
 	if err := grpcServer.Serve(lis); err != nil {
-        fmt.Fprintf(os.Stderr, "[LOGGING-SERVICE] grpcServer.Serve returned error: %v\n", err)
-        log.Fatalf("Failed to serve: %v", err)
-    }
+		fmt.Fprintf(os.Stderr, "[LOGGING-SERVICE] grpcServer.Serve returned error: %v\n", err)
+		log.Fatalf("Failed to serve: %v", err)
+	}
 }
