@@ -120,7 +120,7 @@ export const getCheckpointsByThreadId = <ThrowOnError extends boolean = false>(o
 
 /**
  * Health Check
- * Check the health status of the API gateway and backend services
+ * Check the health status of the API gateway and all backend services
  */
 export const getHealth = <ThrowOnError extends boolean = false>(options?: Options<GetHealthData, ThrowOnError>) => {
     return (options?.client ?? _heyApiClient).get<GetHealthResponses, GetHealthErrors, ThrowOnError>({

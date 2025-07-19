@@ -372,7 +372,7 @@ const docTemplate = `{
         },
         "/health": {
             "get": {
-                "description": "Check the health status of the API gateway and backend services",
+                "description": "Check the health status of the API gateway and all backend services",
                 "consumes": [
                     "application/json"
                 ],
@@ -2173,6 +2173,12 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
+                },
+                "services": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "boolean"
+                    }
                 },
                 "status": {
                     "type": "string"

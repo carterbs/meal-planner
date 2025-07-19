@@ -23,7 +23,7 @@ interface DatabaseConnectionErrorProps {
 
 export const DatabaseConnectionError: React.FC<
   DatabaseConnectionErrorProps
-> = ({ onRetry }) => {
+> = ({ onRetry, services }) => {
   const theme = useTheme();
   const [isRetrying, setIsRetrying] = useState(false);
 
