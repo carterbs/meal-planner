@@ -18,6 +18,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 interface DatabaseConnectionErrorProps {
   onRetry: () => Promise<void>;
+  services?: Record<string, boolean>;
 }
 
 export const DatabaseConnectionError: React.FC<
@@ -116,6 +117,20 @@ export const DatabaseConnectionError: React.FC<
           >
             Database Connection Error
           </Typography>
+
+          {services && (
+            <Box sx={{ mb: 2 }}>
+              {Object.entries(services).map(([name, ok]) => (
+                <Typography
+                  key={name}
+                  color={ok ? 'success.main' : 'error.main'}
+                  variant="body2"
+                >
+                  {name}: {ok ? 'healthy' : 'unhealthy'}
+                </Typography>
+              ))}
+            </Box>
+          )}
 
           <Alert
             severity="error"
