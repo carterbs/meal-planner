@@ -43,28 +43,52 @@ async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function waitForBackend(): Promise<void> {
-  console.log('--- Waiting for backend to be ready ---');
+async function waitForAllServices(): Promise<void> {
+  console.log('--- Waiting for all services to be ready ---');
 
   for (let i = 1; i <= 30; i++) {
     try {
       // Use the generated client for health check
-      console.log('--- Checking BE health ---');
+      console.log(`--- Checking all services health (attempt ${i}/30) ---`);
       const result = await gatewayClient.get({
         url: '/health',
         throwOnError: false
       });
 
+      console.log(`--- Health check response status: ${result.response.status} ---`);
+      
       if (result.response.status === 200) {
-        return;
+        const healthData = result.data as any;
+        console.log('--- Health check response ---');
+        console.log(JSON.stringify(healthData, null, 2));
+        
+        // Check if all services are healthy
+        if (healthData.services && 
+            healthData.services.backend === true && 
+            healthData.services.agent === true && 
+            healthData.services.mcp === true) {
+          console.log('✅ All services are healthy!');
+          return;
+        } else {
+          console.log('⚠️ Some services are not healthy yet:');
+          console.log(`  - Backend: ${healthData.services?.backend || 'unknown'}`);
+          console.log(`  - Agent: ${healthData.services?.agent || 'unknown'}`);
+          console.log(`  - MCP: ${healthData.services?.mcp || 'unknown'}`);
+        }
+      } else {
+        console.log(`❌ Health check returned status ${result.response.status}`);
+        if (result.data) {
+          console.log('Response data:', JSON.stringify(result.data, null, 2));
+        }
       }
     } catch (error) {
-      // Continue waiting
+      console.log('--- Health check failed, retrying ---');
+      console.log('Error details:', error);
     }
     await sleep(1000);
   }
 
-  throw new Error('Backend failed to start within 30 seconds');
+  throw new Error('Services failed to start within 30 seconds');
 }
 
 async function createSession(): Promise<string> {
@@ -161,6 +185,7 @@ async function main(): Promise<void> {
   let backendProcess: any = null;
   let gatewayProcess: any = null;
   let agentProcess: any = null;
+  let mcpProcess: any = null;
 
   // Cleanup function
   const cleanup = async () => {
@@ -176,6 +201,9 @@ async function main(): Promise<void> {
     }
     if (agentProcess) {
       agentProcess.kill('SIGTERM');
+    }
+    if (mcpProcess) {
+      mcpProcess.kill('SIGTERM');
     }
     await execAsync('yarn kill:servers').catch(() => { });
   };
@@ -198,8 +226,6 @@ async function main(): Promise<void> {
       stdio: 'inherit',
     });
 
-    // Give logging service time to start
-    await sleep(2000);
 
     // Start backend
     console.log('--- Starting backend ---');
@@ -211,9 +237,6 @@ async function main(): Promise<void> {
         stdio: 'inherit',
       });
       
-      // Give backend extra time to fully start
-      console.log('--- Waiting 5s for backend to fully initialize ---');
-      await sleep(5000);
     }
 
     // Start API gateway
@@ -223,15 +246,23 @@ async function main(): Promise<void> {
       stdio: 'inherit',
     });
 
-    // Start agent service
-    console.log('--- Starting agent service ---');
-    agentProcess = spawn('yarn', ['start:grpc'], {
-      cwd: 'agent-service',
+
+    // Start MCP server
+    console.log('--- Starting MCP server ---');
+    mcpProcess = spawn('yarn', ['start:mcp'], {
+      cwd: '.',
       stdio: 'inherit',
     });
 
-    // Wait for backend to be ready
-    await waitForBackend();
+    // Start agent service
+    console.log('--- Starting agent service ---');
+    agentProcess = spawn('yarn', ['start:grpc'], {
+      cwd: '.',
+      stdio: 'inherit',
+    });
+
+    // Wait for all services to be ready
+    await waitForAllServices();
 
     // Create session and get thread ID
     console.log('=== CREATING SESSION ===');

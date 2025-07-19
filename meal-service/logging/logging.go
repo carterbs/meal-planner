@@ -32,7 +32,8 @@ func GetGrpcLogger(name string) *zap.SugaredLogger {
 	if useGrpcLog && grpcLogger != nil {
 		// Create a logger with gRPC hook
 		config := zap.NewDevelopmentConfig()
-		config.Encoding = "console"
+		config.OutputPaths = []string{}      // Disable console output
+		config.ErrorOutputPaths = []string{} // Disable error console output
 		config.EncoderConfig.TimeKey = "time"
 		config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("[15:04:05]")
 		config.EncoderConfig.EncodeLevel = func(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
@@ -82,7 +83,7 @@ func InitLogger() {
 
 		// Initialize local zap logger (as fallback or for dual logging)
 		config := zap.NewDevelopmentConfig()
-		config.Encoding = "console"
+		config.OutputPaths = []string{} // Disable console output
 		config.EncoderConfig.TimeKey = "time"
 		config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("[15:04:05]")
 		config.EncoderConfig.EncodeLevel = func(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
@@ -111,4 +112,3 @@ func InitLogger() {
 		Logger = l.Sugar()
 	})
 }
-
