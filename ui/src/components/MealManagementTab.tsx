@@ -39,12 +39,14 @@ import StepsEditor from './StepsEditor';
 
 interface MealManagementTabProps {
   showToast: (message: string) => void;
+  onClose?: () => void;
 }
 
 const mealTypes = ['All', 'Breakfast', 'Lunch', 'Dinner'];
 
 export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   showToast,
+  onClose,
 }) => {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
@@ -411,6 +413,22 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   const renderMainView = () => {
     return (
       <Box sx={{ py: 4, px: 3 }} data-testid="meal-management-tab">
+        {onClose && (
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+            <IconButton
+              onClick={onClose}
+              aria-label="close meal library"
+              sx={{
+                color: '#6b8c5d',
+                '&:hover': {
+                  backgroundColor: 'rgba(107, 140, 93, 0.1)',
+                },
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+          </Stack>
+        )}
         <Typography
           variant="h4"
           gutterBottom
@@ -633,14 +651,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
               >
                 Available Meals
               </Typography>
-              <Box
-                sx={{
-                  mb: 2,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
+              <Box sx={{ mb: 2 }}>
                 <TextField
                   label="Search Meals"
                   variant="outlined"
@@ -648,6 +659,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   value={mealFilter}
                   onChange={(e) => setMealFilter(e.target.value)}
                   fullWidth
+                  sx={{ mb: 2 }}
                   InputProps={{
                     sx: {
                       borderRadius: 2,
@@ -662,7 +674,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                     },
                   }}
                 />
-                <Box>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                   {mealTypes.map((type) => (
                     <Button
                       key={type}
@@ -670,7 +682,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                         mealTypeFilter === type ? 'contained' : 'outlined'
                       }
                       onClick={() => setMealTypeFilter(type)}
-                      sx={{ ml: 1 }}
+                      size="small"
                     >
                       {type}
                     </Button>

@@ -660,15 +660,7 @@ const AgentPage: React.FC = () => {
       <CssBaseline />
       {showMealLibrary ? (
         <Box sx={{ position: 'relative', height: '100vh' }}>
-          <Button
-            onClick={() => setShowMealLibrary(false)}
-            size="small"
-            sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1, color: colors.accent2 }}
-            data-testid="close-meal-library"
-          >
-            <ArrowBackIcon />
-          </Button>
-          <MealManagementTab showToast={showToast} />
+          <MealManagementTab showToast={showToast} onClose={() => setShowMealLibrary(false)} />
         </Box>
       ) : (
         <Box sx={styles.mainContainer}>
