@@ -1614,6 +1614,86 @@ export class ReplaceMealResponse extends Message$1<ReplaceMealResponse> {
 }
 
 /**
+ * @generated from message mealplanner.api.CreateMealIngredientRequest
+ */
+export class CreateMealIngredientRequest extends Message$1<CreateMealIngredientRequest> {
+  /**
+   * @generated from field: int32 meal_id = 1;
+   */
+  mealId = 0;
+
+  /**
+   * @generated from field: mealplanner.api.Ingredient ingredient = 2;
+   */
+  ingredient?: Ingredient;
+
+  constructor(data?: PartialMessage<CreateMealIngredientRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "mealplanner.api.CreateMealIngredientRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "meal_id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "ingredient", kind: "message", T: Ingredient },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateMealIngredientRequest {
+    return new CreateMealIngredientRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateMealIngredientRequest {
+    return new CreateMealIngredientRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateMealIngredientRequest {
+    return new CreateMealIngredientRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateMealIngredientRequest | PlainMessage<CreateMealIngredientRequest> | undefined, b: CreateMealIngredientRequest | PlainMessage<CreateMealIngredientRequest> | undefined): boolean {
+    return proto3.util.equals(CreateMealIngredientRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message mealplanner.api.CreateMealIngredientResponse
+ */
+export class CreateMealIngredientResponse extends Message$1<CreateMealIngredientResponse> {
+  /**
+   * @generated from field: mealplanner.api.Meal meal = 1;
+   */
+  meal?: Meal;
+
+  constructor(data?: PartialMessage<CreateMealIngredientResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "mealplanner.api.CreateMealIngredientResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "meal", kind: "message", T: Meal },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateMealIngredientResponse {
+    return new CreateMealIngredientResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateMealIngredientResponse {
+    return new CreateMealIngredientResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateMealIngredientResponse {
+    return new CreateMealIngredientResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateMealIngredientResponse | PlainMessage<CreateMealIngredientResponse> | undefined, b: CreateMealIngredientResponse | PlainMessage<CreateMealIngredientResponse> | undefined): boolean {
+    return proto3.util.equals(CreateMealIngredientResponse, a, b);
+  }
+}
+
+/**
  * @generated from message mealplanner.api.UpdateMealIngredientRequest
  */
 export class UpdateMealIngredientRequest extends Message$1<UpdateMealIngredientRequest> {

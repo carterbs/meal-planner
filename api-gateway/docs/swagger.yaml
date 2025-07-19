@@ -44,6 +44,18 @@ definitions:
       step:
         type: integer
     type: object
+  _go.CreateMealIngredientRequest:
+    properties:
+      ingredient:
+        $ref: '#/definitions/_go.Ingredient'
+      meal_id:
+        type: integer
+    type: object
+  _go.CreateMealIngredientResponse:
+    properties:
+      meal:
+        $ref: '#/definitions/_go.Meal'
+    type: object
   _go.CreateMealRequest:
     properties:
       meal:
@@ -1072,6 +1084,41 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       summary: Delete Meal
+      tags:
+      - meals
+  /meals/{mealId}/ingredients:
+    post:
+      consumes:
+      - application/json
+      description: Add a new ingredient to a meal
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: string
+      - description: Create ingredient request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/_go.CreateMealIngredientRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ingredient created successfully
+          schema:
+            $ref: '#/definitions/_go.CreateMealIngredientResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Create Meal Ingredient
       tags:
       - meals
   /meals/{mealId}/ingredients/{ingredientId}:

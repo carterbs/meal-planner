@@ -175,6 +175,7 @@ const (
 	MealPlannerAPI_CreateMeal_FullMethodName           = "/mealplanner.api.MealPlannerAPI/CreateMeal"
 	MealPlannerAPI_SwapMeal_FullMethodName             = "/mealplanner.api.MealPlannerAPI/SwapMeal"
 	MealPlannerAPI_ReplaceMeal_FullMethodName          = "/mealplanner.api.MealPlannerAPI/ReplaceMeal"
+	MealPlannerAPI_CreateMealIngredient_FullMethodName = "/mealplanner.api.MealPlannerAPI/CreateMealIngredient"
 	MealPlannerAPI_UpdateMealIngredient_FullMethodName = "/mealplanner.api.MealPlannerAPI/UpdateMealIngredient"
 	MealPlannerAPI_DeleteMealIngredient_FullMethodName = "/mealplanner.api.MealPlannerAPI/DeleteMealIngredient"
 	MealPlannerAPI_DeleteMeal_FullMethodName           = "/mealplanner.api.MealPlannerAPI/DeleteMeal"
@@ -219,6 +220,7 @@ type MealPlannerAPIClient interface {
 	CreateMeal(ctx context.Context, in *CreateMealRequest, opts ...grpc.CallOption) (*CreateMealResponse, error)
 	SwapMeal(ctx context.Context, in *SwapMealRequest, opts ...grpc.CallOption) (*SwapMealResponse, error)
 	ReplaceMeal(ctx context.Context, in *ReplaceMealRequest, opts ...grpc.CallOption) (*ReplaceMealResponse, error)
+	CreateMealIngredient(ctx context.Context, in *CreateMealIngredientRequest, opts ...grpc.CallOption) (*CreateMealIngredientResponse, error)
 	UpdateMealIngredient(ctx context.Context, in *UpdateMealIngredientRequest, opts ...grpc.CallOption) (*UpdateMealIngredientResponse, error)
 	DeleteMealIngredient(ctx context.Context, in *DeleteMealIngredientRequest, opts ...grpc.CallOption) (*DeleteMealIngredientResponse, error)
 	DeleteMeal(ctx context.Context, in *DeleteMealRequest, opts ...grpc.CallOption) (*DeleteMealResponse, error)
@@ -358,6 +360,16 @@ func (c *mealPlannerAPIClient) ReplaceMeal(ctx context.Context, in *ReplaceMealR
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ReplaceMealResponse)
 	err := c.cc.Invoke(ctx, MealPlannerAPI_ReplaceMeal_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *mealPlannerAPIClient) CreateMealIngredient(ctx context.Context, in *CreateMealIngredientRequest, opts ...grpc.CallOption) (*CreateMealIngredientResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateMealIngredientResponse)
+	err := c.cc.Invoke(ctx, MealPlannerAPI_CreateMealIngredient_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -595,6 +607,7 @@ type MealPlannerAPIServer interface {
 	CreateMeal(context.Context, *CreateMealRequest) (*CreateMealResponse, error)
 	SwapMeal(context.Context, *SwapMealRequest) (*SwapMealResponse, error)
 	ReplaceMeal(context.Context, *ReplaceMealRequest) (*ReplaceMealResponse, error)
+	CreateMealIngredient(context.Context, *CreateMealIngredientRequest) (*CreateMealIngredientResponse, error)
 	UpdateMealIngredient(context.Context, *UpdateMealIngredientRequest) (*UpdateMealIngredientResponse, error)
 	DeleteMealIngredient(context.Context, *DeleteMealIngredientRequest) (*DeleteMealIngredientResponse, error)
 	DeleteMeal(context.Context, *DeleteMealRequest) (*DeleteMealResponse, error)
@@ -662,6 +675,9 @@ func (UnimplementedMealPlannerAPIServer) SwapMeal(context.Context, *SwapMealRequ
 }
 func (UnimplementedMealPlannerAPIServer) ReplaceMeal(context.Context, *ReplaceMealRequest) (*ReplaceMealResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReplaceMeal not implemented")
+}
+func (UnimplementedMealPlannerAPIServer) CreateMealIngredient(context.Context, *CreateMealIngredientRequest) (*CreateMealIngredientResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateMealIngredient not implemented")
 }
 func (UnimplementedMealPlannerAPIServer) UpdateMealIngredient(context.Context, *UpdateMealIngredientRequest) (*UpdateMealIngredientResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateMealIngredient not implemented")
@@ -941,6 +957,24 @@ func _MealPlannerAPI_ReplaceMeal_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MealPlannerAPIServer).ReplaceMeal(ctx, req.(*ReplaceMealRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MealPlannerAPI_CreateMealIngredient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateMealIngredientRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MealPlannerAPIServer).CreateMealIngredient(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MealPlannerAPI_CreateMealIngredient_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MealPlannerAPIServer).CreateMealIngredient(ctx, req.(*CreateMealIngredientRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1373,6 +1407,10 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReplaceMeal",
 			Handler:    _MealPlannerAPI_ReplaceMeal_Handler,
+		},
+		{
+			MethodName: "CreateMealIngredient",
+			Handler:    _MealPlannerAPI_CreateMealIngredient_Handler,
 		},
 		{
 			MethodName: "UpdateMealIngredient",
