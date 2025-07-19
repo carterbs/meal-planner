@@ -34,7 +34,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
 ## Development workflow
 1. Start the development environment with:
    ```bash
-   cd backend && go run main.go --dummy
+   cd meal-service && go run main.go --dummy
    ```
    Start the frontend with
    ```bash
@@ -48,7 +48,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
   ```
   This executes Go tests and frontend tests and prints a summary.
 - Individual suites can be run with `yarn test:backend` or `yarn test:frontend`.
-- Backend coverage helpers are provided in `backend/Makefile` (`make coverage`). Frontend coverage can be generated with `yarn coverage` in `frontend`.
+- Backend coverage helpers are provided in `meal-service/Makefile` (`make coverage`). Frontend coverage can be generated with `yarn coverage` in `frontend`.
 - Always run `yarn test` before committing changes.
 
 ## Code style
@@ -60,7 +60,7 @@ This runs comprehensive tests across all components (Go backend, React frontend,
 - Database utilities exist for manual use:
   - `yarn db:backup` creates backups.
   - `yarn db:restore` restores from a backup (see `scripts/README.md`).
-- SQL migrations live in `backend/migrations` and are applied automatically when the backend starts with a real database.
+- SQL migrations live in `meal-service/migrations` and are applied automatically when the backend starts with a real database.
 
 ## Documentation
 - High level architecture and features are described in `docs/MealPlannerSummary.md`.

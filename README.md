@@ -4,7 +4,7 @@ This repository contains a personal meal planning application composed of severa
 
 ## Repository Structure
 
-- **backend/** – Go REST API and business logic. Contains handlers, models, migrations and dummy data for offline use.
+- **meal-service/** – Go REST API and business logic. Contains handlers, models, migrations and dummy data for offline use.
 - **typescript/**
   - **ui/** – React application for the user interface.
   - **agent/** – LangGraph agent CLI for meal planning workflows.
@@ -32,12 +32,12 @@ The system is split into a Go backend and several TypeScript packages.  The back
    ```bash
    yarn install
    (cd typescript && yarn install)
-   (cd backend && go mod download)
+   (cd meal-service && go mod download)
    ```
 
 2. **Install code generation tools**
    ```bash
-   cd backend && make tools
+   cd meal-service && make tools
    ```
 
 3. **Generate code** (Protocol Buffers, OpenAPI, etc.)
@@ -65,7 +65,7 @@ The system is split into a Go backend and several TypeScript packages.  The back
 7. **Start the development servers**
    - Simple mode:
      ```bash
-     cd backend && go run main.go --dummy
+     cd meal-service && go run main.go --dummy
      ```
      ```bash
      cd typescript/ui && yarn start

@@ -123,7 +123,7 @@ async function main(): Promise<void> {
     // Start backend
     console.log('--- Starting backend ---');
     backendProcess = spawn('go', ['run', '.'], {
-      cwd: 'backend',
+      cwd: 'meal-service',
       stdio: 'inherit',
     });
 

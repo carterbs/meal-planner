@@ -10,6 +10,6 @@ pushd typescript
 yarn install
 popd
 
-pushd backend
+pushd meal-service
 go mod download
 popd

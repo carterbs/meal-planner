@@ -207,7 +207,7 @@ async function main(): Promise<void> {
       console.log('Skipping backend start');
     } else {
       backendProcess = spawn('go', ['run', '.'], {
-        cwd: 'backend',
+        cwd: 'meal-service',
         stdio: 'inherit',
       });
       
