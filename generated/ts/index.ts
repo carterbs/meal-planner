@@ -3,3 +3,5 @@ export * from './api_pb.js';
 
 // Export Connect RPC service definitions
 export * from './api_connect.js';
+
+export * from './agent_pb.js';

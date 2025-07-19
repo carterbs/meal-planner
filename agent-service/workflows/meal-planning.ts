@@ -27,7 +27,7 @@ import {
   VALIDATION_CRITERIA,
 } from '../shared/types';
 import { BaseWorkflow } from '../registry';
-import { debugLog } from '../cli';
+import { debugLog } from '../logging';
 import { HttpCheckpointSaver } from '../shared/httpCheckpointer';
 import { FeedbackHandler } from './feedback-handler';
 import {
@@ -44,7 +44,29 @@ import {
 } from './meal-planning-prompts';
 import { v4 as uuidv4 } from 'uuid';
 import { getBackendClient } from '../utils/getBackendClient';
+import { dirname, join } from 'path';
+import { existsSync } from 'fs';
 const DEBUG_LOGS = false;
+
+// Helper function to find repo root
+function findRepoRoot(): string {
+  let currentDir = process.cwd();
+
+  // If we're in a compiled version, start from the actual source location
+  if (currentDir.includes('/dist/')) {
+    currentDir = dirname(dirname(currentDir));
+  }
+
+  while (currentDir !== '/') {
+    if (existsSync(join(currentDir, 'package.json')) && existsSync(join(currentDir, '.git'))) {
+      return currentDir;
+    }
+    currentDir = dirname(currentDir);
+  }
+
+  // Fallback: assume we're already in the repo root
+  return process.cwd();
+}
 
 /**
  * Meal planning workflow
@@ -206,23 +228,17 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   async initialize(): Promise<void> {
     infoLog('MealPlanningWorkflow.initialize called');
     const isCodex = process.argv.includes('--codex');
-    const isJsonMode = process.argv.includes('--json');
 
     // Connect to MCP server
-    // In JSON mode (API calls), assume MCP server is already running and connect to it directly
-    // Otherwise, start the full server stack
+    // Always connect to the already-running MCP server (launched independently by yarn start:grpc)
+    // No longer launch MCP server as child process since agent is now a long-running service
     infoLog(`🍽️ [MEAL-WORKFLOW] Starting to initialize meal planning workflow`);
 
     const transport = new StdioClientTransport({
       command: 'node',
-      args: isJsonMode
-        ? [
-          '/Users/bradcarter/Documents/Dev/meal-planner/typescript/mcp/dist/index.js',
-        ]
-        : [
-          '/Users/bradcarter/Documents/Dev/meal-planner/scripts/start-mcp.js',
-          isCodex ? '--codex' : '',
-        ],
+      args: [
+        join(findRepoRoot(), 'typescript/mcp/dist/index.js'),
+      ],
     });
 
     await this.client.connect(transport);
@@ -376,8 +392,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             const allFeedback = await getBackendClient().getMessages({
               threadId: state.threadId
             })
+            // Add a small buffer (5 seconds) to handle race conditions between message creation and workflow updates
+            const lastUpdateWithBuffer = new Date(lastUpdate.getTime() - 5000);
             const newFeedback = allFeedback.messages.filter((f) =>
-              f.createdAt ? new Date(f.createdAt) > lastUpdate : true,
+              f.createdAt ? new Date(f.createdAt) > lastUpdateWithBuffer : true,
             );
 
             infoLog("New feedback?", { newFeedbackLength: newFeedback.length.toString(), allFeedbackLength: allFeedback.messages.length.toString() });
@@ -499,12 +517,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 
     try {
       // Generate meal plan using MCP tool
+      await infoLog(`🔧 [MCP-INPUT] About to call generateMealPlan with arguments: {}`);
+      await infoLog(`🔧 [MCP-INPUT] MCP client state: ${this.client ? 'EXISTS' : 'NULL'}`);
+      
       const planResult = await this.client.callTool({
         name: 'generateMealPlan',
         arguments: {},
       });
       const planResultString = JSON.stringify(planResult);
       await infoLog(`PLAN RESULT FROM MCP: ${reqId}`);
+      await infoLog(`🔧 [MCP-OUTPUT] Full MCP response: ${planResultString}`);
       await debugLog(planResultString);
 
       // Validate MCP response and guard against missing content

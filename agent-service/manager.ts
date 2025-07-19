@@ -5,7 +5,7 @@ import { MealPlanningStep, WorkflowType } from './shared/types';
 // Removed PostgreSQL dependencies - using HTTP checkpointer only
 import { HttpCheckpointSaver } from './shared/httpCheckpointer';
 import { WorkflowRegistry } from './registry';
-import { debugLog } from './cli';
+import { debugLog } from './logging';
 
 export interface WorkflowSession {
   threadId: string;

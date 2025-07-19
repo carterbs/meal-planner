@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "mealplanner/generated/go/agentpb";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// Agent Service - provides gRPC endpoints for all CLI commands
+service AgentService {
+  // Plan commands
+  rpc PlanStart(PlanStartRequest) returns (PlanStartResponse);
+  rpc PlanFeedback(PlanFeedbackRequest) returns (PlanFeedbackResponse);
+  rpc PlanFinalize(PlanFinalizeRequest) returns (PlanFinalizeResponse);
+  
+  // Workflow management
+  rpc ResumeWorkflow(ResumeWorkflowRequest) returns (ResumeWorkflowResponse);
+}
+
+// Plan Start
+message PlanStartRequest {
+  repeated string participants = 1;
+}
+
+message PlanStartResponse {
+  bool success = 1;
+  string message = 2;
+  string thread_id = 3;
+  string current_step = 4;
+  bytes initial_state = 5; // JSON-encoded state
+}
+
+// Plan Feedback
+message PlanFeedbackRequest {
+  string thread_id = 1;
+  string message = 2;
+  string from = 3;
+}
+
+message PlanFeedbackResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Plan Finalize
+message PlanFinalizeRequest {
+  string thread_id = 1;
+}
+
+message PlanFinalizeResponse {
+  bool success = 1;
+  string message = 2;
+  bytes final_state = 3; // JSON-encoded state
+}
+
+// Resume Workflow
+message ResumeWorkflowRequest {
+  string thread_id = 1;
+  map<string, string> input = 2; // Additional input parameters
+}
+
+message ResumeWorkflowResponse {
+  bool success = 1;
+  string message = 2;
+  string current_step = 3;
+  bytes state = 4; // JSON-encoded state
+}

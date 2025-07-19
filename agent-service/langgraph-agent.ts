@@ -311,7 +311,7 @@ async function main() {
 }
 
 // Run CLI example if this file is executed directly
-// Only run in non-test environments
-if (process.env.NODE_ENV !== 'test') {
+// Only run in non-test environments and when this is the main module
+if (process.env.NODE_ENV !== 'test' && require.main === module) {
   main().catch(console.error);
 }
