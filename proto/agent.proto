@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package agent;
 
-option go_package = "mealplanner/generated/go/agentpb";
+option go_package = "mealplanner/generated/go/agent";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
@@ -21,6 +21,23 @@ service AgentService {
   // High level workflow endpoints for API gateway
   rpc StartAgentWorkflow(mealplanner.api.StartAgentWorkflowRequest) returns (mealplanner.api.StartAgentWorkflowResponse);
   rpc MessageAgent(mealplanner.api.MessageAgentRequest) returns (mealplanner.api.MessageAgentResponse);
+  
+  // Workflow management endpoints
+  rpc GetWorkflowStatus(mealplanner.api.GetWorkflowStatusRequest) returns (mealplanner.api.GetWorkflowStatusResponse);
+  rpc ListWorkflows(google.protobuf.Empty) returns (mealplanner.api.ListWorkflowsResponse);
+  rpc CancelWorkflow(mealplanner.api.CancelWorkflowRequest) returns (mealplanner.api.CancelWorkflowResponse);
+  rpc GetWorkflowState(mealplanner.api.GetWorkflowStateRequest) returns (mealplanner.api.GetWorkflowStateResponse);
+  rpc AbandonWorkflow(mealplanner.api.AbandonWorkflowRequest) returns (mealplanner.api.AbandonWorkflowResponse);
+  
+  // Message management endpoints
+  rpc GetMessages(mealplanner.api.GetMessagesRequest) returns (mealplanner.api.GetMessagesResponse);
+  rpc AddMessage(mealplanner.api.AddMessageRequest) returns (mealplanner.api.AddMessageResponse);
+  rpc UpdateSessionState(mealplanner.api.UpdateSessionStateRequest) returns (mealplanner.api.UpdateSessionStateResponse);
+  
+  // Checkpoint management endpoints
+  rpc GetCheckpoint(mealplanner.api.GetCheckpointRequest) returns (mealplanner.api.GetCheckpointResponse);
+  rpc PutCheckpoint(mealplanner.api.PutCheckpointRequest) returns (mealplanner.api.PutCheckpointResponse);
+  rpc ListCheckpoints(mealplanner.api.ListCheckpointsRequest) returns (mealplanner.api.ListCheckpointsResponse);
 }
 
 // Plan Start

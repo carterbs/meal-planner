@@ -6,6 +6,7 @@ import * as path from 'path';
 import { LangGraphAgent } from './langgraph-agent';
 import { debugLog } from './logging';
 import { MessageRepository } from './database/messages';
+import { CheckpointRepository } from './database/checkpoints';
 import { WorkflowType, MealPlanningState } from './shared/types';
 import {
     PlanStartRequest,
@@ -286,6 +287,307 @@ function messageAgent(call: grpc.ServerUnaryCall<apipb.MessageAgentRequest, apip
     })();
 }
 
+// Workflow Management Methods
+function getWorkflowStatus(call: grpc.ServerUnaryCall<apipb.GetWorkflowStatusRequest, apipb.GetWorkflowStatusResponse>, callback: grpc.sendUnaryData<apipb.GetWorkflowStatusResponse>): void {
+    (async () => {
+        try {
+            const { threadId } = call.request;
+            if (!threadId) return callback(new Error('threadId required'));
+
+            const agent = await initializeAgent();
+            const state = await agent.getWorkflowState(threadId);
+            
+            const status = new apipb.WorkflowStatus({
+                threadId,
+                workflowType: 'meal_planning',
+                currentStep: state.currentStep,
+                participants: state.participants,
+            });
+
+            callback(null, new apipb.GetWorkflowStatusResponse({ status }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error getting workflow status: ${errMsg}`));
+        }
+    })();
+}
+
+function listWorkflows(_call: grpc.ServerUnaryCall<any, apipb.ListWorkflowsResponse>, callback: grpc.sendUnaryData<apipb.ListWorkflowsResponse>): void {
+    (async () => {
+        try {
+            const checkpointRepo = new CheckpointRepository();
+            const workflows = await checkpointRepo.listWorkflows(50); // Default limit of 50
+            
+            const pbWorkflows = workflows.map(wf => new apipb.WorkflowStatus({
+                threadId: wf.thread_id,
+                workflowType: wf.workflow_type,
+                currentStep: wf.current_step,
+                participants: wf.participants,
+            }));
+
+            callback(null, new apipb.ListWorkflowsResponse({ workflows: pbWorkflows }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error listing workflows: ${errMsg}`));
+        }
+    })();
+}
+
+function cancelWorkflow(call: grpc.ServerUnaryCall<apipb.CancelWorkflowRequest, apipb.CancelWorkflowResponse>, callback: grpc.sendUnaryData<apipb.CancelWorkflowResponse>): void {
+    (async () => {
+        try {
+            const { threadId } = call.request;
+            if (!threadId) return callback(new Error('threadId required'));
+
+            const agent = await initializeAgent();
+            const cancelled = await agent.cancelWorkflow(threadId);
+            
+            callback(null, new apipb.CancelWorkflowResponse({ 
+                status: cancelled ? 'CANCELLED' : 'FAILED' 
+            }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error cancelling workflow: ${errMsg}`));
+        }
+    })();
+}
+
+function getWorkflowState(call: grpc.ServerUnaryCall<apipb.GetWorkflowStateRequest, apipb.GetWorkflowStateResponse>, callback: grpc.sendUnaryData<apipb.GetWorkflowStateResponse>): void {
+    (async () => {
+        try {
+            const { threadId } = call.request;
+            if (!threadId) return callback(new Error('threadId required'));
+
+            const agent = await initializeAgent();
+            const state = await agent.getWorkflowState(threadId);
+            
+            // Get messages for this thread
+            const messageRepo = new MessageRepository();
+            const messages = await messageRepo.getMessagesForProtobuf(threadId);
+            const protoMessages = messages.map(msg => new apipb.Message({
+                threadId: msg.thread_id,
+                sender: msg.sender,
+                content: msg.content,
+                createdAt: msg.created_at,
+            }));
+            
+            // Convert state to expected format
+            const response = new apipb.GetWorkflowStateResponse({
+                plan: state.mealPlan || undefined,
+                shoppingList: state.shoppingList ? new apipb.ShoppingList({ items: state.shoppingList.items }) : undefined,
+                messages: protoMessages,
+            });
+
+            callback(null, response);
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error getting workflow state: ${errMsg}`));
+        }
+    })();
+}
+
+function abandonWorkflow(call: grpc.ServerUnaryCall<apipb.AbandonWorkflowRequest, apipb.AbandonWorkflowResponse>, callback: grpc.sendUnaryData<apipb.AbandonWorkflowResponse>): void {
+    (async () => {
+        try {
+            const { threadId } = call.request;
+            if (!threadId) return callback(new Error('threadId required'));
+
+            const agent = await initializeAgent();
+            const cancelled = await agent.cancelWorkflow(threadId);
+            
+            // Add abandonment message to conversation
+            const messageRepo = new MessageRepository();
+            await messageRepo.addMessage(threadId, 'system', 'ABANDONED');
+            
+            callback(null, new apipb.AbandonWorkflowResponse({ 
+                message: cancelled ? 'Workflow abandoned successfully' : 'Failed to abandon workflow'
+            }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error abandoning workflow: ${errMsg}`));
+        }
+    })();
+}
+
+// Message Management Methods
+function getMessages(call: grpc.ServerUnaryCall<apipb.GetMessagesRequest, apipb.GetMessagesResponse>, callback: grpc.sendUnaryData<apipb.GetMessagesResponse>): void {
+    (async () => {
+        try {
+            const { threadId } = call.request;
+            if (!threadId) return callback(new Error('threadId required'));
+
+            const repo = new MessageRepository();
+            const messages = await repo.getMessagesForProtobuf(threadId);
+            
+            const protoMessages = messages.map(msg => new apipb.Message({
+                threadId: msg.thread_id,
+                sender: msg.sender,
+                content: msg.content,
+                createdAt: msg.created_at,
+            }));
+
+            callback(null, new apipb.GetMessagesResponse({ messages: protoMessages }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error getting messages: ${errMsg}`));
+        }
+    })();
+}
+
+function addMessage(call: grpc.ServerUnaryCall<apipb.AddMessageRequest, apipb.AddMessageResponse>, callback: grpc.sendUnaryData<apipb.AddMessageResponse>): void {
+    (async () => {
+        try {
+            const { threadId, sender, message } = call.request;
+            if (!threadId) return callback(new Error('threadId required'));
+            if (!sender) return callback(new Error('sender required'));
+            if (!message) return callback(new Error('message required'));
+
+            const repo = new MessageRepository();
+            await repo.addMessage(threadId, sender, message);
+
+            callback(null, new apipb.AddMessageResponse({ message: 'Message added successfully' }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error adding message: ${errMsg}`));
+        }
+    })();
+}
+
+function updateSessionState(call: grpc.ServerUnaryCall<apipb.UpdateSessionStateRequest, apipb.UpdateSessionStateResponse>, callback: grpc.sendUnaryData<apipb.UpdateSessionStateResponse>): void {
+    (async () => {
+        try {
+            const { threadId, mealPlan, shoppingList, currentStep, status } = call.request;
+            if (!threadId) return callback(new Error('threadId required'));
+
+            // Create state update and store as checkpoint
+            const stateUpdate = {
+                meal_plan: mealPlan,
+                shopping_list: shoppingList,
+                current_step: currentStep,
+                status: status,
+            };
+
+            const checkpointRepo = new CheckpointRepository();
+            const data = Buffer.from(JSON.stringify(stateUpdate), 'utf8');
+            await checkpointRepo.updateWorkflowCheckpoint(threadId, data);
+            
+            callback(null, new apipb.UpdateSessionStateResponse({ message: 'Session state updated successfully' }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error updating session state: ${errMsg}`));
+        }
+    })();
+}
+
+// Checkpoint Management Methods  
+function getCheckpoint(call: grpc.ServerUnaryCall<apipb.GetCheckpointRequest, apipb.GetCheckpointResponse>, callback: grpc.sendUnaryData<apipb.GetCheckpointResponse>): void {
+    (async () => {
+        try {
+            const { threadId, checkpointNs } = call.request;
+            if (!threadId) return callback(new Error('threadId required'));
+
+            const checkpointRepo = new CheckpointRepository();
+            const ns = checkpointNs || 'latest';
+            const result = await checkpointRepo.getCheckpoint(threadId, ns);
+            
+            if (!result.found || !result.checkpoint) {
+                callback(null, new apipb.GetCheckpointResponse({ found: false }));
+                return;
+            }
+
+            // Parse checkpoint data and convert to protobuf
+            try {
+                const checkpointData = JSON.parse(result.checkpoint.toString());
+                const checkpoint = new apipb.AgentCheckpoint(checkpointData);
+                
+                const metadataData = result.metadata ? JSON.parse(result.metadata.toString()) : {};
+                const metadata = new apipb.AgentCheckpointMetadata(metadataData);
+
+                const tuple = new apipb.CheckpointTuple({
+                    checkpoint: checkpoint,
+                    metadata: metadata,
+                });
+
+                callback(null, new apipb.GetCheckpointResponse({ tuple, found: true }));
+            } catch (parseError) {
+                callback(new Error(`Error parsing checkpoint data: ${parseError}`));
+            }
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error getting checkpoint: ${errMsg}`));
+        }
+    })();
+}
+
+function putCheckpoint(call: grpc.ServerUnaryCall<apipb.PutCheckpointRequest, apipb.PutCheckpointResponse>, callback: grpc.sendUnaryData<apipb.PutCheckpointResponse>): void {
+    (async () => {
+        try {
+            const { threadId, checkpoint, metadata, workflowType, checkpointNs } = call.request;
+            if (!threadId) return callback(new Error('threadId required'));
+            if (!checkpoint) return callback(new Error('checkpoint required'));
+
+            const checkpointRepo = new CheckpointRepository();
+            const ns = checkpointNs || 'latest';
+            const wfType = workflowType || 'meal_planning';
+            const meta = metadata || new apipb.AgentCheckpointMetadata({});
+
+            await checkpointRepo.putCheckpoint(threadId, ns, wfType, checkpoint, meta);
+
+            callback(null, new apipb.PutCheckpointResponse({ 
+                success: true,
+                threadId,
+                checkpointNs: ns
+            }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error putting checkpoint: ${errMsg}`));
+        }
+    })();
+}
+
+function listCheckpoints(call: grpc.ServerUnaryCall<apipb.ListCheckpointsRequest, apipb.ListCheckpointsResponse>, callback: grpc.sendUnaryData<apipb.ListCheckpointsResponse>): void {
+    (async () => {
+        try {
+            const { limit, beforeThreadId } = call.request;
+            const checkpointRepo = new CheckpointRepository();
+            const checkpoints = await checkpointRepo.listCheckpoints(limit || 50, beforeThreadId || '');
+            
+            const pbEntries = checkpoints.map(entry => {
+                let checkpoint: apipb.AgentCheckpoint;
+                let metadata: apipb.AgentCheckpointMetadata;
+                
+                try {
+                    const checkpointData = JSON.parse(entry.checkpoint_data.toString());
+                    checkpoint = new apipb.AgentCheckpoint(checkpointData);
+                } catch {
+                    checkpoint = new apipb.AgentCheckpoint({});
+                }
+                
+                try {
+                    const metadataData = entry.metadata ? JSON.parse(entry.metadata.toString()) : {};
+                    metadata = new apipb.AgentCheckpointMetadata(metadataData);
+                } catch {
+                    metadata = new apipb.AgentCheckpointMetadata({});
+                }
+
+                return new apipb.CheckpointEntry({
+                    threadId: entry.thread_id,
+                    checkpointNs: entry.checkpoint_ns,
+                    tuple: new apipb.CheckpointTuple({
+                        checkpoint: checkpoint,
+                        metadata: metadata,
+                    }),
+                });
+            });
+
+            callback(null, new apipb.ListCheckpointsResponse({ entries: pbEntries }));
+        } catch (error) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            callback(new Error(`Error listing checkpoints: ${errMsg}`));
+        }
+    })();
+}
+
 // Load the protobuf definition
 const PROTO_PATH = path.join(__dirname, '../../proto/agent.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
@@ -328,6 +630,17 @@ function startServer(): void {
         resumeWorkflow,
         startAgentWorkflow,
         messageAgent,
+        getWorkflowStatus,
+        listWorkflows,
+        cancelWorkflow,
+        getWorkflowState,
+        abandonWorkflow,
+        getMessages,
+        addMessage,
+        updateSessionState,
+        getCheckpoint,
+        putCheckpoint,
+        listCheckpoints,
     });
 
     // Bind and start the server

@@ -1,26 +1,48 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
-import { API } from '../utils.js';
-import { RemoveMealRequest } from '@mealplanner/generated';
+import { WeeklyMealPlan } from '@mealplanner/generated';
+
+// Helper to perform the removal logic mirroring the backend implementation
+function removeMealFromPlan(plan: WeeklyMealPlan, dayIndex: number, mealType: string) {
+  if (!plan) {
+    throw new Error('plan is null or undefined');
+  }
+  if (dayIndex < 0 || dayIndex > 6) {
+    throw new Error(`invalid dayIndex ${dayIndex}`);
+  }
+
+  const mType = mealType.toLowerCase();
+  if (!['breakfast', 'lunch', 'dinner'].includes(mType)) {
+    throw new Error(`invalid mealType ${mealType}`);
+  }
+
+  const entry = plan.days.find((d) => d.dayIndex === dayIndex && d.mealType === mType);
+  if (!entry) {
+    throw new Error('meal not found for specified dayIndex and mealType');
+  }
+  if (!entry.meal) {
+    throw new Error('meal already empty');
+  }
+
+  entry.meal = undefined as any; // set to undefined / null for protobuf compatibility
+}
 
 export const removeMealArgs = z.object({
-  threadId: z.string().describe('Agent session thread ID'),
+  plan: z.any().describe('Current WeeklyMealPlan object'),
   dayIndex: z.number().describe('Index of the day to remove meal from (0=Monday, 1=Tuesday, ..., 5=Saturday, 6=Sunday)'),
   mealType: z.enum(['breakfast', 'lunch', 'dinner']).describe('Type of meal to remove')
 });
 
-export async function doRemoveMeal(threadId: string, dayIndex: number, mealType: string): Promise<any> {
-  const resp = await fetch(`${API}/api/meals/remove`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },    
-    body: JSON.stringify(new RemoveMealRequest({ threadId, dayIndex, mealType }))
-  });
-  if (!resp.ok) {
-    const errText = await resp.text();
-    throw new McpError(-32000, `BackendError: ${resp.status} ${errText}`);
+export function doRemoveMeal(plan: WeeklyMealPlan, dayIndex: number, mealType: string): WeeklyMealPlan {
+  try {
+    // Deep clone to avoid mutating caller's object
+    const clonedPlan: WeeklyMealPlan = JSON.parse(JSON.stringify(plan));
+    removeMealFromPlan(clonedPlan, dayIndex, mealType);
+    return clonedPlan;
+  } catch (err: any) {
+    throw new McpError(-32000, `RemoveMealError: ${err.message}`);
   }
-  return resp.json();
 }
 
 export function registerRemoveMeal(server: McpServer) {
@@ -28,12 +50,12 @@ export function registerRemoveMeal(server: McpServer) {
     'removeMeal',
     'Remove a specific meal from the current meal plan session',
     {
-      threadId: removeMealArgs.shape.threadId,
+      plan: removeMealArgs.shape.plan,
       dayIndex: removeMealArgs.shape.dayIndex,
       mealType: removeMealArgs.shape.mealType
     },
-    async ({ threadId, dayIndex, mealType }) => {
-      const result = await doRemoveMeal(threadId, dayIndex, mealType);
+    async ({ plan, dayIndex, mealType }) => {
+      const result = doRemoveMeal(plan as WeeklyMealPlan, dayIndex, mealType);
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
       };

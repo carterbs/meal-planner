@@ -55,8 +55,6 @@ export type {
   CreateMealResponse,
   SwapMealRequest,
   SwapMealResponse,
-  RemoveMealRequest,
-  RemoveMealResponse,
   ReplaceMealRequest,
   ReplaceMealResponse,
   UpdateMealIngredientRequest,

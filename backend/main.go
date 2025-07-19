@@ -83,8 +83,6 @@ func main() {
 	// Always initialize service container when not in dummy mode
 	if !*dummyFlag {
 		server.Services = services.NewServiceContainer(connection)
-		// Maintain backward compatibility for existing workflow service usage
-		server.WorkflowService = server.Services.WorkflowService
 	}
 
 	// Start gRPC server (HTTP server removed as part of gRPC migration)

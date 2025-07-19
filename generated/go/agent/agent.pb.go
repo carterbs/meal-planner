@@ -4,17 +4,17 @@
 // 	protoc        v5.29.3
 // source: agent.proto
 
-package agentpb
+package agent
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_go "mealplanner/generated/go"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/emptypb"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -488,7 +488,7 @@ var File_agent_proto protoreflect.FileDescriptor
 
 const file_agent_proto_rawDesc = "" +
 	"\n" +
-	"\vagent.proto\x12\x05agent\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"6\n" +
+	"\vagent.proto\x12\x05agent\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\tapi.proto\"6\n" +
 	"\x10PlanStartRequest\x12\"\n" +
 	"\fparticipants\x18\x01 \x03(\tR\fparticipants\"\xac\x01\n" +
 	"\x11PlanStartResponse\x12\x18\n" +
@@ -522,12 +522,26 @@ const file_agent_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12!\n" +
 	"\fcurrent_step\x18\x03 \x01(\tR\vcurrentStep\x12\x14\n" +
-	"\x05state\x18\x04 \x01(\fR\x05state2\xaf\x02\n" +
+	"\x05state\x18\x04 \x01(\fR\x05state2\xb0\f\n" +
 	"\fAgentService\x12>\n" +
 	"\tPlanStart\x12\x17.agent.PlanStartRequest\x1a\x18.agent.PlanStartResponse\x12G\n" +
 	"\fPlanFeedback\x12\x1a.agent.PlanFeedbackRequest\x1a\x1b.agent.PlanFeedbackResponse\x12G\n" +
 	"\fPlanFinalize\x12\x1a.agent.PlanFinalizeRequest\x1a\x1b.agent.PlanFinalizeResponse\x12M\n" +
-	"\x0eResumeWorkflow\x12\x1c.agent.ResumeWorkflowRequest\x1a\x1d.agent.ResumeWorkflowResponseB\"Z mealplanner/generated/go/agentpbb\x06proto3"
+	"\x0eResumeWorkflow\x12\x1c.agent.ResumeWorkflowRequest\x1a\x1d.agent.ResumeWorkflowResponse\x12m\n" +
+	"\x12StartAgentWorkflow\x12*.mealplanner.api.StartAgentWorkflowRequest\x1a+.mealplanner.api.StartAgentWorkflowResponse\x12[\n" +
+	"\fMessageAgent\x12$.mealplanner.api.MessageAgentRequest\x1a%.mealplanner.api.MessageAgentResponse\x12j\n" +
+	"\x11GetWorkflowStatus\x12).mealplanner.api.GetWorkflowStatusRequest\x1a*.mealplanner.api.GetWorkflowStatusResponse\x12O\n" +
+	"\rListWorkflows\x12\x16.google.protobuf.Empty\x1a&.mealplanner.api.ListWorkflowsResponse\x12a\n" +
+	"\x0eCancelWorkflow\x12&.mealplanner.api.CancelWorkflowRequest\x1a'.mealplanner.api.CancelWorkflowResponse\x12g\n" +
+	"\x10GetWorkflowState\x12(.mealplanner.api.GetWorkflowStateRequest\x1a).mealplanner.api.GetWorkflowStateResponse\x12d\n" +
+	"\x0fAbandonWorkflow\x12'.mealplanner.api.AbandonWorkflowRequest\x1a(.mealplanner.api.AbandonWorkflowResponse\x12X\n" +
+	"\vGetMessages\x12#.mealplanner.api.GetMessagesRequest\x1a$.mealplanner.api.GetMessagesResponse\x12U\n" +
+	"\n" +
+	"AddMessage\x12\".mealplanner.api.AddMessageRequest\x1a#.mealplanner.api.AddMessageResponse\x12m\n" +
+	"\x12UpdateSessionState\x12*.mealplanner.api.UpdateSessionStateRequest\x1a+.mealplanner.api.UpdateSessionStateResponse\x12^\n" +
+	"\rGetCheckpoint\x12%.mealplanner.api.GetCheckpointRequest\x1a&.mealplanner.api.GetCheckpointResponse\x12^\n" +
+	"\rPutCheckpoint\x12%.mealplanner.api.PutCheckpointRequest\x1a&.mealplanner.api.PutCheckpointResponse\x12d\n" +
+	"\x0fListCheckpoints\x12'.mealplanner.api.ListCheckpointsRequest\x1a(.mealplanner.api.ListCheckpointsResponseB Z\x1emealplanner/generated/go/agentb\x06proto3"
 
 var (
 	file_agent_proto_rawDescOnce sync.Once
@@ -543,31 +557,83 @@ func file_agent_proto_rawDescGZIP() []byte {
 
 var file_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_agent_proto_goTypes = []any{
-	(*PlanStartRequest)(nil),       // 0: agent.PlanStartRequest
-	(*PlanStartResponse)(nil),      // 1: agent.PlanStartResponse
-	(*PlanFeedbackRequest)(nil),    // 2: agent.PlanFeedbackRequest
-	(*PlanFeedbackResponse)(nil),   // 3: agent.PlanFeedbackResponse
-	(*PlanFinalizeRequest)(nil),    // 4: agent.PlanFinalizeRequest
-	(*PlanFinalizeResponse)(nil),   // 5: agent.PlanFinalizeResponse
-	(*ResumeWorkflowRequest)(nil),  // 6: agent.ResumeWorkflowRequest
-	(*ResumeWorkflowResponse)(nil), // 7: agent.ResumeWorkflowResponse
-	nil,                            // 8: agent.ResumeWorkflowRequest.InputEntry
+	(*PlanStartRequest)(nil),               // 0: agent.PlanStartRequest
+	(*PlanStartResponse)(nil),              // 1: agent.PlanStartResponse
+	(*PlanFeedbackRequest)(nil),            // 2: agent.PlanFeedbackRequest
+	(*PlanFeedbackResponse)(nil),           // 3: agent.PlanFeedbackResponse
+	(*PlanFinalizeRequest)(nil),            // 4: agent.PlanFinalizeRequest
+	(*PlanFinalizeResponse)(nil),           // 5: agent.PlanFinalizeResponse
+	(*ResumeWorkflowRequest)(nil),          // 6: agent.ResumeWorkflowRequest
+	(*ResumeWorkflowResponse)(nil),         // 7: agent.ResumeWorkflowResponse
+	nil,                                    // 8: agent.ResumeWorkflowRequest.InputEntry
+	(*_go.StartAgentWorkflowRequest)(nil),  // 9: mealplanner.api.StartAgentWorkflowRequest
+	(*_go.MessageAgentRequest)(nil),        // 10: mealplanner.api.MessageAgentRequest
+	(*_go.GetWorkflowStatusRequest)(nil),   // 11: mealplanner.api.GetWorkflowStatusRequest
+	(*emptypb.Empty)(nil),                  // 12: google.protobuf.Empty
+	(*_go.CancelWorkflowRequest)(nil),      // 13: mealplanner.api.CancelWorkflowRequest
+	(*_go.GetWorkflowStateRequest)(nil),    // 14: mealplanner.api.GetWorkflowStateRequest
+	(*_go.AbandonWorkflowRequest)(nil),     // 15: mealplanner.api.AbandonWorkflowRequest
+	(*_go.GetMessagesRequest)(nil),         // 16: mealplanner.api.GetMessagesRequest
+	(*_go.AddMessageRequest)(nil),          // 17: mealplanner.api.AddMessageRequest
+	(*_go.UpdateSessionStateRequest)(nil),  // 18: mealplanner.api.UpdateSessionStateRequest
+	(*_go.GetCheckpointRequest)(nil),       // 19: mealplanner.api.GetCheckpointRequest
+	(*_go.PutCheckpointRequest)(nil),       // 20: mealplanner.api.PutCheckpointRequest
+	(*_go.ListCheckpointsRequest)(nil),     // 21: mealplanner.api.ListCheckpointsRequest
+	(*_go.StartAgentWorkflowResponse)(nil), // 22: mealplanner.api.StartAgentWorkflowResponse
+	(*_go.MessageAgentResponse)(nil),       // 23: mealplanner.api.MessageAgentResponse
+	(*_go.GetWorkflowStatusResponse)(nil),  // 24: mealplanner.api.GetWorkflowStatusResponse
+	(*_go.ListWorkflowsResponse)(nil),      // 25: mealplanner.api.ListWorkflowsResponse
+	(*_go.CancelWorkflowResponse)(nil),     // 26: mealplanner.api.CancelWorkflowResponse
+	(*_go.GetWorkflowStateResponse)(nil),   // 27: mealplanner.api.GetWorkflowStateResponse
+	(*_go.AbandonWorkflowResponse)(nil),    // 28: mealplanner.api.AbandonWorkflowResponse
+	(*_go.GetMessagesResponse)(nil),        // 29: mealplanner.api.GetMessagesResponse
+	(*_go.AddMessageResponse)(nil),         // 30: mealplanner.api.AddMessageResponse
+	(*_go.UpdateSessionStateResponse)(nil), // 31: mealplanner.api.UpdateSessionStateResponse
+	(*_go.GetCheckpointResponse)(nil),      // 32: mealplanner.api.GetCheckpointResponse
+	(*_go.PutCheckpointResponse)(nil),      // 33: mealplanner.api.PutCheckpointResponse
+	(*_go.ListCheckpointsResponse)(nil),    // 34: mealplanner.api.ListCheckpointsResponse
 }
 var file_agent_proto_depIdxs = []int32{
-	8, // 0: agent.ResumeWorkflowRequest.input:type_name -> agent.ResumeWorkflowRequest.InputEntry
-	0, // 1: agent.AgentService.PlanStart:input_type -> agent.PlanStartRequest
-	2, // 2: agent.AgentService.PlanFeedback:input_type -> agent.PlanFeedbackRequest
-	4, // 3: agent.AgentService.PlanFinalize:input_type -> agent.PlanFinalizeRequest
-	6, // 4: agent.AgentService.ResumeWorkflow:input_type -> agent.ResumeWorkflowRequest
-	1, // 5: agent.AgentService.PlanStart:output_type -> agent.PlanStartResponse
-	3, // 6: agent.AgentService.PlanFeedback:output_type -> agent.PlanFeedbackResponse
-	5, // 7: agent.AgentService.PlanFinalize:output_type -> agent.PlanFinalizeResponse
-	7, // 8: agent.AgentService.ResumeWorkflow:output_type -> agent.ResumeWorkflowResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	8,  // 0: agent.ResumeWorkflowRequest.input:type_name -> agent.ResumeWorkflowRequest.InputEntry
+	0,  // 1: agent.AgentService.PlanStart:input_type -> agent.PlanStartRequest
+	2,  // 2: agent.AgentService.PlanFeedback:input_type -> agent.PlanFeedbackRequest
+	4,  // 3: agent.AgentService.PlanFinalize:input_type -> agent.PlanFinalizeRequest
+	6,  // 4: agent.AgentService.ResumeWorkflow:input_type -> agent.ResumeWorkflowRequest
+	9,  // 5: agent.AgentService.StartAgentWorkflow:input_type -> mealplanner.api.StartAgentWorkflowRequest
+	10, // 6: agent.AgentService.MessageAgent:input_type -> mealplanner.api.MessageAgentRequest
+	11, // 7: agent.AgentService.GetWorkflowStatus:input_type -> mealplanner.api.GetWorkflowStatusRequest
+	12, // 8: agent.AgentService.ListWorkflows:input_type -> google.protobuf.Empty
+	13, // 9: agent.AgentService.CancelWorkflow:input_type -> mealplanner.api.CancelWorkflowRequest
+	14, // 10: agent.AgentService.GetWorkflowState:input_type -> mealplanner.api.GetWorkflowStateRequest
+	15, // 11: agent.AgentService.AbandonWorkflow:input_type -> mealplanner.api.AbandonWorkflowRequest
+	16, // 12: agent.AgentService.GetMessages:input_type -> mealplanner.api.GetMessagesRequest
+	17, // 13: agent.AgentService.AddMessage:input_type -> mealplanner.api.AddMessageRequest
+	18, // 14: agent.AgentService.UpdateSessionState:input_type -> mealplanner.api.UpdateSessionStateRequest
+	19, // 15: agent.AgentService.GetCheckpoint:input_type -> mealplanner.api.GetCheckpointRequest
+	20, // 16: agent.AgentService.PutCheckpoint:input_type -> mealplanner.api.PutCheckpointRequest
+	21, // 17: agent.AgentService.ListCheckpoints:input_type -> mealplanner.api.ListCheckpointsRequest
+	1,  // 18: agent.AgentService.PlanStart:output_type -> agent.PlanStartResponse
+	3,  // 19: agent.AgentService.PlanFeedback:output_type -> agent.PlanFeedbackResponse
+	5,  // 20: agent.AgentService.PlanFinalize:output_type -> agent.PlanFinalizeResponse
+	7,  // 21: agent.AgentService.ResumeWorkflow:output_type -> agent.ResumeWorkflowResponse
+	22, // 22: agent.AgentService.StartAgentWorkflow:output_type -> mealplanner.api.StartAgentWorkflowResponse
+	23, // 23: agent.AgentService.MessageAgent:output_type -> mealplanner.api.MessageAgentResponse
+	24, // 24: agent.AgentService.GetWorkflowStatus:output_type -> mealplanner.api.GetWorkflowStatusResponse
+	25, // 25: agent.AgentService.ListWorkflows:output_type -> mealplanner.api.ListWorkflowsResponse
+	26, // 26: agent.AgentService.CancelWorkflow:output_type -> mealplanner.api.CancelWorkflowResponse
+	27, // 27: agent.AgentService.GetWorkflowState:output_type -> mealplanner.api.GetWorkflowStateResponse
+	28, // 28: agent.AgentService.AbandonWorkflow:output_type -> mealplanner.api.AbandonWorkflowResponse
+	29, // 29: agent.AgentService.GetMessages:output_type -> mealplanner.api.GetMessagesResponse
+	30, // 30: agent.AgentService.AddMessage:output_type -> mealplanner.api.AddMessageResponse
+	31, // 31: agent.AgentService.UpdateSessionState:output_type -> mealplanner.api.UpdateSessionStateResponse
+	32, // 32: agent.AgentService.GetCheckpoint:output_type -> mealplanner.api.GetCheckpointResponse
+	33, // 33: agent.AgentService.PutCheckpoint:output_type -> mealplanner.api.PutCheckpointResponse
+	34, // 34: agent.AgentService.ListCheckpoints:output_type -> mealplanner.api.ListCheckpointsResponse
+	18, // [18:35] is the sub-list for method output_type
+	1,  // [1:18] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_agent_proto_init() }
