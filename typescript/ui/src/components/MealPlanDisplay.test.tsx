@@ -67,11 +67,11 @@ describe('MealPlanDisplay', () => {
     expect(empty).toHaveTextContent('---');
   });
 
-  test('displays red meat indicator', () => {
+  test('displays effort icon for steak', () => {
     const plan = buildPlan();
     render(<MealPlanDisplay plan={plan} />);
     const steak = screen.getByText('Steak');
-    expect(steak.nextSibling).toHaveTextContent('🥩');
+    expect(steak.nextSibling).toHaveTextContent('🙂'); // effort=3 gets easy icon
   });
 
   test('displays day headers', () => {
@@ -85,7 +85,7 @@ describe('MealPlanDisplay', () => {
     const plan = buildPlan();
     render(<MealPlanDisplay plan={plan} />);
     const eggs = screen.getByText('Eggs');
-    expect(eggs.nextSibling).toHaveTextContent('🔥');
+    expect(eggs.nextSibling).toHaveTextContent('🙂'); // effort=1 gets easy icon
   });
 
   test('handles click events on meal cards', async () => {

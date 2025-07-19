@@ -173,6 +173,10 @@ test('copies meal plan to clipboard', async () => {
     expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument(),
   );
 
+  // Open share menu first
+  fireEvent.click(screen.getByTestId('share-menu-button'));
+  
+  // Then click copy meal plan
   fireEvent.click(screen.getByTestId('copy-meal-plan'));
   expect(write).toHaveBeenCalled();
 });
