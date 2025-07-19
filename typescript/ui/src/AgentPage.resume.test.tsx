@@ -28,7 +28,7 @@ const stableResumeData = {
   currentStep: 'planning',
   mealPlan: { days: [] },
   shoppingList: [],
-  messages: []
+  messages: [],
 };
 
 // Mock useSession to simulate a resumed session with stable data
@@ -47,10 +47,10 @@ import { getMessages } from './api';
 describe('AgentPage Resume Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock the getMessages API call to return empty messages to prevent loops
     (getMessages as jest.Mock).mockResolvedValue([]);
-    
+
     // Mock localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
@@ -69,12 +69,17 @@ describe('AgentPage Resume Tests', () => {
 
   test('shows End Session button on resume', async () => {
     render(<AgentPage />);
-    
+
     // Wait for the component to process the resumeData and set session state
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /End Session/i })).toBeInTheDocument();
-    }, { timeout: 10000 });
-    
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole('button', { name: /End Session/i }),
+        ).toBeInTheDocument();
+      },
+      { timeout: 10000 },
+    );
+
     // Verify the session was restored
     expect(getMessages).toHaveBeenCalledWith('abc');
   });

@@ -6,6 +6,7 @@ option go_package = "mealplanner/generated/go/agentpb";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
+import "api.proto";
 
 // Agent Service - provides gRPC endpoints for all CLI commands
 service AgentService {
@@ -16,6 +17,10 @@ service AgentService {
   
   // Workflow management
   rpc ResumeWorkflow(ResumeWorkflowRequest) returns (ResumeWorkflowResponse);
+
+  // High level workflow endpoints for API gateway
+  rpc StartAgentWorkflow(mealplanner.api.StartAgentWorkflowRequest) returns (mealplanner.api.StartAgentWorkflowResponse);
+  rpc MessageAgent(mealplanner.api.MessageAgentRequest) returns (mealplanner.api.MessageAgentResponse);
 }
 
 // Plan Start

@@ -16,7 +16,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 0,
       name: 'Test Meal 1',
       effort: 2,
-      
+
       hasRedMeat: false,
       mealType: 'breakfast',
       url: '',
@@ -30,7 +30,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 0,
       name: 'Test Meal 2',
       effort: 3,
-      
+
       hasRedMeat: true,
       mealType: 'dinner',
       url: '',
@@ -46,7 +46,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 0,
       name: 'Test Lunch Meal',
       effort: 1,
-      
+
       hasRedMeat: false,
       mealType: 'lunch',
       url: '',
@@ -57,7 +57,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 0,
       name: 'Test Dinner Meal',
       effort: 2,
-      
+
       hasRedMeat: false,
       mealType: 'dinner',
       url: '',
@@ -82,7 +82,7 @@ export const mockMealPlan: ExtendedMealPlan = {
       id: 5,
       name: 'Eating out',
       effort: 1,
-      
+
       hasRedMeat: false,
       mealType: 'dinner',
       url: '',
@@ -112,7 +112,7 @@ export const mockMealPlanLegacy = {
         id: 0,
         name: 'Test Meal 1',
         effort: 2,
-        
+
         hasRedMeat: false,
         mealType: 'dinner',
         url: '',
@@ -129,7 +129,7 @@ export const mockMealPlanLegacy = {
         id: 0,
         name: 'Test Meal 2',
         effort: 3,
-        
+
         hasRedMeat: true,
         mealType: 'dinner',
         url: '',
@@ -146,7 +146,7 @@ export const mockMealPlanLegacy = {
         id: 0,
         name: 'Eating out',
         effort: 1,
-        
+
         hasRedMeat: false,
         mealType: 'dinner',
         url: '',
@@ -165,7 +165,7 @@ export const mockAvailableMeals: Meal[] = [
     steps: [],
     name: 'Available Test Meal',
     effort: 2,
-    
+
     hasRedMeat: false,
     mealType: 'breakfast',
     ingredients: [],
@@ -176,7 +176,7 @@ export const mockAvailableMeals: Meal[] = [
     steps: [],
     name: 'Another Available Meal',
     effort: 1,
-    
+
     hasRedMeat: true,
     mealType: 'breakfast',
     ingredients: [],
@@ -246,7 +246,7 @@ export const setupFetchMocks = (options?: {
         id: 0,
         name: 'Swapped Test Meal',
         effort: 1,
-        
+
         hasRedMeat: false,
         mealType: 'dinner',
         url: '',
@@ -300,7 +300,7 @@ export const mockWebSocket = () => {
     removeEventListener: jest.fn(),
     readyState: WebSocket.OPEN,
   };
-  
+
   (global as any).WebSocket = jest.fn(() => mockWS);
   return mockWS;
 };
@@ -311,19 +311,19 @@ export const mockClipboard = () => {
     writeText: jest.fn().mockResolvedValue(undefined),
     write: jest.fn().mockResolvedValue(undefined),
   };
-  
+
   Object.defineProperty(navigator, 'clipboard', {
     value: mockClipboard,
     writable: true,
   });
-  
+
   return mockClipboard;
 };
 
 // Mock localStorage
 export const mockLocalStorage = () => {
   const store: Record<string, string> = {};
-  
+
   const mockStorage = {
     getItem: jest.fn((key: string) => store[key] || null),
     setItem: jest.fn((key: string, value: string) => {
@@ -333,15 +333,15 @@ export const mockLocalStorage = () => {
       delete store[key];
     }),
     clear: jest.fn(() => {
-      Object.keys(store).forEach(key => delete store[key]);
+      Object.keys(store).forEach((key) => delete store[key]);
     }),
   };
-  
+
   Object.defineProperty(window, 'localStorage', {
     value: mockStorage,
     writable: true,
   });
-  
+
   return { mockStorage, store };
 };
 
@@ -351,17 +351,17 @@ export const userEvents = {
     const userEvent = (await import('@testing-library/user-event')).default;
     await userEvent.click(element);
   },
-  
+
   typeText: async (element: HTMLElement, text: string) => {
     const userEvent = (await import('@testing-library/user-event')).default;
     await userEvent.type(element, text);
   },
-  
+
   pressKey: async (element: HTMLElement, key: string) => {
     const userEvent = (await import('@testing-library/user-event')).default;
     await userEvent.type(element, `{${key}}`);
   },
-  
+
   hoverElement: async (element: HTMLElement) => {
     const userEvent = (await import('@testing-library/user-event')).default;
     await userEvent.hover(element);
@@ -380,35 +380,43 @@ export const mockSessionData = {
 export const errorUtils = {
   networkError: () => new Error('Network Error'),
   timeoutError: () => new Error('Request timeout'),
-  validationError: (field: string) => new Error(`Validation failed for ${field}`),
+  validationError: (field: string) =>
+    new Error(`Validation failed for ${field}`),
 };
 
 // Loading state utilities
 export const loadingUtils = {
-  simulateDelay: (ms: number = 100) => new Promise(resolve => setTimeout(resolve, ms)),
-  
+  simulateDelay: (ms: number = 100) =>
+    new Promise((resolve) => setTimeout(resolve, ms)),
+
   mockLoadingFetch: (delay: number = 100) => {
-    return jest.fn().mockImplementation(() => 
-      new Promise(resolve => 
-        setTimeout(() => resolve({
-          ok: true,
-          json: () => Promise.resolve({}),
-        }), delay)
-      )
+    return jest.fn().mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                ok: true,
+                json: () => Promise.resolve({}),
+              }),
+            delay,
+          ),
+        ),
     );
   },
 };
 
 // Accessibility test utilities
 export const a11yUtils = {
-  hasAriaLabel: (element: HTMLElement, label: string) => 
+  hasAriaLabel: (element: HTMLElement, label: string) =>
     element.getAttribute('aria-label') === label,
-    
-  hasAriaRole: (element: HTMLElement, role: string) => 
+
+  hasAriaRole: (element: HTMLElement, role: string) =>
     element.getAttribute('role') === role,
-    
-  isFocusable: (element: HTMLElement) => 
-    element.tabIndex >= 0 || ['INPUT', 'BUTTON', 'SELECT', 'TEXTAREA', 'A'].includes(element.tagName),
+
+  isFocusable: (element: HTMLElement) =>
+    element.tabIndex >= 0 ||
+    ['INPUT', 'BUTTON', 'SELECT', 'TEXTAREA', 'A'].includes(element.tagName),
 };
 
 // Drag and drop test utilities
@@ -422,14 +430,14 @@ export const dragDropUtils = {
     preventDefault: jest.fn(),
     stopPropagation: jest.fn(),
   }),
-  
+
   simulateDragDrop: async (source: HTMLElement, target: HTMLElement) => {
     const userEvent = (await import('@testing-library/user-event')).default;
     // This is a simplified drag-drop simulation
     // In real tests, you might need more complex DnD library mocking
     const dragStartEvent = new Event('dragstart', { bubbles: true });
     const dropEvent = new Event('drop', { bubbles: true });
-    
+
     source.dispatchEvent(dragStartEvent);
     target.dispatchEvent(dropEvent);
   },

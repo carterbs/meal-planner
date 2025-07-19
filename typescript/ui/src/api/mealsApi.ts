@@ -1,5 +1,11 @@
-import type { MainMealResponse, MainStepResponse } from '@mealplanner/generated/dist/gateway/types.gen';
-import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client/index.js';
+import type {
+  MainMealResponse,
+  MainStepResponse,
+} from '@mealplanner/generated/dist/gateway/types.gen';
+import {
+  createClient,
+  createConfig,
+} from '@mealplanner/generated/dist/gateway/client/index.js';
 import {
   getMeals as getMealsFromGateway,
   postMeals,
@@ -7,10 +13,9 @@ import {
   putMealsByMealIdIngredientsByIngredientId,
   deleteMealsByMealIdIngredientsByIngredientId,
   postMealsByMealIdStepsBulk,
-  deleteMealsByMealIdSteps
+  deleteMealsByMealIdSteps,
 } from '@mealplanner/generated/dist/gateway/index.js';
 import { Meal, Ingredient, Step } from '../types';
-
 
 // Create the API gateway client
 
@@ -37,7 +42,7 @@ function mapMeal(m: MainMealResponse): Meal {
     hasRedMeat: m.hasRedMeat || false,
     url: m.url || '',
     mealType: m.mealType || '',
-    ingredients: (m.ingredients || []).map(i => ({
+    ingredients: (m.ingredients || []).map((i) => ({
       id: i.id,
       mealId: i.mealId,
       name: i.name || '',
@@ -49,9 +54,11 @@ function mapMeal(m: MainMealResponse): Meal {
 }
 
 // Create the API gateway client
-const gatewayClient = createClient(createConfig({
-  baseUrl: 'http://localhost:8080/api'
-}));
+const gatewayClient = createClient(
+  createConfig({
+    baseUrl: 'http://localhost:8080/api',
+  }),
+);
 
 /**
  * Fetch all meals, optionally filtered by type
@@ -65,7 +72,9 @@ export async function getMeals(mealType?: string): Promise<Meal[]> {
   });
 
   if (!result.data || result.error) {
-    throw new Error(`Failed to fetch meals: ${result.error || 'Unknown error'}`);
+    throw new Error(
+      `Failed to fetch meals: ${result.error || 'Unknown error'}`,
+    );
   }
 
   return (result.data.meals || []).map(mapMeal);
@@ -74,7 +83,9 @@ export async function getMeals(mealType?: string): Promise<Meal[]> {
 /**
  * Create a new meal
  */
-export async function createMeal(meal: Omit<MainMealResponse, 'id'>): Promise<Meal> {
+export async function createMeal(
+  meal: Omit<MainMealResponse, 'id'>,
+): Promise<Meal> {
   const mealData = {
     id: 0, // Will be assigned by backend
     ...meal,
@@ -86,7 +97,9 @@ export async function createMeal(meal: Omit<MainMealResponse, 'id'>): Promise<Me
   });
 
   if (!result.data || result.error) {
-    throw new Error(`Failed to create meal: ${result.error || 'Unknown error'}`);
+    throw new Error(
+      `Failed to create meal: ${result.error || 'Unknown error'}`,
+    );
   }
 
   if (!result.data.name) {
@@ -106,7 +119,9 @@ export async function deleteMeal(mealId: number): Promise<string> {
   });
 
   if (!result.data || result.error) {
-    throw new Error(`Failed to delete meal: ${result.error || 'Unknown error'}`);
+    throw new Error(
+      `Failed to delete meal: ${result.error || 'Unknown error'}`,
+    );
   }
 
   return result.data.message || 'Meal deleted successfully';
@@ -127,10 +142,10 @@ export async function updateMealIngredient(
   });
 
   if (!result.data || result.error) {
-    throw new Error(`Failed to update ingredient: ${result.error || 'Unknown error'}`);
+    throw new Error(
+      `Failed to update ingredient: ${result.error || 'Unknown error'}`,
+    );
   }
-
-  
 
   return mapMeal(result.data);
 }
@@ -145,14 +160,13 @@ export async function deleteMealIngredient(
   const result = await deleteMealsByMealIdIngredientsByIngredientId({
     client: gatewayClient,
     path: { mealId: mealId.toString(), ingredientId: ingredientId.toString() },
-    
   });
 
   if (!result.data || result.error) {
-    throw new Error(`Failed to delete ingredient: ${result.error || 'Unknown error'}`);
+    throw new Error(
+      `Failed to delete ingredient: ${result.error || 'Unknown error'}`,
+    );
   }
-
-  
 
   return mapMeal(result.data);
 }
@@ -184,11 +198,12 @@ export async function deleteAllSteps(mealId: number): Promise<string> {
   const result = await deleteMealsByMealIdSteps({
     client: gatewayClient,
     path: { mealId: mealId.toString() },
-    
   });
 
   if (!result.data || result.error) {
-    throw new Error(`Failed to delete steps: ${result.error || 'Unknown error'}`);
+    throw new Error(
+      `Failed to delete steps: ${result.error || 'Unknown error'}`,
+    );
   }
 
   return result.data.message || 'Steps deleted successfully';
