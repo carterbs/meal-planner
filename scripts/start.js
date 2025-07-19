@@ -102,7 +102,7 @@ console.log(chalk.blue('🚀 Starting backend, API gateway, and frontend...'));
 
 // Start backend first (on 8090)
 const backendProcess = spawn('go', ['run', '.'], {
-  cwd: path.join(PROJECT_ROOT, 'backend'),
+  cwd: path.join(PROJECT_ROOT, 'meal-service'),
   stdio: 'inherit',
   shell: true,
 });

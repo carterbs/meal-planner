@@ -6,7 +6,7 @@ set -x
 lsof -ti:8080 | xargs -r kill -9
 
 # Start backend
-pushd backend > /dev/null
+pushd meal-service > /dev/null
 go run . &
 BACKEND_PID=$!
 popd > /dev/null

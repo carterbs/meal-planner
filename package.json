@@ -18,7 +18,7 @@
         "start:mcp": "node scripts/start-mcp.js",
         "stop:logging": "kill -9 $(lsof -t -i :50052)",
         "test:e2e": "ts-node ./typescript/e2e/e2e_remove_friday.ts",
-        "test:backend": "cd backend && make test",
+        "test:backend": "cd meal-service && make test",
         "test:mcp": "cd typescript/mcp && go test -v ./...",
         "test:frontend": "cd typescript/ui && yarn test",
         "test:agent": "cd agent-service && yarn test",
@@ -30,7 +30,7 @@
         "dev": "node scripts/dev-start.js",
         "meal-agent": "./scripts/meal-agent.sh",
         "kill:servers": "node scripts/kill-servers.js",
-        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\" && gofmt -w backend/"
+        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\" && gofmt -w meal-service/"
     },
     "resolutions": {
         "react": "18.2.0",
