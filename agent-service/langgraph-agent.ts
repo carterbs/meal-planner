@@ -246,7 +246,6 @@ export async function createLangGraphMealPlannerAgent(
   return agent;
 }
 
-// CLI usage example
 async function main() {
   const config: LangGraphAgentConfig = {
     defaultParticipants: ['brad', 'shannon'],
