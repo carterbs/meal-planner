@@ -25,6 +25,10 @@ const portsToKill = [
   5000, 
   3001, 
   3000,
+  // logging service
+  50052,
+  // agent service
+  50053,
   // grpc backend
   50051];
 

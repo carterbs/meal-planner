@@ -20,8 +20,8 @@ async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function waitForBackend(): Promise<void> {
-  console.log('--- Waiting for backend to be ready ---');
+async function waitForAllServices(): Promise<void> {
+  console.log('--- Waiting for all services to be ready ---');
 
   for (let i = 1; i <= 30; i++) {
     try {
@@ -31,16 +31,28 @@ async function waitForBackend(): Promise<void> {
       });
 
       if (result.response.status === 200) {
-        console.log('✅ Backend is ready');
-        return;
+        const healthData = result.data as any;
+        console.log('--- Health check response ---');
+        console.log(JSON.stringify(healthData, null, 2));
+        
+        // Check if all services are healthy
+        if (healthData.services && 
+            healthData.services.backend === true && 
+            healthData.services.agent === true && 
+            healthData.services.mcp === true) {
+          console.log('✅ All services are healthy!');
+          return;
+        } else {
+          console.log('⚠️ Some services are not healthy yet:', healthData.services);
+        }
       }
     } catch (error) {
-      // Continue waiting
+      console.log('--- Health check failed, retrying ---');
     }
     await sleep(1000);
   }
 
-  throw new Error('Backend failed to start within 30 seconds');
+  throw new Error('Services failed to start within 30 seconds');
 }
 
 async function createSession(): Promise<string> {
@@ -185,8 +197,8 @@ async function main(): Promise<void> {
       stdio: 'inherit',
     });
 
-    // Wait for backend to be ready
-    await waitForBackend();
+    // Wait for all services to be ready
+    await waitForAllServices();
 
     // Create session and get thread ID
     const threadId = await createSession();

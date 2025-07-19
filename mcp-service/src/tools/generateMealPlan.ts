@@ -1,7 +1,7 @@
 import { debugLog, infoLog, warnLog, errorLog } from "../logging.js";
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
-import { API } from '../utils.js';
+import { API, retryFetch } from '../utils.js';
 import { WeeklyMealPlan, GenerateMealPlanResponse } from '@mealplanner/generated';
 
 export async function generateMealPlan(): Promise<GenerateMealPlanResponse> {
@@ -27,13 +27,10 @@ export async function generateMealPlan(): Promise<GenerateMealPlanResponse> {
       await errorLog(`🔧 [MCP-FETCH] DNS lookup failed: ${dnsError}`);
     }
     
-    const healthResp = await fetch(`${API}/api/health`, { 
-      method: "GET",
-      signal: AbortSignal.timeout(5000) // 5 second timeout
-    });
+    const healthResp = await retryFetch(`${API}/api/health`, { method: "GET" });
     await infoLog(`🔧 [MCP-FETCH] Health check status: ${healthResp.status} ${healthResp.statusText}`);
     
-    const resp = await fetch(`${API}/api/mealplan/generate`, { method: "POST" });
+    const resp = await retryFetch(`${API}/api/mealplan/generate`, { method: "POST" });
     await infoLog(`🔧 [MCP-FETCH] Response status: ${resp.status} ${resp.statusText}`);
     await infoLog(`🔧 [MCP-FETCH] Response ok: ${resp.ok}`);
     
