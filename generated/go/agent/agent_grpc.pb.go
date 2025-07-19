@@ -4,14 +4,15 @@
 // - protoc             v5.29.3
 // source: agent.proto
 
-package agentpb
+package agent
 
 import (
 	context "context"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	apipb "mealplanner/generated/go"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	_go "mealplanner/generated/go"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -26,6 +27,17 @@ const (
 	AgentService_ResumeWorkflow_FullMethodName     = "/agent.AgentService/ResumeWorkflow"
 	AgentService_StartAgentWorkflow_FullMethodName = "/agent.AgentService/StartAgentWorkflow"
 	AgentService_MessageAgent_FullMethodName       = "/agent.AgentService/MessageAgent"
+	AgentService_GetWorkflowStatus_FullMethodName  = "/agent.AgentService/GetWorkflowStatus"
+	AgentService_ListWorkflows_FullMethodName      = "/agent.AgentService/ListWorkflows"
+	AgentService_CancelWorkflow_FullMethodName     = "/agent.AgentService/CancelWorkflow"
+	AgentService_GetWorkflowState_FullMethodName   = "/agent.AgentService/GetWorkflowState"
+	AgentService_AbandonWorkflow_FullMethodName    = "/agent.AgentService/AbandonWorkflow"
+	AgentService_GetMessages_FullMethodName        = "/agent.AgentService/GetMessages"
+	AgentService_AddMessage_FullMethodName         = "/agent.AgentService/AddMessage"
+	AgentService_UpdateSessionState_FullMethodName = "/agent.AgentService/UpdateSessionState"
+	AgentService_GetCheckpoint_FullMethodName      = "/agent.AgentService/GetCheckpoint"
+	AgentService_PutCheckpoint_FullMethodName      = "/agent.AgentService/PutCheckpoint"
+	AgentService_ListCheckpoints_FullMethodName    = "/agent.AgentService/ListCheckpoints"
 )
 
 // AgentServiceClient is the client API for AgentService service.
@@ -40,8 +52,23 @@ type AgentServiceClient interface {
 	PlanFinalize(ctx context.Context, in *PlanFinalizeRequest, opts ...grpc.CallOption) (*PlanFinalizeResponse, error)
 	// Workflow management
 	ResumeWorkflow(ctx context.Context, in *ResumeWorkflowRequest, opts ...grpc.CallOption) (*ResumeWorkflowResponse, error)
-	StartAgentWorkflow(ctx context.Context, in *apipb.StartAgentWorkflowRequest, opts ...grpc.CallOption) (*apipb.StartAgentWorkflowResponse, error)
-	MessageAgent(ctx context.Context, in *apipb.MessageAgentRequest, opts ...grpc.CallOption) (*apipb.MessageAgentResponse, error)
+	// High level workflow endpoints for API gateway
+	StartAgentWorkflow(ctx context.Context, in *_go.StartAgentWorkflowRequest, opts ...grpc.CallOption) (*_go.StartAgentWorkflowResponse, error)
+	MessageAgent(ctx context.Context, in *_go.MessageAgentRequest, opts ...grpc.CallOption) (*_go.MessageAgentResponse, error)
+	// Workflow management endpoints
+	GetWorkflowStatus(ctx context.Context, in *_go.GetWorkflowStatusRequest, opts ...grpc.CallOption) (*_go.GetWorkflowStatusResponse, error)
+	ListWorkflows(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*_go.ListWorkflowsResponse, error)
+	CancelWorkflow(ctx context.Context, in *_go.CancelWorkflowRequest, opts ...grpc.CallOption) (*_go.CancelWorkflowResponse, error)
+	GetWorkflowState(ctx context.Context, in *_go.GetWorkflowStateRequest, opts ...grpc.CallOption) (*_go.GetWorkflowStateResponse, error)
+	AbandonWorkflow(ctx context.Context, in *_go.AbandonWorkflowRequest, opts ...grpc.CallOption) (*_go.AbandonWorkflowResponse, error)
+	// Message management endpoints
+	GetMessages(ctx context.Context, in *_go.GetMessagesRequest, opts ...grpc.CallOption) (*_go.GetMessagesResponse, error)
+	AddMessage(ctx context.Context, in *_go.AddMessageRequest, opts ...grpc.CallOption) (*_go.AddMessageResponse, error)
+	UpdateSessionState(ctx context.Context, in *_go.UpdateSessionStateRequest, opts ...grpc.CallOption) (*_go.UpdateSessionStateResponse, error)
+	// Checkpoint management endpoints
+	GetCheckpoint(ctx context.Context, in *_go.GetCheckpointRequest, opts ...grpc.CallOption) (*_go.GetCheckpointResponse, error)
+	PutCheckpoint(ctx context.Context, in *_go.PutCheckpointRequest, opts ...grpc.CallOption) (*_go.PutCheckpointResponse, error)
+	ListCheckpoints(ctx context.Context, in *_go.ListCheckpointsRequest, opts ...grpc.CallOption) (*_go.ListCheckpointsResponse, error)
 }
 
 type agentServiceClient struct {
@@ -92,9 +119,9 @@ func (c *agentServiceClient) ResumeWorkflow(ctx context.Context, in *ResumeWorkf
 	return out, nil
 }
 
-func (c *agentServiceClient) StartAgentWorkflow(ctx context.Context, in *apipb.StartAgentWorkflowRequest, opts ...grpc.CallOption) (*apipb.StartAgentWorkflowResponse, error) {
+func (c *agentServiceClient) StartAgentWorkflow(ctx context.Context, in *_go.StartAgentWorkflowRequest, opts ...grpc.CallOption) (*_go.StartAgentWorkflowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(apipb.StartAgentWorkflowResponse)
+	out := new(_go.StartAgentWorkflowResponse)
 	err := c.cc.Invoke(ctx, AgentService_StartAgentWorkflow_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -102,10 +129,120 @@ func (c *agentServiceClient) StartAgentWorkflow(ctx context.Context, in *apipb.S
 	return out, nil
 }
 
-func (c *agentServiceClient) MessageAgent(ctx context.Context, in *apipb.MessageAgentRequest, opts ...grpc.CallOption) (*apipb.MessageAgentResponse, error) {
+func (c *agentServiceClient) MessageAgent(ctx context.Context, in *_go.MessageAgentRequest, opts ...grpc.CallOption) (*_go.MessageAgentResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(apipb.MessageAgentResponse)
+	out := new(_go.MessageAgentResponse)
 	err := c.cc.Invoke(ctx, AgentService_MessageAgent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) GetWorkflowStatus(ctx context.Context, in *_go.GetWorkflowStatusRequest, opts ...grpc.CallOption) (*_go.GetWorkflowStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.GetWorkflowStatusResponse)
+	err := c.cc.Invoke(ctx, AgentService_GetWorkflowStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) ListWorkflows(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*_go.ListWorkflowsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.ListWorkflowsResponse)
+	err := c.cc.Invoke(ctx, AgentService_ListWorkflows_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) CancelWorkflow(ctx context.Context, in *_go.CancelWorkflowRequest, opts ...grpc.CallOption) (*_go.CancelWorkflowResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.CancelWorkflowResponse)
+	err := c.cc.Invoke(ctx, AgentService_CancelWorkflow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) GetWorkflowState(ctx context.Context, in *_go.GetWorkflowStateRequest, opts ...grpc.CallOption) (*_go.GetWorkflowStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.GetWorkflowStateResponse)
+	err := c.cc.Invoke(ctx, AgentService_GetWorkflowState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) AbandonWorkflow(ctx context.Context, in *_go.AbandonWorkflowRequest, opts ...grpc.CallOption) (*_go.AbandonWorkflowResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.AbandonWorkflowResponse)
+	err := c.cc.Invoke(ctx, AgentService_AbandonWorkflow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) GetMessages(ctx context.Context, in *_go.GetMessagesRequest, opts ...grpc.CallOption) (*_go.GetMessagesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.GetMessagesResponse)
+	err := c.cc.Invoke(ctx, AgentService_GetMessages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) AddMessage(ctx context.Context, in *_go.AddMessageRequest, opts ...grpc.CallOption) (*_go.AddMessageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.AddMessageResponse)
+	err := c.cc.Invoke(ctx, AgentService_AddMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) UpdateSessionState(ctx context.Context, in *_go.UpdateSessionStateRequest, opts ...grpc.CallOption) (*_go.UpdateSessionStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.UpdateSessionStateResponse)
+	err := c.cc.Invoke(ctx, AgentService_UpdateSessionState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) GetCheckpoint(ctx context.Context, in *_go.GetCheckpointRequest, opts ...grpc.CallOption) (*_go.GetCheckpointResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.GetCheckpointResponse)
+	err := c.cc.Invoke(ctx, AgentService_GetCheckpoint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) PutCheckpoint(ctx context.Context, in *_go.PutCheckpointRequest, opts ...grpc.CallOption) (*_go.PutCheckpointResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.PutCheckpointResponse)
+	err := c.cc.Invoke(ctx, AgentService_PutCheckpoint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentServiceClient) ListCheckpoints(ctx context.Context, in *_go.ListCheckpointsRequest, opts ...grpc.CallOption) (*_go.ListCheckpointsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.ListCheckpointsResponse)
+	err := c.cc.Invoke(ctx, AgentService_ListCheckpoints_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +261,23 @@ type AgentServiceServer interface {
 	PlanFinalize(context.Context, *PlanFinalizeRequest) (*PlanFinalizeResponse, error)
 	// Workflow management
 	ResumeWorkflow(context.Context, *ResumeWorkflowRequest) (*ResumeWorkflowResponse, error)
-	StartAgentWorkflow(context.Context, *apipb.StartAgentWorkflowRequest) (*apipb.StartAgentWorkflowResponse, error)
-	MessageAgent(context.Context, *apipb.MessageAgentRequest) (*apipb.MessageAgentResponse, error)
+	// High level workflow endpoints for API gateway
+	StartAgentWorkflow(context.Context, *_go.StartAgentWorkflowRequest) (*_go.StartAgentWorkflowResponse, error)
+	MessageAgent(context.Context, *_go.MessageAgentRequest) (*_go.MessageAgentResponse, error)
+	// Workflow management endpoints
+	GetWorkflowStatus(context.Context, *_go.GetWorkflowStatusRequest) (*_go.GetWorkflowStatusResponse, error)
+	ListWorkflows(context.Context, *emptypb.Empty) (*_go.ListWorkflowsResponse, error)
+	CancelWorkflow(context.Context, *_go.CancelWorkflowRequest) (*_go.CancelWorkflowResponse, error)
+	GetWorkflowState(context.Context, *_go.GetWorkflowStateRequest) (*_go.GetWorkflowStateResponse, error)
+	AbandonWorkflow(context.Context, *_go.AbandonWorkflowRequest) (*_go.AbandonWorkflowResponse, error)
+	// Message management endpoints
+	GetMessages(context.Context, *_go.GetMessagesRequest) (*_go.GetMessagesResponse, error)
+	AddMessage(context.Context, *_go.AddMessageRequest) (*_go.AddMessageResponse, error)
+	UpdateSessionState(context.Context, *_go.UpdateSessionStateRequest) (*_go.UpdateSessionStateResponse, error)
+	// Checkpoint management endpoints
+	GetCheckpoint(context.Context, *_go.GetCheckpointRequest) (*_go.GetCheckpointResponse, error)
+	PutCheckpoint(context.Context, *_go.PutCheckpointRequest) (*_go.PutCheckpointResponse, error)
+	ListCheckpoints(context.Context, *_go.ListCheckpointsRequest) (*_go.ListCheckpointsResponse, error)
 	mustEmbedUnimplementedAgentServiceServer()
 }
 
@@ -148,11 +300,44 @@ func (UnimplementedAgentServiceServer) PlanFinalize(context.Context, *PlanFinali
 func (UnimplementedAgentServiceServer) ResumeWorkflow(context.Context, *ResumeWorkflowRequest) (*ResumeWorkflowResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResumeWorkflow not implemented")
 }
-func (UnimplementedAgentServiceServer) StartAgentWorkflow(context.Context, *apipb.StartAgentWorkflowRequest) (*apipb.StartAgentWorkflowResponse, error) {
+func (UnimplementedAgentServiceServer) StartAgentWorkflow(context.Context, *_go.StartAgentWorkflowRequest) (*_go.StartAgentWorkflowResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StartAgentWorkflow not implemented")
 }
-func (UnimplementedAgentServiceServer) MessageAgent(context.Context, *apipb.MessageAgentRequest) (*apipb.MessageAgentResponse, error) {
+func (UnimplementedAgentServiceServer) MessageAgent(context.Context, *_go.MessageAgentRequest) (*_go.MessageAgentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MessageAgent not implemented")
+}
+func (UnimplementedAgentServiceServer) GetWorkflowStatus(context.Context, *_go.GetWorkflowStatusRequest) (*_go.GetWorkflowStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowStatus not implemented")
+}
+func (UnimplementedAgentServiceServer) ListWorkflows(context.Context, *emptypb.Empty) (*_go.ListWorkflowsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListWorkflows not implemented")
+}
+func (UnimplementedAgentServiceServer) CancelWorkflow(context.Context, *_go.CancelWorkflowRequest) (*_go.CancelWorkflowResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelWorkflow not implemented")
+}
+func (UnimplementedAgentServiceServer) GetWorkflowState(context.Context, *_go.GetWorkflowStateRequest) (*_go.GetWorkflowStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowState not implemented")
+}
+func (UnimplementedAgentServiceServer) AbandonWorkflow(context.Context, *_go.AbandonWorkflowRequest) (*_go.AbandonWorkflowResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AbandonWorkflow not implemented")
+}
+func (UnimplementedAgentServiceServer) GetMessages(context.Context, *_go.GetMessagesRequest) (*_go.GetMessagesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMessages not implemented")
+}
+func (UnimplementedAgentServiceServer) AddMessage(context.Context, *_go.AddMessageRequest) (*_go.AddMessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMessage not implemented")
+}
+func (UnimplementedAgentServiceServer) UpdateSessionState(context.Context, *_go.UpdateSessionStateRequest) (*_go.UpdateSessionStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSessionState not implemented")
+}
+func (UnimplementedAgentServiceServer) GetCheckpoint(context.Context, *_go.GetCheckpointRequest) (*_go.GetCheckpointResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCheckpoint not implemented")
+}
+func (UnimplementedAgentServiceServer) PutCheckpoint(context.Context, *_go.PutCheckpointRequest) (*_go.PutCheckpointResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutCheckpoint not implemented")
+}
+func (UnimplementedAgentServiceServer) ListCheckpoints(context.Context, *_go.ListCheckpointsRequest) (*_go.ListCheckpointsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCheckpoints not implemented")
 }
 func (UnimplementedAgentServiceServer) mustEmbedUnimplementedAgentServiceServer() {}
 func (UnimplementedAgentServiceServer) testEmbeddedByValue()                      {}
@@ -248,7 +433,7 @@ func _AgentService_ResumeWorkflow_Handler(srv interface{}, ctx context.Context, 
 }
 
 func _AgentService_StartAgentWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(apipb.StartAgentWorkflowRequest)
+	in := new(_go.StartAgentWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -260,13 +445,13 @@ func _AgentService_StartAgentWorkflow_Handler(srv interface{}, ctx context.Conte
 		FullMethod: AgentService_StartAgentWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentServiceServer).StartAgentWorkflow(ctx, req.(*apipb.StartAgentWorkflowRequest))
+		return srv.(AgentServiceServer).StartAgentWorkflow(ctx, req.(*_go.StartAgentWorkflowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _AgentService_MessageAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(apipb.MessageAgentRequest)
+	in := new(_go.MessageAgentRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -278,7 +463,205 @@ func _AgentService_MessageAgent_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: AgentService_MessageAgent_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentServiceServer).MessageAgent(ctx, req.(*apipb.MessageAgentRequest))
+		return srv.(AgentServiceServer).MessageAgent(ctx, req.(*_go.MessageAgentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_GetWorkflowStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.GetWorkflowStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).GetWorkflowStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_GetWorkflowStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).GetWorkflowStatus(ctx, req.(*_go.GetWorkflowStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_ListWorkflows_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).ListWorkflows(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_ListWorkflows_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).ListWorkflows(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_CancelWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.CancelWorkflowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).CancelWorkflow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_CancelWorkflow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).CancelWorkflow(ctx, req.(*_go.CancelWorkflowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_GetWorkflowState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.GetWorkflowStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).GetWorkflowState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_GetWorkflowState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).GetWorkflowState(ctx, req.(*_go.GetWorkflowStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_AbandonWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.AbandonWorkflowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).AbandonWorkflow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_AbandonWorkflow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).AbandonWorkflow(ctx, req.(*_go.AbandonWorkflowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_GetMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.GetMessagesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).GetMessages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_GetMessages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).GetMessages(ctx, req.(*_go.GetMessagesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_AddMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.AddMessageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).AddMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_AddMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).AddMessage(ctx, req.(*_go.AddMessageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_UpdateSessionState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.UpdateSessionStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).UpdateSessionState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_UpdateSessionState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).UpdateSessionState(ctx, req.(*_go.UpdateSessionStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_GetCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.GetCheckpointRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).GetCheckpoint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_GetCheckpoint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).GetCheckpoint(ctx, req.(*_go.GetCheckpointRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_PutCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.PutCheckpointRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).PutCheckpoint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_PutCheckpoint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).PutCheckpoint(ctx, req.(*_go.PutCheckpointRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AgentService_ListCheckpoints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(_go.ListCheckpointsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).ListCheckpoints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_ListCheckpoints_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).ListCheckpoints(ctx, req.(*_go.ListCheckpointsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -313,6 +696,50 @@ var AgentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MessageAgent",
 			Handler:    _AgentService_MessageAgent_Handler,
+		},
+		{
+			MethodName: "GetWorkflowStatus",
+			Handler:    _AgentService_GetWorkflowStatus_Handler,
+		},
+		{
+			MethodName: "ListWorkflows",
+			Handler:    _AgentService_ListWorkflows_Handler,
+		},
+		{
+			MethodName: "CancelWorkflow",
+			Handler:    _AgentService_CancelWorkflow_Handler,
+		},
+		{
+			MethodName: "GetWorkflowState",
+			Handler:    _AgentService_GetWorkflowState_Handler,
+		},
+		{
+			MethodName: "AbandonWorkflow",
+			Handler:    _AgentService_AbandonWorkflow_Handler,
+		},
+		{
+			MethodName: "GetMessages",
+			Handler:    _AgentService_GetMessages_Handler,
+		},
+		{
+			MethodName: "AddMessage",
+			Handler:    _AgentService_AddMessage_Handler,
+		},
+		{
+			MethodName: "UpdateSessionState",
+			Handler:    _AgentService_UpdateSessionState_Handler,
+		},
+		{
+			MethodName: "GetCheckpoint",
+			Handler:    _AgentService_GetCheckpoint_Handler,
+		},
+		{
+			MethodName: "PutCheckpoint",
+			Handler:    _AgentService_PutCheckpoint_Handler,
+		},
+		{
+			MethodName: "ListCheckpoints",
+			Handler:    _AgentService_ListCheckpoints_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

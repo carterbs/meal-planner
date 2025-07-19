@@ -407,7 +407,6 @@ func main() {
 	r.Get("/api/meals", gw.getAllMeals)
 	r.Post("/api/meals", gw.createMeal)
 	r.Post("/api/meals/swap", gw.swapMeal)
-	r.Post("/api/meals/remove", gw.removeMeal)
 	r.Put("/api/meals/{mealId}/ingredients/{ingredientId}", gw.updateMealIngredient)
 	r.Delete("/api/meals/{mealId}/ingredients/{ingredientId}", gw.deleteMealIngredient)
 	r.Delete("/api/meals/{mealId}", gw.deleteMeal)
@@ -685,33 +684,6 @@ func (gw *Gateway) swapMeal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := gw.backend.SwapMeal(r.Context(), &req)
-	writeJSONResponse(w, resp, err)
-}
-
-// @Summary Remove Meal
-// @Description Remove a meal from the plan
-// @Tags meals
-// @Accept json
-// @Produce json
-// @Param request body apipb.RemoveMealRequest true "Remove meal request"
-// @Success 200 {object} MealPlanResponse "Meal removed successfully"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /meals/remove [post]
-func (gw *Gateway) removeMeal(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	var req apipb.RemoveMealRequest
-	if err := protojson.Unmarshal(body, &req); err != nil {
-		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	resp, err := gw.backend.RemoveMeal(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1222,7 +1194,7 @@ func (gw *Gateway) getWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.backend.GetWorkflowStatus(r.Context(), req)
+	resp, err := gw.agent.GetWorkflowStatus(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1235,7 +1207,7 @@ func (gw *Gateway) getWorkflowStatus(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /agent/workflows [get]
 func (gw *Gateway) listWorkflows(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.backend.ListWorkflows(r.Context(), &emptypb.Empty{})
+	resp, err := gw.agent.ListWorkflows(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1256,7 +1228,7 @@ func (gw *Gateway) cancelWorkflow(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.backend.CancelWorkflow(r.Context(), req)
+	resp, err := gw.agent.CancelWorkflow(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1278,7 +1250,7 @@ func (gw *Gateway) getWorkflowState(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.backend.GetWorkflowState(r.Context(), req)
+	resp, err := gw.agent.GetWorkflowState(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1299,7 +1271,7 @@ func (gw *Gateway) abandonWorkflow(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.backend.AbandonWorkflow(r.Context(), req)
+	resp, err := gw.agent.AbandonWorkflow(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1338,7 +1310,7 @@ func (gw *Gateway) addMessage(w http.ResponseWriter, r *http.Request) {
 		Message:  reqBody.Message,
 	}
 
-	resp, err := gw.backend.AddMessage(r.Context(), req)
+	resp, err := gw.agent.AddMessage(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1363,7 +1335,7 @@ func (gw *Gateway) getMessages(w http.ResponseWriter, r *http.Request) {
 		ThreadId: threadId,
 	}
 
-	resp, err := gw.backend.GetMessages(r.Context(), req)
+	resp, err := gw.agent.GetMessages(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1406,7 +1378,7 @@ func (gw *Gateway) updateSessionState(w http.ResponseWriter, r *http.Request) {
 		Status:       reqBody.Status,
 	}
 
-	resp, err := gw.backend.UpdateSessionState(r.Context(), req)
+	resp, err := gw.agent.UpdateSessionState(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1432,7 +1404,7 @@ func (gw *Gateway) getCheckpoint(w http.ResponseWriter, r *http.Request) {
 		CheckpointNs: checkpointNs,
 	}
 
-	resp, err := gw.backend.GetCheckpoint(r.Context(), req)
+	resp, err := gw.agent.GetCheckpoint(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1459,7 +1431,7 @@ func (gw *Gateway) putCheckpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := gw.backend.PutCheckpoint(r.Context(), &req)
+	resp, err := gw.agent.PutCheckpoint(r.Context(), &req)
 	writeJSONResponse(w, resp, err)
 }
 
@@ -1489,6 +1461,6 @@ func (gw *Gateway) listCheckpoints(w http.ResponseWriter, r *http.Request) {
 		BeforeThreadId: beforeThreadId,
 	}
 
-	resp, err := gw.backend.ListCheckpoints(r.Context(), req)
+	resp, err := gw.agent.ListCheckpoints(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }

@@ -3,7 +3,6 @@ package services
 import (
 	apipb "mealplanner/generated/go"
 	"mealplanner/models"
-	"mealplanner/repositories"
 )
 
 // MealService handles meal CRUD operations and business logic
@@ -64,49 +63,6 @@ type ShoppingListService interface {
 	ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) ([]*apipb.ShoppingListItem, error)
 }
 
-// MessageService handles chat message operations
-type MessageService interface {
-	GetMessages(threadID string) ([]models.ChatMessage, error)
-	GetMessagesWithTimestamps(threadID string) ([]map[string]interface{}, error)
-	AddMessage(threadID, sender, message string) (models.ChatMessage, error)
-	UpdateWorkflowCheckpointWithMessage(threadID, sender, message string) error
-}
-
-// WorkflowService handles workflow state management (expanded)
-type WorkflowService interface {
-	// Existing methods
-	GetMealPlan(threadID string) (*apipb.WeeklyMealPlan, error)
-	UpdateMealPlan(threadID string, plan *apipb.WeeklyMealPlan) error
-	GetWorkflowState(threadID string) (*apipb.MealPlanningCheckpointState, error)
-	UpdateWorkflowState(threadID string, state *apipb.MealPlanningCheckpointState) error
-
-	// New methods
-	GetWorkflowCheckpoint(threadID string) ([]byte, string, error)
-	UpdateWorkflowCheckpoint(threadID string, data []byte) error
-	UpdateWorkflowCheckpointWithMessage(threadID, sender, message string) error
-
-	// Message operations
-	AddMessage(threadID, sender, message string) (*models.ChatMessage, error)
-	AddAgentMessage(threadID, text, timestamp string) error
-	AddUserFeedback(threadID, from, message, timestamp string) error
-	// Listing
-	ListWorkflows(limit int) ([]models.WorkflowStatus, error)
-}
-
-// CheckpointService handles low level checkpoint persistence
-type CheckpointService interface {
-	GetCheckpoint(threadID, checkpointNS string) (checkpoint []byte, metadata []byte, found bool, err error)
-	PutCheckpoint(threadID, checkpointNS, workflowType string, checkpoint []byte, metadata []byte) error
-	ListCheckpoints(limit int, before string) ([]repositories.CheckpointRecord, error)
-}
-
-// CheckpointRecord represents a checkpoint entry
-type CheckpointRecord struct {
-	ThreadID     string
-	CheckpointNS string
-	Checkpoint   []byte
-	Metadata     []byte
-}
 
 // ServiceContainer holds all service dependencies
 type ServiceContainer struct {
@@ -115,7 +71,4 @@ type ServiceContainer struct {
 	RecipeStepService   RecipeStepService
 	MealPlanService     MealPlanService
 	ShoppingListService ShoppingListService
-	MessageService      MessageService
-	WorkflowService     WorkflowService
-	CheckpointService   CheckpointService
 }

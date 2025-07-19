@@ -4,7 +4,8 @@
 // @ts-nocheck
 
 import { PlanFeedbackRequest, PlanFeedbackResponse, PlanFinalizeRequest, PlanFinalizeResponse, PlanStartRequest, PlanStartResponse, ResumeWorkflowRequest, ResumeWorkflowResponse } from "./agent_pb.js";
-import { MethodKind } from "@bufbuild/protobuf";
+import { Empty, MethodKind } from "@bufbuild/protobuf";
+import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddMessageRequest, AddMessageResponse, CancelWorkflowRequest, CancelWorkflowResponse, GetCheckpointRequest, GetCheckpointResponse, GetMessagesRequest, GetMessagesResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, MessageAgentRequest, MessageAgentResponse, PutCheckpointRequest, PutCheckpointResponse, StartAgentWorkflowRequest, StartAgentWorkflowResponse, UpdateSessionStateRequest, UpdateSessionStateResponse } from "./api_pb.js";
 
 /**
  * Agent Service - provides gRPC endpoints for all CLI commands
@@ -52,6 +53,131 @@ export const AgentService = {
       name: "ResumeWorkflow",
       I: ResumeWorkflowRequest,
       O: ResumeWorkflowResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * High level workflow endpoints for API gateway
+     *
+     * @generated from rpc agent.AgentService.StartAgentWorkflow
+     */
+    startAgentWorkflow: {
+      name: "StartAgentWorkflow",
+      I: StartAgentWorkflowRequest,
+      O: StartAgentWorkflowResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc agent.AgentService.MessageAgent
+     */
+    messageAgent: {
+      name: "MessageAgent",
+      I: MessageAgentRequest,
+      O: MessageAgentResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Workflow management endpoints
+     *
+     * @generated from rpc agent.AgentService.GetWorkflowStatus
+     */
+    getWorkflowStatus: {
+      name: "GetWorkflowStatus",
+      I: GetWorkflowStatusRequest,
+      O: GetWorkflowStatusResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc agent.AgentService.ListWorkflows
+     */
+    listWorkflows: {
+      name: "ListWorkflows",
+      I: Empty,
+      O: ListWorkflowsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc agent.AgentService.CancelWorkflow
+     */
+    cancelWorkflow: {
+      name: "CancelWorkflow",
+      I: CancelWorkflowRequest,
+      O: CancelWorkflowResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc agent.AgentService.GetWorkflowState
+     */
+    getWorkflowState: {
+      name: "GetWorkflowState",
+      I: GetWorkflowStateRequest,
+      O: GetWorkflowStateResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc agent.AgentService.AbandonWorkflow
+     */
+    abandonWorkflow: {
+      name: "AbandonWorkflow",
+      I: AbandonWorkflowRequest,
+      O: AbandonWorkflowResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Message management endpoints
+     *
+     * @generated from rpc agent.AgentService.GetMessages
+     */
+    getMessages: {
+      name: "GetMessages",
+      I: GetMessagesRequest,
+      O: GetMessagesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc agent.AgentService.AddMessage
+     */
+    addMessage: {
+      name: "AddMessage",
+      I: AddMessageRequest,
+      O: AddMessageResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc agent.AgentService.UpdateSessionState
+     */
+    updateSessionState: {
+      name: "UpdateSessionState",
+      I: UpdateSessionStateRequest,
+      O: UpdateSessionStateResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Checkpoint management endpoints
+     *
+     * @generated from rpc agent.AgentService.GetCheckpoint
+     */
+    getCheckpoint: {
+      name: "GetCheckpoint",
+      I: GetCheckpointRequest,
+      O: GetCheckpointResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc agent.AgentService.PutCheckpoint
+     */
+    putCheckpoint: {
+      name: "PutCheckpoint",
+      I: PutCheckpointRequest,
+      O: PutCheckpointResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc agent.AgentService.ListCheckpoints
+     */
+    listCheckpoints: {
+      name: "ListCheckpoints",
+      I: ListCheckpointsRequest,
+      O: ListCheckpointsResponse,
       kind: MethodKind.Unary,
     },
   }

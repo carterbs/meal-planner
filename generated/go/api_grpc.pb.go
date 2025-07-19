@@ -4,7 +4,7 @@
 // - protoc             v5.29.3
 // source: api.proto
 
-package apipb
+package _go
 
 import (
 	context "context"
@@ -174,7 +174,6 @@ const (
 	MealPlannerAPI_GetAllMeals_FullMethodName          = "/mealplanner.api.MealPlannerAPI/GetAllMeals"
 	MealPlannerAPI_CreateMeal_FullMethodName           = "/mealplanner.api.MealPlannerAPI/CreateMeal"
 	MealPlannerAPI_SwapMeal_FullMethodName             = "/mealplanner.api.MealPlannerAPI/SwapMeal"
-	MealPlannerAPI_RemoveMeal_FullMethodName           = "/mealplanner.api.MealPlannerAPI/RemoveMeal"
 	MealPlannerAPI_ReplaceMeal_FullMethodName          = "/mealplanner.api.MealPlannerAPI/ReplaceMeal"
 	MealPlannerAPI_UpdateMealIngredient_FullMethodName = "/mealplanner.api.MealPlannerAPI/UpdateMealIngredient"
 	MealPlannerAPI_DeleteMealIngredient_FullMethodName = "/mealplanner.api.MealPlannerAPI/DeleteMealIngredient"
@@ -186,8 +185,6 @@ const (
 	MealPlannerAPI_DeleteStep_FullMethodName           = "/mealplanner.api.MealPlannerAPI/DeleteStep"
 	MealPlannerAPI_ReorderSteps_FullMethodName         = "/mealplanner.api.MealPlannerAPI/ReorderSteps"
 	MealPlannerAPI_DeleteAllSteps_FullMethodName       = "/mealplanner.api.MealPlannerAPI/DeleteAllSteps"
-	MealPlannerAPI_StartAgentWorkflow_FullMethodName   = "/mealplanner.api.MealPlannerAPI/StartAgentWorkflow"
-	MealPlannerAPI_MessageAgent_FullMethodName         = "/mealplanner.api.MealPlannerAPI/MessageAgent"
 	MealPlannerAPI_GetWorkflowStatus_FullMethodName    = "/mealplanner.api.MealPlannerAPI/GetWorkflowStatus"
 	MealPlannerAPI_ListWorkflows_FullMethodName        = "/mealplanner.api.MealPlannerAPI/ListWorkflows"
 	MealPlannerAPI_CancelWorkflow_FullMethodName       = "/mealplanner.api.MealPlannerAPI/CancelWorkflow"
@@ -221,7 +218,6 @@ type MealPlannerAPIClient interface {
 	GetAllMeals(ctx context.Context, in *GetAllMealsRequest, opts ...grpc.CallOption) (*GetAllMealsResponse, error)
 	CreateMeal(ctx context.Context, in *CreateMealRequest, opts ...grpc.CallOption) (*CreateMealResponse, error)
 	SwapMeal(ctx context.Context, in *SwapMealRequest, opts ...grpc.CallOption) (*SwapMealResponse, error)
-	RemoveMeal(ctx context.Context, in *RemoveMealRequest, opts ...grpc.CallOption) (*RemoveMealResponse, error)
 	ReplaceMeal(ctx context.Context, in *ReplaceMealRequest, opts ...grpc.CallOption) (*ReplaceMealResponse, error)
 	UpdateMealIngredient(ctx context.Context, in *UpdateMealIngredientRequest, opts ...grpc.CallOption) (*UpdateMealIngredientResponse, error)
 	DeleteMealIngredient(ctx context.Context, in *DeleteMealIngredientRequest, opts ...grpc.CallOption) (*DeleteMealIngredientResponse, error)
@@ -234,9 +230,7 @@ type MealPlannerAPIClient interface {
 	DeleteStep(ctx context.Context, in *DeleteStepRequest, opts ...grpc.CallOption) (*DeleteStepResponse, error)
 	ReorderSteps(ctx context.Context, in *ReorderStepsRequest, opts ...grpc.CallOption) (*ReorderStepsResponse, error)
 	DeleteAllSteps(ctx context.Context, in *DeleteAllStepsRequest, opts ...grpc.CallOption) (*DeleteAllStepsResponse, error)
-	// Agent workflow endpoints
-	StartAgentWorkflow(ctx context.Context, in *StartAgentWorkflowRequest, opts ...grpc.CallOption) (*StartAgentWorkflowResponse, error)
-	MessageAgent(ctx context.Context, in *MessageAgentRequest, opts ...grpc.CallOption) (*MessageAgentResponse, error)
+	// Agent workflow endpoints handled by the agent service
 	GetWorkflowStatus(ctx context.Context, in *GetWorkflowStatusRequest, opts ...grpc.CallOption) (*GetWorkflowStatusResponse, error)
 	ListWorkflows(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListWorkflowsResponse, error)
 	CancelWorkflow(ctx context.Context, in *CancelWorkflowRequest, opts ...grpc.CallOption) (*CancelWorkflowResponse, error)
@@ -360,16 +354,6 @@ func (c *mealPlannerAPIClient) SwapMeal(ctx context.Context, in *SwapMealRequest
 	return out, nil
 }
 
-func (c *mealPlannerAPIClient) RemoveMeal(ctx context.Context, in *RemoveMealRequest, opts ...grpc.CallOption) (*RemoveMealResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveMealResponse)
-	err := c.cc.Invoke(ctx, MealPlannerAPI_RemoveMeal_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *mealPlannerAPIClient) ReplaceMeal(ctx context.Context, in *ReplaceMealRequest, opts ...grpc.CallOption) (*ReplaceMealResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ReplaceMealResponse)
@@ -474,26 +458,6 @@ func (c *mealPlannerAPIClient) DeleteAllSteps(ctx context.Context, in *DeleteAll
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteAllStepsResponse)
 	err := c.cc.Invoke(ctx, MealPlannerAPI_DeleteAllSteps_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *mealPlannerAPIClient) StartAgentWorkflow(ctx context.Context, in *StartAgentWorkflowRequest, opts ...grpc.CallOption) (*StartAgentWorkflowResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StartAgentWorkflowResponse)
-	err := c.cc.Invoke(ctx, MealPlannerAPI_StartAgentWorkflow_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *mealPlannerAPIClient) MessageAgent(ctx context.Context, in *MessageAgentRequest, opts ...grpc.CallOption) (*MessageAgentResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MessageAgentResponse)
-	err := c.cc.Invoke(ctx, MealPlannerAPI_MessageAgent_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -630,7 +594,6 @@ type MealPlannerAPIServer interface {
 	GetAllMeals(context.Context, *GetAllMealsRequest) (*GetAllMealsResponse, error)
 	CreateMeal(context.Context, *CreateMealRequest) (*CreateMealResponse, error)
 	SwapMeal(context.Context, *SwapMealRequest) (*SwapMealResponse, error)
-	RemoveMeal(context.Context, *RemoveMealRequest) (*RemoveMealResponse, error)
 	ReplaceMeal(context.Context, *ReplaceMealRequest) (*ReplaceMealResponse, error)
 	UpdateMealIngredient(context.Context, *UpdateMealIngredientRequest) (*UpdateMealIngredientResponse, error)
 	DeleteMealIngredient(context.Context, *DeleteMealIngredientRequest) (*DeleteMealIngredientResponse, error)
@@ -643,9 +606,7 @@ type MealPlannerAPIServer interface {
 	DeleteStep(context.Context, *DeleteStepRequest) (*DeleteStepResponse, error)
 	ReorderSteps(context.Context, *ReorderStepsRequest) (*ReorderStepsResponse, error)
 	DeleteAllSteps(context.Context, *DeleteAllStepsRequest) (*DeleteAllStepsResponse, error)
-	// Agent workflow endpoints
-	StartAgentWorkflow(context.Context, *StartAgentWorkflowRequest) (*StartAgentWorkflowResponse, error)
-	MessageAgent(context.Context, *MessageAgentRequest) (*MessageAgentResponse, error)
+	// Agent workflow endpoints handled by the agent service
 	GetWorkflowStatus(context.Context, *GetWorkflowStatusRequest) (*GetWorkflowStatusResponse, error)
 	ListWorkflows(context.Context, *emptypb.Empty) (*ListWorkflowsResponse, error)
 	CancelWorkflow(context.Context, *CancelWorkflowRequest) (*CancelWorkflowResponse, error)
@@ -699,9 +660,6 @@ func (UnimplementedMealPlannerAPIServer) CreateMeal(context.Context, *CreateMeal
 func (UnimplementedMealPlannerAPIServer) SwapMeal(context.Context, *SwapMealRequest) (*SwapMealResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SwapMeal not implemented")
 }
-func (UnimplementedMealPlannerAPIServer) RemoveMeal(context.Context, *RemoveMealRequest) (*RemoveMealResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveMeal not implemented")
-}
 func (UnimplementedMealPlannerAPIServer) ReplaceMeal(context.Context, *ReplaceMealRequest) (*ReplaceMealResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReplaceMeal not implemented")
 }
@@ -734,12 +692,6 @@ func (UnimplementedMealPlannerAPIServer) ReorderSteps(context.Context, *ReorderS
 }
 func (UnimplementedMealPlannerAPIServer) DeleteAllSteps(context.Context, *DeleteAllStepsRequest) (*DeleteAllStepsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAllSteps not implemented")
-}
-func (UnimplementedMealPlannerAPIServer) StartAgentWorkflow(context.Context, *StartAgentWorkflowRequest) (*StartAgentWorkflowResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartAgentWorkflow not implemented")
-}
-func (UnimplementedMealPlannerAPIServer) MessageAgent(context.Context, *MessageAgentRequest) (*MessageAgentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MessageAgent not implemented")
 }
 func (UnimplementedMealPlannerAPIServer) GetWorkflowStatus(context.Context, *GetWorkflowStatusRequest) (*GetWorkflowStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowStatus not implemented")
@@ -975,24 +927,6 @@ func _MealPlannerAPI_SwapMeal_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MealPlannerAPI_RemoveMeal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveMealRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MealPlannerAPIServer).RemoveMeal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MealPlannerAPI_RemoveMeal_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MealPlannerAPIServer).RemoveMeal(ctx, req.(*RemoveMealRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _MealPlannerAPI_ReplaceMeal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReplaceMealRequest)
 	if err := dec(in); err != nil {
@@ -1187,42 +1121,6 @@ func _MealPlannerAPI_DeleteAllSteps_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MealPlannerAPIServer).DeleteAllSteps(ctx, req.(*DeleteAllStepsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MealPlannerAPI_StartAgentWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StartAgentWorkflowRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MealPlannerAPIServer).StartAgentWorkflow(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MealPlannerAPI_StartAgentWorkflow_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MealPlannerAPIServer).StartAgentWorkflow(ctx, req.(*StartAgentWorkflowRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MealPlannerAPI_MessageAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MessageAgentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MealPlannerAPIServer).MessageAgent(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MealPlannerAPI_MessageAgent_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MealPlannerAPIServer).MessageAgent(ctx, req.(*MessageAgentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1473,10 +1371,6 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MealPlannerAPI_SwapMeal_Handler,
 		},
 		{
-			MethodName: "RemoveMeal",
-			Handler:    _MealPlannerAPI_RemoveMeal_Handler,
-		},
-		{
 			MethodName: "ReplaceMeal",
 			Handler:    _MealPlannerAPI_ReplaceMeal_Handler,
 		},
@@ -1519,14 +1413,6 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteAllSteps",
 			Handler:    _MealPlannerAPI_DeleteAllSteps_Handler,
-		},
-		{
-			MethodName: "StartAgentWorkflow",
-			Handler:    _MealPlannerAPI_StartAgentWorkflow_Handler,
-		},
-		{
-			MethodName: "MessageAgent",
-			Handler:    _MealPlannerAPI_MessageAgent_Handler,
 		},
 		{
 			MethodName: "GetWorkflowStatus",
