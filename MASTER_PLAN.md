@@ -1,6 +1,3 @@
-## Rename backend service
-Then rename the backend service to meal-service. 
-
 ## Move MCP into the root of the repo
 Move the server
 
