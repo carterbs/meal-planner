@@ -4,196 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
 
 	apipb "mealplanner/generated/go"
-	agentpb "mealplanner/generated/go/agent"
 	"mealplanner/logging"
-	"mealplanner/models"
 	"mealplanner/server"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var grpcServerLogger = logging.GetGrpcLogger("grpc-server")
-var agentClient agentpb.AgentServiceClient
-var agentConn *grpc.ClientConn
-
-// initAgentClient initializes the gRPC client connection to the agent service with retries
-func initAgentClient() error {
-	maxRetries := 5
-	baseDelay := 1 * time.Second
-
-	for i := 0; i < maxRetries; i++ {
-		start := time.Now()
-		grpcServerLogger.Infow("Attempting to connect to agent service",
-			"attempt", i+1,
-			"address", "localhost:50053")
-
-		// Use DialContext with timeout and WithBlock, just like the logging client
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		conn, err := grpc.DialContext(
-			ctx,
-			"localhost:50053",
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithBlock(),
-		)
-		cancel()
-
-		if err == nil {
-			agentConn = conn
-			agentClient = agentpb.NewAgentServiceClient(conn)
-			grpcServerLogger.Infow("Successfully connected to agent service",
-				"attempt", i+1,
-				"duration", time.Since(start).String())
-			return nil
-		}
-
-		if i < maxRetries-1 {
-			delay := time.Duration(i+1) * baseDelay
-			grpcServerLogger.Infow("Failed to connect to agent service, retrying",
-				"attempt", i+1,
-				"maxRetries", maxRetries,
-				"retryIn", delay.String(),
-				"error", err.Error())
-			time.Sleep(delay)
-		}
-	}
-
-	return fmt.Errorf("failed to connect to agent service after %d attempts", maxRetries)
-}
-
-// closeAgentClient closes the agent service connection
-func closeAgentClient() error {
-	if agentConn != nil {
-		err := agentConn.Close()
-		agentConn = nil
-		agentClient = nil
-		return err
-	}
-	return nil
-}
-
-// ensureAgentClient attempts to ensure we have a working agent client, with lazy retry
-func ensureAgentClient() error {
-	if agentClient != nil {
-		return nil
-	}
-
-	// Try to initialize with fewer retries for lazy loading
-	maxRetries := 3
-	baseDelay := 500 * time.Millisecond
-
-	for i := 0; i < maxRetries; i++ {
-		conn, err := grpc.Dial("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err == nil {
-			agentClient = agentpb.NewAgentServiceClient(conn)
-			grpcServerLogger.Infow("Lazy-initialized agent service connection", "attempt", i+1)
-			return nil
-		}
-
-		if i < maxRetries-1 {
-			delay := time.Duration(i+1) * baseDelay
-			time.Sleep(delay)
-		}
-	}
-
-	return fmt.Errorf("failed to lazy-initialize agent service connection after %d attempts", maxRetries)
-}
 
 type MealPlannerAPIServer struct {
 	apipb.UnimplementedMealPlannerAPIServer
-}
-
-// callAgentService makes a gRPC call to the agent service
-func callAgentService(ctx context.Context, method string, req interface{}) (models.AgentResponse, error) {
-	if agentClient == nil {
-		return models.AgentResponse{}, fmt.Errorf("agent client not initialized")
-	}
-
-	grpcServerLogger.Debugw("callAgentService: calling agent service", "method", method)
-
-	switch method {
-	case "plan_start":
-		if startReq, ok := req.(*agentpb.PlanStartRequest); ok {
-			// set deadline for the ctx
-			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-			resp, err := agentClient.PlanStart(ctx, startReq)
-			cancel()
-			if err != nil {
-				grpcServerLogger.Errorw("callAgentService: plan start failed", "error", err)
-				return models.AgentResponse{}, fmt.Errorf("agent service plan start failed: %w", err)
-			}
-			// log out the whole result
-			grpcServerLogger.Infow("callAgentService: plan start response", "response", resp)
-			return models.AgentResponse{
-				Success:     resp.Success,
-				Message:     resp.Message,
-				ThreadID:    resp.ThreadId,
-				CurrentStep: resp.CurrentStep,
-				InitialState: func() map[string]interface{} {
-					if len(resp.InitialState) > 0 {
-						var state map[string]interface{}
-						if err := json.Unmarshal(resp.InitialState, &state); err == nil {
-							return state
-						}
-					}
-					return nil
-				}(),
-			}, nil
-		}
-	case "plan_feedback":
-		if feedbackReq, ok := req.(*agentpb.PlanFeedbackRequest); ok {
-			resp, err := agentClient.PlanFeedback(ctx, feedbackReq)
-			if err != nil {
-				grpcServerLogger.Errorw("callAgentService: plan feedback failed", "error", err)
-				return models.AgentResponse{}, fmt.Errorf("agent service plan feedback failed: %w", err)
-			}
-			return models.AgentResponse{
-				Success:     resp.Success,
-				Message:     resp.Message,
-				ThreadID:    "", // Not returned by feedback
-				CurrentStep: "",
-			}, nil
-		}
-	case "resume":
-		if resumeReq, ok := req.(*agentpb.ResumeWorkflowRequest); ok {
-			resp, err := agentClient.ResumeWorkflow(ctx, resumeReq)
-			if err != nil {
-				grpcServerLogger.Errorw("callAgentService: resume workflow failed", "error", err)
-				return models.AgentResponse{}, fmt.Errorf("agent service resume workflow failed: %w", err)
-			}
-			return models.AgentResponse{
-				Success:     resp.Success,
-				Message:     resp.Message,
-				ThreadID:    "", // Not returned by resume
-				CurrentStep: resp.CurrentStep,
-			}, nil
-		}
-	case "finalize":
-		if finalizeReq, ok := req.(*agentpb.PlanFinalizeRequest); ok {
-			resp, err := agentClient.PlanFinalize(ctx, finalizeReq)
-			if err != nil {
-				grpcServerLogger.Errorw("callAgentService: plan finalize failed", "error", err)
-				return models.AgentResponse{}, fmt.Errorf("agent service plan finalize failed: %w", err)
-			}
-			return models.AgentResponse{
-				Success:     resp.Success,
-				Message:     resp.Message,
-				ThreadID:    "", // Not returned by finalize
-				CurrentStep: "",
-			}, nil
-		}
-	default:
-		return models.AgentResponse{}, fmt.Errorf("unknown agent service method: %s", method)
-	}
-
-	return models.AgentResponse{}, fmt.Errorf("invalid request type for method: %s", method)
 }
 
 // joinParticipants converts a slice of participants to a comma-separated string
@@ -234,7 +58,6 @@ func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
 
 func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Empty) (*apipb.HealthCheckResponse, error) {
 	dbHealthy := false
-	agentHealthy := false
 
 	// Check database health
 	if server.DB == nil {
@@ -252,30 +75,17 @@ func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Emp
 	}
 	dbHealthy = true
 
-	// Check agent service health - verify connection state
-	if agentClient != nil && agentConn != nil {
-		state := agentConn.GetState()
-		if state == connectivity.Ready || state == connectivity.Idle {
-			agentHealthy = true
-		}
-	}
-
-	if dbHealthy && agentHealthy {
+	if dbHealthy {
 		return &apipb.HealthCheckResponse{
 			Status:  "ok",
-			Message: "Database and agent service connected - service healthy",
-		}, nil
-	} else if dbHealthy {
-		return &apipb.HealthCheckResponse{
-			Status:  "degraded",
-			Message: "Database connected but agent service unavailable - limited functionality",
-		}, nil
-	} else {
-		return &apipb.HealthCheckResponse{
-			Status:  "error",
-			Message: "Database connection is healthy but agent service unavailable",
+			Message: "Database connected",
 		}, nil
 	}
+
+	return &apipb.HealthCheckResponse{
+		Status:  "error",
+		Message: "Database connection is not healthy",
+	}, nil
 }
 
 func (s *MealPlannerAPIServer) Reconnect(ctx context.Context, req *emptypb.Empty) (*apipb.ReconnectResponse, error) {
@@ -596,135 +406,6 @@ func (s *MealPlannerAPIServer) DeleteAllSteps(ctx context.Context, req *apipb.De
 
 	return &apipb.DeleteAllStepsResponse{
 		Message: "All steps deleted successfully",
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) StartAgentWorkflow(ctx context.Context, req *apipb.StartAgentWorkflowRequest) (*apipb.StartAgentWorkflowResponse, error) {
-	if req.Request == nil {
-		return nil, fmt.Errorf("request is required")
-	}
-	if len(req.Request.Participants) == 0 {
-		return nil, fmt.Errorf("participants required")
-	}
-	if req.Request.WorkflowType == "" {
-		return nil, fmt.Errorf("workflow_type required")
-	}
-
-	// Convert to models format for CLI execution
-	startReq := models.AgentStartRequest{
-		Participants: req.Request.Participants,
-		WorkflowType: req.Request.WorkflowType,
-	}
-
-	ctxTimeout, cancel := context.WithTimeout(ctx, 25*time.Second)
-	defer cancel()
-
-	// Create agent service request
-	agentReq := &agentpb.PlanStartRequest{
-		Participants: startReq.Participants,
-	}
-
-	resp, err := callAgentService(ctxTimeout, "plan_start", agentReq)
-	if err != nil {
-		grpcServerLogger.Errorw("StartAgentWorkflow: agent service start failed", "error", err)
-		return nil, fmt.Errorf("agent service start failed: %w", err)
-	}
-
-	// Convert response to protobuf format
-	pbResp := &apipb.AgentResponse{
-		Success:     resp.Success,
-		Message:     resp.Message,
-		ThreadId:    resp.ThreadID,
-		CurrentStep: resp.CurrentStep,
-	}
-	// Initialize workflow checkpoint if thread ID returned
-	var stateMap map[string]interface{}
-	if resp.ThreadID != "" {
-		if resp.InitialState != nil {
-			if b, err := json.Marshal(resp.InitialState); err == nil {
-				_ = json.Unmarshal(b, &stateMap)
-			}
-			if stateMap == nil {
-				stateMap = map[string]interface{}{}
-			}
-			// Remove deprecated fields
-			delete(stateMap, "workflow_type")
-			delete(stateMap, "channel_values")
-
-			checkpoint := map[string]interface{}{
-				"state": stateMap,
-				"next":  []interface{}{},
-				"step":  0,
-			}
-			if data, err := json.Marshal(checkpoint); err == nil {
-				server.Services.WorkflowService.UpdateWorkflowCheckpoint(resp.ThreadID, data)
-				pbResp.InitialState = string(data)
-			}
-		}
-
-		// Add initial agent message if present
-		if resp.Message != "" {
-			t := time.Now().Format(time.RFC3339)
-			server.Services.WorkflowService.AddAgentMessage(resp.ThreadID, resp.Message, t)
-		}
-	}
-
-	return &apipb.StartAgentWorkflowResponse{
-		Response: pbResp,
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) MessageAgent(ctx context.Context, req *apipb.MessageAgentRequest) (*apipb.MessageAgentResponse, error) {
-	if req.Request == nil {
-		return nil, fmt.Errorf("request is required")
-	}
-	if req.Request.ThreadId == "" {
-		return nil, fmt.Errorf("threadId required")
-	}
-	if req.Request.Message == "" {
-		return nil, fmt.Errorf("message required")
-	}
-	if req.Request.From == "" {
-		return nil, fmt.Errorf("from required")
-	}
-
-	ctxTimeout, cancel := context.WithTimeout(ctx, 25*time.Second)
-	defer cancel()
-
-	// Run feedback
-	feedbackReq := &agentpb.PlanFeedbackRequest{
-		ThreadId: req.Request.ThreadId,
-		Message:  req.Request.Message,
-		From:     req.Request.From,
-	}
-	_, err := callAgentService(ctxTimeout, "plan_feedback", feedbackReq)
-	if err != nil {
-		grpcServerLogger.Errorw("MessageAgent: agent service feedback failed", "error", err)
-		return nil, fmt.Errorf("agent service feedback failed: %w", err)
-	}
-
-	// Run resume
-	resumeReq := &agentpb.ResumeWorkflowRequest{
-		ThreadId: req.Request.ThreadId,
-	}
-	grpcServerLogger.Debugw("MessageAgent: invoking resume", "threadID", req.Request.ThreadId)
-	resp, err := callAgentService(ctxTimeout, "resume", resumeReq)
-	if err != nil {
-		grpcServerLogger.Errorw("MessageAgent: agent service resume failed", "error", err)
-		return nil, fmt.Errorf("agent service resume failed: %w", err)
-	}
-	grpcServerLogger.Debugw("MessageAgent: resume response", "threadID", req.Request.ThreadId, "success", resp.Success, "message", resp.Message, "currentStep", resp.CurrentStep)
-
-	// Convert response to protobuf format
-	pbResp := &apipb.AgentResponse{
-		Success:     resp.Success,
-		Message:     resp.Message,
-		ThreadId:    resp.ThreadID,
-		CurrentStep: resp.CurrentStep,
-	}
-
-	return &apipb.MessageAgentResponse{
-		Response: pbResp,
 	}, nil
 }
 
