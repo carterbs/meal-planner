@@ -232,6 +232,27 @@ func (s *MealPlannerAPIServer) ReplaceMeal(ctx context.Context, req *apipb.Repla
 	}, nil
 }
 
+func (s *MealPlannerAPIServer) CreateMealIngredient(ctx context.Context, req *apipb.CreateMealIngredientRequest) (*apipb.CreateMealIngredientResponse, error) {
+	if req.Ingredient == nil {
+		return nil, fmt.Errorf("ingredient is required")
+	}
+
+	err := server.Services.IngredientService.CreateMealIngredient(int(req.MealId), req.Ingredient)
+	if err != nil {
+		return nil, fmt.Errorf("error creating meal ingredient: %w", err)
+	}
+
+	// Get updated meal to return
+	meal, err := server.Services.MealService.GetMealByID(int(req.MealId))
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving updated meal: %w", err)
+	}
+
+	return &apipb.CreateMealIngredientResponse{
+		Meal: meal,
+	}, nil
+}
+
 func (s *MealPlannerAPIServer) UpdateMealIngredient(ctx context.Context, req *apipb.UpdateMealIngredientRequest) (*apipb.UpdateMealIngredientResponse, error) {
 	if req.Ingredient == nil {
 		return nil, fmt.Errorf("ingredient is required")

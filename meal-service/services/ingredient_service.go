@@ -20,6 +20,18 @@ func NewIngredientService(ingredientRepo repositories.IngredientRepository) Ingr
 	return &ingredientService{ingredientRepo: ingredientRepo}
 }
 
+// CreateMealIngredient creates a new ingredient for a specific meal
+func (s *ingredientService) CreateMealIngredient(mealID int, ingredient *models.Ingredient) error {
+	ingredientServiceLogger.Debugw("Creating ingredient for meal", "mealID", mealID, "ingredient", ingredient.GetName())
+	err := s.ingredientRepo.CreateMealIngredient(context.Background(), mealID, ingredient)
+	if err != nil {
+		ingredientServiceLogger.Errorw("Failed to create ingredient for meal", "mealID", mealID, "error", err)
+		return fmt.Errorf("failed to create ingredient for meal ID %d: %w", mealID, err)
+	}
+	ingredientServiceLogger.Debugw("Successfully created ingredient for meal", "mealID", mealID, "ingredient", ingredient.GetName())
+	return nil
+}
+
 // UpdateMealIngredient updates an ingredient for a specific meal
 func (s *ingredientService) UpdateMealIngredient(mealID int, ingredient *models.Ingredient) error {
 	ingredientServiceLogger.Debugw("Updating ingredient for meal", "ingredientID", ingredient.GetId(), "mealID", mealID)

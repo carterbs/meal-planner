@@ -30,6 +30,15 @@ export type GoAgentCheckpointMetadata = {
     step?: number;
 };
 
+export type GoCreateMealIngredientRequest = {
+    ingredient?: GoIngredient;
+    meal_id?: number;
+};
+
+export type GoCreateMealIngredientResponse = {
+    meal?: GoMeal;
+};
+
 export type GoCreateMealRequest = {
     meal?: GoMeal;
 };
@@ -246,6 +255,9 @@ export type MainGetMessagesResponse = {
 
 export type MainHealthResponse = {
     message?: string;
+    services?: {
+        [key: string]: boolean;
+    };
     status?: string;
 };
 
@@ -946,6 +958,43 @@ export type DeleteMealsByMealIdResponses = {
 };
 
 export type DeleteMealsByMealIdResponse = DeleteMealsByMealIdResponses[keyof DeleteMealsByMealIdResponses];
+
+export type PostMealsByMealIdIngredientsData = {
+    /**
+     * Create ingredient request
+     */
+    body: GoCreateMealIngredientRequest;
+    path: {
+        /**
+         * Meal ID
+         */
+        mealId: string;
+    };
+    query?: never;
+    url: '/meals/{mealId}/ingredients';
+};
+
+export type PostMealsByMealIdIngredientsErrors = {
+    /**
+     * Bad request
+     */
+    400: MainErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: MainErrorResponse;
+};
+
+export type PostMealsByMealIdIngredientsError = PostMealsByMealIdIngredientsErrors[keyof PostMealsByMealIdIngredientsErrors];
+
+export type PostMealsByMealIdIngredientsResponses = {
+    /**
+     * Ingredient created successfully
+     */
+    200: GoCreateMealIngredientResponse;
+};
+
+export type PostMealsByMealIdIngredientsResponse = PostMealsByMealIdIngredientsResponses[keyof PostMealsByMealIdIngredientsResponses];
 
 export type DeleteMealsByMealIdIngredientsByIngredientIdData = {
     body?: never;

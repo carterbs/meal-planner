@@ -17,6 +17,11 @@ func NewIngredientRepository(db *sql.DB) *IngredientRepositoryImpl {
 	return &IngredientRepositoryImpl{db: db}
 }
 
+// CreateMealIngredient creates a new ingredient for a meal
+func (r *IngredientRepositoryImpl) CreateMealIngredient(ctx context.Context, mealID int, ingredient *models.Ingredient) error {
+	return models.CreateMealIngredient(r.db, mealID, ingredient)
+}
+
 // UpdateMealIngredient updates a meal's ingredient
 func (r *IngredientRepositoryImpl) UpdateMealIngredient(ctx context.Context, mealID int, ingredient *models.Ingredient) error {
 	return models.UpdateMealIngredient(r.db, mealID, ingredient)
