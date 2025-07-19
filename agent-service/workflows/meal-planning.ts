@@ -233,7 +233,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const transport = new StdioClientTransport({
       command: 'node',
       args: [
-        join(findRepoRoot(), 'typescript/mcp/dist/index.js'),
+        join(findRepoRoot(), 'mcp-service/dist/index.js'),
       ],
     });
 

@@ -37,7 +37,7 @@ function startDatabase() {
 function buildMCP() {
   try {
     execSync('yarn build', { 
-      cwd: path.join(PROJECT_ROOT, 'typescript/mcp'),
+      cwd: path.join(PROJECT_ROOT, 'mcp-service'),
       stdio: 'ignore'
     });
   } catch (error) {
@@ -73,7 +73,7 @@ buildMCP();
 const backendProcess = startBackend();
 
 // Ensure logs directory exists
-const logsDir = path.join(PROJECT_ROOT, 'typescript/mcp/logs');
+const logsDir = path.join(PROJECT_ROOT, 'mcp-service/logs');
 if (!require('fs').existsSync(logsDir)) {
   require('fs').mkdirSync(logsDir, { recursive: true });
 }
@@ -100,7 +100,7 @@ setTimeout(() => {
     
     // Create the process with inherit for console output
     const mcpProcess = spawn('node', ['dist/index.js'], {
-      cwd: path.join(PROJECT_ROOT, 'typescript/mcp'),
+      cwd: path.join(PROJECT_ROOT, 'mcp-service'),
       stdio: ['inherit', 'pipe', 'pipe'],
       env: {
         ...process.env,

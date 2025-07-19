@@ -50,7 +50,7 @@ The development setup runs without authentication. In production you can place t
 
 ## Development
 
-Install dependencies with `yarn` (already provided). Useful commands inside `typescript/mcp`:
+Install dependencies with `yarn` (already provided). Useful commands inside `mcp-service`:
 
 - `yarn build` – compile TypeScript to `dist/`.
 - `yarn start` – run the compiled server.
@@ -68,7 +68,7 @@ From the repository root, `yarn test` runs all project suites including MCP test
 1. Run `yarn build` to produce `dist/index.js`.
 2. Start the backend (e.g., `go run main.go --dummy` or via Docker).
 3. Launch the MCP server with `node dist/index.js` or use the helper script `scripts/start-mcp.js`.
-4. Monitor the logs in `typescript/mcp/logs/` for health.
+4. Monitor the logs in `mcp-service/logs/` for health.
 
 The server is stateless aside from logs and connects to the backend via HTTP, so it can be scaled horizontally behind a process manager.
 
