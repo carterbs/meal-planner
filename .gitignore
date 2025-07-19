@@ -29,5 +29,5 @@ Thumbs.db
 
 # Build artifacts
 api-gateway/api-gateway
-backend/mealplanner
+meal-service/mealplanner
 logging-service/loggingservice

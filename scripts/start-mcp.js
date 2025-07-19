@@ -53,7 +53,7 @@ function startBackend() {
     goArgs.push('--dummy');
   }
   return spawn('go', goArgs, {
-      cwd: path.join(PROJECT_ROOT, 'backend'),
+      cwd: path.join(PROJECT_ROOT, 'meal-service'),
       stdio: 'ignore',
       env: process.env
     });

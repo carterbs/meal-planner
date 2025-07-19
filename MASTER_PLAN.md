@@ -1,16 +1,5 @@
-## Decouple backend service from agent service
-Remove usage of the agentClient in the backend by moving the endpoints that use the client from the backend to the agent-service. Create new gRPC endpoints that handle requests from the API gateway (e.g., StartAgentWorkflow), invoking existing functionality where the backend was previously calling the agent service. Then move the API gateway to calling the agent service directly for those http endpoints.
-
-At this point the agent service and backend service will be totally independent.
-
 ## Rename backend service
 Then rename the backend service to meal-service. 
-
-## Delete dead code
-With the agent service alive and well, we should delete dead code from the backend. Tests + runtime code.
-
-## Clean up protos
-Remove agent-specific stuff from the backend protos.
 
 ## Move MCP into the root of the repo
 Move the server

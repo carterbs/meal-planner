@@ -9,7 +9,7 @@ lsof -ti:8080 | xargs -r kill -9
 echo "--- Starting backend ---"
 # start_backend
 echo "Starting backend..."
-pushd backend > /dev/null
+pushd meal-service > /dev/null
 go run . &
 popd > /dev/null
 
