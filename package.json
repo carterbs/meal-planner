@@ -3,10 +3,9 @@
     "version": "1.0.0",
     "private": true,
     "workspaces": [
-        "typescript/ui",
-        "typescript/agent",
+        "ui",
         "mcp-service",
-        "typescript/shared",
+        "shared",
         "generated/ts",
         "generated/ts/gateway",
         "logging-service/client/ts",
@@ -18,10 +17,10 @@
         "start:mcp": "node scripts/start-mcp.js",
         "start:agent": "cd agent-service && yarn start",
         "stop:logging": "kill -9 $(lsof -t -i :50052)",
-        "test:e2e": "ts-node ./typescript/e2e/e2e_remove_friday.ts",
+        "test:e2e": "ts-node ./e2e/e2e_remove_friday.ts",
         "test:backend": "cd meal-service && make test",
         "test:mcp": "cd mcp-service && yarn test",
-        "test:frontend": "cd typescript/ui && yarn test",
+        "test:frontend": "cd ui && yarn test",
         "test:agent": "cd agent-service && yarn test",
         "build:agent": "cd agent-service && yarn build",
         "build:mcp": "cd mcp-service && yarn build",
@@ -31,7 +30,7 @@
         "dev": "node scripts/dev-start.js",
         "meal-agent": "./scripts/meal-agent.sh",
         "kill:servers": "node scripts/kill-servers.js",
-        "format": "prettier --write \"typescript/agent/**/*.{ts,tsx}\" \"typescript/ui/**/*.{ts,tsx}\" && gofmt -w meal-service/"
+        "format": "prettier --write \"agent-service/**/*.{ts,tsx}\" \"ui/**/*.{ts,tsx}\" && gofmt -w meal-service/"
     },
     "resolutions": {
         "react": "18.2.0",

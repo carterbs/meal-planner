@@ -17,7 +17,7 @@ This repository contains a personal meal planning application composed of severa
 
 ## Architecture Overview
 
-The system is split into a Go backend and several TypeScript packages.  The backend exposes REST endpoints on port `8080` and persists data in PostgreSQL.  The React UI communicates directly with the backend during development.  The LangGraph agent is a command line tool that orchestrates meal plan generation and communicates with the backend or MCP server.  The MCP server exposes a Model Context Protocol API that proxies backend calls for the agent.  Shared TypeScript code lives in `typescript/shared` and is published to the workspace so all packages share a single set of types.
+The system is split into a Go backend and several TypeScript packages.  The backend exposes REST endpoints on port `8080` and persists data in PostgreSQL.  The React UI communicates directly with the backend during development.  The LangGraph agent is a command line tool that orchestrates meal plan generation and communicates with the backend or MCP server.  The MCP server exposes a Model Context Protocol API that proxies backend calls for the agent.  Shared TypeScript code lives in `shared` and is published to the workspace so all packages share a single set of types. The React UI is located in the `ui` directory.
 
 ```
 [React UI]  --->  [Go Backend]  --->  [PostgreSQL]
@@ -68,7 +68,7 @@ The system is split into a Go backend and several TypeScript packages.  The back
      cd meal-service && go run main.go --dummy
      ```
      ```bash
-     cd typescript/ui && yarn start
+     cd ui && yarn start
      ```
    - Full environment (starts Docker and both servers):
      ```bash
@@ -85,7 +85,7 @@ The `docker-compose.yml` file launches a PostgreSQL container and pgAdmin for lo
 | `yarn start`      | Runs `scripts/start.js` which launches the Go backend and React frontend together. |
 | `yarn start:mcp`  | Builds and launches the MCP server alongside the backend.    |
 | `yarn dev`        | Starts Docker containers if necessary and then runs `yarn start`. |
-| `yarn meal-agent` | Builds and runs the CLI agent from `typescript/agent`.       |
+| `yarn meal-agent` | Builds and runs the CLI agent from `agent-service`.       |
 | `yarn test`       | Executes backend, frontend and agent test suites with a summary. |
 | `yarn test:backend` | Run Go tests only.                                         |
 | `yarn test:frontend` | Run React tests only.                                     |

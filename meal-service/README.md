@@ -107,10 +107,10 @@ cd backend
 go run main.go --dummy
 ```
 
-Run the React frontend from `typescript/ui` with:
+Run the React frontend from `ui` with:
 
 ```bash
-cd typescript/ui
+cd ui
 yarn start
 ```
 
