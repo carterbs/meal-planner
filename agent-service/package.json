@@ -5,8 +5,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node --env-file=.env dist/langgraph-agent.js",
+    "start:grpc": "node --env-file=.env dist/main.js",
     "cli": "node --env-file=.env dist/cli.js",
     "dev": "tsx --env-file=.env langgraph-agent.ts",
+    "dev:grpc": "tsx --env-file=.env main.ts",
     "dev:cli": "tsx --env-file=.env cli.ts",
     "test": "jest",
     "test:watch": "jest --watch",

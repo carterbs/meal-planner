@@ -17,6 +17,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -87,9 +88,12 @@ func main() {
 		server.WorkflowService = server.Services.WorkflowService
 	}
 
-	// HTTP server removed - all HTTP traffic now goes through API Gateway
-
-	// Database health checking removed - handled by gRPC HealthCheck endpoint
+	// Initialize agent service client with retries (blocks until connected or max retries exceeded)
+	if err := initAgentClient(); err != nil {
+		mainLogger.Warnw("Failed to initialize agent client after retries, agent workflows will not work", "error", err)
+	} else {
+		mainLogger.Info("Agent service client initialized successfully")
+	}
 
 	// Start gRPC server (HTTP server removed as part of gRPC migration)
 	lis, err := net.Listen("tcp", ":50051")
@@ -107,19 +111,46 @@ func main() {
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 
-	// Set health status based on database connectivity
+	// Set health status based on database and agent service connectivity
 	var healthStatus grpc_health_v1.HealthCheckResponse_ServingStatus
+	dbHealthy := false
+	agentHealthy := false
+	
+	// Check database health
 	if connection != nil {
 		if err := connection.Ping(); err == nil {
-			healthStatus = grpc_health_v1.HealthCheckResponse_SERVING
-			mainLogger.Info("Health check: Database connected - service SERVING")
+			dbHealthy = true
 		} else {
-			healthStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
-			mainLogger.Warn("Health check: Database ping failed - service NOT_SERVING")
+			mainLogger.Warn("Health check: Database ping failed")
 		}
 	} else {
+		mainLogger.Warn("Health check: No database connection")
+	}
+	
+	// Check agent service health - verify connection state
+	if agentClient != nil && agentConn != nil {
+		state := agentConn.GetState()
+		if state == connectivity.Ready || state == connectivity.Idle {
+			agentHealthy = true
+		} else {
+			mainLogger.Warnw("Health check: Agent connection not ready", "state", state.String())
+		}
+	} else {
+		mainLogger.Warn("Health check: No agent service connection")
+	}
+	
+	if dbHealthy && agentHealthy {
+		healthStatus = grpc_health_v1.HealthCheckResponse_SERVING
+		mainLogger.Info("Health check: Database and agent service connected - service SERVING")
+	} else {
 		healthStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
-		mainLogger.Warn("Health check: No database connection - service NOT_SERVING")
+		if !dbHealthy && !agentHealthy {
+			mainLogger.Warn("Health check: Database and agent service not connected - service NOT_SERVING")
+		} else if !dbHealthy {
+			mainLogger.Warn("Health check: Database not connected - service NOT_SERVING")
+		} else {
+			mainLogger.Warn("Health check: Agent service not connected - service NOT_SERVING")
+		}
 	}
 
 	healthServer.SetServingStatus("mealplanner.api.MealPlannerAPI", healthStatus)
@@ -132,16 +163,43 @@ func main() {
 
 		for range ticker.C {
 			var currentStatus grpc_health_v1.HealthCheckResponse_ServingStatus
+			dbHealthy := false
+			agentHealthy := false
+			
+			// Check database health
 			if server.DB != nil {
 				if err := server.DB.Ping(); err == nil {
-					currentStatus = grpc_health_v1.HealthCheckResponse_SERVING
+					dbHealthy = true
 				} else {
-					currentStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
 					mainLogger.Warnw("Health check: Database ping failed", "error", err)
 				}
 			} else {
-				currentStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
 				mainLogger.Warn("Health check: No database connection")
+			}
+			
+			// Check agent service health - verify connection state
+			if agentClient != nil && agentConn != nil {
+				state := agentConn.GetState()
+				if state == connectivity.Ready || state == connectivity.Idle {
+					agentHealthy = true
+				} else {
+					mainLogger.Warnw("Health check: Agent connection not ready", "state", state.String())
+				}
+			} else {
+				mainLogger.Warn("Health check: No agent service connection")
+			}
+			
+			if dbHealthy && agentHealthy {
+				currentStatus = grpc_health_v1.HealthCheckResponse_SERVING
+			} else {
+				currentStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
+				if !dbHealthy && !agentHealthy {
+					mainLogger.Warn("Health check: Database and agent service not connected")
+				} else if !dbHealthy {
+					mainLogger.Warn("Health check: Database not connected")
+				} else {
+					mainLogger.Warn("Health check: Agent service not connected")
+				}
 			}
 
 			// Update health status if it changed
