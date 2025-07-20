@@ -17,7 +17,7 @@ This repository contains a personal meal planning application composed of severa
 
 ## Architecture Overview
 
-The system is split into a Go backend and several TypeScript packages.  The backend exposes REST endpoints on port `8080` and persists data in PostgreSQL.  The React UI communicates directly with the backend during development.  The LangGraph agent is a command line tool that orchestrates meal plan generation and communicates with the backend or MCP server.  The MCP server exposes a Model Context Protocol API that proxies backend calls for the agent.  Shared TypeScript code lives in `shared` and is published to the workspace so all packages share a single set of types. The React UI is located in the `ui` directory.
+The system is split into a Go backend and several TypeScript packages.  The backend exposes REST endpoints on port `8090` and persists data in PostgreSQL.  The React UI communicates directly with the backend during development.  The LangGraph agent is a command line tool that orchestrates meal plan generation and communicates with the backend or MCP server.  The MCP server exposes a Model Context Protocol API that proxies backend calls for the agent.  Shared TypeScript code lives in `shared` and is published to the workspace so all packages share a single set of types. The React UI is located in the `ui` directory.
 
 ```
 [React UI]  --->  [Go Backend]  --->  [PostgreSQL]
