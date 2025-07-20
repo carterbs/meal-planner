@@ -67,6 +67,7 @@ const colorSchemes = {
     text: '#3a3a3a',
     userMsgBg: '#f4f7f2',
     aiMsgBg: '#f4f7f2',
+    changedMealHighlight: '#92ca92',
   },
   earthyNeutrals: {
     name: 'Earthy Neutrals',
@@ -82,6 +83,7 @@ const colorSchemes = {
     text: '#3a3a3a',
     userMsgBg: '#c9e0c2',
     aiMsgBg: '#f7f4f2',
+    changedMealHighlight: '#92ca92',
   },
   naturalLinen: {
     name: 'Natural Linen',
@@ -96,6 +98,7 @@ const colorSchemes = {
     text: '#3a3a3a',
     userMsgBg: '#E8F4EC',
     aiMsgBg: '#eef2ee',
+    changedMealHighlight: '#92ca92',
   },
 };
 // Style variables - now a function that takes colors

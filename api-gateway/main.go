@@ -462,112 +462,74 @@ func main() {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /health [get]
 func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
-	log.Printf("🔍 Starting comprehensive health check...")
+	log.Printf("🔍 Starting quick health check...")
 	services := make(map[string]bool)
-	
-	maxRetries := 3
-	retryDelay := time.Second
 
-	// Check logging service with retries
+	// Check logging service (single attempt)
 	log.Printf("🔍 Checking logging service...")
 	loggingHealthy := false
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		if grpcLogger != nil {
-			if err := grpcLogger.LogWithDetails(r.Context(), "DEBUG", "Health check test message", "", "api-gateway", nil); err != nil {
-				if attempt == maxRetries {
-					log.Printf("❌ Logging service health check failed after %d attempts: %v", maxRetries, err)
-				} else {
-					time.Sleep(retryDelay)
-				}
-			} else {
-				loggingHealthy = true
-				log.Printf("✅ Logging service health check passed")
-				break
-			}
+	if grpcLogger != nil {
+		if err := grpcLogger.LogWithDetails(r.Context(), "DEBUG", "Health check test message", "", "api-gateway", nil); err != nil {
+			log.Printf("❌ Logging service health check failed: %v", err)
 		} else {
-			if attempt == maxRetries {
-				log.Printf("❌ Logging service client not initialized after retries")
-			}
-			break
+			loggingHealthy = true
+			log.Printf("✅ Logging service health check passed")
 		}
+	} else {
+		log.Printf("❌ Logging service client not initialized")
 	}
 	services["logging"] = loggingHealthy
 
-	// Check backend service with retries
+	// Check backend service (single attempt)
 	log.Printf("🔍 Checking backend service...")
 	backendHealthy := false
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		backendResp, backendErr := gw.backend.HealthCheck(r.Context(), &emptypb.Empty{})
-		if backendErr != nil {
-			if attempt == maxRetries {
-				log.Printf("❌ Backend health check failed after %d attempts: %v", maxRetries, backendErr)
-			} else {
-				time.Sleep(retryDelay)
-			}
-		} else if backendResp == nil {
-			if attempt == maxRetries {
-				log.Printf("❌ Backend health check returned nil response after %d attempts", maxRetries)
-			} else {
-				time.Sleep(retryDelay)
-			}
-		} else {
-			backendHealthy = true
-			log.Printf("✅ Backend health check passed")
-			break
-		}
+	backendResp, backendErr := gw.backend.HealthCheck(r.Context(), &emptypb.Empty{})
+	if backendErr != nil {
+		log.Printf("❌ Backend health check failed: %v", backendErr)
+	} else if backendResp == nil {
+		log.Printf("❌ Backend health check returned nil response")
+	} else {
+		backendHealthy = true
+		log.Printf("✅ Backend health check passed")
 	}
 	services["backend"] = backendHealthy
 
-	// Check agent service with retries
+	// Check agent service (single attempt)
 	log.Printf("🔍 Checking agent service...")
 	agentHealthy := false
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		agentResp, agentErr := gw.agent.ListWorkflows(r.Context(), &emptypb.Empty{})
-		if agentErr != nil {
-			if attempt == maxRetries {
-				log.Printf("❌ Agent health check failed after %d attempts: %v", maxRetries, agentErr)
-			} else {
-				time.Sleep(retryDelay)
-			}
-		} else if agentResp == nil {
-			if attempt == maxRetries {
-				log.Printf("❌ Agent health check returned nil response after %d attempts", maxRetries)
-			} else {
-				time.Sleep(retryDelay)
-			}
-		} else {
-			agentHealthy = true
-			log.Printf("✅ Agent health check passed")
-			break
-		}
+	agentResp, agentErr := gw.agent.ListWorkflows(r.Context(), &emptypb.Empty{})
+	if agentErr != nil {
+		log.Printf("❌ Agent health check failed: %v", agentErr)
+	} else if agentResp == nil {
+		log.Printf("❌ Agent health check returned nil response")
+	} else {
+		agentHealthy = true
+		log.Printf("✅ Agent health check passed")
 	}
 	services["agent"] = agentHealthy
 
-	// Check MCP service with retries
+	// Check MCP service (single attempt)
 	log.Printf("🔍 Checking MCP service...")
 	mcpHealthy := false
 	mcpAddr := os.Getenv("MCP_SERVICE_ADDR")
 	if mcpAddr == "" {
 		mcpAddr = "localhost:3001"
 	}
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		if mcpResp, err := http.Get("http://" + mcpAddr + "/health"); err != nil {
-			if attempt == maxRetries {
-				log.Printf("❌ MCP health check failed after %d attempts: %v", maxRetries, err)
-			} else {
-				time.Sleep(retryDelay)
-			}
+
+	// Use a short timeout for the HTTP request
+	client := &http.Client{
+		Timeout: 2 * time.Second,
+	}
+
+	if mcpResp, err := client.Get("http://" + mcpAddr + "/health"); err != nil {
+		log.Printf("❌ MCP health check failed: %v", err)
+	} else {
+		defer mcpResp.Body.Close()
+		if mcpResp.StatusCode == 200 {
+			mcpHealthy = true
+			log.Printf("✅ MCP health check passed (status: %d)", mcpResp.StatusCode)
 		} else {
-			defer mcpResp.Body.Close()
-			if mcpResp.StatusCode == 200 {
-				mcpHealthy = true
-				log.Printf("✅ MCP health check passed (status: %d)", mcpResp.StatusCode)
-				break
-			} else if attempt == maxRetries {
-				log.Printf("❌ MCP health check failed after %d attempts (status: %d)", maxRetries, mcpResp.StatusCode)
-			} else {
-				time.Sleep(retryDelay)
-			}
+			log.Printf("❌ MCP health check failed (status: %d)", mcpResp.StatusCode)
 		}
 	}
 	services["mcp"] = mcpHealthy
