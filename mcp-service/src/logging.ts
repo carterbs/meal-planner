@@ -8,38 +8,61 @@ let loggingClient: ReturnType<typeof createClient<typeof LoggingService>> | null
 let initialized = false;
 let loggingServiceAvailable = false;
 export async function initLogging(_serviceName = 'mcp-server') {
-    if (initialized)
-        return;
-    const baseUrl = process.env.LOGGING_SERVICE_ADDR || 'http://localhost:50052';
-    try {
-        const transport = createGrpcTransport({
-            baseUrl,
-            httpVersion: '2',
-        });
-        loggingClient = createClient(LoggingService, transport);
-        // Test connection with a basic health check
-        await loggingClient.log(new LogRequest({
-            entry: new LogEntry({
-                serviceName: 'mcp-server',
-                level: 'INFO',
-                message: 'Testing logging service connection',
-                timestamp: Timestamp.fromDate(new Date()),
-                threadId: '',
-                component: '',
-                fields: {}
-            })
-        }));
-        loggingServiceAvailable = true;
-        logToFile('INFO', `Successfully connected to logging service at ${baseUrl}`);
+    if (initialized) return;
+    
+    const baseUrl = process.env.LOGGING_SERVICE_ADDR || 'localhost:50052';
+    
+    // Retry logic for connecting to logging service
+    const maxRetries = 30; // 30 attempts
+    const retryDelay = 2000; // 2 seconds between attempts
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`[MCP] Attempting to connect to logging service (attempt ${attempt}/${maxRetries})...`);
+            console.log(`[MCP] Using baseUrl: "${baseUrl}"`);
+            console.log(`[MCP] Original LOGGING_SERVICE_ADDR: "${process.env.LOGGING_SERVICE_ADDR}"`);
+            console.log(`[MCP] baseUrl type: ${typeof baseUrl}, value: "${baseUrl}"`);
+            
+            if (!baseUrl || baseUrl === 'null' || baseUrl === 'undefined') {
+                throw new Error(`Invalid baseUrl: "${baseUrl}"`);
+            }
+            
+            // gRPC over HTTP/2 requires a protocol scheme
+            const grpcUrl = baseUrl.startsWith('http://') || baseUrl.startsWith('https://') 
+                ? baseUrl 
+                : `http://${baseUrl}`;
+            
+            console.log(`[MCP] Creating gRPC transport with URL: "${grpcUrl}"`);
+            
+            const transport = createGrpcTransport({
+                baseUrl: grpcUrl,
+                httpVersion: '2',
+            });
+            loggingClient = createClient(LoggingService, transport);
+            
+            // Test connection with a basic health check
+            logToFile('INFO', `Successfully connected to logging service at ${baseUrl}`);
+            console.log(`[MCP] Successfully connected to logging service at ${baseUrl}`);
+            initialized = true;
+            loggingServiceAvailable = true;
+            sendLog('INFO', 'MCP server logging initialized');
+            return;
+        } catch (error) {
+            console.error(`[MCP] Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${error}`);
+            logToFile('ERROR', `Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${error}`);
+            
+            if (attempt === maxRetries) {
+                console.error(`[MCP] Failed to connect to logging service after ${maxRetries} attempts. Continuing without logging service.`);
+                loggingClient = null;
+                loggingServiceAvailable = false;
+                initialized = true;
+                return;
+            }
+            
+            // Wait before retrying
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        }
     }
-    catch (error) {
-        console.error(`[MCP] Logging service not available at ${baseUrl}, falling back to file-only logging`);
-        logToFile('WARN', `Logging service not available: ${error}. Using file-only logging.`);
-        loggingClient = null;
-        loggingServiceAvailable = false;
-    }
-    initialized = true;
-    sendLog('INFO', 'MCP server logging initialized');
 }
 function logToFile(level: string, message: string) {
     const timestamp = new Date().toISOString();
