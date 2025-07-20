@@ -18,17 +18,20 @@ describe('MealPlanningWorkflow State Management Tests', () => {
   let mockCheckpointer: jest.Mocked<DbCheckpointSaver>;
   let mockClient: any;
   let mockLLM: any;
+  let mockMessageRepo: any;
   let mockConfig: any;
   beforeEach(() => {
     setupConsoleMocks();
     mockCheckpointer = TestMockFactory.createMockCheckpointer() as any;
     mockClient = TestMockFactory.createMockMCPClient();
     mockLLM = TestMockFactory.createMockLLM();
+    mockMessageRepo = TestMockFactory.createMockMessageRepository();
     mockConfig = TestMockFactory.createMockExtendedRunnableConfig();
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;
     workflow.client = mockClient;
     workflow.llm = mockLLM;
     workflow.nanoLlm = mockLLM;
+    workflow.messageRepo = mockMessageRepo;
   });
   afterEach(() => {
     restoreConsoleMocks();

@@ -70,6 +70,12 @@ export class DbCheckpointSaver {
           checkpoint,
           metadata,
         );
+        // Also update the latest pointer so workflows can be resumed after restart
+        const latestData = Buffer.from(
+          JSON.stringify(checkpoint.toJson()),
+          'utf8',
+        );
+        await this.checkpointRepo.updateWorkflowCheckpoint(threadId, latestData);
       } catch (e) {
         await infoLog(`[CHECKPOINT] putCheckpoint failed (non-fatal): ${e}`);
         // swallow the error so workflows continue even when persistence isn't available

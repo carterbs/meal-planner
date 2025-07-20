@@ -23,6 +23,12 @@ func NewMockIngredientRepository(t interface {
 	return m
 }
 
+// CreateMealIngredient mock implementation
+func (m *MockIngredientRepository) CreateMealIngredient(ctx context.Context, mealID int, ingredient *models.Ingredient) error {
+	args := m.Called(ctx, mealID, ingredient)
+	return args.Error(0)
+}
+
 // UpdateMealIngredient mock implementation
 func (m *MockIngredientRepository) UpdateMealIngredient(ctx context.Context, mealID int, ingredient *models.Ingredient) error {
 	args := m.Called(ctx, mealID, ingredient)
