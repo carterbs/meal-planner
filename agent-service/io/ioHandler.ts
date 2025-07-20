@@ -5,7 +5,6 @@ export interface IOHandler {
    * @param from Identifier of the sender (e.g., 'brad', 'shannon').
    */
   sendMessage(message: string, from: string): Promise<void>;
-
   /**
    * Prompt the participant for input.
    * @param prompt The prompt message.
@@ -13,7 +12,6 @@ export interface IOHandler {
    * @returns The participant's input.
    */
   receiveInput(prompt: string, from: string): Promise<string>;
-
   /**
    * Format a message uniformly, including optional timestamp.
    * @param message The message content.
@@ -21,7 +19,6 @@ export interface IOHandler {
    * @param timestamp Optional timestamp (defaults to now).
    */
   formatMessage(message: string, from: string, timestamp?: Date): string;
-
   /**
    * Clean up any resources (e.g., close streams).
    */

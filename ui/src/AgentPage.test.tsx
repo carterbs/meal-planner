@@ -175,7 +175,7 @@ test('copies meal plan to clipboard', async () => {
 
   // Open share menu first
   fireEvent.click(screen.getByTestId('share-menu-button'));
-  
+
   // Then click copy meal plan
   fireEvent.click(screen.getByTestId('copy-meal-plan'));
   expect(write).toHaveBeenCalled();
@@ -496,7 +496,9 @@ test('opens and closes meal library', () => {
   render(<AgentPage />);
 
   fireEvent.click(screen.getByTestId('open-meal-library'));
-  expect(screen.getAllByTestId('meal-management-tab').length).toBeGreaterThan(0);
+  expect(screen.getAllByTestId('meal-management-tab').length).toBeGreaterThan(
+    0,
+  );
 
   fireEvent.click(screen.getByTestId('close-meal-library'));
   expect(screen.queryByTestId('meal-management-tab')).not.toBeInTheDocument();

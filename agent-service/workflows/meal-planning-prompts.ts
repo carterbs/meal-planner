@@ -1,5 +1,4 @@
 import { VALIDATION_CRITERIA } from '../shared/types';
-
 /**
  * Generates a prompt to analyze user feedback for satisfaction.
  */
@@ -8,7 +7,6 @@ export function getAnalyzeFeedbackPrompt(
 ): string {
   return `Given the following user feedback on a meal plan, does the user want changes or are they satisfied? Respond with a JSON object: { "satisfied": true/false, "reasoning": "..." }\n\nFeedback: ${latestFeedbackMessage}`;
 }
-
 /**
  * Generates a prompt to update a weekly meal plan based on session feedback.
  */
@@ -46,7 +44,6 @@ Current meal plan:\n${planDescription}\n\nAvailable meals to choose from:\n${mea
 }\n\nIf no removals or replacements are needed, return: {"removals": [], "replacements": [], "userMessage": "Your current meal plan already looks great and addresses your preferences!"}\n
 <important> Your response should be parseable as JSON.</important>`;
 }
-
 /**
  * Generates a prompt to optimize a weekly meal plan based on detected issues.
  */
@@ -67,7 +64,6 @@ export function getOptimizeMealPlanPrompt(
   ]
 }\nIf no replacements are needed, return: {"replacements": []}.\n\n<important> Your response should be parseable as JSON.</important>`;
 }
-
 /**
  * Generates a prompt to categorize pantry staples in a shopping list.
  */

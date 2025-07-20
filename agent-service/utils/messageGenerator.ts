@@ -1,17 +1,14 @@
 import { ChatOpenAI } from '@langchain/openai';
 import { debugLog } from '../logging';
 import type { WeeklyMealPlan } from '@mealplanner/generated';
-
 export class MessageGenerator {
   private llm: ChatOpenAI;
-
   constructor() {
     this.llm = new ChatOpenAI({
       temperature: 0.7,
       modelName: 'gpt-4.1-nano',
     });
   }
-
   /**
    * Generate a contextual message for workflow resumption
    */
@@ -37,12 +34,10 @@ export class MessageGenerator {
           .slice(0, 3);
         mealPlanSummary = `Current meal plan has ${mealCount} meals across ${uniqueDays} days. Sample meals: ${sampleMeals.join(', ')}`;
       }
-
       let shoppingListSummary = '';
       if (context.shoppingList && context.shoppingList.length > 0) {
         shoppingListSummary = `Shopping list has ${context.shoppingList.length} items including: ${context.shoppingList.slice(0, 5).join(', ')}${context.shoppingList.length > 5 ? '...' : ''}`;
       }
-
       const prompt = `Generate a brief, friendly message (1-2 sentences) for a meal planning assistant that has just resumed processing a user's request. Be conversational, helpful, and reference specific details from the meal plan when possible.
 
 Context:
@@ -65,22 +60,19 @@ Examples:
 - "I've updated the plan - you now have Honey Nut Cheerios on Tuesday and Bagels with Cream cheese on Wednesday."
 
 Your Response (just the message, no quotes or formatting):`;
-
       const result = await this.llm.invoke([{ role: 'user', content: prompt }]);
       const message =
         typeof result.content === 'string'
           ? result.content
           : String(result.content);
-
-      debugLog(`[MESSAGE_GENERATOR] Generated message: ${message}`);
+      await debugLog(`[MESSAGE_GENERATOR] Generated message: ${message}`);
       return message.trim();
     } catch (error) {
-      debugLog(`[MESSAGE_GENERATOR] Error generating message: ${error}`);
+      await debugLog(`[MESSAGE_GENERATOR] Error generating message: ${error}`);
       // Fallback to generic message
       return "I'm working on your meal plan now!";
     }
   }
-
   /**
    * Generate a message for workflow completion
    */
@@ -101,12 +93,10 @@ Your Response (just the message, no quotes or formatting):`;
           .slice(0, 2);
         mealPlanDetails = `${mealCount} meals across ${uniqueDays} days${featuredMeals.length > 0 ? `, featuring ${featuredMeals.join(' and ')}` : ''}`;
       }
-
       let shoppingDetails = '';
       if (context.shoppingList && context.shoppingList.length > 0) {
         shoppingDetails = `shopping list with ${context.shoppingList.length} items`;
       }
-
       const prompt = `Generate a brief, friendly completion message (1-2 sentences) for a meal planning assistant that has finished creating a meal plan and shopping list. Reference specific details when possible.
 
 Context:
@@ -127,17 +117,17 @@ Examples:
 - "Perfect! I've put together a great week of meals including some delicious pasta dishes and quick breakfast options, plus your complete shopping list."
 
 Response (just the message, no quotes or formatting):`;
-
       const result = await this.llm.invoke([{ role: 'user', content: prompt }]);
       const message =
         typeof result.content === 'string'
           ? result.content
           : String(result.content);
-
-      debugLog(`[MESSAGE_GENERATOR] Generated completion message: ${message}`);
+      await debugLog(
+        `[MESSAGE_GENERATOR] Generated completion message: ${message}`,
+      );
       return message.trim();
     } catch (error) {
-      debugLog(
+      await debugLog(
         `[MESSAGE_GENERATOR] Error generating completion message: ${error}`,
       );
       // Fallback to generic message

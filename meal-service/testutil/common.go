@@ -16,8 +16,8 @@ var (
 
 // Common test errors
 var (
-	ErrTestDatabase = errors.New("test database error")
-	ErrTestNotFound = errors.New("test record not found")
+	ErrTestDatabase   = errors.New("test database error")
+	ErrTestNotFound   = errors.New("test record not found")
 	ErrTestValidation = errors.New("test validation error")
 )
 
@@ -26,17 +26,17 @@ const (
 	TestMealID1 = 1
 	TestMealID2 = 2
 	TestMealID3 = 3
-	
+
 	TestIngredientID1 = 1
 	TestIngredientID2 = 2
 	TestIngredientID3 = 3
-	
+
 	TestStepID1 = 1
 	TestStepID2 = 2
 	TestStepID3 = 3
-	
-	TestThreadID = "test-thread-123"
-	TestNamespace = "test-namespace"
+
+	TestThreadID     = "test-thread-123"
+	TestNamespace    = "test-namespace"
 	TestWorkflowType = "meal-planning"
 )
 
@@ -76,7 +76,7 @@ func CreateTestMealSet() []*models.Meal {
 				NewStepBuilder().WithID(3).WithMealID(TestMealID1).WithOrder(3).WithInstruction("Combine pasta with egg mixture").Build(),
 			}).
 			Build(),
-		
+
 		NewMealBuilder().
 			WithID(TestMealID2).
 			WithName("Chicken Tacos").
@@ -93,7 +93,7 @@ func CreateTestMealSet() []*models.Meal {
 				NewStepBuilder().WithID(6).WithMealID(TestMealID2).WithOrder(3).WithInstruction("Assemble tacos").Build(),
 			}).
 			Build(),
-		
+
 		NewMealBuilder().
 			WithID(TestMealID3).
 			WithName("Scrambled Eggs").

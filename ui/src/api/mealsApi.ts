@@ -140,7 +140,7 @@ export async function updateMealIngredient(
   const result = await putMealsByMealIdIngredientsByIngredientId({
     client: gatewayClient,
     path: { mealId: mealId.toString(), ingredientId: ingredientId.toString() },
-    body: { 
+    body: {
       ingredient,
       ingredient_id: ingredientId,
       meal_id: mealId,
@@ -166,7 +166,7 @@ export async function createMealIngredient(
   const result = await postMealsByMealIdIngredients({
     client: gatewayClient,
     path: { mealId: mealId.toString() },
-    body: { 
+    body: {
       ingredient,
       meal_id: mealId,
     },

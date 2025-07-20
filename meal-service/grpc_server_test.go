@@ -45,11 +45,11 @@ func TestGetCheckpoint_MessageConversion(t *testing.T) {
 		// Create test checkpoint data with messages in the format we store
 		checkpointData := map[string]interface{}{
 			"state": map[string]interface{}{
-				"current_step":     "generate_plan",
-				"thread_id":        "test-thread-123",
-				"participants":     []string{"user"},
-				"iteration_count":  1,
-				"is_finalized":     false,
+				"current_step":    "generate_plan",
+				"thread_id":       "test-thread-123",
+				"participants":    []string{"user"},
+				"iteration_count": 1,
+				"is_finalized":    false,
 			},
 			"messages": []interface{}{
 				map[string]interface{}{
@@ -140,11 +140,11 @@ func TestGetCheckpoint_MessageConversion(t *testing.T) {
 		// Create test checkpoint data without messages
 		checkpointData := map[string]interface{}{
 			"state": map[string]interface{}{
-				"current_step":     "initial",
-				"thread_id":        "test-thread-456",
-				"participants":     []string{"user"},
-				"iteration_count":  1,
-				"is_finalized":     false,
+				"current_step":    "initial",
+				"thread_id":       "test-thread-456",
+				"participants":    []string{"user"},
+				"iteration_count": 1,
+				"is_finalized":    false,
 			},
 			"next": []interface{}{},
 			"step": 0,

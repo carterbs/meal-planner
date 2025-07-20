@@ -16,7 +16,7 @@ func TestShoppingListService_BuildShoppingList_Empty(t *testing.T) {
 	mockMealRepo := mocks.NewMockMealRepository(t)
 	mockShoppingListRepo := mocks.NewMockShoppingListRepository(t)
 	service := NewShoppingListService(mockMealRepo, mockShoppingListRepo)
-	
+
 	items, err := service.BuildShoppingList([]int{})
 	assert.NoError(t, err)
 	assert.Empty(t, items)
@@ -38,7 +38,7 @@ func TestShoppingListService_BuildShoppingList_WithMeals(t *testing.T) {
 					testutil.NewMealBuilder().WithID(testutil.TestMealID2).WithName("Salad").WithMealType("lunch").Build(),
 				}
 				mockMealRepo.On("GetMealsByIDs", mock.Anything, []int{testutil.TestMealID1, testutil.TestMealID2}).Return(meals, nil)
-				
+
 				items := []*apipb.ShoppingListItem{
 					{Ingredient: "Pasta", Quantity: "1 lb"},
 					{Ingredient: "Tomatoes", Quantity: "2 cups"},

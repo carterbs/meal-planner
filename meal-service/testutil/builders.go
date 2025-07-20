@@ -3,9 +3,9 @@ package testutil
 import (
 	"time"
 
-	"mealplanner/models"
-	apipb "mealplanner/generated/go"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	apipb "mealplanner/generated/go"
+	"mealplanner/models"
 )
 
 // MealBuilder helps create test meal data
@@ -184,7 +184,7 @@ type WeeklyMealPlanBuilder struct {
 func NewWeeklyMealPlanBuilder() *WeeklyMealPlanBuilder {
 	return &WeeklyMealPlanBuilder{
 		plan: &models.WeeklyMealPlan{
-			Days: make([]*models.MealPlanEntry, 0),
+			Days:         make([]*models.MealPlanEntry, 0),
 			ShoppingList: make([]*models.ShoppingListItem, 0),
 		},
 	}
@@ -273,7 +273,7 @@ func NewAPIWeeklyMealPlanBuilder() *APIWeeklyMealPlanBuilder {
 		MealType: "dinner",
 		Effort:   2,
 	}
-	
+
 	return &APIWeeklyMealPlanBuilder{
 		plan: &apipb.WeeklyMealPlan{
 			Days: []*apipb.MealPlanEntry{

@@ -48,4 +48,3 @@ type CheckpointSummary struct {
 	UpdatedAt    time.Time              `json:"updated_at"`
 	Metadata     map[string]interface{} `json:"metadata"`
 }
-

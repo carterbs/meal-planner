@@ -39,11 +39,11 @@ func (r *IngredientRepositoryImpl) GetIngredientsForMeals(ctx context.Context, m
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var ingredients []*models.Ingredient
 	for _, meal := range meals {
 		ingredients = append(ingredients, meal.Ingredients...)
 	}
-	
+
 	return ingredients, nil
 }

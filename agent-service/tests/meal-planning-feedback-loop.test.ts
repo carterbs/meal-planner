@@ -1,10 +1,12 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { DbCheckpointSaver } from '../shared/dbCheckpointer';
-import { TestMockFactory, setupConsoleMocks, restoreConsoleMocks } from './test-utils';
-
+import {
+  TestMockFactory,
+  setupConsoleMocks,
+  restoreConsoleMocks,
+} from './test-utils';
 // Mock external dependencies
 jest.mock('../logging');
-
 describe('MealPlanningWorkflow Feedback Loop Tests', () => {
   let workflow: any;
   let mockCheckpointer: jest.Mocked<DbCheckpointSaver>;
@@ -12,90 +14,80 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
   let mockLLM: any;
   let mockNanoLLM: any;
   let mockMessageRepo: any;
-
   beforeEach(() => {
     setupConsoleMocks();
-    
     mockCheckpointer = TestMockFactory.createMockCheckpointer() as any;
     mockClient = TestMockFactory.createMockMCPClient();
     mockLLM = TestMockFactory.createMockLLM();
     mockNanoLLM = TestMockFactory.createMockLLM();
     mockMessageRepo = TestMockFactory.createMockMessageRepository();
-
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;
     workflow.client = mockClient;
     workflow.llm = mockLLM;
     workflow.nanoLlm = mockNanoLLM;
     workflow.messageRepo = mockMessageRepo;
   });
-
   afterEach(() => {
     restoreConsoleMocks();
     jest.clearAllMocks();
   });
-
   describe('analyzeFeedbackNode', () => {
     it('analyzes feedback and detects satisfaction', async () => {
       const mockMessages = [
         TestMockFactory.createMockMessage({
-          content: 'This looks great, I\'m happy with the plan!',
+          content: "This looks great, I'm happy with the plan!",
         }),
       ];
-
       mockNanoLLM.invoke.mockResolvedValue({
-        content: '{"satisfied": true, "reasoning": "User expressed satisfaction"}',
+        content:
+          '{"satisfied": true, "reasoning": "User expressed satisfaction"}',
       });
-
       const result = await workflow.analyzeFeedbackNode(mockMessages);
-
       expect(result).toEqual({
         satisfied: true,
         reasoning: 'User expressed satisfaction',
       });
       expect(mockNanoLLM.invoke).toHaveBeenCalledWith([
-        { role: 'user', content: expect.stringContaining('This looks great, I\'m happy with the plan!') },
+        {
+          role: 'user',
+          content: expect.stringContaining(
+            "This looks great, I'm happy with the plan!",
+          ),
+        },
       ]);
     });
-
     it('detects dissatisfaction in feedback', async () => {
       const mockMessages = [
         TestMockFactory.createMockMessage({
-          content: 'I don\'t like the meals for Monday',
+          content: "I don't like the meals for Monday",
         }),
       ];
-
       mockNanoLLM.invoke.mockResolvedValue({
-        content: '{"satisfied": false, "reasoning": "User wants changes to Monday meals"}',
+        content:
+          '{"satisfied": false, "reasoning": "User wants changes to Monday meals"}',
       });
-
       const result = await workflow.analyzeFeedbackNode(mockMessages);
-
       expect(result).toEqual({
         satisfied: false,
         reasoning: 'User wants changes to Monday meals',
       });
     });
-
     it('handles unparsable feedback analysis gracefully', async () => {
       const mockMessages = [
         TestMockFactory.createMockMessage({
           content: 'Some feedback',
         }),
       ];
-
       mockNanoLLM.invoke.mockResolvedValue({
         content: 'Not valid JSON',
       });
-
       const result = await workflow.analyzeFeedbackNode(mockMessages);
-
       expect(result).toEqual({
         satisfied: false,
         reasoning: 'Could not parse LLM response.',
       });
     });
   });
-
   describe('applyFeedbackNode', () => {
     it('applies feedback with meal replacements', async () => {
       const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();
@@ -103,24 +95,25 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
         mealPlan: mockMealPlan,
         threadId: 'test-thread',
       });
-
       const mockFeedback = [
         TestMockFactory.createMockMessage({
           content: 'Please change dinner on Monday',
         }),
       ];
-
       const stateWithFeedback = {
         ...mockState,
         feedback_to_apply: mockFeedback,
       };
-
       // Mock MCP client for getMeals
       mockClient.callTool.mockResolvedValue({
         isError: false,
-        content: [{ type: 'text', text: JSON.stringify([TestMockFactory.createMockMeal()]) }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify([TestMockFactory.createMockMeal()]),
+          },
+        ],
       });
-
       // Mock LLM response for feedback application
       mockLLM.invoke.mockResolvedValue({
         content: JSON.stringify({
@@ -133,40 +126,42 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
               reason: 'User requested change',
             },
           ],
-          userMessage: 'I\'ve updated Monday dinner as requested!',
+          userMessage: "I've updated Monday dinner as requested!",
         }),
       });
-
       const result = await workflow.applyFeedbackNode(stateWithFeedback);
-
       expect(result.mealPlan).toBeDefined();
-      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith('test-thread', 'agent', 'I\'ve updated Monday dinner as requested!');
+      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith(
+        'test-thread',
+        'agent',
+        "I've updated Monday dinner as requested!",
+      );
     });
-
     it('applies feedback with meal removals', async () => {
       const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();
       const mockState = TestMockFactory.createMockMealPlanningState({
         mealPlan: mockMealPlan,
         threadId: 'test-thread',
       });
-
       const mockFeedback = [
         TestMockFactory.createMockMessage({
           content: 'Remove breakfast on Sunday',
         }),
       ];
-
       const stateWithFeedback = {
         ...mockState,
         feedback_to_apply: mockFeedback,
       };
-
       // Mock MCP client for getMeals
       mockClient.callTool.mockResolvedValue({
         isError: false,
-        content: [{ type: 'text', text: JSON.stringify([TestMockFactory.createMockMeal()]) }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify([TestMockFactory.createMockMeal()]),
+          },
+        ],
       });
-
       // Mock LLM response for feedback application
       mockLLM.invoke.mockResolvedValue({
         content: JSON.stringify({
@@ -177,39 +172,37 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
               reason: 'User requested removal',
             },
           ],
-          userMessage: 'I\'ve removed Sunday breakfast as requested!',
+          userMessage: "I've removed Sunday breakfast as requested!",
         }),
       });
-
       const result = await workflow.applyFeedbackNode(stateWithFeedback);
-
       expect(result.mealPlan).toBeDefined();
     });
-
     it('handles feedback with invalid meal IDs', async () => {
       const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();
       const mockState = TestMockFactory.createMockMealPlanningState({
         mealPlan: mockMealPlan,
         threadId: 'test-thread',
       });
-
       const mockFeedback = [
         TestMockFactory.createMockMessage({
           content: 'Change dinner to something else',
         }),
       ];
-
       const stateWithFeedback = {
         ...mockState,
         feedback_to_apply: mockFeedback,
       };
-
       // Mock MCP client for getMeals
       mockClient.callTool.mockResolvedValue({
         isError: false,
-        content: [{ type: 'text', text: JSON.stringify([TestMockFactory.createMockMeal({ id: 1 })]) }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify([TestMockFactory.createMockMeal({ id: 1 })]),
+          },
+        ],
       });
-
       // Mock LLM response with invalid meal ID
       mockLLM.invoke.mockResolvedValue({
         content: JSON.stringify({
@@ -222,36 +215,31 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
               reason: 'User requested change',
             },
           ],
-          userMessage: 'I\'ve made some adjustments to your meal plan.',
+          userMessage: "I've made some adjustments to your meal plan.",
         }),
       });
-
       const result = await workflow.applyFeedbackNode(stateWithFeedback);
-
       expect(result.mealPlan).toBeDefined();
       // The meal plan should remain unchanged for invalid replacements
     });
-
     it('throws error when no meal plan to apply feedback to', async () => {
       const mockState = TestMockFactory.createMockMealPlanningState({
         mealPlan: undefined,
       });
-
       const mockFeedback = [
         TestMockFactory.createMockMessage({
           content: 'Some feedback',
         }),
       ];
-
       const stateWithFeedback = {
         ...mockState,
         feedback_to_apply: mockFeedback,
       };
-
-      await expect(workflow.applyFeedbackNode(stateWithFeedback)).rejects.toThrow('No meal plan to apply feedback to');
+      await expect(
+        workflow.applyFeedbackNode(stateWithFeedback),
+      ).rejects.toThrow('No meal plan to apply feedback to');
     });
   });
-
   describe('feedback loop integration', () => {
     it('applies feedback and updates meal plan', async () => {
       const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();
@@ -259,27 +247,32 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
         mealPlan: mockMealPlan,
         threadId: 'test-thread',
       });
-
       const mockFeedback = [
         TestMockFactory.createMockMessage({
           content: 'Change Monday dinner to something lighter',
         }),
       ];
-
       const stateWithFeedback = {
         ...mockState,
         feedback_to_apply: mockFeedback,
       };
-
       // Mock MCP client for getMeals
       mockClient.callTool.mockResolvedValue({
         isError: false,
-        content: [{ type: 'text', text: JSON.stringify([
-          TestMockFactory.createMockMeal({ id: 1, name: 'Heavy Meal' }),
-          TestMockFactory.createMockMeal({ id: 2, name: 'Light Meal', effort: 1 }),
-        ]) }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify([
+              TestMockFactory.createMockMeal({ id: 1, name: 'Heavy Meal' }),
+              TestMockFactory.createMockMeal({
+                id: 2,
+                name: 'Light Meal',
+                effort: 1,
+              }),
+            ]),
+          },
+        ],
       });
-
       // Mock LLM for feedback application
       mockLLM.invoke.mockResolvedValue({
         content: JSON.stringify({
@@ -292,77 +285,75 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
               reason: 'User requested lighter meal',
             },
           ],
-          userMessage: 'I\'ve changed Monday dinner to a lighter option!',
+          userMessage: "I've changed Monday dinner to a lighter option!",
         }),
       });
-
       const result = await workflow.applyFeedbackNode(stateWithFeedback);
-
       expect(result.mealPlan).toBeDefined();
-      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith('test-thread', 'agent', 'I\'ve changed Monday dinner to a lighter option!');
+      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith(
+        'test-thread',
+        'agent',
+        "I've changed Monday dinner to a lighter option!",
+      );
     });
-
     it('handles feedback analysis for satisfied user', async () => {
       const mockFeedback = [
         TestMockFactory.createMockMessage({
           content: 'This meal plan looks perfect, thank you!',
         }),
       ];
-
       mockNanoLLM.invoke.mockResolvedValue({
-        content: '{"satisfied": true, "reasoning": "User expressed satisfaction with the plan"}',
+        content:
+          '{"satisfied": true, "reasoning": "User expressed satisfaction with the plan"}',
       });
-
       const result = await workflow.analyzeFeedbackNode(mockFeedback);
-
       expect(result.satisfied).toBe(true);
-      expect(result.reasoning).toBe('User expressed satisfaction with the plan');
+      expect(result.reasoning).toBe(
+        'User expressed satisfaction with the plan',
+      );
     });
-
     it('handles feedback analysis for dissatisfied user', async () => {
       const mockFeedback = [
         TestMockFactory.createMockMessage({
           content: 'I need more vegetarian options',
         }),
       ];
-
       mockNanoLLM.invoke.mockResolvedValue({
-        content: '{"satisfied": false, "reasoning": "User wants more vegetarian options"}',
+        content:
+          '{"satisfied": false, "reasoning": "User wants more vegetarian options"}',
       });
-
       const result = await workflow.analyzeFeedbackNode(mockFeedback);
-
       expect(result.satisfied).toBe(false);
       expect(result.reasoning).toBe('User wants more vegetarian options');
     });
-
     it('handles feedback with complex meal changes', async () => {
       const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();
       const mockState = TestMockFactory.createMockMealPlanningState({
         mealPlan: mockMealPlan,
         threadId: 'test-thread',
       });
-
       const mockFeedback = [
         TestMockFactory.createMockMessage({
           content: 'Remove all breakfast meals and change Tuesday lunch',
         }),
       ];
-
       const stateWithFeedback = {
         ...mockState,
         feedback_to_apply: mockFeedback,
       };
-
       // Mock MCP client for getMeals
       mockClient.callTool.mockResolvedValue({
         isError: false,
-        content: [{ type: 'text', text: JSON.stringify([
-          TestMockFactory.createMockMeal({ id: 1, mealType: 'lunch' }),
-          TestMockFactory.createMockMeal({ id: 2, mealType: 'lunch' }),
-        ]) }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify([
+              TestMockFactory.createMockMeal({ id: 1, mealType: 'lunch' }),
+              TestMockFactory.createMockMeal({ id: 2, mealType: 'lunch' }),
+            ]),
+          },
+        ],
       });
-
       // Mock LLM for feedback application
       mockLLM.invoke.mockResolvedValue({
         content: JSON.stringify({
@@ -382,14 +373,17 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
               reason: 'User requested different lunch',
             },
           ],
-          userMessage: 'I\'ve removed breakfast meals and updated Tuesday lunch!',
+          userMessage:
+            "I've removed breakfast meals and updated Tuesday lunch!",
         }),
       });
-
       const result = await workflow.applyFeedbackNode(stateWithFeedback);
-
       expect(result.mealPlan).toBeDefined();
-      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith('test-thread', 'agent', 'I\'ve removed breakfast meals and updated Tuesday lunch!');
+      expect(mockMessageRepo.addMessage).toHaveBeenCalledWith(
+        'test-thread',
+        'agent',
+        "I've removed breakfast meals and updated Tuesday lunch!",
+      );
     });
   });
 });
