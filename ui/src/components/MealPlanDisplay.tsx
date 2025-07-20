@@ -31,6 +31,7 @@ interface MealPlanDisplayProps {
     text: string;
     accent: string;
     apricot?: string;
+    changedMealHighlight?: string;
   };
 }
 
@@ -45,6 +46,7 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
     border: 'rgba(139, 115, 85, 0.1)',
     text: '#2c2c2c',
     accent: '#6b8c5d',
+    changedMealHighlight: '#92ca92',
   };
   const activeColors = colors || defaultColors;
   const grouped = DAYS_OF_THE_WEEK.map((day, idx) => ({
@@ -141,22 +143,23 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                         sx={{
                           fontSize: '0.875rem',
                           color: isEmpty ? '#a0a0a0' : activeColors.text,
+                          borderLeft: `2px solid transparent`,
                           fontStyle: isEmpty ? 'italic' : 'normal',
                           ...(isHighlighted && {
-                            backgroundColor: `${activeColors.accent}25`,
-                            borderLeft: `2px solid ${activeColors.accent}`,
+                            backgroundColor: `${activeColors.changedMealHighlight}100`,
+                            borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
                             padding: '2px 6px',
                             borderRadius: '4px',
                             transition: 'all 2s ease-out',
                             animation: 'highlightFade 5s forwards',
                             '@keyframes highlightFade': {
                               '0%': {
-                                backgroundColor: `${activeColors.accent}40`,
-                                borderLeft: `2px solid ${activeColors.accent}`,
+                                backgroundColor: `${activeColors.changedMealHighlight}40`,
+                                borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
                               },
                               '50%': {
-                                backgroundColor: `${activeColors.accent}25`,
-                                borderLeft: `2px solid ${activeColors.accent}`,
+                                backgroundColor: `${activeColors.changedMealHighlight}25`,
+                                borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
                               },
                               '100%': {
                                 backgroundColor: 'transparent',
