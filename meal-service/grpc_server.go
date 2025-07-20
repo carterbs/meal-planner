@@ -42,34 +42,71 @@ func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
 }
 
 func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Empty) (*apipb.HealthCheckResponse, error) {
+	var healthIssues []string
 	dbHealthy := false
+	loggingHealthy := false
+	
+	maxRetries := 3
+	retryDelay := time.Second
 
-	// Check database health
-	if server.DB == nil {
-		return &apipb.HealthCheckResponse{
-			Status:  "error",
-			Message: "Database not connected. Make sure Docker is running and the database container is started.",
-		}, nil
+	// Check database health with retries
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if server.DB == nil {
+			if attempt == maxRetries {
+				healthIssues = append(healthIssues, "Database not connected after retries")
+			}
+		} else if err := server.DB.Ping(); err != nil {
+			if attempt == maxRetries {
+				healthIssues = append(healthIssues, fmt.Sprintf("Database connection failed after %d attempts: %v", maxRetries, err))
+			} else {
+				time.Sleep(retryDelay)
+			}
+		} else {
+			dbHealthy = true
+			break
+		}
 	}
 
-	if err := server.DB.Ping(); err != nil {
-		return &apipb.HealthCheckResponse{
-			Status:  "error",
-			Message: "Database connection lost. Make sure Docker is running and the database container is started.",
-		}, nil
+	// Check logging service health with retries
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if grpcServerLogger == nil {
+			if attempt == maxRetries {
+				healthIssues = append(healthIssues, "Logging client not initialized after retries")
+			}
+		} else {
+			// Try to log a test message to verify logging service connectivity
+			err := grpcServerLogger.Log(ctx, "DEBUG", "Health check test message", "", "meal-service")
+			if err != nil {
+				if attempt == maxRetries {
+					healthIssues = append(healthIssues, fmt.Sprintf("Logging service connection failed after %d attempts: %v", maxRetries, err))
+				} else {
+					time.Sleep(retryDelay)
+				}
+			} else {
+				loggingHealthy = true
+				break
+			}
+		}
 	}
-	dbHealthy = true
 
-	if dbHealthy {
+	// Determine overall health
+	if dbHealthy && loggingHealthy {
 		return &apipb.HealthCheckResponse{
 			Status:  "ok",
-			Message: "Database connected",
+			Message: "All dependencies healthy",
+		}, nil
+	}
+
+	if len(healthIssues) > 0 {
+		return &apipb.HealthCheckResponse{
+			Status:  "error",
+			Message: fmt.Sprintf("Health check failed: %v", healthIssues),
 		}, nil
 	}
 
 	return &apipb.HealthCheckResponse{
 		Status:  "error",
-		Message: "Database connection is not healthy",
+		Message: "Unknown health check error",
 	}, nil
 }
 

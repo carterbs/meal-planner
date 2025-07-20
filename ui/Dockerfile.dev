@@ -1,0 +1,35 @@
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Enable corepack for proper yarn version
+RUN corepack enable
+
+# Copy root package files (yarn workspaces)
+COPY package.json yarn.lock ./
+COPY ui/package.json ./ui/
+COPY shared/package.json ./shared/
+COPY generated/ts/package.json ./generated/ts/
+
+# Install all workspace dependencies
+RUN yarn install
+
+# Copy source code
+COPY ui/ ./ui/
+COPY shared/ ./shared/
+COPY generated/ ./generated/
+
+# Build workspace dependencies
+RUN yarn workspace @meal-planner/shared build
+
+# Set working directory to ui
+WORKDIR /app/ui
+
+# Expose port
+EXPOSE 3000
+
+# Set HOST to 0.0.0.0 so React dev server is accessible from outside container
+ENV HOST=0.0.0.0
+
+# Start development server
+CMD ["yarn", "start"]

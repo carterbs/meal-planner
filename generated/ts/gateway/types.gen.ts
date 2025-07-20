@@ -1567,5 +1567,5 @@ export type PutWorkflowsByThreadIdStateResponses = {
 export type PutWorkflowsByThreadIdStateResponse = PutWorkflowsByThreadIdStateResponses[keyof PutWorkflowsByThreadIdStateResponses];
 
 export type ClientOptions = {
-    baseUrl: 'localhost:8080/api' | (string & {});
+    baseUrl: 'localhost:8090/api' | (string & {});
 };

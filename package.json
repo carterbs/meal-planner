@@ -14,6 +14,11 @@
     "scripts": {
         "generate_code": "./scripts/generate_code.sh",
         "start": "yarn kill:servers &&node scripts/start.js",
+        "dev": "docker-compose up -d && cd ui && yarn start",
+        "dev:rebuild": "docker-compose down && yarn generate_code && docker-compose build && docker-compose up -d && cd ui && yarn start",
+        "dev:logs": "docker-compose logs -f",
+        "dev:down": "docker-compose down",
+        "dev:restart": "docker-compose restart",
         "start:mcp": "node scripts/start-mcp.js",
         "start:agent": "cd agent-service && yarn start",
         "stop:logging": "kill -9 $(lsof -t -i :50052)",
@@ -27,7 +32,6 @@
         "test": "node scripts/test-summary.js",
         "db:backup": "node scripts/backup-db.js",
         "db:restore": "node scripts/restore-db.js",
-        "dev": "node scripts/dev-start.js",
         "meal-agent": "./scripts/meal-agent.sh",
         "kill:servers": "node scripts/kill-servers.js",
         "format": "prettier --write \"agent-service/**/*.{ts,tsx}\" \"ui/**/*.{ts,tsx}\" && gofmt -w meal-service/"
@@ -54,6 +58,7 @@
         "@connectrpc/connect": "^1.6.0",
         "@connectrpc/connect-node": "^1.6.0",
         "@connectrpc/connect-web": "^1.6.0",
-        "@connectrpc/protoc-gen-connect-es": "^1.6.1"
+        "@connectrpc/protoc-gen-connect-es": "^1.6.1",
+        "eventsource-parser": "^1.1.2"
     }
 }

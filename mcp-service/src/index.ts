@@ -67,8 +67,41 @@ async function main() {
         }
     });
     // Health check endpoint
-    app.get('/health', (req, res) => {
-        res.json({ status: 'ok', service: 'mealplanner-mcp' });
+    app.get('/health', async (req, res) => {
+        const healthIssues: string[] = [];
+        let loggingHealthy = false;
+
+        const maxRetries = 3;
+        const retryDelay = 1000; // 1 second
+
+        // Check logging service health with retries
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                await infoLog('Health check test message');
+                loggingHealthy = true;
+                break;
+            } catch (error) {
+                if (attempt === maxRetries) {
+                    healthIssues.push(`Logging service connection failed after ${maxRetries} attempts: ${error}`);
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                }
+            }
+        }
+
+        if (loggingHealthy) {
+            res.json({ 
+                status: 'ok', 
+                service: 'mealplanner-mcp',
+                message: 'All dependencies healthy'
+            });
+        } else {
+            res.status(503).json({ 
+                status: 'error', 
+                service: 'mealplanner-mcp',
+                message: `Health check failed: ${healthIssues.join(', ')}`
+            });
+        }
     });
     // Start the server
     app.listen(port, () => {

@@ -4,7 +4,6 @@ package agent;
 
 option go_package = "mealplanner/generated/go/agent";
 
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "api.proto";
 

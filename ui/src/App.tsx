@@ -13,7 +13,7 @@ import {
 
 const gatewayClient = createClient(
   createConfig({
-    baseUrl: 'http://localhost:8080/api',
+    baseUrl: 'http://localhost:8090/api',
   }),
 );
 

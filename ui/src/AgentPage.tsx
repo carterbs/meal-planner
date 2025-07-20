@@ -33,15 +33,14 @@ import {
   getAgentCheckpoint,
   getMessages,
   SessionInfo,
+  goGetShoppingList,
 } from './api';
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
-import type { WorkflowState } from './hooks/useSession';
 import {
   createClient,
   createConfig,
 } from '@mealplanner/generated/dist/gateway/client/index.js';
-import { postShoppinglist } from '@mealplanner/generated/dist/gateway/index.js';
 
 import type { SxProps, Theme } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
@@ -49,7 +48,7 @@ import type { DayOfTheWeek } from '@meal-planner/shared';
 
 const gatewayClient = createClient(
   createConfig({
-    baseUrl: 'http://localhost:8080/api',
+    baseUrl: 'http://localhost:8090/api',
   }),
 );
 
@@ -566,14 +565,9 @@ const AgentPage: React.FC = () => {
         setMealPlan(newPlan);
         applyHighlights(newPlan);
         try {
-          const planIds =
-            state.mealPlan.days?.map((d) => d.meal?.id ?? 0) ?? [];
-          const shoppingRes = await postShoppinglist({
-            client: gatewayClient,
-            body: { plan: planIds },
-          });
-          if (shoppingRes.data && !shoppingRes.error) {
-            const items = (shoppingRes.data.items ?? []).map((i) => ({
+          const shoppingRes = await goGetShoppingList(newPlan);
+          if (shoppingRes) {
+            const items = (shoppingRes).map((i) => ({
               ingredient: i.ingredient ?? '',
               quantity: i.quantity ?? '',
               category: i.category ?? '',

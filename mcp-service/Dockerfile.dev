@@ -1,0 +1,27 @@
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Enable corepack for proper yarn version
+RUN corepack enable
+
+# Copy root package files (yarn workspaces)
+COPY package.json yarn.lock ./
+COPY mcp-service/package.json ./mcp-service/
+COPY shared/package.json ./shared/
+COPY generated/ts/package.json ./generated/ts/
+
+# Install all workspace dependencies
+RUN yarn install
+
+# Copy source code
+COPY mcp-service/ ./mcp-service/
+COPY shared/ ./shared/
+COPY generated/ ./generated/
+
+# Build from root to ensure workspace linking works
+RUN yarn workspace @mealplanner/generated install
+RUN yarn workspace mcp build
+
+# Use nodemon for hot reloading in development
+CMD ["yarn", "start:mcp"]

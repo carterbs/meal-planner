@@ -10,7 +10,6 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_go "mealplanner/generated/go"
 	reflect "reflect"
 	sync "sync"
@@ -488,7 +487,7 @@ var File_agent_proto protoreflect.FileDescriptor
 
 const file_agent_proto_rawDesc = "" +
 	"\n" +
-	"\vagent.proto\x12\x05agent\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\tapi.proto\"6\n" +
+	"\vagent.proto\x12\x05agent\x1a\x1bgoogle/protobuf/empty.proto\x1a\tapi.proto\"6\n" +
 	"\x10PlanStartRequest\x12\"\n" +
 	"\fparticipants\x18\x01 \x03(\tR\fparticipants\"\xac\x01\n" +
 	"\x11PlanStartResponse\x12\x18\n" +
