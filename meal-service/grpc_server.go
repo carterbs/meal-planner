@@ -45,47 +45,27 @@ func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Emp
 	var healthIssues []string
 	dbHealthy := false
 	loggingHealthy := false
-	
-	maxRetries := 3
-	retryDelay := time.Second
 
-	// Check database health with retries
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		if server.DB == nil {
-			if attempt == maxRetries {
-				healthIssues = append(healthIssues, "Database not connected after retries")
-			}
-		} else if err := server.DB.Ping(); err != nil {
-			if attempt == maxRetries {
-				healthIssues = append(healthIssues, fmt.Sprintf("Database connection failed after %d attempts: %v", maxRetries, err))
-			} else {
-				time.Sleep(retryDelay)
-			}
-		} else {
-			dbHealthy = true
-			break
-		}
+	// Check database health (single attempt)
+	if server.DB == nil {
+		healthIssues = append(healthIssues, "Database not connected")
+	} else if err := server.DB.Ping(); err != nil {
+		healthIssues = append(healthIssues, fmt.Sprintf("Database connection failed: %v", err))
+	} else {
+		dbHealthy = true
 	}
 
-	// Check logging service health with retries
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		if grpcServerLogger == nil {
-			if attempt == maxRetries {
-				healthIssues = append(healthIssues, "Logging client not initialized after retries")
-			}
+	// Check logging service health (single attempt)
+	grpcClient := logging.GetGrpcClient()
+	if grpcClient == nil {
+		healthIssues = append(healthIssues, "Logging client not initialized")
+	} else {
+		// Try to log a test message to verify logging service connectivity
+		err := grpcClient.LogWithDetails(ctx, "DEBUG", "Health check test message", "", "meal-service", nil)
+		if err != nil {
+			healthIssues = append(healthIssues, fmt.Sprintf("Logging service connection failed: %v", err))
 		} else {
-			// Try to log a test message to verify logging service connectivity
-			err := grpcServerLogger.Log(ctx, "DEBUG", "Health check test message", "", "meal-service")
-			if err != nil {
-				if attempt == maxRetries {
-					healthIssues = append(healthIssues, fmt.Sprintf("Logging service connection failed after %d attempts: %v", maxRetries, err))
-				} else {
-					time.Sleep(retryDelay)
-				}
-			} else {
-				loggingHealthy = true
-				break
-			}
+			loggingHealthy = true
 		}
 	}
 

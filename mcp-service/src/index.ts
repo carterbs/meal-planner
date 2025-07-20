@@ -71,22 +71,12 @@ async function main() {
         const healthIssues: string[] = [];
         let loggingHealthy = false;
 
-        const maxRetries = 3;
-        const retryDelay = 1000; // 1 second
-
-        // Check logging service health with retries
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                await infoLog('Health check test message');
-                loggingHealthy = true;
-                break;
-            } catch (error) {
-                if (attempt === maxRetries) {
-                    healthIssues.push(`Logging service connection failed after ${maxRetries} attempts: ${error}`);
-                } else {
-                    await new Promise(resolve => setTimeout(resolve, retryDelay));
-                }
-            }
+        // Check logging service health (single attempt)
+        try {
+            await infoLog('Health check test message');
+            loggingHealthy = true;
+        } catch (error) {
+            healthIssues.push(`Logging service connection failed: ${error}`);
         }
 
         if (loggingHealthy) {
