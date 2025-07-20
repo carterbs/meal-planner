@@ -497,7 +497,7 @@ func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
 	// Check agent service (single attempt)
 	log.Printf("🔍 Checking agent service...")
 	agentHealthy := false
-	agentResp, agentErr := gw.agent.ListWorkflows(r.Context(), &emptypb.Empty{})
+	agentResp, agentErr := gw.agent.HealthCheck(r.Context(), &emptypb.Empty{})
 	if agentErr != nil {
 		log.Printf("❌ Agent health check failed: %v", agentErr)
 	} else if agentResp == nil {
