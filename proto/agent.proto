@@ -9,6 +9,9 @@ import "api.proto";
 
 // Agent Service - provides gRPC endpoints for all CLI commands
 service AgentService {
+  // Health check endpoint
+  rpc HealthCheck(google.protobuf.Empty) returns (mealplanner.api.HealthCheckResponse);
+  
   // Plan commands
   rpc PlanStart(PlanStartRequest) returns (PlanStartResponse);
   rpc PlanFeedback(PlanFeedbackRequest) returns (PlanFeedbackResponse);

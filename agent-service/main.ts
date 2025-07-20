@@ -666,64 +666,40 @@ function healthCheck(
       let loggingHealthy = false;
       let mcpHealthy = false;
 
-      const maxRetries = 3;
-      const retryDelay = 1000; // 1 second
-
-      // Check database health with retries
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          const db = getDatabase();
-          const result = await db.query('SELECT 1');
-          if (result.rows.length > 0) {
-            dbHealthy = true;
-            break;
-          }
-        } catch (error) {
-          if (attempt === maxRetries) {
-            healthIssues.push(`Database connection failed after ${maxRetries} attempts: ${error}`);
-          } else {
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
-          }
+      // Check database health (single attempt)
+      try {
+        const db = getDatabase();
+        const result = await db.query('SELECT 1');
+        if (result.rows.length > 0) {
+          dbHealthy = true;
         }
+      } catch (error) {
+        healthIssues.push(`Database connection failed: ${error}`);
       }
 
-      // Check logging service health with retries
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          await debugLog('Health check test message');
-          loggingHealthy = true;
-          break;
-        } catch (error) {
-          if (attempt === maxRetries) {
-            healthIssues.push(`Logging service connection failed after ${maxRetries} attempts: ${error}`);
-          } else {
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
-          }
-        }
+      // Check logging service health (single attempt)
+      try {
+        await debugLog('Health check test message');
+        loggingHealthy = true;
+      } catch (error) {
+        healthIssues.push(`Logging service connection failed: ${error}`);
       }
 
-      // Check MCP service health with retries
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          const mcpHost = process.env.MCP_HOST || 'localhost';
-          const mcpPort = process.env.MCP_PORT || '3001';
-          const mcpUrl = `http://${mcpHost}:${mcpPort}/health`;
-          
-          const fetch = (await import('node-fetch')).default;
-          const response = await fetch(mcpUrl, { timeout: 5000 });
-          if (response.status === 200) {
-            mcpHealthy = true;
-            break;
-          } else if (attempt === maxRetries) {
-            healthIssues.push(`MCP service returned status: ${response.status} after ${maxRetries} attempts`);
-          }
-        } catch (error) {
-          if (attempt === maxRetries) {
-            healthIssues.push(`MCP service connection failed after ${maxRetries} attempts: ${error}`);
-          } else {
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
-          }
+      // Check MCP service health (single attempt with timeout)
+      try {
+        const mcpHost = process.env.MCP_HOST || 'localhost';
+        const mcpPort = process.env.MCP_PORT || '3001';
+        const mcpUrl = `http://${mcpHost}:${mcpPort}/health`;
+        
+        const fetch = (await import('node-fetch')).default;
+        const response = await fetch(mcpUrl, { timeout: 2000 }); // 2 second timeout
+        if (response.status === 200) {
+          mcpHealthy = true;
+        } else {
+          healthIssues.push(`MCP service returned status: ${response.status}`);
         }
+      } catch (error) {
+        healthIssues.push(`MCP service connection failed: ${error}`);
       }
 
       if (dbHealthy && loggingHealthy && mcpHealthy) {
