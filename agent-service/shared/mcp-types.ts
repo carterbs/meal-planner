@@ -1,6 +1,5 @@
 import type { ShoppingListItem } from './types';
 export type { ShoppingListItem };
-
 // Types for MCP tool calls and responses
 export type MCPToolResult = {
   content: Array<{
@@ -9,14 +8,11 @@ export type MCPToolResult = {
   }>;
   isError?: boolean;
 };
-
 // Shopping List Types
 export interface ShoppingListRequest {
   plan: number[]; // Array of meal IDs
 }
-
 export interface ShoppingListResponse extends Array<ShoppingListItem> {}
-
 // MCP Tool Names
 export type MCPToolName =
   | 'generateMealPlan'
@@ -24,7 +20,6 @@ export type MCPToolName =
   | 'generateShoppingList'
   | 'swapMeal'
   | 'replaceMeal';
-
 // Type-safe MCP tool call function
 export async function callMCPTool<TArgs, TResponse>(
   client: any, // TODO: Replace with proper MCP client type
@@ -35,13 +30,11 @@ export async function callMCPTool<TArgs, TResponse>(
     name: toolName,
     arguments: args,
   });
-
   if (result.isError) {
     throw new Error(
       `MCP tool error: ${result.content[0]?.text || 'Unknown error'}`,
     );
   }
-
   try {
     return JSON.parse(result.content[0]?.text || '{}') as TResponse;
   } catch (error) {

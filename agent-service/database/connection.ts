@@ -1,7 +1,5 @@
 import { Pool } from 'pg';
-
 let pool: Pool | null = null;
-
 export function getDatabase(): Pool {
   if (!pool) {
     pool = new Pool({
@@ -17,7 +15,6 @@ export function getDatabase(): Pool {
   }
   return pool;
 }
-
 export async function closeDatabase(): Promise<void> {
   if (pool) {
     await pool.end();

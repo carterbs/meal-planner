@@ -49,7 +49,7 @@ func AssertShoppingListItemEquals(t *testing.T, expected, actual *models.Shoppin
 func AssertWeeklyMealPlanEquals(t *testing.T, expected, actual *models.WeeklyMealPlan) {
 	t.Helper()
 	assert.Equal(t, len(expected.GetDays()), len(actual.GetDays()), "Days count mismatch")
-	
+
 	// Check each day's meals
 	for i, expectedDay := range expected.GetDays() {
 		if i >= len(actual.GetDays()) {

@@ -1,8 +1,15 @@
-import { WeeklyMealPlan, MealPlanEntry, Meal, ShoppingListItem, Message, Ingredient, Step } from '@mealplanner/generated';
+import {
+  WeeklyMealPlan,
+  MealPlanEntry,
+  Meal,
+  ShoppingListItem,
+  Message,
+  Ingredient,
+  Step,
+} from '@mealplanner/generated';
 import { MealPlanningCheckpointState } from '@mealplanner/generated';
 import { MealPlanningState, MealPlanningStep } from '../shared/types';
 import { Timestamp } from '@bufbuild/protobuf';
-
 export class TestMockFactory {
   static createMockMeal(overrides: Partial<Meal> = {}): Meal {
     return new Meal({
@@ -14,18 +21,31 @@ export class TestMockFactory {
       url: 'https://test.com',
       mealType: 'dinner',
       ingredients: [
-        new Ingredient({ id: 1, mealId: 1, quantity: 1, unit: 'cup', name: 'ingredient1' }),
-        new Ingredient({ id: 2, mealId: 1, quantity: 2, unit: 'tbsp', name: 'ingredient2' })
+        new Ingredient({
+          id: 1,
+          mealId: 1,
+          quantity: 1,
+          unit: 'cup',
+          name: 'ingredient1',
+        }),
+        new Ingredient({
+          id: 2,
+          mealId: 1,
+          quantity: 2,
+          unit: 'tbsp',
+          name: 'ingredient2',
+        }),
       ],
       steps: [
         new Step({ id: 1, mealId: 1, stepNumber: 1, instruction: 'step1' }),
-        new Step({ id: 2, mealId: 1, stepNumber: 2, instruction: 'step2' })
+        new Step({ id: 2, mealId: 1, stepNumber: 2, instruction: 'step2' }),
       ],
       ...overrides,
     });
   }
-
-  static createMockMealPlanEntry(overrides: Partial<MealPlanEntry> = {}): MealPlanEntry {
+  static createMockMealPlanEntry(
+    overrides: Partial<MealPlanEntry> = {},
+  ): MealPlanEntry {
     return new MealPlanEntry({
       dayIndex: 0,
       mealType: 'dinner',
@@ -33,15 +53,17 @@ export class TestMockFactory {
       ...overrides,
     });
   }
-
-  static createMockWeeklyMealPlan(entries: MealPlanEntry[] = []): WeeklyMealPlan {
+  static createMockWeeklyMealPlan(
+    entries: MealPlanEntry[] = [],
+  ): WeeklyMealPlan {
     return new WeeklyMealPlan({
       days: entries.length > 0 ? entries : [this.createMockMealPlanEntry()],
       shoppingList: [],
     });
   }
-
-  static createMockMealPlanningState(overrides: Partial<MealPlanningState> = {}): MealPlanningState {
+  static createMockMealPlanningState(
+    overrides: Partial<MealPlanningState> = {},
+  ): MealPlanningState {
     return new MealPlanningCheckpointState({
       threadId: 'test-thread-123',
       participants: ['brad'],
@@ -56,8 +78,9 @@ export class TestMockFactory {
       ...overrides,
     });
   }
-
-  static createMockShoppingListItem(overrides: Partial<ShoppingListItem> = {}): ShoppingListItem {
+  static createMockShoppingListItem(
+    overrides: Partial<ShoppingListItem> = {},
+  ): ShoppingListItem {
     return new ShoppingListItem({
       ingredient: 'Test Ingredient',
       quantity: '1 cup',
@@ -65,7 +88,6 @@ export class TestMockFactory {
       ...overrides,
     });
   }
-
   static createMockMessage(overrides: Partial<Message> = {}): Message {
     return new Message({
       threadId: 'test-thread-123',
@@ -75,7 +97,6 @@ export class TestMockFactory {
       ...overrides,
     });
   }
-
   static createMockMCPClient() {
     return {
       connect: jest.fn().mockResolvedValue(undefined),
@@ -86,7 +107,6 @@ export class TestMockFactory {
       }),
     };
   }
-
   static createMockLLM() {
     return {
       invoke: jest.fn().mockResolvedValue({
@@ -94,14 +114,19 @@ export class TestMockFactory {
       }),
     };
   }
-
   static createMockCheckpointer() {
     return {
       checkpointRepo: {
-        getCheckpoint: jest.fn().mockResolvedValue({ checkpoint: null, metadata: null, found: false }),
+        getCheckpoint: jest.fn().mockResolvedValue({
+          checkpoint: null,
+          metadata: null,
+          found: false,
+        }),
         putCheckpoint: jest.fn().mockResolvedValue(undefined),
         listCheckpoints: jest.fn().mockResolvedValue([]),
-        getWorkflowCheckpoint: jest.fn().mockResolvedValue({ data: null, ns: null }),
+        getWorkflowCheckpoint: jest
+          .fn()
+          .mockResolvedValue({ data: null, ns: null }),
         updateWorkflowCheckpoint: jest.fn().mockResolvedValue(undefined),
         listWorkflows: jest.fn().mockResolvedValue([]),
       },
@@ -112,7 +137,6 @@ export class TestMockFactory {
       listWorkflows: jest.fn().mockResolvedValue([]),
     };
   }
-
   static createMockBackendClient() {
     return {
       addMessage: jest.fn().mockResolvedValue(undefined),
@@ -121,17 +145,21 @@ export class TestMockFactory {
       }),
     };
   }
-
   static createMockMessageRepository() {
     return {
       addMessage: jest.fn().mockResolvedValue(undefined),
       getMessages: jest.fn().mockResolvedValue([
-        { sender: 'user', text: 'Test message', created_at: new Date().toISOString() }
+        {
+          sender: 'user',
+          text: 'Test message',
+          created_at: new Date().toISOString(),
+        },
       ]),
-      getMessagesForProtobuf: jest.fn().mockResolvedValue([this.createMockMessage()]),
+      getMessagesForProtobuf: jest
+        .fn()
+        .mockResolvedValue([this.createMockMessage()]),
     };
   }
-
   static createMockExtendedRunnableConfig() {
     return {
       configurable: {
@@ -139,7 +167,6 @@ export class TestMockFactory {
       },
     };
   }
-
   static createHighEffortMeals(count: number): MealPlanEntry[] {
     return Array.from({ length: count }, (_, i) =>
       this.createMockMealPlanEntry({
@@ -150,10 +177,9 @@ export class TestMockFactory {
           name: `High Effort Meal ${i + 1}`,
           effort: 4,
         }),
-      })
+      }),
     );
   }
-
   static createRedMeatMeals(count: number): MealPlanEntry[] {
     return Array.from({ length: count }, (_, i) =>
       this.createMockMealPlanEntry({
@@ -164,12 +190,14 @@ export class TestMockFactory {
           name: `Red Meat Meal ${i + 1}`,
           hasRedMeat: true,
         }),
-      })
+      }),
     );
   }
-
   static createDuplicateMeals(): MealPlanEntry[] {
-    const duplicateMeal = this.createMockMeal({ id: 1, name: 'Duplicate Meal' });
+    const duplicateMeal = this.createMockMeal({
+      id: 1,
+      name: 'Duplicate Meal',
+    });
     return [
       this.createMockMealPlanEntry({
         dayIndex: 0,
@@ -184,14 +212,12 @@ export class TestMockFactory {
     ];
   }
 }
-
 export class TestAssertionHelpers {
   static assertMealPlanStructure(plan: WeeklyMealPlan) {
     expect(plan).toBeInstanceOf(WeeklyMealPlan);
     expect(plan.days).toBeDefined();
     expect(Array.isArray(plan.days)).toBe(true);
   }
-
   static assertMealPlanEntryStructure(entry: MealPlanEntry) {
     expect(entry).toBeInstanceOf(MealPlanEntry);
     expect(typeof entry.dayIndex).toBe('number');
@@ -200,7 +226,6 @@ export class TestAssertionHelpers {
     expect(entry.dayIndex).toBeLessThanOrEqual(6);
     expect(['breakfast', 'lunch', 'dinner']).toContain(entry.mealType);
   }
-
   static assertStateStructure(state: MealPlanningState) {
     expect(state).toBeInstanceOf(MealPlanningCheckpointState);
     expect(typeof state.threadId).toBe('string');
@@ -210,21 +235,18 @@ export class TestAssertionHelpers {
     expect(Object.values(MealPlanningStep)).toContain(state.currentStep);
   }
 }
-
 export const mockConsole = {
   log: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
   info: jest.fn(),
 };
-
 export function setupConsoleMocks() {
   jest.spyOn(console, 'log').mockImplementation(mockConsole.log);
   jest.spyOn(console, 'error').mockImplementation(mockConsole.error);
   jest.spyOn(console, 'warn').mockImplementation(mockConsole.warn);
   jest.spyOn(console, 'info').mockImplementation(mockConsole.info);
 }
-
 export function restoreConsoleMocks() {
   jest.restoreAllMocks();
 }

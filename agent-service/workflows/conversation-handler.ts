@@ -1,14 +1,12 @@
 import { infoLog, errorLog } from '../logging';
 import { WorkflowManager } from '../manager';
 import { WorkflowType, MealPlanningStep } from '../shared/types';
-
 export interface ConversationMessage {
   from: string;
   message: string;
   timestamp: Date;
   threadId?: string;
 }
-
 export interface ConversationResponse {
   success: boolean;
   message: string;
@@ -16,14 +14,11 @@ export interface ConversationResponse {
   currentStep?: string;
   nextAction?: string;
 }
-
 export class ConversationHandler {
   private workflowManager: WorkflowManager;
-
   constructor(workflowManager: WorkflowManager) {
     this.workflowManager = workflowManager;
   }
-
   /**
    * Handle a conversation message and route it appropriately
    */
@@ -35,10 +30,9 @@ export class ConversationHandler {
       if (!input.threadId) {
         return await this.startNewConversation(input);
       }
-
       return await this.continueConversation(input);
     } catch (error) {
-      errorLog(`${`❌ [CONVERSATION] Error handling message:`} ${error}`);
+      await errorLog(`${`❌ [CONVERSATION] Error handling message:`} ${error}`);
       return {
         success: false,
         message:
@@ -46,20 +40,17 @@ export class ConversationHandler {
       };
     }
   }
-
   /**
    * Start a new meal planning conversation
    */
   private async startNewConversation(
     input: ConversationMessage,
   ): Promise<ConversationResponse> {
-    infoLog(
+    await infoLog(
       `💬 [CONVERSATION] Starting new meal planning conversation for ${input.from}`,
     );
-
     // Detect intent from the message
     const intent = this.detectIntent(input.message);
-
     if (intent === 'meal_planning') {
       // Start a new meal planning workflow
       const threadId = await this.workflowManager.startWorkflow(
@@ -69,12 +60,10 @@ export class ConversationHandler {
           input: { initial_message: input.message },
         },
       );
-
       // Execute the first step
       await this.workflowManager.executeWorkflowStep(threadId, {
         initial_request: input.message,
       });
-
       return {
         success: true,
         message:
@@ -84,14 +73,12 @@ export class ConversationHandler {
         nextAction: 'Generating and optimizing meal plan',
       };
     }
-
     return {
       success: false,
       message:
         "I can help you with meal planning! Try saying something like 'create a meal plan' or 'I need help planning meals for this week'.",
     };
   }
-
   /**
    * Continue an existing conversation
    */
@@ -99,15 +86,12 @@ export class ConversationHandler {
     input: ConversationMessage,
   ): Promise<ConversationResponse> {
     const { threadId, from, message } = input;
-
     if (!threadId) {
       throw new Error('Thread ID required for continuing conversation');
     }
-
-    infoLog(
+    await infoLog(
       `💬 [CONVERSATION] Continuing conversation ${threadId} from ${from}`,
     );
-
     // Get current workflow status
     const status = await this.workflowManager.getWorkflowStatus(threadId);
     if (!status) {
@@ -117,20 +101,16 @@ export class ConversationHandler {
           "I couldn't find our previous conversation. Let's start fresh!",
       };
     }
-
     // Handle based on current step
     switch (status.currentStep) {
       case MealPlanningStep.AWAIT_FEEDBACK:
         return await this.handleFeedback(threadId, from, message);
-
       case MealPlanningStep.COMPLETE:
         return await this.handleCompletedWorkflow(threadId, from, message);
-
       default:
         return await this.handleActiveWorkflow(threadId, message);
     }
   }
-
   /**
    * Handle feedback during the await_feedback step
    */
@@ -139,17 +119,15 @@ export class ConversationHandler {
     from: string,
     message: string,
   ): Promise<ConversationResponse> {
-    infoLog(`💬 [CONVERSATION] Processing feedback from ${from}: ${message}`);
-
-
+    await infoLog(
+      `💬 [CONVERSATION] Processing feedback from ${from}: ${message}`,
+    );
     // Resume the workflow to process the feedback
     const result = await this.workflowManager.resumeWorkflow(threadId, {
       feedback_received: true,
     });
-
     // Provide appropriate response based on feedback
     const isPositive = this.isPositiveFeedback(message);
-
     if (isPositive) {
       return {
         success: true,
@@ -170,7 +148,6 @@ export class ConversationHandler {
       };
     }
   }
-
   /**
    * Handle messages when workflow is complete
    */
@@ -181,7 +158,6 @@ export class ConversationHandler {
   ): Promise<ConversationResponse> {
     // Check if user wants to start a new plan or modify existing
     const intent = this.detectIntent(message);
-
     if (intent === 'meal_planning') {
       // Start a new workflow
       return await this.startNewConversation({
@@ -190,7 +166,6 @@ export class ConversationHandler {
         timestamp: new Date(),
       });
     }
-
     if (intent === 'modify_plan') {
       // TODO: Implement plan modification
       return {
@@ -201,7 +176,6 @@ export class ConversationHandler {
         nextAction: 'Plan modification requested',
       };
     }
-
     return {
       success: true,
       message:
@@ -209,7 +183,6 @@ export class ConversationHandler {
       threadId,
     };
   }
-
   /**
    * Handle messages during active workflow execution
    */
@@ -217,16 +190,14 @@ export class ConversationHandler {
     threadId: string,
     message: string,
   ): Promise<ConversationResponse> {
-    infoLog(
+    await infoLog(
       `💬 [CONVERSATION] Workflow ${threadId} is active, continuing execution`,
     );
-
     try {
       // Continue workflow execution
       const result = await this.workflowManager.executeWorkflowStep(threadId, {
         user_input: message,
       });
-
       return {
         success: true,
         message: this.getStepMessage(result.currentStep ?? 'unknown'),
@@ -235,7 +206,7 @@ export class ConversationHandler {
         nextAction: this.getNextAction(result.currentStep ?? 'unknown'),
       };
     } catch (error) {
-      errorLog(
+      await errorLog(
         `${`❌ [CONVERSATION] Error executing workflow step:`} ${error}`,
       );
       return {
@@ -246,13 +217,11 @@ export class ConversationHandler {
       };
     }
   }
-
   /**
    * Detect user intent from message
    */
   private detectIntent(message: string): string {
     const lowerMessage = message.toLowerCase();
-
     // Meal planning keywords
     const mealPlanningKeywords = [
       'meal plan',
@@ -265,7 +234,6 @@ export class ConversationHandler {
       'food plan',
       'menu planning',
     ];
-
     // Modification keywords
     const modifyKeywords = [
       'change',
@@ -277,20 +245,16 @@ export class ConversationHandler {
       'alter',
       'adjust',
     ];
-
     if (
       mealPlanningKeywords.some((keyword) => lowerMessage.includes(keyword))
     ) {
       return 'meal_planning';
     }
-
     if (modifyKeywords.some((keyword) => lowerMessage.includes(keyword))) {
       return 'modify_plan';
     }
-
     return 'unknown';
   }
-
   /**
    * Determine if feedback is positive
    */
@@ -308,7 +272,6 @@ export class ConversationHandler {
       'looks good',
       'fantastic',
     ];
-
     const negativeKeywords = [
       'no',
       "don't like",
@@ -320,17 +283,14 @@ export class ConversationHandler {
       'hate',
       'dislike',
     ];
-
     const positiveCount = positiveKeywords.filter((keyword) =>
       lowerMessage.includes(keyword),
     ).length;
     const negativeCount = negativeKeywords.filter((keyword) =>
       lowerMessage.includes(keyword),
     ).length;
-
     return positiveCount > negativeCount;
   }
-
   /**
    * Get user-friendly message for each workflow step
    */
@@ -354,7 +314,6 @@ export class ConversationHandler {
         return '🔄 Processing your request...';
     }
   }
-
   /**
    * Get next action description for each step
    */

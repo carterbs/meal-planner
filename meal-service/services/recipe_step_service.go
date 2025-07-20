@@ -1,23 +1,23 @@
 package services
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
 
-    "mealplanner/logging"
-    "mealplanner/models"
-    "mealplanner/repositories"
+	"mealplanner/logging"
+	"mealplanner/models"
+	"mealplanner/repositories"
 )
 
 type recipeStepService struct {
-    repo repositories.RecipeStepRepository
+	repo repositories.RecipeStepRepository
 }
 
 var recipeStepServiceLogger = logging.GetGrpcLogger("recipe-step-service")
 
 // NewRecipeStepService creates a new recipe step service instance
 func NewRecipeStepService(repo repositories.RecipeStepRepository) RecipeStepService {
-    return &recipeStepService{repo: repo}
+	return &recipeStepService{repo: repo}
 }
 
 // GetStepsForMeal retrieves all steps for a given meal

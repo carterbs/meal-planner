@@ -9,18 +9,18 @@ import (
 
 // MockIngredientRepository is a mock implementation of IngredientRepository for testing
 type MockIngredientRepository struct {
-    mock.Mock
+	mock.Mock
 }
 
 // NewMockIngredientRepository creates a new mock with cleanup
-func NewMockIngredientRepository(t interface{
-    mock.TestingT
-    Cleanup(func())
+func NewMockIngredientRepository(t interface {
+	mock.TestingT
+	Cleanup(func())
 }) *MockIngredientRepository {
-    m := &MockIngredientRepository{}
-    m.Mock.Test(t)
-    t.Cleanup(func() { m.AssertExpectations(t) })
-    return m
+	m := &MockIngredientRepository{}
+	m.Mock.Test(t)
+	t.Cleanup(func() { m.AssertExpectations(t) })
+	return m
 }
 
 // UpdateMealIngredient mock implementation

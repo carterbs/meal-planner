@@ -6,7 +6,6 @@ export enum WorkflowType {
   RECIPE_MANAGEMENT = 'recipe_management',
   INGREDIENT_MANAGEMENT = 'ingredient_management',
 }
-
 // Base workflow state interface
 export interface BaseWorkflowState {
   threadId: string;
@@ -16,7 +15,6 @@ export interface BaseWorkflowState {
   updated_at: Date;
   current_step: string;
 }
-
 // Meal planning workflow steps
 export enum MealPlanningStep {
   INITIATE = 'initiate',
@@ -30,7 +28,6 @@ export enum MealPlanningStep {
   GENERATE_SHOPPING_LIST = 'generate_shopping_list',
   COMPLETE = 'complete',
 }
-
 // Recipe management workflow steps
 export enum RecipeManagementStep {
   INITIATE = 'initiate',
@@ -39,7 +36,6 @@ export enum RecipeManagementStep {
   CONFIRM = 'confirm',
   COMPLETE = 'complete',
 }
-
 // Ingredient management workflow steps
 export enum IngredientManagementStep {
   INITIATE = 'initiate',
@@ -49,7 +45,6 @@ export enum IngredientManagementStep {
   CONFIRM = 'confirm',
   COMPLETE = 'complete',
 }
-
 export interface RecipeData {
   id?: number;
   name: string;
@@ -58,33 +53,26 @@ export interface RecipeData {
   meal_type: string;
   effort: number;
 }
-
 export interface IngredientData {
   id?: number;
   name: string;
   category?: string;
   properties?: Record<string, any>;
 }
-
 export interface SubstitutionData {
   from_ingredient: string;
   to_ingredient: string;
   ratio?: number;
   notes?: string;
 }
-
 // Meal structure (reuse from existing agent)
-
 // Types for meal planning domain
 export type InternalMeal = import('@mealplanner/generated').Meal;
 export type ShoppingListItem =
   import('@mealplanner/generated').ShoppingListItem;
-
 // Use proto as the single source of truth for meal planning state
 import { MealPlanningCheckpointState } from '@mealplanner/generated';
 export type MealPlanningState = MealPlanningCheckpointState;
-
-
 export interface RecipeManagementState extends BaseWorkflowState {
   workflow_type: WorkflowType.RECIPE_MANAGEMENT;
   recipe_action: 'create' | 'update' | 'delete';
@@ -92,7 +80,6 @@ export interface RecipeManagementState extends BaseWorkflowState {
   validation_errors: string[];
   current_step: RecipeManagementStep;
 }
-
 export interface IngredientManagementState extends BaseWorkflowState {
   workflow_type: WorkflowType.INGREDIENT_MANAGEMENT;
   ingredient_action: 'create' | 'update' | 'delete' | 'substitute';
@@ -101,9 +88,7 @@ export interface IngredientManagementState extends BaseWorkflowState {
   validation_errors: string[];
   current_step: IngredientManagementStep;
 }
-
 // Union type for all workflow states
-
 // Extended LangChain config including our checkpoint identifiers
 export interface ExtendedRunnableConfig extends RunnableConfig {
   configurable?: {
@@ -111,13 +96,11 @@ export interface ExtendedRunnableConfig extends RunnableConfig {
     checkpoint_ns?: string;
   };
 }
-
 // Union type for all workflow states
 export type WorkflowState =
   | MealPlanningState
   | RecipeManagementState
   | IngredientManagementState;
-
 // Zod schemas for validation
 export const BaseWorkflowStateSchema = z.object({
   threadId: z.string(),
@@ -127,7 +110,6 @@ export const BaseWorkflowStateSchema = z.object({
   updated_at: z.date(),
   current_step: z.string(),
 });
-
 export const MealPlanningStateSchema = BaseWorkflowStateSchema.extend({
   workflow_type: z.literal(WorkflowType.MEAL_PLANNING),
   meal_plan: z
@@ -172,7 +154,6 @@ export const MealPlanningStateSchema = BaseWorkflowStateSchema.extend({
   shopping_list_formatted: z.string().optional(),
   _error: z.string().optional(),
 });
-
 export const RecipeManagementStateSchema = BaseWorkflowStateSchema.extend({
   workflow_type: z.literal(WorkflowType.RECIPE_MANAGEMENT),
   recipe_action: z.enum(['create', 'update', 'delete']),
@@ -189,7 +170,6 @@ export const RecipeManagementStateSchema = BaseWorkflowStateSchema.extend({
   validation_errors: z.array(z.string()),
   current_step: z.nativeEnum(RecipeManagementStep),
 });
-
 export const IngredientManagementStateSchema = BaseWorkflowStateSchema.extend({
   workflow_type: z.literal(WorkflowType.INGREDIENT_MANAGEMENT),
   ingredient_action: z.enum(['create', 'update', 'delete', 'substitute']),
@@ -212,7 +192,6 @@ export const IngredientManagementStateSchema = BaseWorkflowStateSchema.extend({
   validation_errors: z.array(z.string()),
   current_step: z.nativeEnum(IngredientManagementStep),
 });
-
 // Constants
 export const DAY_NAMES = [
   'Sunday',
@@ -223,7 +202,6 @@ export const DAY_NAMES = [
   'Friday',
   'Saturday',
 ] as const;
-
 export const VALIDATION_CRITERIA = {
   maxConsecutiveHighEffort: 2,
   maxRedMeatPerWeek: 3,

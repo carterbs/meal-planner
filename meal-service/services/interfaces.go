@@ -64,7 +64,6 @@ type ShoppingListService interface {
 	ConvertIngredientsToShoppingItems(ingredients []*models.Ingredient) ([]*apipb.ShoppingListItem, error)
 }
 
-
 // ServiceContainer holds all service dependencies
 type ServiceContainer struct {
 	MealService         MealService

@@ -18,75 +18,62 @@ import type {
 import type { MealPlanningState } from './shared/types';
 import { spawnSync } from 'child_process';
 import { debugLog } from './logging';
-
 export interface LangGraphAgentConfig {
   defaultParticipants?: string[];
 }
-
 export class LangGraphAgent {
   private workflowManager: WorkflowManager;
   private conversationHandler: ConversationHandler;
   private feedbackHandler: FeedbackHandler;
   private registry: WorkflowRegistry;
   private isInitialized = false;
-
   constructor(_config: LangGraphAgentConfig) {
     // Initialize registry and register factories
     this.registry = new WorkflowRegistry();
     for (const factory of workflowFactories) {
       this.registry.registerFactory(factory);
     }
-
     // Initialize workflow manager
     this.workflowManager = new WorkflowManager(this.registry);
-
     // Initialize handlers - we'll get the actual feedback handler after initialization
     this.feedbackHandler = new FeedbackHandler(
       this.workflowManager['checkpointer'],
     );
-    this.conversationHandler = new ConversationHandler(
-      this.workflowManager,
-    );
+    this.conversationHandler = new ConversationHandler(this.workflowManager);
   }
-
   async initialize(): Promise<void> {
     if (this.isInitialized) {
       return;
     }
-
     try {
       await this.workflowManager.initialize();
       this.isInitialized = true;
-
       const supportedTypes = this.workflowManager.getSupportedWorkflowTypes();
-      debugLog(
+      await debugLog(
         `🚀 [LANGGRAPH-AGENT] Initialized with ${supportedTypes.length} workflow types:${JSON.stringify(supportedTypes)}`,
       );
     } catch (error) {
-      debugLog(
+      await debugLog(
         `❌[LANGGRAPH - AGENT] Initialization failed: ${JSON.stringify(error)}`,
       );
       throw error;
     }
   }
-
   async shutdown(): Promise<void> {
     if (!this.isInitialized) {
       return;
     }
-
     try {
       await this.workflowManager.shutdown();
       this.isInitialized = false;
-      debugLog(`🛑[LANGGRAPH - AGENT] Agent shut down successfully`);
+      await debugLog(`🛑[LANGGRAPH - AGENT] Agent shut down successfully`);
     } catch (error) {
-      debugLog(
+      await debugLog(
         `❌[LANGGRAPH - AGENT] Shutdown error: ${JSON.stringify(error)}`,
       );
       throw error;
     }
   }
-
   /**
    * Handle a conversation message
    */
@@ -96,7 +83,6 @@ export class LangGraphAgent {
     this.ensureInitialized();
     return await this.conversationHandler.handleMessage(message);
   }
-
   /**
    * Start a new workflow
    */
@@ -109,7 +95,6 @@ export class LangGraphAgent {
       participants: participants,
     });
   }
-
   /**
    * Get workflow status
    */
@@ -117,7 +102,6 @@ export class LangGraphAgent {
     this.ensureInitialized();
     return await this.workflowManager.getWorkflowStatus(threadId);
   }
-
   /**
    * List all workflows
    */
@@ -125,7 +109,6 @@ export class LangGraphAgent {
     this.ensureInitialized();
     return await this.workflowManager.listWorkflows(type);
   }
-
   /**
    * Resume a paused workflow
    */
@@ -133,7 +116,6 @@ export class LangGraphAgent {
     this.ensureInitialized();
     return await this.workflowManager.resumeWorkflow(threadId, input);
   }
-
   /**
    * Cancel a workflow
    */
@@ -141,7 +123,6 @@ export class LangGraphAgent {
     this.ensureInitialized();
     return await this.workflowManager.cancelWorkflow(threadId);
   }
-
   /**
    * Check if a workflow is awaiting feedback
    */
@@ -149,17 +130,14 @@ export class LangGraphAgent {
     this.ensureInitialized();
     return await this.feedbackHandler.isAwaitingFeedback(threadId);
   }
-
   /**
    * Get system statistics
    */
   async getStats() {
     this.ensureInitialized();
-
     const activeSessionCount = this.workflowManager.getActiveSessionCount();
     const supportedTypes = this.workflowManager.getSupportedWorkflowTypes();
     const allWorkflows = await this.workflowManager.listWorkflows();
-
     return {
       activeSessionCount,
       supportedWorkflowTypes: supportedTypes,
@@ -175,7 +153,6 @@ export class LangGraphAgent {
       ),
     };
   }
-
   /**
    * Health check
    */
@@ -190,7 +167,6 @@ export class LangGraphAgent {
           details: { error: 'Agent not initialized' },
         };
       }
-
       const stats = await this.getStats();
       return {
         status: 'healthy',
@@ -208,18 +184,18 @@ export class LangGraphAgent {
       };
     }
   }
-
   private ensureInitialized(): void {
     if (!this.isInitialized) {
-      throw new Error('Agent must be initialized before use. Call initialize() first.');
+      throw new Error(
+        'Agent must be initialized before use. Call initialize() first.',
+      );
     }
   }
-
   /**
    * Retrieve the serialized workflow state (generated protobuf type) for a given thread.
    */
   async getWorkflowState(threadId: string): Promise<MealPlanningState> {
-    debugLog(`🔄 Getting workflow state for thread ${threadId}`);
+    await debugLog(`🔄 Getting workflow state for thread ${threadId}`);
     this.ensureInitialized();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore – accessing private checkpointer
@@ -236,7 +212,6 @@ export class LangGraphAgent {
     return checkpoint.state as MealPlanningState;
   }
 }
-
 // Example usage and backward compatibility
 export async function createLangGraphMealPlannerAgent(
   config: LangGraphAgentConfig,
@@ -245,25 +220,21 @@ export async function createLangGraphMealPlannerAgent(
   await agent.initialize();
   return agent;
 }
-
 async function main() {
   const config: LangGraphAgentConfig = {
     defaultParticipants: ['brad', 'shannon'],
   };
-
   const agent = new LangGraphAgent(config);
   const io = new CLIHandler();
   const participants = config.defaultParticipants || ['brad'];
   const user = participants[0];
   let threadId: string | undefined;
-
   try {
     await agent.initialize();
     await io.sendMessage(
       'Welcome to the Meal Planner! Type your messages below.',
       'System',
     );
-
     while (true) {
       const input = await io.receiveInput('Your message', user);
       const response = await agent.handleMessage({
@@ -274,7 +245,6 @@ async function main() {
       });
       threadId = response.threadId;
       await io.sendMessage(response.message, 'Agent');
-
       if (response.currentStep === 'complete' || !response.success) {
         await io.sendMessage('Session ended.', 'System');
         if (threadId) {
@@ -286,14 +256,13 @@ async function main() {
                 []) as GeneratedShoppingListItem[],
             } as GeneratedWeeklyMealPlan);
             await io.sendMessage(text, 'System');
-            debugLog(`\nHTML version:\n${html}`);
-
+            await debugLog(`\nHTML version:\n${html}`);
             // Auto copy HTML table to clipboard as HTML
             try {
               spawnSync('pbcopy', ['-Prefer', 'html'], { input: html });
-              debugLog(`✅ HTML table copied to clipboard (as HTML)`);
+              await debugLog(`✅ HTML table copied to clipboard (as HTML)`);
             } catch (err) {
-              debugLog(
+              await debugLog(
                 `⚠️ Failed to copy HTML to clipboard: ${JSON.stringify(err)}`,
               );
             }
@@ -303,13 +272,12 @@ async function main() {
       }
     }
   } catch (error) {
-    debugLog(`❌ Agent Error: ${JSON.stringify(error)} `);
+    await debugLog(`❌ Agent Error: ${JSON.stringify(error)} `);
   } finally {
     io.close();
     await agent.shutdown();
   }
 }
-
 // Run CLI example if this file is executed directly
 // Only run in non-test environments and when this is the main module
 if (process.env.NODE_ENV !== 'test' && require.main === module) {

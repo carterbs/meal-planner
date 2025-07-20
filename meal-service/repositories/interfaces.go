@@ -7,7 +7,6 @@ import (
 	"mealplanner/models"
 )
 
-
 // MealRepository handles meal-related database operations
 type MealRepository interface {
 	// Basic CRUD operations
@@ -21,7 +20,7 @@ type MealRepository interface {
 	// Specialized operations
 	SwapMeal(ctx context.Context, mealID int, mealType string) (*models.Meal, error)
 	UpdateLastPlannedDates(ctx context.Context, mealIDs []int) error
-	
+
 	// Meal planning specific
 	GetLastPlannedMeals(ctx context.Context) (*models.WeeklyMealPlan, error)
 	GenerateWeeklyMealPlan(ctx context.Context) (*models.WeeklyMealPlan, error)
@@ -33,7 +32,7 @@ type IngredientRepository interface {
 	CreateMealIngredient(ctx context.Context, mealID int, ingredient *models.Ingredient) error
 	UpdateMealIngredient(ctx context.Context, mealID int, ingredient *models.Ingredient) error
 	DeleteMealIngredient(ctx context.Context, ingredientID int) error
-	
+
 	// Bulk operations for shopping lists
 	GetIngredientsForMeals(ctx context.Context, mealIDs []int) ([]*models.Ingredient, error)
 }
@@ -57,13 +56,12 @@ type MealPlanRepository interface {
 	GetMealPlanItems(ctx context.Context, mealPlanID int) ([]models.MealPlanEntry, error)
 	SaveMealPlan(ctx context.Context, threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error)
 	RemoveMealFromPlan(ctx context.Context, plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error
- 
+
 	// Meal plan generation & retrieval
 	GenerateWeeklyMealPlan(ctx context.Context) (*models.WeeklyMealPlan, error)
 	GetLastPlannedMeals(ctx context.Context) (*models.WeeklyMealPlan, error)
 	PopulateMealDetails(ctx context.Context, plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error)
 }
-
 
 // ShoppingListRepository handles shopping list generation (if needed for future extensions)
 type ShoppingListRepository interface {

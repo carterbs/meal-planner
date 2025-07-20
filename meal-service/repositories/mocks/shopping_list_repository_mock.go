@@ -37,4 +37,4 @@ func (m *MockShoppingListRepository) ConvertIngredientsToShoppingItems(ctx conte
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]*apipb.ShoppingListItem), args.Error(1)
-} 
+}

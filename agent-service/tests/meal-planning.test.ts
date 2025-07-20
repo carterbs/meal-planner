@@ -2,15 +2,12 @@ import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { VALIDATION_CRITERIA } from '../shared/types';
 import { WeeklyMealPlan, MealPlanEntry, Meal } from '@mealplanner/generated';
 import { DbCheckpointSaver } from '../shared/dbCheckpointer';
-
 describe('MealPlanningWorkflow logic', () => {
   let workflow: any;
   const mockCheckpointer = {} as DbCheckpointSaver;
-
   beforeAll(() => {
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;
   });
-
   describe('extractJsonFromResponse', () => {
     it('removes markdown fences and trims whitespace', () => {
       const input = '```json\n  { \"foo\": \"bar\" }  \n```';
@@ -22,16 +19,13 @@ describe('MealPlanningWorkflow logic', () => {
       expect(workflow.extractJsonFromResponse(input)).toBe('{\"a\":1}');
     });
   });
-
   describe('validatePlan', () => {
     function makePlan(days: MealPlanEntry[]): WeeklyMealPlan {
       return new WeeklyMealPlan({ days, shoppingList: [] });
     }
-
     it('returns no issues for empty plan', () => {
       expect(workflow.validatePlan(makePlan([]))).toEqual([]);
     });
-
     it('flags too many consecutive high-effort meals', () => {
       const { maxConsecutiveHighEffort } = VALIDATION_CRITERIA;
       const days = Array(maxConsecutiveHighEffort + 2)
@@ -59,7 +53,6 @@ describe('MealPlanningWorkflow logic', () => {
         `Too many consecutive high-effort meals (day ${maxConsecutiveHighEffort + 1})`,
       );
     });
-
     it('flags too many red meat meals', () => {
       const { maxRedMeatPerWeek } = VALIDATION_CRITERIA;
       const days = Array(maxRedMeatPerWeek + 1)
@@ -87,7 +80,6 @@ describe('MealPlanningWorkflow logic', () => {
         `Too many red meat meals: ${maxRedMeatPerWeek + 1} (max ${maxRedMeatPerWeek})`,
       );
     });
-
     it('flags duplicate meals', () => {
       const days = [
         new MealPlanEntry({
@@ -139,7 +131,6 @@ describe('MealPlanningWorkflow logic', () => {
       const issues = workflow.validatePlan(makePlan(days));
       expect(issues).toContain('Duplicate meals found: 1');
     });
-
     it('returns no issues for valid plan', () => {
       const days = [
         new MealPlanEntry({

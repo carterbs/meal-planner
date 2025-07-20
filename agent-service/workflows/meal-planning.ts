@@ -18,7 +18,6 @@ import {
 } from '@mealplanner/generated';
 import { MealPlanningCheckpointState } from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';
-
 import {
   MealPlanningState,
   MealPlanningStep,
@@ -33,7 +32,6 @@ import {
   ShoppingListResponse,
   MCPToolResult as MCPToolResultType,
 } from '../shared/mcp-types';
-
 import { DAYS_OF_THE_WEEK } from '../shared/days';
 import {
   getAnalyzeFeedbackPrompt,
@@ -44,9 +42,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { MessageRepository } from '../database/messages';
 const DEBUG_LOGS = false;
-
-
-
 /**
  * Meal planning workflow
  */
@@ -62,13 +57,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       .replace(/```/g, '')
       .trim();
   }
-
   /**
    * Helper to update proto state with partial updates
    */
   private updateState(
     currentState: MealPlanningState,
-    updates: Partial<MealPlanningState>
+    updates: Partial<MealPlanningState>,
   ): MealPlanningState {
     return new MealPlanningCheckpointState({
       ...currentState,
@@ -76,42 +70,42 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       updatedAt: Timestamp.fromDate(new Date()),
     });
   }
-
   /**
    * Add a message to the messages table via direct DB access
    */
-  private async addMessage(threadId: string, sender: string, message: string): Promise<void> {
+  private async addMessage(
+    threadId: string,
+    sender: string,
+    message: string,
+  ): Promise<void> {
     try {
       await this.messageRepo.addMessage(threadId, sender, message);
-
-      debugLog(`[MESSAGE] Added ${sender} message to thread ${threadId}`);
+      await debugLog(`[MESSAGE] Added ${sender} message to thread ${threadId}`);
     } catch (err) {
-      warnLog(`⚠️ [MESSAGE] Failed to add ${sender} message: ${err}`);
+      await warnLog(`⚠️ [MESSAGE] Failed to add ${sender} message: ${err}`);
       // Don't throw - message persistence shouldn't break the workflow
     }
   }
-
   /**
    * Get messages from the messages table via direct DB access
    */
   private async getMessages(threadId: string): Promise<string[]> {
     try {
       const messages = await this.messageRepo.getMessages(threadId);
-
       // Filter for user messages and extract just the message content
       const userMessages = messages
         .filter((msg) => msg.sender === 'user')
         .map((msg) => msg.text || '')
         .filter((content: string) => content.trim().length > 0);
-
-      debugLog(`[MESSAGE] Retrieved ${userMessages.length} user messages from thread ${threadId}`);
+      await debugLog(
+        `[MESSAGE] Retrieved ${userMessages.length} user messages from thread ${threadId}`,
+      );
       return userMessages;
     } catch (err) {
-      warnLog(`⚠️ [MESSAGE] Failed to get messages: ${err}`);
+      await warnLog(`⚠️ [MESSAGE] Failed to get messages: ${err}`);
       return []; // Return empty array on error
     }
   }
-
   /**
    * Convert any Meal.lastPlanned that is not already a Date into a Date so
    * that WeeklyMealPlan.toJSON() can safely call toISOString().
@@ -124,7 +118,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       delete meal.lastPlanned;
     }
   }
-
   readonly type = WorkflowType.MEAL_PLANNING;
   readonly graph: {
     invoke: (
@@ -137,7 +130,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private nanoLlm!: ChatOpenAI | FakeChatModel;
   private checkpointer: DbCheckpointSaver;
   private feedbackHandler: FeedbackHandler;
-
   constructor(checkpointer: DbCheckpointSaver) {
     this.messageRepo = new MessageRepository();
     this.checkpointer = checkpointer;
@@ -148,11 +140,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       name: `meal-planner-workflow-${clientId}`,
       version: '1.0.0',
     });
-
     // Create workflow graph
     this.graph = this.createGraph();
   }
-
   private async saveCheckpoint(
     config: ExtendedRunnableConfig,
     state: MealPlanningState,
@@ -172,7 +162,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
     }
-
     await infoLog(
       `🔍 [SAVE-CHECKPOINT] mealPlan before checkpoint serialization: ${JSON.stringify(state)}`,
     );
@@ -202,69 +191,67 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     });
     await this.checkpointer.put(config, checkpoint, metadata);
   }
-
   async ensureMCPClient(): Promise<void> {
-    await infoLog(`ensureMCPClient called - isConnectedToMCP: ${this.isConnectedToMCP}`);
+    await infoLog(
+      `ensureMCPClient called - isConnectedToMCP: ${this.isConnectedToMCP}`,
+    );
     if (this.isConnectedToMCP) {
       await infoLog('MCP client already connected, skipping initialization');
       return;
     }
-    
     await infoLog('Connecting to MCP client...');
     this.isConnectedToMCP = true;
-    const mcpPort = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT) : 3001;
+    const mcpPort = process.env.MCP_PORT
+      ? parseInt(process.env.MCP_PORT)
+      : 3001;
     const transport = new StreamableHTTPClientTransport(
-      new URL(`http://localhost:${mcpPort}/mcp`)
+      new URL(`http://localhost:${mcpPort}/mcp`),
     );
     await this.client.connect(transport);
     await infoLog('MCP client connected successfully');
   }
-
   async initialize(): Promise<void> {
     await infoLog('MealPlanningWorkflow.initialize called');
     const isCodex = process.argv.includes('--codex');
-
     // Connect to MCP server
     // Always connect to the already-running MCP server (launched independently by yarn start:mcp)
     // No longer launch MCP server as child process since agent is now a long-running service
-    await infoLog(`🍽️ [MEAL-WORKFLOW] Starting to initialize meal planning workflow`);
-
+    await infoLog(
+      `🍽️ [MEAL-WORKFLOW] Starting to initialize meal planning workflow`,
+    );
     await this.ensureMCPClient();
-
     // Initialize LLM
     const isTestMode = process.env.NODE_ENV === 'test';
     this.llm = isCodex
       ? new FakeChatModel({})
       : new ChatOpenAI({
-        temperature: 0,
-        modelName: isTestMode ? 'gpt-4.1-nano' : 'gpt-4.1',
-      });
+          temperature: 0,
+          modelName: isTestMode ? 'gpt-4.1-nano' : 'gpt-4.1',
+        });
     // Initialize nano LLM for feedback analysis
     this.nanoLlm = new ChatOpenAI({
       temperature: 0,
       modelName: 'gpt-4.1-nano',
     });
-
     await infoLog(`🍽️ [MEAL-WORKFLOW] Initialized meal planning workflow`);
   }
-
   async cleanup(): Promise<void> {
     await infoLog('MealPlanningWorkflow.cleanup called');
     if (this.client) {
       await this.client.close();
     }
   }
-
   // Expose feedback handler for external use
   getFeedbackHandler(): FeedbackHandler {
     return this.feedbackHandler;
   }
-
   private createGraph() {
     return {
       invoke: async (input: unknown, config: ExtendedRunnableConfig) => {
         await infoLog('MealPlanningWorkflow.invoke called');
-        await infoLog(`${`🍽️ [MEAL-WORKFLOW] Invoking workflow; input:`} ${input}`);
+        await infoLog(
+          `${`🍽️ [MEAL-WORKFLOW] Invoking workflow; input:`} ${input}`,
+        );
         // Load checkpoint
         const tuple = await this.checkpointer.getTuple(config);
         let state: MealPlanningState;
@@ -284,30 +271,41 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           });
           // Generate, optimize, present, pause for feedback
           const initiateResult = await this.initiateNode(state);
-          await infoLog(`Debuggyz - Initiated the workflow. Current Step: ${initiateResult.currentStep}`)
+          await infoLog(
+            `Debuggyz - Initiated the workflow. Current Step: ${initiateResult.currentStep}`,
+          );
           state = this.updateState(state, initiateResult);
           await this.saveCheckpoint(config, state);
-          await infoLog(`Debuggyz - After updating state. Current Step: ${state.currentStep}`)
-
+          await infoLog(
+            `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
+          );
           const generateResult = await this.generatePlanNode(state);
-          await infoLog(`Debuggyz - Generated the plan. Current Step: ${generateResult.currentStep}`)
+          await infoLog(
+            `Debuggyz - Generated the plan. Current Step: ${generateResult.currentStep}`,
+          );
           state = this.updateState(state, generateResult);
           await this.saveCheckpoint(config, state);
-          await infoLog(`Debuggyz - After updating state. Current Step: ${state.currentStep}`)
-
+          await infoLog(
+            `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
+          );
           const optimizeResult = await this.optimizePlanNode(state);
-          await infoLog(`Debuggyz - Optimized the plan. ${optimizeResult.currentStep}`)
+          await infoLog(
+            `Debuggyz - Optimized the plan. ${optimizeResult.currentStep}`,
+          );
           state = this.updateState(state, optimizeResult);
           await this.saveCheckpoint(config, state);
-          await infoLog(`Debuggyz - After updating state. Current Step: ${state.currentStep}`)
-
+          await infoLog(
+            `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
+          );
           const presentResult = await this.presentPlanNode(state);
-          await infoLog(`Debuggyz - Presenting the plan. Current Step: ${optimizeResult.currentStep}`)
-
+          await infoLog(
+            `Debuggyz - Presenting the plan. Current Step: ${optimizeResult.currentStep}`,
+          );
           state = this.updateState(state, presentResult);
           await this.saveCheckpoint(config, state);
-          await infoLog(`Debuggyz - After updating state. Current Step: ${state.currentStep}`)
-
+          await infoLog(
+            `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
+          );
           // Pause: checkpoint state
           // Debug: log the final state before saving checkpoint
           await infoLog(
@@ -336,12 +334,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               '🔍 [CHECKPOINT] mealPlan before WeeklyMealPlan.fromJson:',
             );
             await infoLog(JSON.stringify(checkpoint.state.mealPlan, null, 2));
-
             this.coerceDates(checkpoint.state.mealPlan);
             deserializedMealPlan = WeeklyMealPlan.fromJson(
               checkpoint.state.mealPlan.toJson(),
             );
-
             // DEBUGGING: Log mealPlan after deserialization
             await infoLog(
               '🔍 [CHECKPOINT] mealPlan after WeeklyMealPlan.fromJson:',
@@ -355,7 +351,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               }
             }
           }
-
           // Use checkpoint state directly since it's already a proto
           state = checkpoint.state;
           // Update meal plan if we deserialized it
@@ -376,42 +371,47 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           while (!feedbackSatisfied) {
             const lastUpdate = checkpoint.state.updatedAt.toDate();
             // 1. Gather all recent feedback (within last 5 minutes)
-            const allFeedback = await this.messageRepo.getMessagesForProtobuf(state.threadId);
+            const allFeedback = await this.messageRepo.getMessagesForProtobuf(
+              state.threadId,
+            );
             // Add a small buffer (5 seconds) to handle race conditions between message creation and workflow updates
             const lastUpdateWithBuffer = new Date(lastUpdate.getTime() - 5000);
             const newFeedback = allFeedback.filter((f: any) =>
-              f.created_at ? new Date(f.created_at) > lastUpdateWithBuffer : true,
+              f.created_at
+                ? new Date(f.created_at) > lastUpdateWithBuffer
+                : true,
             );
-
-            await infoLog("New feedback?", { newFeedbackLength: newFeedback.length.toString(), allFeedbackLength: allFeedback.length.toString() });
+            await infoLog('New feedback?', {
+              newFeedbackLength: newFeedback.length.toString(),
+              allFeedbackLength: allFeedback.length.toString(),
+            });
             // 2. Analyze feedback to determine user satisfaction
             let analyzeResult = { satisfied: false, reasoning: '' };
             if (newFeedback.length > 0) {
               analyzeResult = await this.analyzeFeedbackNode(newFeedback);
             }
-
             // 3. If satisfied, finalize plan and break loop
             if (analyzeResult.satisfied) {
               state = this.updateState(state, {
-                currentStep: MealPlanningStep.FINALIZE_PLAN
+                currentStep: MealPlanningStep.FINALIZE_PLAN,
               });
               feedbackSatisfied = true;
               break;
             }
-
             // 4. If there is new feedback and not satisfied, apply it
             if (newFeedback.length > 0) {
               // Apply feedback via LLM
-              const stateWithFeedback = Object.assign(state, { feedback_to_apply: newFeedback });
-              const feedbackResult = await this.applyFeedbackNode(stateWithFeedback);
+              const stateWithFeedback = Object.assign(state, {
+                feedback_to_apply: newFeedback,
+              });
+              const feedbackResult =
+                await this.applyFeedbackNode(stateWithFeedback);
               state = this.updateState(state, feedbackResult);
-
               // Feedback applied - continue processing
               const optimizeResult = await this.optimizePlanNode(state);
               state = this.updateState(state, optimizeResult);
               await this.saveCheckpoint(config, state);
             }
-
             // 5. Present the plan after feedback is processed/applied
             const presentResult = await this.presentPlanNode(state);
             state = this.updateState(state, presentResult);
@@ -433,7 +433,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                   }
                 }
               }
-
               // DEBUGGING: Check if meal_plan is properly set before final checkpoint
               await infoLog(
                 `🔍 [FINAL-CHECKPOINT] About to save final checkpoint with mealPlan: ${state.mealPlan ? 'EXISTS' : 'NULL/UNDEFINED'}`,
@@ -443,7 +442,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                   `🔍 [FINAL-CHECKPOINT] meal_plan has ${state.mealPlan.days?.length || 0} days`,
                 );
               }
-
               // State is already a proto object
               const checkpoint = new AgentCheckpoint({
                 state: state,
@@ -462,15 +460,23 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               feedbackSatisfied = true;
             }
           }
-          await infoLog(`🔍 [WORKFLOW] Finalizing plan for thread ${config.configurable?.threadId}`);
+          await infoLog(
+            `🔍 [WORKFLOW] Finalizing plan for thread ${config.configurable?.threadId}`,
+          );
           // Finalize, generate shopping list, complete
           const finalizeResult = await this.finalizePlanNode(state);
           state = this.updateState(state, finalizeResult);
-          await infoLog(`🔍 [WORKFLOW] Generating shopping list for thread ${config.configurable?.threadId}`);
+          await infoLog(
+            `🔍 [WORKFLOW] Generating shopping list for thread ${config.configurable?.threadId}`,
+          );
           const shoppingResult = await this.generateShoppingListNode(state);
-          await infoLog(`🔍 [WORKFLOW] Generated shopping list for thread ${config.configurable?.threadId}`);
+          await infoLog(
+            `🔍 [WORKFLOW] Generated shopping list for thread ${config.configurable?.threadId}`,
+          );
           state = this.updateState(state, shoppingResult);
-          await infoLog(`🔍 [WORKFLOW] Completed workflow for thread ${config.configurable?.threadId}`);
+          await infoLog(
+            `🔍 [WORKFLOW] Completed workflow for thread ${config.configurable?.threadId}`,
+          );
           const completeResult = await this.completeNode(state);
           state = this.updateState(state, completeResult);
           return state;
@@ -478,7 +484,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       },
     };
   }
-
   // Node implementations
   private async initiateNode(
     state: MealPlanningState,
@@ -487,24 +492,24 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     await infoLog(
       `🍽️ [MEAL-WORKFLOW] Initiating meal planning for thread ${state.threadId}`,
     );
-
     return {
       currentStep: MealPlanningStep.GENERATE_PLAN,
     };
   }
-
   private async generatePlanNode(
     _state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
     await infoLog('MealPlanningWorkflow.generatePlanNode called');
     const reqId = uuidv4();
     await infoLog(`🍽️ [MEAL-WORKFLOW] Generating initial meal plan: ${reqId}`);
-
     try {
       // Generate meal plan using MCP tool
-      await infoLog(`🔧 [MCP-INPUT] About to call generateMealPlan with arguments: {}`);
-      await infoLog(`🔧 [MCP-INPUT] MCP client state: ${this.client ? 'EXISTS' : 'NULL'}`);
-      
+      await infoLog(
+        `🔧 [MCP-INPUT] About to call generateMealPlan with arguments: {}`,
+      );
+      await infoLog(
+        `🔧 [MCP-INPUT] MCP client state: ${this.client ? 'EXISTS' : 'NULL'}`,
+      );
       const planResult = await this.client.callTool({
         name: 'generateMealPlan',
         arguments: {},
@@ -513,29 +518,24 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       await infoLog(`PLAN RESULT FROM MCP: ${reqId}`);
       await infoLog(`🔧 [MCP-OUTPUT] Full MCP response: ${planResultString}`);
       await debugLog(planResultString);
-
       // Validate MCP response and guard against missing content
       if ((planResult as MCPToolResultType).isError) {
         const errorContent =
           Array.isArray((planResult as MCPToolResultType).content) &&
-            (planResult as MCPToolResultType).content[0]?.type === 'text'
+          (planResult as MCPToolResultType).content[0]?.type === 'text'
             ? (planResult as MCPToolResultType).content[0].text
             : 'Unknown error';
         throw new Error(`MCP tool error: ${errorContent}`);
       }
-
       const responseText =
         Array.isArray((planResult as MCPToolResultType).content) &&
-          (planResult as MCPToolResultType).content[0]?.type === 'text'
+        (planResult as MCPToolResultType).content[0]?.type === 'text'
           ? (planResult as MCPToolResultType).content[0].text
           : '{}';
-
       const jsonText = this.extractJsonFromResponse(responseText);
       const generateResponse = JSON.parse(jsonText);
-
       await infoLog(`MEAL PLAN from generate------- req: ${reqId}`);
       await infoLog(JSON.stringify(generateResponse, null, 2));
-
       // DEBUGGING: Log dayIndex values BEFORE fromJson conversion
       await infoLog(
         '🔍 [AGENT] dayIndex values BEFORE WeeklyMealPlan.fromJson:',
@@ -548,9 +548,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           );
         }
       }
-
       const mealPlan = WeeklyMealPlan.fromJson(generateResponse.plan);
-
       // DEBUGGING: Log dayIndex values AFTER fromJson conversion
       await infoLog(
         '🔍 [AGENT] dayIndex values AFTER WeeklyMealPlan.fromJson:',
@@ -563,17 +561,15 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           );
         }
       }
-
       return {
         currentStep: MealPlanningStep.OPTIMIZE_PLAN,
         mealPlan: mealPlan,
       };
     } catch (error) {
-      errorLog(`${` [MEAL-WORKFLOW] Error generating plan:`} ${error}`);
+      await errorLog(`${` [MEAL-WORKFLOW] Error generating plan:`} ${error}`);
       throw error;
     }
   }
-
   private async optimizePlanNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
@@ -581,14 +577,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     await infoLog(
       `🍽️ [MEAL-WORKFLOW] Optimizing meal plan (iteration ${state.iterationCount + 1})`,
     );
-
     if (!state.mealPlan) {
       throw new Error('No meal plan to optimize');
     }
-
     const issues = this.validatePlan(state.mealPlan);
     let optimizedPlan = state.mealPlan;
-
     if (issues.length > 0) {
       await infoLog(
         `${`📋 [MEAL-WORKFLOW] Found ${issues.length} issues:`} ${issues}`,
@@ -597,17 +590,17 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     } else {
       await infoLog(`✅ [MEAL-WORKFLOW] Plan is already valid`);
     }
-
     return {
       currentStep: MealPlanningStep.PRESENT_PLAN,
       mealPlan: optimizedPlan,
       iterationCount: state.iterationCount + 1,
     };
   }
-
   // New: apply feedback using LLM with feedback context
   private async applyFeedbackNode(
-    state: MealPlanningState & { feedback_to_apply?: any[] },
+    state: MealPlanningState & {
+      feedback_to_apply?: any[];
+    },
   ): Promise<Partial<MealPlanningState>> {
     await infoLog('MealPlanningWorkflow.applyFeedbackNode called');
     await infoLog(`🍽️ [MEAL-WORKFLOW] Applying user feedback via LLM`);
@@ -619,29 +612,28 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       ? state.feedback_to_apply.map((f) => f.content)
       : await this.getMessages(state.threadId);
     // Call LLM to pick alternatives based on feedback
-    
     const result = await this.applyFeedbackWithLLM(
       state.mealPlan,
       feedbackMessages,
     );
-
     // Store the LLM's response message in the database
     if (result.userMessage) {
       await this.addMessage(state.threadId, 'agent', result.userMessage);
     }
-
     return {
       mealPlan: result.mealPlan,
     };
   }
-
   // Analyze feedback using nano LLM. Returns { satisfied: boolean, reasoning: string }
-  private async analyzeFeedbackNode(
-    feedbackEntries: any[],
-  ): Promise<{ satisfied: boolean; reasoning: string }> {
+  private async analyzeFeedbackNode(feedbackEntries: any[]): Promise<{
+    satisfied: boolean;
+    reasoning: string;
+  }> {
     await infoLog('MealPlanningWorkflow.analyzeFeedbackNode called');
     const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
-    await infoLog(`🍽️ [MEAL-WORKFLOW] Analyzing feedback: ${latestFeedback.content}`);
+    await infoLog(
+      `🍽️ [MEAL-WORKFLOW] Analyzing feedback: ${latestFeedback.content}`,
+    );
     const prompt = getAnalyzeFeedbackPrompt(latestFeedback.content);
     const result = await this.nanoLlm.invoke([
       { role: 'user', content: prompt },
@@ -660,20 +652,22 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         ),
       );
     } catch (err) {
-      errorLog(
+      await errorLog(
         `❌ [MEAL-WORKFLOW] Failed to parse feedback analysis response: ${err}`,
       );
     }
     return analysis;
   }
-
   private async applyFeedbackWithLLM(
     plan: GeneratedWeeklyMealPlan,
     feedback: string[],
-  ): Promise<{ mealPlan: GeneratedWeeklyMealPlan; userMessage: string }> {
+  ): Promise<{
+    mealPlan: GeneratedWeeklyMealPlan;
+    userMessage: string;
+  }> {
     await infoLog('MealPlanningWorkflow.applyFeedbackWithLLM called');
     const t0 = Date.now();
-    debugLog(
+    await debugLog(
       `[FEEDBACK] applyFeedbackWithLLM start (feedbackCount=${feedback.length})`,
     );
     // Fetch available meals
@@ -700,7 +694,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal!.name} (ID: ${day.meal!.id}, effort: ${day.meal!.effort}, red meat: ${day.meal!.hasRedMeat})`,
       )
       .join('\n');
-
     const feedbackText =
       feedback.length > 0
         ? `ALL USER FEEDBACK FROM THIS SESSION (in chronological order):\n${feedback.map((msg, idx) => `${idx + 1}. ${msg}`).join('\n')}\n`
@@ -716,23 +709,19 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       typeof result.content === 'string'
         ? result.content
         : JSON.stringify(result.content);
-
     await infoLog(`🤖 [MEAL-WORKFLOW] Raw LLM response:`);
     await infoLog(llmResponse);
-
     await infoLog(
       `${`🤖 [MEAL-WORKFLOW] Feedback being processed:`} ${feedbackText}`,
     );
     // Create a proper WeeklyMealPlan object to preserve protobuf structure
     let updatedPlan: WeeklyMealPlan = plan;
     let userMessage = "I've updated your meal plan based on your feedback!"; // Default fallback message
-
     try {
       const cleanedResponse = this.extractJsonFromResponse(llmResponse);
       await infoLog(`🤖 [MEAL-WORKFLOW] Cleaned JSON response:`);
       await infoLog(cleanedResponse);
       const recommendations = JSON.parse(cleanedResponse);
-
       // Extract user message from LLM response
       if (
         recommendations.userMessage &&
@@ -740,7 +729,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       ) {
         userMessage = recommendations.userMessage;
       }
-
       // Handle removals first
       if (recommendations.removals && Array.isArray(recommendations.removals)) {
         for (const removal of recommendations.removals) {
@@ -750,19 +738,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             await infoLog(
               `🤖 [MEAL-WORKFLOW] Applying removal from the LLM: Remove ${day} ${mealType} - ${reason}`,
             );
-
             // Handle "all" mealType by removing each meal type individually
             const mealTypesToRemove =
               mealType === 'all'
                 ? ['breakfast', 'lunch', 'dinner']
                 : [mealType];
-
             // Apply all removals locally to avoid race conditions with multiple MCP calls
             for (const specificMealType of mealTypesToRemove) {
               await infoLog(
                 `🤖 [MEAL-WORKFLOW] Applying local removal: dayIndex=${dayIndex}, mealType=${specificMealType}`,
               );
-
               // Find and remove the meal from the local plan
               updatedPlan.days = updatedPlan.days.map((planDay) => {
                 if (
@@ -782,7 +767,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           }
         }
       }
-
       // Handle replacements
       if (
         recommendations.replacements &&
@@ -812,97 +796,82 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           }
         }
       }
-
     } catch (error) {
-      errorLog(
+      await errorLog(
         `❌ [MEAL-WORKFLOW] Failed to parse LLM feedback response: ${error}`,
       );
       userMessage =
         "I've made some adjustments to your meal plan based on your feedback."; // Fallback on error
     }
-    debugLog(
+    await debugLog(
       `[FEEDBACK] applyFeedbackWithLLM finished in ${Date.now() - t0}ms`,
     );
     return { mealPlan: updatedPlan, userMessage };
   }
-
   private async presentPlanNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
     await infoLog('MealPlanningWorkflow.presentPlanNode called');
     await infoLog(`🍽️ [MEAL-WORKFLOW] Presenting meal plan to participants`);
-
     if (!state.mealPlan) {
       throw new Error('No meal plan to present');
     }
-
     // Format plan for presentation
     const planPresentation = this.formatPlanForPresentation(state.mealPlan);
     await infoLog(`📋 [MEAL-PLAN]\n${planPresentation}`);
-
     // Check if we have recent feedback that requires processing
-
     return {
       currentStep: MealPlanningStep.AWAIT_FEEDBACK,
     };
   }
-
   private async finalizePlanNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
     await infoLog('MealPlanningWorkflow.finalizePlanNode called');
     await infoLog(`🍽️ [MEAL-WORKFLOW] Finalizing meal plan`);
-
     if (!state.mealPlan) {
       throw new Error('No meal plan to finalize');
     }
-
     // Save the meal plan using MCP tool
     try {
       await this.client.callTool({
         name: 'finalizeMealPlan',
         arguments: { mealPlan: state.mealPlan },
       });
-
       await infoLog(`✅ [MEAL-WORKFLOW] Meal plan saved successfully`);
     } catch (error) {
-      warnLog(`${`⚠️ [MEAL-WORKFLOW] Could not save meal plan:`} ${error}`);
+      await warnLog(
+        `${`⚠️ [MEAL-WORKFLOW] Could not save meal plan:`} ${error}`,
+      );
       // Continue anyway as this is not critical for the workflow
     }
-
     return {
       currentStep: MealPlanningStep.GENERATE_SHOPPING_LIST,
       isFinalized: true,
     };
   }
-
   private async generateShoppingListNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
     await infoLog('MealPlanningWorkflow.generateShoppingListNode called');
     await infoLog(`🍽️ [MEAL-WORKFLOW] Generating shopping list`);
-
     if (!state.mealPlan) {
       throw new Error('No meal plan for shopping list generation');
     }
-
     try {
       // Extract meal IDs from the meal plan
       const mealIds = state.mealPlan.days
         .map((day) => day.meal?.id)
         .filter((id): id is number => id !== undefined)
         .filter((id, index, self) => self.indexOf(id) === index); // Deduplicate
-
       await infoLog(
         `${`🛒 [MEAL-WORKFLOW] Generating shopping list for meal IDs:`} ${mealIds}`,
       );
-
       // Call the MCP tool directly with proper typing
       const result = (await this.client.callTool({
         name: 'generateShoppingList',
         arguments: { plan: mealIds },
       })) as MCPToolResultType;
-
       if (result.isError) {
         const errorContent =
           Array.isArray(result.content) && result.content[0]?.type === 'text'
@@ -910,13 +879,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             : 'Unknown error';
         throw new Error(`MCP tool error: ${errorContent}`);
       }
-
       // Parse the response with proper type checking
       const responseText =
         Array.isArray(result.content) && result.content[0]?.type === 'text'
           ? result.content[0].text
           : '[]';
-
       if (DEBUG_LOGS) {
         await infoLog(`🛒 [DEBUG] Raw shopping list response: ${responseText}`);
       }
@@ -926,15 +893,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           `🛒 [DEBUG] Parsed shopping list: ${JSON.stringify(shoppingList, null, 2)}`,
         );
       }
-
       await infoLog(
         `✅ [MEAL-WORKFLOW] Generated shopping list with ${shoppingList.length} items`,
       );
-
       // Display the shopping list in a nice format
       await infoLog('\n🛍️  SHOPPING LIST 🛒');
       await infoLog('===================');
-
       if (!Array.isArray(shoppingList) || shoppingList.length === 0) {
         await infoLog('\nNo items in shopping list');
         return {
@@ -948,10 +912,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         const groupedItems = shoppingList.reduce(
           (acc: Record<string, ShoppingListItem[]>, item: ShoppingListItem) => {
             if (!item || typeof item !== 'object') {
-              warnLog(`Skipping invalid shopping list item: ${item}`);
+              console.warn(`Skipping invalid shopping list item: ${item}`);
               return acc;
             }
-
             const category =
               item.category && typeof item.category === 'string'
                 ? item.category
@@ -964,20 +927,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               item.quantity && typeof item.quantity === 'string'
                 ? item.quantity
                 : '';
-
             if (!acc[category]) {
               acc[category] = [];
             }
-
             acc[category].push(
               ShoppingListItem.fromJson({ ingredient, quantity, category }),
             );
-
             return acc;
           },
           {},
         );
-
         // Format shopping list as a bulleted string (grouped by category)
         let bulletedList = '';
         for (const [category, items] of Object.entries(groupedItems)) {
@@ -987,11 +946,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           });
         }
         bulletedList = bulletedList.trim();
-
         // Pantry staples prompt
         const PANTRY_STAPLES_CATEGORIZATION_PROMPT =
           getPantryStaplesCategorizationPrompt(bulletedList);
-
         try {
           await infoLog(
             `\n🛒 [LLM FORMATTED SHOPPING LIST]: Asking LLM to categorize our list: ${bulletedList}...\n`,
@@ -1007,27 +964,27 @@ export class MealPlanningWorkflow implements BaseWorkflow {
 🛒 [LLM FORMATTED SHOPPING LIST]:
  ${shoppingListFormatted}`);
         } catch (llmError) {
-          errorLog(
+          await errorLog(
             `❌ Error calling LLM for pantry staples formatting: ${llmError}`,
           );
           shoppingListFormatted = bulletedList; // fallback
         }
-
         await infoLog('\nHappy shopping! 🛒');
         await infoLog('===================\n');
       } catch (error) {
-        errorLog(`❌ Error formatting shopping list: ${error}`);
+        await errorLog(`❌ Error formatting shopping list: ${error}`);
         // Fallback: display raw data if formatting fails
         await infoLog('\nRaw shopping list data:');
         await infoLog(JSON.stringify(shoppingList, null, 2));
       }
-
       return {
         currentStep: MealPlanningStep.COMPLETE,
-        shoppingList: shoppingList ? new ShoppingList({ items: shoppingList }) : undefined,
+        shoppingList: shoppingList
+          ? new ShoppingList({ items: shoppingList })
+          : undefined,
       };
     } catch (error) {
-      errorLog(
+      await errorLog(
         `${`❌ [MEAL-WORKFLOW] Error generating shopping list:`} ${error}`,
       );
       // Continue with empty shopping list on error
@@ -1037,30 +994,24 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       };
     }
   }
-
   private async completeNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
     await infoLog('MealPlanningWorkflow.completeNode called');
     await infoLog(`🍽️ [MEAL-WORKFLOW] Meal planning workflow completed`);
-
     // Final validation
-    const finalIssues = state.mealPlan
-      ? this.validatePlan(state.mealPlan)
-      : [];
+    const finalIssues = state.mealPlan ? this.validatePlan(state.mealPlan) : [];
     if (finalIssues.length > 0) {
-      warnLog(`${`⚠️ [MEAL-WORKFLOW] Final plan has issues:`} ${finalIssues}`);
+      await warnLog(
+        `${`⚠️ [MEAL-WORKFLOW] Final plan has issues:`} ${finalIssues}`,
+      );
     }
-
     return {
       currentStep: MealPlanningStep.COMPLETE,
     };
   }
-
   private validatePlan(plan: GeneratedWeeklyMealPlan): string[] {
-    infoLog('MealPlanningWorkflow.validatePlan called');
     const issues: string[] = [];
-
     // Check consecutive high-effort meals
     let consecutiveHighEffort = 0;
     for (const day of plan.days) {
@@ -1077,7 +1028,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         consecutiveHighEffort = 0;
       }
     }
-
     // Check red meat count
     const redMeatCount = plan.days.filter((d) => d.meal?.hasRedMeat).length;
     if (redMeatCount > VALIDATION_CRITERIA.maxRedMeatPerWeek) {
@@ -1085,7 +1035,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         `Too many red meat meals: ${redMeatCount} (max ${VALIDATION_CRITERIA.maxRedMeatPerWeek})`,
       );
     }
-
     // Check for duplicates
     const mealIds = plan.days
       .map((d) => d.meal?.id)
@@ -1096,10 +1045,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     if (duplicates.length > 0) {
       issues.push(`Duplicate meals found: ${duplicates.join(', ')}`);
     }
-
     return issues;
   }
-
   private async optimizePlanWithLLM(
     plan: GeneratedWeeklyMealPlan,
     issues: string[],
@@ -1113,7 +1060,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const availableMeals: GeneratedMeal[] = JSON.parse(
       (mealsResp as MCPToolResultType).content[0].text,
     );
-
     // Create concise meal options for the prompt
     const mealOptions = availableMeals
       .map(
@@ -1121,7 +1067,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           `${m.id}: ${m.name} (${m.mealType}, effort: ${m.effort}, red meat: ${m.hasRedMeat})`,
       )
       .join('\n');
-
     const dayNames = DAYS_OF_THE_WEEK;
     const planDescription = plan.days
       .filter((day) => day.meal)
@@ -1130,27 +1075,22 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal!.name} (ID: ${day.meal!.id}, effort: ${day.meal!.effort}, red meat: ${day.meal!.hasRedMeat})`,
       )
       .join('\n');
-
     const prompt = getOptimizeMealPlanPrompt(
       issues,
       planDescription,
       mealOptions,
     );
-
     const result = await this.llm.invoke([{ role: 'user', content: prompt }]);
     const llmResponse =
       typeof result.content === 'string'
         ? result.content
         : JSON.stringify(result.content);
-
     // Parse and apply recommendations
     let optimizedPlan = { ...plan, days: [...plan.days] };
-
     try {
       const recommendations = JSON.parse(
         this.extractJsonFromResponse(llmResponse),
       );
-
       if (
         recommendations.replacements &&
         Array.isArray(recommendations.replacements)
@@ -1159,12 +1099,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           const { day, mealType, oldMealId, newMealId, reason } = replacement;
           const dayIndex = dayNames.indexOf(day);
           const newMeal = availableMeals.find((m) => m.id === newMealId);
-
           if (dayIndex >= 0 && newMeal && newMeal.mealType === mealType) {
             await infoLog(
               `🤖 [MEAL-WORKFLOW] Applying optimization: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.name} (ID ${newMealId}) - ${reason}`,
             );
-
             optimizedPlan.days = optimizedPlan.days.map((planDay) => {
               if (
                 planDay.dayIndex === dayIndex &&
@@ -1182,19 +1120,17 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
     } catch (error) {
-      errorLog(`❌ [MEAL-WORKFLOW] Failed to parse LLM response: ${error}`);
+      await errorLog(
+        `❌ [MEAL-WORKFLOW] Failed to parse LLM response: ${error}`,
+      );
     }
-
     return new WeeklyMealPlan(optimizedPlan);
   }
-
   private formatPlanForPresentation(plan: GeneratedWeeklyMealPlan): string {
     const dayNames = DAYS_OF_THE_WEEK;
     const lines: string[] = [];
-
     lines.push('📅 Weekly Meal Plan:');
     lines.push('='.repeat(50));
-
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
       const dayMeals = plan.days.filter((d) => d.dayIndex === dayIndex);
       if (dayMeals.length > 0) {
@@ -1212,7 +1148,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
     }
-
     return lines.join('\n');
   }
 }

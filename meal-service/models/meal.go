@@ -232,11 +232,11 @@ func CreateMealIngredient(db *sql.DB, mealID int, ingredient *Ingredient) error 
 		mealModelLogger.Errorw("CreateMealIngredient: error inserting ingredient", "mealID", mealID, "error", err)
 		return err
 	}
-	
+
 	// Update the ingredient with the new ID
 	ingredient.Id = int32(ingredientID)
 	ingredient.MealId = int32(mealID)
-	
+
 	mealModelLogger.Debugw("CreateMealIngredient: created ingredient", "ingredientID", ingredientID, "mealID", mealID)
 	return nil
 }

@@ -2,15 +2,12 @@ import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { MealPlanningStep } from '../shared/types';
 import { WeeklyMealPlan } from '@mealplanner/generated';
 import { DbCheckpointSaver } from '../shared/dbCheckpointer';
-
 describe('MealPlanningWorkflow LLM integration and edge cases', () => {
   let workflow: any;
   const mockCheckpointer = {} as DbCheckpointSaver;
-
   beforeAll(() => {
     workflow = new MealPlanningWorkflow(mockCheckpointer) as any;
   });
-
   describe('analyzeFeedbackNode', () => {
     it('parses satisfied JSON response', async () => {
       workflow.nanoLlm = {
@@ -24,7 +21,6 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
       const res = await workflow.analyzeFeedbackNode(feedback);
       expect(res).toEqual({ satisfied: true, reasoning: 'Great' });
     });
-
     it('handles unparsable JSON gracefully', async () => {
       workflow.nanoLlm = {
         invoke: jest.fn().mockResolvedValue({ content: 'not json' }),
@@ -38,7 +34,6 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
       spy.mockRestore();
     });
   });
-
   describe('applyFeedbackWithLLM', () => {
     beforeEach(() => {
       // Mocks for availableMeals and newPlan
@@ -60,7 +55,6 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
           },
         ],
       };
-
       workflow.client = {
         callTool: jest.fn().mockResolvedValue({
           content: [{ text: JSON.stringify(availableMeals) }],
@@ -73,7 +67,6 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
         typeof s === 'string' ? s : JSON.stringify(s),
       );
     });
-
     it('applies feedback and returns new plan', async () => {
       // Setup: plan has Sunday breakfast with id 1, availableMeals has id 2
       const plan = {
@@ -94,7 +87,6 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
           hasRedMeat: false,
         },
       ];
-
       workflow.client.callTool.mockResolvedValue({
         content: [{ text: JSON.stringify(availableMeals) }],
       });
@@ -146,14 +138,12 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
       expect(res).toEqual({ mealPlan: expectedPlan, userMessage: 'done' });
     });
   });
-
   describe('optimizePlanNode', () => {
     it('throws when no meal_plan', async () => {
       await expect(
         workflow.optimizePlanNode({ iterationCount: 0, mealPlan: undefined }),
       ).rejects.toThrow('No meal plan to optimize');
     });
-
     it('calls optimizePlanWithLLM when issues exist', async () => {
       // Use enough consecutive high-effort meals to trigger validation
       const plan = {
@@ -176,10 +166,8 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
         ],
       } as WeeklyMealPlan;
       workflow.optimizePlanWithLLM = jest.fn().mockResolvedValue(plan);
-
       const state = { mealPlan: plan, iterationCount: 0 } as any;
       const res: any = await workflow.optimizePlanNode(state);
-
       expect(workflow.optimizePlanWithLLM).toHaveBeenCalledWith(
         plan,
         expect.arrayContaining([

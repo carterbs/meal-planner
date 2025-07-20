@@ -204,7 +204,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
     // Check if this is a new ingredient (negative ID)
     const isNewIngredient = editedIngredient.id! < 0;
-    
+
     // Create the ingredient data for the API using the MainIngredientResponse format
     const ingredientForApi = {
       id: isNewIngredient ? 0 : editedIngredient.id!,
@@ -217,7 +217,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     // Use different endpoints for creating vs updating ingredients
     const apiCall = isNewIngredient
       ? createMealIngredient(selectedMeal.id!, ingredientForApi)
-      : updateMealIngredient(selectedMeal.id!, editedIngredient.id!, ingredientForApi);
+      : updateMealIngredient(
+          selectedMeal.id!,
+          editedIngredient.id!,
+          ingredientForApi,
+        );
 
     // Save to backend
     apiCall
@@ -230,7 +234,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
         setEditingIngredientIndex(null);
         setEditedIngredient(null);
-        showToast(isNewIngredient ? 'Ingredient added successfully' : 'Ingredient updated successfully');
+        showToast(
+          isNewIngredient
+            ? 'Ingredient added successfully'
+            : 'Ingredient updated successfully',
+        );
       })
       .catch((err) => {
         console.error('Error saving ingredient:', err);
@@ -244,7 +252,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
     // Check if this is a new ingredient (negative ID) that hasn't been saved yet
     const isNewIngredient = ingredientId < 0;
-    
+
     if (isNewIngredient) {
       // For new ingredients, just remove from UI without API call
       const updatedIngredients = selectedMeal.ingredients.filter(
@@ -254,7 +262,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
         ...selectedMeal,
         ingredients: updatedIngredients,
       };
-      
+
       setSelectedMeal(updatedMeal);
       setMeals((prev) =>
         prev.map((m) => (m.id === selectedMeal.id ? updatedMeal : m)),
@@ -494,7 +502,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   component="div"
                   gutterBottom
                   sx={{
-                    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                    fontFamily:
+                      '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
                     fontWeight: 600,
                     color: '#3a3a3a',
                     mb: 1,
@@ -568,7 +577,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   component="div"
                   gutterBottom
                   sx={{
-                    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                    fontFamily:
+                      '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
                     fontWeight: 600,
                     color: '#3a3a3a',
                     mb: 1,
@@ -625,7 +635,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
             <Typography
               variant="h5"
               sx={{
-                fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                fontFamily:
+                  '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
                 fontWeight: 600,
                 color: '#3a3a3a',
               }}
@@ -814,7 +825,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                       variant="h5"
                       gutterBottom
                       sx={{
-                        fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                        fontFamily:
+                          '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
                         fontWeight: 600,
                         color: '#3a3a3a',
                         mb: 2,
@@ -1066,7 +1078,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                     )}
 
                     {/* Recipe Steps section - only show if there are steps or in edit mode */}
-                    {(selectedMeal?.steps && selectedMeal.steps.length > 0) || editMode ? (
+                    {(selectedMeal?.steps && selectedMeal.steps.length > 0) ||
+                    editMode ? (
                       <Box sx={{ mt: 3 }}>
                         <Typography variant="h6" gutterBottom>
                           Recipe Steps
@@ -1147,10 +1160,11 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
             >
               <ArrowBackIcon />
             </IconButton>
-            <Typography 
+            <Typography
               variant="h5"
               sx={{
-                fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                fontFamily:
+                  '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
                 fontWeight: 600,
                 color: '#3a3a3a',
               }}
@@ -1165,7 +1179,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   };
 
   return (
-    <Box 
+    <Box
       data-testid="meal-management-tab"
       sx={{
         backgroundColor: '#F7F5F2', // earthyNeutrals mainBg
