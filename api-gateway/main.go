@@ -35,7 +35,7 @@ import (
 // @contact.email support@swagger.io
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @host localhost:8080
+// @host localhost:8090
 // @BasePath /api
 
 // Response structures for Swagger documentation
@@ -387,7 +387,7 @@ func main() {
 
 	// Swagger UI
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+		httpSwagger.URL("http://localhost:8090/swagger/doc.json"),
 	))
 
 	// Health endpoints
@@ -445,10 +445,10 @@ func main() {
 	r.Get("/api/checkpoints", gw.listCheckpoints)
 
 	if grpcLogger != nil {
-		grpcLogger.LogWithDetails(ctx, "INFO", "API Gateway starting on :8080, connecting to backend gRPC :50051", "", "api-gateway", nil)
+		grpcLogger.LogWithDetails(ctx, "INFO", "API Gateway starting on :8090, connecting to backend gRPC :50051", "", "api-gateway", nil)
 	}
-	log.Println("API Gateway starting on :8080, connecting to backend gRPC :50051")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Println("API Gateway starting on :8090, connecting to backend gRPC :50051")
+	log.Fatal(http.ListenAndServe(":8090", r))
 }
 
 // Health endpoints
@@ -464,51 +464,119 @@ func main() {
 func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
 	log.Printf("🔍 Starting comprehensive health check...")
 	services := make(map[string]bool)
+	
+	maxRetries := 3
+	retryDelay := time.Second
 
-	// Check backend service
+	// Check logging service with retries
+	log.Printf("🔍 Checking logging service...")
+	loggingHealthy := false
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if grpcLogger != nil {
+			if err := grpcLogger.LogWithDetails(r.Context(), "DEBUG", "Health check test message", "", "api-gateway", nil); err != nil {
+				if attempt == maxRetries {
+					log.Printf("❌ Logging service health check failed after %d attempts: %v", maxRetries, err)
+				} else {
+					time.Sleep(retryDelay)
+				}
+			} else {
+				loggingHealthy = true
+				log.Printf("✅ Logging service health check passed")
+				break
+			}
+		} else {
+			if attempt == maxRetries {
+				log.Printf("❌ Logging service client not initialized after retries")
+			}
+			break
+		}
+	}
+	services["logging"] = loggingHealthy
+
+	// Check backend service with retries
 	log.Printf("🔍 Checking backend service...")
-	backendResp, backendErr := gw.backend.HealthCheck(r.Context(), &emptypb.Empty{})
-	if backendErr != nil {
-		log.Printf("❌ Backend health check failed: %v", backendErr)
-	} else if backendResp == nil {
-		log.Printf("❌ Backend health check returned nil response")
-	} else {
-		log.Printf("✅ Backend health check passed")
+	backendHealthy := false
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		backendResp, backendErr := gw.backend.HealthCheck(r.Context(), &emptypb.Empty{})
+		if backendErr != nil {
+			if attempt == maxRetries {
+				log.Printf("❌ Backend health check failed after %d attempts: %v", maxRetries, backendErr)
+			} else {
+				time.Sleep(retryDelay)
+			}
+		} else if backendResp == nil {
+			if attempt == maxRetries {
+				log.Printf("❌ Backend health check returned nil response after %d attempts", maxRetries)
+			} else {
+				time.Sleep(retryDelay)
+			}
+		} else {
+			backendHealthy = true
+			log.Printf("✅ Backend health check passed")
+			break
+		}
 	}
-	services["backend"] = backendErr == nil && backendResp != nil
+	services["backend"] = backendHealthy
 
-	// Check agent service
+	// Check agent service with retries
 	log.Printf("🔍 Checking agent service...")
-	agentResp, agentErr := gw.agent.ListWorkflows(r.Context(), &emptypb.Empty{})
-	if agentErr != nil {
-		log.Printf("❌ Agent health check failed: %v", agentErr)
-	} else if agentResp == nil {
-		log.Printf("❌ Agent health check returned nil response")
-	} else {
-		log.Printf("✅ Agent health check passed")
+	agentHealthy := false
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		agentResp, agentErr := gw.agent.ListWorkflows(r.Context(), &emptypb.Empty{})
+		if agentErr != nil {
+			if attempt == maxRetries {
+				log.Printf("❌ Agent health check failed after %d attempts: %v", maxRetries, agentErr)
+			} else {
+				time.Sleep(retryDelay)
+			}
+		} else if agentResp == nil {
+			if attempt == maxRetries {
+				log.Printf("❌ Agent health check returned nil response after %d attempts", maxRetries)
+			} else {
+				time.Sleep(retryDelay)
+			}
+		} else {
+			agentHealthy = true
+			log.Printf("✅ Agent health check passed")
+			break
+		}
 	}
-	services["agent"] = agentErr == nil && agentResp != nil
+	services["agent"] = agentHealthy
 
-	// Check MCP service
+	// Check MCP service with retries
 	log.Printf("🔍 Checking MCP service...")
 	mcpHealthy := false
-	if mcpResp, err := http.Get("http://localhost:3001/health"); err != nil {
-		log.Printf("❌ MCP health check failed: %v", err)
-	} else {
-		defer mcpResp.Body.Close()
-		mcpHealthy = mcpResp.StatusCode == 200
-		if mcpHealthy {
-			log.Printf("✅ MCP health check passed (status: %d)", mcpResp.StatusCode)
+	mcpAddr := os.Getenv("MCP_SERVICE_ADDR")
+	if mcpAddr == "" {
+		mcpAddr = "localhost:3001"
+	}
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if mcpResp, err := http.Get("http://" + mcpAddr + "/health"); err != nil {
+			if attempt == maxRetries {
+				log.Printf("❌ MCP health check failed after %d attempts: %v", maxRetries, err)
+			} else {
+				time.Sleep(retryDelay)
+			}
 		} else {
-			log.Printf("❌ MCP health check failed (status: %d)", mcpResp.StatusCode)
+			defer mcpResp.Body.Close()
+			if mcpResp.StatusCode == 200 {
+				mcpHealthy = true
+				log.Printf("✅ MCP health check passed (status: %d)", mcpResp.StatusCode)
+				break
+			} else if attempt == maxRetries {
+				log.Printf("❌ MCP health check failed after %d attempts (status: %d)", maxRetries, mcpResp.StatusCode)
+			} else {
+				time.Sleep(retryDelay)
+			}
 		}
 	}
 	services["mcp"] = mcpHealthy
 
 	// Determine overall health
-	allHealthy := services["backend"] && services["agent"] && services["mcp"]
+	allHealthy := services["logging"] && services["backend"] && services["agent"] && services["mcp"]
 
 	log.Printf("📊 Health check summary:")
+	log.Printf("  - Logging: %v", services["logging"])
 	log.Printf("  - Backend: %v", services["backend"])
 	log.Printf("  - Agent: %v", services["agent"])
 	log.Printf("  - MCP: %v", services["mcp"])

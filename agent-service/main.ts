@@ -7,6 +7,7 @@ import { debugLog } from './logging';
 import { MessageRepository } from './database/messages';
 import { CheckpointRepository } from './database/checkpoints';
 import { WorkflowType, MealPlanningState } from './shared/types';
+import { getDatabase } from './database/connection';
 import {
   PlanStartRequest,
   PlanStartResponse,
@@ -652,6 +653,107 @@ function listCheckpoints(
     }
   })();
 }
+
+// Health Check implementation
+function healthCheck(
+  _call: grpc.ServerUnaryCall<any, any>,
+  callback: grpc.sendUnaryData<any>,
+): void {
+  (async () => {
+    try {
+      const healthIssues: string[] = [];
+      let dbHealthy = false;
+      let loggingHealthy = false;
+      let mcpHealthy = false;
+
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second
+
+      // Check database health with retries
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const db = getDatabase();
+          const result = await db.query('SELECT 1');
+          if (result.rows.length > 0) {
+            dbHealthy = true;
+            break;
+          }
+        } catch (error) {
+          if (attempt === maxRetries) {
+            healthIssues.push(`Database connection failed after ${maxRetries} attempts: ${error}`);
+          } else {
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
+        }
+      }
+
+      // Check logging service health with retries
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          await debugLog('Health check test message');
+          loggingHealthy = true;
+          break;
+        } catch (error) {
+          if (attempt === maxRetries) {
+            healthIssues.push(`Logging service connection failed after ${maxRetries} attempts: ${error}`);
+          } else {
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
+        }
+      }
+
+      // Check MCP service health with retries
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const mcpHost = process.env.MCP_HOST || 'localhost';
+          const mcpPort = process.env.MCP_PORT || '3001';
+          const mcpUrl = `http://${mcpHost}:${mcpPort}/health`;
+          
+          const fetch = (await import('node-fetch')).default;
+          const response = await fetch(mcpUrl, { timeout: 5000 });
+          if (response.status === 200) {
+            mcpHealthy = true;
+            break;
+          } else if (attempt === maxRetries) {
+            healthIssues.push(`MCP service returned status: ${response.status} after ${maxRetries} attempts`);
+          }
+        } catch (error) {
+          if (attempt === maxRetries) {
+            healthIssues.push(`MCP service connection failed after ${maxRetries} attempts: ${error}`);
+          } else {
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
+        }
+      }
+
+      if (dbHealthy && loggingHealthy && mcpHealthy) {
+        callback(null, {
+          status: 'ok',
+          message: 'All dependencies healthy',
+          services: {
+            database: true,
+            logging: true,
+            mcp: true
+          }
+        });
+      } else {
+        callback(null, {
+          status: 'error',
+          message: `Health check failed: ${healthIssues.join(', ')}`,
+          services: {
+            database: dbHealthy,
+            logging: loggingHealthy,
+            mcp: mcpHealthy
+          }
+        });
+      }
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      callback(new Error(`Health check error: ${errMsg}`));
+    }
+  })();
+}
+
 // Load the protobuf definition
 const PROTO_PATH = path.join(__dirname, '../../proto/agent.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
@@ -703,6 +805,7 @@ function startServer(): void {
     getCheckpoint,
     putCheckpoint,
     listCheckpoints,
+    healthCheck,
   });
   // Bind and start the server
   server.bindAsync(
