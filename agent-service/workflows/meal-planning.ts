@@ -64,11 +64,13 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     currentState: MealPlanningState,
     updates: Partial<MealPlanningState>,
   ): MealPlanningState {
-    return new MealPlanningCheckpointState({
-      ...currentState,
-      ...updates,
-      updatedAt: Timestamp.fromDate(new Date()),
-    });
+    // Use the generated constructor to clone the existing message so we keep
+    // all proto fields intact (including nested Timestamps). Then overlay the
+    // updates object.
+    const merged = new MealPlanningCheckpointState(currentState);
+    Object.assign(merged as any, updates);
+    merged.updatedAt = Timestamp.fromDate(new Date());
+    return merged;
   }
   /**
    * Add a message to the messages table via direct DB access

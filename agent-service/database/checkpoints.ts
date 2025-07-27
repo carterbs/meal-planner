@@ -5,6 +5,7 @@ import {
   AgentCheckpoint,
   AgentCheckpointMetadata,
 } from '@mealplanner/generated';
+import { errorLog, infoLog } from '../logging';
 export class CheckpointRepository {
   private db: Pool;
   constructor() {
@@ -62,9 +63,11 @@ export class CheckpointRepository {
     const query = `INSERT INTO workflow_checkpoints (thread_id, workflow_type, checkpoint_ns, checkpoint_data, metadata, created_at, updated_at)
       VALUES ($1,$2,$3,$4,$5,NOW(),NOW())
       ON CONFLICT (thread_id, checkpoint_ns) DO UPDATE SET checkpoint_data=EXCLUDED.checkpoint_data, metadata=EXCLUDED.metadata, updated_at=NOW()`;
-    // Serialize to JSON right at the database insert
-    const checkpointJson = JSON.stringify(checkpoint.toJson());
-    const metadataJson = JSON.stringify(metadata.toJson());
+    // Serialize to canonical protobuf-JSON so well-known types like Timestamp
+    // are rendered as RFC-3339 strings instead of {seconds,nanos} objects.
+    // `toJsonString()` is provided by @bufbuild/protobuf Message.
+    const checkpointJson = checkpoint.toJsonString();
+    const metadataJson = metadata.toJsonString();
     await this.db.query(query, [
       threadID,
       workflowType,
@@ -159,8 +162,10 @@ export class CheckpointRepository {
     const query = `SELECT thread_id, workflow_type, checkpoint_data
       FROM workflow_checkpoints
       WHERE checkpoint_ns = 'latest'
-      ORDER BY updated_at DESC`;
-    const result = await this.db.query(query);
+      ORDER BY updated_at DESC
+      LIMIT $1`;
+    const args = [limit];
+    const result = await this.db.query(query, args);
     const seen = new Set<string>();
     const results: WorkflowStatus[] = [];
     for (const row of result.rows) {
@@ -174,20 +179,18 @@ export class CheckpointRepository {
       let participants: string[] = [];
       let currentStep = '';
       try {
-        const raw = JSON.parse(data.toString());
         // Extract participants
-        if (raw.state && Array.isArray(raw.state.participants)) {
-          participants = raw.state.participants.filter(
+        if (data.state && Array.isArray(data.state.participants)) {
+          participants = data.state.participants.filter(
             (p: any) => typeof p === 'string',
           );
         }
-        // Extract currentStep either from top-level "step" or state.currentStep
-        if (raw.step) {
-          currentStep = String(raw.step);
-        } else if (raw.state && raw.state.currentStep) {
-          currentStep = String(raw.state.currentStep);
+        // Extract currentStep either from top-level "step" or state.current_step
+       if (data.state && data.state.currentStep) {
+          currentStep = String(data.state.currentStep);
         }
-      } catch {
+      } catch (e) {
+        await errorLog(`[CHECKPOINT] listWorkflows, error: ${e instanceof Error ? e.message : String(e)}`);
         // skip malformed rows but continue processing others
         continue;
       }
@@ -197,9 +200,6 @@ export class CheckpointRepository {
         current_step: currentStep,
         participants: participants,
       });
-      if (limit > 0 && results.length >= limit) {
-        break;
-      }
     }
     return results;
   }

@@ -547,11 +547,11 @@ function getCheckpoint(
       // Parse checkpoint data and convert to protobuf
       try {
         const checkpointData = JSON.parse(result.checkpoint.toString());
-        const checkpoint = new apipb.AgentCheckpoint(checkpointData);
+        const checkpoint = apipb.AgentCheckpoint.fromJson(checkpointData);
         const metadataData = result.metadata
           ? JSON.parse(result.metadata.toString())
           : {};
-        const metadata = new apipb.AgentCheckpointMetadata(metadataData);
+        const metadata = apipb.AgentCheckpointMetadata.fromJson(metadataData);
         const tuple = new apipb.CheckpointTuple({
           checkpoint: checkpoint,
           metadata: metadata,
@@ -624,7 +624,7 @@ function listCheckpoints(
         let metadata: apipb.AgentCheckpointMetadata;
         try {
           const checkpointData = JSON.parse(entry.checkpoint_data.toString());
-          checkpoint = new apipb.AgentCheckpoint(checkpointData);
+          checkpoint = apipb.AgentCheckpoint.fromJson(checkpointData);
         } catch {
           checkpoint = new apipb.AgentCheckpoint({});
         }
@@ -632,7 +632,7 @@ function listCheckpoints(
           const metadataData = entry.metadata
             ? JSON.parse(entry.metadata.toString())
             : {};
-          metadata = new apipb.AgentCheckpointMetadata(metadataData);
+          metadata = apipb.AgentCheckpointMetadata.fromJson(metadataData);
         } catch {
           metadata = new apipb.AgentCheckpointMetadata({});
         }
