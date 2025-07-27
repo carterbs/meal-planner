@@ -206,9 +206,11 @@ describe('MealManagementTab', () => {
       fireEvent.click(screen.getByText('Test Meal'));
     });
 
-    // Verify meal details are shown (the component should display the meal details)
+    // Verify meal details are shown in the new full-width view
+    // The new UI shows the meal name in the header and "Edit Recipe" button
     await waitFor(() => {
-      expect(screen.getByText('Meal Details')).toBeInTheDocument();
+      expect(screen.getByText('Edit Recipe')).toBeInTheDocument();
+      expect(screen.getByLabelText('back to meals list')).toBeInTheDocument();
     });
   });
 
@@ -288,5 +290,41 @@ describe('MealManagementTab', () => {
     expect(screen.getByText('Meal Library')).toBeInTheDocument();
     expect(screen.getByText('Browse Meals')).toBeInTheDocument();
     expect(screen.getByText('Add New Recipe')).toBeInTheDocument();
+  });
+
+  test('navigates from meal details back to meals list', async () => {
+    await act(async () => {
+      render(<MealManagementTab showToast={mockShowToast} />);
+    });
+
+    // Navigate to browse meals
+    await act(async () => {
+      fireEvent.click(screen.getByText('Browse Meals'));
+    });
+
+    // Wait for meals to load and click on a meal
+    await waitFor(() => {
+      expect(screen.getByText('Test Meal')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Test Meal'));
+    });
+
+    // Verify we're in the meal edit view
+    await waitFor(() => {
+      expect(screen.getByLabelText('back to meals list')).toBeInTheDocument();
+    });
+
+    // Click back to meals list
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('back to meals list'));
+    });
+
+    // Verify we're back to the meals list (not the main menu)
+    await waitFor(() => {
+      expect(screen.getByText('Available Meals')).toBeInTheDocument();
+      expect(screen.getByLabelText('back to main menu')).toBeInTheDocument();
+    });
   });
 });

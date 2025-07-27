@@ -608,6 +608,12 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
   // Render the browse meals view
   const renderBrowseView = () => {
+    // If a meal is selected, show the full-width editing view
+    if (selectedMeal) {
+      return renderMealEditView();
+    }
+
+    // Otherwise show the full-width meals list
     return (
       <Fade in={true}>
         <Box
@@ -645,498 +651,489 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
             </Typography>
           </Stack>
 
-          <Grid container spacing={3} sx={{ flexGrow: 1, height: '100%' }}>
-            <Grid
-              item
-              xs={12}
-              md={6}
-              sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+          {/* Full-width meals list */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{
+                fontWeight: 600,
+                mb: 2,
+              }}
             >
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  fontWeight: 600,
-                  mb: 2,
-                }}
-              >
-                Available Meals
-              </Typography>
-              <Box sx={{ mb: 2 }}>
-                <TextField
-                  label="Search Meals"
-                  variant="outlined"
-                  size="small"
-                  value={mealFilter}
-                  onChange={(e) => setMealFilter(e.target.value)}
-                  fullWidth
-                  sx={{ mb: 2 }}
-                  InputProps={{
-                    sx: {
-                      borderRadius: 2,
-                      bgcolor: 'background.paper',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: alpha(theme.palette.primary.main, 0.2),
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: theme.palette.primary.main,
-                      },
+              Available Meals
+            </Typography>
+            <Box sx={{ mb: 2 }}>
+              <TextField
+                label="Search Meals"
+                variant="outlined"
+                size="small"
+                value={mealFilter}
+                onChange={(e) => setMealFilter(e.target.value)}
+                fullWidth
+                sx={{ mb: 2 }}
+                InputProps={{
+                  sx: {
+                    borderRadius: 2,
+                    bgcolor: 'background.paper',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: alpha(theme.palette.primary.main, 0.2),
                     },
-                  }}
-                />
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {mealTypes.map((type) => (
-                    <Button
-                      key={type}
-                      variant={
-                        mealTypeFilter === type ? 'contained' : 'outlined'
-                      }
-                      onClick={() => setMealTypeFilter(type)}
-                      size="small"
-                    >
-                      {type}
-                    </Button>
-                  ))}
-                </Box>
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: theme.palette.primary.main,
+                    },
+                  },
+                }}
+              />
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {mealTypes.map((type) => (
+                  <Button
+                    key={type}
+                    variant={
+                      mealTypeFilter === type ? 'contained' : 'outlined'
+                    }
+                    onClick={() => setMealTypeFilter(type)}
+                    size="small"
+                  >
+                    {type}
+                  </Button>
+                ))}
               </Box>
-              <Paper
+            </Box>
+            <Paper
+              sx={{
+                flexGrow: 1,
+                width: '100%',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                border: '1px solid #e0e4e0',
+                borderRadius: 2,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '500px',
+                backgroundColor: '#ffffff',
+              }}
+            >
+              <DataGrid
+                rows={filteredMeals}
+                columns={columns}
+                getRowId={(row) => row.id}
+                initialState={{
+                  sorting: {
+                    sortModel: [{ field: 'name', sort: 'asc' }],
+                  },
+                  pagination: {
+                    paginationModel: { pageSize: 10 },
+                  },
+                }}
+                onRowClick={(params) => {
+                  const meal = meals.find((m) => m.id === params.id);
+                  if (meal) setSelectedMeal(meal);
+                }}
+                rowSelection={false}
+                disableRowSelectionOnClick
+                pageSizeOptions={[5, 10, 25]}
+                pagination={true}
                 sx={{
                   flexGrow: 1,
-                  width: '100%',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                  border: '1px solid #e0e4e0',
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: '500px',
-                  backgroundColor: '#ffffff',
-                }}
-              >
-                <DataGrid
-                  rows={filteredMeals}
-                  columns={columns}
-                  getRowId={(row) => row.id}
-                  initialState={{
-                    sorting: {
-                      sortModel: [{ field: 'name', sort: 'asc' }],
-                    },
-                    pagination: {
-                      paginationModel: { pageSize: 10 },
-                    },
-                  }}
-                  onRowClick={(params) => {
-                    const meal = meals.find((m) => m.id === params.id);
-                    if (meal) setSelectedMeal(meal);
-                  }}
-                  rowSelection={false}
-                  disableRowSelectionOnClick
-                  pageSizeOptions={[5, 10, 25]}
-                  pagination={true}
-                  sx={{
-                    flexGrow: 1,
-                    '& .MuiDataGrid-row:hover': {
-                      cursor: 'pointer',
-                      backgroundColor: '#f7f4f2',
-                      boxShadow: 'none',
-                      transition: 'background-color 0.2s ease',
-                    },
-                    '& .MuiDataGrid-row.Mui-selected': {
-                      backgroundColor: '#c9e0c2',
-                    },
-                    '& .MuiDataGrid-cell': {
-                      textDecoration: 'none',
-                      borderBottom: '1px solid #e0e4e0',
+                  '& .MuiDataGrid-row:hover': {
+                    cursor: 'pointer',
+                    backgroundColor: '#f7f4f2',
+                    boxShadow: 'none',
+                    transition: 'background-color 0.2s ease',
+                  },
+                  '& .MuiDataGrid-row.Mui-selected': {
+                    backgroundColor: '#c9e0c2',
+                  },
+                  '& .MuiDataGrid-cell': {
+                    textDecoration: 'none',
+                    borderBottom: '1px solid #e0e4e0',
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                  },
+                  '& .MuiDataGrid-row:focus, & .MuiDataGrid-cell:focus': {
+                    outline: 'none',
+                  },
+                  '& .MuiDataGrid-row': {
+                    boxShadow: 'none',
+                  },
+                  border: 'none',
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: '#f7f4f2',
+                    borderBottom: '1px solid #e0e4e0',
+                    '& .MuiDataGrid-columnHeader': {
                       padding: '12px 16px',
+                    },
+                    '& .MuiDataGrid-columnHeaderTitle': {
+                      fontWeight: 600,
+                      color: '#3a3a3a',
                       fontSize: '14px',
                     },
-                    '& .MuiDataGrid-row:focus, & .MuiDataGrid-cell:focus': {
-                      outline: 'none',
-                    },
-                    '& .MuiDataGrid-row': {
-                      boxShadow: 'none',
-                    },
-                    border: 'none',
-                    '& .MuiDataGrid-columnHeaders': {
-                      backgroundColor: '#f7f4f2',
-                      borderBottom: '1px solid #e0e4e0',
-                      '& .MuiDataGrid-columnHeader': {
-                        padding: '12px 16px',
-                      },
-                      '& .MuiDataGrid-columnHeaderTitle': {
-                        fontWeight: 600,
-                        color: '#3a3a3a',
-                        fontSize: '14px',
-                      },
-                    },
-                    '& .MuiDataGrid-footerContainer': {
-                      borderTop: '1px solid #e0e4e0',
-                    },
-                  }}
-                />
-              </Paper>
-            </Grid>
+                  },
+                  '& .MuiDataGrid-footerContainer': {
+                    borderTop: '1px solid #e0e4e0',
+                  },
+                }}
+              />
+            </Paper>
+          </Box>
+        </Box>
+      </Fade>
+    );
+  };
 
-            {selectedMeal && (
-              <Grid
-                item
-                xs={12}
-                md={6}
-                sx={{ display: 'flex', flexDirection: 'column' }}
+  // Render the full-width meal editing view
+  const renderMealEditView = () => {
+    if (!selectedMeal) return null;
+
+    return (
+      <Fade in={true}>
+        <Box
+          sx={{
+            py: 3,
+            px: 3,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+            <IconButton
+              onClick={() => setSelectedMeal(null)}
+              aria-label="back to meals list"
+              sx={{
+                color: '#6b8c5d',
+                '&:hover': {
+                  backgroundColor: 'rgba(107, 140, 93, 0.1)',
+                },
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography
+              variant="h5"
+              sx={{
+                fontFamily:
+                  '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+                fontWeight: 600,
+                color: '#3a3a3a',
+              }}
+            >
+              {selectedMeal.name}
+            </Typography>
+            <Box sx={{ flexGrow: 1 }} />
+            <Button
+              variant={editMode ? 'outlined' : 'contained'}
+              color={editMode ? 'secondary' : 'primary'}
+              onClick={toggleEditMode}
+              startIcon={editMode ? null : <EditIcon />}
+            >
+              {editMode ? 'Done' : 'Edit Recipe'}
+            </Button>
+          </Stack>
+
+          {/* Full-width recipe details */}
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              borderColor: '#e0e4e0',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+              flexGrow: 1,
+              backgroundColor: '#ffffff',
+            }}
+          >
+            <CardContent sx={{ p: 4 }}>
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{
+                  mb: 3,
+                  flexWrap: 'wrap',
+                  gap: 1,
+                }}
               >
                 <Box
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    mb: 2,
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    color: theme.palette.primary.main,
+                    py: 0.5,
+                    px: 1.5,
+                    borderRadius: 4,
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
                   }}
                 >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 600,
-                    }}
-                  >
-                    Meal Details
-                  </Typography>
-                  <Button
-                    variant={editMode ? 'outlined' : 'contained'}
-                    color={editMode ? 'secondary' : 'primary'}
-                    onClick={toggleEditMode}
-                    startIcon={editMode ? null : <EditIcon />}
-                  >
-                    {editMode ? 'Done' : 'Edit Recipe'}
-                  </Button>
+                  Effort Level: {selectedMeal.effort}
                 </Box>
-                <Card
-                  variant="outlined"
+                <Box
                   sx={{
-                    borderRadius: 2,
-                    borderColor: '#e0e4e0',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                    height: '100%',
-                    backgroundColor: '#ffffff',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    bgcolor: selectedMeal.hasRedMeat
+                      ? alpha(theme.palette.secondary.main, 0.08)
+                      : alpha(theme.palette.success.main, 0.08),
+                    color: selectedMeal.hasRedMeat
+                      ? theme.palette.secondary.main
+                      : theme.palette.success.main,
+                    py: 0.5,
+                    px: 1.5,
+                    borderRadius: 4,
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
                   }}
                 >
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography
-                      variant="h5"
-                      gutterBottom
-                      sx={{
-                        fontFamily:
-                          '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-                        fontWeight: 600,
-                        color: '#3a3a3a',
-                        mb: 2,
-                        fontSize: '18px',
-                      }}
-                    >
-                      {selectedMeal.name}
-                    </Typography>
+                  {selectedMeal.hasRedMeat
+                    ? '🥩 Red Meat'
+                    : '🥗 No Red Meat'}
+                </Box>
+              </Stack>
 
-                    <Stack
-                      direction="row"
-                      spacing={2}
-                      sx={{
-                        mb: 3,
-                        flexWrap: 'wrap',
-                        gap: 1,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          bgcolor: alpha(theme.palette.primary.main, 0.08),
-                          color: theme.palette.primary.main,
-                          py: 0.5,
-                          px: 1.5,
-                          borderRadius: 4,
-                          fontWeight: 500,
-                          fontSize: '0.875rem',
-                        }}
-                      >
-                        Effort Level: {selectedMeal.effort}
-                      </Box>
-                      <Box
-                        sx={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          bgcolor: selectedMeal.hasRedMeat
-                            ? alpha(theme.palette.secondary.main, 0.08)
-                            : alpha(theme.palette.success.main, 0.08),
-                          color: selectedMeal.hasRedMeat
-                            ? theme.palette.secondary.main
-                            : theme.palette.success.main,
-                          py: 0.5,
-                          px: 1.5,
-                          borderRadius: 4,
-                          fontWeight: 500,
-                          fontSize: '0.875rem',
-                        }}
-                      >
-                        {selectedMeal.hasRedMeat
-                          ? '🥩 Red Meat'
-                          : '🥗 No Red Meat'}
-                      </Box>
-                    </Stack>
+              {selectedMeal.url && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  href={selectedMeal.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ mb: 3 }}
+                >
+                  View Recipe Online
+                </Button>
+              )}
 
-                    {selectedMeal.url && (
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        href={selectedMeal.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{ mb: 2 }}
-                      >
-                        View Recipe Online
-                      </Button>
-                    )}
+              <Divider sx={{ my: 3 }} />
 
-                    <Divider sx={{ my: 3 }} />
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: theme.palette.text.primary,
+                  }}
+                >
+                  Ingredients:
+                </Typography>
+                {editMode && (
+                  <Button
+                    variant="outlined"
+                    onClick={addIngredient}
+                    startIcon={<AddIcon />}
+                    size="small"
+                  >
+                    Add Ingredient
+                  </Button>
+                )}
+              </Box>
 
+              {selectedMeal.ingredients.length > 0 ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1.5,
+                    mt: 2,
+                    mb: 4,
+                  }}
+                >
+                  {selectedMeal.ingredients.map((ing, index) => (
                     <Box
+                      key={ing.id || index}
                       sx={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        mb: 2,
+                        mb: 1.5,
+                        p: 2,
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: alpha(
+                          theme.palette.primary.main,
+                          0.1,
+                        ),
+                        boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.05)}`,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: alpha(
+                            theme.palette.primary.main,
+                            0.3,
+                          ),
+                          boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.08)}`,
+                        },
                       }}
                     >
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 600,
-                          color: theme.palette.text.primary,
-                        }}
-                      >
-                        Ingredients:
-                      </Typography>
-                      {editMode && (
-                        <Button
-                          variant="outlined"
-                          onClick={addIngredient}
-                          startIcon={<AddIcon />}
-                          size="small"
-                        >
-                          Add Ingredient
-                        </Button>
-                      )}
-                    </Box>
-
-                    {selectedMeal.ingredients.length > 0 ? (
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 1.5,
-                          mt: 2,
-                        }}
-                      >
-                        {selectedMeal.ingredients.map((ing, index) => (
+                      {editMode && editingIngredientIndex === index ? (
+                        <Box sx={{ width: '100%' }}>
+                          <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                              <TextField
+                                label="name"
+                                size="small"
+                                fullWidth
+                                value={editedIngredient?.name || ''}
+                                onChange={(e) =>
+                                  handleIngredientChange(
+                                    'name',
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={3}>
+                              <TextField
+                                label="quantity"
+                                size="small"
+                                type="number"
+                                fullWidth
+                                value={editedIngredient?.quantity || 0}
+                                onChange={(e) =>
+                                  handleIngredientChange(
+                                    'quantity',
+                                    parseFloat(e.target.value),
+                                  )
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={3}>
+                              <TextField
+                                label="unit"
+                                size="small"
+                                fullWidth
+                                value={editedIngredient?.unit || ''}
+                                onChange={(e) =>
+                                  handleIngredientChange(
+                                    'unit',
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                            </Grid>
+                          </Grid>
                           <Box
-                            key={ing.id || index}
                             sx={{
                               display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              mb: 1.5,
-                              p: 2,
-                              borderRadius: 2,
-                              bgcolor: 'background.paper',
-                              border: '1px solid',
-                              borderColor: alpha(
-                                theme.palette.primary.main,
-                                0.1,
-                              ),
-                              boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.05)}`,
-                              transition: 'all 0.2s ease',
-                              '&:hover': {
-                                borderColor: alpha(
-                                  theme.palette.primary.main,
-                                  0.3,
-                                ),
-                                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.08)}`,
-                              },
+                              gap: 1,
+                              justifyContent: 'flex-end',
+                              mt: 1,
                             }}
                           >
-                            {editMode && editingIngredientIndex === index ? (
-                              <Box sx={{ width: '100%' }}>
-                                <Grid container spacing={2}>
-                                  <Grid item xs={6}>
-                                    <TextField
-                                      label="name"
-                                      size="small"
-                                      fullWidth
-                                      value={editedIngredient?.name || ''}
-                                      onChange={(e) =>
-                                        handleIngredientChange(
-                                          'name',
-                                          e.target.value,
-                                        )
-                                      }
-                                    />
-                                  </Grid>
-                                  <Grid item xs={3}>
-                                    <TextField
-                                      label="quantity"
-                                      size="small"
-                                      type="number"
-                                      fullWidth
-                                      value={editedIngredient?.quantity || 0}
-                                      onChange={(e) =>
-                                        handleIngredientChange(
-                                          'quantity',
-                                          parseFloat(e.target.value),
-                                        )
-                                      }
-                                    />
-                                  </Grid>
-                                  <Grid item xs={3}>
-                                    <TextField
-                                      label="unit"
-                                      size="small"
-                                      fullWidth
-                                      value={editedIngredient?.unit || ''}
-                                      onChange={(e) =>
-                                        handleIngredientChange(
-                                          'unit',
-                                          e.target.value,
-                                        )
-                                      }
-                                    />
-                                  </Grid>
-                                </Grid>
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    gap: 1,
-                                    justifyContent: 'flex-end',
-                                    mt: 1,
-                                  }}
-                                >
-                                  <Button
-                                    variant="contained"
-                                    color="primary"
-                                    onClick={saveIngredient}
-                                    sx={{ borderRadius: 6 }}
-                                  >
-                                    Save
-                                  </Button>
-                                  <Button
-                                    variant="outlined"
-                                    onClick={cancelIngredientEdit}
-                                    sx={{ borderRadius: 6 }}
-                                  >
-                                    Cancel
-                                  </Button>
-                                </Box>
-                              </Box>
-                            ) : (
-                              <>
-                                <Typography fontWeight={500}>
-                                  {`${ing.quantity ? ing.quantity + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`.trim()}
-                                </Typography>
-                                {editMode && (
-                                  <Box sx={{ display: 'flex', gap: 1 }}>
-                                    <Button
-                                      variant="outlined"
-                                      onClick={() => startEditing(ing)}
-                                      data-testid={`edit-ingredient-${ing.id}`}
-                                      size="small"
-                                      sx={{ borderRadius: 6 }}
-                                    >
-                                      Edit
-                                    </Button>
-                                    <Button
-                                      variant="outlined"
-                                      color="error"
-                                      onClick={() => deleteIngredient(ing.id!)}
-                                      size="small"
-                                      sx={{ borderRadius: 6 }}
-                                    >
-                                      Delete
-                                    </Button>
-                                  </Box>
-                                )}
-                              </>
-                            )}
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={saveIngredient}
+                              sx={{ borderRadius: 6 }}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              onClick={cancelIngredientEdit}
+                              sx={{ borderRadius: 6 }}
+                            >
+                              Cancel
+                            </Button>
                           </Box>
-                        ))}
-                      </Box>
-                    ) : (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mt: 1, mb: 3, fontStyle: 'italic' }}
-                      >
-                        No ingredients added yet.
-                      </Typography>
-                    )}
-
-                    {/* Recipe Steps section - only show if there are steps or in edit mode */}
-                    {(selectedMeal?.steps && selectedMeal.steps.length > 0) ||
-                    editMode ? (
-                      <Box sx={{ mt: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                          Recipe Steps
-                        </Typography>
-
-                        {selectedMeal ? (
-                          <>
-                            <StepsEditor
-                              steps={selectedMeal.steps || []}
-                              onChange={(updatedSteps) => {
-                                if (editMode) {
-                                  setSelectedMeal({
-                                    ...selectedMeal,
-                                    steps: updatedSteps,
-                                  });
-                                }
-                              }}
-                              readOnly={!editMode}
-                            />
-                            {editMode && (
-                              <Box
-                                sx={{
-                                  mt: 2,
-                                  display: 'flex',
-                                  justifyContent: 'flex-end',
-                                }}
+                        </Box>
+                      ) : (
+                        <>
+                          <Typography fontWeight={500}>
+                            {`${ing.quantity ? ing.quantity + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`.trim()}
+                          </Typography>
+                          {editMode && (
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Button
+                                variant="outlined"
+                                onClick={() => startEditing(ing)}
+                                data-testid={`edit-ingredient-${ing.id}`}
+                                size="small"
+                                sx={{ borderRadius: 6 }}
                               >
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  onClick={() =>
-                                    handleSaveSteps(
-                                      selectedMeal.id!,
-                                      selectedMeal.steps || [],
-                                    )
-                                  }
-                                  disabled={loading}
-                                >
-                                  Save Steps
-                                </Button>
-                              </Box>
-                            )}
-                          </>
-                        ) : (
-                          <StepsEditor
-                            steps={[]}
-                            readOnly={true}
-                            onChange={() => {}}
-                          />
-                        )}
-                      </Box>
-                    ) : null}
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
-          </Grid>
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={() => deleteIngredient(ing.id!)}
+                                size="small"
+                                sx={{ borderRadius: 6 }}
+                              >
+                                Delete
+                              </Button>
+                            </Box>
+                          )}
+                        </>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1, mb: 4, fontStyle: 'italic' }}
+                >
+                  No ingredients added yet.
+                </Typography>
+              )}
+
+              {/* Recipe Steps section - only show if there are steps or in edit mode */}
+              {(selectedMeal?.steps && selectedMeal.steps.length > 0) ||
+              editMode ? (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Recipe Steps
+                  </Typography>
+
+                  <StepsEditor
+                    steps={selectedMeal.steps || []}
+                    onChange={(updatedSteps) => {
+                      if (editMode) {
+                        setSelectedMeal({
+                          ...selectedMeal,
+                          steps: updatedSteps,
+                        });
+                      }
+                    }}
+                    readOnly={!editMode}
+                  />
+                  {editMode && (
+                    <Box
+                      sx={{
+                        mt: 2,
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() =>
+                          handleSaveSteps(
+                            selectedMeal.id!,
+                            selectedMeal.steps || [],
+                          )
+                        }
+                        disabled={loading}
+                      >
+                        Save Steps
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+              ) : null}
+            </CardContent>
+          </Card>
         </Box>
       </Fade>
     );
