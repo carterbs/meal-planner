@@ -214,9 +214,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   async initialize(): Promise<void> {
     await infoLog('MealPlanningWorkflow.initialize called');
     const isCodex = process.argv.includes('--codex');
-    // Connect to MCP server
-    // Always connect to the already-running MCP server (launched independently by yarn start:mcp)
-    // No longer launch MCP server as child process since agent is now a long-running service
     await infoLog(
       `🍽️ [MEAL-WORKFLOW] Starting to initialize meal planning workflow`,
     );

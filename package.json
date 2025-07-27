@@ -12,9 +12,8 @@
         "agent-service"
     ],
     "scripts": {
-        "generate_code": "./scripts/generate_code.sh",
-        "start": "yarn kill:servers &&node scripts/start.js",
         "dev": "docker-compose up -d && cd ui && yarn start",
+        "generate_code": "./scripts/generate_code.sh",
         "dev:rebuild": "docker-compose down && yarn generate_code && docker-compose build && docker-compose up -d && cd ui && yarn start",
         "dev:logs": "docker-compose logs -f",
         "dev:down": "docker-compose down",
