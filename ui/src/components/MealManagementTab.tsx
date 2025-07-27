@@ -329,6 +329,12 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     fetchMeals();
   }, [mealTypeFilter]);
 
+  // Fetch fresh meals whenever we land on the browse view
+  useEffect(() => {
+    if (currentView === 'browse') {
+      fetchMeals();
+    }
+  }, [currentView]);
   // Filter meals based on search term
   const filteredMeals = meals.filter((meal) =>
     meal.name.toLowerCase().includes(mealFilter.toLowerCase()),
