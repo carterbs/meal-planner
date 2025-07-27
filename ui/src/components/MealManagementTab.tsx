@@ -424,8 +424,10 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     if (editMode && selectedMeal) {
       setEditingIngredientIndex(-1);
       setEditedIngredient(null);
-      // Save the current meal state when exiting edit mode
-      handleUpdateMeal(selectedMeal);
+      // Save the current meal state when exiting edit mode and then navigate back to the list
+      handleUpdateMeal(selectedMeal).then(() => {
+        setSelectedMeal(null);
+      });
     }
     setEditMode(!editMode);
   };
