@@ -196,12 +196,17 @@ function startAgentWorkflow(
         request.participants,
       );
       const state = await agent.getWorkflowState(threadId);
+      
+      const stateString = typeof (state as any).toJsonString === 'function' 
+        ? (state as any).toJsonString({ emitDefaultValues: true }) 
+        : JSON.stringify(state);
+      
       const resp = new apipb.AgentResponse({
         success: true,
         message: 'Workflow started',
         threadId,
         currentStep: state.currentStep,
-        initialState: state.toJsonString(),
+        initialState: stateString,
       });
       callback(null, new apipb.StartAgentWorkflowResponse({ response: resp }));
     } catch (error) {
@@ -687,85 +692,81 @@ function healthCheck(
   })();
 }
 
-// Only load protobuf and start server when not in test environment
-if (process.env.NODE_ENV !== 'test') {
-  // Load the protobuf definition
-  const PROTO_PATH = path.join(__dirname, '../../proto/agent.proto');
-  const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
-    longs: String,
-    enums: String,
-    defaults: true,
-    oneofs: true,
-  });
-  interface ProtoGrpcType {
-    agent: {
-      AgentService: {
-        service: grpc.ServiceDefinition;
-      };
+// Load the protobuf definition
+const PROTO_PATH = path.join(__dirname, '../../proto/agent.proto');
+const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
+  longs: String,
+  enums: String,
+  defaults: true,
+  oneofs: true,
+});
+interface ProtoGrpcType {
+  agent: {
+    AgentService: {
+      service: grpc.ServiceDefinition;
     };
-  }
-  const protoDescriptor = grpc.loadPackageDefinition(
-    packageDefinition,
-  ) as unknown as ProtoGrpcType;
-  const agentProto = protoDescriptor.agent;
-  // Start the gRPC server
-  function startServer(): void {
-    const server = new grpc.Server({
-      'grpc.keepalive_time_ms': 30000,
-      'grpc.keepalive_timeout_ms': 5000,
-      'grpc.keepalive_permit_without_calls': 1,
-      'grpc.http2.max_pings_without_data': 0,
-      'grpc.http2.min_time_between_pings_ms': 10000,
-      'grpc.http2.min_ping_interval_without_data_ms': 300000,
-      'grpc.max_receive_message_length': 4 * 1024 * 1024,
-      'grpc.max_send_message_length': 4 * 1024 * 1024,
+  };
+}
+const protoDescriptor = grpc.loadPackageDefinition(
+  packageDefinition,
+) as unknown as ProtoGrpcType;
+const agentProto = protoDescriptor.agent;
+// Start the gRPC server
+function startServer(): void {
+  const server = new grpc.Server({
+    'grpc.keepalive_time_ms': 30000,
+    'grpc.keepalive_timeout_ms': 5000,
+    'grpc.keepalive_permit_without_calls': 1,
+    'grpc.http2.max_pings_without_data': 0,
+    'grpc.http2.min_time_between_pings_ms': 10000,
+    'grpc.http2.min_ping_interval_without_data_ms': 300000,
+    'grpc.max_receive_message_length': 4 * 1024 * 1024,
+    'grpc.max_send_message_length': 4 * 1024 * 1024,
+  });
+  const port = process.env.AGENT_SERVICE_PORT || '50053';
+  server.addService(agentProto.AgentService.service, {
+    planStart,
+    planFeedback,
+    planFinalize,
+    resumeWorkflow,
+    startAgentWorkflow,
+    messageAgent,
+    getWorkflowStatus,
+    listWorkflows,
+    cancelWorkflow,
+    getWorkflowState,
+    abandonWorkflow,
+    getMessages,
+    addMessage,
+    updateSessionState,
+    getCheckpoint,
+    putCheckpoint,
+    listCheckpoints,
+    healthCheck,
+  });
+  server.bindAsync(
+    `0.0.0.0:${port}`,
+    grpc.ServerCredentials.createInsecure(),
+    async (err, port) => {
+      if (err) {
+        await debugLog(`Failed to start server: ${err.message}`);
+        return;
+      }
+      await debugLog(`🚀 Agent service started on port ${port}`);
+    },
+  );
+  process.on('SIGINT', async () => {
+    await debugLog('Shutting down agent service...');
+    server.tryShutdown(async (err) => {
+      if (err) {
+        await debugLog(`Error during shutdown: ${err.message}`);
+        server.forceShutdown();
+      }
+      process.exit(0);
     });
-    const port = process.env.AGENT_SERVICE_PORT || '50053';
-    // Add the service implementation
-    server.addService(agentProto.AgentService.service, {
-      planStart,
-      planFeedback,
-      planFinalize,
-      resumeWorkflow,
-      startAgentWorkflow,
-      messageAgent,
-      getWorkflowStatus,
-      listWorkflows,
-      cancelWorkflow,
-      getWorkflowState,
-      abandonWorkflow,
-      getMessages,
-      addMessage,
-      updateSessionState,
-      getCheckpoint,
-      putCheckpoint,
-      listCheckpoints,
-      healthCheck,
-    });
-    // Bind and start the server
-    server.bindAsync(
-      `0.0.0.0:${port}`,
-      grpc.ServerCredentials.createInsecure(),
-      async (err, port) => {
-        if (err) {
-          await debugLog(`Failed to start server: ${err.message}`);
-          return;
-        }
-        await debugLog(`🚀 Agent service started on port ${port}`);
-      },
-    );
-    // Handle graceful shutdown
-    process.on('SIGINT', async () => {
-      await debugLog('Shutting down agent service...');
-      server.tryShutdown(async (err) => {
-        if (err) {
-          await debugLog(`Error during shutdown: ${err.message}`);
-          server.forceShutdown();
-        }
-        process.exit(0);
-      });
-    });
-  }
-  // Start the server
+  });
+}
+// Only start the server when this file is run directly
+if (require.main === module) {
   startServer();
 }

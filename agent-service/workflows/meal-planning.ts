@@ -336,7 +336,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             await infoLog(JSON.stringify(checkpoint.state.mealPlan, null, 2));
             this.coerceDates(checkpoint.state.mealPlan);
             deserializedMealPlan = WeeklyMealPlan.fromJson(
-              checkpoint.state.mealPlan.toJson(),
+              checkpoint.state.mealPlan.toJson()
             );
             // DEBUGGING: Log mealPlan after deserialization
             await infoLog(

@@ -305,8 +305,11 @@ func writeJSONResponse(w http.ResponseWriter, msg interface{}, err error) {
 		return
 	}
 
-	// Use protojson for consistent serialization
-	b, marshalErr := protojson.Marshal(msg.(proto.Message))
+	// Use protojson for consistent serialization with EmitDefaultValues to include dayIndex: 0
+	marshalOpts := protojson.MarshalOptions{
+		EmitDefaultValues: true,
+	}
+	b, marshalErr := marshalOpts.Marshal(msg.(proto.Message))
 	if marshalErr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		errorResp := map[string]string{"error": "Failed to marshal response"}

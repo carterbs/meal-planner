@@ -1,5 +1,4 @@
 import * as grpc from '@grpc/grpc-js';
-import * as path from 'path';
 import { LangGraphAgent } from './langgraph-agent';
 import { debugLog } from './logging';
 import { WorkflowType, MealPlanningState } from './shared/types';
@@ -16,13 +15,6 @@ async function initializeAgent(): Promise<LangGraphAgent> {
     await agentInstance.initialize();
   }
   return agentInstance;
-}
-
-// Validate UUID thread IDs
-function validateThreadId(threadId: string): boolean {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(threadId);
 }
 
 export function planStart(
@@ -52,22 +44,9 @@ export function planStart(
         await debugLog(`Failed to fetch initial workflow state: ${e}`);
         return callback(e as Error);
       }
-      // Serialize initial state and fill missing dayIndex defaults
-      let rawStateJson: string;
-      if (typeof (initialState as any).toJsonString === 'function') {
-        rawStateJson = (initialState as any).toJsonString();
-      } else {
-        rawStateJson = JSON.stringify(initialState);
-      }
-      const parsed: any = JSON.parse(rawStateJson);
-      if (parsed.mealPlan?.days && Array.isArray(parsed.mealPlan.days)) {
-        parsed.mealPlan.days.forEach((day: any, idx: number) => {
-          if (day.dayIndex === undefined || !day.hasOwnProperty('dayIndex')) {
-            day.dayIndex = idx;
-          }
-        });
-      }
-      const stateString = JSON.stringify(parsed);
+      const stateString = typeof (initialState as any).toJsonString === 'function' 
+        ? (initialState as any).toJsonString({ emitDefaultValues: true }) 
+        : JSON.stringify(initialState);
       const response = new PlanStartResponse({
         success: true,
         message: 'Meal planning session started',

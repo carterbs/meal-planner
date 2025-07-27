@@ -14,7 +14,7 @@ export async function doSwapMeal(dayIndex: number): Promise<SwapMealResponse> {
     const resp = await fetch(`${API}/api/meals/swap`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData.toJson())
+        body: JSON.stringify(requestData.toJson({ emitDefaultValues: true }))
     });
     if (!resp.ok) {
         throw new McpError(-32000, `BackendError: ${resp.statusText}`);
