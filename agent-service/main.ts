@@ -36,7 +36,7 @@ function validateThreadId(threadId: string): boolean {
   return uuidRegex.test(threadId);
 }
 // Plan Start implementation
-function planStart(
+export function planStart(
   call: grpc.ServerUnaryCall<PlanStartRequest, PlanStartResponse>,
   callback: grpc.sendUnaryData<PlanStartResponse>,
 ): void {
@@ -65,16 +65,11 @@ function planStart(
       }
       // Serialize initial state to JSON and ensure dayIndex defaults are set
       const rawStateJson = initialState.toJsonString();
-      let parsedState: any;
-      try {
-        parsedState = JSON.parse(rawStateJson);
-      } catch (e) {
-        // Fallback to empty state if parsing fails
-        parsedState = {};
-      }
+      let parsedState: MealPlanningState;
+      parsedState = JSON.parse(rawStateJson);
       if (parsedState.mealPlan?.days && Array.isArray(parsedState.mealPlan.days)) {
         parsedState.mealPlan.days.forEach((day: any, idx: number) => {
-          if (day.dayIndex === undefined) {
+          if (day.dayIndex === undefined || !day.hasOwnProperty('dayIndex')) {
             day.dayIndex = idx;
           }
         });
@@ -707,7 +702,7 @@ function healthCheck(
         const mcpHost = process.env.MCP_HOST || 'localhost';
         const mcpPort = process.env.MCP_PORT || '3001';
         const mcpUrl = `http://${mcpHost}:${mcpPort}/health`;
-        
+
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(mcpUrl, { timeout: 2000 }); // 2 second timeout
         if (response.status === 200) {
