@@ -1860,6 +1860,86 @@ export class DeleteMealIngredientResponse extends Message$1<DeleteMealIngredient
 }
 
 /**
+ * @generated from message mealplanner.api.UpdateMealRequest
+ */
+export class UpdateMealRequest extends Message$1<UpdateMealRequest> {
+  /**
+   * @generated from field: int32 meal_id = 1;
+   */
+  mealId = 0;
+
+  /**
+   * @generated from field: mealplanner.api.Meal meal = 2;
+   */
+  meal?: Meal;
+
+  constructor(data?: PartialMessage<UpdateMealRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "mealplanner.api.UpdateMealRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "meal_id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "meal", kind: "message", T: Meal },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateMealRequest {
+    return new UpdateMealRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateMealRequest {
+    return new UpdateMealRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateMealRequest {
+    return new UpdateMealRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateMealRequest | PlainMessage<UpdateMealRequest> | undefined, b: UpdateMealRequest | PlainMessage<UpdateMealRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateMealRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message mealplanner.api.UpdateMealResponse
+ */
+export class UpdateMealResponse extends Message$1<UpdateMealResponse> {
+  /**
+   * @generated from field: mealplanner.api.Meal meal = 1;
+   */
+  meal?: Meal;
+
+  constructor(data?: PartialMessage<UpdateMealResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "mealplanner.api.UpdateMealResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "meal", kind: "message", T: Meal },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateMealResponse {
+    return new UpdateMealResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateMealResponse {
+    return new UpdateMealResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateMealResponse {
+    return new UpdateMealResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateMealResponse | PlainMessage<UpdateMealResponse> | undefined, b: UpdateMealResponse | PlainMessage<UpdateMealResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateMealResponse, a, b);
+  }
+}
+
+/**
  * @generated from message mealplanner.api.DeleteMealRequest
  */
 export class DeleteMealRequest extends Message$1<DeleteMealRequest> {

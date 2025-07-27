@@ -52,6 +52,18 @@ func (b *MealBuilder) WithEffort(level int) *MealBuilder {
 	return b
 }
 
+// WithHasRedMeat sets whether the meal has red meat
+func (b *MealBuilder) WithHasRedMeat(hasRedMeat bool) *MealBuilder {
+	b.meal.HasRedMeat = hasRedMeat
+	return b
+}
+
+// WithURL sets the meal URL
+func (b *MealBuilder) WithURL(url string) *MealBuilder {
+	b.meal.Url = url
+	return b
+}
+
 // WithIngredients sets the ingredients
 func (b *MealBuilder) WithIngredients(ingredients []*models.Ingredient) *MealBuilder {
 	b.meal.Ingredients = ingredients

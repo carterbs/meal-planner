@@ -407,6 +407,7 @@ func main() {
 	// Meals endpoints
 	r.Get("/api/meals", gw.getAllMeals)
 	r.Post("/api/meals", gw.createMeal)
+	r.Put("/api/meals/{mealId}", gw.updateMeal)
 	r.Post("/api/meals/swap", gw.swapMeal)
 	r.Post("/api/meals/{mealId}/ingredients", gw.createMealIngredient)
 	r.Put("/api/meals/{mealId}/ingredients/{ingredientId}", gw.updateMealIngredient)
@@ -759,6 +760,56 @@ func (gw *Gateway) createMeal(w http.ResponseWriter, r *http.Request) {
 	resp, err := gw.backend.CreateMeal(r.Context(), &req)
 	if err == nil {
 		w.WriteHeader(http.StatusCreated)
+	}
+	writeJSONResponse(w, resp, err)
+}
+
+// @Summary Update Meal
+// @Description Update an existing meal's properties (name, effort, meal type, etc.)
+// @Tags meals
+// @Accept json
+// @Produce json
+// @Param mealId path int true "Meal ID"
+// @Param request body apipb.UpdateMealRequest true "Update meal request"
+// @Success 200 {object} MealResponse "Meal updated successfully"
+// @Failure 400 {object} ErrorResponse "Bad request"
+// @Failure 404 {object} ErrorResponse "Meal not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /meals/{mealId} [put]
+func (gw *Gateway) updateMeal(w http.ResponseWriter, r *http.Request) {
+	mealIDStr := chi.URLParam(r, "mealId")
+	mealID, err := strconv.Atoi(mealIDStr)
+	if err != nil {
+		http.Error(w, "Invalid meal ID: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var updateReq apipb.UpdateMealRequest
+	if err := protojson.Unmarshal(body, &updateReq); err != nil {
+		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Ensure the meal ID from URL matches the request
+	updateReq.MealId = int32(mealID)
+
+	req := &apipb.UpdateMealRequest{
+		MealId: updateReq.MealId,
+		Meal:   updateReq.Meal,
+	}
+
+	resp, err := gw.backend.UpdateMeal(r.Context(), req)
+	if err != nil {
+		if err.Error() == "meal not found" {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
 	}
 	writeJSONResponse(w, resp, err)
 }

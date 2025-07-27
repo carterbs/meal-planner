@@ -14,7 +14,7 @@ type MealService interface {
 
 	// CRUD operations
 	CreateMeal(meal *models.Meal) (*models.Meal, error)
-	UpdateMeal(meal *models.Meal) error
+	UpdateMeal(meal *models.Meal) (*models.Meal, error)
 	DeleteMeal(id int) error
 
 	// Ingredient operations

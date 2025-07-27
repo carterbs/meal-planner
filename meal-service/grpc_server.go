@@ -231,6 +231,32 @@ func (s *MealPlannerAPIServer) CreateMeal(ctx context.Context, req *apipb.Create
 	}, nil
 }
 
+func (s *MealPlannerAPIServer) UpdateMeal(ctx context.Context, req *apipb.UpdateMealRequest) (*apipb.UpdateMealResponse, error) {
+	if req.Meal == nil {
+		return nil, fmt.Errorf("meal is required")
+	}
+
+	if req.MealId == 0 {
+		return nil, fmt.Errorf("meal ID is required")
+	}
+
+	if req.Meal.Name == "" {
+		return nil, fmt.Errorf("meal name is required")
+	}
+
+	// Set the meal ID from the request to ensure consistency
+	req.Meal.Id = req.MealId
+
+	meal, err := server.Services.MealService.UpdateMeal(req.Meal)
+	if err != nil {
+		return nil, fmt.Errorf("error updating meal: %w", err)
+	}
+
+	return &apipb.UpdateMealResponse{
+		Meal: meal,
+	}, nil
+}
+
 func (s *MealPlannerAPIServer) SwapMeal(ctx context.Context, req *apipb.SwapMealRequest) (*apipb.SwapMealResponse, error) {
 	meal, err := server.Services.MealService.SwapMeal(int(req.MealId), req.MealType)
 	if err != nil {
