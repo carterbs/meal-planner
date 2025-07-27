@@ -6,11 +6,9 @@ import { LangGraphAgent } from './langgraph-agent';
 import { debugLog } from './logging';
 import { MessageRepository } from './database/messages';
 import { CheckpointRepository } from './database/checkpoints';
-import { WorkflowType, MealPlanningState } from './shared/types';
+import { WorkflowType } from './shared/types';
 import { getDatabase } from './database/connection';
 import {
-  PlanStartRequest,
-  PlanStartResponse,
   PlanFeedbackRequest,
   PlanFeedbackResponse,
   PlanFinalizeRequest,
@@ -18,6 +16,7 @@ import {
   ResumeWorkflowRequest,
   ResumeWorkflowResponse,
 } from '@mealplanner/generated/agent_pb';
+import { planStart } from './handlers';
 import * as apipb from '@mealplanner/generated/api_pb';
 // Initialize agent instance
 let agentInstance: LangGraphAgent | null = null;
@@ -35,61 +34,7 @@ function validateThreadId(threadId: string): boolean {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(threadId);
 }
-// Plan Start implementation
-export function planStart(
-  call: grpc.ServerUnaryCall<PlanStartRequest, PlanStartResponse>,
-  callback: grpc.sendUnaryData<PlanStartResponse>,
-): void {
-  (async () => {
-    try {
-      const request = call.request;
-      const participants = request.participants || [];
-      if (participants.length === 0) {
-        return callback(new Error('At least one participant is required.'));
-      }
-      const agentInstance = await initializeAgent();
-      await debugLog(
-        `🔄 Starting meal planning session for participants: ${participants.join(', ')}`,
-      );
-      const threadId = await agentInstance.startWorkflow(
-        WorkflowType.MEAL_PLANNING,
-        participants,
-      );
-      await debugLog(`🔄 Got a threadId: ${threadId}`);
-      let initialState: MealPlanningState;
-      try {
-        initialState = await agentInstance.getWorkflowState(threadId);
-      } catch (e) {
-        await debugLog(`Failed to fetch initial workflow state: ${e}`);
-        return callback(e as Error);
-      }
-      // Serialize initial state to JSON and ensure dayIndex defaults are set
-      const rawStateJson = initialState.toJsonString();
-      let parsedState: MealPlanningState;
-      parsedState = JSON.parse(rawStateJson);
-      if (parsedState.mealPlan?.days && Array.isArray(parsedState.mealPlan.days)) {
-        parsedState.mealPlan.days.forEach((day: any, idx: number) => {
-          if (day.dayIndex === undefined || !day.hasOwnProperty('dayIndex')) {
-            day.dayIndex = idx;
-          }
-        });
-      }
-      const stateString = JSON.stringify(parsedState);
-      const response = new PlanStartResponse({
-        success: true,
-        message: 'Meal planning session started',
-        threadId: threadId,
-        currentStep: initialState.currentStep,
-        initialState: new TextEncoder().encode(stateString),
-      });
-      callback(null, response);
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      await debugLog(`Error starting meal planning session: ${errMsg}`);
-      callback(new Error(`Error starting meal planning session: ${errMsg}`));
-    }
-  })();
-}
+// planStart is imported from handlers.ts
 // Plan Feedback implementation
 function planFeedback(
   call: grpc.ServerUnaryCall<PlanFeedbackRequest, PlanFeedbackResponse>,
@@ -155,7 +100,7 @@ function planFinalize(
       if (result.success) {
         await debugLog('✅ Meal plan finalized successfully!');
         // Get and display the final meal plan
-        let finalState: MealPlanningState;
+        let finalState: any; // Changed from MealPlanningState to any as MealPlanningState is removed
         try {
           finalState = await agentInstance.getWorkflowState(threadId);
         } catch (stateError) {
@@ -204,7 +149,7 @@ function resumeWorkflow(
       if (result.success) {
         await debugLog('✅ Workflow resumed successfully!');
         // Get current state
-        let currentState: MealPlanningState;
+        let currentState: any; // Changed from MealPlanningState to any
         try {
           currentState = await agentInstance.getWorkflowState(threadId);
         } catch (stateError) {
@@ -742,82 +687,85 @@ function healthCheck(
   })();
 }
 
-// Load the protobuf definition
-const PROTO_PATH = path.join(__dirname, '../../proto/agent.proto');
-const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
-  longs: String,
-  enums: String,
-  defaults: true,
-  oneofs: true,
-});
-interface ProtoGrpcType {
-  agent: {
-    AgentService: {
-      service: grpc.ServiceDefinition;
+// Only load protobuf and start server when not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  // Load the protobuf definition
+  const PROTO_PATH = path.join(__dirname, '../../proto/agent.proto');
+  const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true,
+  });
+  interface ProtoGrpcType {
+    agent: {
+      AgentService: {
+        service: grpc.ServiceDefinition;
+      };
     };
-  };
-}
-const protoDescriptor = grpc.loadPackageDefinition(
-  packageDefinition,
-) as unknown as ProtoGrpcType;
-const agentProto = protoDescriptor.agent;
-// Start the gRPC server
-function startServer(): void {
-  const server = new grpc.Server({
-    'grpc.keepalive_time_ms': 30000,
-    'grpc.keepalive_timeout_ms': 5000,
-    'grpc.keepalive_permit_without_calls': 1,
-    'grpc.http2.max_pings_without_data': 0,
-    'grpc.http2.min_time_between_pings_ms': 10000,
-    'grpc.http2.min_ping_interval_without_data_ms': 300000,
-    'grpc.max_receive_message_length': 4 * 1024 * 1024,
-    'grpc.max_send_message_length': 4 * 1024 * 1024,
-  });
-  const port = process.env.AGENT_SERVICE_PORT || '50053';
-  // Add the service implementation
-  server.addService(agentProto.AgentService.service, {
-    planStart,
-    planFeedback,
-    planFinalize,
-    resumeWorkflow,
-    startAgentWorkflow,
-    messageAgent,
-    getWorkflowStatus,
-    listWorkflows,
-    cancelWorkflow,
-    getWorkflowState,
-    abandonWorkflow,
-    getMessages,
-    addMessage,
-    updateSessionState,
-    getCheckpoint,
-    putCheckpoint,
-    listCheckpoints,
-    healthCheck,
-  });
-  // Bind and start the server
-  server.bindAsync(
-    `0.0.0.0:${port}`,
-    grpc.ServerCredentials.createInsecure(),
-    async (err, port) => {
-      if (err) {
-        await debugLog(`Failed to start server: ${err.message}`);
-        return;
-      }
-      await debugLog(`🚀 Agent service started on port ${port}`);
-    },
-  );
-  // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    await debugLog('Shutting down agent service...');
-    server.tryShutdown(async (err) => {
-      if (err) {
-        await debugLog(`Error during shutdown: ${err.message}`);
-        server.forceShutdown();
-      }
-      process.exit(0);
+  }
+  const protoDescriptor = grpc.loadPackageDefinition(
+    packageDefinition,
+  ) as unknown as ProtoGrpcType;
+  const agentProto = protoDescriptor.agent;
+  // Start the gRPC server
+  function startServer(): void {
+    const server = new grpc.Server({
+      'grpc.keepalive_time_ms': 30000,
+      'grpc.keepalive_timeout_ms': 5000,
+      'grpc.keepalive_permit_without_calls': 1,
+      'grpc.http2.max_pings_without_data': 0,
+      'grpc.http2.min_time_between_pings_ms': 10000,
+      'grpc.http2.min_ping_interval_without_data_ms': 300000,
+      'grpc.max_receive_message_length': 4 * 1024 * 1024,
+      'grpc.max_send_message_length': 4 * 1024 * 1024,
     });
-  });
+    const port = process.env.AGENT_SERVICE_PORT || '50053';
+    // Add the service implementation
+    server.addService(agentProto.AgentService.service, {
+      planStart,
+      planFeedback,
+      planFinalize,
+      resumeWorkflow,
+      startAgentWorkflow,
+      messageAgent,
+      getWorkflowStatus,
+      listWorkflows,
+      cancelWorkflow,
+      getWorkflowState,
+      abandonWorkflow,
+      getMessages,
+      addMessage,
+      updateSessionState,
+      getCheckpoint,
+      putCheckpoint,
+      listCheckpoints,
+      healthCheck,
+    });
+    // Bind and start the server
+    server.bindAsync(
+      `0.0.0.0:${port}`,
+      grpc.ServerCredentials.createInsecure(),
+      async (err, port) => {
+        if (err) {
+          await debugLog(`Failed to start server: ${err.message}`);
+          return;
+        }
+        await debugLog(`🚀 Agent service started on port ${port}`);
+      },
+    );
+    // Handle graceful shutdown
+    process.on('SIGINT', async () => {
+      await debugLog('Shutting down agent service...');
+      server.tryShutdown(async (err) => {
+        if (err) {
+          await debugLog(`Error during shutdown: ${err.message}`);
+          server.forceShutdown();
+        }
+        process.exit(0);
+      });
+    });
+  }
+  // Start the server
+  startServer();
 }
-// Start the server
-startServer();
