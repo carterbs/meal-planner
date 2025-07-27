@@ -36,8 +36,10 @@ export class DbCheckpointSaver {
       const metadataData = result.metadata
         ? JSON.parse(result.metadata.toString())
         : {};
-      const checkpoint = new AgentCheckpoint(checkpointData);
-      const metadata = new AgentCheckpointMetadata(metadataData);
+      // Use the generated fromJson helper so that google.protobuf.Timestamp and other
+      // well-known types are deserialized properly (e.g. createdAt / updatedAt).
+      const checkpoint = AgentCheckpoint.fromJson(checkpointData);
+      const metadata = AgentCheckpointMetadata.fromJson(metadataData);
       await infoLog(
         `[CHECKPOINT] Got checkpoint for thread ${threadId}: ${JSON.stringify(checkpoint)}`,
       );
@@ -70,6 +72,11 @@ export class DbCheckpointSaver {
           checkpoint,
           metadata,
         );
+        // Also keep a copy under the reserved namespace "latest" so that
+        // resume/list endpoints can easily fetch the most-recent checkpoint
+        // without needing the caller to supply a namespace.
+        const latestJson = checkpoint.toJsonString();
+        await this.checkpointRepo.updateWorkflowCheckpoint(threadId, Buffer.from(latestJson, 'utf8'));
       } catch (e) {
         await infoLog(`[CHECKPOINT] putCheckpoint failed (non-fatal): ${e}`);
         // swallow the error so workflows continue even when persistence isn't available
@@ -105,8 +112,8 @@ export class DbCheckpointSaver {
         const metadataData = record.metadata
           ? JSON.parse(record.metadata.toString())
           : {};
-        const checkpoint = new AgentCheckpoint(checkpointData);
-        const metadata = new AgentCheckpointMetadata(metadataData);
+        const checkpoint = AgentCheckpoint.fromJson(checkpointData);
+        const metadata = AgentCheckpointMetadata.fromJson(metadataData);
         yield [
           {
             configurable: {
@@ -146,7 +153,7 @@ export class DbCheckpointSaver {
   }
   async listWorkflows(): Promise<WorkflowStatus[]> {
     try {
-      const workflowStatuses = await this.checkpointRepo.listWorkflows(100);
+      const workflowStatuses = await this.checkpointRepo.listWorkflows(10);
       // Convert database WorkflowStatus to protobuf WorkflowStatus
       return workflowStatuses.map(
         (status) =>
