@@ -81,6 +81,10 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
       field: 'mealType',
       headerName: 'Meal Type',
       width: 120,
+      valueFormatter: (value: string) => {
+        if (!value) return '';
+        return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+      },
     },
     {
       field: 'effort',
@@ -129,6 +133,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
       field: 'actions',
       headerName: 'Actions',
       width: 120,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => (
         <Button
           variant="outlined"
@@ -723,9 +729,6 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   sorting: {
                     sortModel: [{ field: 'name', sort: 'asc' }],
                   },
-                  pagination: {
-                    paginationModel: { pageSize: 10 },
-                  },
                 }}
                 onRowClick={(params) => {
                   const meal = meals.find((m) => m.id === params.id);
@@ -733,8 +736,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                 }}
                 rowSelection={false}
                 disableRowSelectionOnClick
-                pageSizeOptions={[5, 10, 25]}
-                pagination={true}
+                hideFooter={true}
                 sx={{
                   flexGrow: 1,
                   '& .MuiDataGrid-row:hover': {
@@ -746,11 +748,16 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   '& .MuiDataGrid-row.Mui-selected': {
                     backgroundColor: '#c9e0c2',
                   },
+                  '& .MuiDataGrid-row:nth-of-type(even)': {
+                    backgroundColor: '#fafafa',
+                  },
                   '& .MuiDataGrid-cell': {
                     textDecoration: 'none',
                     borderBottom: '1px solid #e0e4e0',
                     padding: '12px 16px',
                     fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
                   },
                   '& .MuiDataGrid-row:focus, & .MuiDataGrid-cell:focus': {
                     outline: 'none',
@@ -770,9 +777,6 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                       color: '#3a3a3a',
                       fontSize: '14px',
                     },
-                  },
-                  '& .MuiDataGrid-footerContainer': {
-                    borderTop: '1px solid #e0e4e0',
                   },
                 }}
               />
