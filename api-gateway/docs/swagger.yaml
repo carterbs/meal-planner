@@ -243,6 +243,13 @@ definitions:
       meal_id:
         type: integer
     type: object
+  _go.UpdateMealRequest:
+    properties:
+      meal:
+        $ref: '#/definitions/_go.Meal'
+      meal_id:
+        type: integer
+    type: object
   _go.UpdateSessionStateRequest:
     properties:
       current_step:
@@ -1084,6 +1091,45 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       summary: Delete Meal
+      tags:
+      - meals
+    put:
+      consumes:
+      - application/json
+      description: Update an existing meal's properties (name, effort, meal type,
+        etc.)
+      parameters:
+      - description: Meal ID
+        in: path
+        name: mealId
+        required: true
+        type: integer
+      - description: Update meal request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/_go.UpdateMealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meal updated successfully
+          schema:
+            $ref: '#/definitions/main.MealResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "404":
+          description: Meal not found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Update Meal
       tags:
       - meals
   /meals/{mealId}/ingredients:

@@ -54,13 +54,24 @@ func (s *mealService) CreateMeal(meal *models.Meal) (*models.Meal, error) {
 	return result, nil
 }
 
-// UpdateMeal updates an existing meal in the database
-func (s *mealService) UpdateMeal(meal *models.Meal) error {
-	err := s.mealRepo.UpdateMeal(context.Background(), meal)
+// UpdateMeal updates an existing meal in the database and returns the updated meal
+func (s *mealService) UpdateMeal(meal *models.Meal) (*models.Meal, error) {
+	mealServiceLogger.Debugw("Updating meal", "mealID", meal.GetId(), "mealName", meal.GetName())
+	_, err := s.mealRepo.UpdateMeal(context.Background(), meal)
 	if err != nil {
-		return fmt.Errorf("failed to update meal: %w", err)
+		mealServiceLogger.Errorw("Failed to update meal", "mealID", meal.GetId(), "error", err)
+		return nil, fmt.Errorf("failed to update meal: %w", err)
 	}
-	return nil
+	
+	// Fetch and return the updated meal with all its data (ingredients, steps)
+	updatedMeal, err := s.mealRepo.GetMealByID(context.Background(), int(meal.GetId()))
+	if err != nil {
+		mealServiceLogger.Errorw("Failed to fetch updated meal", "mealID", meal.GetId(), "error", err)
+		return nil, fmt.Errorf("failed to fetch updated meal: %w", err)
+	}
+	
+	mealServiceLogger.Debugw("Successfully updated meal", "mealID", meal.GetId())
+	return updatedMeal, nil
 }
 
 // DeleteMeal deletes a meal from the database

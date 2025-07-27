@@ -55,9 +55,9 @@ func (m *MockMealRepository) CreateMeal(ctx context.Context, meal *models.Meal) 
 }
 
 // UpdateMeal mock implementation
-func (m *MockMealRepository) UpdateMeal(ctx context.Context, meal *models.Meal) error {
+func (m *MockMealRepository) UpdateMeal(ctx context.Context, meal *models.Meal) (*models.Meal, error) {
 	args := m.Called(ctx, meal)
-	return args.Error(0)
+	return args.Get(0).(*models.Meal), args.Error(1)
 }
 
 // DeleteMeal mock implementation

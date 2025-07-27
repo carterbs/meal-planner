@@ -409,3 +409,42 @@ func CreateMeal(db *sql.DB, meal *Meal) (*Meal, error) {
 	mealModelLogger.Debugw("CreateMeal: created meal", "mealID", mealID, "ingredientCount", len(meal.GetIngredients()), "stepCount", len(meal.GetSteps()))
 	return meal, nil
 }
+
+// UpdateMeal updates an existing meal's basic properties (name, effort, red meat, url, meal type)
+func UpdateMeal(db *sql.DB, meal *Meal) error {
+	if meal.GetId() == 0 {
+		mealModelLogger.Errorw("UpdateMeal: meal ID not provided")
+		return errors.New("meal ID is required for update")
+	}
+
+	// Set default meal_type to "dinner" if not provided
+	mealType := meal.GetMealType()
+	if mealType == "" {
+		mealType = "dinner"
+	}
+
+	result, err := db.Exec(`
+		UPDATE meals 
+		SET meal_name = $1, relative_effort = $2, red_meat = $3, url = $4, meal_type = $5
+		WHERE id = $6`,
+		meal.GetName(), meal.GetEffort(), meal.GetHasRedMeat(), meal.GetUrl(), mealType, meal.GetId())
+	
+	if err != nil {
+		mealModelLogger.Errorw("UpdateMeal: error executing update", "mealID", meal.GetId(), "error", err)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		mealModelLogger.Errorw("UpdateMeal: error checking rows affected", "mealID", meal.GetId(), "error", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		mealModelLogger.Errorw("UpdateMeal: no rows updated, meal may not exist", "mealID", meal.GetId())
+		return errors.New("meal not found")
+	}
+
+	mealModelLogger.Debugw("UpdateMeal: updated meal", "mealID", meal.GetId(), "rowsAffected", rowsAffected)
+	return nil
+}
