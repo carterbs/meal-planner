@@ -10,7 +10,7 @@ const execAsync = promisify(exec);
 // Create the API gateway client factory
 export function createGatewayClient() {
   return createClient(createConfig({
-    baseUrl: 'http://localhost:8080/api'
+    baseUrl: 'http://localhost:8090/api'
   }));
 }
 

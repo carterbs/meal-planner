@@ -35,7 +35,7 @@ import (
 // @contact.email support@swagger.io
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @host localhost:8080
+// @host localhost:8090
 // @BasePath /api
 
 // Response structures for Swagger documentation
@@ -387,7 +387,7 @@ func main() {
 
 	// Swagger UI
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+		httpSwagger.URL("http://localhost:8090/swagger/doc.json"),
 	))
 
 	// Health endpoints
@@ -445,10 +445,10 @@ func main() {
 	r.Get("/api/checkpoints", gw.listCheckpoints)
 
 	if grpcLogger != nil {
-		grpcLogger.LogWithDetails(ctx, "INFO", "API Gateway starting on :8080, connecting to backend gRPC :50051", "", "api-gateway", nil)
+		grpcLogger.LogWithDetails(ctx, "INFO", "API Gateway starting on :8090, connecting to backend gRPC :50051", "", "api-gateway", nil)
 	}
-	log.Println("API Gateway starting on :8080, connecting to backend gRPC :50051")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Println("API Gateway starting on :8090, connecting to backend gRPC :50051")
+	log.Fatal(http.ListenAndServe(":8090", r))
 }
 
 // Health endpoints
@@ -462,42 +462,71 @@ func main() {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /health [get]
 func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
-	log.Printf("🔍 Starting comprehensive health check...")
+	log.Printf("🔍 Starting quick health check...")
 	services := make(map[string]bool)
 
-	// Check backend service
+	// Check logging service (single attempt)
+	log.Printf("🔍 Checking logging service...")
+	loggingHealthy := false
+	if grpcLogger != nil {
+		if err := grpcLogger.LogWithDetails(r.Context(), "DEBUG", "Health check test message", "", "api-gateway", nil); err != nil {
+			log.Printf("❌ Logging service health check failed: %v", err)
+		} else {
+			loggingHealthy = true
+			log.Printf("✅ Logging service health check passed")
+		}
+	} else {
+		log.Printf("❌ Logging service client not initialized")
+	}
+	services["logging"] = loggingHealthy
+
+	// Check backend service (single attempt)
 	log.Printf("🔍 Checking backend service...")
+	backendHealthy := false
 	backendResp, backendErr := gw.backend.HealthCheck(r.Context(), &emptypb.Empty{})
 	if backendErr != nil {
 		log.Printf("❌ Backend health check failed: %v", backendErr)
 	} else if backendResp == nil {
 		log.Printf("❌ Backend health check returned nil response")
 	} else {
+		backendHealthy = true
 		log.Printf("✅ Backend health check passed")
 	}
-	services["backend"] = backendErr == nil && backendResp != nil
+	services["backend"] = backendHealthy
 
-	// Check agent service
+	// Check agent service (single attempt)
 	log.Printf("🔍 Checking agent service...")
-	agentResp, agentErr := gw.agent.ListWorkflows(r.Context(), &emptypb.Empty{})
+	agentHealthy := false
+	agentResp, agentErr := gw.agent.HealthCheck(r.Context(), &emptypb.Empty{})
 	if agentErr != nil {
 		log.Printf("❌ Agent health check failed: %v", agentErr)
 	} else if agentResp == nil {
 		log.Printf("❌ Agent health check returned nil response")
 	} else {
+		agentHealthy = true
 		log.Printf("✅ Agent health check passed")
 	}
-	services["agent"] = agentErr == nil && agentResp != nil
+	services["agent"] = agentHealthy
 
-	// Check MCP service
+	// Check MCP service (single attempt)
 	log.Printf("🔍 Checking MCP service...")
 	mcpHealthy := false
-	if mcpResp, err := http.Get("http://localhost:3001/health"); err != nil {
+	mcpAddr := os.Getenv("MCP_SERVICE_ADDR")
+	if mcpAddr == "" {
+		mcpAddr = "localhost:3001"
+	}
+
+	// Use a short timeout for the HTTP request
+	client := &http.Client{
+		Timeout: 2 * time.Second,
+	}
+
+	if mcpResp, err := client.Get("http://" + mcpAddr + "/health"); err != nil {
 		log.Printf("❌ MCP health check failed: %v", err)
 	} else {
 		defer mcpResp.Body.Close()
-		mcpHealthy = mcpResp.StatusCode == 200
-		if mcpHealthy {
+		if mcpResp.StatusCode == 200 {
+			mcpHealthy = true
 			log.Printf("✅ MCP health check passed (status: %d)", mcpResp.StatusCode)
 		} else {
 			log.Printf("❌ MCP health check failed (status: %d)", mcpResp.StatusCode)
@@ -506,9 +535,10 @@ func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
 	services["mcp"] = mcpHealthy
 
 	// Determine overall health
-	allHealthy := services["backend"] && services["agent"] && services["mcp"]
+	allHealthy := services["logging"] && services["backend"] && services["agent"] && services["mcp"]
 
 	log.Printf("📊 Health check summary:")
+	log.Printf("  - Logging: %v", services["logging"])
 	log.Printf("  - Backend: %v", services["backend"])
 	log.Printf("  - Agent: %v", services["agent"])
 	log.Printf("  - MCP: %v", services["mcp"])

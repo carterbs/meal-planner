@@ -17,7 +17,7 @@ This repository contains a personal meal planning application composed of severa
 
 ## Architecture Overview
 
-The system is split into a Go backend and several TypeScript packages.  The backend exposes REST endpoints on port `8080` and persists data in PostgreSQL.  The React UI communicates directly with the backend during development.  The LangGraph agent is a command line tool that orchestrates meal plan generation and communicates with the backend or MCP server.  The MCP server exposes a Model Context Protocol API that proxies backend calls for the agent.  Shared TypeScript code lives in `shared` and is published to the workspace so all packages share a single set of types. The React UI is located in the `ui` directory.
+The system is split into a Go backend and several TypeScript packages.  The backend exposes REST endpoints on port `8090` and persists data in PostgreSQL.  The React UI communicates directly with the backend during development.  The LangGraph agent is a command line tool that orchestrates meal plan generation and communicates with the backend or MCP server.  The MCP server exposes a Model Context Protocol API that proxies backend calls for the agent.  Shared TypeScript code lives in `shared` and is published to the workspace so all packages share a single set of types. The React UI is located in the `ui` directory.
 
 ```
 [React UI]  --->  [Go Backend]  --->  [PostgreSQL]
@@ -63,38 +63,11 @@ The system is split into a Go backend and several TypeScript packages.  The back
    ```
 
 7. **Start the development servers**
-   - Simple mode:
-     ```bash
-     cd meal-service && go run main.go --dummy
-     ```
-     ```bash
-     cd ui && yarn start
-     ```
-   - Full environment (starts Docker and both servers):
+   - Full environment (starts Docker and all servers):
      ```bash
      yarn dev
      ```
 
-The `docker-compose.yml` file launches a PostgreSQL container and pgAdmin for local development.
-
-## Root Package Scripts
-
-| Script            | Description                                                  |
-|-------------------|--------------------------------------------------------------|
-| `yarn generate_code` | Generate Protocol Buffer, OpenAPI, and TypeScript client code from definitions. |
-| `yarn start`      | Runs `scripts/start.js` which launches the Go backend and React frontend together. |
-| `yarn start:mcp`  | Builds and launches the MCP server alongside the backend.    |
-| `yarn dev`        | Starts Docker containers if necessary and then runs `yarn start`. |
-| `yarn meal-agent` | Builds and runs the CLI agent from `agent-service`.       |
-| `yarn test`       | Executes backend, frontend and agent test suites with a summary. |
-| `yarn test:backend` | Run Go tests only.                                         |
-| `yarn test:frontend` | Run React tests only.                                     |
-| `yarn test:agent` | Run agent unit tests.                                        |
-| `yarn build:agent` | Compile the agent TypeScript sources.                       |
-| `yarn db:backup`  | Create a database backup using `scripts/backup-db.js`.       |
-| `yarn db:restore` | Restore the database from a backup file.                     |
-| `yarn kill:servers` | Kill processes started by the helper scripts.              |
-| `yarn format`     | Run Prettier across the TypeScript workspaces.               |
 
 ## Testing
 

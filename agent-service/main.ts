@@ -7,6 +7,7 @@ import { debugLog } from './logging';
 import { MessageRepository } from './database/messages';
 import { CheckpointRepository } from './database/checkpoints';
 import { WorkflowType, MealPlanningState } from './shared/types';
+import { getDatabase } from './database/connection';
 import {
   PlanStartRequest,
   PlanStartResponse,
@@ -652,6 +653,83 @@ function listCheckpoints(
     }
   })();
 }
+
+// Health Check implementation
+function healthCheck(
+  _call: grpc.ServerUnaryCall<any, any>,
+  callback: grpc.sendUnaryData<any>,
+): void {
+  (async () => {
+    try {
+      const healthIssues: string[] = [];
+      let dbHealthy = false;
+      let loggingHealthy = false;
+      let mcpHealthy = false;
+
+      // Check database health (single attempt)
+      try {
+        const db = getDatabase();
+        const result = await db.query('SELECT 1');
+        if (result.rows.length > 0) {
+          dbHealthy = true;
+        }
+      } catch (error) {
+        healthIssues.push(`Database connection failed: ${error}`);
+      }
+
+      // Check logging service health (single attempt)
+      try {
+        await debugLog('Health check test message');
+        loggingHealthy = true;
+      } catch (error) {
+        healthIssues.push(`Logging service connection failed: ${error}`);
+      }
+
+      // Check MCP service health (single attempt with timeout)
+      try {
+        const mcpHost = process.env.MCP_HOST || 'localhost';
+        const mcpPort = process.env.MCP_PORT || '3001';
+        const mcpUrl = `http://${mcpHost}:${mcpPort}/health`;
+        
+        const fetch = (await import('node-fetch')).default;
+        const response = await fetch(mcpUrl, { timeout: 2000 }); // 2 second timeout
+        if (response.status === 200) {
+          mcpHealthy = true;
+        } else {
+          healthIssues.push(`MCP service returned status: ${response.status}`);
+        }
+      } catch (error) {
+        healthIssues.push(`MCP service connection failed: ${error}`);
+      }
+
+      if (dbHealthy && loggingHealthy && mcpHealthy) {
+        callback(null, {
+          status: 'ok',
+          message: 'All dependencies healthy',
+          services: {
+            database: true,
+            logging: true,
+            mcp: true
+          }
+        });
+      } else {
+        callback(null, {
+          status: 'error',
+          message: `Health check failed: ${healthIssues.join(', ')}`,
+          services: {
+            database: dbHealthy,
+            logging: loggingHealthy,
+            mcp: mcpHealthy
+          }
+        });
+      }
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      callback(new Error(`Health check error: ${errMsg}`));
+    }
+  })();
+}
+
 // Load the protobuf definition
 const PROTO_PATH = path.join(__dirname, '../../proto/agent.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
@@ -703,6 +781,7 @@ function startServer(): void {
     getCheckpoint,
     putCheckpoint,
     listCheckpoints,
+    healthCheck,
   });
   // Bind and start the server
   server.bindAsync(

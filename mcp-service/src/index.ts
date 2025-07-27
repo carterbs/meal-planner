@@ -67,8 +67,31 @@ async function main() {
         }
     });
     // Health check endpoint
-    app.get('/health', (req, res) => {
-        res.json({ status: 'ok', service: 'mealplanner-mcp' });
+    app.get('/health', async (req, res) => {
+        const healthIssues: string[] = [];
+        let loggingHealthy = false;
+
+        // Check logging service health (single attempt)
+        try {
+            await infoLog('Health check test message');
+            loggingHealthy = true;
+        } catch (error) {
+            healthIssues.push(`Logging service connection failed: ${error}`);
+        }
+
+        if (loggingHealthy) {
+            res.json({ 
+                status: 'ok', 
+                service: 'mealplanner-mcp',
+                message: 'All dependencies healthy'
+            });
+        } else {
+            res.status(503).json({ 
+                status: 'error', 
+                service: 'mealplanner-mcp',
+                message: `Health check failed: ${healthIssues.join(', ')}`
+            });
+        }
     });
     // Start the server
     app.listen(port, () => {

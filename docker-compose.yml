@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:14
@@ -11,6 +9,12 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mealuser -d mealplanner"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   pgadmin:
     image: dpage/pgadmin4
@@ -20,7 +24,145 @@ services:
     ports:
       - "5050:80"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
+  logging-service:
+    build:
+      context: .
+      dockerfile: ./logging-service/Dockerfile.dev
+    volumes:
+      - ./logging-service:/app/logging-service
+      - ./generated:/app/generated
+      - ./logging-service/logs:/app/logging-service/logs
+    working_dir: /app/logging-service
+    command: ["air", "-c", ".air.toml"]
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -tuln | grep :50052 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  meal-service:
+    build:
+      context: .
+      dockerfile: ./meal-service/Dockerfile.dev
+    environment:
+      - LOGGING_SERVICE_ADDR=logging-service:50052
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=mealuser
+      - DB_PASSWORD=mealpass
+      - DB_NAME=mealplanner
+    volumes:
+      - ./meal-service:/app/meal-service
+      - ./generated:/app/generated
+      - ./logging-service:/app/logging-service
+    working_dir: /app/meal-service
+    command: ["air", "-c", ".air.toml"]
+    depends_on:
+      db:
+        condition: service_healthy
+      logging-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -tuln | grep :50051 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mcp-service:
+    build:
+      context: .
+      dockerfile: ./mcp-service/Dockerfile.dev
+    environment:
+      - LOGGING_SERVICE_ADDR=logging-service:50052
+      - BACKEND_BASE_URL=http://api-gateway:8090
+    volumes:
+      - ./mcp-service:/app/mcp-service
+      - ./shared:/app/shared
+      - ./generated:/app/generated
+      - /app/node_modules
+    working_dir: /app/mcp-service
+    command: ["yarn", "start"]
+    depends_on:
+      logging-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3001/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  agent-service:
+    build:
+      context: .
+      dockerfile: ./agent-service/Dockerfile.dev
+    environment:
+      - LOGGING_SERVICE_ADDR=logging-service:50052
+      - MCP_HOST=mcp-service
+      - MCP_PORT=3001
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=mealuser
+      - DB_PASSWORD=mealpass
+      - DB_NAME=mealplanner
+    volumes:
+      - ./agent-service:/app/agent-service
+      - ./shared:/app/shared
+      - ./generated:/app/generated
+      - ./proto:/app/proto
+      - /app/node_modules
+    working_dir: /app/agent-service
+    command: ["yarn", "start:grpc"]
+    depends_on:
+      db:
+        condition: service_healthy
+      logging-service:
+        condition: service_healthy
+      mcp-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -tuln | grep :50053 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile.dev
+    ports:
+      - "8090:8090"
+    environment:
+      - LOGGING_SERVICE_ADDR=logging-service:50052
+      - BACKEND_GRPC_ADDR=meal-service:50051
+      - AGENT_GRPC_ADDR=agent-service:50053
+      - MCP_SERVICE_ADDR=mcp-service:3001
+    volumes:
+      - ./api-gateway:/app/api-gateway
+      - ./generated:/app/generated
+    working_dir: /app/api-gateway
+    command: ["air", "-c", ".air.toml"]
+    depends_on:
+      logging-service:
+        condition: service_healthy
+      meal-service:
+        condition: service_healthy
+      agent-service:
+        condition: service_healthy
+      mcp-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8090/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   pgdata:

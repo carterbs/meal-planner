@@ -598,7 +598,7 @@ definitions:
           9999-12-31T23:59:59Z inclusive.
         type: integer
     type: object
-host: localhost:8080
+host: localhost:8090
 info:
   contact:
     email: support@swagger.io

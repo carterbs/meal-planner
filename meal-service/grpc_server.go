@@ -42,34 +42,51 @@ func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
 }
 
 func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Empty) (*apipb.HealthCheckResponse, error) {
+	var healthIssues []string
 	dbHealthy := false
+	loggingHealthy := false
 
-	// Check database health
+	// Check database health (single attempt)
 	if server.DB == nil {
-		return &apipb.HealthCheckResponse{
-			Status:  "error",
-			Message: "Database not connected. Make sure Docker is running and the database container is started.",
-		}, nil
+		healthIssues = append(healthIssues, "Database not connected")
+	} else if err := server.DB.Ping(); err != nil {
+		healthIssues = append(healthIssues, fmt.Sprintf("Database connection failed: %v", err))
+	} else {
+		dbHealthy = true
 	}
 
-	if err := server.DB.Ping(); err != nil {
-		return &apipb.HealthCheckResponse{
-			Status:  "error",
-			Message: "Database connection lost. Make sure Docker is running and the database container is started.",
-		}, nil
+	// Check logging service health (single attempt)
+	grpcClient := logging.GetGrpcClient()
+	if grpcClient == nil {
+		healthIssues = append(healthIssues, "Logging client not initialized")
+	} else {
+		// Try to log a test message to verify logging service connectivity
+		err := grpcClient.LogWithDetails(ctx, "DEBUG", "Health check test message", "", "meal-service", nil)
+		if err != nil {
+			healthIssues = append(healthIssues, fmt.Sprintf("Logging service connection failed: %v", err))
+		} else {
+			loggingHealthy = true
+		}
 	}
-	dbHealthy = true
 
-	if dbHealthy {
+	// Determine overall health
+	if dbHealthy && loggingHealthy {
 		return &apipb.HealthCheckResponse{
 			Status:  "ok",
-			Message: "Database connected",
+			Message: "All dependencies healthy",
+		}, nil
+	}
+
+	if len(healthIssues) > 0 {
+		return &apipb.HealthCheckResponse{
+			Status:  "error",
+			Message: fmt.Sprintf("Health check failed: %v", healthIssues),
 		}, nil
 	}
 
 	return &apipb.HealthCheckResponse{
 		Status:  "error",
-		Message: "Database connection is not healthy",
+		Message: "Unknown health check error",
 	}, nil
 }
 

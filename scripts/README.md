@@ -34,7 +34,7 @@ yarn start
 Use this script when containers are already running or when deploying without the MCP server.
 
 ### `start-mcp.js`
-Starts the backend and the TypeScript MCP server. It also ensures the database container is running and will build the MCP server before launching. Ports 8080 and 3001 are freed before start. Invoked with:
+Starts the backend and the TypeScript MCP server. It also ensures the database container is running and will build the MCP server before launching. Ports 8090 and 3001 are freed before start. Invoked with:
 
 ```bash
 yarn start:mcp [--codex]

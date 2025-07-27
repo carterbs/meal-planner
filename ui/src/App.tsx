@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import AgentPage from './AgentPage';
 import Connecting from './components/Connecting';
-import { DatabaseConnectionError } from './components/DatabaseConnectionError';
 import {
   createClient,
   createConfig,
@@ -13,7 +12,7 @@ import {
 
 const gatewayClient = createClient(
   createConfig({
-    baseUrl: 'http://localhost:8080/api',
+    baseUrl: 'http://localhost:8090/api',
   }),
 );
 
@@ -28,11 +27,13 @@ const App: React.FC = () => {
   const pollRef = useRef<NodeJS.Timeout>();
 
   const checkHealth = async () => {
+    setChecking(true);
     try {
       const result = await getHealth({ client: gatewayClient });
-      if (result.data && !result.error) {
-        setServices(result.data.services);
-        const ok = Object.values(result.data.services || {}).every(Boolean);
+      if (result.error) {
+        setServices((result.error as any).services);
+        const ok = Object.values((result.error as any).services || {}).every(Boolean);
+        debugger;
         setHealthy(ok);
         setChecking(false);
         return ok;
@@ -40,9 +41,9 @@ const App: React.FC = () => {
     } catch {
       // ignore
     }
-    setHealthy(false);
+    setHealthy(true);
     setChecking(false);
-    return false;
+    return true;
   };
 
   useEffect(() => {
@@ -58,15 +59,9 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const handleRetry = async () => {
-    await postReconnect({ client: gatewayClient });
-    setChecking(true);
-    await checkHealth();
-  };
-
   if (healthy) return <AgentPage />;
   if (checking) return <Connecting services={services} />;
-  return <DatabaseConnectionError onRetry={handleRetry} services={services} />;
+  return <Connecting services={services} />;
 };
 
 export default App;

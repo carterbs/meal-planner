@@ -2,6 +2,7 @@ import type {
   MainMealResponse,
   MainStepResponse,
   MainIngredientResponse,
+  MainShoppingListItemResponse,
 } from '@mealplanner/generated/dist/gateway/types.gen';
 import {
   createClient,
@@ -16,8 +17,10 @@ import {
   deleteMealsByMealIdIngredientsByIngredientId,
   postMealsByMealIdStepsBulk,
   deleteMealsByMealIdSteps,
+  postShoppinglist,
+  GoGetShoppingListRequest,
 } from '@mealplanner/generated/dist/gateway/index.js';
-import { Meal, Ingredient, Step } from '../types';
+import { Meal, Ingredient, Step, WeeklyMealPlan } from '../types';
 
 // Create the API gateway client
 
@@ -58,7 +61,7 @@ function mapMeal(m: MainMealResponse): Meal {
 // Create the API gateway client
 const gatewayClient = createClient(
   createConfig({
-    baseUrl: 'http://localhost:8080/api',
+    baseUrl: 'http://localhost:8090/api',
   }),
 );
 
@@ -259,4 +262,22 @@ export async function replaceAllSteps(
     const instructions = steps.map((step) => step.instruction);
     await addBulkSteps(mealId, instructions);
   }
+}
+
+export async function goGetShoppingList(mealPlan: WeeklyMealPlan): Promise<MainShoppingListItemResponse[]> {
+  const request: GoGetShoppingListRequest = {
+    plan: mealPlan.days.filter((day) => day.meal).map((day) => day.meal!.id),
+  };
+  const result = await postShoppinglist({
+    client: gatewayClient,
+    body: request,
+  });
+
+  if (!result.data || !result.data.items || result.error) {
+    throw new Error(
+      `Failed to generate shopping list: ${result.error || 'Unknown error'}`,
+    );
+  }
+
+  return result.data.items;
 }

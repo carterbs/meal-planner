@@ -1,4 +1,4 @@
-export const API = process.env.BACKEND_BASE_URL || 'http://127.0.0.1:8080';
+export const API = process.env.BACKEND_BASE_URL || 'http://127.0.0.1:8090';
 // Retry utility for HTTP requests
 export async function retryFetch(url: string, options: RequestInit = {}, maxRetries = 30, retryDelay = 2000): Promise<Response> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {

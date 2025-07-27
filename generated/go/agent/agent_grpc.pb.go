@@ -21,6 +21,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	AgentService_HealthCheck_FullMethodName        = "/agent.AgentService/HealthCheck"
 	AgentService_PlanStart_FullMethodName          = "/agent.AgentService/PlanStart"
 	AgentService_PlanFeedback_FullMethodName       = "/agent.AgentService/PlanFeedback"
 	AgentService_PlanFinalize_FullMethodName       = "/agent.AgentService/PlanFinalize"
@@ -46,6 +47,8 @@ const (
 //
 // Agent Service - provides gRPC endpoints for all CLI commands
 type AgentServiceClient interface {
+	// Health check endpoint
+	HealthCheck(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*_go.HealthCheckResponse, error)
 	// Plan commands
 	PlanStart(ctx context.Context, in *PlanStartRequest, opts ...grpc.CallOption) (*PlanStartResponse, error)
 	PlanFeedback(ctx context.Context, in *PlanFeedbackRequest, opts ...grpc.CallOption) (*PlanFeedbackResponse, error)
@@ -77,6 +80,16 @@ type agentServiceClient struct {
 
 func NewAgentServiceClient(cc grpc.ClientConnInterface) AgentServiceClient {
 	return &agentServiceClient{cc}
+}
+
+func (c *agentServiceClient) HealthCheck(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*_go.HealthCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(_go.HealthCheckResponse)
+	err := c.cc.Invoke(ctx, AgentService_HealthCheck_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *agentServiceClient) PlanStart(ctx context.Context, in *PlanStartRequest, opts ...grpc.CallOption) (*PlanStartResponse, error) {
@@ -255,6 +268,8 @@ func (c *agentServiceClient) ListCheckpoints(ctx context.Context, in *_go.ListCh
 //
 // Agent Service - provides gRPC endpoints for all CLI commands
 type AgentServiceServer interface {
+	// Health check endpoint
+	HealthCheck(context.Context, *emptypb.Empty) (*_go.HealthCheckResponse, error)
 	// Plan commands
 	PlanStart(context.Context, *PlanStartRequest) (*PlanStartResponse, error)
 	PlanFeedback(context.Context, *PlanFeedbackRequest) (*PlanFeedbackResponse, error)
@@ -288,6 +303,9 @@ type AgentServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAgentServiceServer struct{}
 
+func (UnimplementedAgentServiceServer) HealthCheck(context.Context, *emptypb.Empty) (*_go.HealthCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
+}
 func (UnimplementedAgentServiceServer) PlanStart(context.Context, *PlanStartRequest) (*PlanStartResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PlanStart not implemented")
 }
@@ -358,6 +376,24 @@ func RegisterAgentServiceServer(s grpc.ServiceRegistrar, srv AgentServiceServer)
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&AgentService_ServiceDesc, srv)
+}
+
+func _AgentService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AgentService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).HealthCheck(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _AgentService_PlanStart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -673,6 +709,10 @@ var AgentService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "agent.AgentService",
 	HandlerType: (*AgentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "HealthCheck",
+			Handler:    _AgentService_HealthCheck_Handler,
+		},
 		{
 			MethodName: "PlanStart",
 			Handler:    _AgentService_PlanStart_Handler,

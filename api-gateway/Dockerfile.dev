@@ -1,0 +1,21 @@
+FROM golang:1.24-alpine
+
+WORKDIR /app
+
+# Install hot reload tool
+RUN go install github.com/air-verse/air@latest
+
+# Copy all files from project root (needed for local module dependencies)
+COPY . .
+
+# Set working directory to api-gateway
+WORKDIR /app/api-gateway
+
+# Download dependencies
+RUN go mod download
+
+# Expose port
+EXPOSE 8090
+
+# Use air for hot reloading in development
+CMD ["air", "-c", ".air.toml"]
