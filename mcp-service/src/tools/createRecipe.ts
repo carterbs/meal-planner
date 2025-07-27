@@ -38,7 +38,7 @@ export async function createRecipe(data: z.infer<typeof createRecipeArgs>) {
     const resp = await fetch(`${API}/api/meals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData.toJson())
+        body: JSON.stringify(requestData.toJson({ emitDefaultValues: true }))
     });
     if (!resp.ok)
         throw new McpError(-32000, `BackendError: ${resp.statusText}`);
@@ -56,7 +56,7 @@ export async function createRecipe(data: z.infer<typeof createRecipeArgs>) {
     const stepResp = await fetch(`${API}/api/meals/${id}/steps/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(stepsRequestData.toJson())
+        body: JSON.stringify(stepsRequestData.toJson({ emitDefaultValues: true }))
     });
     if (!stepResp.ok)
         throw new McpError(-32000, `BackendError: ${stepResp.statusText}`);
