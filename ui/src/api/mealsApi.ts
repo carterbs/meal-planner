@@ -11,6 +11,7 @@ import {
 import {
   getMeals as getMealsFromGateway,
   postMeals,
+  putMealsByMealId,
   deleteMealsByMealId,
   postMealsByMealIdIngredients,
   putMealsByMealIdIngredientsByIngredientId,
@@ -102,13 +103,36 @@ export async function createMeal(
   });
 
   if (!result.data || result.error) {
-    throw new Error(
-      `Failed to create meal: ${result.error || 'Unknown error'}`,
-    );
+    const errorMessage = result.error?.error || result.error || 'Unknown error';
+    throw new Error(`Failed to create meal: ${errorMessage}`);
   }
 
-  if (!result.data.name) {
+  if (!result.data) {
     throw new Error('No meal returned from create request');
+  }
+
+  return mapMeal(result.data);
+}
+
+/**
+ * Update an existing meal
+ */
+export async function updateMeal(
+  mealId: number,
+  meal: MainMealResponse,
+): Promise<Meal> {
+  const result = await putMealsByMealId({
+    client: gatewayClient,
+    path: { mealId: mealId },
+    body: {
+      meal_id: mealId,
+      meal,
+    },
+  });
+
+  if (!result.data || result.error) {
+    const errorMessage = result.error?.error || result.error || 'Unknown error';
+    throw new Error(`Failed to update meal: ${errorMessage}`);
   }
 
   return mapMeal(result.data);
