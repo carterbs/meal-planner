@@ -3,9 +3,9 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { PlanFeedbackRequest, PlanFeedbackResponse, PlanFinalizeRequest, PlanFinalizeResponse, PlanStartRequest, PlanStartResponse, ResumeWorkflowRequest, ResumeWorkflowResponse } from "./agent_pb.js";
 import { Empty, MethodKind } from "@bufbuild/protobuf";
-import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddMessageRequest, AddMessageResponse, CancelWorkflowRequest, CancelWorkflowResponse, GetCheckpointRequest, GetCheckpointResponse, GetMessagesRequest, GetMessagesResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, MessageAgentRequest, MessageAgentResponse, PutCheckpointRequest, PutCheckpointResponse, StartAgentWorkflowRequest, StartAgentWorkflowResponse, UpdateSessionStateRequest, UpdateSessionStateResponse } from "./api_pb.js";
+import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddMessageRequest, AddMessageResponse, CancelWorkflowRequest, CancelWorkflowResponse, GetCheckpointRequest, GetCheckpointResponse, GetMessagesRequest, GetMessagesResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, HealthCheckResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, MessageAgentRequest, MessageAgentResponse, PutCheckpointRequest, PutCheckpointResponse, StartAgentWorkflowRequest, StartAgentWorkflowResponse, UpdateSessionStateRequest, UpdateSessionStateResponse } from "./api_pb.js";
+import { PlanFeedbackRequest, PlanFeedbackResponse, PlanFinalizeRequest, PlanFinalizeResponse, PlanStartRequest, PlanStartResponse, ResumeWorkflowRequest, ResumeWorkflowResponse } from "./agent_pb.js";
 
 /**
  * Agent Service - provides gRPC endpoints for all CLI commands
@@ -15,6 +15,17 @@ import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddMessageRequest, Add
 export const AgentService = {
   typeName: "agent.AgentService",
   methods: {
+    /**
+     * Health check endpoint
+     *
+     * @generated from rpc agent.AgentService.HealthCheck
+     */
+    healthCheck: {
+      name: "HealthCheck",
+      I: Empty,
+      O: HealthCheckResponse,
+      kind: MethodKind.Unary,
+    },
     /**
      * Plan commands
      *

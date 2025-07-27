@@ -21,36 +21,56 @@ type LoggingClient struct {
 }
 
 func NewLoggingClient(addr, serviceName string) (*LoggingClient, error) {
-    // Emit diagnostic logs to help troubleshoot connectivity issues to the centralized
-    // logging service. These will appear in standard output of the calling process
-    // (e.g. container logs) even before the structured logger is fully configured.
-    start := time.Now()
-    fmt.Printf("[LoggingClient] Attempting to connect to logging service at %s\n", addr)
+	// Emit diagnostic logs to help troubleshoot connectivity issues to the centralized
+	// logging service. These will appear in standard output of the calling process
+	// (e.g. container logs) even before the structured logger is fully configured.
+	start := time.Now()
+	fmt.Printf("[LoggingClient] Attempting to connect to logging service at %s\n", addr)
 
-    // Dial in blocking mode so we immediately know if the service is reachable. Use a
-    // short timeout so application start-up is not unduly delayed.
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
+	// Retry logic for connecting to logging service
+	maxRetries := 30              // 30 attempts
+	retryDelay := 2 * time.Second // 2 seconds between attempts
 
-    conn, err := grpc.DialContext(
-        ctx,
-        addr,
-        grpc.WithTransportCredentials(insecure.NewCredentials()),
-        grpc.WithBlock(),
-    )
-    if err != nil {
-        fmt.Printf("[LoggingClient] Failed to connect to logging service at %s: %v\n", addr, err)
-        return nil, err
-    }
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		fmt.Printf("[LoggingClient] Connection attempt %d/%d\n", attempt, maxRetries)
 
-    fmt.Printf("[LoggingClient] Connected to logging service at %s (took %s)\n", addr, time.Since(start))
+		// Dial in blocking mode so we immediately know if the service is reachable. Use a
+		// short timeout so application start-up is not unduly delayed.
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-    client := pb.NewLoggingServiceClient(conn)
-    return &LoggingClient{
-        client:      client,
-        conn:        conn,
-        serviceName: serviceName,
-    }, nil
+		conn, err := grpc.DialContext(
+			ctx,
+			addr,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithBlock(),
+		)
+		cancel() // Cancel the context immediately after dial
+
+		if err != nil {
+			fmt.Printf("[LoggingClient] Failed to connect to logging service at %s (attempt %d/%d): %v\n", addr, attempt, maxRetries, err)
+
+			if attempt == maxRetries {
+				fmt.Printf("[LoggingClient] Failed to connect after %d attempts\n", maxRetries)
+				return nil, err
+			}
+
+			// Wait before retrying
+			time.Sleep(retryDelay)
+			continue
+		}
+
+		fmt.Printf("[LoggingClient] Connected to logging service at %s (took %s, attempt %d)\n", addr, time.Since(start), attempt)
+
+		client := pb.NewLoggingServiceClient(conn)
+		return &LoggingClient{
+			client:      client,
+			conn:        conn,
+			serviceName: serviceName,
+		}, nil
+	}
+
+	// This should never be reached, but just in case
+	return nil, fmt.Errorf("failed to connect to logging service after %d attempts", maxRetries)
 }
 
 func (c *LoggingClient) Close() error {

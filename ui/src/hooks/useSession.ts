@@ -17,7 +17,7 @@ import type {
 // Create the API gateway client
 const gatewayClient = createClient(
   createConfig({
-    baseUrl: 'http://localhost:8080/api',
+    baseUrl: 'http://localhost:8090/api',
   }),
 );
 

@@ -20,8 +20,7 @@ const chalk = require('chalk');
 
 const portsToKill = [
   8000,
-  8080, // api-gateway
-  8090, // backend
+  8090, // api-gateway
   5000, 
   3001, 
   3000,

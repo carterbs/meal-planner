@@ -206,8 +206,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const mcpPort = process.env.MCP_PORT
       ? parseInt(process.env.MCP_PORT)
       : 3001;
+    const mcpHost = process.env.MCP_HOST || 'localhost';
     const transport = new StreamableHTTPClientTransport(
-      new URL(`http://localhost:${mcpPort}/mcp`),
+      new URL(`http://${mcpHost}:${mcpPort}/mcp`),
     );
     await this.client.connect(transport);
     await infoLog('MCP client connected successfully');
@@ -215,9 +216,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   async initialize(): Promise<void> {
     await infoLog('MealPlanningWorkflow.initialize called');
     const isCodex = process.argv.includes('--codex');
-    // Connect to MCP server
-    // Always connect to the already-running MCP server (launched independently by yarn start:mcp)
-    // No longer launch MCP server as child process since agent is now a long-running service
     await infoLog(
       `🍽️ [MEAL-WORKFLOW] Starting to initialize meal planning workflow`,
     );

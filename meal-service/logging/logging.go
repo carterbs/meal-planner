@@ -74,6 +74,12 @@ func GetGrpcLogger(name string) *zap.SugaredLogger {
 	return Logger.Named(name)
 }
 
+// GetGrpcClient returns the gRPC logging client for direct use in health checks
+func GetGrpcClient() *logger.LoggingClient {
+	InitLogger()
+	return grpcLogger
+}
+
 // InitLogger initializes the global structured logger (zap) for the application.
 func InitLogger() {
 	loggerOnce.Do(func() {
