@@ -7,6 +7,7 @@ import {
   deleteMealIngredient,
   deleteMeal as deleteMealApi,
   replaceAllSteps,
+  updateMeal as updateMealApi,
 } from '../api';
 import {
   Box,
@@ -24,6 +25,10 @@ import {
   Fade,
   Switch,
   FormControlLabel,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { format } from 'date-fns';
@@ -415,12 +420,51 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
   // Function to toggle between edit and view modes
   const toggleEditMode = () => {
-    // If switching from edit to view mode, reset any active editing
-    if (editMode) {
+    // If switching from edit to view mode, save changes and reset any active editing
+    if (editMode && selectedMeal) {
       setEditingIngredientIndex(-1);
       setEditedIngredient(null);
+      // Save the current meal state when exiting edit mode
+      handleUpdateMeal(selectedMeal);
     }
     setEditMode(!editMode);
+  };
+
+  // Function to handle meal updates
+  const handleUpdateMeal = async (updatedMeal: Meal) => {
+    if (!updatedMeal.id) return;
+
+    try {
+      setLoading(true);
+      const result = await updateMealApi(updatedMeal.id, {
+        id: updatedMeal.id,
+        name: updatedMeal.name,
+        effort: updatedMeal.effort,
+        hasRedMeat: updatedMeal.hasRedMeat,
+        url: updatedMeal.url,
+        mealType: updatedMeal.mealType,
+        ingredients: updatedMeal.ingredients,
+        steps: updatedMeal.steps,
+      });
+
+      // Update the selected meal with the result from the backend
+      setSelectedMeal(result);
+      
+      // Update the meals list as well
+      setMeals(prev => 
+        prev.map(meal => meal.id === result.id ? result : meal)
+      );
+
+      showToast('Meal updated successfully');
+    } catch (error) {
+      console.error('Error updating meal:', error);
+      showToast('Error updating meal');
+      // Revert the optimistic update if it failed
+      // This would require storing the previous state, but for now we'll refetch
+      fetchMeals();
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Render the main menu with options
@@ -849,6 +893,32 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
             }}
           >
             <CardContent sx={{ p: 4 }}>
+              {/* Meal Type Selector - only show in edit mode */}
+              {editMode && (
+                <Box sx={{ mb: 3 }}>
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel id="meal-type-edit-label">Meal Type</InputLabel>
+                    <Select
+                      labelId="meal-type-edit-label"
+                      id="meal-type-edit-select"
+                      value={selectedMeal.mealType}
+                      label="Meal Type"
+                      onChange={(e) => {
+                        const updatedMeal = {
+                          ...selectedMeal,
+                          mealType: e.target.value,
+                        };
+                        setSelectedMeal(updatedMeal);
+                      }}
+                    >
+                      <MenuItem value="breakfast">Breakfast</MenuItem>
+                      <MenuItem value="lunch">Lunch</MenuItem>
+                      <MenuItem value="dinner">Dinner</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              )}
+
               <Stack
                 direction="row"
                 spacing={2}
@@ -858,6 +928,21 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                   gap: 1,
                 }}
               >
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    bgcolor: alpha(theme.palette.info.main, 0.08),
+                    color: theme.palette.info.main,
+                    py: 0.5,
+                    px: 1.5,
+                    borderRadius: 4,
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  {selectedMeal.mealType.charAt(0).toUpperCase() + selectedMeal.mealType.slice(1)}
+                </Box>
                 <Box
                   sx={{
                     display: 'inline-flex',
