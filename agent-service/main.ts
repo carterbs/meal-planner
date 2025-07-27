@@ -63,12 +63,29 @@ function planStart(
         await debugLog(`Failed to fetch initial workflow state: ${e}`);
         return callback(e as Error);
       }
+      // Serialize initial state to JSON and ensure dayIndex defaults are set
+      const rawStateJson = initialState.toJsonString();
+      let parsedState: any;
+      try {
+        parsedState = JSON.parse(rawStateJson);
+      } catch (e) {
+        // Fallback to empty state if parsing fails
+        parsedState = {};
+      }
+      if (parsedState.mealPlan?.days && Array.isArray(parsedState.mealPlan.days)) {
+        parsedState.mealPlan.days.forEach((day: any, idx: number) => {
+          if (day.dayIndex === undefined) {
+            day.dayIndex = idx;
+          }
+        });
+      }
+      const stateString = JSON.stringify(parsedState);
       const response = new PlanStartResponse({
         success: true,
         message: 'Meal planning session started',
         threadId: threadId,
         currentStep: initialState.currentStep,
-        initialState: new TextEncoder().encode(initialState.toJsonString()),
+        initialState: new TextEncoder().encode(stateString),
       });
       callback(null, response);
     } catch (error) {
