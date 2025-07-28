@@ -147,6 +147,7 @@ type MealResponse struct {
 	Id          int32                `json:"id"`
 	Name        string               `json:"name"`
 	Effort      int32                `json:"effort"`
+	LastPlanned *string              `json:"lastPlanned,omitempty" swaggertype:"string" format:"date-time"`
 	HasRedMeat  bool                 `json:"hasRedMeat"`
 	Url         string               `json:"url"`
 	MealType    string               `json:"mealType"`

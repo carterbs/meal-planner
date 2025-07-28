@@ -26,7 +26,7 @@ import MealPlanDisplay from './components/MealPlanDisplay';
 import { MealManagementTab } from './components/MealManagementTab';
 import { Toast } from './components/Toast';
 import { ShoppingListItem } from './types';
-import { WeeklyMealPlan } from '@mealplanner/generated';
+import { MealPlanEntry, WeeklyMealPlan, Meal } from '@mealplanner/generated';
 import {
   startAgentSession,
   sendAgentMessage,
@@ -45,6 +45,8 @@ import {
 import type { SxProps, Theme } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
 import type { DayOfTheWeek } from '@meal-planner/shared';
+import { Timestamp } from '@bufbuild/protobuf';
+import { convertGatewayMealPlan } from './utils/mealPlanConverter';
 
 const gatewayClient = createClient(
   createConfig({
@@ -505,7 +507,7 @@ const AgentPage: React.FC = () => {
 
       // Resume meal plan if available
       if (resumeData.mealPlan?.days) {
-        setMealPlan(new WeeklyMealPlan({ days: resumeData.mealPlan.days }));
+        setMealPlan(convertGatewayMealPlan(resumeData.mealPlan));
       }
 
       // Resume shopping list if available
@@ -564,7 +566,7 @@ const AgentPage: React.FC = () => {
 
       // Update meal plan
       if (state.mealPlan) {
-        const newPlan = new WeeklyMealPlan({ days: state.mealPlan.days ?? [] });
+        const newPlan = convertGatewayMealPlan(state.mealPlan);
         setMealPlan(newPlan);
         applyHighlights(newPlan);
         try {
@@ -584,11 +586,9 @@ const AgentPage: React.FC = () => {
 
       // Check for meal plan in initial state
       if (result.initialState?.state?.mealPlan) {
-        console.log(
-          'Applying highlights for new meal plan:',
-          result.initialState.state.mealPlan,
-        );
-        applyHighlights(result.initialState.state.mealPlan);
+        const plan = convertGatewayMealPlan(result.initialState.state.mealPlan);
+        console.log('Applying highlights for new meal plan:', plan);
+        applyHighlights(plan);
       }
 
       // Check for shopping list in initial state

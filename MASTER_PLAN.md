@@ -6,12 +6,6 @@ For running on my linux box.
 - Also have AI normalize ingredients when inserting into the DB
 - Have a repeatable script for this
 
-## Bugs
-- Last Planned appears to be "never" for everything...that ain't great!
-
-## QoL Improvements
-- Allow user to edit 'last planned' with a date picker
-
 ## Adding recipes
 - UI returns an error despite the backend completing properly
 - "Process ingredients" Shouldn't be a necessary step. I should be able to just have a textarea full of ingredients and the processing should just happen.

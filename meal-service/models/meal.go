@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
+	// needed for timestamp conversion
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
 
@@ -423,12 +424,20 @@ func UpdateMeal(db *sql.DB, meal *Meal) error {
 		mealType = "dinner"
 	}
 
+	// Convert last_planned timestamp if provided
+	var lastPlanned interface{}
+	if meal.LastPlanned != nil {
+		lastPlanned = meal.LastPlanned.AsTime()
+	} else {
+		lastPlanned = nil
+	}
+
 	result, err := db.Exec(`
 		UPDATE meals 
-		SET meal_name = $1, relative_effort = $2, red_meat = $3, url = $4, meal_type = $5
-		WHERE id = $6`,
-		meal.GetName(), meal.GetEffort(), meal.GetHasRedMeat(), meal.GetUrl(), mealType, meal.GetId())
-	
+		SET meal_name = $1, relative_effort = $2, red_meat = $3, url = $4, meal_type = $5, last_planned = $6
+		WHERE id = $7`,
+		meal.GetName(), meal.GetEffort(), meal.GetHasRedMeat(), meal.GetUrl(), mealType, lastPlanned, meal.GetId())
+
 	if err != nil {
 		mealModelLogger.Errorw("UpdateMeal: error executing update", "mealID", meal.GetId(), "error", err)
 		return err

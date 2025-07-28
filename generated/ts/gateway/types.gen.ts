@@ -292,6 +292,7 @@ export type MainMealResponse = {
     hasRedMeat?: boolean;
     id?: number;
     ingredients?: Array<MainIngredientResponse>;
+    lastPlanned?: string;
     mealType?: string;
     name?: string;
     steps?: Array<MainStepResponse>;

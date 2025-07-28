@@ -40,6 +40,13 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
     fetchMeals();
   }, [mealTypeFilter]);
 
+  // Refetch meals when entering the browse view to ensure latest data (e.g., lastPlanned updates)
+  useEffect(() => {
+    if (currentView === 'browse') {
+      fetchMeals();
+    }
+  }, [currentView]);
+
   /** Callback after creating a new recipe */
   const handleRecipeAdded = () => {
     fetchMeals();
@@ -104,8 +111,14 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
               onMealUpdated={(m) => {
                 handleMealUpdated(m);
                 setSelectedMeal(m);
+                // Re-fetch full list to capture any updates like lastPlanned
+                fetchMeals();
               }}
-              onBack={() => setSelectedMeal(null)}
+              onBack={() => {
+                setSelectedMeal(null);
+                // Re-fetch meals when leaving edit view
+                fetchMeals();
+              }}
               showToast={showToast}
             />
           </Box>

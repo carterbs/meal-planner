@@ -162,7 +162,25 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 		return nil, fmt.Errorf("meal plan is required")
 	}
 
-	// For now, just return success as finalization logic needs to be implemented
+	// Collect meal IDs from the finalized plan
+	mealIDSet := make(map[int]struct{})
+	for _, entry := range req.Plan.Days {
+		if entry != nil && entry.Meal != nil {
+			mealIDSet[int(entry.Meal.GetId())] = struct{}{}
+		}
+	}
+	var mealIDs []int
+	for id := range mealIDSet {
+		mealIDs = append(mealIDs, id)
+	}
+
+	// Persist last_planned timestamps
+	if len(mealIDs) > 0 {
+		if err := server.Services.MealService.UpdateLastPlannedDates(mealIDs); err != nil {
+			return nil, fmt.Errorf("failed to update last planned dates: %w", err)
+		}
+	}
+
 	return &apipb.FinalizeMealPlanResponse{
 		Message: "Meal plan finalized successfully",
 	}, nil

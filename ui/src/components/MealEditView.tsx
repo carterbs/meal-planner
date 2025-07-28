@@ -30,6 +30,8 @@ import {
   updateMeal as updateMealApi,
 } from '../api';
 
+import type { MainMealResponse } from '@mealplanner/generated/dist/gateway/types.gen';
+
 import { Meal, Ingredient, Step } from '../types';
 
 interface MealEditViewProps {
@@ -176,7 +178,7 @@ const MealEditView: React.FC<MealEditViewProps> = ({
     if (!updatedMeal.id) return;
     try {
       setLoading(true);
-      const result = await updateMealApi(updatedMeal.id, {
+      const mealData: MainMealResponse = {
         id: updatedMeal.id,
         name: updatedMeal.name,
         effort: updatedMeal.effort,
@@ -185,7 +187,10 @@ const MealEditView: React.FC<MealEditViewProps> = ({
         mealType: updatedMeal.mealType,
         ingredients: updatedMeal.ingredients,
         steps: updatedMeal.steps,
-      });
+        lastPlanned: updatedMeal.lastPlanned,
+      };
+
+      const result = await updateMealApi(updatedMeal.id, mealData);
       setLocalMeal(result);
       onMealUpdated(result);
       showToast('Meal updated successfully');
@@ -259,25 +264,54 @@ const MealEditView: React.FC<MealEditViewProps> = ({
         }}
       >
         <CardContent sx={{ p: 4 }}>
-          {/* Meal type selector */}
+          {/* Meal type selector and Last Planned date */}
           {editMode && (
             <Box sx={{ mb: 3 }}>
-              <FormControl size="small" sx={{ minWidth: 200 }}>
-                <InputLabel id="meal-type-edit-label">Meal Type</InputLabel>
-                <Select
-                  labelId="meal-type-edit-label"
-                  id="meal-type-edit-select"
-                  value={localMeal.mealType}
-                  label="Meal Type"
-                  onChange={(e) =>
-                    setLocalMeal({ ...localMeal, mealType: e.target.value })
-                  }
-                >
-                  <MenuItem value="breakfast">Breakfast</MenuItem>
-                  <MenuItem value="lunch">Lunch</MenuItem>
-                  <MenuItem value="dinner">Dinner</MenuItem>
-                </Select>
-              </FormControl>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel id="meal-type-edit-label">Meal Type</InputLabel>
+                    <Select
+                      labelId="meal-type-edit-label"
+                      id="meal-type-edit-select"
+                      value={localMeal.mealType}
+                      label="Meal Type"
+                      onChange={(e) =>
+                        setLocalMeal({ ...localMeal, mealType: e.target.value })
+                      }
+                    >
+                      <MenuItem value="breakfast">Breakfast</MenuItem>
+                      <MenuItem value="lunch">Lunch</MenuItem>
+                      <MenuItem value="dinner">Dinner</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Last Planned"
+                    type="date"
+                    size="small"
+                    fullWidth
+                    value={
+                      localMeal.lastPlanned
+                        ? localMeal.lastPlanned.split('T')[0]
+                        : ''
+                    }
+                    onChange={(e) => {
+                      const dateValue = e.target.value;
+                      setLocalMeal({
+                        ...localMeal,
+                        lastPlanned: dateValue
+                          ? new Date(dateValue + 'T00:00:00.000Z').toISOString()
+                          : undefined,
+                      });
+                    }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                </Grid>
+              </Grid>
             </Box>
           )}
 

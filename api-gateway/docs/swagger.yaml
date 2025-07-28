@@ -466,6 +466,9 @@ definitions:
         items:
           $ref: '#/definitions/main.IngredientResponse'
         type: array
+      lastPlanned:
+        format: date-time
+        type: string
       mealType:
         type: string
       name:
