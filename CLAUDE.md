@@ -14,3 +14,6 @@ Run /commit, then push the branch and create the PR using the `gh` cli.
 ## Development notes
 - We use yarn in this project. Do not use npm comands.
 - when accessing the database, use docker-exec. the pass is mealpass, the user is mealuser. the database container is meal-planner-db-1
+
+## TypeScript Guidelines
+- Casting types to `any` in typescript files should be avoided at all costs. If you believe you need to cast as any, you need to justify it.

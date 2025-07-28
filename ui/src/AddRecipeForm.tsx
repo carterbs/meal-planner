@@ -14,6 +14,10 @@ import {
   Snackbar,
   Alert,
   Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { Ingredient, Step, Meal } from './types';
 import { createMeal } from './api';
@@ -84,6 +88,10 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
   const handleRedMeatChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMeal({ ...meal, hasRedMeat: e.target.checked });
+  };
+
+  const handleMealTypeChange = (e: any) => {
+    setMeal({ ...meal, mealType: e.target.value });
   };
 
   const handleRawIngredientsChange = (
@@ -326,7 +334,24 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel id="meal-type-label">Meal Type</InputLabel>
+              <Select
+                labelId="meal-type-label"
+                id="meal-type-select"
+                value={meal.mealType}
+                label="Meal Type"
+                onChange={handleMealTypeChange}
+              >
+                <MenuItem value="breakfast">Breakfast</MenuItem>
+                <MenuItem value="lunch">Lunch</MenuItem>
+                <MenuItem value="dinner">Dinner</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
             <FormControlLabel
               control={
                 <Switch

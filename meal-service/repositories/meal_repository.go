@@ -44,10 +44,14 @@ func (r *MealRepositoryImpl) CreateMeal(ctx context.Context, meal *models.Meal) 
 	return models.CreateMeal(r.db, meal)
 }
 
-// UpdateMeal updates an existing meal (not implemented in models)
-func (r *MealRepositoryImpl) UpdateMeal(ctx context.Context, meal *models.Meal) error {
-	// TODO: Implement when needed
-	return nil
+// UpdateMeal updates an existing meal
+func (r *MealRepositoryImpl) UpdateMeal(ctx context.Context, meal *models.Meal) (*models.Meal, error) {
+	err := models.UpdateMeal(r.db, meal)
+	if err != nil {
+		return nil, err
+	}
+	// Return the updated meal
+	return meal, nil
 }
 
 // DeleteMeal deletes a meal and its related data

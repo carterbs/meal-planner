@@ -3174,7 +3174,7 @@ __metadata:
 
 "@mealplanner/generated@file:../generated/ts::locator=meal-planner-agent-service%40workspace%3Aagent-service":
   version: 1.0.0
-  resolution: "@mealplanner/generated@file:../generated/ts#../generated/ts::hash=cc1932&locator=meal-planner-agent-service%40workspace%3Aagent-service"
+  resolution: "@mealplanner/generated@file:../generated/ts#../generated/ts::hash=289519&locator=meal-planner-agent-service%40workspace%3Aagent-service"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
   peerDependencies:
@@ -3182,7 +3182,7 @@ __metadata:
     "@connectrpc/connect-node": ^1.6.0
     "@connectrpc/connect-web": ^1.6.0
     typescript: ">=4.0.0"
-  checksum: 10c0/89d6aac0a8072c6314f1b2e304c5addd3f556d53edfdbdcd3b70b9f992535276ad5f1ac6fa04283324087a6e91ebe1131ee822b9b4f17987990f275f3f902b9e
+  checksum: 10c0/5f7fe0793a30fe05b46c0c569c233ad6ca171792ea56abd28d273e6c87d34ee1653a3b26d41101b101f674a0a289977a8b6c86a626e49521cdc9462ab686277d
   languageName: node
   linkType: hard
 

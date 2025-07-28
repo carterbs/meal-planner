@@ -108,18 +108,6 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       return []; // Return empty array on error
     }
   }
-  /**
-   * Convert any Meal.lastPlanned that is not already a Date into a Date so
-   * that WeeklyMealPlan.toJSON() can safely call toISOString().
-   */
-  private coerceDates(plan: WeeklyMealPlan | undefined): void {
-    if (!plan?.days) return;
-    for (const entry of plan.days) {
-      const meal = entry.meal;
-      if (!meal) continue;
-      delete meal.lastPlanned;
-    }
-  }
   readonly type = WorkflowType.MEAL_PLANNING;
   readonly graph: {
     invoke: (
@@ -334,9 +322,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               '🔍 [CHECKPOINT] mealPlan before WeeklyMealPlan.fromJson:',
             );
             await infoLog(JSON.stringify(checkpoint.state.mealPlan, null, 2));
-            this.coerceDates(checkpoint.state.mealPlan);
             deserializedMealPlan = WeeklyMealPlan.fromJson(
-              checkpoint.state.mealPlan.toJson(),
+              checkpoint.state.mealPlan.toJson()
             );
             // DEBUGGING: Log mealPlan after deserialization
             await infoLog(

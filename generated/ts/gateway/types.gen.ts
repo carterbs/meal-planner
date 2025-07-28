@@ -155,6 +155,11 @@ export type GoUpdateMealIngredientRequest = {
     meal_id?: number;
 };
 
+export type GoUpdateMealRequest = {
+    meal?: GoMeal;
+    meal_id?: number;
+};
+
 export type GoUpdateSessionStateRequest = {
     current_step?: string;
     /**
@@ -287,6 +292,7 @@ export type MainMealResponse = {
     hasRedMeat?: boolean;
     id?: number;
     ingredients?: Array<MainIngredientResponse>;
+    lastPlanned?: string;
     mealType?: string;
     name?: string;
     steps?: Array<MainStepResponse>;
@@ -958,6 +964,47 @@ export type DeleteMealsByMealIdResponses = {
 };
 
 export type DeleteMealsByMealIdResponse = DeleteMealsByMealIdResponses[keyof DeleteMealsByMealIdResponses];
+
+export type PutMealsByMealIdData = {
+    /**
+     * Update meal request
+     */
+    body: GoUpdateMealRequest;
+    path: {
+        /**
+         * Meal ID
+         */
+        mealId: number;
+    };
+    query?: never;
+    url: '/meals/{mealId}';
+};
+
+export type PutMealsByMealIdErrors = {
+    /**
+     * Bad request
+     */
+    400: MainErrorResponse;
+    /**
+     * Meal not found
+     */
+    404: MainErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: MainErrorResponse;
+};
+
+export type PutMealsByMealIdError = PutMealsByMealIdErrors[keyof PutMealsByMealIdErrors];
+
+export type PutMealsByMealIdResponses = {
+    /**
+     * Meal updated successfully
+     */
+    200: MainMealResponse;
+};
+
+export type PutMealsByMealIdResponse = PutMealsByMealIdResponses[keyof PutMealsByMealIdResponses];
 
 export type PostMealsByMealIdIngredientsData = {
     /**
