@@ -87,8 +87,7 @@ This plan addresses the architectural complexity that makes agent development ch
 
 **Step 3: Runtime Validation**
 - [ ] Add development-mode type checker that validates API responses
-- [ ] Log warnings when response doesn't match generated types
-- [ ] Fail fast in development when types mismatch
+- [ ] Throw errors when response doesn't match generated types
 
 ### 2.3 Single Source of Truth Migration (Week 2)
 
@@ -96,8 +95,10 @@ This plan addresses the architectural complexity that makes agent development ch
 
 **Step 1: Identify Hand-Written Types**
 - [ ] Audit ui/src/types.ts for non-UI types
+- [ ] Audit agent-service/shared/types.ts for non-agent-service types
+- [ ] Audit mcp-service for types that aren't generated (and should be)
 - [ ] List all types that should come from generation
-- [ ] Find all usages of these types in UI code
+- [ ] Find all usages of these types in UI, agent, or mcp code
 
 **Step 2: Migrate to Generated Types**
 - [ ] Update imports to use generated types
