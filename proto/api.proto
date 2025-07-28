@@ -235,6 +235,15 @@ message DeleteMealIngredientResponse {
   Meal meal = 1;
 }
 
+message UpdateMealRequest {
+  int32 meal_id = 1;
+  Meal meal = 2;
+}
+
+message UpdateMealResponse {
+  Meal meal = 1;
+}
+
 message DeleteMealRequest {
   int32 meal_id = 1;
 }
@@ -526,6 +535,7 @@ service MealPlannerAPI {
   // Meals endpoints
   rpc GetAllMeals(GetAllMealsRequest) returns (GetAllMealsResponse);
   rpc CreateMeal(CreateMealRequest) returns (CreateMealResponse);
+  rpc UpdateMeal(UpdateMealRequest) returns (UpdateMealResponse);
   rpc SwapMeal(SwapMealRequest) returns (SwapMealResponse);
   rpc ReplaceMeal(ReplaceMealRequest) returns (ReplaceMealResponse);
   rpc CreateMealIngredient(CreateMealIngredientRequest) returns (CreateMealIngredientResponse);

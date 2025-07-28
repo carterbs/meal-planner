@@ -5,7 +5,7 @@ import {
   AgentCheckpoint,
   AgentCheckpointMetadata,
 } from '@mealplanner/generated';
-import { errorLog, infoLog } from '../logging';
+import { errorLog } from '../logging';
 export class CheckpointRepository {
   private db: Pool;
   constructor() {

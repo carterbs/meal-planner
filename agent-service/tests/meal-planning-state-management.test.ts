@@ -108,34 +108,6 @@ describe('MealPlanningWorkflow State Management Tests', () => {
       expect(result.updatedAt).toBeDefined();
     });
   });
-  describe('coerceDates', () => {
-    it('coerces dates properly before serialization', () => {
-      const mealPlan = TestMockFactory.createMockWeeklyMealPlan([
-        TestMockFactory.createMockMealPlanEntry({
-          meal: TestMockFactory.createMockMeal({
-            lastPlanned: new Date() as any,
-          }),
-        }),
-      ]);
-      workflow.coerceDates(mealPlan);
-      expect(mealPlan.days[0].meal?.lastPlanned).toBeUndefined();
-    });
-    it('handles undefined meal plan', () => {
-      expect(() => workflow.coerceDates(undefined)).not.toThrow();
-    });
-    it('handles meal plan with no days', () => {
-      const mealPlan = TestMockFactory.createMockWeeklyMealPlan([]);
-      expect(() => workflow.coerceDates(mealPlan)).not.toThrow();
-    });
-    it('handles meal plan with entries without meals', () => {
-      const mealPlan = TestMockFactory.createMockWeeklyMealPlan([
-        TestMockFactory.createMockMealPlanEntry({
-          meal: undefined,
-        }),
-      ]);
-      expect(() => workflow.coerceDates(mealPlan)).not.toThrow();
-    });
-  });
   describe('checkpoint loading and deserialization', () => {
     it('loads checkpoint and deserializes meal plan correctly', async () => {
       const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();

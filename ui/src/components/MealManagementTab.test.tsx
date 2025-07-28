@@ -9,6 +9,7 @@ import { setupFetchMocks, cleanupFetchMocks } from '../test-utils';
 jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
   getMeals: jest.fn(),
   postMeals: jest.fn(),
+  putMealsByMealId: jest.fn(),
   deleteMealsByMealId: jest.fn(),
   putMealsByMealIdIngredientsByIngredientId: jest.fn(),
   deleteMealsByMealIdIngredientsByIngredientId: jest.fn(),
@@ -25,6 +26,7 @@ jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
 import {
   getMeals,
   postMeals,
+  putMealsByMealId,
   deleteMealsByMealId,
   putMealsByMealIdIngredientsByIngredientId,
   deleteMealsByMealIdIngredientsByIngredientId,
@@ -34,6 +36,7 @@ import {
 
 const mockGetMeals = getMeals as jest.MockedFunction<typeof getMeals>;
 const mockPostMeals = postMeals as jest.MockedFunction<typeof postMeals>;
+const mockPutMeal = putMealsByMealId as jest.MockedFunction<typeof putMealsByMealId>;
 const mockDeleteMeal = deleteMealsByMealId as jest.MockedFunction<
   typeof deleteMealsByMealId
 >;
@@ -167,7 +170,8 @@ describe('MealManagementTab', () => {
       data: {},
       error: null,
     } as any);
-
+    // Default mock for updateMeal via gateway
+    mockPutMeal.mockResolvedValue({ data: mockGatewayMeals[0], error: null } as any);
     mockShowToast.mockClear();
   });
 
@@ -206,9 +210,11 @@ describe('MealManagementTab', () => {
       fireEvent.click(screen.getByText('Test Meal'));
     });
 
-    // Verify meal details are shown (the component should display the meal details)
+    // Verify meal details are shown in the new full-width view
+    // The new UI shows the meal name in the header and "Edit Recipe" button
     await waitFor(() => {
-      expect(screen.getByText('Meal Details')).toBeInTheDocument();
+      expect(screen.getByText('Edit Recipe')).toBeInTheDocument();
+      expect(screen.getByLabelText('back to meals list')).toBeInTheDocument();
     });
   });
 
@@ -288,5 +294,167 @@ describe('MealManagementTab', () => {
     expect(screen.getByText('Meal Library')).toBeInTheDocument();
     expect(screen.getByText('Browse Meals')).toBeInTheDocument();
     expect(screen.getByText('Add New Recipe')).toBeInTheDocument();
+  });
+
+  test('navigates from meal details back to meals list', async () => {
+    await act(async () => {
+      render(<MealManagementTab showToast={mockShowToast} />);
+    });
+
+    // Navigate to browse meals
+    await act(async () => {
+      fireEvent.click(screen.getByText('Browse Meals'));
+    });
+
+    // Wait for meals to load and click on a meal
+    await waitFor(() => {
+      expect(screen.getByText('Test Meal')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Test Meal'));
+    });
+
+    // Verify we're in the meal edit view
+    await waitFor(() => {
+      expect(screen.getByLabelText('back to meals list')).toBeInTheDocument();
+    });
+
+    // Click back to meals list
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('back to meals list'));
+    });
+
+    // Verify we're back to the meals list (not the main menu)
+    await waitFor(() => {
+      expect(screen.getByText('Available Meals')).toBeInTheDocument();
+      expect(screen.getByLabelText('back to main menu')).toBeInTheDocument();
+    });
+  });
+
+  test('displays meal type selector in edit view and persists changes', async () => {
+    // Mock gateway update call for this test
+    mockPutMeal.mockResolvedValueOnce({ data: mockGatewayMeals[0], error: null } as any);
+
+    await act(async () => {
+      render(<MealManagementTab showToast={mockShowToast} />);
+    });
+
+    // Navigate to browse meals
+    await act(async () => {
+      fireEvent.click(screen.getByText('Browse Meals'));
+    });
+
+    // Wait for meals to load and click on a meal
+    await waitFor(() => {
+      expect(screen.getByText('Test Meal')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Test Meal'));
+    });
+
+    // Click Edit Recipe to enter edit mode
+    await act(async () => {
+      fireEvent.click(screen.getByText('Edit Recipe'));
+    });
+
+    // Wait for edit view to load
+    await waitFor(() => {
+      expect(screen.getByLabelText('Meal Type')).toBeInTheDocument();
+    });
+
+    // Find and change the meal type selector
+    const mealTypeSelect = screen.getByLabelText('Meal Type');
+    await act(async () => {
+      fireEvent.mouseDown(mealTypeSelect);
+    });
+
+    // Wait for dropdown options and select lunch
+    await waitFor(() => {
+      expect(screen.getByText('Lunch')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Lunch'));
+    });
+
+    // Click Done to save changes
+    await act(async () => {
+      fireEvent.click(screen.getByText('Done'));
+    });
+
+    // Verify client update was called with correct parameters
+    await waitFor(() => {
+      expect(mockPutMeal).toHaveBeenCalledWith({
+        client: {},
+        path: { mealId: 1 },
+        body: expect.objectContaining({
+          meal_id: 1,
+          meal: expect.objectContaining({ id: 1, mealType: 'lunch' }),
+        }),
+      });
+    });
+
+    // Verify success toast was shown
+    expect(mockShowToast).toHaveBeenCalledWith('Meal updated successfully');
+  });
+
+  test('handles error when updating meal type', async () => {
+    // Mock gateway update to throw an error
+    mockPutMeal.mockRejectedValueOnce(new Error('Update failed'));
+
+    await act(async () => {
+      render(<MealManagementTab showToast={mockShowToast} />);
+    });
+
+    // Navigate to browse meals
+    await act(async () => {
+      fireEvent.click(screen.getByText('Browse Meals'));
+    });
+
+    // Wait for meals to load and click on a meal
+    await waitFor(() => {
+      expect(screen.getByText('Test Meal')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Test Meal'));
+    });
+
+    // Click Edit Recipe to enter edit mode
+    await act(async () => {
+      fireEvent.click(screen.getByText('Edit Recipe'));
+    });
+
+    // Wait for edit view to load
+    await waitFor(() => {
+      expect(screen.getByLabelText('Meal Type')).toBeInTheDocument();
+    });
+
+    // Find and change the meal type selector
+    const mealTypeSelect = screen.getByLabelText('Meal Type');
+    await act(async () => {
+      fireEvent.mouseDown(mealTypeSelect);
+    });
+
+    // Wait for dropdown options and select lunch
+    await waitFor(() => {
+      expect(screen.getByText('Lunch')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('Lunch'));
+    });
+
+    // Click Done to save changes
+    await act(async () => {
+      fireEvent.click(screen.getByText('Done'));
+    });
+
+    // Verify error toast was shown
+    await waitFor(() => {
+      expect(mockShowToast).toHaveBeenCalledWith('Error updating meal');
+    });
   });
 });

@@ -14,7 +14,7 @@ type MealRepository interface {
 	GetMealsByIDs(ctx context.Context, ids []int) ([]*models.Meal, error)
 	GetMealByID(ctx context.Context, id int) (*models.Meal, error)
 	CreateMeal(ctx context.Context, meal *models.Meal) (*models.Meal, error)
-	UpdateMeal(ctx context.Context, meal *models.Meal) error
+	UpdateMeal(ctx context.Context, meal *models.Meal) (*models.Meal, error)
 	DeleteMeal(ctx context.Context, id int) error
 
 	// Specialized operations

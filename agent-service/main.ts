@@ -6,11 +6,9 @@ import { LangGraphAgent } from './langgraph-agent';
 import { debugLog } from './logging';
 import { MessageRepository } from './database/messages';
 import { CheckpointRepository } from './database/checkpoints';
-import { WorkflowType, MealPlanningState } from './shared/types';
+import { WorkflowType } from './shared/types';
 import { getDatabase } from './database/connection';
 import {
-  PlanStartRequest,
-  PlanStartResponse,
   PlanFeedbackRequest,
   PlanFeedbackResponse,
   PlanFinalizeRequest,
@@ -18,6 +16,7 @@ import {
   ResumeWorkflowRequest,
   ResumeWorkflowResponse,
 } from '@mealplanner/generated/agent_pb';
+import { planStart } from './handlers';
 import * as apipb from '@mealplanner/generated/api_pb';
 // Initialize agent instance
 let agentInstance: LangGraphAgent | null = null;
@@ -35,49 +34,7 @@ function validateThreadId(threadId: string): boolean {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(threadId);
 }
-// Plan Start implementation
-function planStart(
-  call: grpc.ServerUnaryCall<PlanStartRequest, PlanStartResponse>,
-  callback: grpc.sendUnaryData<PlanStartResponse>,
-): void {
-  (async () => {
-    try {
-      const request = call.request;
-      const participants = request.participants || [];
-      if (participants.length === 0) {
-        return callback(new Error('At least one participant is required.'));
-      }
-      const agentInstance = await initializeAgent();
-      await debugLog(
-        `🔄 Starting meal planning session for participants: ${participants.join(', ')}`,
-      );
-      const threadId = await agentInstance.startWorkflow(
-        WorkflowType.MEAL_PLANNING,
-        participants,
-      );
-      await debugLog(`🔄 Got a threadId: ${threadId}`);
-      let initialState: MealPlanningState;
-      try {
-        initialState = await agentInstance.getWorkflowState(threadId);
-      } catch (e) {
-        await debugLog(`Failed to fetch initial workflow state: ${e}`);
-        return callback(e as Error);
-      }
-      const response = new PlanStartResponse({
-        success: true,
-        message: 'Meal planning session started',
-        threadId: threadId,
-        currentStep: initialState.currentStep,
-        initialState: new TextEncoder().encode(initialState.toJsonString()),
-      });
-      callback(null, response);
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      await debugLog(`Error starting meal planning session: ${errMsg}`);
-      callback(new Error(`Error starting meal planning session: ${errMsg}`));
-    }
-  })();
-}
+// planStart is imported from handlers.ts
 // Plan Feedback implementation
 function planFeedback(
   call: grpc.ServerUnaryCall<PlanFeedbackRequest, PlanFeedbackResponse>,
@@ -143,7 +100,7 @@ function planFinalize(
       if (result.success) {
         await debugLog('✅ Meal plan finalized successfully!');
         // Get and display the final meal plan
-        let finalState: MealPlanningState;
+        let finalState: any; // Changed from MealPlanningState to any as MealPlanningState is removed
         try {
           finalState = await agentInstance.getWorkflowState(threadId);
         } catch (stateError) {
@@ -192,7 +149,7 @@ function resumeWorkflow(
       if (result.success) {
         await debugLog('✅ Workflow resumed successfully!');
         // Get current state
-        let currentState: MealPlanningState;
+        let currentState: any; // Changed from MealPlanningState to any
         try {
           currentState = await agentInstance.getWorkflowState(threadId);
         } catch (stateError) {
@@ -239,12 +196,17 @@ function startAgentWorkflow(
         request.participants,
       );
       const state = await agent.getWorkflowState(threadId);
+      
+      const stateString = typeof (state as any).toJsonString === 'function' 
+        ? (state as any).toJsonString({ emitDefaultValues: true }) 
+        : JSON.stringify(state);
+      
       const resp = new apipb.AgentResponse({
         success: true,
         message: 'Workflow started',
         threadId,
         currentStep: state.currentStep,
-        initialState: state.toJsonString(),
+        initialState: stateString,
       });
       callback(null, new apipb.StartAgentWorkflowResponse({ response: resp }));
     } catch (error) {
@@ -690,7 +652,7 @@ function healthCheck(
         const mcpHost = process.env.MCP_HOST || 'localhost';
         const mcpPort = process.env.MCP_PORT || '3001';
         const mcpUrl = `http://${mcpHost}:${mcpPort}/health`;
-        
+
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(mcpUrl, { timeout: 2000 }); // 2 second timeout
         if (response.status === 200) {
@@ -762,7 +724,6 @@ function startServer(): void {
     'grpc.max_send_message_length': 4 * 1024 * 1024,
   });
   const port = process.env.AGENT_SERVICE_PORT || '50053';
-  // Add the service implementation
   server.addService(agentProto.AgentService.service, {
     planStart,
     planFeedback,
@@ -783,7 +744,6 @@ function startServer(): void {
     listCheckpoints,
     healthCheck,
   });
-  // Bind and start the server
   server.bindAsync(
     `0.0.0.0:${port}`,
     grpc.ServerCredentials.createInsecure(),
@@ -795,7 +755,6 @@ function startServer(): void {
       await debugLog(`🚀 Agent service started on port ${port}`);
     },
   );
-  // Handle graceful shutdown
   process.on('SIGINT', async () => {
     await debugLog('Shutting down agent service...');
     server.tryShutdown(async (err) => {
@@ -807,5 +766,7 @@ function startServer(): void {
     });
   });
 }
-// Start the server
-startServer();
+// Only start the server when this file is run directly
+if (require.main === module) {
+  startServer();
+}

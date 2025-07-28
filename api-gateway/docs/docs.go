@@ -750,6 +750,63 @@ const docTemplate = `{
             }
         },
         "/meals/{mealId}": {
+            "put": {
+                "description": "Update an existing meal's properties (name, effort, meal type, etc.)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meals"
+                ],
+                "summary": "Update Meal",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Meal ID",
+                        "name": "mealId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update meal request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/_go.UpdateMealRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Meal updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/main.MealResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Meal not found",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "Delete a meal",
                 "consumes": [
@@ -1995,6 +2052,17 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.UpdateMealRequest": {
+            "type": "object",
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                },
+                "meal_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "_go.UpdateSessionStateRequest": {
             "type": "object",
             "properties": {
@@ -2330,6 +2398,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/main.IngredientResponse"
                     }
+                },
+                "lastPlanned": {
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "mealType": {
                     "type": "string"

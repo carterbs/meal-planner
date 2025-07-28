@@ -245,6 +245,72 @@ func TestMealService_CreateMeal(t *testing.T) {
 	}
 }
 
+func TestMealService_UpdateMeal(t *testing.T) {
+	tests := []struct {
+		name        string
+		meal        *models.Meal
+		setupMocks  func(*mocks.MockMealRepository, *mocks.MockIngredientRepository)
+		expectedErr string
+	}{
+		{
+			name: "successful update",
+			meal: testutil.NewMealBuilder().WithID(testutil.TestMealID1).WithName("Updated Meal").WithMealType("lunch").Build(),
+			setupMocks: func(mealRepo *mocks.MockMealRepository, ingredientRepo *mocks.MockIngredientRepository) {
+				updatedMeal := testutil.NewMealBuilder().WithID(testutil.TestMealID1).WithName("Updated Meal").WithMealType("lunch").Build()
+				mealRepo.On("UpdateMeal", mock.Anything, mock.Anything).Return(updatedMeal, nil)
+			},
+			expectedErr: "",
+		},
+		{
+			name: "database error during update",
+			meal: testutil.NewMealBuilder().WithID(testutil.TestMealID1).WithName("Updated Meal").Build(),
+			setupMocks: func(mealRepo *mocks.MockMealRepository, ingredientRepo *mocks.MockIngredientRepository) {
+				mealRepo.On("UpdateMeal", mock.Anything, mock.Anything).Return((*models.Meal)(nil), testutil.ErrTestDatabase)
+			},
+			expectedErr: "failed to update meal",
+		},
+		{
+			name: "update meal with different meal type",
+			meal: testutil.NewMealBuilder().WithID(testutil.TestMealID1).WithMealType("breakfast").Build(),
+			setupMocks: func(mealRepo *mocks.MockMealRepository, ingredientRepo *mocks.MockIngredientRepository) {
+				updatedMeal := testutil.NewMealBuilder().WithID(testutil.TestMealID1).WithMealType("breakfast").Build()
+				mealRepo.On("UpdateMeal", mock.Anything, mock.Anything).Return(updatedMeal, nil)
+			},
+			expectedErr: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			mealRepo := new(mocks.MockMealRepository)
+			ingredientRepo := new(mocks.MockIngredientRepository)
+			tt.setupMocks(mealRepo, ingredientRepo)
+
+			service := NewMealService(mealRepo, ingredientRepo)
+
+			// Execute
+			result, err := service.UpdateMeal(tt.meal)
+
+			// Assert
+			if tt.expectedErr != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErr)
+				assert.Nil(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, tt.meal.GetId(), result.GetId())
+				assert.Equal(t, tt.meal.GetName(), result.GetName())
+				assert.Equal(t, tt.meal.GetMealType(), result.GetMealType())
+			}
+
+			mealRepo.AssertExpectations(t)
+			ingredientRepo.AssertExpectations(t)
+		})
+	}
+}
+
 func TestMealService_DeleteMeal(t *testing.T) {
 	tests := []struct {
 		name        string

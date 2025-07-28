@@ -162,7 +162,25 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 		return nil, fmt.Errorf("meal plan is required")
 	}
 
-	// For now, just return success as finalization logic needs to be implemented
+	// Collect meal IDs from the finalized plan
+	mealIDSet := make(map[int]struct{})
+	for _, entry := range req.Plan.Days {
+		if entry != nil && entry.Meal != nil {
+			mealIDSet[int(entry.Meal.GetId())] = struct{}{}
+		}
+	}
+	var mealIDs []int
+	for id := range mealIDSet {
+		mealIDs = append(mealIDs, id)
+	}
+
+	// Persist last_planned timestamps
+	if len(mealIDs) > 0 {
+		if err := server.Services.MealService.UpdateLastPlannedDates(mealIDs); err != nil {
+			return nil, fmt.Errorf("failed to update last planned dates: %w", err)
+		}
+	}
+
 	return &apipb.FinalizeMealPlanResponse{
 		Message: "Meal plan finalized successfully",
 	}, nil
@@ -227,6 +245,32 @@ func (s *MealPlannerAPIServer) CreateMeal(ctx context.Context, req *apipb.Create
 	}
 
 	return &apipb.CreateMealResponse{
+		Meal: meal,
+	}, nil
+}
+
+func (s *MealPlannerAPIServer) UpdateMeal(ctx context.Context, req *apipb.UpdateMealRequest) (*apipb.UpdateMealResponse, error) {
+	if req.Meal == nil {
+		return nil, fmt.Errorf("meal is required")
+	}
+
+	if req.MealId == 0 {
+		return nil, fmt.Errorf("meal ID is required")
+	}
+
+	if req.Meal.Name == "" {
+		return nil, fmt.Errorf("meal name is required")
+	}
+
+	// Set the meal ID from the request to ensure consistency
+	req.Meal.Id = req.MealId
+
+	meal, err := server.Services.MealService.UpdateMeal(req.Meal)
+	if err != nil {
+		return nil, fmt.Errorf("error updating meal: %w", err)
+	}
+
+	return &apipb.UpdateMealResponse{
 		Meal: meal,
 	}, nil
 }
