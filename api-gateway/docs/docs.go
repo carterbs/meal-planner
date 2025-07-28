@@ -2399,6 +2399,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/main.IngredientResponse"
                     }
                 },
+                "lastPlanned": {
+                    "type": "string",
+                    "format": "date-time"
+                },
                 "mealType": {
                     "type": "string"
                 },
