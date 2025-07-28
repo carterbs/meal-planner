@@ -7,9 +7,7 @@ For running on my linux box.
 - Have a repeatable script for this
 
 ## Bugs
-- When starting a new session, monday doesn't come back. When reloading the page, it's fine.
 - Last Planned appears to be "never" for everything...that ain't great!
-- After editing a meal, 'done' should go back to the list of meals. they should also update whenever you load the meal library.
 
 ## QoL Improvements
 - Allow user to edit 'last planned' with a date picker
@@ -23,5 +21,8 @@ For running on my linux box.
 Add, edit, etc
 - Basically a free form text area and have the AI figure out all of the pieces of the receipe, then insert into the DB.
 - Maybe a recipe workshopping feature or something.
+
+## Refactors
+- Extract handlers out of main.ts in the agent-service so we can unit test them properly.
 
 We are approaching perfection.
