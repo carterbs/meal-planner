@@ -41,10 +41,14 @@ function mapStep(s: MainStepResponse): Step {
  * Map MainMealResponse to UI Meal
  */
 function mapMeal(m: MainMealResponse): Meal {
+  // Type assertion to access lastPlanned field that exists in runtime but not in generated types
+  const mealWithLastPlanned = m as MainMealResponse & { lastPlanned?: string };
+  
   return {
     id: m.id,
     name: m.name || '',
     effort: m.effort || 0,
+    lastPlanned: mealWithLastPlanned.lastPlanned,
     hasRedMeat: m.hasRedMeat || false,
     url: m.url || '',
     mealType: m.mealType || '',

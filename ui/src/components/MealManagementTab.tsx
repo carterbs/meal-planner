@@ -101,10 +101,16 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
       field: 'lastPlanned',
       headerName: 'Last Planned',
       width: 150,
-      valueFormatter: (value: string | null) => {
-        if (!value) return 'Never';
-        const date = new Date(value);
-        return format(date, 'MM-dd-yyyy');
+      valueFormatter: (value: string | null | undefined) => {
+        if (!value || value === '') return 'Never';
+        try {
+          const date = new Date(value);
+          // Check if the date is valid
+          if (isNaN(date.getTime())) return 'Never';
+          return format(date, 'MM-dd-yyyy');
+        } catch (error) {
+          return 'Never';
+        }
       },
     },
     {
