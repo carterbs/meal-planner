@@ -24,6 +24,7 @@ export interface Meal {
   id?: number;
   name: string;
   effort: number;
+  lastPlanned?: string;
   hasRedMeat: boolean;
   url: string;
   mealType: string;
