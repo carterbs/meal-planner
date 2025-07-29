@@ -1,52 +1,967 @@
 {
-    "swagger": "2.0",
-    "info": {
-        "description": "API Gateway for Meal Planner service",
-        "title": "Meal Planner API Gateway",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
+    "basePath": "/api",
+    "definitions": {
+        "_go.AbandonWorkflowResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
         },
+        "_go.AddBulkStepsRequest": {
+            "properties": {
+                "instructions": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "mealId": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AddBulkStepsResponse": {
+            "properties": {
+                "steps": {
+                    "items": {
+                        "$ref": "#/definitions/_go.Step"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AddMessageRequest": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "sender": {
+                    "description": "\"user\" or \"agent\"",
+                    "type": "string"
+                },
+                "threadId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AddMessageResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AddStepRequest": {
+            "properties": {
+                "mealId": {
+                    "type": "integer"
+                },
+                "step": {
+                    "$ref": "#/definitions/_go.Step"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AddStepResponse": {
+            "properties": {
+                "step": {
+                    "$ref": "#/definitions/_go.Step"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AgentCheckpoint": {
+            "properties": {
+                "next": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "state": {
+                    "$ref": "#/definitions/_go.MealPlanningCheckpointState"
+                },
+                "step": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AgentCheckpointMetadata": {
+            "properties": {
+                "source": {
+                    "type": "string"
+                },
+                "step": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AgentMessageRequest": {
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "interactive": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "threadId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AgentResponse": {
+            "properties": {
+                "currentStep": {
+                    "type": "string"
+                },
+                "initialState": {
+                    "description": "JSON string",
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "raw": {
+                    "description": "JSON string",
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "threadId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.AgentStartRequest": {
+            "properties": {
+                "participants": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "workflowType": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.CancelWorkflowResponse": {
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.CheckpointEntry": {
+            "properties": {
+                "checkpointNs": {
+                    "type": "string"
+                },
+                "threadId": {
+                    "type": "string"
+                },
+                "tuple": {
+                    "$ref": "#/definitions/_go.CheckpointTuple"
+                }
+            },
+            "type": "object"
+        },
+        "_go.CheckpointTuple": {
+            "properties": {
+                "checkpoint": {
+                    "$ref": "#/definitions/_go.AgentCheckpoint"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/_go.AgentCheckpointMetadata"
+                }
+            },
+            "type": "object"
+        },
+        "_go.CreateMealIngredientRequest": {
+            "properties": {
+                "ingredient": {
+                    "$ref": "#/definitions/_go.Ingredient"
+                },
+                "mealId": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.CreateMealIngredientResponse": {
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            },
+            "type": "object"
+        },
+        "_go.CreateMealRequest": {
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            },
+            "type": "object"
+        },
+        "_go.CreateMealResponse": {
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            },
+            "type": "object"
+        },
+        "_go.DeleteAllStepsResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.DeleteMealIngredientResponse": {
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            },
+            "type": "object"
+        },
+        "_go.DeleteMealResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.DeleteStepResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.FeedbackEntryProto": {
+            "properties": {
+                "from": {
+                    "description": "\"user\" or agent id",
+                    "type": "string"
+                },
+                "mealPlanVersion": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                }
+            },
+            "type": "object"
+        },
+        "_go.FinalizeMealPlanRequest": {
+            "properties": {
+                "plan": {
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                }
+            },
+            "type": "object"
+        },
+        "_go.FinalizeMealPlanResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GenerateMealPlanResponse": {
+            "properties": {
+                "plan": {
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GetAllMealsResponse": {
+            "properties": {
+                "meals": {
+                    "items": {
+                        "$ref": "#/definitions/_go.Meal"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GetCheckpointResponse": {
+            "properties": {
+                "found": {
+                    "type": "boolean"
+                },
+                "tuple": {
+                    "$ref": "#/definitions/_go.CheckpointTuple"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GetMealPlanResponse": {
+            "properties": {
+                "plan": {
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GetMessagesResponse": {
+            "properties": {
+                "messages": {
+                    "items": {
+                        "$ref": "#/definitions/_go.Message"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GetShoppingListRequest": {
+            "properties": {
+                "plan": {
+                    "description": "meal IDs",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GetShoppingListResponse": {
+            "properties": {
+                "items": {
+                    "items": {
+                        "$ref": "#/definitions/_go.ShoppingListItem"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GetStepsResponse": {
+            "properties": {
+                "steps": {
+                    "items": {
+                        "$ref": "#/definitions/_go.Step"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GetWorkflowStateResponse": {
+            "properties": {
+                "messages": {
+                    "items": {
+                        "$ref": "#/definitions/_go.Message"
+                    },
+                    "type": "array"
+                },
+                "plan": {
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                },
+                "shoppingList": {
+                    "$ref": "#/definitions/_go.ShoppingList"
+                }
+            },
+            "type": "object"
+        },
+        "_go.GetWorkflowStatusResponse": {
+            "properties": {
+                "status": {
+                    "$ref": "#/definitions/_go.WorkflowStatus"
+                }
+            },
+            "type": "object"
+        },
+        "_go.HealthCheckResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "services": {
+                    "additionalProperties": {
+                        "type": "boolean"
+                    },
+                    "type": "object"
+                },
+                "status": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.Ingredient": {
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "mealId": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.ListCheckpointsResponse": {
+            "properties": {
+                "entries": {
+                    "items": {
+                        "$ref": "#/definitions/_go.CheckpointEntry"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.ListWorkflowsResponse": {
+            "properties": {
+                "workflows": {
+                    "items": {
+                        "$ref": "#/definitions/_go.WorkflowStatus"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.Meal": {
+            "properties": {
+                "effort": {
+                    "type": "integer"
+                },
+                "hasRedMeat": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ingredients": {
+                    "items": {
+                        "$ref": "#/definitions/_go.Ingredient"
+                    },
+                    "type": "array"
+                },
+                "lastPlanned": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "mealType": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "steps": {
+                    "items": {
+                        "$ref": "#/definitions/_go.Step"
+                    },
+                    "type": "array"
+                },
+                "url": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.MealPlanEntry": {
+            "properties": {
+                "dayIndex": {
+                    "type": "integer"
+                },
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                },
+                "mealType": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.MealPlanningCheckpointState": {
+            "properties": {
+                "createdAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "currentStep": {
+                    "type": "string"
+                },
+                "feedbackHistory": {
+                    "items": {
+                        "$ref": "#/definitions/_go.FeedbackEntryProto"
+                    },
+                    "type": "array"
+                },
+                "isFinalized": {
+                    "type": "boolean"
+                },
+                "iterationCount": {
+                    "type": "integer"
+                },
+                "mealPlan": {
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                },
+                "participants": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "shoppingList": {
+                    "$ref": "#/definitions/_go.ShoppingList"
+                },
+                "threadId": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                }
+            },
+            "type": "object"
+        },
+        "_go.Message": {
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "sender": {
+                    "description": "\"user\" or \"agent\"",
+                    "type": "string"
+                },
+                "threadId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.MessageAgentRequest": {
+            "properties": {
+                "request": {
+                    "$ref": "#/definitions/_go.AgentMessageRequest"
+                }
+            },
+            "type": "object"
+        },
+        "_go.MessageAgentResponse": {
+            "properties": {
+                "response": {
+                    "$ref": "#/definitions/_go.AgentResponse"
+                }
+            },
+            "type": "object"
+        },
+        "_go.PutCheckpointRequest": {
+            "properties": {
+                "checkpoint": {
+                    "$ref": "#/definitions/_go.AgentCheckpoint"
+                },
+                "checkpointNs": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/_go.AgentCheckpointMetadata"
+                },
+                "threadId": {
+                    "type": "string"
+                },
+                "workflowType": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.PutCheckpointResponse": {
+            "properties": {
+                "checkpointNs": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "threadId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.ReconnectResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.ReorderStepsRequest": {
+            "properties": {
+                "mealId": {
+                    "type": "integer"
+                },
+                "stepIds": {
+                    "items": {
+                        "type": "integer"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.ReorderStepsResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.ReplaceMealRequest": {
+            "properties": {
+                "day": {
+                    "type": "string"
+                },
+                "newMealId": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.ReplaceMealResponse": {
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            },
+            "type": "object"
+        },
+        "_go.SaveMealPlanRequest": {
+            "properties": {
+                "entries": {
+                    "items": {
+                        "$ref": "#/definitions/_go.MealPlanEntry"
+                    },
+                    "type": "array"
+                },
+                "threadId": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.ShoppingList": {
+            "properties": {
+                "items": {
+                    "items": {
+                        "$ref": "#/definitions/_go.ShoppingListItem"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.ShoppingListItem": {
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "ingredient": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.StartAgentWorkflowRequest": {
+            "properties": {
+                "request": {
+                    "$ref": "#/definitions/_go.AgentStartRequest"
+                }
+            },
+            "type": "object"
+        },
+        "_go.StartAgentWorkflowResponse": {
+            "properties": {
+                "response": {
+                    "$ref": "#/definitions/_go.AgentResponse"
+                }
+            },
+            "type": "object"
+        },
+        "_go.Step": {
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "instruction": {
+                    "type": "string"
+                },
+                "mealId": {
+                    "type": "integer"
+                },
+                "stepNumber": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.SwapMealRequest": {
+            "properties": {
+                "mealId": {
+                    "type": "integer"
+                },
+                "mealType": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.SwapMealResponse": {
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            },
+            "type": "object"
+        },
+        "_go.UpdateMealIngredientRequest": {
+            "properties": {
+                "ingredient": {
+                    "$ref": "#/definitions/_go.Ingredient"
+                },
+                "ingredientId": {
+                    "type": "integer"
+                },
+                "mealId": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.UpdateMealIngredientResponse": {
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            },
+            "type": "object"
+        },
+        "_go.UpdateMealRequest": {
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                },
+                "mealId": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.UpdateMealResponse": {
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            },
+            "type": "object"
+        },
+        "_go.UpdateSessionStateRequest": {
+            "properties": {
+                "currentStep": {
+                    "type": "string"
+                },
+                "mealPlan": {
+                    "description": "JSON string",
+                    "type": "string"
+                },
+                "shoppingList": {
+                    "description": "JSON string",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "threadId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.UpdateSessionStateResponse": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "_go.UpdateStepRequest": {
+            "properties": {
+                "mealId": {
+                    "type": "integer"
+                },
+                "step": {
+                    "$ref": "#/definitions/_go.Step"
+                },
+                "stepId": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "_go.UpdateStepResponse": {
+            "properties": {
+                "step": {
+                    "$ref": "#/definitions/_go.Step"
+                }
+            },
+            "type": "object"
+        },
+        "_go.WeeklyMealPlan": {
+            "properties": {
+                "days": {
+                    "items": {
+                        "$ref": "#/definitions/_go.MealPlanEntry"
+                    },
+                    "type": "array"
+                },
+                "shoppingList": {
+                    "items": {
+                        "$ref": "#/definitions/_go.ShoppingListItem"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "_go.WorkflowStatus": {
+            "properties": {
+                "currentStep": {
+                    "type": "string"
+                },
+                "participants": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "threadId": {
+                    "type": "string"
+                },
+                "workflowType": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "main.ErrorResponse": {
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "timestamppb.Timestamp": {
+            "properties": {
+                "nanos": {
+                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+                    "type": "integer"
+                },
+                "seconds": {
+                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "host": "localhost:8090",
+    "info": {
+        "contact": {
+            "email": "support@swagger.io",
+            "name": "API Support",
+            "url": "http://www.swagger.io/support"
+        },
+        "description": "API Gateway for Meal Planner service",
         "license": {
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
+        "termsOfService": "http://swagger.io/terms/",
+        "title": "Meal Planner API Gateway",
         "version": "1.0"
     },
-    "host": "localhost:8090",
-    "basePath": "/api",
     "paths": {
         "/agent/message": {
             "post": {
-                "description": "Send a message to an existing agent workflow",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "agent"
-                ],
-                "summary": "Message Agent",
+                "description": "Send a message to an existing agent workflow",
                 "parameters": [
                     {
                         "description": "Agent message request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.AgentMessageRequestBody"
+                            "$ref": "#/definitions/_go.MessageAgentRequest"
                         }
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Message sent successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.AgentMessageResponse"
+                            "$ref": "#/definitions/_go.MessageAgentResponse"
                         }
                     },
                     "400": {
@@ -61,38 +976,38 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Message Agent",
+                "tags": [
+                    "agent"
+                ]
             }
         },
         "/agent/start": {
             "post": {
-                "description": "Start a new agent workflow for meal planning",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "agent"
-                ],
-                "summary": "Start Agent Workflow",
+                "description": "Start a new agent workflow for meal planning",
                 "parameters": [
                     {
                         "description": "Agent start request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.AgentStartRequestBody"
+                            "$ref": "#/definitions/_go.StartAgentWorkflowRequest"
                         }
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Agent workflow started successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.AgentStartResponse"
+                            "$ref": "#/definitions/_go.StartAgentWorkflowResponse"
                         }
                     },
                     "400": {
@@ -107,36 +1022,36 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Start Agent Workflow",
+                "tags": [
+                    "agent"
+                ]
             }
         },
         "/agent/status/{threadId}": {
             "get": {
-                "description": "Get the status of an agent workflow",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "agent"
-                ],
-                "summary": "Get Workflow Status",
+                "description": "Get the status of an agent workflow",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Thread ID",
-                        "name": "threadId",
                         "in": "path",
-                        "required": true
+                        "name": "threadId",
+                        "required": true,
+                        "type": "string"
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Workflow status retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.WorkflowStatusResponse"
+                            "$ref": "#/definitions/_go.GetWorkflowStatusResponse"
                         }
                     },
                     "400": {
@@ -151,27 +1066,27 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Get Workflow Status",
+                "tags": [
+                    "agent"
+                ]
             }
         },
         "/agent/workflows": {
             "get": {
-                "description": "List all active workflows",
                 "consumes": [
                     "application/json"
                 ],
+                "description": "List all active workflows",
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "agent"
-                ],
-                "summary": "List Workflows",
                 "responses": {
                     "200": {
                         "description": "Workflows listed successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.WorkflowsResponse"
+                            "$ref": "#/definitions/_go.ListWorkflowsResponse"
                         }
                     },
                     "500": {
@@ -180,36 +1095,36 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "List Workflows",
+                "tags": [
+                    "agent"
+                ]
             }
         },
         "/agent/workflows/{threadId}": {
             "delete": {
-                "description": "Cancel an active workflow",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "agent"
-                ],
-                "summary": "Cancel Workflow",
+                "description": "Cancel an active workflow",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Thread ID",
-                        "name": "threadId",
                         "in": "path",
-                        "required": true
+                        "name": "threadId",
+                        "required": true,
+                        "type": "string"
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Workflow cancelled successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.CancelWorkflowResponse"
                         }
                     },
                     "400": {
@@ -224,41 +1139,41 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Cancel Workflow",
+                "tags": [
+                    "agent"
+                ]
             }
         },
         "/checkpoints": {
             "get": {
-                "description": "List all checkpoints",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "checkpoint"
-                ],
-                "summary": "List Checkpoints",
+                "description": "List all checkpoints",
                 "parameters": [
                     {
-                        "type": "integer",
                         "description": "Limit number of results",
+                        "in": "query",
                         "name": "limit",
-                        "in": "query"
+                        "type": "integer"
                     },
                     {
-                        "type": "string",
                         "description": "Before thread ID for pagination",
+                        "in": "query",
                         "name": "before_thread_id",
-                        "in": "query"
+                        "type": "string"
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Checkpoints listed successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.CheckpointListResponse"
+                            "$ref": "#/definitions/_go.ListCheckpointsResponse"
                         }
                     },
                     "500": {
@@ -267,36 +1182,36 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "List Checkpoints",
+                "tags": [
+                    "checkpoint"
+                ]
             },
             "post": {
-                "description": "Save a checkpoint",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "checkpoint"
-                ],
-                "summary": "Put Checkpoint",
+                "description": "Save a checkpoint",
                 "parameters": [
                     {
                         "description": "Put checkpoint request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.PutCheckpointRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Checkpoint saved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.PutCheckpointResponse"
                         }
                     },
                     "400": {
@@ -311,42 +1226,42 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Put Checkpoint",
+                "tags": [
+                    "checkpoint"
+                ]
             }
         },
         "/checkpoints/{thread_id}": {
             "get": {
-                "description": "Get a checkpoint by thread ID",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "checkpoint"
-                ],
-                "summary": "Get Checkpoint",
+                "description": "Get a checkpoint by thread ID",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Thread ID",
-                        "name": "thread_id",
                         "in": "path",
-                        "required": true
+                        "name": "thread_id",
+                        "required": true,
+                        "type": "string"
                     },
                     {
-                        "type": "string",
                         "description": "Checkpoint namespace",
+                        "in": "query",
                         "name": "checkpoint_ns",
-                        "in": "query"
+                        "type": "string"
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Checkpoint retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.CheckpointResponse"
+                            "$ref": "#/definitions/_go.GetCheckpointResponse"
                         }
                     },
                     "404": {
@@ -361,27 +1276,27 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Get Checkpoint",
+                "tags": [
+                    "checkpoint"
+                ]
             }
         },
         "/health": {
             "get": {
-                "description": "Check the health status of the API gateway and all backend services",
                 "consumes": [
                     "application/json"
                 ],
+                "description": "Check the health status of the API gateway and all backend services",
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Health Check",
                 "responses": {
                     "200": {
                         "description": "Health check successful",
                         "schema": {
-                            "$ref": "#/definitions/main.HealthResponse"
+                            "$ref": "#/definitions/_go.HealthCheckResponse"
                         }
                     },
                     "500": {
@@ -390,27 +1305,27 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Health Check",
+                "tags": [
+                    "health"
+                ]
             }
         },
         "/mealplan": {
             "get": {
-                "description": "Get the current meal plan",
                 "consumes": [
                     "application/json"
                 ],
+                "description": "Get the current meal plan",
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "mealplan"
-                ],
-                "summary": "Get Meal Plan",
                 "responses": {
                     "200": {
                         "description": "Meal plan retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealPlanResponse"
+                            "$ref": "#/definitions/_go.GetMealPlanResponse"
                         }
                     },
                     "500": {
@@ -419,36 +1334,36 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Get Meal Plan",
+                "tags": [
+                    "mealplan"
+                ]
             },
             "post": {
-                "description": "Save the current meal plan",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "mealplan"
-                ],
-                "summary": "Save Meal Plan",
+                "description": "Save the current meal plan",
                 "parameters": [
                     {
                         "description": "Save meal plan request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.SaveMealPlanRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Meal plan saved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.FinalizeMealPlanResponse"
                         }
                     },
                     "400": {
@@ -463,38 +1378,38 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Save Meal Plan",
+                "tags": [
+                    "mealplan"
+                ]
             }
         },
         "/mealplan/finalize": {
             "post": {
-                "description": "Finalize the current meal plan",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "mealplan"
-                ],
-                "summary": "Finalize Meal Plan",
+                "description": "Finalize the current meal plan",
                 "parameters": [
                     {
                         "description": "Finalize meal plan request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.FinalizeMealPlanRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Meal plan finalized successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.FinalizeMealPlanResponse"
                         }
                     },
                     "400": {
@@ -509,27 +1424,27 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Finalize Meal Plan",
+                "tags": [
+                    "mealplan"
+                ]
             }
         },
         "/mealplan/generate": {
             "post": {
-                "description": "Generate a new meal plan",
                 "consumes": [
                     "application/json"
                 ],
+                "description": "Generate a new meal plan",
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "mealplan"
-                ],
-                "summary": "Generate Meal Plan",
                 "responses": {
                     "200": {
                         "description": "Meal plan generated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealPlanResponse"
+                            "$ref": "#/definitions/_go.GenerateMealPlanResponse"
                         }
                     },
                     "500": {
@@ -538,22 +1453,22 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Generate Meal Plan",
+                "tags": [
+                    "mealplan"
+                ]
             }
         },
         "/mealplan/ics": {
             "get": {
-                "description": "Get meal plan as ICS calendar file",
                 "consumes": [
                     "application/json"
                 ],
+                "description": "Get meal plan as ICS calendar file",
                 "produces": [
                     "text/calendar"
                 ],
-                "tags": [
-                    "mealplan"
-                ],
-                "summary": "Get Meal Plan ICS",
                 "responses": {
                     "200": {
                         "description": "ICS calendar file",
@@ -567,38 +1482,38 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Get Meal Plan ICS",
+                "tags": [
+                    "mealplan"
+                ]
             }
         },
         "/mealplan/replace": {
             "post": {
-                "description": "Replace a meal in the plan",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "meals"
-                ],
-                "summary": "Replace Meal",
+                "description": "Replace a meal in the plan",
                 "parameters": [
                     {
                         "description": "Replace meal request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.ReplaceMealRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Meal replaced successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.ReplaceMealResponse"
                         }
                     },
                     "400": {
@@ -613,35 +1528,35 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Replace Meal",
+                "tags": [
+                    "meals"
+                ]
             }
         },
         "/meals": {
             "get": {
-                "description": "Get all available meals",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "meals"
-                ],
-                "summary": "Get All Meals",
+                "description": "Get all available meals",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Meal type filter",
+                        "in": "query",
                         "name": "type",
-                        "in": "query"
+                        "type": "string"
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Meals retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealsResponse"
+                            "$ref": "#/definitions/_go.GetAllMealsResponse"
                         }
                     },
                     "500": {
@@ -650,36 +1565,36 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Get All Meals",
+                "tags": [
+                    "meals"
+                ]
             },
             "post": {
-                "description": "Create a new meal",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "meals"
-                ],
-                "summary": "Create Meal",
+                "description": "Create a new meal",
                 "parameters": [
                     {
                         "description": "Create meal request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.CreateMealRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "201": {
                         "description": "Meal created successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.CreateMealResponse"
                         }
                     },
                     "400": {
@@ -694,38 +1609,38 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Create Meal",
+                "tags": [
+                    "meals"
+                ]
             }
         },
         "/meals/swap": {
             "post": {
-                "description": "Swap a meal with another",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "meals"
-                ],
-                "summary": "Swap Meal",
+                "description": "Swap a meal with another",
                 "parameters": [
                     {
                         "description": "Swap meal request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.SwapMealRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Meal swapped successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.SwapMealResponse"
                         }
                     },
                     "400": {
@@ -740,45 +1655,87 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Swap Meal",
+                "tags": [
+                    "meals"
+                ]
             }
         },
         "/meals/{mealId}": {
-            "put": {
-                "description": "Update an existing meal's properties (name, effort, meal type, etc.)",
+            "delete": {
                 "consumes": [
                     "application/json"
+                ],
+                "description": "Delete a meal",
+                "parameters": [
+                    {
+                        "description": "Meal ID",
+                        "in": "path",
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
+                    }
                 ],
                 "produces": [
                     "application/json"
                 ],
+                "responses": {
+                    "200": {
+                        "description": "Meal deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/_go.DeleteMealResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    }
+                },
+                "summary": "Delete Meal",
                 "tags": [
                     "meals"
+                ]
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
                 ],
-                "summary": "Update Meal",
+                "description": "Update an existing meal's properties (name, effort, meal type, etc.)",
                 "parameters": [
                     {
-                        "type": "integer",
                         "description": "Meal ID",
-                        "name": "mealId",
                         "in": "path",
-                        "required": true
+                        "name": "mealId",
+                        "required": true,
+                        "type": "integer"
                     },
                     {
                         "description": "Update meal request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.UpdateMealRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Meal updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.UpdateMealResponse"
                         }
                     },
                     "400": {
@@ -799,81 +1756,39 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
-            },
-            "delete": {
-                "description": "Delete a meal",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+                },
+                "summary": "Update Meal",
                 "tags": [
                     "meals"
-                ],
-                "summary": "Delete Meal",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Meal ID",
-                        "name": "mealId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Meal deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
+                ]
             }
         },
         "/meals/{mealId}/ingredients": {
             "post": {
-                "description": "Add a new ingredient to a meal",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "meals"
-                ],
-                "summary": "Create Meal Ingredient",
+                "description": "Add a new ingredient to a meal",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Meal ID",
-                        "name": "mealId",
                         "in": "path",
-                        "required": true
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
                         "description": "Create ingredient request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.CreateMealIngredientRequest"
                         }
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -894,52 +1809,101 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Create Meal Ingredient",
+                "tags": [
+                    "meals"
+                ]
             }
         },
         "/meals/{mealId}/ingredients/{ingredientId}": {
-            "put": {
-                "description": "Update an ingredient in a meal",
+            "delete": {
                 "consumes": [
                     "application/json"
+                ],
+                "description": "Delete an ingredient from a meal",
+                "parameters": [
+                    {
+                        "description": "Meal ID",
+                        "in": "path",
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Ingredient ID",
+                        "in": "path",
+                        "name": "ingredientId",
+                        "required": true,
+                        "type": "string"
+                    }
                 ],
                 "produces": [
                     "application/json"
                 ],
+                "responses": {
+                    "200": {
+                        "description": "Ingredient deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/_go.DeleteMealIngredientResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    }
+                },
+                "summary": "Delete Meal Ingredient",
                 "tags": [
                     "meals"
+                ]
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
                 ],
-                "summary": "Update Meal Ingredient",
+                "description": "Update an ingredient in a meal",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Meal ID",
-                        "name": "mealId",
                         "in": "path",
-                        "required": true
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
-                        "type": "string",
                         "description": "Ingredient ID",
-                        "name": "ingredientId",
                         "in": "path",
-                        "required": true
+                        "name": "ingredientId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
                         "description": "Update ingredient request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.UpdateMealIngredientRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Ingredient updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.UpdateMealIngredientResponse"
                         }
                     },
                     "400": {
@@ -954,85 +1918,78 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
-            },
-            "delete": {
-                "description": "Delete an ingredient from a meal",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+                },
+                "summary": "Update Meal Ingredient",
                 "tags": [
                     "meals"
-                ],
-                "summary": "Delete Meal Ingredient",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Meal ID",
-                        "name": "mealId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Ingredient ID",
-                        "name": "ingredientId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Ingredient deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
+                ]
             }
         },
         "/meals/{mealId}/steps": {
-            "get": {
-                "description": "Get recipe steps for a meal",
+            "delete": {
                 "consumes": [
                     "application/json"
+                ],
+                "description": "Delete all recipe steps from a meal",
+                "parameters": [
+                    {
+                        "description": "Meal ID",
+                        "in": "path",
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
+                    }
                 ],
                 "produces": [
                     "application/json"
                 ],
+                "responses": {
+                    "200": {
+                        "description": "All steps deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/_go.DeleteAllStepsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    }
+                },
+                "summary": "Delete All Recipe Steps",
                 "tags": [
                     "steps"
+                ]
+            },
+            "get": {
+                "consumes": [
+                    "application/json"
                 ],
-                "summary": "Get Recipe Steps",
+                "description": "Get recipe steps for a meal",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Meal ID",
-                        "name": "mealId",
                         "in": "path",
-                        "required": true
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Steps retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.StepsResponse"
+                            "$ref": "#/definitions/_go.GetStepsResponse"
                         }
                     },
                     "400": {
@@ -1047,43 +2004,43 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Get Recipe Steps",
+                "tags": [
+                    "steps"
+                ]
             },
             "post": {
-                "description": "Add a recipe step to a meal",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "steps"
-                ],
-                "summary": "Add Recipe Step",
+                "description": "Add a recipe step to a meal",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Meal ID",
-                        "name": "mealId",
                         "in": "path",
-                        "required": true
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
                         "description": "Add step request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.AddStepRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Step added successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.StepResponse"
+                            "$ref": "#/definitions/_go.AddStepResponse"
                         }
                     },
                     "400": {
@@ -1098,87 +2055,45 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
-            },
-            "delete": {
-                "description": "Delete all recipe steps from a meal",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+                },
+                "summary": "Add Recipe Step",
                 "tags": [
                     "steps"
-                ],
-                "summary": "Delete All Recipe Steps",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Meal ID",
-                        "name": "mealId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "All steps deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
+                ]
             }
         },
         "/meals/{mealId}/steps/bulk": {
             "post": {
-                "description": "Add multiple recipe steps to a meal",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "steps"
-                ],
-                "summary": "Add Bulk Recipe Steps",
+                "description": "Add multiple recipe steps to a meal",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Meal ID",
-                        "name": "mealId",
                         "in": "path",
-                        "required": true
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
                         "description": "Add bulk steps request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.AddBulkStepsRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Steps added successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.StepsResponse"
+                            "$ref": "#/definitions/_go.AddBulkStepsResponse"
                         }
                     },
                     "400": {
@@ -1193,45 +2108,45 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Add Bulk Recipe Steps",
+                "tags": [
+                    "steps"
+                ]
             }
         },
         "/meals/{mealId}/steps/reorder": {
             "put": {
-                "description": "Reorder recipe steps in a meal",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "steps"
-                ],
-                "summary": "Reorder Recipe Steps",
+                "description": "Reorder recipe steps in a meal",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Meal ID",
-                        "name": "mealId",
                         "in": "path",
-                        "required": true
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
                         "description": "Reorder steps request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.ReorderStepsRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Steps reordered successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.ReorderStepsResponse"
                         }
                     },
                     "400": {
@@ -1246,52 +2161,101 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Reorder Recipe Steps",
+                "tags": [
+                    "steps"
+                ]
             }
         },
         "/meals/{mealId}/steps/{stepId}": {
-            "put": {
-                "description": "Update a recipe step in a meal",
+            "delete": {
                 "consumes": [
                     "application/json"
+                ],
+                "description": "Delete a recipe step from a meal",
+                "parameters": [
+                    {
+                        "description": "Meal ID",
+                        "in": "path",
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Step ID",
+                        "in": "path",
+                        "name": "stepId",
+                        "required": true,
+                        "type": "string"
+                    }
                 ],
                 "produces": [
                     "application/json"
                 ],
+                "responses": {
+                    "200": {
+                        "description": "Step deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/_go.DeleteStepResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    }
+                },
+                "summary": "Delete Recipe Step",
                 "tags": [
                     "steps"
+                ]
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
                 ],
-                "summary": "Update Recipe Step",
+                "description": "Update a recipe step in a meal",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Meal ID",
-                        "name": "mealId",
                         "in": "path",
-                        "required": true
+                        "name": "mealId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
-                        "type": "string",
                         "description": "Step ID",
-                        "name": "stepId",
                         "in": "path",
-                        "required": true
+                        "name": "stepId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
                         "description": "Update step request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.UpdateStepRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Step updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.StepResponse"
+                            "$ref": "#/definitions/_go.UpdateStepResponse"
                         }
                     },
                     "400": {
@@ -1306,76 +2270,27 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
-            },
-            "delete": {
-                "description": "Delete a recipe step from a meal",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+                },
+                "summary": "Update Recipe Step",
                 "tags": [
                     "steps"
-                ],
-                "summary": "Delete Recipe Step",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Meal ID",
-                        "name": "mealId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Step ID",
-                        "name": "stepId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Step deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
+                ]
             }
         },
         "/reconnect": {
             "post": {
-                "description": "Reconnect to backend services",
                 "consumes": [
                     "application/json"
                 ],
+                "description": "Reconnect to backend services",
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Reconnect",
                 "responses": {
                     "200": {
                         "description": "Reconnect successful",
                         "schema": {
-                            "$ref": "#/definitions/main.HealthResponse"
+                            "$ref": "#/definitions/_go.ReconnectResponse"
                         }
                     },
                     "500": {
@@ -1384,38 +2299,38 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Reconnect",
+                "tags": [
+                    "health"
+                ]
             }
         },
         "/shoppinglist": {
             "post": {
-                "description": "Get shopping list for meal plan",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "shopping"
-                ],
-                "summary": "Get Shopping List",
+                "description": "Get shopping list for meal plan",
                 "parameters": [
                     {
                         "description": "Shopping list request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.GetShoppingListRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Shopping list retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.ShoppingListResponse"
+                            "$ref": "#/definitions/_go.GetShoppingListResponse"
                         }
                     },
                     "400": {
@@ -1430,36 +2345,36 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Get Shopping List",
+                "tags": [
+                    "shopping"
+                ]
             }
         },
         "/workflows/{threadId}": {
             "get": {
-                "description": "Get the current state of a workflow",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "workflow"
-                ],
-                "summary": "Get Workflow State",
+                "description": "Get the current state of a workflow",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Thread ID",
-                        "name": "threadId",
                         "in": "path",
-                        "required": true
+                        "name": "threadId",
+                        "required": true,
+                        "type": "string"
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Workflow state retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.WorkflowStateResponse"
+                            "$ref": "#/definitions/_go.GetWorkflowStateResponse"
                         }
                     },
                     "400": {
@@ -1474,36 +2389,36 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Get Workflow State",
+                "tags": [
+                    "workflow"
+                ]
             }
         },
         "/workflows/{threadId}/abandon": {
             "post": {
-                "description": "Abandon a workflow",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "workflow"
-                ],
-                "summary": "Abandon Workflow",
+                "description": "Abandon a workflow",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Thread ID",
-                        "name": "threadId",
                         "in": "path",
-                        "required": true
+                        "name": "threadId",
+                        "required": true,
+                        "type": "string"
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Workflow abandoned successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.AbandonWorkflowResponse"
                         }
                     },
                     "400": {
@@ -1518,36 +2433,36 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Abandon Workflow",
+                "tags": [
+                    "workflow"
+                ]
             }
         },
         "/workflows/{threadId}/messages": {
             "get": {
-                "description": "Get all messages for a workflow thread",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "workflow"
-                ],
-                "summary": "Get Messages",
+                "description": "Get all messages for a workflow thread",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Thread ID",
-                        "name": "threadId",
                         "in": "path",
-                        "required": true
+                        "name": "threadId",
+                        "required": true,
+                        "type": "string"
                     }
+                ],
+                "produces": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
                         "description": "Messages retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.GetMessagesResponse"
+                            "$ref": "#/definitions/_go.GetMessagesResponse"
                         }
                     },
                     "400": {
@@ -1562,43 +2477,43 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Get Messages",
+                "tags": [
+                    "workflow"
+                ]
             },
             "post": {
-                "description": "Add a message to a workflow",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "workflow"
-                ],
-                "summary": "Add Message",
+                "description": "Add a message to a workflow",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Thread ID",
-                        "name": "threadId",
                         "in": "path",
-                        "required": true
+                        "name": "threadId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
                         "description": "Add message request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.AddMessageRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Message added successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.AddMessageResponse"
                         }
                     },
                     "400": {
@@ -1613,45 +2528,45 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Add Message",
+                "tags": [
+                    "workflow"
+                ]
             }
         },
         "/workflows/{threadId}/state": {
             "put": {
-                "description": "Update the state of a workflow session",
                 "consumes": [
                     "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "workflow"
-                ],
-                "summary": "Update Session State",
+                "description": "Update the state of a workflow session",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Thread ID",
-                        "name": "threadId",
                         "in": "path",
-                        "required": true
+                        "name": "threadId",
+                        "required": true,
+                        "type": "string"
                     },
                     {
                         "description": "Update session state request",
-                        "name": "request",
                         "in": "body",
+                        "name": "request",
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/_go.UpdateSessionStateRequest"
                         }
                     }
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Session state updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.UpdateSessionStateResponse"
                         }
                     },
                     "400": {
@@ -1666,941 +2581,13 @@
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
                     }
-                }
+                },
+                "summary": "Update Session State",
+                "tags": [
+                    "workflow"
+                ]
             }
         }
     },
-    "definitions": {
-        "_go.AddBulkStepsRequest": {
-            "type": "object",
-            "properties": {
-                "instructions": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "meal_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.AddMessageRequest": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "sender": {
-                    "description": "\"user\" or \"agent\"",
-                    "type": "string"
-                },
-                "thread_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.AddStepRequest": {
-            "type": "object",
-            "properties": {
-                "meal_id": {
-                    "type": "integer"
-                },
-                "step": {
-                    "$ref": "#/definitions/_go.Step"
-                }
-            }
-        },
-        "_go.AgentCheckpoint": {
-            "type": "object",
-            "properties": {
-                "next": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "state": {
-                    "$ref": "#/definitions/_go.MealPlanningCheckpointState"
-                },
-                "step": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.AgentCheckpointMetadata": {
-            "type": "object",
-            "properties": {
-                "source": {
-                    "type": "string"
-                },
-                "step": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.CreateMealIngredientRequest": {
-            "type": "object",
-            "properties": {
-                "ingredient": {
-                    "$ref": "#/definitions/_go.Ingredient"
-                },
-                "meal_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.CreateMealIngredientResponse": {
-            "type": "object",
-            "properties": {
-                "meal": {
-                    "$ref": "#/definitions/_go.Meal"
-                }
-            }
-        },
-        "_go.CreateMealRequest": {
-            "type": "object",
-            "properties": {
-                "meal": {
-                    "$ref": "#/definitions/_go.Meal"
-                }
-            }
-        },
-        "_go.FeedbackEntryProto": {
-            "type": "object",
-            "properties": {
-                "from": {
-                    "description": "\"user\" or agent id",
-                    "type": "string"
-                },
-                "meal_plan_version": {
-                    "type": "integer"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "timestamp": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                }
-            }
-        },
-        "_go.FinalizeMealPlanRequest": {
-            "type": "object",
-            "properties": {
-                "plan": {
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
-                }
-            }
-        },
-        "_go.GetShoppingListRequest": {
-            "type": "object",
-            "properties": {
-                "plan": {
-                    "description": "meal IDs",
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                }
-            }
-        },
-        "_go.Ingredient": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "meal_id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "quantity": {
-                    "type": "number"
-                },
-                "unit": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.Meal": {
-            "type": "object",
-            "properties": {
-                "effort": {
-                    "type": "integer"
-                },
-                "has_red_meat": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "ingredients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.Ingredient"
-                    }
-                },
-                "last_planned": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                },
-                "meal_type": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "steps": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.Step"
-                    }
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.MealPlanEntry": {
-            "type": "object",
-            "properties": {
-                "day_index": {
-                    "type": "integer"
-                },
-                "meal": {
-                    "$ref": "#/definitions/_go.Meal"
-                },
-                "meal_type": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.MealPlanningCheckpointState": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                },
-                "current_step": {
-                    "type": "string"
-                },
-                "feedback_history": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.FeedbackEntryProto"
-                    }
-                },
-                "is_finalized": {
-                    "type": "boolean"
-                },
-                "iteration_count": {
-                    "type": "integer"
-                },
-                "meal_plan": {
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
-                },
-                "participants": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "shopping_list": {
-                    "$ref": "#/definitions/_go.ShoppingList"
-                },
-                "thread_id": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                }
-            }
-        },
-        "_go.PutCheckpointRequest": {
-            "type": "object",
-            "properties": {
-                "checkpoint": {
-                    "$ref": "#/definitions/_go.AgentCheckpoint"
-                },
-                "checkpoint_ns": {
-                    "type": "string"
-                },
-                "metadata": {
-                    "$ref": "#/definitions/_go.AgentCheckpointMetadata"
-                },
-                "thread_id": {
-                    "type": "string"
-                },
-                "workflow_type": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.ReorderStepsRequest": {
-            "type": "object",
-            "properties": {
-                "meal_id": {
-                    "type": "integer"
-                },
-                "step_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                }
-            }
-        },
-        "_go.ReplaceMealRequest": {
-            "type": "object",
-            "properties": {
-                "day": {
-                    "type": "string"
-                },
-                "new_meal_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.SaveMealPlanRequest": {
-            "type": "object",
-            "properties": {
-                "entries": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.MealPlanEntry"
-                    }
-                },
-                "thread_id": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.ShoppingList": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.ShoppingListItem"
-                    }
-                }
-            }
-        },
-        "_go.ShoppingListItem": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "type": "string"
-                },
-                "ingredient": {
-                    "type": "string"
-                },
-                "quantity": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.Step": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "instruction": {
-                    "type": "string"
-                },
-                "meal_id": {
-                    "type": "integer"
-                },
-                "step_number": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.SwapMealRequest": {
-            "type": "object",
-            "properties": {
-                "meal_id": {
-                    "type": "integer"
-                },
-                "meal_type": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.UpdateMealIngredientRequest": {
-            "type": "object",
-            "properties": {
-                "ingredient": {
-                    "$ref": "#/definitions/_go.Ingredient"
-                },
-                "ingredient_id": {
-                    "type": "integer"
-                },
-                "meal_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.UpdateMealRequest": {
-            "type": "object",
-            "properties": {
-                "meal": {
-                    "$ref": "#/definitions/_go.Meal"
-                },
-                "meal_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.UpdateSessionStateRequest": {
-            "type": "object",
-            "properties": {
-                "current_step": {
-                    "type": "string"
-                },
-                "meal_plan": {
-                    "description": "JSON string",
-                    "type": "string"
-                },
-                "shopping_list": {
-                    "description": "JSON string",
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "thread_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.UpdateStepRequest": {
-            "type": "object",
-            "properties": {
-                "meal_id": {
-                    "type": "integer"
-                },
-                "step": {
-                    "$ref": "#/definitions/_go.Step"
-                },
-                "step_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "_go.WeeklyMealPlan": {
-            "type": "object",
-            "properties": {
-                "days": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.MealPlanEntry"
-                    }
-                },
-                "shopping_list": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.ShoppingListItem"
-                    }
-                }
-            }
-        },
-        "main.AgentMessageRequestBody": {
-            "type": "object",
-            "properties": {
-                "from": {
-                    "type": "string"
-                },
-                "interactive": {
-                    "type": "boolean"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "threadId": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.AgentMessageResponse": {
-            "type": "object",
-            "properties": {
-                "response": {
-                    "$ref": "#/definitions/main.AgentResponseBody"
-                }
-            }
-        },
-        "main.AgentResponseBody": {
-            "type": "object",
-            "properties": {
-                "currentStep": {
-                    "type": "string"
-                },
-                "initialState": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                },
-                "threadId": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.AgentStartRequestBody": {
-            "type": "object",
-            "properties": {
-                "participants": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "workflowType": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.AgentStartResponse": {
-            "type": "object",
-            "properties": {
-                "response": {
-                    "$ref": "#/definitions/main.AgentResponseBody"
-                }
-            }
-        },
-        "main.CheckpointListResponse": {
-            "type": "object",
-            "properties": {
-                "entries": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "checkpointNs": {
-                                "type": "string"
-                            },
-                            "threadId": {
-                                "type": "string"
-                            },
-                            "tuple": {
-                                "$ref": "#/definitions/main.CheckpointTupleResponse"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "main.CheckpointResponse": {
-            "type": "object",
-            "properties": {
-                "found": {
-                    "type": "boolean"
-                },
-                "tuple": {
-                    "type": "object",
-                    "properties": {
-                        "checkpoint": {
-                            "type": "object",
-                            "properties": {
-                                "state": {
-                                    "type": "object",
-                                    "properties": {
-                                        "currentStep": {
-                                            "type": "string"
-                                        },
-                                        "mealPlan": {
-                                            "type": "object",
-                                            "properties": {
-                                                "days": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "$ref": "#/definitions/main.MealPlanEntryResponse"
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        "participants": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "threadId": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "main.CheckpointTupleResponse": {
-            "type": "object",
-            "properties": {
-                "checkpoint": {
-                    "type": "object",
-                    "properties": {
-                        "state": {
-                            "type": "object",
-                            "properties": {
-                                "currentStep": {
-                                    "type": "string"
-                                },
-                                "mealPlan": {
-                                    "type": "object",
-                                    "properties": {
-                                        "days": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/main.MealPlanEntryResponse"
-                                            }
-                                        }
-                                    }
-                                },
-                                "participants": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                },
-                                "threadId": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "main.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.GetMessagesResponse": {
-            "type": "object",
-            "properties": {
-                "messages": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.MessageResponse"
-                    }
-                }
-            }
-        },
-        "main.HealthResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "services": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "boolean"
-                    }
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.IngredientResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "mealId": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "quantity": {
-                    "type": "number"
-                },
-                "unit": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.MealPlanEntryResponse": {
-            "type": "object",
-            "properties": {
-                "dayIndex": {
-                    "type": "integer"
-                },
-                "meal": {
-                    "$ref": "#/definitions/main.MealResponse"
-                },
-                "mealType": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.MealPlanResponse": {
-            "type": "object",
-            "properties": {
-                "plan": {
-                    "type": "object",
-                    "properties": {
-                        "days": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.MealPlanEntryResponse"
-                            }
-                        },
-                        "shoppingList": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.ShoppingListItemResponse"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "main.MealResponse": {
-            "type": "object",
-            "properties": {
-                "effort": {
-                    "type": "integer"
-                },
-                "hasRedMeat": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "ingredients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.IngredientResponse"
-                    }
-                },
-                "lastPlanned": {
-                    "type": "string",
-                    "format": "date-time"
-                },
-                "mealType": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "steps": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.StepResponse"
-                    }
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.MealsResponse": {
-            "type": "object",
-            "properties": {
-                "meals": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.MealResponse"
-                    }
-                }
-            }
-        },
-        "main.MessageResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "sender": {
-                    "type": "string"
-                },
-                "threadId": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.ShoppingListItemResponse": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "type": "string"
-                },
-                "ingredient": {
-                    "type": "string"
-                },
-                "quantity": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.ShoppingListResponse": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.ShoppingListItemResponse"
-                    }
-                }
-            }
-        },
-        "main.SimpleMessageResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.StepResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "instruction": {
-                    "type": "string"
-                },
-                "mealId": {
-                    "type": "integer"
-                },
-                "stepNumber": {
-                    "type": "integer"
-                }
-            }
-        },
-        "main.StepsResponse": {
-            "type": "object",
-            "properties": {
-                "steps": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.StepResponse"
-                    }
-                }
-            }
-        },
-        "main.WorkflowMessageResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "sender": {
-                    "type": "string"
-                },
-                "threadId": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.WorkflowStateResponse": {
-            "type": "object",
-            "properties": {
-                "messages": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.WorkflowMessageResponse"
-                    }
-                },
-                "plan": {
-                    "type": "object",
-                    "properties": {
-                        "days": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.MealPlanEntryResponse"
-                            }
-                        }
-                    }
-                },
-                "shoppingList": {
-                    "type": "object",
-                    "properties": {
-                        "items": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.ShoppingListItemResponse"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "main.WorkflowStatusResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "object",
-                    "properties": {
-                        "currentStep": {
-                            "type": "string"
-                        },
-                        "participants": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "threadId": {
-                            "type": "string"
-                        },
-                        "workflowType": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "main.WorkflowsResponse": {
-            "type": "object",
-            "properties": {
-                "workflows": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.WorkflowStatusResponse"
-                    }
-                }
-            }
-        },
-        "timestamppb.Timestamp": {
-            "type": "object",
-            "properties": {
-                "nanos": {
-                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
-                    "type": "integer"
-                },
-                "seconds": {
-                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
-                    "type": "integer"
-                }
-            }
-        }
-    }
+    "swagger": "2.0"
 }

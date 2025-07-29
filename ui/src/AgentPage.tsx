@@ -511,8 +511,8 @@ const AgentPage: React.FC = () => {
       }
 
       // Resume shopping list if available
-      if (resumeData.shoppingList) {
-        const items = resumeData.shoppingList.map((i) => ({
+      if (resumeData.shoppingList?.items) {
+        const items = resumeData.shoppingList.items.map((i) => ({
           ingredient: i.ingredient ?? '',
           quantity: i.quantity ?? '',
           category: i.category ?? '',

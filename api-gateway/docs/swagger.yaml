@@ -1,5 +1,10 @@
 basePath: /api
 definitions:
+  _go.AbandonWorkflowResponse:
+    properties:
+      message:
+        type: string
+    type: object
   _go.AddBulkStepsRequest:
     properties:
       instructions:
@@ -8,6 +13,13 @@ definitions:
         type: array
       meal_id:
         type: integer
+    type: object
+  _go.AddBulkStepsResponse:
+    properties:
+      steps:
+        items:
+          $ref: '#/definitions/_go.Step'
+        type: array
     type: object
   _go.AddMessageRequest:
     properties:
@@ -19,10 +31,20 @@ definitions:
       thread_id:
         type: string
     type: object
+  _go.AddMessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
   _go.AddStepRequest:
     properties:
       meal_id:
         type: integer
+      step:
+        $ref: '#/definitions/_go.Step'
+    type: object
+  _go.AddStepResponse:
+    properties:
       step:
         $ref: '#/definitions/_go.Step'
     type: object
@@ -44,6 +66,64 @@ definitions:
       step:
         type: integer
     type: object
+  _go.AgentMessageRequest:
+    properties:
+      from:
+        type: string
+      interactive:
+        type: boolean
+      message:
+        type: string
+      thread_id:
+        type: string
+    type: object
+  _go.AgentResponse:
+    properties:
+      current_step:
+        type: string
+      initial_state:
+        description: JSON string
+        type: string
+      message:
+        type: string
+      raw:
+        description: JSON string
+        type: string
+      success:
+        type: boolean
+      thread_id:
+        type: string
+    type: object
+  _go.AgentStartRequest:
+    properties:
+      participants:
+        items:
+          type: string
+        type: array
+      workflow_type:
+        type: string
+    type: object
+  _go.CancelWorkflowResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  _go.CheckpointEntry:
+    properties:
+      checkpoint_ns:
+        type: string
+      thread_id:
+        type: string
+      tuple:
+        $ref: '#/definitions/_go.CheckpointTuple'
+    type: object
+  _go.CheckpointTuple:
+    properties:
+      checkpoint:
+        $ref: '#/definitions/_go.AgentCheckpoint'
+      metadata:
+        $ref: '#/definitions/_go.AgentCheckpointMetadata'
+    type: object
   _go.CreateMealIngredientRequest:
     properties:
       ingredient:
@@ -60,6 +140,31 @@ definitions:
     properties:
       meal:
         $ref: '#/definitions/_go.Meal'
+    type: object
+  _go.CreateMealResponse:
+    properties:
+      meal:
+        $ref: '#/definitions/_go.Meal'
+    type: object
+  _go.DeleteAllStepsResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  _go.DeleteMealIngredientResponse:
+    properties:
+      meal:
+        $ref: '#/definitions/_go.Meal'
+    type: object
+  _go.DeleteMealResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  _go.DeleteStepResponse:
+    properties:
+      message:
+        type: string
     type: object
   _go.FeedbackEntryProto:
     properties:
@@ -78,6 +183,42 @@ definitions:
       plan:
         $ref: '#/definitions/_go.WeeklyMealPlan'
     type: object
+  _go.FinalizeMealPlanResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  _go.GenerateMealPlanResponse:
+    properties:
+      plan:
+        $ref: '#/definitions/_go.WeeklyMealPlan'
+    type: object
+  _go.GetAllMealsResponse:
+    properties:
+      meals:
+        items:
+          $ref: '#/definitions/_go.Meal'
+        type: array
+    type: object
+  _go.GetCheckpointResponse:
+    properties:
+      found:
+        type: boolean
+      tuple:
+        $ref: '#/definitions/_go.CheckpointTuple'
+    type: object
+  _go.GetMealPlanResponse:
+    properties:
+      plan:
+        $ref: '#/definitions/_go.WeeklyMealPlan'
+    type: object
+  _go.GetMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/_go.Message'
+        type: array
+    type: object
   _go.GetShoppingListRequest:
     properties:
       plan:
@@ -85,6 +226,47 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  _go.GetShoppingListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/_go.ShoppingListItem'
+        type: array
+    type: object
+  _go.GetStepsResponse:
+    properties:
+      steps:
+        items:
+          $ref: '#/definitions/_go.Step'
+        type: array
+    type: object
+  _go.GetWorkflowStateResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/_go.Message'
+        type: array
+      plan:
+        $ref: '#/definitions/_go.WeeklyMealPlan'
+      shopping_list:
+        $ref: '#/definitions/_go.ShoppingList'
+    type: object
+  _go.GetWorkflowStatusResponse:
+    properties:
+      status:
+        $ref: '#/definitions/_go.WorkflowStatus'
+    type: object
+  _go.HealthCheckResponse:
+    properties:
+      message:
+        type: string
+      services:
+        additionalProperties:
+          type: boolean
+        type: object
+      status:
+        type: string
     type: object
   _go.Ingredient:
     properties:
@@ -98,6 +280,20 @@ definitions:
         type: number
       unit:
         type: string
+    type: object
+  _go.ListCheckpointsResponse:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/_go.CheckpointEntry'
+        type: array
+    type: object
+  _go.ListWorkflowsResponse:
+    properties:
+      workflows:
+        items:
+          $ref: '#/definitions/_go.WorkflowStatus'
+        type: array
     type: object
   _go.Meal:
     properties:
@@ -160,6 +356,28 @@ definitions:
       updated_at:
         $ref: '#/definitions/timestamppb.Timestamp'
     type: object
+  _go.Message:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      sender:
+        description: '"user" or "agent"'
+        type: string
+      thread_id:
+        type: string
+    type: object
+  _go.MessageAgentRequest:
+    properties:
+      request:
+        $ref: '#/definitions/_go.AgentMessageRequest'
+    type: object
+  _go.MessageAgentResponse:
+    properties:
+      response:
+        $ref: '#/definitions/_go.AgentResponse'
+    type: object
   _go.PutCheckpointRequest:
     properties:
       checkpoint:
@@ -173,6 +391,22 @@ definitions:
       workflow_type:
         type: string
     type: object
+  _go.PutCheckpointResponse:
+    properties:
+      checkpoint_ns:
+        type: string
+      success:
+        type: boolean
+      thread_id:
+        type: string
+    type: object
+  _go.ReconnectResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
   _go.ReorderStepsRequest:
     properties:
       meal_id:
@@ -182,12 +416,22 @@ definitions:
           type: integer
         type: array
     type: object
+  _go.ReorderStepsResponse:
+    properties:
+      message:
+        type: string
+    type: object
   _go.ReplaceMealRequest:
     properties:
       day:
         type: string
       new_meal_id:
         type: integer
+    type: object
+  _go.ReplaceMealResponse:
+    properties:
+      meal:
+        $ref: '#/definitions/_go.Meal'
     type: object
   _go.SaveMealPlanRequest:
     properties:
@@ -216,6 +460,16 @@ definitions:
       quantity:
         type: string
     type: object
+  _go.StartAgentWorkflowRequest:
+    properties:
+      request:
+        $ref: '#/definitions/_go.AgentStartRequest'
+    type: object
+  _go.StartAgentWorkflowResponse:
+    properties:
+      response:
+        $ref: '#/definitions/_go.AgentResponse'
+    type: object
   _go.Step:
     properties:
       id:
@@ -234,6 +488,11 @@ definitions:
       meal_type:
         type: string
     type: object
+  _go.SwapMealResponse:
+    properties:
+      meal:
+        $ref: '#/definitions/_go.Meal'
+    type: object
   _go.UpdateMealIngredientRequest:
     properties:
       ingredient:
@@ -243,12 +502,22 @@ definitions:
       meal_id:
         type: integer
     type: object
+  _go.UpdateMealIngredientResponse:
+    properties:
+      meal:
+        $ref: '#/definitions/_go.Meal'
+    type: object
   _go.UpdateMealRequest:
     properties:
       meal:
         $ref: '#/definitions/_go.Meal'
       meal_id:
         type: integer
+    type: object
+  _go.UpdateMealResponse:
+    properties:
+      meal:
+        $ref: '#/definitions/_go.Meal'
     type: object
   _go.UpdateSessionStateRequest:
     properties:
@@ -265,6 +534,11 @@ definitions:
       thread_id:
         type: string
     type: object
+  _go.UpdateSessionStateResponse:
+    properties:
+      message:
+        type: string
+    type: object
   _go.UpdateStepRequest:
     properties:
       meal_id:
@@ -273,6 +547,11 @@ definitions:
         $ref: '#/definitions/_go.Step'
       step_id:
         type: integer
+    type: object
+  _go.UpdateStepResponse:
+    properties:
+      step:
+        $ref: '#/definitions/_go.Step'
     type: object
   _go.WeeklyMealPlan:
     properties:
@@ -285,312 +564,23 @@ definitions:
           $ref: '#/definitions/_go.ShoppingListItem'
         type: array
     type: object
-  main.AgentMessageRequestBody:
+  _go.WorkflowStatus:
     properties:
-      from:
+      current_step:
         type: string
-      interactive:
-        type: boolean
-      message:
-        type: string
-      threadId:
-        type: string
-    type: object
-  main.AgentMessageResponse:
-    properties:
-      response:
-        $ref: '#/definitions/main.AgentResponseBody'
-    type: object
-  main.AgentResponseBody:
-    properties:
-      currentStep:
-        type: string
-      initialState:
-        type: string
-      message:
-        type: string
-      success:
-        type: boolean
-      threadId:
-        type: string
-    type: object
-  main.AgentStartRequestBody:
-    properties:
       participants:
         items:
           type: string
         type: array
-      workflowType:
+      thread_id:
         type: string
-    type: object
-  main.AgentStartResponse:
-    properties:
-      response:
-        $ref: '#/definitions/main.AgentResponseBody'
-    type: object
-  main.CheckpointListResponse:
-    properties:
-      entries:
-        items:
-          properties:
-            checkpointNs:
-              type: string
-            threadId:
-              type: string
-            tuple:
-              $ref: '#/definitions/main.CheckpointTupleResponse'
-          type: object
-        type: array
-    type: object
-  main.CheckpointResponse:
-    properties:
-      found:
-        type: boolean
-      tuple:
-        properties:
-          checkpoint:
-            properties:
-              state:
-                properties:
-                  currentStep:
-                    type: string
-                  mealPlan:
-                    properties:
-                      days:
-                        items:
-                          $ref: '#/definitions/main.MealPlanEntryResponse'
-                        type: array
-                    type: object
-                  participants:
-                    items:
-                      type: string
-                    type: array
-                  threadId:
-                    type: string
-                type: object
-            type: object
-        type: object
-    type: object
-  main.CheckpointTupleResponse:
-    properties:
-      checkpoint:
-        properties:
-          state:
-            properties:
-              currentStep:
-                type: string
-              mealPlan:
-                properties:
-                  days:
-                    items:
-                      $ref: '#/definitions/main.MealPlanEntryResponse'
-                    type: array
-                type: object
-              participants:
-                items:
-                  type: string
-                type: array
-              threadId:
-                type: string
-            type: object
-        type: object
+      workflow_type:
+        type: string
     type: object
   main.ErrorResponse:
     properties:
       error:
         type: string
-    type: object
-  main.GetMessagesResponse:
-    properties:
-      messages:
-        items:
-          $ref: '#/definitions/main.MessageResponse'
-        type: array
-    type: object
-  main.HealthResponse:
-    properties:
-      message:
-        type: string
-      services:
-        additionalProperties:
-          type: boolean
-        type: object
-      status:
-        type: string
-    type: object
-  main.IngredientResponse:
-    properties:
-      id:
-        type: integer
-      mealId:
-        type: integer
-      name:
-        type: string
-      quantity:
-        type: number
-      unit:
-        type: string
-    type: object
-  main.MealPlanEntryResponse:
-    properties:
-      dayIndex:
-        type: integer
-      meal:
-        $ref: '#/definitions/main.MealResponse'
-      mealType:
-        type: string
-    type: object
-  main.MealPlanResponse:
-    properties:
-      plan:
-        properties:
-          days:
-            items:
-              $ref: '#/definitions/main.MealPlanEntryResponse'
-            type: array
-          shoppingList:
-            items:
-              $ref: '#/definitions/main.ShoppingListItemResponse'
-            type: array
-        type: object
-    type: object
-  main.MealResponse:
-    properties:
-      effort:
-        type: integer
-      hasRedMeat:
-        type: boolean
-      id:
-        type: integer
-      ingredients:
-        items:
-          $ref: '#/definitions/main.IngredientResponse'
-        type: array
-      lastPlanned:
-        format: date-time
-        type: string
-      mealType:
-        type: string
-      name:
-        type: string
-      steps:
-        items:
-          $ref: '#/definitions/main.StepResponse'
-        type: array
-      url:
-        type: string
-    type: object
-  main.MealsResponse:
-    properties:
-      meals:
-        items:
-          $ref: '#/definitions/main.MealResponse'
-        type: array
-    type: object
-  main.MessageResponse:
-    properties:
-      content:
-        type: string
-      createdAt:
-        type: string
-      sender:
-        type: string
-      threadId:
-        type: string
-    type: object
-  main.ShoppingListItemResponse:
-    properties:
-      category:
-        type: string
-      ingredient:
-        type: string
-      quantity:
-        type: string
-    type: object
-  main.ShoppingListResponse:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/main.ShoppingListItemResponse'
-        type: array
-    type: object
-  main.SimpleMessageResponse:
-    properties:
-      message:
-        type: string
-    type: object
-  main.StepResponse:
-    properties:
-      id:
-        type: integer
-      instruction:
-        type: string
-      mealId:
-        type: integer
-      stepNumber:
-        type: integer
-    type: object
-  main.StepsResponse:
-    properties:
-      steps:
-        items:
-          $ref: '#/definitions/main.StepResponse'
-        type: array
-    type: object
-  main.WorkflowMessageResponse:
-    properties:
-      content:
-        type: string
-      createdAt:
-        type: string
-      sender:
-        type: string
-      threadId:
-        type: string
-    type: object
-  main.WorkflowStateResponse:
-    properties:
-      messages:
-        items:
-          $ref: '#/definitions/main.WorkflowMessageResponse'
-        type: array
-      plan:
-        properties:
-          days:
-            items:
-              $ref: '#/definitions/main.MealPlanEntryResponse'
-            type: array
-        type: object
-      shoppingList:
-        properties:
-          items:
-            items:
-              $ref: '#/definitions/main.ShoppingListItemResponse'
-            type: array
-        type: object
-    type: object
-  main.WorkflowStatusResponse:
-    properties:
-      status:
-        properties:
-          currentStep:
-            type: string
-          participants:
-            items:
-              type: string
-            type: array
-          threadId:
-            type: string
-          workflowType:
-            type: string
-        type: object
-    type: object
-  main.WorkflowsResponse:
-    properties:
-      workflows:
-        items:
-          $ref: '#/definitions/main.WorkflowStatusResponse'
-        type: array
     type: object
   timestamppb.Timestamp:
     properties:
@@ -633,14 +623,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/main.AgentMessageRequestBody'
+          $ref: '#/definitions/_go.MessageAgentRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Message sent successfully
           schema:
-            $ref: '#/definitions/main.AgentMessageResponse'
+            $ref: '#/definitions/_go.MessageAgentResponse'
         "400":
           description: Bad request
           schema:
@@ -663,14 +653,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/main.AgentStartRequestBody'
+          $ref: '#/definitions/_go.StartAgentWorkflowRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Agent workflow started successfully
           schema:
-            $ref: '#/definitions/main.AgentStartResponse'
+            $ref: '#/definitions/_go.StartAgentWorkflowResponse'
         "400":
           description: Bad request
           schema:
@@ -699,7 +689,7 @@ paths:
         "200":
           description: Workflow status retrieved successfully
           schema:
-            $ref: '#/definitions/main.WorkflowStatusResponse'
+            $ref: '#/definitions/_go.GetWorkflowStatusResponse'
         "400":
           description: Bad request
           schema:
@@ -722,7 +712,7 @@ paths:
         "200":
           description: Workflows listed successfully
           schema:
-            $ref: '#/definitions/main.WorkflowsResponse'
+            $ref: '#/definitions/_go.ListWorkflowsResponse'
         "500":
           description: Internal server error
           schema:
@@ -747,7 +737,7 @@ paths:
         "200":
           description: Workflow cancelled successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.CancelWorkflowResponse'
         "400":
           description: Bad request
           schema:
@@ -779,7 +769,7 @@ paths:
         "200":
           description: Checkpoints listed successfully
           schema:
-            $ref: '#/definitions/main.CheckpointListResponse'
+            $ref: '#/definitions/_go.ListCheckpointsResponse'
         "500":
           description: Internal server error
           schema:
@@ -804,7 +794,7 @@ paths:
         "200":
           description: Checkpoint saved successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.PutCheckpointResponse'
         "400":
           description: Bad request
           schema:
@@ -837,7 +827,7 @@ paths:
         "200":
           description: Checkpoint retrieved successfully
           schema:
-            $ref: '#/definitions/main.CheckpointResponse'
+            $ref: '#/definitions/_go.GetCheckpointResponse'
         "404":
           description: Checkpoint not found
           schema:
@@ -860,7 +850,7 @@ paths:
         "200":
           description: Health check successful
           schema:
-            $ref: '#/definitions/main.HealthResponse'
+            $ref: '#/definitions/_go.HealthCheckResponse'
         "500":
           description: Internal server error
           schema:
@@ -879,7 +869,7 @@ paths:
         "200":
           description: Meal plan retrieved successfully
           schema:
-            $ref: '#/definitions/main.MealPlanResponse'
+            $ref: '#/definitions/_go.GetMealPlanResponse'
         "500":
           description: Internal server error
           schema:
@@ -904,7 +894,7 @@ paths:
         "200":
           description: Meal plan saved successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.FinalizeMealPlanResponse'
         "400":
           description: Bad request
           schema:
@@ -934,7 +924,7 @@ paths:
         "200":
           description: Meal plan finalized successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.FinalizeMealPlanResponse'
         "400":
           description: Bad request
           schema:
@@ -957,7 +947,7 @@ paths:
         "200":
           description: Meal plan generated successfully
           schema:
-            $ref: '#/definitions/main.MealPlanResponse'
+            $ref: '#/definitions/_go.GenerateMealPlanResponse'
         "500":
           description: Internal server error
           schema:
@@ -1002,7 +992,7 @@ paths:
         "200":
           description: Meal replaced successfully
           schema:
-            $ref: '#/definitions/main.MealResponse'
+            $ref: '#/definitions/_go.ReplaceMealResponse'
         "400":
           description: Bad request
           schema:
@@ -1030,7 +1020,7 @@ paths:
         "200":
           description: Meals retrieved successfully
           schema:
-            $ref: '#/definitions/main.MealsResponse'
+            $ref: '#/definitions/_go.GetAllMealsResponse'
         "500":
           description: Internal server error
           schema:
@@ -1055,7 +1045,7 @@ paths:
         "201":
           description: Meal created successfully
           schema:
-            $ref: '#/definitions/main.MealResponse'
+            $ref: '#/definitions/_go.CreateMealResponse'
         "400":
           description: Bad request
           schema:
@@ -1084,7 +1074,7 @@ paths:
         "200":
           description: Meal deleted successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.DeleteMealResponse'
         "400":
           description: Bad request
           schema:
@@ -1119,7 +1109,7 @@ paths:
         "200":
           description: Meal updated successfully
           schema:
-            $ref: '#/definitions/main.MealResponse'
+            $ref: '#/definitions/_go.UpdateMealResponse'
         "400":
           description: Bad request
           schema:
@@ -1192,7 +1182,7 @@ paths:
         "200":
           description: Ingredient deleted successfully
           schema:
-            $ref: '#/definitions/main.MealResponse'
+            $ref: '#/definitions/_go.DeleteMealIngredientResponse'
         "400":
           description: Bad request
           schema:
@@ -1231,7 +1221,7 @@ paths:
         "200":
           description: Ingredient updated successfully
           schema:
-            $ref: '#/definitions/main.MealResponse'
+            $ref: '#/definitions/_go.UpdateMealIngredientResponse'
         "400":
           description: Bad request
           schema:
@@ -1260,7 +1250,7 @@ paths:
         "200":
           description: All steps deleted successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.DeleteAllStepsResponse'
         "400":
           description: Bad request
           schema:
@@ -1288,7 +1278,7 @@ paths:
         "200":
           description: Steps retrieved successfully
           schema:
-            $ref: '#/definitions/main.StepsResponse'
+            $ref: '#/definitions/_go.GetStepsResponse'
         "400":
           description: Bad request
           schema:
@@ -1322,7 +1312,7 @@ paths:
         "200":
           description: Step added successfully
           schema:
-            $ref: '#/definitions/main.StepResponse'
+            $ref: '#/definitions/_go.AddStepResponse'
         "400":
           description: Bad request
           schema:
@@ -1356,7 +1346,7 @@ paths:
         "200":
           description: Step deleted successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.DeleteStepResponse'
         "400":
           description: Bad request
           schema:
@@ -1395,7 +1385,7 @@ paths:
         "200":
           description: Step updated successfully
           schema:
-            $ref: '#/definitions/main.StepResponse'
+            $ref: '#/definitions/_go.UpdateStepResponse'
         "400":
           description: Bad request
           schema:
@@ -1430,7 +1420,7 @@ paths:
         "200":
           description: Steps added successfully
           schema:
-            $ref: '#/definitions/main.StepsResponse'
+            $ref: '#/definitions/_go.AddBulkStepsResponse'
         "400":
           description: Bad request
           schema:
@@ -1465,7 +1455,7 @@ paths:
         "200":
           description: Steps reordered successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.ReorderStepsResponse'
         "400":
           description: Bad request
           schema:
@@ -1495,7 +1485,7 @@ paths:
         "200":
           description: Meal swapped successfully
           schema:
-            $ref: '#/definitions/main.MealResponse'
+            $ref: '#/definitions/_go.SwapMealResponse'
         "400":
           description: Bad request
           schema:
@@ -1518,7 +1508,7 @@ paths:
         "200":
           description: Reconnect successful
           schema:
-            $ref: '#/definitions/main.HealthResponse'
+            $ref: '#/definitions/_go.ReconnectResponse'
         "500":
           description: Internal server error
           schema:
@@ -1544,7 +1534,7 @@ paths:
         "200":
           description: Shopping list retrieved successfully
           schema:
-            $ref: '#/definitions/main.ShoppingListResponse'
+            $ref: '#/definitions/_go.GetShoppingListResponse'
         "400":
           description: Bad request
           schema:
@@ -1573,7 +1563,7 @@ paths:
         "200":
           description: Workflow state retrieved successfully
           schema:
-            $ref: '#/definitions/main.WorkflowStateResponse'
+            $ref: '#/definitions/_go.GetWorkflowStateResponse'
         "400":
           description: Bad request
           schema:
@@ -1602,7 +1592,7 @@ paths:
         "200":
           description: Workflow abandoned successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.AbandonWorkflowResponse'
         "400":
           description: Bad request
           schema:
@@ -1631,7 +1621,7 @@ paths:
         "200":
           description: Messages retrieved successfully
           schema:
-            $ref: '#/definitions/main.GetMessagesResponse'
+            $ref: '#/definitions/_go.GetMessagesResponse'
         "400":
           description: Bad request
           schema:
@@ -1665,7 +1655,7 @@ paths:
         "200":
           description: Message added successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.AddMessageResponse'
         "400":
           description: Bad request
           schema:
@@ -1700,7 +1690,7 @@ paths:
         "200":
           description: Session state updated successfully
           schema:
-            $ref: '#/definitions/main.SimpleMessageResponse'
+            $ref: '#/definitions/_go.UpdateSessionStateResponse'
         "400":
           description: Bad request
           schema:

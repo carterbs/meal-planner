@@ -10,9 +10,9 @@ import {
   postAgentStart,
   postAgentMessage,
   PostAgentMessageData,
-  MainAgentMessageRequestBody,
+  GoAgentMessageRequest,
   getCheckpointsByThreadId,
-  MainCheckpointResponse,
+  GoGetCheckpointResponse,
   getWorkflowsByThreadIdMessages,
   GetWorkflowsByThreadIdMessagesData,
   GetWorkflowsByThreadIdMessagesResponses,
@@ -49,8 +49,10 @@ export async function startAgentSession(
   workflowType: string = 'meal_planning',
 ): Promise<StartSessionResult> {
   const requestData = {
-    participants,
-    workflowType,
+    request: {
+      participants,
+      workflowType,
+    }
   };
 
   const result = await postAgentStart({
@@ -106,11 +108,13 @@ export async function sendAgentMessage(
   from: string = 'user',
   interactive: boolean = false,
 ): Promise<SendMessageResult> {
-  const requestData: MainAgentMessageRequestBody = {
-    threadId,
-    message,
-    from,
-    interactive,
+  const requestData = {
+    request: {
+      threadId,
+      message,
+      from,
+      interactive,
+    }
   };
 
   const result = await postAgentMessage({

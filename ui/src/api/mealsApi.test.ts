@@ -1,6 +1,6 @@
 import { updateMeal, createMeal } from './mealsApi';
 import type { 
-  MainMealResponse, 
+  GoMeal, 
   MainErrorResponse,
   PostMealsResponses,
   PostMealsErrors,
@@ -26,7 +26,7 @@ const mockPostMeals = postMeals as jest.MockedFunction<any>;
 const mockPutMealsByMealId = putMealsByMealId as jest.MockedFunction<any>;
 
 describe('updateMeal', () => {
-  const mockMeal: MainMealResponse = {
+  const mockMeal: GoMeal = {
     id: 1,
     name: 'Test Meal',
     effort: 2,
@@ -138,7 +138,7 @@ describe('updateMeal', () => {
   });
 
   test('correctly formats request with all meal fields', async () => {
-    const complexMeal: MainMealResponse = {
+    const complexMeal: GoMeal = {
       id: 42,
       name: 'Complex Meal',
       effort: 5,
@@ -183,7 +183,7 @@ describe('updateMeal', () => {
 });
 
 describe('createMeal', () => {
-  const mockMealInput: Omit<MainMealResponse, 'id'> = {
+  const mockMealInput: Omit<GoMeal, 'id'> = {
     name: 'New Test Meal',
     effort: 3,
     hasRedMeat: true,
@@ -327,7 +327,7 @@ describe('createMeal', () => {
   });
 
   test('correctly formats meal data with temporary IDs for ingredients and steps', async () => {
-    const mealWithTempIds: Omit<MainMealResponse, 'id'> = {
+    const mealWithTempIds: Omit<GoMeal, 'id'> = {
       name: 'Meal with temp IDs',
       effort: 2,
       hasRedMeat: false,

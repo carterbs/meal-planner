@@ -1,8 +1,8 @@
 import type {
-  MainMealResponse,
-  MainStepResponse,
-  MainIngredientResponse,
-  MainShoppingListItemResponse,
+  GoMeal,
+  GoStep,
+  GoIngredient,
+  GoShoppingListItem,
 } from '@mealplanner/generated/dist/gateway/types.gen';
 import {
   createClient,
@@ -26,9 +26,9 @@ import { Meal, Ingredient, Step, WeeklyMealPlan } from '../types';
 // Create the API gateway client
 
 /**
- * Map MainStepResponse to UI Step
+ * Map GoStep to UI Step
  */
-function mapStep(s: MainStepResponse): Step {
+function mapStep(s: GoStep): Step {
   return {
     id: s.id,
     mealId: s.mealId,
@@ -38,12 +38,12 @@ function mapStep(s: MainStepResponse): Step {
 }
 
 /**
- * Map MainMealResponse to UI Meal
+ * Map GoMeal to UI Meal
  */
-function mapMeal(m: MainMealResponse): Meal {
+function mapMeal(m: GoMeal): Meal {
   // Type assertion to access lastPlanned field that exists in runtime but not in generated types
-  const mealWithLastPlanned = m as MainMealResponse & { lastPlanned?: string };
-  
+  const mealWithLastPlanned = m as GoMeal & { lastPlanned?: string };
+
   return {
     id: m.id,
     name: m.name || '',
@@ -94,7 +94,7 @@ export async function getMeals(mealType?: string): Promise<Meal[]> {
  * Create a new meal
  */
 export async function createMeal(
-  meal: Omit<MainMealResponse, 'id'>,
+  meal: Omit<GoMeal, 'id'>,
 ): Promise<Meal> {
   const mealData = {
     id: 0, // Will be assigned by backend
@@ -111,11 +111,11 @@ export async function createMeal(
     throw new Error(`Failed to create meal: ${errorMessage}`);
   }
 
-  if (!result.data) {
+  if (!result.data || !result.data.meal) {
     throw new Error('No meal returned from create request');
   }
 
-  return mapMeal(result.data);
+  return mapMeal(result.data.meal);
 }
 
 /**
@@ -123,13 +123,13 @@ export async function createMeal(
  */
 export async function updateMeal(
   mealId: number,
-  meal: MainMealResponse,
+  meal: GoMeal,
 ): Promise<Meal> {
   const result = await putMealsByMealId({
     client: gatewayClient,
     path: { mealId: mealId },
     body: {
-      meal_id: mealId,
+      mealId: mealId,
       meal,
     },
   });
@@ -139,7 +139,11 @@ export async function updateMeal(
     throw new Error(`Failed to update meal: ${errorMessage}`);
   }
 
-  return mapMeal(result.data);
+  if (!result.data.meal) {
+    throw new Error('No meal returned from update request');
+  }
+
+  return mapMeal(result.data.meal);
 }
 
 /**
@@ -166,15 +170,15 @@ export async function deleteMeal(mealId: number): Promise<string> {
 export async function updateMealIngredient(
   mealId: number,
   ingredientId: number,
-  ingredient: MainIngredientResponse,
+  ingredient: GoIngredient,
 ): Promise<Meal> {
   const result = await putMealsByMealIdIngredientsByIngredientId({
     client: gatewayClient,
     path: { mealId: mealId.toString(), ingredientId: ingredientId.toString() },
     body: {
       ingredient,
-      ingredient_id: ingredientId,
-      meal_id: mealId,
+      ingredientId: ingredientId,
+      mealId: mealId,
     },
   });
 
@@ -184,7 +188,11 @@ export async function updateMealIngredient(
     );
   }
 
-  return mapMeal(result.data);
+  if (!result.data.meal) {
+    throw new Error('No meal returned from update ingredient request');
+  }
+
+  return mapMeal(result.data.meal);
 }
 
 /**
@@ -192,14 +200,14 @@ export async function updateMealIngredient(
  */
 export async function createMealIngredient(
   mealId: number,
-  ingredient: MainIngredientResponse,
+  ingredient: GoIngredient,
 ): Promise<Meal> {
   const result = await postMealsByMealIdIngredients({
     client: gatewayClient,
     path: { mealId: mealId.toString() },
     body: {
       ingredient,
-      meal_id: mealId,
+      mealId: mealId,
     },
   });
 
@@ -234,7 +242,11 @@ export async function deleteMealIngredient(
     );
   }
 
-  return mapMeal(result.data);
+  if (!result.data.meal) {
+    throw new Error('No meal returned from delete ingredient request');
+  }
+
+  return mapMeal(result.data.meal);
 }
 
 /**
@@ -292,7 +304,7 @@ export async function replaceAllSteps(
   }
 }
 
-export async function goGetShoppingList(mealPlan: WeeklyMealPlan): Promise<MainShoppingListItemResponse[]> {
+export async function goGetShoppingList(mealPlan: WeeklyMealPlan): Promise<GoShoppingListItem[]> {
   const request: GoGetShoppingListRequest = {
     plan: mealPlan.days.filter((day) => day.meal).map((day) => day.meal!.id),
   };

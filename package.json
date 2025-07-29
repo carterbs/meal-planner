@@ -33,7 +33,10 @@
         "db:restore": "node scripts/restore-db.js",
         "meal-agent": "./scripts/meal-agent.sh",
         "kill:servers": "node scripts/kill-servers.js",
-        "format": "prettier --write \"agent-service/**/*.{ts,tsx}\" \"ui/**/*.{ts,tsx}\" && gofmt -w meal-service/"
+        "format": "prettier --write \"agent-service/**/*.{ts,tsx}\" \"ui/**/*.{ts,tsx}\" && gofmt -w meal-service/",
+        "lint": "make lint",
+        "swagger": "make swagger",
+        "generate": "make generate"
     },
     "resolutions": {
         "react": "18.2.0",

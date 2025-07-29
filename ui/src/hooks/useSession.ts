@@ -9,9 +9,10 @@ import {
   postShoppinglist,
 } from '@mealplanner/generated/dist/gateway/index.js';
 import type {
-  MainCheckpointResponse,
-  MainMealPlanEntryResponse,
-  MainShoppingListItemResponse,
+  GoGetCheckpointResponse,
+  GoMealPlanEntry,
+  GoShoppingList,
+  GoShoppingListItem,
 } from '@mealplanner/generated/dist/gateway/types.gen';
 
 // Create the API gateway client
@@ -24,14 +25,15 @@ const gatewayClient = createClient(
 // Shape of checkpoint.state
 interface CheckpointState {
   currentStep?: string;
-  mealPlan?: { days?: MainMealPlanEntryResponse[] };
+  mealPlan?: { days?: GoMealPlanEntry[] };
   participants?: string[];
   threadId?: string;
+  shoppingList?: GoShoppingList;
 }
 
 export interface WorkflowState extends CheckpointState {
   threadId: string;
-  shoppingList?: MainShoppingListItemResponse[];
+  shoppingList?: GoShoppingList;
 } // include threadId & optional shoppingList for resumeData
 
 export default function useSession(startSession: () => Promise<void>) {
@@ -60,7 +62,11 @@ export default function useSession(startSession: () => Promise<void>) {
           return;
         }
 
-        const data: WorkflowState = { ...state, threadId: id };
+        const data: WorkflowState = { 
+          ...state, 
+          threadId: id,
+          shoppingList: state.shoppingList 
+        };
         setResumeData(data);
         // Fetch shopping list for resumed meal plan
         if (state.mealPlan) {
@@ -74,7 +80,7 @@ export default function useSession(startSession: () => Promise<void>) {
               if (res.data && !res.error) {
                 const items = res.data.items ?? [];
                 setResumeData((prev) =>
-                  prev ? { ...prev, shoppingList: items } : prev,
+                  prev ? { ...prev, shoppingList: { items } } : prev,
                 );
               }
             })
