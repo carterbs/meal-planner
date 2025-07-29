@@ -5,13 +5,14 @@ This folder contains all automation and helper scripts used to develop, test and
 ## Table of Contents
 
 1. [Development Scripts](#development-scripts)
-2. [Testing Utilities](#testing-utilities)
-3. [Database Management](#database-management)
-4. [Agent CLI](#agent-cli)
-5. [End-to-End Utilities](#end-to-end-utilities)
-6. [Workflow Integration](#workflow-integration)
-7. [Best Practices](#best-practices)
-8. [Troubleshooting](#troubleshooting)
+2. [Linting and Code Quality](#linting-and-code-quality)
+3. [Testing Utilities](#testing-utilities)
+4. [Database Management](#database-management)
+5. [Agent CLI](#agent-cli)
+6. [End-to-End Utilities](#end-to-end-utilities)
+7. [Workflow Integration](#workflow-integration)
+8. [Best Practices](#best-practices)
+9. [Troubleshooting](#troubleshooting)
 
 ## Development Scripts
 
@@ -55,6 +56,28 @@ Convenience wrapper for the meal planning agent CLI. It verifies the agent is bu
 ```bash
 ./scripts/meal-agent.sh [args]
 ```
+
+## Linting and Code Quality
+
+### `lint.sh`
+Runs all linting checks for the meal-planner project:
+- Custom Swagger response linter (ensures all @Success annotations use proto types)
+- Standard Go linters (golangci-lint if available)
+- go vet for basic Go code checks
+
+Usage:
+```bash
+./scripts/lint.sh
+# or via Makefile
+make lint
+```
+
+Exit codes:
+- 0: All linting passed
+- 1: Linting violations found
+- 2: Script setup/configuration error
+
+This script is integrated into the Makefile and runs automatically before code generation to ensure code quality.
 
 ## Testing Utilities
 
@@ -105,6 +128,7 @@ See the [End-to-End Scripts](#end-to-end-scripts) section above. They demonstrat
 ## Workflow Integration
 
 - **Local development**: `yarn dev` brings up Docker services and both apps. Use `yarn kill:servers` if ports become stuck.
+- **Code quality**: `make lint` runs all linting checks. This is automatically executed before code generation in `make generate`.
 - **Testing**: `yarn test` runs `test-summary.js`, providing one report across all packages. Continuous integration should invoke this command.
 - **Database**: Back up your local database with `yarn db:backup` before experiments and restore with `yarn db:restore` when needed.
 - **Deployment/MCP**: `yarn start:mcp` starts the backend and MCP gateway for the production-like environment.
@@ -112,6 +136,7 @@ See the [End-to-End Scripts](#end-to-end-scripts) section above. They demonstrat
 ## Best Practices
 
 - Always run `yarn test` before committing changes.
+- Run `make lint` before generating code to catch issues early. The Makefile enforces this automatically.
 - Use `yarn dev` during everyday development to ensure Docker containers start correctly and the database is ready.
 - Clean up stray processes with `yarn kill:servers` if ports are in use or scripts fail unexpectedly.
 - Keep regular backups of your local database using `yarn db:backup`.

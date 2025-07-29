@@ -30,7 +30,7 @@ import {
   updateMeal as updateMealApi,
 } from '../api';
 
-import type { MainMealResponse } from '@mealplanner/generated/dist/gateway/types.gen';
+import type { GoMeal } from '@mealplanner/generated/dist/gateway/types.gen';
 
 import { Meal, Ingredient, Step } from '../types';
 
@@ -178,16 +178,15 @@ const MealEditView: React.FC<MealEditViewProps> = ({
     if (!updatedMeal.id) return;
     try {
       setLoading(true);
-      const mealData: MainMealResponse = {
-        id: updatedMeal.id,
-        name: updatedMeal.name,
-        effort: updatedMeal.effort,
-        hasRedMeat: updatedMeal.hasRedMeat,
-        url: updatedMeal.url,
-        mealType: updatedMeal.mealType,
-        ingredients: updatedMeal.ingredients,
-        steps: updatedMeal.steps,
-        lastPlanned: updatedMeal.lastPlanned,
+      // Convert UI Meal to GoMeal, handling timestamp conversion
+      const { lastPlanned, ...mealDataWithoutTimestamp } = updatedMeal;
+      const mealData: GoMeal = {
+        ...mealDataWithoutTimestamp,
+        // Convert string lastPlanned to TimestamppbTimestamp if it exists
+        lastPlanned: lastPlanned ? {
+          seconds: Math.floor(new Date(lastPlanned).getTime() / 1000),
+          nanos: 0
+        } : undefined
       };
 
       const result = await updateMealApi(updatedMeal.id, mealData);

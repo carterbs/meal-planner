@@ -17,6 +17,7 @@ import {
   ResumeWorkflowResponse,
 } from '@mealplanner/generated/agent_pb';
 import { planStart } from './handlers';
+export { planStart };
 import * as apipb from '@mealplanner/generated/api_pb';
 // Initialize agent instance
 let agentInstance: LangGraphAgent | null = null;
@@ -196,11 +197,11 @@ function startAgentWorkflow(
         request.participants,
       );
       const state = await agent.getWorkflowState(threadId);
-      
-      const stateString = typeof (state as any).toJsonString === 'function' 
-        ? (state as any).toJsonString({ emitDefaultValues: true }) 
+
+      const stateString = typeof (state as any).toJsonString === 'function'
+        ? (state as any).toJsonString({ emitDefaultValues: true })
         : JSON.stringify(state);
-      
+
       const resp = new apipb.AgentResponse({
         success: true,
         message: 'Workflow started',

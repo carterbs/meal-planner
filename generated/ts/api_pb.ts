@@ -964,6 +964,11 @@ export class HealthCheckResponse extends Message$1<HealthCheckResponse> {
    */
   message = "";
 
+  /**
+   * @generated from field: map<string, bool> services = 3;
+   */
+  services: { [key: string]: boolean } = {};
+
   constructor(data?: PartialMessage<HealthCheckResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -974,6 +979,7 @@ export class HealthCheckResponse extends Message$1<HealthCheckResponse> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "services", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 8 /* ScalarType.BOOL */} },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): HealthCheckResponse {

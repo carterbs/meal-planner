@@ -10,7 +10,7 @@ cd api-gateway
 
 # Generate swagger documentation
 echo "Generating Swagger documentation..."
-swag init --parseDependency --parseInternal
+swag init --parseDependency --parseInternal --propertyStrategy camelcase
 
 # Check if swagger.json was generated
 if [ ! -f "docs/swagger.json" ]; then
@@ -22,5 +22,11 @@ echo "Swagger documentation generated successfully at api-gateway/docs/swagger.j
 
 # Navigate back to project root
 cd ..
+
+# Transform snake_case to camelCase in swagger.json
+echo "Transforming property names from snake_case to camelCase..."
+go run tools/swagger-transform/main.go \
+  -input api-gateway/docs/swagger.json \
+  -output api-gateway/docs/swagger.json
 
 echo "=== OpenAPI generation complete ==="

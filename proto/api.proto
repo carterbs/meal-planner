@@ -135,6 +135,7 @@ message WorkflowStatus {
 message HealthCheckResponse {
   string status = 1;
   string message = 2;
+  map<string, bool> services = 3;
 }
 
 message ReconnectResponse {
