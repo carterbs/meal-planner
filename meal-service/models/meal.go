@@ -303,28 +303,51 @@ func DeleteMeal(db *sql.DB, mealID int) error {
 
 // UpdateLastPlannedDates updates the last_planned date to current time for the given meal IDs
 func UpdateLastPlannedDates(db *sql.DB, mealIDs []int) error {
+	logger := logging.GetLogger("meal-model")
+	logger.Infow("🔧 [MODEL-FINALIZE] UpdateLastPlannedDates called", "mealIDs", mealIDs, "count", len(mealIDs))
+
 	if len(mealIDs) == 0 {
+		logger.Warn("🔧 [MODEL-FINALIZE] No meal IDs provided, returning early")
 		return nil
 	}
 
 	// Start a transaction
+	logger.Info("🔧 [MODEL-FINALIZE] Starting database transaction")
 	tx, err := db.Begin()
 	if err != nil {
+		logger.Errorw("🔧 [MODEL-FINALIZE] Failed to start transaction", "error", err)
 		return err
 	}
 	defer tx.Rollback()
 
 	// Update last_planned date for all meals in the plan
-	_, err = tx.Exec(`
+	logger.Infow("🔧 [MODEL-FINALIZE] Executing UPDATE query for meal IDs", "mealIDs", mealIDs)
+	result, err := tx.Exec(`
 		UPDATE meals 
 		SET last_planned = NOW() 
 		WHERE id = ANY($1)
 	`, pq.Array(mealIDs))
 	if err != nil {
+		logger.Errorw("🔧 [MODEL-FINALIZE] UPDATE query failed", "error", err, "mealIDs", mealIDs)
 		return err
 	}
 
-	return tx.Commit()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		logger.Errorw("🔧 [MODEL-FINALIZE] Failed to get rows affected", "error", err)
+	} else {
+		logger.Infow("🔧 [MODEL-FINALIZE] UPDATE query completed", "rowsAffected", rowsAffected, "expectedRows", len(mealIDs))
+	}
+
+	logger.Info("🔧 [MODEL-FINALIZE] Committing transaction")
+	err = tx.Commit()
+	if err != nil {
+		logger.Errorw("🔧 [MODEL-FINALIZE] Failed to commit transaction", "error", err)
+		return err
+	}
+
+	logger.Info("🔧 [MODEL-FINALIZE] UpdateLastPlannedDates completed successfully")
+	return nil
 }
 
 // CreateMeal inserts a new meal and its ingredients into the database

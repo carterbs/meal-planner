@@ -814,24 +814,37 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private async finalizePlanNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
-    await infoLog('MealPlanningWorkflow.finalizePlanNode called');
-    await infoLog(`🍽️ [MEAL-WORKFLOW] Finalizing meal plan`);
+    await infoLog('🍽️ [FINALIZE] Starting meal plan finalization...');
+    
+    if (!state.threadId) {
+      const errorMsg = 'No thread ID available for finalization';
+      await errorLog(`❌ [FINALIZE] ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
+    
     if (!state.mealPlan) {
       throw new Error('No meal plan to finalize');
     }
-    // Save the meal plan using MCP tool
+    
+    // Log the current meal plan for debugging
+    const mealIds = state.mealPlan.days
+      ?.map(day => day.meal?.id)
+      ?.filter(id => id !== undefined) || [];
+    
+    await infoLog(`🍽️ [FINALIZE] About to finalize plan for thread ${state.threadId} with ${mealIds.length} meals: [${mealIds.join(', ')}]`);
+    
     try {
-      await this.client.callTool({
+      const result = await this.client.callTool({
         name: 'finalizeMealPlan',
-        arguments: { mealPlan: state.mealPlan },
+        arguments: { threadId: state.threadId }  // Simple thread ID instead of complex mealPlan object
       });
-      await infoLog(`✅ [MEAL-WORKFLOW] Meal plan saved successfully`);
+      await infoLog(`✅ [FINALIZE] MCP tool returned: ${JSON.stringify(result)}`);
     } catch (error) {
-      await warnLog(
-        `${`⚠️ [MEAL-WORKFLOW] Could not save meal plan:`} ${error}`,
-      );
-      // Continue anyway as this is not critical for the workflow
+      const errorMsg = `Critical failure: Could not save meal plan: ${error}`;
+      await errorLog(`❌ [FINALIZE] ${errorMsg}`);
+      throw new Error(errorMsg);
     }
+    
     return {
       currentStep: MealPlanningStep.GENERATE_SHOPPING_LIST,
       isFinalized: true,

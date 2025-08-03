@@ -132,7 +132,7 @@ export type GoFeedbackEntryProto = {
 };
 
 export type GoFinalizeMealPlanRequest = {
-    plan?: GoWeeklyMealPlan;
+    threadId?: string;
 };
 
 export type GoFinalizeMealPlanResponse = {

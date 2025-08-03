@@ -62,14 +62,14 @@ func (s *mealService) UpdateMeal(meal *models.Meal) (*models.Meal, error) {
 		mealServiceLogger.Errorw("Failed to update meal", "mealID", meal.GetId(), "error", err)
 		return nil, fmt.Errorf("failed to update meal: %w", err)
 	}
-	
+
 	// Fetch and return the updated meal with all its data (ingredients, steps)
 	updatedMeal, err := s.mealRepo.GetMealByID(context.Background(), int(meal.GetId()))
 	if err != nil {
 		mealServiceLogger.Errorw("Failed to fetch updated meal", "mealID", meal.GetId(), "error", err)
 		return nil, fmt.Errorf("failed to fetch updated meal: %w", err)
 	}
-	
+
 	mealServiceLogger.Debugw("Successfully updated meal", "mealID", meal.GetId())
 	return updatedMeal, nil
 }
@@ -150,12 +150,14 @@ func (s *mealService) DeleteMealIngredient(mealID, ingredientID int) (*models.Me
 
 // UpdateLastPlannedDates updates the last planned dates for multiple meals
 func (s *mealService) UpdateLastPlannedDates(mealIDs []int) error {
-	mealServiceLogger.Debugw("Updating last planned dates for meals", "mealIDs", mealIDs)
+	mealServiceLogger.Infow("🔧 [SERVICE-FINALIZE] UpdateLastPlannedDates called", "mealIDs", mealIDs, "count", len(mealIDs))
+
 	err := s.mealRepo.UpdateLastPlannedDates(context.Background(), mealIDs)
 	if err != nil {
-		mealServiceLogger.Errorw("Failed to update last planned dates for meals", "mealIDs", mealIDs, "error", err)
+		mealServiceLogger.Errorw("🔧 [SERVICE-FINALIZE] Failed to update last planned dates for meals", "mealIDs", mealIDs, "error", err)
 		return fmt.Errorf("failed to update last planned dates for meal IDs %v: %w", mealIDs, err)
 	}
-	mealServiceLogger.Debugw("Successfully updated last planned dates for meals", "mealCount", len(mealIDs))
+
+	mealServiceLogger.Infow("🔧 [SERVICE-FINALIZE] Successfully updated last planned dates for meals", "mealCount", len(mealIDs))
 	return nil
 }

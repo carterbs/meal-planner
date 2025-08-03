@@ -1,4 +1,4 @@
-import { planStart } from '../main';
+import { planStart } from '../handlers';
 import { PlanStartRequest, PlanStartResponse } from '@mealplanner/generated/agent_pb';
 
 // Mock LangGraphAgent to control startWorkflow and initial state

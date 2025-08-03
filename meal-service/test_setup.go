@@ -11,11 +11,11 @@ import (
 func setupTestEnvironment(t *testing.T) {
 	// Reset logging for tests
 	logging.ResetForTest()
-	
+
 	// Set environment variable to disable gRPC logging during tests
 	originalEnv := os.Getenv("DISABLE_GRPC_LOGGING")
 	os.Setenv("DISABLE_GRPC_LOGGING", "true")
-	
+
 	t.Cleanup(func() {
 		// Restore original environment
 		if originalEnv == "" {

@@ -99,11 +99,12 @@ describe('MealPlanningWorkflow Core Node Tests', () => {
     });
   });
   describe('finalizePlanNode', () => {
-    it('finalizes plan by calling MCP tool', async () => {
+    it('finalizes plan by calling MCP tool with threadId', async () => {
       const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();
       const mockState = TestMockFactory.createMockMealPlanningState({
         currentStep: MealPlanningStep.FINALIZE_PLAN,
         mealPlan: mockMealPlan,
+        threadId: 'test-thread-123',
       });
       mockClient.callTool.mockResolvedValue({
         isError: false,
@@ -112,29 +113,41 @@ describe('MealPlanningWorkflow Core Node Tests', () => {
       const result = await workflow.finalizePlanNode(mockState);
       expect(mockClient.callTool).toHaveBeenCalledWith({
         name: 'finalizeMealPlan',
-        arguments: { mealPlan: mockMealPlan },
+        arguments: { threadId: 'test-thread-123' },
       });
       expect(result.currentStep).toBe(MealPlanningStep.GENERATE_SHOPPING_LIST);
       expect(result.isFinalized).toBe(true);
     });
-    it('handles MCP tool errors during plan finalization', async () => {
+    it('throws critical error when MCP tool fails', async () => {
       const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();
       const mockState = TestMockFactory.createMockMealPlanningState({
         currentStep: MealPlanningStep.FINALIZE_PLAN,
         mealPlan: mockMealPlan,
+        threadId: 'test-thread-123',
       });
       mockClient.callTool.mockRejectedValue(
         new Error('MCP finalization failed'),
       );
-      const result = await workflow.finalizePlanNode(mockState);
-      // Should continue despite error
-      expect(result.currentStep).toBe(MealPlanningStep.GENERATE_SHOPPING_LIST);
-      expect(result.isFinalized).toBe(true);
+      await expect(workflow.finalizePlanNode(mockState)).rejects.toThrow(
+        'Critical failure: Could not save meal plan: Error: MCP finalization failed',
+      );
+    });
+    it('throws error when no thread ID available', async () => {
+      const mockMealPlan = TestMockFactory.createMockWeeklyMealPlan();
+      const mockState = TestMockFactory.createMockMealPlanningState({
+        currentStep: MealPlanningStep.FINALIZE_PLAN,
+        mealPlan: mockMealPlan,
+        threadId: undefined,
+      });
+      await expect(workflow.finalizePlanNode(mockState)).rejects.toThrow(
+        'No thread ID available for finalization',
+      );
     });
     it('throws error when no meal plan to finalize', async () => {
       const mockState = TestMockFactory.createMockMealPlanningState({
         currentStep: MealPlanningStep.FINALIZE_PLAN,
         mealPlan: undefined,
+        threadId: 'test-thread-123',
       });
       await expect(workflow.finalizePlanNode(mockState)).rejects.toThrow(
         'No meal plan to finalize',

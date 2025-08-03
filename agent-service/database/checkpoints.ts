@@ -119,7 +119,7 @@ export class CheckpointRepository {
   // UpdateWorkflowCheckpoint upserts checkpoint_data for a thread under namespace "latest" - matches Go models/checkpoint.go
   async updateWorkflowCheckpoint(
     threadID: string,
-    data: Buffer,
+    data: AgentCheckpoint,
   ): Promise<void> {
     // Extract workflow_type from the checkpoint JSON so that the `latest`
     // row always has a non-empty workflow_type. This prevents downstream
@@ -127,7 +127,7 @@ export class CheckpointRepository {
     // value when they load the most-recent checkpoint.
     let wfType = '';
     try {
-      const generic = JSON.parse(data.toString());
+      const generic = JSON.parse(JSON.stringify(data));
       // First try nested state.workflow_type (canonical)
       if (
         generic.state &&

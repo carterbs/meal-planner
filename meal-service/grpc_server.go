@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	apipb "mealplanner/generated/go"
@@ -158,15 +160,38 @@ func (s *MealPlannerAPIServer) GenerateMealPlan(ctx context.Context, req *emptyp
 }
 
 func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.FinalizeMealPlanRequest) (*apipb.FinalizeMealPlanResponse, error) {
-	if req.Plan == nil {
-		return nil, fmt.Errorf("meal plan is required")
+	grpcServerLogger.Info("🔧 [BACKEND-FINALIZE] FinalizeMealPlan called")
+
+	if req.ThreadId == "" {
+		grpcServerLogger.Error("🔧 [BACKEND-FINALIZE] No thread ID provided in request")
+		return nil, fmt.Errorf("thread ID is required")
 	}
+
+	grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Processing thread: %s", req.ThreadId))
+
+	// Get checkpoint and extract meal plan
+	checkpoint, err := getCheckpointFromDB(req.ThreadId)
+	if err != nil {
+		grpcServerLogger.Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Failed to get checkpoint: %v", err))
+		return nil, fmt.Errorf("failed to get checkpoint: %w", err)
+	}
+
+	if checkpoint.State.MealPlan == nil {
+		grpcServerLogger.Error("🔧 [BACKEND-FINALIZE] No meal plan found in checkpoint")
+		return nil, fmt.Errorf("no meal plan found in checkpoint")
+	}
+
+	grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Processing meal plan with %d days", len(checkpoint.State.MealPlan.Days)))
 
 	// Collect meal IDs from the finalized plan
 	mealIDSet := make(map[int]struct{})
-	for _, entry := range req.Plan.Days {
+	for i, entry := range checkpoint.State.MealPlan.Days {
 		if entry != nil && entry.Meal != nil {
-			mealIDSet[int(entry.Meal.GetId())] = struct{}{}
+			mealID := int(entry.Meal.GetId())
+			mealIDSet[mealID] = struct{}{}
+			grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Day %d: Found meal ID %d", i, mealID))
+		} else {
+			grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Day %d: No meal found", i))
 		}
 	}
 	var mealIDs []int
@@ -174,13 +199,21 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 		mealIDs = append(mealIDs, id)
 	}
 
+	grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Unique meal IDs to update: %v", mealIDs))
+
 	// Persist last_planned timestamps
 	if len(mealIDs) > 0 {
+		grpcServerLogger.Info("🔧 [BACKEND-FINALIZE] Calling UpdateLastPlannedDates...")
 		if err := server.Services.MealService.UpdateLastPlannedDates(mealIDs); err != nil {
+			grpcServerLogger.Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] UpdateLastPlannedDates failed: %v", err))
 			return nil, fmt.Errorf("failed to update last planned dates: %w", err)
 		}
+		grpcServerLogger.Info("🔧 [BACKEND-FINALIZE] UpdateLastPlannedDates succeeded")
+	} else {
+		grpcServerLogger.Warn("🔧 [BACKEND-FINALIZE] No meal IDs to update")
 	}
 
+	grpcServerLogger.Info("🔧 [BACKEND-FINALIZE] FinalizeMealPlan completed successfully")
 	return &apipb.FinalizeMealPlanResponse{
 		Message: "Meal plan finalized successfully",
 	}, nil
@@ -456,5 +489,96 @@ func (s *MealPlannerAPIServer) DeleteAllSteps(ctx context.Context, req *apipb.De
 
 	return &apipb.DeleteAllStepsResponse{
 		Message: "All steps deleted successfully",
+	}, nil
+}
+
+// getCheckpointFromDB retrieves and parses checkpoint data from the database
+func getCheckpointFromDB(threadID string) (*apipb.AgentCheckpoint, error) {
+	// Query the database for checkpoint data
+	query := `SELECT checkpoint_data FROM workflow_checkpoints WHERE thread_id = $1 ORDER BY updated_at DESC LIMIT 1`
+
+	var checkpointDataJSON []byte
+	err := server.DB.QueryRow(query, threadID).Scan(&checkpointDataJSON)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("checkpoint not found for thread ID: %s", threadID)
+		}
+		return nil, fmt.Errorf("failed to query checkpoint: %w", err)
+	}
+
+	// Parse the JSON data to extract the checkpoint structure
+	var rawCheckpoint map[string]interface{}
+	if err := json.Unmarshal(checkpointDataJSON, &rawCheckpoint); err != nil {
+		return nil, fmt.Errorf("failed to parse checkpoint JSON: %w", err)
+	}
+
+	// Extract the state portion
+	stateData, ok := rawCheckpoint["state"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("checkpoint state is missing or invalid")
+	}
+
+	// Extract meal plan from state
+	mealPlanData, ok := stateData["meal_plan"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("meal plan is missing or invalid in checkpoint state")
+	}
+
+	// Convert meal plan data to protobuf WeeklyMealPlan
+	mealPlan, err := convertToWeeklyMealPlan(mealPlanData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert meal plan: %w", err)
+	}
+
+	// Create the checkpoint structure
+	checkpoint := &apipb.AgentCheckpoint{
+		State: &apipb.MealPlanningCheckpointState{
+			MealPlan: mealPlan,
+		},
+	}
+
+	return checkpoint, nil
+}
+
+// convertToWeeklyMealPlan converts raw JSON meal plan data to protobuf WeeklyMealPlan
+func convertToWeeklyMealPlan(mealPlanData map[string]interface{}) (*apipb.WeeklyMealPlan, error) {
+	daysData, ok := mealPlanData["days"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("meal plan days data is missing or invalid")
+	}
+
+	var days []*apipb.MealPlanEntry
+	for _, dayData := range daysData {
+		dayMap, ok := dayData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		entry := &apipb.MealPlanEntry{}
+
+		// Extract meal data
+		if mealData, ok := dayMap["meal"].(map[string]interface{}); ok {
+			if mealID, ok := mealData["id"].(float64); ok {
+				entry.Meal = &apipb.Meal{
+					Id: int32(mealID),
+				}
+			}
+		}
+
+		// Extract day_index if available
+		if dayIndex, ok := dayMap["day_index"].(float64); ok {
+			entry.DayIndex = int32(dayIndex)
+		}
+
+		// Extract meal_type if available
+		if mealType, ok := dayMap["meal_type"].(string); ok {
+			entry.MealType = mealType
+		}
+
+		days = append(days, entry)
+	}
+
+	return &apipb.WeeklyMealPlan{
+		Days: days,
 	}, nil
 }

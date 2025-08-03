@@ -280,8 +280,8 @@
         },
         "_go.FinalizeMealPlanRequest": {
             "properties": {
-                "plan": {
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                "threadId": {
+                    "type": "string"
                 }
             },
             "type": "object"
