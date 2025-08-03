@@ -1957,8 +1957,8 @@ const docTemplate = `{
         "_go.FinalizeMealPlanRequest": {
             "type": "object",
             "properties": {
-                "plan": {
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                "thread_id": {
+                    "type": "string"
                 }
             }
         },

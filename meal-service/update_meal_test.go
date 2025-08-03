@@ -17,10 +17,10 @@ import (
 func TestMealPlannerAPIServer_UpdateMeal(t *testing.T) {
 	// Setup test environment without logging service
 	setupTestEnvironment(t)
-	
+
 	// Store original services for restoration
 	originalServices := server.Services
-	
+
 	t.Cleanup(func() {
 		server.Services = originalServices
 	})

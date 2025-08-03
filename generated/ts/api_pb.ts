@@ -1123,9 +1123,9 @@ export class GenerateMealPlanResponse extends Message$1<GenerateMealPlanResponse
  */
 export class FinalizeMealPlanRequest extends Message$1<FinalizeMealPlanRequest> {
   /**
-   * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+   * @generated from field: string thread_id = 1;
    */
-  plan?: WeeklyMealPlan;
+  threadId = "";
 
   constructor(data?: PartialMessage<FinalizeMealPlanRequest>) {
     super();
@@ -1135,7 +1135,7 @@ export class FinalizeMealPlanRequest extends Message$1<FinalizeMealPlanRequest> 
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "mealplanner.api.FinalizeMealPlanRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "plan", kind: "message", T: WeeklyMealPlan },
+    { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FinalizeMealPlanRequest {

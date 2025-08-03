@@ -180,8 +180,8 @@ definitions:
     type: object
   _go.FinalizeMealPlanRequest:
     properties:
-      plan:
-        $ref: '#/definitions/_go.WeeklyMealPlan'
+      thread_id:
+        type: string
     type: object
   _go.FinalizeMealPlanResponse:
     properties:

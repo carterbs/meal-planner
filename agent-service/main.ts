@@ -464,19 +464,20 @@ function updateSessionState(
 ): void {
   (async () => {
     try {
-      const { threadId, mealPlan, shoppingList, currentStep, status } =
+      const { threadId, mealPlan, shoppingList, currentStep } =
         call.request;
       if (!threadId) return callback(new Error('threadId required'));
       // Create state update and store as checkpoint
-      const stateUpdate = {
-        meal_plan: mealPlan,
-        shopping_list: shoppingList,
-        current_step: currentStep,
-        status: status,
-      };
+      const stateUpdate = new apipb.AgentCheckpoint({
+        state: new apipb.MealPlanningCheckpointState({
+          mealPlan: new apipb.WeeklyMealPlan({ days: JSON.parse(mealPlan).days }),
+          shoppingList: new apipb.ShoppingList({ items: JSON.parse(shoppingList).items }),
+          currentStep: currentStep || 'initiate',
+        }),
+        next: [],
+      });
       const checkpointRepo = new CheckpointRepository();
-      const data = Buffer.from(JSON.stringify(stateUpdate), 'utf8');
-      await checkpointRepo.updateWorkflowCheckpoint(threadId, data);
+      await checkpointRepo.updateWorkflowCheckpoint(threadId, stateUpdate);
       callback(
         null,
         new apipb.UpdateSessionStateResponse({
