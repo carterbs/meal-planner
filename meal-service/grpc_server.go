@@ -92,29 +92,6 @@ func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Emp
 	}, nil
 }
 
-func (s *MealPlannerAPIServer) Reconnect(ctx context.Context, req *emptypb.Empty) (*apipb.ReconnectResponse, error) {
-	// Check database connection
-	if server.DB == nil {
-		return &apipb.ReconnectResponse{
-			Status:  "error",
-			Message: "Database not connected. Make sure Docker is running and the database container is started.",
-		}, nil
-	}
-
-	if err := server.DB.Ping(); err == nil {
-		return &apipb.ReconnectResponse{
-			Status:  "ok",
-			Message: "Database connection is already established and healthy",
-		}, nil
-	}
-
-	// For now, just return error as actual reconnection logic is complex
-	return &apipb.ReconnectResponse{
-		Status:  "error",
-		Message: "Database reconnection not implemented in gRPC server. Use HTTP endpoint for reconnection.",
-	}, nil
-}
-
 func (s *MealPlannerAPIServer) GetMealPlan(ctx context.Context, req *emptypb.Empty) (*apipb.GetMealPlanResponse, error) {
 	var plan *apipb.WeeklyMealPlan
 	var err error
@@ -581,12 +558,4 @@ func convertToWeeklyMealPlan(mealPlanData map[string]interface{}) (*apipb.Weekly
 	return &apipb.WeeklyMealPlan{
 		Days: days,
 	}, nil
-}
-
-func getMapKeys(m map[string]interface{}) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
 }
