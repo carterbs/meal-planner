@@ -28,11 +28,6 @@ func (r *MealPlanRepositoryImpl) GetMealPlanItems(ctx context.Context, mealPlanI
 	return models.GetMealPlanItems(r.db, mealPlanID)
 }
 
-// SaveMealPlan saves a meal plan to the database
-func (r *MealPlanRepositoryImpl) SaveMealPlan(ctx context.Context, threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
-	return models.SaveMealPlan(r.db, threadID, version, entries)
-}
-
 // RemoveMealFromPlan removes a meal from a specific plan slot
 func (r *MealPlanRepositoryImpl) RemoveMealFromPlan(ctx context.Context, plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
 	return models.RemoveMealFromPlan(plan, dayIndex, mealType)

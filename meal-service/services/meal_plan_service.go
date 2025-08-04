@@ -76,11 +76,6 @@ func (s *mealPlanService) RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayInde
 	return nil
 }
 
-// SaveMealPlan persists a meal plan
-func (s *mealPlanService) SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
-	return s.repo.SaveMealPlan(context.Background(), threadID, version, entries)
-}
-
 // GetLatestMealPlan retrieves the latest meal plan identifier
 func (s *mealPlanService) GetLatestMealPlan(threadID string) (*models.MealPlanIdentifier, error) {
 	return s.repo.GetLatestMealPlan(context.Background(), threadID)

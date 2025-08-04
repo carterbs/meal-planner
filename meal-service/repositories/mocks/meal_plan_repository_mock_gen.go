@@ -2,8 +2,9 @@ package mocks
 
 import (
 	"context"
-	"github.com/stretchr/testify/mock"
 	"mealplanner/models"
+
+	"github.com/stretchr/testify/mock"
 )
 
 // MockMealPlanRepository satisfies repositories.MealPlanRepository for tests.
@@ -50,14 +51,6 @@ func (m *MockMealPlanRepository) PopulateMealDetails(ctx context.Context, plan *
 func (m *MockMealPlanRepository) RemoveMealFromPlan(ctx context.Context, plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
 	args := m.Called(ctx, plan, dayIndex, mealType)
 	return args.Error(0)
-}
-
-func (m *MockMealPlanRepository) SaveMealPlan(ctx context.Context, threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
-	args := m.Called(ctx, threadID, version, entries)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.MealPlanIdentifier), args.Error(1)
 }
 
 func (m *MockMealPlanRepository) GetLatestMealPlan(ctx context.Context, threadID string) (*models.MealPlanIdentifier, error) {

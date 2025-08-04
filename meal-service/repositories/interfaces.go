@@ -54,7 +54,6 @@ type MealPlanRepository interface {
 	// Meal plan persistence
 	GetLatestMealPlan(ctx context.Context, threadID string) (*models.MealPlanIdentifier, error)
 	GetMealPlanItems(ctx context.Context, mealPlanID int) ([]models.MealPlanEntry, error)
-	SaveMealPlan(ctx context.Context, threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error)
 	RemoveMealFromPlan(ctx context.Context, plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error
 
 	// Meal plan generation & retrieval

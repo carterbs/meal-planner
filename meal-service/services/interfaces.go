@@ -51,8 +51,6 @@ type MealPlanService interface {
 	PopulateMealDetails(plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error)
 	RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error
 
-	// Persistence operations
-	SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error)
 	GetLatestMealPlan(threadID string) (*models.MealPlanIdentifier, error)
 	GetMealPlanItems(mealPlanID int) ([]models.MealPlanEntry, error)
 }

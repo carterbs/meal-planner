@@ -349,55 +349,6 @@ export class WeeklyMealPlan extends Message$1<WeeklyMealPlan> {
 }
 
 /**
- * @generated from message mealplanner.api.SaveMealPlanRequest
- */
-export class SaveMealPlanRequest extends Message$1<SaveMealPlanRequest> {
-  /**
-   * @generated from field: string thread_id = 1;
-   */
-  threadId = "";
-
-  /**
-   * @generated from field: int32 version = 2;
-   */
-  version = 0;
-
-  /**
-   * @generated from field: repeated mealplanner.api.MealPlanEntry entries = 3;
-   */
-  entries: MealPlanEntry[] = [];
-
-  constructor(data?: PartialMessage<SaveMealPlanRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.SaveMealPlanRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "version", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 3, name: "entries", kind: "message", T: MealPlanEntry, repeated: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SaveMealPlanRequest {
-    return new SaveMealPlanRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SaveMealPlanRequest {
-    return new SaveMealPlanRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SaveMealPlanRequest {
-    return new SaveMealPlanRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: SaveMealPlanRequest | PlainMessage<SaveMealPlanRequest> | undefined, b: SaveMealPlanRequest | PlainMessage<SaveMealPlanRequest> | undefined): boolean {
-    return proto3.util.equals(SaveMealPlanRequest, a, b);
-  }
-}
-
-/**
  * @generated from message mealplanner.api.MealPlanIdentifier
  */
 export class MealPlanIdentifier extends Message$1<MealPlanIdentifier> {
@@ -3235,6 +3186,8 @@ export class GetMessagesResponse extends Message$1<GetMessagesResponse> {
 }
 
 /**
+ * todo what the hell is this compared to the checkpoint junk?
+ *
  * @generated from message mealplanner.api.UpdateSessionStateRequest
  */
 export class UpdateSessionStateRequest extends Message$1<UpdateSessionStateRequest> {

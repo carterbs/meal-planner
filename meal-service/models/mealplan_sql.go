@@ -18,37 +18,6 @@ type MealPlanIdentifier struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// SaveMealPlan persists a meal plan and its items
-func SaveMealPlan(db *sql.DB, threadID string, version int, entries []MealPlanEntry) (*MealPlanIdentifier, error) {
-	// Insert into meal_plans
-	const planQuery = `
-	INSERT INTO meal_plans (thread_id, version)
-	VALUES ($1, $2)
-	RETURNING id, thread_id, version, created_at`
-	var id int
-	var tid string
-	var ver int
-	var createdAt time.Time
-	err := db.QueryRow(planQuery, threadID, version).Scan(&id, &tid, &ver, &createdAt)
-	if err != nil {
-		return nil, err
-	}
-	// Insert items
-	const itemQuery = `
-	INSERT INTO meal_plan_items (meal_plan_id, day_index, meal_type, meal)
-	VALUES ($1, $2, $3, $4)`
-	for _, e := range entries {
-		mealJSON, err := json.Marshal(e.Meal)
-		if err != nil {
-			return nil, err
-		}
-		if _, err := db.Exec(itemQuery, id, e.DayIndex, e.MealType, mealJSON); err != nil {
-			return nil, err
-		}
-	}
-	return &MealPlanIdentifier{ID: id, ThreadID: tid, Version: ver, CreatedAt: createdAt}, nil
-}
-
 // GetLatestMealPlan retrieves the latest meal plan identifier for a thread
 func GetLatestMealPlan(db *sql.DB, threadID string) (*MealPlanIdentifier, error) {
 	const query = `

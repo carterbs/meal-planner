@@ -426,50 +426,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "description": "Save the current meal plan",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "mealplan"
-                ],
-                "summary": "Save Meal Plan",
-                "parameters": [
-                    {
-                        "description": "Save meal plan request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/_go.SaveMealPlanRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Meal plan saved successfully",
-                        "schema": {
-                            "$ref": "#/definitions/_go.FinalizeMealPlanResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "501": {
-                        "description": "Not implemented",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/mealplan/finalize": {
@@ -2347,23 +2303,6 @@ const docTemplate = `{
             "properties": {
                 "meal": {
                     "$ref": "#/definitions/_go.Meal"
-                }
-            }
-        },
-        "_go.SaveMealPlanRequest": {
-            "type": "object",
-            "properties": {
-                "entries": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.MealPlanEntry"
-                    }
-                },
-                "thread_id": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "integer"
                 }
             }
         },
