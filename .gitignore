@@ -31,3 +31,4 @@ Thumbs.db
 api-gateway/api-gateway
 meal-service/mealplanner
 logging-service/loggingservice
+meal-service/tmp/main

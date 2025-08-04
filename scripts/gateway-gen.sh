@@ -29,4 +29,11 @@ go run tools/swagger-transform/main.go \
   -input api-gateway/docs/swagger.json \
   -output api-gateway/docs/swagger.json
 
+# Fix missing protobuf fields (especially timestamps)
+echo "Fixing missing protobuf fields in swagger.json..."
+go run tools/swagger-fix/main.go \
+  -input api-gateway/docs/swagger.json \
+  -output api-gateway/docs/swagger.json \
+  -proto-dir proto
+
 echo "=== OpenAPI generation complete ==="

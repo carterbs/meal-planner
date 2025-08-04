@@ -44,7 +44,7 @@ import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
 import type { DayOfTheWeek } from '@meal-planner/shared';
 import { convertGatewayMealPlan } from './utils/mealPlanConverter';
 
-const gatewayClient = createClient(
+const _gatewayClient = createClient(
   createConfig({
     baseUrl: 'http://localhost:8090/api',
   }),
@@ -607,7 +607,7 @@ const AgentPage: React.FC = () => {
         'text/plain': new Blob([text], { type: 'text/plain' }),
       });
       navigator.clipboard.write([item]);
-    } catch (e) {
+    } catch {
       navigator.clipboard.writeText(text);
     }
   };
@@ -636,7 +636,7 @@ const AgentPage: React.FC = () => {
     }
   };
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+  const _handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
 

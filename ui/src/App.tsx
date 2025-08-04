@@ -32,7 +32,6 @@ const App: React.FC = () => {
       if (result.error) {
         setServices((result.error as any).services);
         const ok = Object.values((result.error as any).services || {}).every(Boolean);
-        debugger;
         setHealthy(ok);
         setChecking(false);
         return ok;
