@@ -1101,43 +1101,6 @@ export class FinalizeMealPlanResponse extends Message$1<FinalizeMealPlanResponse
 }
 
 /**
- * @generated from message mealplanner.api.MealPlanICSResponse
- */
-export class MealPlanICSResponse extends Message$1<MealPlanICSResponse> {
-  /**
-   * @generated from field: bytes ics_data = 1;
-   */
-  icsData = new Uint8Array(0);
-
-  constructor(data?: PartialMessage<MealPlanICSResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.MealPlanICSResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "ics_data", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanICSResponse {
-    return new MealPlanICSResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlanICSResponse {
-    return new MealPlanICSResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlanICSResponse {
-    return new MealPlanICSResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: MealPlanICSResponse | PlainMessage<MealPlanICSResponse> | undefined, b: MealPlanICSResponse | PlainMessage<MealPlanICSResponse> | undefined): boolean {
-    return proto3.util.equals(MealPlanICSResponse, a, b);
-  }
-}
-
-/**
  * Shopping list endpoints
  *
  * @generated from message mealplanner.api.GetShoppingListRequest

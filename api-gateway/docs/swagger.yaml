@@ -888,25 +888,6 @@ paths:
       summary: Generate Meal Plan
       tags:
       - mealplan
-  /mealplan/ics:
-    get:
-      consumes:
-      - application/json
-      description: Get meal plan as ICS calendar file
-      produces:
-      - text/calendar
-      responses:
-        "200":
-          description: ICS calendar file
-          schema:
-            type: file
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/main.ErrorResponse'
-      summary: Get Meal Plan ICS
-      tags:
-      - mealplan
   /mealplan/replace:
     post:
       consumes:

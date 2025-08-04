@@ -754,29 +754,6 @@ export type PostMealplanGenerateResponses = {
 
 export type PostMealplanGenerateResponse = PostMealplanGenerateResponses[keyof PostMealplanGenerateResponses];
 
-export type GetMealplanIcsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/mealplan/ics';
-};
-
-export type GetMealplanIcsErrors = {
-    /**
-     * Internal server error
-     */
-    500: MainErrorResponse;
-};
-
-export type GetMealplanIcsError = GetMealplanIcsErrors[keyof GetMealplanIcsErrors];
-
-export type GetMealplanIcsResponses = {
-    /**
-     * ICS calendar file
-     */
-    200: unknown;
-};
-
 export type PostMealplanReplaceData = {
     /**
      * Replace meal request

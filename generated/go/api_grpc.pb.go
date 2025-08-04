@@ -168,7 +168,6 @@ const (
 	MealPlannerAPI_GetMealPlan_FullMethodName          = "/mealplanner.api.MealPlannerAPI/GetMealPlan"
 	MealPlannerAPI_GenerateMealPlan_FullMethodName     = "/mealplanner.api.MealPlannerAPI/GenerateMealPlan"
 	MealPlannerAPI_FinalizeMealPlan_FullMethodName     = "/mealplanner.api.MealPlannerAPI/FinalizeMealPlan"
-	MealPlannerAPI_GetMealPlanICS_FullMethodName       = "/mealplanner.api.MealPlannerAPI/GetMealPlanICS"
 	MealPlannerAPI_GetShoppingList_FullMethodName      = "/mealplanner.api.MealPlannerAPI/GetShoppingList"
 	MealPlannerAPI_GetAllMeals_FullMethodName          = "/mealplanner.api.MealPlannerAPI/GetAllMeals"
 	MealPlannerAPI_CreateMeal_FullMethodName           = "/mealplanner.api.MealPlannerAPI/CreateMeal"
@@ -210,7 +209,6 @@ type MealPlannerAPIClient interface {
 	GetMealPlan(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetMealPlanResponse, error)
 	GenerateMealPlan(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GenerateMealPlanResponse, error)
 	FinalizeMealPlan(ctx context.Context, in *FinalizeMealPlanRequest, opts ...grpc.CallOption) (*FinalizeMealPlanResponse, error)
-	GetMealPlanICS(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MealPlanICSResponse, error)
 	// Shopping list endpoints
 	GetShoppingList(ctx context.Context, in *GetShoppingListRequest, opts ...grpc.CallOption) (*GetShoppingListResponse, error)
 	// Meals endpoints
@@ -288,16 +286,6 @@ func (c *mealPlannerAPIClient) FinalizeMealPlan(ctx context.Context, in *Finaliz
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FinalizeMealPlanResponse)
 	err := c.cc.Invoke(ctx, MealPlannerAPI_FinalizeMealPlan_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *mealPlannerAPIClient) GetMealPlanICS(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MealPlanICSResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MealPlanICSResponse)
-	err := c.cc.Invoke(ctx, MealPlannerAPI_GetMealPlanICS_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -586,7 +574,6 @@ type MealPlannerAPIServer interface {
 	GetMealPlan(context.Context, *emptypb.Empty) (*GetMealPlanResponse, error)
 	GenerateMealPlan(context.Context, *emptypb.Empty) (*GenerateMealPlanResponse, error)
 	FinalizeMealPlan(context.Context, *FinalizeMealPlanRequest) (*FinalizeMealPlanResponse, error)
-	GetMealPlanICS(context.Context, *emptypb.Empty) (*MealPlanICSResponse, error)
 	// Shopping list endpoints
 	GetShoppingList(context.Context, *GetShoppingListRequest) (*GetShoppingListResponse, error)
 	// Meals endpoints
@@ -641,9 +628,6 @@ func (UnimplementedMealPlannerAPIServer) GenerateMealPlan(context.Context, *empt
 }
 func (UnimplementedMealPlannerAPIServer) FinalizeMealPlan(context.Context, *FinalizeMealPlanRequest) (*FinalizeMealPlanResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeMealPlan not implemented")
-}
-func (UnimplementedMealPlannerAPIServer) GetMealPlanICS(context.Context, *emptypb.Empty) (*MealPlanICSResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMealPlanICS not implemented")
 }
 func (UnimplementedMealPlannerAPIServer) GetShoppingList(context.Context, *GetShoppingListRequest) (*GetShoppingListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetShoppingList not implemented")
@@ -815,24 +799,6 @@ func _MealPlannerAPI_FinalizeMealPlan_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MealPlannerAPIServer).FinalizeMealPlan(ctx, req.(*FinalizeMealPlanRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MealPlannerAPI_GetMealPlanICS_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MealPlannerAPIServer).GetMealPlanICS(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MealPlannerAPI_GetMealPlanICS_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MealPlannerAPIServer).GetMealPlanICS(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1345,10 +1311,6 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FinalizeMealPlan",
 			Handler:    _MealPlannerAPI_FinalizeMealPlan_Handler,
-		},
-		{
-			MethodName: "GetMealPlanICS",
-			Handler:    _MealPlannerAPI_GetMealPlanICS_Handler,
 		},
 		{
 			MethodName: "GetShoppingList",
