@@ -76,7 +76,6 @@ export async function startAgentSession(
     currentStep: agentResponse.currentStep,
   };
 
-  debugger;
   let initialState;
   if (agentResponse.initialState) {
     try {

@@ -74,7 +74,7 @@ const BrowseMealsView: React.FC<BrowseMealsViewProps> = ({
           const date = new Date(value);
           if (isNaN(date.getTime())) return 'Never';
           return date.toLocaleDateString();
-        } catch (error) {
+        } catch {
           return 'Never';
         }
       },

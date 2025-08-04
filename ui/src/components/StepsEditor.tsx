@@ -273,7 +273,7 @@ const StepsEditor: React.FC<StepsEditorProps> = ({
     setNewStepText('');
   };
 
-  const updateStep = (index: number, instruction: string) => {
+  const _updateStep = (index: number, instruction: string) => {
     const updatedSteps = [...steps];
     updatedSteps[index].instruction = instruction;
     onChange(updatedSteps);

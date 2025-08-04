@@ -9,9 +9,9 @@ import type {
 } from '@mealplanner/generated/dist/gateway/types.gen';
 import type { RequestResult } from '@mealplanner/generated/dist/gateway/client/types';
 
-// Define the return types for our mocked functions
-type PostMealsResult = RequestResult<PostMealsResponses, PostMealsErrors, false, 'fields'>;
-type PutMealsResult = RequestResult<PutMealsByMealIdResponses, PutMealsByMealIdErrors, false, 'fields'>;
+// Define the return types for our mocked functions (unused but kept for type reference)
+type _PostMealsResult = RequestResult<PostMealsResponses, PostMealsErrors, false, 'fields'>;
+type _PutMealsResult = RequestResult<PutMealsByMealIdResponses, PutMealsByMealIdErrors, false, 'fields'>;
 
 // Mock the generated client functions
 jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({

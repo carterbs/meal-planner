@@ -432,7 +432,7 @@ export const dragDropUtils = {
   }),
 
   simulateDragDrop: async (source: HTMLElement, target: HTMLElement) => {
-    const userEvent = (await import('@testing-library/user-event')).default;
+    const _userEvent = (await import('@testing-library/user-event')).default;
     // This is a simplified drag-drop simulation
     // In real tests, you might need more complex DnD library mocking
     const dragStartEvent = new Event('dragstart', { bubbles: true });

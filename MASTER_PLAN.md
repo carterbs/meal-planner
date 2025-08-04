@@ -19,102 +19,12 @@ Add, edit, etc
 ## Refactors
 - Extract handlers out of main.ts in the agent-service so we can unit test them properly.
 
-### Service Layer Redundancy Analysis
-
-After removing `IngredientService` (✅ completed), we have identified additional redundant service layers that are just pass-throughs to repositories:
-
-#### ✅ Already Removed:
-- **IngredientService**: Was pure pass-through with only logging. Now using `IngredientRepository` directly in gRPC handlers.
-
-#### 🔴 Candidates for Removal (Pure Pass-throughs):
-
-1. **RecipeStepService** - Complete pass-through to `RecipeStepRepository`
-   - All 7 methods just add logging and call repository
-   - No business logic, validation, or orchestration
-   - Used in: `grpc_server.go` (6 methods)
-   - **Recommendation**: Remove and use repository directly
-
-2. **MealPlanService** - Mostly pass-through to `MealPlanRepository`
-   - 6 out of 6 methods are simple pass-throughs with logging
-   - No business logic or data transformation
-   - Used in: `grpc_server.go` (3 methods)
-   - **Recommendation**: Remove and use repository directly
-
-3. **ShoppingListService** - Simple orchestration layer
-   - `BuildShoppingList()`: Calls `MealRepo.GetMealsByIDs()` → `ShoppingListRepo.GenerateShoppingListFromMeals()`
-   - Other methods are pass-throughs
-   - **Some business logic present** (orchestrating meal fetching + list generation)
-   - **Recommendation**: Keep but consider simplifying
-
-#### 🟡 Keep (Has Business Logic):
-
-4. **MealService** - Contains actual business logic
-   - Orchestrates multiple repositories (`MealRepository` + `IngredientRepository`)
-   - `UpdateMealIngredient()`: Updates ingredient → fetches updated meal
-   - `DeleteMealIngredient()`: Deletes ingredient → fetches updated meal  
-   - Has cross-cutting concerns and data aggregation
-   - **Recommendation**: Keep - provides value
-
-#### Removal Impact:
-- **RecipeStepService**: 6 gRPC methods need to create `RecipeStepRepository` directly
-- **MealPlanService**: 3 gRPC methods need to create `MealPlanRepository` directly
-- **ServiceContainer**: Can be simplified to just `MealService` + `ShoppingListService`
-
-#### Benefits:
-- Reduces layers of indirection (models → repositories → services → gRPC)
-- Eliminates ~200 lines of boilerplate code
-- Faster development (no need to add service method for every repository method)
-- Easier testing (test repositories directly, not service wrappers)
-
-#### Next Steps:
-1. Remove `RecipeStepService` (similar to `IngredientService` removal)
-2. Remove `MealPlanService` 
-3. Simplify `ServiceContainer`
-4. Update gRPC handlers to use repositories directly
-
 We are approaching perfection.
 
 # Meal Planner Architecture Improvement Plan
 
 ## Overview
 This plan addresses the architectural complexity that makes agent development challenging, with two parallel approaches: code improvements and agent education.
-
-## Phase 1: Immediate Agent Education
-
-### 1.1 Create Comprehensive Agent Guide (`AGENT-GUIDE.md`)
-- **Data Flow Documentation**: Write about how data transforms through each layer
-- **Type Mapping Guide**: Document exactly how proto types map to generated types and where type assertions are needed
-- **Troubleshooting Guide**: Common errors and their solutions
-
-## Phase 2: Type System Simplification - Implementation Plan
-
-### 2.1 Fix Swagger Generation (Week 1)
-
-**Goal**: Ensure swagger.json contains 100% of protobuf fields with correct types
-
-**Step 1: Audit Current Swagger Annotations**
-- [ ] Run type-validator sub-agent to identify all missing fields
-- [ ] Document each field that exists in proto but not in swagger.json
-- [ ] Identify patterns (e.g., all Timestamp fields are missing)
-
-**Step 2: Fix Go Swagger Annotations**
-- [ ] Add explicit swagger comments to api-gateway handlers for proto fields
-- [ ] Create custom swagger type definitions for protobuf.Timestamp:
-  ```go
-  // @Success 200 {object} MainMealResponse
-  // @Param lastPlanned type string format "date-time"
-  ```
-- [ ] Ensure nested proto messages are properly annotated
-- [ ] Handle proto enums with proper swagger enum tags
-
-**Step 3: Create Swagger Generation Test**
-- [ ] Write Go test that:
-  - Parses proto files to get all field names
-  - Parses generated swagger.json
-  - Fails if any proto field is missing from swagger
-- [ ] Add to CI pipeline
-
-### 2.2 Fix TypeScript Generation (Week 1-2)
 
 **Goal**: Generated TypeScript types exactly match runtime JSON
 
@@ -190,12 +100,12 @@ This plan addresses the architectural complexity that makes agent development ch
 
 ### Implementation Order
 
-1. **Week 1 Priority**:
-   - Fix swagger annotations for missing fields (especially timestamps)
-   - Get lastPlanned working end-to-end without type assertions
-   - Create proto → swagger validation test
+1. **✅ Week 1 Priority - COMPLETED**:
+   - ✅ Fix swagger annotations for missing fields (especially timestamps)
+   - ✅ Get lastPlanned working end-to-end without type assertions
+   - ✅ Create proto → swagger validation test
 
-2. **Week 2 Priority**:
+2. **Current Priority (Week 2+)**:
    - Configure TypeScript generation correctly
    - Migrate UI to use only generated types
    - Add all validation to CI
@@ -203,7 +113,7 @@ This plan addresses the architectural complexity that makes agent development ch
 ### Success Criteria
 - [ ] `yarn generate_code` produces types that need zero type assertions
 - [ ] Adding a new proto field automatically appears in UI types
-- [ ] CI fails if any proto field is missing from generated code
+- ✅ CI fails if any proto field is missing from generated code
 - [ ] No manual type definitions for API responses
 
 
@@ -238,15 +148,20 @@ This plan addresses the architectural complexity that makes agent development ch
 
 ## Implementation Priority
 
-**Immediate (This Week)**:
-1. Create AGENT-GUIDE.md with data flow documentation
-2. Add validation scripts for agents
-3. Fix OpenAPI generation to include all fields
+**✅ Immediate (This Week) - COMPLETED**:
+1. ✅ Fix OpenAPI generation to include all fields
+2. ✅ Add validation scripts that prevent type drift
+3. ✅ Technical enforcement now prevents swagger/protobuf mismatches
+
+**Current Priority**:
+1. Configure TypeScript generation correctly (Section 2.2)
+2. Migrate UI to use only generated types (Section 2.3)
+3. Complete generation pipeline hardening (Section 2.4)
 
 **Short Term (Next 2 Weeks)**:
 1. Build type bridge layer
 2. Unify code generation pipeline
-3. Add type safety checks
+3. Add remaining type safety checks
 
 **Long Term (Month)**:
 1. Simplify agent state management

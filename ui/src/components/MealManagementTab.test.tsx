@@ -55,7 +55,7 @@ const mockDeleteSteps = deleteMealsByMealIdSteps as jest.MockedFunction<
 
 // We still need to mock the DataGrid component as it's complex and has virtual scrolling behavior
 jest.mock('@mui/x-data-grid', () => ({
-  DataGrid: ({ rows, columns, onRowClick }: any) => (
+  DataGrid: ({ rows, _columns, onRowClick }: any) => (
     <div data-testid="mock-data-grid">
       {rows &&
         rows.length > 0 &&
@@ -73,7 +73,7 @@ jest.mock('@mui/x-data-grid', () => ({
   ),
 }));
 
-const mockMeals = [
+const _mockMeals = [
   {
     id: 1,
     name: 'Test Meal',

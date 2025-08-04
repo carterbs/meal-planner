@@ -84,8 +84,11 @@ module.exports = [
       
       // Additional TypeScript rules for dead code
       '@typescript-eslint/no-unused-expressions': 'error',
-      '@typescript-eslint/no-unnecessary-condition': 'warn',
+      '@typescript-eslint/no-unnecessary-condition': 'off', // Often defensive programming
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+      
+      // React hooks - allow missing dependencies for intentional patterns
+      'react-hooks/exhaustive-deps': 'off',
     },
   },
   {

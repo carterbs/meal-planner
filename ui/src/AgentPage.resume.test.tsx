@@ -34,7 +34,7 @@ const stableResumeData = {
 // Mock useSession to simulate a resumed session with stable data
 jest.mock('./hooks/useSession', () => ({
   __esModule: true,
-  default: (startSession: any) => ({
+  default: (_startSession: any) => ({
     resumeData: stableResumeData,
     isResuming: false,
     startNewSession: jest.fn(),
