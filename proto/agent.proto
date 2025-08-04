@@ -34,7 +34,6 @@ service AgentService {
   // Message management endpoints
   rpc GetMessages(mealplanner.api.GetMessagesRequest) returns (mealplanner.api.GetMessagesResponse);
   rpc AddMessage(mealplanner.api.AddMessageRequest) returns (mealplanner.api.AddMessageResponse);
-  rpc UpdateSessionState(mealplanner.api.UpdateSessionStateRequest) returns (mealplanner.api.UpdateSessionStateResponse);
   
   // Checkpoint management endpoints
   rpc GetCheckpoint(mealplanner.api.GetCheckpointRequest) returns (mealplanner.api.GetCheckpointResponse);

@@ -384,19 +384,6 @@ message GetMessagesResponse {
   repeated Message messages = 1;
 }
 
-// todo what the hell is this compared to the checkpoint junk?
-message UpdateSessionStateRequest {
-  string thread_id = 1;
-  string meal_plan = 2; // JSON string
-  string shopping_list = 3; // JSON string
-  string current_step = 4;
-  string status = 5;
-}
-
-message UpdateSessionStateResponse {
-  string message = 1;
-}
-
 // Workflow persistence structures without google.protobuf.Any
 
 // Feedback entry reused inside MealPlanningState and checkpoints
@@ -558,7 +545,6 @@ service MealPlannerAPI {
   rpc AbandonWorkflow(AbandonWorkflowRequest) returns (AbandonWorkflowResponse);
   rpc AddMessage(AddMessageRequest) returns (AddMessageResponse);
   rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
-  rpc UpdateSessionState(UpdateSessionStateRequest) returns (UpdateSessionStateResponse);
 
   // Checkpoint persistence endpoints
   rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse);

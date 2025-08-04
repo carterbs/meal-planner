@@ -455,41 +455,6 @@ function addMessage(
     }
   })();
 }
-function updateSessionState(
-  call: grpc.ServerUnaryCall<
-    apipb.UpdateSessionStateRequest,
-    apipb.UpdateSessionStateResponse
-  >,
-  callback: grpc.sendUnaryData<apipb.UpdateSessionStateResponse>,
-): void {
-  (async () => {
-    try {
-      const { threadId, mealPlan, shoppingList, currentStep } =
-        call.request;
-      if (!threadId) return callback(new Error('threadId required'));
-      // Create state update and store as checkpoint
-      const stateUpdate = new apipb.AgentCheckpoint({
-        state: new apipb.MealPlanningCheckpointState({
-          mealPlan: new apipb.WeeklyMealPlan({ days: JSON.parse(mealPlan).days }),
-          shoppingList: new apipb.ShoppingList({ items: JSON.parse(shoppingList).items }),
-          currentStep: currentStep || 'initiate',
-        }),
-        next: [],
-      });
-      const checkpointRepo = new CheckpointRepository();
-      await checkpointRepo.updateWorkflowCheckpoint(threadId, stateUpdate);
-      callback(
-        null,
-        new apipb.UpdateSessionStateResponse({
-          message: 'Session state updated successfully',
-        }),
-      );
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      callback(new Error(`Error updating session state: ${errMsg}`));
-    }
-  })();
-}
 // Checkpoint Management Methods
 function getCheckpoint(
   call: grpc.ServerUnaryCall<
@@ -740,7 +705,6 @@ function startServer(): void {
     abandonWorkflow,
     getMessages,
     addMessage,
-    updateSessionState,
     getCheckpoint,
     putCheckpoint,
     listCheckpoints,

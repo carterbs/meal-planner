@@ -348,24 +348,6 @@ export type GoUpdateMealResponse = {
     meal?: GoMeal;
 };
 
-export type GoUpdateSessionStateRequest = {
-    currentStep?: string;
-    /**
-     * JSON string
-     */
-    mealPlan?: string;
-    /**
-     * JSON string
-     */
-    shoppingList?: string;
-    status?: string;
-    threadId?: string;
-};
-
-export type GoUpdateSessionStateResponse = {
-    message?: string;
-};
-
 export type GoUpdateStepRequest = {
     mealId?: number;
     step?: GoStep;
@@ -1570,43 +1552,6 @@ export type PostWorkflowsByThreadIdMessagesResponses = {
 };
 
 export type PostWorkflowsByThreadIdMessagesResponse = PostWorkflowsByThreadIdMessagesResponses[keyof PostWorkflowsByThreadIdMessagesResponses];
-
-export type PutWorkflowsByThreadIdStateData = {
-    /**
-     * Update session state request
-     */
-    body: GoUpdateSessionStateRequest;
-    path: {
-        /**
-         * Thread ID
-         */
-        threadId: string;
-    };
-    query?: never;
-    url: '/workflows/{threadId}/state';
-};
-
-export type PutWorkflowsByThreadIdStateErrors = {
-    /**
-     * Bad request
-     */
-    400: MainErrorResponse;
-    /**
-     * Internal server error
-     */
-    500: MainErrorResponse;
-};
-
-export type PutWorkflowsByThreadIdStateError = PutWorkflowsByThreadIdStateErrors[keyof PutWorkflowsByThreadIdStateErrors];
-
-export type PutWorkflowsByThreadIdStateResponses = {
-    /**
-     * Session state updated successfully
-     */
-    200: GoUpdateSessionStateResponse;
-};
-
-export type PutWorkflowsByThreadIdStateResponse = PutWorkflowsByThreadIdStateResponses[keyof PutWorkflowsByThreadIdStateResponses];
 
 export type ClientOptions = {
     baseUrl: 'localhost:8090/api' | (string & {});
