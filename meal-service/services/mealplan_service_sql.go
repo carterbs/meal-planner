@@ -37,10 +37,6 @@ func (s *sqlMealPlanService) RemoveMealFromPlan(plan *apipb.WeeklyMealPlan, dayI
 	return models.RemoveMealFromPlan(plan, dayIndex, mealType)
 }
 
-func (s *sqlMealPlanService) SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
-	return models.SaveMealPlan(s.db, threadID, version, entries)
-}
-
 func (s *sqlMealPlanService) GetLatestMealPlan(threadID string) (*models.MealPlanIdentifier, error) {
 	return models.GetLatestMealPlan(s.db, threadID)
 }

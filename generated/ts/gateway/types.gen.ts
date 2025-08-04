@@ -295,12 +295,6 @@ export type GoReplaceMealResponse = {
     meal?: GoMeal;
 };
 
-export type GoSaveMealPlanRequest = {
-    entries?: Array<GoMealPlanEntry>;
-    threadId?: string;
-    version?: number;
-};
-
 export type GoShoppingList = {
     items?: Array<GoShoppingListItem>;
 };
@@ -725,38 +719,6 @@ export type GetMealplanResponses = {
 };
 
 export type GetMealplanResponse = GetMealplanResponses[keyof GetMealplanResponses];
-
-export type PostMealplanData = {
-    /**
-     * Save meal plan request
-     */
-    body: GoSaveMealPlanRequest;
-    path?: never;
-    query?: never;
-    url: '/mealplan';
-};
-
-export type PostMealplanErrors = {
-    /**
-     * Bad request
-     */
-    400: MainErrorResponse;
-    /**
-     * Not implemented
-     */
-    501: MainErrorResponse;
-};
-
-export type PostMealplanError = PostMealplanErrors[keyof PostMealplanErrors];
-
-export type PostMealplanResponses = {
-    /**
-     * Meal plan saved successfully
-     */
-    200: GoFinalizeMealPlanResponse;
-};
-
-export type PostMealplanResponse = PostMealplanResponses[keyof PostMealplanResponses];
 
 export type PostMealplanFinalizeData = {
     /**

@@ -46,9 +46,7 @@ export function registerFinalizeMealPlan(server: McpServer) {
         console.log(`🔧 [MCP-FINALIZE] Args type:`, typeof threadId);
         console.log(`🔧 [MCP-FINALIZE] Available keys in args:`, threadId && typeof threadId === 'object' ? Object.keys(threadId) : 'not an object');
 
-        debugger;
         // Extract threadId from the arguments - it might be nested in the args structure
-
         if (!threadId || typeof threadId !== 'string' || threadId.trim() === '') {
             throw new McpError(-32602, 'threadId is required and must be a non-empty string');
         }

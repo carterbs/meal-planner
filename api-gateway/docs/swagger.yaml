@@ -433,17 +433,6 @@ definitions:
       meal:
         $ref: '#/definitions/_go.Meal'
     type: object
-  _go.SaveMealPlanRequest:
-    properties:
-      entries:
-        items:
-          $ref: '#/definitions/_go.MealPlanEntry'
-        type: array
-      thread_id:
-        type: string
-      version:
-        type: integer
-    type: object
   _go.ShoppingList:
     properties:
       items:
@@ -875,35 +864,6 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       summary: Get Meal Plan
-      tags:
-      - mealplan
-    post:
-      consumes:
-      - application/json
-      description: Save the current meal plan
-      parameters:
-      - description: Save meal plan request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/_go.SaveMealPlanRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Meal plan saved successfully
-          schema:
-            $ref: '#/definitions/_go.FinalizeMealPlanResponse'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/main.ErrorResponse'
-        "501":
-          description: Not implemented
-          schema:
-            $ref: '#/definitions/main.ErrorResponse'
-      summary: Save Meal Plan
       tags:
       - mealplan
   /mealplan/finalize:

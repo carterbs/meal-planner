@@ -218,7 +218,6 @@ func main() {
 
 	// Meal plan endpoints
 	r.Get("/api/mealplan", gw.getMealPlan)
-	r.Post("/api/mealplan", gw.saveMealPlan)
 	r.Post("/api/mealplan/generate", gw.generateMealPlan)
 	r.Post("/api/mealplan/finalize", gw.finalizeMealPlan)
 	r.Get("/api/mealplan/ics", gw.getMealPlanICS)
@@ -411,34 +410,6 @@ func (gw *Gateway) reconnect(w http.ResponseWriter, r *http.Request) {
 func (gw *Gateway) getMealPlan(w http.ResponseWriter, r *http.Request) {
 	resp, err := gw.backend.GetMealPlan(r.Context(), &emptypb.Empty{})
 	writeJSONResponse(w, resp, err)
-}
-
-// @Summary Save Meal Plan
-// @Description Save the current meal plan
-// @Tags mealplan
-// @Accept json
-// @Produce json
-// @Param request body apipb.SaveMealPlanRequest true "Save meal plan request"
-// @Success 200 {object} apipb.FinalizeMealPlanResponse "Meal plan saved successfully"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 501 {object} ErrorResponse "Not implemented"
-// @Router /mealplan [post]
-func (gw *Gateway) saveMealPlan(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	var req apipb.SaveMealPlanRequest
-	if err := protojson.Unmarshal(body, &req); err != nil {
-		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Note: SaveMealPlan is not in the gRPC service definition, so we'll need to handle this differently
-	// For now, return an error indicating this endpoint needs implementation
-	http.Error(w, "SaveMealPlan not yet implemented in gRPC service", http.StatusNotImplemented)
 }
 
 // @Summary Generate Meal Plan
