@@ -1,19 +1,11 @@
-Claude should proactively use these commands when working on tasks that benefit from version control.
-
-## Custom Slash Commands
-
-### /commit
-If on main, create a new branch. Once on a feature branch, commit code with a descriptive message. 
-
-### /commit-push-pr
-Run /commit, then push the branch and create the PR using the `gh` cli. 
-
-## Code Generation Guidelines
-- When generating swagger annotations, be very specific. I don't want unknowns in the generated code.
-
-## Development notes
-- We use yarn in this project. Do not use npm comands.
-- when accessing the database, use docker-exec. the pass is mealpass, the user is mealuser. the database container is meal-planner-db-1
+- Always start tasks by understanding the user's request, and then deciding if the task should be delegated to a specialized sub agent. Never handle complex work directly - always create Tasks for sub agents.
+- When you learn something new about how to work inside of this repo, make sure you update @CLAUDE.md, but keep it brief. For example if you run commands multiple times before learning the correct command, then that file should be updated.
+- DO NOT IMPLEMENT PLACEHOLDERS OR SIMPLE IMPLEMENTATIONS. WE WANT FULL IMPLEMENTATIONS. I WILL YELL AT YOU IF YOU VIOLATE THIS.
+- Only use yarn when operating on typescript packages.
 
 ## TypeScript Guidelines
 - Casting types to `any` in typescript files should be avoided at all costs. If you believe you need to cast as any, you need to justify it.
+
+## Takeaways
+- Confidence comes from clear, effective contracts (when testing, designing APIs, and working with agents and stakeholders).
+- Communicate clearly so that each agent has exactly the context it needs to succeed in its role, be it research, framing, coding, monitoring, or debugging.- Align early so that you can continue autonomously.
