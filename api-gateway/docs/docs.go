@@ -503,35 +503,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/mealplan/ics": {
-            "get": {
-                "description": "Get meal plan as ICS calendar file",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "text/calendar"
-                ],
-                "tags": [
-                    "mealplan"
-                ],
-                "summary": "Get Meal Plan ICS",
-                "responses": {
-                    "200": {
-                        "description": "ICS calendar file",
-                        "schema": {
-                            "type": "file"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/mealplan/replace": {
             "post": {
                 "description": "Replace a meal in the plan",

@@ -219,7 +219,6 @@ func main() {
 	r.Get("/api/mealplan", gw.getMealPlan)
 	r.Post("/api/mealplan/generate", gw.generateMealPlan)
 	r.Post("/api/mealplan/finalize", gw.finalizeMealPlan)
-	r.Get("/api/mealplan/ics", gw.getMealPlanICS)
 
 	// Shopping list endpoints
 	r.Post("/api/shoppinglist", gw.getShoppingList)
@@ -447,27 +446,6 @@ func (gw *Gateway) finalizeMealPlan(w http.ResponseWriter, r *http.Request) {
 		log.Printf("🔧 [GATEWAY-FINALIZE] Backend success: %s", resp.Message)
 	}
 	writeJSONResponse(w, resp, err)
-}
-
-// @Summary Get Meal Plan ICS
-// @Description Get meal plan as ICS calendar file
-// @Tags mealplan
-// @Accept json
-// @Produce text/calendar
-// @Success 200 {file} binary "ICS calendar file"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /mealplan/ics [get]
-func (gw *Gateway) getMealPlanICS(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.backend.GetMealPlanICS(r.Context(), &emptypb.Empty{})
-	if err != nil {
-		status := httpStatusFromGRPC(err)
-		http.Error(w, err.Error(), status)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/calendar")
-	w.Header().Set("Content-Disposition", "attachment; filename=mealplan.ics")
-	w.Write(resp.IcsData)
 }
 
 // Shopping list endpoints

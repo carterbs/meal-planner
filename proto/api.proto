@@ -149,10 +149,6 @@ message FinalizeMealPlanResponse {
   string message = 1;
 }
 
-message MealPlanICSResponse {
-  bytes ics_data = 1;
-}
-
 // Shopping list endpoints
 message GetShoppingListRequest {
   repeated int32 plan = 1; // meal IDs
@@ -504,7 +500,6 @@ service MealPlannerAPI {
   rpc GetMealPlan(google.protobuf.Empty) returns (GetMealPlanResponse);
   rpc GenerateMealPlan(google.protobuf.Empty) returns (GenerateMealPlanResponse);
   rpc FinalizeMealPlan(FinalizeMealPlanRequest) returns (FinalizeMealPlanResponse);
-  rpc GetMealPlanICS(google.protobuf.Empty) returns (MealPlanICSResponse);
 
   // Shopping list endpoints
   rpc GetShoppingList(GetShoppingListRequest) returns (GetShoppingListResponse);

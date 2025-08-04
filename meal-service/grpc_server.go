@@ -43,7 +43,6 @@ func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
 	return server.Services.ShoppingListService.BuildShoppingList(mealIDs)
 }
 
-
 func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Empty) (*apipb.HealthCheckResponse, error) {
 	var healthIssues []string
 	dbHealthy := false
@@ -217,12 +216,6 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 	grpcServerLogger.Info("🔧 [BACKEND-FINALIZE] FinalizeMealPlan completed successfully")
 	return &apipb.FinalizeMealPlanResponse{
 		Message: "Meal plan finalized successfully",
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) GetMealPlanICS(ctx context.Context, req *emptypb.Empty) (*apipb.MealPlanICSResponse, error) {
-	return &apipb.MealPlanICSResponse{
-		IcsData: []byte(""),
 	}, nil
 }
 

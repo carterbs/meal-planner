@@ -46,7 +46,6 @@ export type {
   GenerateMealPlanResponse,
   FinalizeMealPlanRequest,
   FinalizeMealPlanResponse,
-  MealPlanICSResponse,
   GetShoppingListRequest,
   GetShoppingListResponse,
   GetAllMealsRequest,
