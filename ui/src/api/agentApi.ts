@@ -1,5 +1,4 @@
 import {
-  AgentCheckpoint,
   MealPlanningCheckpointState,
 } from '@mealplanner/generated';
 import {
@@ -9,13 +8,8 @@ import {
 import {
   postAgentStart,
   postAgentMessage,
-  PostAgentMessageData,
-  GoAgentMessageRequest,
   getCheckpointsByThreadId,
-  GoGetCheckpointResponse,
   getWorkflowsByThreadIdMessages,
-  GetWorkflowsByThreadIdMessagesData,
-  GetWorkflowsByThreadIdMessagesResponses,
 } from '@mealplanner/generated/dist/gateway/index.js';
 
 // Create the API gateway client

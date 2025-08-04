@@ -21,7 +21,7 @@ import {
   postShoppinglist,
   GoGetShoppingListRequest,
 } from '@mealplanner/generated/dist/gateway/index.js';
-import { Meal, Ingredient, Step, WeeklyMealPlan } from '../types';
+import { Meal, Step, WeeklyMealPlan } from '../types';
 
 // Create the API gateway client
 

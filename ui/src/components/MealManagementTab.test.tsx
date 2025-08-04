@@ -2,8 +2,6 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '../test-utils';
 import { MealManagementTab } from './MealManagementTab';
 import '@testing-library/jest-dom';
-import userEvent from '@testing-library/user-event';
-import { setupFetchMocks, cleanupFetchMocks } from '../test-utils';
 
 // Mock the generated gateway client
 jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({

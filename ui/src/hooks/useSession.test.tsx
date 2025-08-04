@@ -1,7 +1,6 @@
 import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import useSession from './useSession';
-import { mockLocalStorage, errorUtils, loadingUtils } from '../test-utils';
 
 // Mock the generated gateway client
 jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({

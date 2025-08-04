@@ -2,14 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AgentPage from './AgentPage';
-import {
-  mockWebSocket,
-  mockClipboard,
-  mockLocalStorage,
-  userEvents,
-  errorUtils,
-  loadingUtils,
-} from './test-utils';
+
+
 
 // Mock the generated gateway functions
 jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
