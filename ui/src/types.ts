@@ -93,6 +93,4 @@ export type {
   AbandonWorkflowResponse,
   AddMessageRequest,
   AddMessageResponse,
-  UpdateSessionStateRequest,
-  UpdateSessionStateResponse,
 } from '@mealplanner/generated';

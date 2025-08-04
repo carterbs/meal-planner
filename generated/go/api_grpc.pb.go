@@ -194,7 +194,6 @@ const (
 	MealPlannerAPI_AbandonWorkflow_FullMethodName      = "/mealplanner.api.MealPlannerAPI/AbandonWorkflow"
 	MealPlannerAPI_AddMessage_FullMethodName           = "/mealplanner.api.MealPlannerAPI/AddMessage"
 	MealPlannerAPI_GetMessages_FullMethodName          = "/mealplanner.api.MealPlannerAPI/GetMessages"
-	MealPlannerAPI_UpdateSessionState_FullMethodName   = "/mealplanner.api.MealPlannerAPI/UpdateSessionState"
 	MealPlannerAPI_GetCheckpoint_FullMethodName        = "/mealplanner.api.MealPlannerAPI/GetCheckpoint"
 	MealPlannerAPI_PutCheckpoint_FullMethodName        = "/mealplanner.api.MealPlannerAPI/PutCheckpoint"
 	MealPlannerAPI_ListCheckpoints_FullMethodName      = "/mealplanner.api.MealPlannerAPI/ListCheckpoints"
@@ -243,7 +242,6 @@ type MealPlannerAPIClient interface {
 	AbandonWorkflow(ctx context.Context, in *AbandonWorkflowRequest, opts ...grpc.CallOption) (*AbandonWorkflowResponse, error)
 	AddMessage(ctx context.Context, in *AddMessageRequest, opts ...grpc.CallOption) (*AddMessageResponse, error)
 	GetMessages(ctx context.Context, in *GetMessagesRequest, opts ...grpc.CallOption) (*GetMessagesResponse, error)
-	UpdateSessionState(ctx context.Context, in *UpdateSessionStateRequest, opts ...grpc.CallOption) (*UpdateSessionStateResponse, error)
 	// Checkpoint persistence endpoints
 	GetCheckpoint(ctx context.Context, in *GetCheckpointRequest, opts ...grpc.CallOption) (*GetCheckpointResponse, error)
 	PutCheckpoint(ctx context.Context, in *PutCheckpointRequest, opts ...grpc.CallOption) (*PutCheckpointResponse, error)
@@ -558,16 +556,6 @@ func (c *mealPlannerAPIClient) GetMessages(ctx context.Context, in *GetMessagesR
 	return out, nil
 }
 
-func (c *mealPlannerAPIClient) UpdateSessionState(ctx context.Context, in *UpdateSessionStateRequest, opts ...grpc.CallOption) (*UpdateSessionStateResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateSessionStateResponse)
-	err := c.cc.Invoke(ctx, MealPlannerAPI_UpdateSessionState_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *mealPlannerAPIClient) GetCheckpoint(ctx context.Context, in *GetCheckpointRequest, opts ...grpc.CallOption) (*GetCheckpointResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetCheckpointResponse)
@@ -641,7 +629,6 @@ type MealPlannerAPIServer interface {
 	AbandonWorkflow(context.Context, *AbandonWorkflowRequest) (*AbandonWorkflowResponse, error)
 	AddMessage(context.Context, *AddMessageRequest) (*AddMessageResponse, error)
 	GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error)
-	UpdateSessionState(context.Context, *UpdateSessionStateRequest) (*UpdateSessionStateResponse, error)
 	// Checkpoint persistence endpoints
 	GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error)
 	PutCheckpoint(context.Context, *PutCheckpointRequest) (*PutCheckpointResponse, error)
@@ -745,9 +732,6 @@ func (UnimplementedMealPlannerAPIServer) AddMessage(context.Context, *AddMessage
 }
 func (UnimplementedMealPlannerAPIServer) GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMessages not implemented")
-}
-func (UnimplementedMealPlannerAPIServer) UpdateSessionState(context.Context, *UpdateSessionStateRequest) (*UpdateSessionStateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateSessionState not implemented")
 }
 func (UnimplementedMealPlannerAPIServer) GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCheckpoint not implemented")
@@ -1319,24 +1303,6 @@ func _MealPlannerAPI_GetMessages_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MealPlannerAPI_UpdateSessionState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateSessionStateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MealPlannerAPIServer).UpdateSessionState(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MealPlannerAPI_UpdateSessionState_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MealPlannerAPIServer).UpdateSessionState(ctx, req.(*UpdateSessionStateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _MealPlannerAPI_GetCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetCheckpointRequest)
 	if err := dec(in); err != nil {
@@ -1517,10 +1483,6 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMessages",
 			Handler:    _MealPlannerAPI_GetMessages_Handler,
-		},
-		{
-			MethodName: "UpdateSessionState",
-			Handler:    _MealPlannerAPI_UpdateSessionState_Handler,
 		},
 		{
 			MethodName: "GetCheckpoint",

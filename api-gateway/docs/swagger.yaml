@@ -508,26 +508,6 @@ definitions:
       meal:
         $ref: '#/definitions/_go.Meal'
     type: object
-  _go.UpdateSessionStateRequest:
-    properties:
-      current_step:
-        type: string
-      meal_plan:
-        description: JSON string
-        type: string
-      shopping_list:
-        description: JSON string
-        type: string
-      status:
-        type: string
-      thread_id:
-        type: string
-    type: object
-  _go.UpdateSessionStateResponse:
-    properties:
-      message:
-        type: string
-    type: object
   _go.UpdateStepRequest:
     properties:
       meal_id:
@@ -1625,41 +1605,6 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       summary: Add Message
-      tags:
-      - workflow
-  /workflows/{threadId}/state:
-    put:
-      consumes:
-      - application/json
-      description: Update the state of a workflow session
-      parameters:
-      - description: Thread ID
-        in: path
-        name: threadId
-        required: true
-        type: string
-      - description: Update session state request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/_go.UpdateSessionStateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Session state updated successfully
-          schema:
-            $ref: '#/definitions/_go.UpdateSessionStateResponse'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/main.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/main.ErrorResponse'
-      summary: Update Session State
       tags:
       - workflow
 swagger: "2.0"

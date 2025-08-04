@@ -259,7 +259,6 @@ func main() {
 	r.Post("/api/workflows/{threadId}/abandon", gw.abandonWorkflow)
 	r.Get("/api/workflows/{threadId}/messages", gw.getMessages)
 	r.Post("/api/workflows/{threadId}/messages", gw.addMessage)
-	r.Put("/api/workflows/{threadId}/state", gw.updateSessionState)
 
 	// Checkpoint persistence endpoints
 	r.Get("/api/checkpoints/{thread_id}", gw.getCheckpoint)
@@ -1331,49 +1330,6 @@ func (gw *Gateway) getMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := gw.agent.GetMessages(r.Context(), req)
-	writeJSONResponse(w, resp, err)
-}
-
-// @Summary Update Session State
-// @Description Update the state of a workflow session
-// @Tags workflow
-// @Accept json
-// @Produce json
-// @Param threadId path string true "Thread ID"
-// @Param request body apipb.UpdateSessionStateRequest true "Update session state request"
-// @Success 200 {object} apipb.UpdateSessionStateResponse "Session state updated successfully"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /workflows/{threadId}/state [put]
-func (gw *Gateway) updateSessionState(w http.ResponseWriter, r *http.Request) {
-	threadId := chi.URLParam(r, "threadId")
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read body: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	var reqBody struct {
-		MealPlan     string `json:"meal_plan"`
-		ShoppingList string `json:"shopping_list"`
-		CurrentStep  string `json:"current_step"`
-		Status       string `json:"status"`
-	}
-	if err := json.Unmarshal(body, &reqBody); err != nil {
-		http.Error(w, "Invalid request payload: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	req := &apipb.UpdateSessionStateRequest{
-		ThreadId:     threadId,
-		MealPlan:     reqBody.MealPlan,
-		ShoppingList: reqBody.ShoppingList,
-		CurrentStep:  reqBody.CurrentStep,
-		Status:       reqBody.Status,
-	}
-
-	resp, err := gw.agent.UpdateSessionState(r.Context(), req)
 	writeJSONResponse(w, resp, err)
 }
 

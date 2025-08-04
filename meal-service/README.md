@@ -88,7 +88,6 @@ Workflow state and history can be managed via:
 - `GET  /api/workflows/{threadId}` – Fetch full state for a workflow.
 - `POST /api/workflows/{threadId}/abandon` – Mark a workflow as abandoned.
 - `POST /api/workflows/{threadId}/messages` – Persist a chat message.
-- `PUT  /api/workflows/{threadId}/state` – Update stored workflow data.
 
 ## Features
 

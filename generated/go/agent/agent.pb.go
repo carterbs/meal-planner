@@ -521,7 +521,7 @@ const file_agent_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12!\n" +
 	"\fcurrent_step\x18\x03 \x01(\tR\vcurrentStep\x12\x14\n" +
-	"\x05state\x18\x04 \x01(\fR\x05state2\xfd\f\n" +
+	"\x05state\x18\x04 \x01(\fR\x05state2\x8e\f\n" +
 	"\fAgentService\x12K\n" +
 	"\vHealthCheck\x12\x16.google.protobuf.Empty\x1a$.mealplanner.api.HealthCheckResponse\x12>\n" +
 	"\tPlanStart\x12\x17.agent.PlanStartRequest\x1a\x18.agent.PlanStartResponse\x12G\n" +
@@ -537,8 +537,7 @@ const file_agent_proto_rawDesc = "" +
 	"\x0fAbandonWorkflow\x12'.mealplanner.api.AbandonWorkflowRequest\x1a(.mealplanner.api.AbandonWorkflowResponse\x12X\n" +
 	"\vGetMessages\x12#.mealplanner.api.GetMessagesRequest\x1a$.mealplanner.api.GetMessagesResponse\x12U\n" +
 	"\n" +
-	"AddMessage\x12\".mealplanner.api.AddMessageRequest\x1a#.mealplanner.api.AddMessageResponse\x12m\n" +
-	"\x12UpdateSessionState\x12*.mealplanner.api.UpdateSessionStateRequest\x1a+.mealplanner.api.UpdateSessionStateResponse\x12^\n" +
+	"AddMessage\x12\".mealplanner.api.AddMessageRequest\x1a#.mealplanner.api.AddMessageResponse\x12^\n" +
 	"\rGetCheckpoint\x12%.mealplanner.api.GetCheckpointRequest\x1a&.mealplanner.api.GetCheckpointResponse\x12^\n" +
 	"\rPutCheckpoint\x12%.mealplanner.api.PutCheckpointRequest\x1a&.mealplanner.api.PutCheckpointResponse\x12d\n" +
 	"\x0fListCheckpoints\x12'.mealplanner.api.ListCheckpointsRequest\x1a(.mealplanner.api.ListCheckpointsResponseB Z\x1emealplanner/generated/go/agentb\x06proto3"
@@ -575,24 +574,22 @@ var file_agent_proto_goTypes = []any{
 	(*_go.AbandonWorkflowRequest)(nil),     // 15: mealplanner.api.AbandonWorkflowRequest
 	(*_go.GetMessagesRequest)(nil),         // 16: mealplanner.api.GetMessagesRequest
 	(*_go.AddMessageRequest)(nil),          // 17: mealplanner.api.AddMessageRequest
-	(*_go.UpdateSessionStateRequest)(nil),  // 18: mealplanner.api.UpdateSessionStateRequest
-	(*_go.GetCheckpointRequest)(nil),       // 19: mealplanner.api.GetCheckpointRequest
-	(*_go.PutCheckpointRequest)(nil),       // 20: mealplanner.api.PutCheckpointRequest
-	(*_go.ListCheckpointsRequest)(nil),     // 21: mealplanner.api.ListCheckpointsRequest
-	(*_go.HealthCheckResponse)(nil),        // 22: mealplanner.api.HealthCheckResponse
-	(*_go.StartAgentWorkflowResponse)(nil), // 23: mealplanner.api.StartAgentWorkflowResponse
-	(*_go.MessageAgentResponse)(nil),       // 24: mealplanner.api.MessageAgentResponse
-	(*_go.GetWorkflowStatusResponse)(nil),  // 25: mealplanner.api.GetWorkflowStatusResponse
-	(*_go.ListWorkflowsResponse)(nil),      // 26: mealplanner.api.ListWorkflowsResponse
-	(*_go.CancelWorkflowResponse)(nil),     // 27: mealplanner.api.CancelWorkflowResponse
-	(*_go.GetWorkflowStateResponse)(nil),   // 28: mealplanner.api.GetWorkflowStateResponse
-	(*_go.AbandonWorkflowResponse)(nil),    // 29: mealplanner.api.AbandonWorkflowResponse
-	(*_go.GetMessagesResponse)(nil),        // 30: mealplanner.api.GetMessagesResponse
-	(*_go.AddMessageResponse)(nil),         // 31: mealplanner.api.AddMessageResponse
-	(*_go.UpdateSessionStateResponse)(nil), // 32: mealplanner.api.UpdateSessionStateResponse
-	(*_go.GetCheckpointResponse)(nil),      // 33: mealplanner.api.GetCheckpointResponse
-	(*_go.PutCheckpointResponse)(nil),      // 34: mealplanner.api.PutCheckpointResponse
-	(*_go.ListCheckpointsResponse)(nil),    // 35: mealplanner.api.ListCheckpointsResponse
+	(*_go.GetCheckpointRequest)(nil),       // 18: mealplanner.api.GetCheckpointRequest
+	(*_go.PutCheckpointRequest)(nil),       // 19: mealplanner.api.PutCheckpointRequest
+	(*_go.ListCheckpointsRequest)(nil),     // 20: mealplanner.api.ListCheckpointsRequest
+	(*_go.HealthCheckResponse)(nil),        // 21: mealplanner.api.HealthCheckResponse
+	(*_go.StartAgentWorkflowResponse)(nil), // 22: mealplanner.api.StartAgentWorkflowResponse
+	(*_go.MessageAgentResponse)(nil),       // 23: mealplanner.api.MessageAgentResponse
+	(*_go.GetWorkflowStatusResponse)(nil),  // 24: mealplanner.api.GetWorkflowStatusResponse
+	(*_go.ListWorkflowsResponse)(nil),      // 25: mealplanner.api.ListWorkflowsResponse
+	(*_go.CancelWorkflowResponse)(nil),     // 26: mealplanner.api.CancelWorkflowResponse
+	(*_go.GetWorkflowStateResponse)(nil),   // 27: mealplanner.api.GetWorkflowStateResponse
+	(*_go.AbandonWorkflowResponse)(nil),    // 28: mealplanner.api.AbandonWorkflowResponse
+	(*_go.GetMessagesResponse)(nil),        // 29: mealplanner.api.GetMessagesResponse
+	(*_go.AddMessageResponse)(nil),         // 30: mealplanner.api.AddMessageResponse
+	(*_go.GetCheckpointResponse)(nil),      // 31: mealplanner.api.GetCheckpointResponse
+	(*_go.PutCheckpointResponse)(nil),      // 32: mealplanner.api.PutCheckpointResponse
+	(*_go.ListCheckpointsResponse)(nil),    // 33: mealplanner.api.ListCheckpointsResponse
 }
 var file_agent_proto_depIdxs = []int32{
 	8,  // 0: agent.ResumeWorkflowRequest.input:type_name -> agent.ResumeWorkflowRequest.InputEntry
@@ -610,30 +607,28 @@ var file_agent_proto_depIdxs = []int32{
 	15, // 12: agent.AgentService.AbandonWorkflow:input_type -> mealplanner.api.AbandonWorkflowRequest
 	16, // 13: agent.AgentService.GetMessages:input_type -> mealplanner.api.GetMessagesRequest
 	17, // 14: agent.AgentService.AddMessage:input_type -> mealplanner.api.AddMessageRequest
-	18, // 15: agent.AgentService.UpdateSessionState:input_type -> mealplanner.api.UpdateSessionStateRequest
-	19, // 16: agent.AgentService.GetCheckpoint:input_type -> mealplanner.api.GetCheckpointRequest
-	20, // 17: agent.AgentService.PutCheckpoint:input_type -> mealplanner.api.PutCheckpointRequest
-	21, // 18: agent.AgentService.ListCheckpoints:input_type -> mealplanner.api.ListCheckpointsRequest
-	22, // 19: agent.AgentService.HealthCheck:output_type -> mealplanner.api.HealthCheckResponse
-	1,  // 20: agent.AgentService.PlanStart:output_type -> agent.PlanStartResponse
-	3,  // 21: agent.AgentService.PlanFeedback:output_type -> agent.PlanFeedbackResponse
-	5,  // 22: agent.AgentService.PlanFinalize:output_type -> agent.PlanFinalizeResponse
-	7,  // 23: agent.AgentService.ResumeWorkflow:output_type -> agent.ResumeWorkflowResponse
-	23, // 24: agent.AgentService.StartAgentWorkflow:output_type -> mealplanner.api.StartAgentWorkflowResponse
-	24, // 25: agent.AgentService.MessageAgent:output_type -> mealplanner.api.MessageAgentResponse
-	25, // 26: agent.AgentService.GetWorkflowStatus:output_type -> mealplanner.api.GetWorkflowStatusResponse
-	26, // 27: agent.AgentService.ListWorkflows:output_type -> mealplanner.api.ListWorkflowsResponse
-	27, // 28: agent.AgentService.CancelWorkflow:output_type -> mealplanner.api.CancelWorkflowResponse
-	28, // 29: agent.AgentService.GetWorkflowState:output_type -> mealplanner.api.GetWorkflowStateResponse
-	29, // 30: agent.AgentService.AbandonWorkflow:output_type -> mealplanner.api.AbandonWorkflowResponse
-	30, // 31: agent.AgentService.GetMessages:output_type -> mealplanner.api.GetMessagesResponse
-	31, // 32: agent.AgentService.AddMessage:output_type -> mealplanner.api.AddMessageResponse
-	32, // 33: agent.AgentService.UpdateSessionState:output_type -> mealplanner.api.UpdateSessionStateResponse
-	33, // 34: agent.AgentService.GetCheckpoint:output_type -> mealplanner.api.GetCheckpointResponse
-	34, // 35: agent.AgentService.PutCheckpoint:output_type -> mealplanner.api.PutCheckpointResponse
-	35, // 36: agent.AgentService.ListCheckpoints:output_type -> mealplanner.api.ListCheckpointsResponse
-	19, // [19:37] is the sub-list for method output_type
-	1,  // [1:19] is the sub-list for method input_type
+	18, // 15: agent.AgentService.GetCheckpoint:input_type -> mealplanner.api.GetCheckpointRequest
+	19, // 16: agent.AgentService.PutCheckpoint:input_type -> mealplanner.api.PutCheckpointRequest
+	20, // 17: agent.AgentService.ListCheckpoints:input_type -> mealplanner.api.ListCheckpointsRequest
+	21, // 18: agent.AgentService.HealthCheck:output_type -> mealplanner.api.HealthCheckResponse
+	1,  // 19: agent.AgentService.PlanStart:output_type -> agent.PlanStartResponse
+	3,  // 20: agent.AgentService.PlanFeedback:output_type -> agent.PlanFeedbackResponse
+	5,  // 21: agent.AgentService.PlanFinalize:output_type -> agent.PlanFinalizeResponse
+	7,  // 22: agent.AgentService.ResumeWorkflow:output_type -> agent.ResumeWorkflowResponse
+	22, // 23: agent.AgentService.StartAgentWorkflow:output_type -> mealplanner.api.StartAgentWorkflowResponse
+	23, // 24: agent.AgentService.MessageAgent:output_type -> mealplanner.api.MessageAgentResponse
+	24, // 25: agent.AgentService.GetWorkflowStatus:output_type -> mealplanner.api.GetWorkflowStatusResponse
+	25, // 26: agent.AgentService.ListWorkflows:output_type -> mealplanner.api.ListWorkflowsResponse
+	26, // 27: agent.AgentService.CancelWorkflow:output_type -> mealplanner.api.CancelWorkflowResponse
+	27, // 28: agent.AgentService.GetWorkflowState:output_type -> mealplanner.api.GetWorkflowStateResponse
+	28, // 29: agent.AgentService.AbandonWorkflow:output_type -> mealplanner.api.AbandonWorkflowResponse
+	29, // 30: agent.AgentService.GetMessages:output_type -> mealplanner.api.GetMessagesResponse
+	30, // 31: agent.AgentService.AddMessage:output_type -> mealplanner.api.AddMessageResponse
+	31, // 32: agent.AgentService.GetCheckpoint:output_type -> mealplanner.api.GetCheckpointResponse
+	32, // 33: agent.AgentService.PutCheckpoint:output_type -> mealplanner.api.PutCheckpointResponse
+	33, // 34: agent.AgentService.ListCheckpoints:output_type -> mealplanner.api.ListCheckpointsResponse
+	18, // [18:35] is the sub-list for method output_type
+	1,  // [1:18] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name
 	1,  // [1:1] is the sub-list for extension extendee
 	0,  // [0:1] is the sub-list for field type_name

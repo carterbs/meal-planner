@@ -1577,59 +1577,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/workflows/{threadId}/state": {
-            "put": {
-                "description": "Update the state of a workflow session",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "workflow"
-                ],
-                "summary": "Update Session State",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Thread ID",
-                        "name": "threadId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update session state request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/_go.UpdateSessionStateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Session state updated successfully",
-                        "schema": {
-                            "$ref": "#/definitions/_go.UpdateSessionStateResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -2421,36 +2368,6 @@ const docTemplate = `{
             "properties": {
                 "meal": {
                     "$ref": "#/definitions/_go.Meal"
-                }
-            }
-        },
-        "_go.UpdateSessionStateRequest": {
-            "type": "object",
-            "properties": {
-                "current_step": {
-                    "type": "string"
-                },
-                "meal_plan": {
-                    "description": "JSON string",
-                    "type": "string"
-                },
-                "shopping_list": {
-                    "description": "JSON string",
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "thread_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.UpdateSessionStateResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
                 }
             }
         },
