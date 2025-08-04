@@ -1,1 +1,2 @@
-We use yarn, not npm.
+- We use yarn, not npm.
+- Rely on CLAUDE.md in each directory for an overview of what to do and dominant conventions
