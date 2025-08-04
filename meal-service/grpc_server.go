@@ -97,15 +97,15 @@ func (s *MealPlannerAPIServer) GetMealPlan(ctx context.Context, req *emptypb.Emp
 	var plan *apipb.WeeklyMealPlan
 	var err error
 
-	plan, err = server.Services.MealPlanService.GetLastPlannedMeals()
+	plan, err = server.Services.MealPlanRepository.GetLastPlannedMeals(ctx)
 	if err != nil {
-		plan, err = server.Services.MealPlanService.GenerateWeeklyMealPlan()
+		plan, err = server.Services.MealPlanRepository.GenerateWeeklyMealPlan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error generating meal plan: %w", err)
 		}
 	}
 
-	detailedPlan, err := server.Services.MealPlanService.PopulateMealDetails(plan)
+	detailedPlan, err := server.Services.MealPlanRepository.PopulateMealDetails(ctx, plan)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching meal details: %w", err)
 	}
@@ -118,12 +118,12 @@ func (s *MealPlannerAPIServer) GetMealPlan(ctx context.Context, req *emptypb.Emp
 }
 
 func (s *MealPlannerAPIServer) GenerateMealPlan(ctx context.Context, req *emptypb.Empty) (*apipb.GenerateMealPlanResponse, error) {
-	plan, err := server.Services.MealPlanService.GenerateWeeklyMealPlan()
+	plan, err := server.Services.MealPlanRepository.GenerateWeeklyMealPlan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error generating meal plan: %w", err)
 	}
 
-	detailedPlan, err := server.Services.MealPlanService.PopulateMealDetails(plan)
+	detailedPlan, err := server.Services.MealPlanRepository.PopulateMealDetails(ctx, plan)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching meal details: %w", err)
 	}
@@ -372,7 +372,7 @@ func (s *MealPlannerAPIServer) DeleteMeal(ctx context.Context, req *apipb.Delete
 }
 
 func (s *MealPlannerAPIServer) GetSteps(ctx context.Context, req *apipb.GetStepsRequest) (*apipb.GetStepsResponse, error) {
-	steps, err := server.Services.RecipeStepService.GetStepsForMeal(int(req.MealId))
+	steps, err := server.Services.RecipeStepRepository.GetStepsForMeal(context.Background(), int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error getting steps: %w", err)
 	}
@@ -387,9 +387,9 @@ func (s *MealPlannerAPIServer) AddStep(ctx context.Context, req *apipb.AddStepRe
 		return nil, fmt.Errorf("step is required")
 	}
 
-	// The service expects a protobuf Step
+	// The repository expects a protobuf Step
 	req.Step.MealId = req.MealId
-	createdStep, err := server.Services.RecipeStepService.AddStepToMeal(req.Step)
+	createdStep, err := server.Services.RecipeStepRepository.AddStepToMeal(context.Background(), req.Step)
 	if err != nil {
 		return nil, fmt.Errorf("error adding step: %w", err)
 	}
@@ -400,7 +400,7 @@ func (s *MealPlannerAPIServer) AddStep(ctx context.Context, req *apipb.AddStepRe
 }
 
 func (s *MealPlannerAPIServer) AddBulkSteps(ctx context.Context, req *apipb.AddBulkStepsRequest) (*apipb.AddBulkStepsResponse, error) {
-	steps, err := server.Services.RecipeStepService.AddMultipleStepsToMeal(int(req.MealId), req.Instructions)
+	steps, err := server.Services.RecipeStepRepository.AddMultipleStepsToMeal(context.Background(), int(req.MealId), req.Instructions)
 	if err != nil {
 		return nil, fmt.Errorf("error adding bulk steps: %w", err)
 	}
@@ -419,7 +419,7 @@ func (s *MealPlannerAPIServer) UpdateStep(ctx context.Context, req *apipb.Update
 	req.Step.Id = req.StepId
 	req.Step.MealId = req.MealId
 
-	err := server.Services.RecipeStepService.UpdateStep(req.Step)
+	err := server.Services.RecipeStepRepository.UpdateStep(context.Background(), req.Step)
 	if err != nil {
 		return nil, fmt.Errorf("error updating step: %w", err)
 	}
@@ -430,7 +430,7 @@ func (s *MealPlannerAPIServer) UpdateStep(ctx context.Context, req *apipb.Update
 }
 
 func (s *MealPlannerAPIServer) DeleteStep(ctx context.Context, req *apipb.DeleteStepRequest) (*apipb.DeleteStepResponse, error) {
-	err := server.Services.RecipeStepService.DeleteStep(int(req.StepId), int(req.MealId))
+	err := server.Services.RecipeStepRepository.DeleteStep(context.Background(), int(req.StepId), int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting step: %w", err)
 	}
@@ -446,7 +446,7 @@ func (s *MealPlannerAPIServer) ReorderSteps(ctx context.Context, req *apipb.Reor
 		stepIds[i] = int(id)
 	}
 
-	err := server.Services.RecipeStepService.ReorderSteps(int(req.MealId), stepIds)
+	err := server.Services.RecipeStepRepository.ReorderSteps(context.Background(), int(req.MealId), stepIds)
 	if err != nil {
 		return nil, fmt.Errorf("error reordering steps: %w", err)
 	}
@@ -457,7 +457,7 @@ func (s *MealPlannerAPIServer) ReorderSteps(ctx context.Context, req *apipb.Reor
 }
 
 func (s *MealPlannerAPIServer) DeleteAllSteps(ctx context.Context, req *apipb.DeleteAllStepsRequest) (*apipb.DeleteAllStepsResponse, error) {
-	err := server.Services.RecipeStepService.DeleteAllStepsForMeal(int(req.MealId))
+	err := server.Services.RecipeStepRepository.DeleteAllStepsForMeal(context.Background(), int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting all steps: %w", err)
 	}

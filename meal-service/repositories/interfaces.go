@@ -57,8 +57,8 @@ type MealPlanRepository interface {
 	RemoveMealFromPlan(ctx context.Context, plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error
 
 	// Meal plan generation & retrieval
-	GenerateWeeklyMealPlan(ctx context.Context) (*models.WeeklyMealPlan, error)
-	GetLastPlannedMeals(ctx context.Context) (*models.WeeklyMealPlan, error)
+	GenerateWeeklyMealPlan(ctx context.Context) (*apipb.WeeklyMealPlan, error)
+	GetLastPlannedMeals(ctx context.Context) (*apipb.WeeklyMealPlan, error)
 	PopulateMealDetails(ctx context.Context, plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error)
 }
 
