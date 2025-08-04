@@ -2395,8 +2395,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "API Gateway for Meal Planner service",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {
