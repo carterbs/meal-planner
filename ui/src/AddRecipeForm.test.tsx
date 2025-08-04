@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from './test-utils';
 import AddRecipeForm from './AddRecipeForm';
-import { Step } from './types';
 import { setupFetchMocks, cleanupFetchMocks } from './test-utils';
 import '@testing-library/jest-dom';
 

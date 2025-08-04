@@ -10,7 +10,6 @@ import {
   Paper,
   Slider,
   Chip,
-  IconButton,
   Snackbar,
   Alert,
   Divider,

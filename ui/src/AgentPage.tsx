@@ -16,17 +16,14 @@ import {
 import {
   RestaurantMenu as RestaurantMenuIcon,
   ExitToApp as ExitToAppIcon,
-  ExpandMore as ExpandMoreIcon,
-  ShoppingCart as ShoppingCartIcon,
   IosShare as ShareIcon,
   MenuBook as MenuBookIcon,
-  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import MealPlanDisplay from './components/MealPlanDisplay';
 import { MealManagementTab } from './components/MealManagementTab';
 import { Toast } from './components/Toast';
 import { ShoppingListItem } from './types';
-import { MealPlanEntry, WeeklyMealPlan, Meal } from '@mealplanner/generated';
+import { WeeklyMealPlan } from '@mealplanner/generated';
 import {
   startAgentSession,
   sendAgentMessage,
@@ -45,7 +42,6 @@ import {
 import type { SxProps, Theme } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
 import type { DayOfTheWeek } from '@meal-planner/shared';
-import { Timestamp } from '@bufbuild/protobuf';
 import { convertGatewayMealPlan } from './utils/mealPlanConverter';
 
 const gatewayClient = createClient(

@@ -1,8 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, act, within } from '../test-utils';
+import { render, screen, fireEvent, act } from '../test-utils';
 import StepsEditor from './StepsEditor';
 import '@testing-library/jest-dom';
-import { Step } from '../types';
 
 describe('StepsEditor', () => {
   const mockOnChange = jest.fn();

@@ -9,10 +9,8 @@ import {
   postShoppinglist,
 } from '@mealplanner/generated/dist/gateway/index.js';
 import type {
-  GoGetCheckpointResponse,
   GoMealPlanEntry,
   GoShoppingList,
-  GoShoppingListItem,
 } from '@mealplanner/generated/dist/gateway/types.gen';
 
 // Create the API gateway client

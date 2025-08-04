@@ -16,6 +16,12 @@
 - Build production: `yarn build`
 - Proxy configured for backend at `http://localhost:8090`
 
+## Code Quality & Dead Code Detection
+- Lint code: `yarn lint`
+- Auto-fix lint issues: `yarn lint:fix`
+- Find unused exports: `yarn dead-code`
+- Combined dead code check: `yarn dead-code:check`
+
 ## Framework & Libraries
 - React 18 with TypeScript
 - Material-UI (MUI) with custom theme following "crunchy mom aesthetic"
