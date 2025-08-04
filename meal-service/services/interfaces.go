@@ -26,13 +26,6 @@ type MealService interface {
 	UpdateLastPlannedDates(mealIDs []int) error
 }
 
-// IngredientService handles ingredient management operations
-type IngredientService interface {
-	CreateMealIngredient(mealID int, ingredient *models.Ingredient) error
-	UpdateMealIngredient(mealID int, ingredient *models.Ingredient) error
-	DeleteMealIngredient(ingredientID int) error
-}
-
 // RecipeStepService handles recipe step operations
 type RecipeStepService interface {
 	GetStepsForMeal(mealID int) ([]*models.Step, error)
@@ -65,7 +58,6 @@ type ShoppingListService interface {
 // ServiceContainer holds all service dependencies
 type ServiceContainer struct {
 	MealService         MealService
-	IngredientService   IngredientService
 	RecipeStepService   RecipeStepService
 	MealPlanService     MealPlanService
 	ShoppingListService ShoppingListService

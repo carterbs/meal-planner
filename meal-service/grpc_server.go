@@ -8,6 +8,7 @@ import (
 
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
+	"mealplanner/repositories"
 	"mealplanner/server"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -302,7 +303,8 @@ func (s *MealPlannerAPIServer) CreateMealIngredient(ctx context.Context, req *ap
 		return nil, fmt.Errorf("ingredient is required")
 	}
 
-	err := server.Services.IngredientService.CreateMealIngredient(int(req.MealId), req.Ingredient)
+	ingredientRepo := repositories.NewIngredientRepository(server.DB)
+	err := ingredientRepo.CreateMealIngredient(ctx, int(req.MealId), req.Ingredient)
 	if err != nil {
 		return nil, fmt.Errorf("error creating meal ingredient: %w", err)
 	}
@@ -323,7 +325,8 @@ func (s *MealPlannerAPIServer) UpdateMealIngredient(ctx context.Context, req *ap
 		return nil, fmt.Errorf("ingredient is required")
 	}
 
-	err := server.Services.IngredientService.UpdateMealIngredient(int(req.MealId), req.Ingredient)
+	ingredientRepo := repositories.NewIngredientRepository(server.DB)
+	err := ingredientRepo.UpdateMealIngredient(ctx, int(req.MealId), req.Ingredient)
 	if err != nil {
 		return nil, fmt.Errorf("error updating meal ingredient: %w", err)
 	}
@@ -340,7 +343,8 @@ func (s *MealPlannerAPIServer) UpdateMealIngredient(ctx context.Context, req *ap
 }
 
 func (s *MealPlannerAPIServer) DeleteMealIngredient(ctx context.Context, req *apipb.DeleteMealIngredientRequest) (*apipb.DeleteMealIngredientResponse, error) {
-	err := server.Services.IngredientService.DeleteMealIngredient(int(req.IngredientId))
+	ingredientRepo := repositories.NewIngredientRepository(server.DB)
+	err := ingredientRepo.DeleteMealIngredient(ctx, int(req.IngredientId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting meal ingredient: %w", err)
 	}

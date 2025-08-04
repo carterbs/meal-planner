@@ -19,6 +19,59 @@ Add, edit, etc
 ## Refactors
 - Extract handlers out of main.ts in the agent-service so we can unit test them properly.
 
+### Service Layer Redundancy Analysis
+
+After removing `IngredientService` (✅ completed), we have identified additional redundant service layers that are just pass-throughs to repositories:
+
+#### ✅ Already Removed:
+- **IngredientService**: Was pure pass-through with only logging. Now using `IngredientRepository` directly in gRPC handlers.
+
+#### 🔴 Candidates for Removal (Pure Pass-throughs):
+
+1. **RecipeStepService** - Complete pass-through to `RecipeStepRepository`
+   - All 7 methods just add logging and call repository
+   - No business logic, validation, or orchestration
+   - Used in: `grpc_server.go` (6 methods)
+   - **Recommendation**: Remove and use repository directly
+
+2. **MealPlanService** - Mostly pass-through to `MealPlanRepository`
+   - 6 out of 6 methods are simple pass-throughs with logging
+   - No business logic or data transformation
+   - Used in: `grpc_server.go` (3 methods)
+   - **Recommendation**: Remove and use repository directly
+
+3. **ShoppingListService** - Simple orchestration layer
+   - `BuildShoppingList()`: Calls `MealRepo.GetMealsByIDs()` → `ShoppingListRepo.GenerateShoppingListFromMeals()`
+   - Other methods are pass-throughs
+   - **Some business logic present** (orchestrating meal fetching + list generation)
+   - **Recommendation**: Keep but consider simplifying
+
+#### 🟡 Keep (Has Business Logic):
+
+4. **MealService** - Contains actual business logic
+   - Orchestrates multiple repositories (`MealRepository` + `IngredientRepository`)
+   - `UpdateMealIngredient()`: Updates ingredient → fetches updated meal
+   - `DeleteMealIngredient()`: Deletes ingredient → fetches updated meal  
+   - Has cross-cutting concerns and data aggregation
+   - **Recommendation**: Keep - provides value
+
+#### Removal Impact:
+- **RecipeStepService**: 6 gRPC methods need to create `RecipeStepRepository` directly
+- **MealPlanService**: 3 gRPC methods need to create `MealPlanRepository` directly
+- **ServiceContainer**: Can be simplified to just `MealService` + `ShoppingListService`
+
+#### Benefits:
+- Reduces layers of indirection (models → repositories → services → gRPC)
+- Eliminates ~200 lines of boilerplate code
+- Faster development (no need to add service method for every repository method)
+- Easier testing (test repositories directly, not service wrappers)
+
+#### Next Steps:
+1. Remove `RecipeStepService` (similar to `IngredientService` removal)
+2. Remove `MealPlanService` 
+3. Simplify `ServiceContainer`
+4. Update gRPC handlers to use repositories directly
+
 We are approaching perfection.
 
 # Meal Planner Architecture Improvement Plan
@@ -196,111 +249,11 @@ This plan addresses the architectural complexity that makes agent development ch
 3. Add type safety checks
 
 **Long Term (Month)**:
-1. Migrate to Connect-ES throughout
-2. Simplify agent state management
-3. Complete testing infrastructure
+1. Simplify agent state management
+2. Complete testing infrastructure
 
 ## Success Metrics
 - Agent can add a field like 'lastPlanned' in under 30 minutes
 - No type assertions needed in UI code
 - All generated types match runtime data
 - Single command regenerates all code correctly
-
-## Risk Mitigation
-- Keep REST API during transition period
-- Maintain backward compatibility
-- Incremental migration with feature flags
-- Comprehensive testing at each stage
-
-
-## Clean up unused gateway endpoints
-Goal: List all endpoints in the api-gateway/main.go that are not called by either the UI, the agent-service, or the mcp-service
-## File: ui/src/api/mealsApi.ts
-getMeals(mealType?)
-  Called from: MealManagementTab.tsx (lines 28, 39, 45, 51, 113, 119)
-  Endpoint: GET /api/meals
-  Query params: type (optional, lowercase meal type)
-createMeal(meal)
-  Called from: AddRecipeForm.tsx (line 260)
-  Endpoint: POST /api/meals
-  Body: { meal: GoMeal }
-updateMeal(mealId, meal)
-  Called from: Not directly called in current UI components
-  Endpoint: PUT /api/meals/{mealId}
-  Body: { mealId: number, meal: GoMeal }
-deleteMeal(mealId)
-  Called from: MealManagementTab.tsx (line 58)
-  Endpoint: DELETE /api/meals/{mealId}
-updateMealIngredient(mealId, ingredientId, ingredient)
-  Called from: Not directly called in current UI components
-  Endpoint: PUT /api/meals/{mealId}/ingredients/{ingredientId}
-  Body: { ingredient: GoIngredient, ingredientId: number, mealId: number }
-createMealIngredient(mealId, ingredient)
-  Called from: Not directly called in current UI components
-  Endpoint: POST /api/meals/{mealId}/ingredients
-  Body: { ingredient: GoIngredient, mealId: number }
-deleteMealIngredient(mealId, ingredientId)
-  Called from: Not directly called in current UI components
-  Endpoint: DELETE /api/meals/{mealId}/ingredients/{ingredientId}
-addBulkSteps(mealId, instructions)
-  Called from: Not directly called in current UI components
-  Endpoint: POST /api/meals/{mealId}/steps/bulk
-  Body: { instructions: string[] }
-deleteAllSteps(mealId)
-  Called from: Not directly called in current UI components
-  Endpoint: DELETE /api/meals/{mealId}/steps
-replaceAllSteps(mealId, steps)
-  Called from: Not directly called in current UI components
-  Endpoint: Calls deleteAllSteps then addBulkSteps
-goGetShoppingList(mealPlan)
-  Called from: AgentPage.tsx (line 582)
-  Endpoint: POST /api/shoppinglist
-  Body: { plan: number[] } (array of meal IDs)
-
-## File: ui/src/api/agentApi.ts
-startAgentSession(participants?, workflowType?)
-  Called from: AgentPage.tsx (line 463)
-  Endpoint: POST /api/agent/start
-  Body: { request: { participants: string[], workflowType: string } }
-sendAgentMessage(threadId, message, from?, interactive?)
-  Called from: AgentPage.tsx (line 547)
-  Endpoint: POST /api/agent/message
-  Body: { request: { threadId: string, message: string, from: string, interactive: boolean } }
-getAgentCheckpoint(threadId)
-  Called from: AgentPage.tsx (line 559)
-  Endpoint: GET /api/checkpoints/{thread_id}
-getMessages(threadId)
-  Called from: AgentPage.tsx (line 527)
-  Endpoint: GET /api/workflows/{threadId}/messages
-File: ui/src/hooks/useSession.ts
-  getCheckpointsByThreadId(threadId)
-  Called from: useSession.ts (line 35)
-  Endpoint: GET /api/checkpoints/{thread_id}
-postShoppinglist(plan)
-  Called from: useSession.ts (line 70)
-  Endpoint: POST /api/shoppinglist
-  Body: { plan: number[] }
-postWorkflowsByThreadIdAbandon(threadId)
-  Called from: useSession.ts (line 95)
-  Endpoint: POST /api/workflows/{threadId}/abandon
-
-# Agent Service
-gRPC Checkpoint Operations
-Called from: httpCheckpointer.ts (multiple lines)
-Endpoint: gRPC calls to backend service
-Purpose: Checkpoint persistence operations
-Details: Uses gRPC transport for:
-  getCheckpoint() - Retrieve checkpoints
-  putCheckpoint() - Save checkpoints
-  listCheckpoints() - List checkpoints
-  getWorkflowStatus() - Get workflow status
-  listWorkflows() - List workflows
-
-# MCP Service
-All calls go to the backend API at http://127.0.0.1:8090/api (or BACKEND_BASE_URL):
-  Meal Management: /api/meals (GET, POST, DELETE)
-  Meal Steps: /api/meals/{id}/steps and /api/meals/{id}/steps/bulk
-  Meal Ingredients: /api/meals/{id}/ingredients
-  Meal Planning: /api/mealplan (GET), /api/mealplan/generate (POST), /api/mealplan/finalize (POST), /api/mealplan/replace (POST)
-  Shopping List: /api/shoppinglist (POST)
-  Meal Swapping: /api/meals/swap (POST)
