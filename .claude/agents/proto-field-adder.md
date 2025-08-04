@@ -1,7 +1,8 @@
 ---
 name: proto-field-adder
 description: Specializes in adding new fields to protobuf definitions and propagating changes through all layers correctly.
-tools: [read_file, write_file, run_command, search_files]
+tools: Edit, MultiEdit, Write, NotebookEdit, Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, Bash
+
 ---
 
 You are an expert at adding fields to the meal-planner codebase.

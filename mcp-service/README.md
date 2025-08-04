@@ -1,98 +1,207 @@
-# Model Context Protocol (MCP) Server
+# MCP Service
 
-This directory contains the TypeScript implementation of the Model Context Protocol (MCP) server for the meal planning application. The MCP layer exposes backend data and functionality in a format that AI agents can easily consume while maintaining a clean separation between LLM interactions and application logic.
+TypeScript MCP server that exposes meal planner backend functionality to AI agents via HTTP transport. Implements the [Model Context Protocol specification](https://modelcontextprotocol.io/specification/2025-06-18/server) to provide resources and tools for meal planning operations.
+
+## MCP Server Details
+
+- **MCP SDK Version**: @modelcontextprotocol/sdk ^1.12.3
+- **Server Name**: `mealplanner-mcp`
+- **Server Version**: `1.0.0`
+- **Transport**: HTTP with SSE streaming (`StreamableHTTPServerTransport`)
+- **Session Mode**: Stateless (supports multiple concurrent agent sessions)
+- **Content Types**: JSON responses with `application/json` MIME type
 
 ## Architecture
 
-The server is built with [`@modelcontextprotocol/sdk`](https://modelcontextprotocol.io) and runs as a Node.js process. `src/index.ts` creates an `McpServer` instance and registers all resources and tools. The server communicates over standard input/output using `StdioServerTransport` and connects to the Go backend via HTTP.
+- **Transport**: HTTP with SSE streaming (`StreamableHTTPServerTransport`)
+- **Port**: 3001 (configurable via `MCP_PORT`)
+- **Backend**: Connects to Go backend via HTTP (`BACKEND_BASE_URL`)
+- **Logging**: gRPC connection to logging service + local file backup
+- **Error Handling**: Proper MCP error codes (-32000 for backend errors)
+- **Retry Logic**: 30-attempt retry with 2s delays for backend connections
 
 ```
-AI Client/Agent ↔ MCP Server ↔ Meal Planner Backend
+AI Agent → HTTP/SSE → MCP Server → HTTP → Go Backend
+                        ↓
+                gRPC Logging Service
+                        ↓
+                Local File Backup
 ```
 
-The backend base URL is controlled by the `BACKEND_BASE_URL` environment variable (defaults to `http://localhost:8080`). Logging is handled by `src/utils/logger.ts` which writes timestamps to `logs/mcp-server.log`.
+## MCP Resources
 
-### Resources
+All resources follow MCP specification with proper URI schemes and content structure:
 
-Resources provide contextual documents to the LLM. The server exposes:
+- **WeeklyMealPlan** (`meal://plan/weekly`) - Current weekly plan with dates, meals, effort levels
+- **Recipes** (`meal://recipes/all`) - All recipe summaries with metadata including ID, name, effort level, red meat status
+- **RecipeSteps** (`meal://recipes/steps`) - Detailed cooking steps for specific recipes
 
-- **WeeklyMealPlan** (`meal://plan/weekly`) – current weekly plan with meal names and dates.
-- **Recipes** (`meal://recipes/all`) – list of all recipe summaries.
-- **RecipeSteps** (`meal://recipes/steps`) – detailed steps for a specific recipe.
+## MCP Tools
 
-### Tools
+All tools use Zod schema validation and return structured JSON responses. Error handling follows MCP specification with appropriate error codes.
 
-Tools allow the agent to invoke backend actions. Each tool wraps a REST endpoint:
+| Tool | Parameters | Description |
+|------|------------|-------------|
+| `generateMealPlan` | None | Create a fresh 7-day meal plan with automatic recipe selection based on effort preferences and red meat limits |
+| `finalizeMealPlan` | `threadId: string` | Commit the current plan as final for the specified thread |
+| `swapMeal` | `day: string, mealType: enum` | Replace a meal with random alternative of same type |
+| `replaceMeal` | `day: string, mealType: enum, newMealId: number` | Replace specific meal with chosen recipe, considering effort levels and dietary constraints |
+| `generateShoppingList` | `threadId: string` | Generate consolidated ingredient list for current meal plan |
+| `createRecipe` | `name, redMeat: boolean, effort: enum, steps: array, ingredients?: array` | Add new recipe with full metadata, cooking steps, and optional ingredients |
+| `deleteRecipe` | `id: number` | Permanently remove recipe from database |
+| `getMeals` | `mealType?: enum` | Retrieve all available meals with metadata, optionally filtered by type |
+| `getCurrentMealPlan` | None | Fetch active meal plan with all scheduled meals |
+| `removeMeal` | `day: string, mealType: enum` | Remove specific meal from current plan |
 
-| Tool | Endpoint | Description |
-|------|----------|-------------|
-| `generateMealPlan` | `POST /api/mealplan/generate` | Create a fresh weekly plan. |
-| `finalizeMealPlan` | `POST /api/mealplan/finalize` | Commit the current plan as final. |
-| `swapMeal` | `POST /api/meals/swap` | Replace a meal on a day with a random alternative. |
-| `replaceMeal` | `POST /api/mealplan/replace` | Replace a specific meal with a chosen one. |
-| `generateShoppingList` | `POST /api/shoppinglist` | Return a list of ingredients for a plan. |
-| `createRecipe` | `POST /api/meals` | Add a new recipe to the database. |
-| `deleteRecipe` | `DELETE /api/meals/{id}` | Remove a recipe permanently. |
-| `getMeals` | `GET /api/meals` | Retrieve meals, optionally filtered by type. |
-| `getCurrentMealPlan` | `GET /api/mealplan` | Fetch the active meal plan. |
-| `removeMeal` | `POST /api/meals/remove` | Remove a meal from the current plan. |
+### Tool Parameter Details
 
-### Protocol Flow
-
-1. An AI agent starts the MCP server (usually via `scripts/start-mcp.js`).
-2. The agent connects using `StdioClientTransport` from the MCP SDK.
-3. The client requests resources or calls tools. The server forwards those requests to the backend and returns structured MCP responses.
-4. All messages follow the [Model Context Protocol](https://modelcontextprotocol.io) specification, enabling safe tool execution and resource delivery.
-
-### Authentication & Security
-
-The development setup runs without authentication. In production you can place the MCP server behind an authenticating proxy or extend it to require API keys when calling tools. CORS headers are enabled in the Go backend for local development.
+**Day Values**: `Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday`
+**Meal Types**: `breakfast, lunch, dinner`  
+**Effort Levels**: `LOW, MED, HIGH`
+**Thread IDs**: Used for session management in stateless mode
 
 ## Development
 
-Install dependencies with `yarn` (already provided). Useful commands inside `mcp-service`:
+**Stack**: TypeScript, Express, MCP SDK, gRPC logging
 
-- `yarn build` – compile TypeScript to `dist/`.
-- `yarn start` – run the compiled server.
-- `yarn dev` – start with automatic reload using `nodemon` and `tsx`.
-- `yarn test` – run unit tests for resources and tools.
-
-From the repository root, `yarn test` runs all project suites including MCP tests.
-
-### Debugging
-
-`scripts/start-mcp.js` launches the backend, builds the MCP server, and writes console logs to `logs/mcp-console.log`. Inspect this log for runtime errors. The server itself logs to `logs/mcp-server.log`.
-
-## Deployment & Operations
-
-1. Run `yarn build` to produce `dist/index.js`.
-2. Start the backend (e.g., `go run main.go --dummy` or via Docker).
-3. Launch the MCP server with `node dist/index.js` or use the helper script `scripts/start-mcp.js`.
-4. Monitor the logs in `mcp-service/logs/` for health.
-
-The server is stateless aside from logs and connects to the backend via HTTP, so it can be scaled horizontally behind a process manager.
-
-## Configuration
-
-- `BACKEND_BASE_URL` – base URL for the Go backend (default `http://localhost:8080`).
-
-## Integration with AI Agents
-
-The `MealPlanningWorkflow` in `agent-service/workflows/meal-planning.ts` initializes a client:
-
-```ts
-const client = new Client({ name: 'meal-planner-workflow', version: '1.0.0' });
-const transport = new StdioClientTransport({ command: 'node', args: ['scripts/start-mcp.js'] });
-await client.connect(transport);
+### Setup
+```bash
+yarn install          # Install dependencies
+yarn build            # Compile TypeScript
+yarn dev              # Development with hot reload
+yarn test             # Run unit tests
 ```
 
-Once connected, the workflow can call MCP tools using `callMCPTool` from `agent-service/shared/mcp-types.ts` to generate plans, modify meals, and produce shopping lists.
+### Environment Variables
+- `MCP_PORT` - Server port (default: 3001)
+- `BACKEND_BASE_URL` - Go backend URL (default: http://127.0.0.1:8090)
+- `LOGGING_SERVICE_ADDR` - gRPC logging service (default: localhost:50052)
 
-## Testing Strategy
+### MCP Endpoints
+- `GET /health` - Health check (tests logging service and backend connectivity)
+- `POST /mcp` - MCP protocol endpoint with SSE streaming
+- `GET /mcp` - MCP protocol endpoint for capability negotiation
 
-Unit tests live in `tests/` and mock fetch calls to validate each tool and resource. Run `yarn test` in this directory to execute the suite. Always run `yarn test` from the repository root before committing changes to ensure all modules continue to pass.
+### Logging Architecture
+- **Primary**: gRPC connection to centralized logging service
+- **Retry Logic**: 30-attempt connection retry with 2s delays on startup
+- **Fallback**: Local file logging to `mcp-debug.log` when gRPC unavailable
+- **Format**: Structured protobuf LogEntry with timestamps, levels, and metadata
+- **Levels**: DEBUG, INFO, WARN, ERROR with appropriate routing
 
-## Customization
+### Testing
+```bash
+yarn test             # Run Jest unit tests with mocked HTTP calls
+```
 
-You can extend the server by registering additional resources or tools in `src/index.ts`. Follow the patterns in the existing files and consult the MCP SDK documentation for advanced features such as custom transports or proxying authorization requests.
+**Test Coverage**:
+- Unit tests in `tests/` directory using Jest + nock for HTTP mocking
+- Resource fetching tests with backend simulation
+- Tool execution tests with error handling validation
+- MCP protocol compliance testing
+
+### MCP Development Notes
+
+**Error Handling**: All tools and resources use proper MCP error codes:
+- `-32000`: Backend/external service errors
+- Proper error propagation with descriptive messages
+- Graceful fallback behavior when services unavailable
+
+**Performance**: 
+- 5-second timeout on backend requests
+- Automatic retry logic with exponential backoff
+- Stateless server design for horizontal scaling
+
+**Protocol Compliance**:
+- Follows MCP specification for resource/tool registration
+- Proper URI schemes for resources (`meal://`)
+- Structured JSON responses with appropriate MIME types
+- SSE streaming for real-time communication
+
+## Docker Development
+```bash
+# Uses Dockerfile.dev with yarn workspaces
+docker build -f Dockerfile.dev -t mcp-service .
+```
+
+## MCP Client Integration
+
+### Connection Methods
+
+**HTTP/SSE Transport**:
+```typescript
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+
+const transport = new StreamableHTTPClientTransport({
+  baseUrl: 'http://localhost:3001/mcp'
+});
+```
+
+**Server Capabilities**: The server advertises these MCP capabilities:
+- Resources: 3 available (WeeklyMealPlan, Recipes, RecipeSteps)
+- Tools: 10 available (meal planning, recipe management, shopping lists)
+- Sampling: Not supported
+- Logging: Structured logging via gRPC with local fallback
+
+### Example MCP Client Usage
+
+```typescript
+// List available resources
+const resources = await client.listResources();
+
+// Read a specific resource
+const mealPlan = await client.readResource('meal://plan/weekly');
+
+// Execute a tool
+const result = await client.callTool('generateMealPlan', {});
+```
+
+The server runs in **stateless mode**, supporting multiple concurrent agent sessions without session conflicts.
+
+## Debugging & Troubleshooting
+
+### MCP Server Health Check
+```bash
+curl http://localhost:3001/health
+```
+Expected response: `{"status":"ok","service":"mealplanner-mcp","message":"All dependencies healthy"}`
+
+### Common Issues
+
+**Connection Failures**:
+- Check that `BACKEND_BASE_URL` points to running Go backend 
+- Verify gRPC logging service is available at `LOGGING_SERVICE_ADDR`
+- Review `mcp-debug.log` for detailed error traces
+
+**MCP Protocol Errors**:
+- Ensure client uses proper SSE streaming transport
+- Verify JSON-RPC message format compliance
+- Check MCP SDK version compatibility (@modelcontextprotocol/sdk ^1.12.3)
+
+**Resource/Tool Errors**:
+- Backend connectivity issues return MCP error code -32000
+- Invalid parameters trigger Zod validation errors
+- Check server logs for detailed error context
+
+### Development Debugging
+
+**Log Levels**: 
+- Use `debugLog()` for detailed tracing
+- `infoLog()` for operational events  
+- `errorLog()` for failures requiring attention
+
+**Manual Testing**:
+```bash
+# Test MCP endpoint directly
+curl -X POST http://localhost:3001/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
+
+### Performance Monitoring
+
+- **Backend Latency**: Monitor response times to Go backend API
+- **gRPC Logging**: Check connection retry patterns and success rates  
+- **Memory Usage**: Track JSON parsing/serialization overhead
+- **Concurrent Sessions**: Validate stateless operation under load
 
