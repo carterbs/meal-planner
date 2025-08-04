@@ -10,7 +10,6 @@ jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
 
 jest.mock('@mealplanner/generated/dist/gateway/sdk.gen', () => ({
   getHealth: jest.fn(),
-  postReconnect: jest.fn(),
 }));
 
 import { getHealth } from '@mealplanner/generated/dist/gateway/sdk.gen';

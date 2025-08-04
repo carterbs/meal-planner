@@ -42,7 +42,6 @@ export type {
   AgentResponse,
   WorkflowStatus,
   HealthCheckResponse,
-  ReconnectResponse,
   GetMealPlanResponse,
   GenerateMealPlanResponse,
   FinalizeMealPlanRequest,

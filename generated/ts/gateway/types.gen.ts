@@ -272,11 +272,6 @@ export type GoPutCheckpointResponse = {
     threadId?: string;
 };
 
-export type GoReconnectResponse = {
-    message?: string;
-    status?: string;
-};
-
 export type GoReorderStepsRequest = {
     mealId?: number;
     stepIds?: Array<number>;
@@ -1356,31 +1351,6 @@ export type PutMealsByMealIdStepsByStepIdResponses = {
 };
 
 export type PutMealsByMealIdStepsByStepIdResponse = PutMealsByMealIdStepsByStepIdResponses[keyof PutMealsByMealIdStepsByStepIdResponses];
-
-export type PostReconnectData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/reconnect';
-};
-
-export type PostReconnectErrors = {
-    /**
-     * Internal server error
-     */
-    500: MainErrorResponse;
-};
-
-export type PostReconnectError = PostReconnectErrors[keyof PostReconnectErrors];
-
-export type PostReconnectResponses = {
-    /**
-     * Reconnect successful
-     */
-    200: GoReconnectResponse;
-};
-
-export type PostReconnectResponse = PostReconnectResponses[keyof PostReconnectResponses];
 
 export type PostShoppinglistData = {
     /**

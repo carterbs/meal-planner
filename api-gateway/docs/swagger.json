@@ -622,17 +622,6 @@
             },
             "type": "object"
         },
-        "_go.ReconnectResponse": {
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            },
-            "type": "object"
-        },
         "_go.ReorderStepsRequest": {
             "properties": {
                 "mealId": {
@@ -2183,35 +2172,6 @@
                 "summary": "Update Recipe Step",
                 "tags": [
                     "steps"
-                ]
-            }
-        },
-        "/reconnect": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "description": "Reconnect to backend services",
-                "produces": [
-                    "application/json"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Reconnect successful",
-                        "schema": {
-                            "$ref": "#/definitions/_go.ReconnectResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                },
-                "summary": "Reconnect",
-                "tags": [
-                    "health"
                 ]
             }
         },

@@ -214,7 +214,6 @@ func main() {
 
 	// Health endpoints
 	r.Get("/api/health", gw.healthCheck)
-	r.Post("/api/reconnect", gw.reconnect)
 
 	// Meal plan endpoints
 	r.Get("/api/mealplan", gw.getMealPlan)
@@ -381,19 +380,6 @@ func (gw *Gateway) healthCheck(w http.ResponseWriter, r *http.Request) {
 		log.Printf("✅ Returning healthy status")
 		writeJSONResponse(w, response, nil)
 	}
-}
-
-// @Summary Reconnect
-// @Description Reconnect to backend services
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} apipb.ReconnectResponse "Reconnect successful"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /reconnect [post]
-func (gw *Gateway) reconnect(w http.ResponseWriter, r *http.Request) {
-	resp, err := gw.backend.Reconnect(r.Context(), &emptypb.Empty{})
-	writeJSONResponse(w, resp, err)
 }
 
 // Meal plan endpoints
