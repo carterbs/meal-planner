@@ -481,13 +481,7 @@ func (gw *Gateway) finalizeMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("🔧 [GATEWAY-FINALIZE] Parsed request - Plan is nil: %v", req.Plan == nil)
-	if req.Plan != nil {
-		log.Printf("🔧 [GATEWAY-FINALIZE] Plan has %d days", len(req.Plan.Days))
-		if len(req.Plan.Days) > 0 {
-			log.Printf("🔧 [GATEWAY-FINALIZE] First day sample: %+v", req.Plan.Days[0])
-		}
-	}
+	log.Printf("🔧 [GATEWAY-FINALIZE] Parsed request - Thread ID: %s", req.ThreadId)
 
 	log.Printf("🔧 [GATEWAY-FINALIZE] Calling backend FinalizeMealPlan...")
 	resp, err := gw.backend.FinalizeMealPlan(r.Context(), &req)
