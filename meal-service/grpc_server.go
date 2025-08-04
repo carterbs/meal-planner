@@ -43,6 +43,7 @@ func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
 	return server.Services.ShoppingListService.BuildShoppingList(mealIDs)
 }
 
+
 func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Empty) (*apipb.HealthCheckResponse, error) {
 	var healthIssues []string
 	dbHealthy := false
@@ -519,8 +520,14 @@ func getCheckpointFromDB(threadID string) (*apipb.AgentCheckpoint, error) {
 	}
 
 	// Extract meal plan from state
-	mealPlanData, ok := stateData["meal_plan"].(map[string]interface{})
+	var keys []string
+	for k := range stateData {
+		keys = append(keys, k)
+	}
+	grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Checkpoint state keys: %v", keys))
+	mealPlanData, ok := stateData["mealPlan"].(map[string]interface{})
 	if !ok {
+		grpcServerLogger.Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] mealPlan key not found or wrong type. Available keys: %v", keys))
 		return nil, fmt.Errorf("meal plan is missing or invalid in checkpoint state")
 	}
 
@@ -581,4 +588,12 @@ func convertToWeeklyMealPlan(mealPlanData map[string]interface{}) (*apipb.Weekly
 	return &apipb.WeeklyMealPlan{
 		Days: days,
 	}, nil
+}
+
+func getMapKeys(m map[string]interface{}) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }

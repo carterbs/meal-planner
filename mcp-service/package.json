@@ -16,6 +16,7 @@
     "@connectrpc/connect": "^1.6.0",
     "@connectrpc/connect-node": "^1.6.0",
     "@connectrpc/connect-web": "^1.6.0",
+    "@jest/globals": "^30.0.5",
     "@mealplanner/generated": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.12.3",
     "cors": "^2.8.5",
