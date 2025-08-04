@@ -951,49 +951,6 @@ export class HealthCheckResponse extends Message$1<HealthCheckResponse> {
 }
 
 /**
- * @generated from message mealplanner.api.ReconnectResponse
- */
-export class ReconnectResponse extends Message$1<ReconnectResponse> {
-  /**
-   * @generated from field: string status = 1;
-   */
-  status = "";
-
-  /**
-   * @generated from field: string message = 2;
-   */
-  message = "";
-
-  constructor(data?: PartialMessage<ReconnectResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.ReconnectResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReconnectResponse {
-    return new ReconnectResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReconnectResponse {
-    return new ReconnectResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReconnectResponse {
-    return new ReconnectResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ReconnectResponse | PlainMessage<ReconnectResponse> | undefined, b: ReconnectResponse | PlainMessage<ReconnectResponse> | undefined): boolean {
-    return proto3.util.equals(ReconnectResponse, a, b);
-  }
-}
-
-/**
  * Meal plan endpoints
  *
  * @generated from message mealplanner.api.GetMealPlanResponse

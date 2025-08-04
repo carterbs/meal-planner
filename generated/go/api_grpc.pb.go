@@ -165,7 +165,6 @@ var LoggingService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	MealPlannerAPI_HealthCheck_FullMethodName          = "/mealplanner.api.MealPlannerAPI/HealthCheck"
-	MealPlannerAPI_Reconnect_FullMethodName            = "/mealplanner.api.MealPlannerAPI/Reconnect"
 	MealPlannerAPI_GetMealPlan_FullMethodName          = "/mealplanner.api.MealPlannerAPI/GetMealPlan"
 	MealPlannerAPI_GenerateMealPlan_FullMethodName     = "/mealplanner.api.MealPlannerAPI/GenerateMealPlan"
 	MealPlannerAPI_FinalizeMealPlan_FullMethodName     = "/mealplanner.api.MealPlannerAPI/FinalizeMealPlan"
@@ -207,7 +206,6 @@ const (
 type MealPlannerAPIClient interface {
 	// Health endpoints
 	HealthCheck(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HealthCheckResponse, error)
-	Reconnect(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ReconnectResponse, error)
 	// Meal plan endpoints
 	GetMealPlan(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetMealPlanResponse, error)
 	GenerateMealPlan(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GenerateMealPlanResponse, error)
@@ -260,16 +258,6 @@ func (c *mealPlannerAPIClient) HealthCheck(ctx context.Context, in *emptypb.Empt
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthCheckResponse)
 	err := c.cc.Invoke(ctx, MealPlannerAPI_HealthCheck_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *mealPlannerAPIClient) Reconnect(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ReconnectResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ReconnectResponse)
-	err := c.cc.Invoke(ctx, MealPlannerAPI_Reconnect_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -594,7 +582,6 @@ func (c *mealPlannerAPIClient) ListCheckpoints(ctx context.Context, in *ListChec
 type MealPlannerAPIServer interface {
 	// Health endpoints
 	HealthCheck(context.Context, *emptypb.Empty) (*HealthCheckResponse, error)
-	Reconnect(context.Context, *emptypb.Empty) (*ReconnectResponse, error)
 	// Meal plan endpoints
 	GetMealPlan(context.Context, *emptypb.Empty) (*GetMealPlanResponse, error)
 	GenerateMealPlan(context.Context, *emptypb.Empty) (*GenerateMealPlanResponse, error)
@@ -645,9 +632,6 @@ type UnimplementedMealPlannerAPIServer struct{}
 
 func (UnimplementedMealPlannerAPIServer) HealthCheck(context.Context, *emptypb.Empty) (*HealthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
-}
-func (UnimplementedMealPlannerAPIServer) Reconnect(context.Context, *emptypb.Empty) (*ReconnectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Reconnect not implemented")
 }
 func (UnimplementedMealPlannerAPIServer) GetMealPlan(context.Context, *emptypb.Empty) (*GetMealPlanResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMealPlan not implemented")
@@ -777,24 +761,6 @@ func _MealPlannerAPI_HealthCheck_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MealPlannerAPIServer).HealthCheck(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MealPlannerAPI_Reconnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MealPlannerAPIServer).Reconnect(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MealPlannerAPI_Reconnect_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MealPlannerAPIServer).Reconnect(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1367,10 +1333,6 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HealthCheck",
 			Handler:    _MealPlannerAPI_HealthCheck_Handler,
-		},
-		{
-			MethodName: "Reconnect",
-			Handler:    _MealPlannerAPI_Reconnect_Handler,
 		},
 		{
 			MethodName: "GetMealPlan",

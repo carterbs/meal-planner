@@ -259,21 +259,21 @@ export const setupFetchMocks = (options?: {
       } as Response);
     }
 
-    if (urlStr.includes('/api/health') || urlStr.includes('/api/reconnect')) {
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ status: 'ok' }),
-      } as Response);
-    }
-
-    // Default response for other endpoints
+    if (urlStr.includes('/api/health')) {
     return Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({}),
+      json: () => Promise.resolve({ status: 'ok' }),
     } as Response);
-  }) as jest.Mock;
+  }
 
-  return global.fetch;
+  // Default response for other endpoints
+  return Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  } as Response);
+}) as jest.Mock;
+
+return global.fetch;
 };
 
 // Cleanup function to reset fetch mocks

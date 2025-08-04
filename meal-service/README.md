@@ -28,7 +28,6 @@ Environment variables configure the database connection (see `.env.example`). Wh
 
 ```
 GET  /api/health              # basic health check
-POST /api/reconnect           # attempt to reconnect to the DB
 ```
 
 The remainder of the API is served under `/api/*` and handled in the `handlers` package.

@@ -1320,35 +1320,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/reconnect": {
-            "post": {
-                "description": "Reconnect to backend services",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Reconnect",
-                "responses": {
-                    "200": {
-                        "description": "Reconnect successful",
-                        "schema": {
-                            "$ref": "#/definitions/_go.ReconnectResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/shoppinglist": {
             "post": {
                 "description": "Get shopping list for meal plan",
@@ -2197,17 +2168,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "thread_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "_go.ReconnectResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "status": {
                     "type": "string"
                 }
             }

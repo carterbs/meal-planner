@@ -132,11 +132,6 @@ message HealthCheckResponse {
   map<string, bool> services = 3;
 }
 
-message ReconnectResponse {
-  string status = 1;
-  string message = 2;
-}
-
 // Meal plan endpoints
 message GetMealPlanResponse {
   WeeklyMealPlan plan = 1;
@@ -504,7 +499,6 @@ service LoggingService {
 service MealPlannerAPI {
   // Health endpoints
   rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse);
-  rpc Reconnect(google.protobuf.Empty) returns (ReconnectResponse);
 
   // Meal plan endpoints
   rpc GetMealPlan(google.protobuf.Empty) returns (GetMealPlanResponse);

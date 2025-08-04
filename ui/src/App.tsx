@@ -7,7 +7,6 @@ import {
 } from '@mealplanner/generated/dist/gateway/client/index.js';
 import {
   getHealth,
-  postReconnect,
 } from '@mealplanner/generated/dist/gateway/sdk.gen';
 
 const gatewayClient = createClient(
