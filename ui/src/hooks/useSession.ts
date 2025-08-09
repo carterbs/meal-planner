@@ -58,29 +58,32 @@ export default function useSession(startSession: () => Promise<void>) {
         if (typeof cp === 'string') {
           parsedCp = JSON.parse(cp);
         }
-        
+
         // Handle case where tuple might be string-encoded
         let tuple = parsedCp.tuple;
         if (typeof tuple === 'string') {
           tuple = JSON.parse(tuple);
         }
-        
+
         // Extract checkpoint state
         const checkpointData = (tuple as any)?.checkpoint;
         if (!checkpointData) return;
-        
+
         // Handle case where checkpoint might be a string (from API response)
-        const checkpoint = typeof checkpointData === 'string' ? JSON.parse(checkpointData) : checkpointData;
+        const checkpoint =
+          typeof checkpointData === 'string'
+            ? JSON.parse(checkpointData)
+            : checkpointData;
         const state = checkpoint.state;
         if (!state) {
           localStorage.removeItem('sessionId');
           return;
         }
 
-        const data: WorkflowState = { 
-          ...state, 
+        const data: WorkflowState = {
+          ...state,
           threadId: id,
-          shoppingList: state.shoppingList 
+          shoppingList: state.shoppingList,
         };
         setResumeData(data);
         // Fetch shopping list for resumed meal plan
@@ -88,10 +91,12 @@ export default function useSession(startSession: () => Promise<void>) {
           postShoppinglist({
             client: gatewayClient,
             body: {
-              plan: state.mealPlan.days?.map((d: GoMealPlanEntry) => {
-                const meal = typeof d.meal === 'string' ? JSON.parse(d.meal) : d.meal;
-                return meal?.id ?? 0;
-              }) ?? [],
+              plan:
+                state.mealPlan.days?.map((d: GoMealPlanEntry) => {
+                  const meal =
+                    typeof d.meal === 'string' ? JSON.parse(d.meal) : d.meal;
+                  return meal?.id ?? 0;
+                }) ?? [],
             },
           })
             .then((res) => {

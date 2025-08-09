@@ -323,7 +323,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             );
             await infoLog(JSON.stringify(checkpoint.state.mealPlan, null, 2));
             deserializedMealPlan = WeeklyMealPlan.fromJson(
-              checkpoint.state.mealPlan.toJson()
+              checkpoint.state.mealPlan.toJson(),
             );
             // DEBUGGING: Log mealPlan after deserialization
             await infoLog(
@@ -815,36 +815,41 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
     await infoLog('🍽️ [FINALIZE] Starting meal plan finalization...');
-    
+
     if (!state.threadId) {
       const errorMsg = 'No thread ID available for finalization';
       await errorLog(`❌ [FINALIZE] ${errorMsg}`);
       throw new Error(errorMsg);
     }
-    
+
     if (!state.mealPlan) {
       throw new Error('No meal plan to finalize');
     }
-    
+
     // Log the current meal plan for debugging
-    const mealIds = state.mealPlan.days
-      ?.map(day => day.meal?.id)
-      ?.filter(id => id !== undefined) || [];
-    
-    await infoLog(`🍽️ [FINALIZE] About to finalize plan for thread ${state.threadId} with ${mealIds.length} meals: [${mealIds.join(', ')}]`);
-    
+    const mealIds =
+      state.mealPlan.days
+        ?.map((day) => day.meal?.id)
+        ?.filter((id) => id !== undefined) || [];
+
+    await infoLog(
+      `🍽️ [FINALIZE] About to finalize plan for thread ${state.threadId} with ${mealIds.length} meals: [${mealIds.join(', ')}]`,
+    );
+
     try {
       const result = await this.client.callTool({
         name: 'finalizeMealPlan',
-        arguments: { threadId: state.threadId }  // Simple thread ID instead of complex mealPlan object
+        arguments: { threadId: state.threadId }, // Simple thread ID instead of complex mealPlan object
       });
-      await infoLog(`✅ [FINALIZE] MCP tool returned: ${JSON.stringify(result)}`);
+      await infoLog(
+        `✅ [FINALIZE] MCP tool returned: ${JSON.stringify(result)}`,
+      );
     } catch (error) {
       const errorMsg = `Critical failure: Could not save meal plan: ${error}`;
       await errorLog(`❌ [FINALIZE] ${errorMsg}`);
       throw new Error(errorMsg);
     }
-    
+
     return {
       currentStep: MealPlanningStep.GENERATE_SHOPPING_LIST,
       isFinalized: true,

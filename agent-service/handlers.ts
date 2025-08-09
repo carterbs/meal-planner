@@ -11,7 +11,9 @@ import {
 let agentInstance: LangGraphAgent | null = null;
 async function initializeAgent(): Promise<LangGraphAgent> {
   if (!agentInstance) {
-    agentInstance = new LangGraphAgent({ defaultParticipants: ['brad', 'shannon'] });
+    agentInstance = new LangGraphAgent({
+      defaultParticipants: ['brad', 'shannon'],
+    });
     await agentInstance.initialize();
   }
   return agentInstance;
@@ -44,9 +46,10 @@ export function planStart(
         await debugLog(`Failed to fetch initial workflow state: ${e}`);
         return callback(e as Error);
       }
-      const stateString = typeof (initialState as any).toJsonString === 'function' 
-        ? (initialState as any).toJsonString({ emitDefaultValues: true }) 
-        : JSON.stringify(initialState);
+      const stateString =
+        typeof (initialState as any).toJsonString === 'function'
+          ? (initialState as any).toJsonString({ emitDefaultValues: true })
+          : JSON.stringify(initialState);
       const response = new PlanStartResponse({
         success: true,
         message: 'Meal planning session started',
@@ -61,4 +64,4 @@ export function planStart(
       callback(new Error(`Error starting meal planning session: ${errMsg}`));
     }
   })();
-} 
+}

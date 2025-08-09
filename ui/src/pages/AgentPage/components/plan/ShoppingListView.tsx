@@ -10,7 +10,10 @@ interface ShoppingListViewProps {
   styles: AgentStyles;
 }
 
-const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, styles }) => {
+const ShoppingListView: React.FC<ShoppingListViewProps> = ({
+  items,
+  styles,
+}) => {
   return (
     <Box sx={{ mt: 2, flex: 1, overflow: 'auto' }}>
       <Box component="div" sx={{ p: 0, m: 0 }}>
@@ -27,5 +30,3 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, styles }) =>
 };
 
 export default ShoppingListView;
-
-

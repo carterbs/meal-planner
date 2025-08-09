@@ -198,9 +198,10 @@ function startAgentWorkflow(
       );
       const state = await agent.getWorkflowState(threadId);
 
-      const stateString = typeof (state as any).toJsonString === 'function'
-        ? (state as any).toJsonString({ emitDefaultValues: true })
-        : JSON.stringify(state);
+      const stateString =
+        typeof (state as any).toJsonString === 'function'
+          ? (state as any).toJsonString({ emitDefaultValues: true })
+          : JSON.stringify(state);
 
       const resp = new apipb.AgentResponse({
         success: true,
@@ -638,8 +639,8 @@ function healthCheck(
           services: {
             database: true,
             logging: true,
-            mcp: true
-          }
+            mcp: true,
+          },
         });
       } else {
         callback(null, {
@@ -648,8 +649,8 @@ function healthCheck(
           services: {
             database: dbHealthy,
             logging: loggingHealthy,
-            mcp: mcpHealthy
-          }
+            mcp: mcpHealthy,
+          },
         });
       }
     } catch (error) {

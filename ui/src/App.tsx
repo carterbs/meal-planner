@@ -5,9 +5,7 @@ import {
   createClient,
   createConfig,
 } from '@mealplanner/generated/dist/gateway/client/index.js';
-import {
-  getHealth,
-} from '@mealplanner/generated/dist/gateway/sdk.gen';
+import { getHealth } from '@mealplanner/generated/dist/gateway/sdk.gen';
 
 const gatewayClient = createClient(
   createConfig({
@@ -31,7 +29,9 @@ const App: React.FC = () => {
       const result = await getHealth({ client: gatewayClient });
       if (result.error) {
         setServices((result.error as any).services);
-        const ok = Object.values((result.error as any).services || {}).every(Boolean);
+        const ok = Object.values((result.error as any).services || {}).every(
+          Boolean,
+        );
         setHealthy(ok);
         setChecking(false);
         return ok;

@@ -186,11 +186,13 @@ export class CheckpointRepository {
           );
         }
         // Extract currentStep either from top-level "step" or state.current_step
-       if (data.state && data.state.currentStep) {
+        if (data.state && data.state.currentStep) {
           currentStep = String(data.state.currentStep);
         }
       } catch (e) {
-        await errorLog(`[CHECKPOINT] listWorkflows, error: ${e instanceof Error ? e.message : String(e)}`);
+        await errorLog(
+          `[CHECKPOINT] listWorkflows, error: ${e instanceof Error ? e.message : String(e)}`,
+        );
         // skip malformed rows but continue processing others
         continue;
       }

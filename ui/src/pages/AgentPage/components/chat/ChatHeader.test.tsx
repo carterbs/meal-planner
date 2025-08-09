@@ -22,7 +22,7 @@ describe('ChatHeader', () => {
         onOpenMealLibrary={onOpenLib}
         colors={colors}
         styles={styles}
-      />
+      />,
     );
 
     const startBtn = screen.getByTestId('start-session');
@@ -49,7 +49,7 @@ describe('ChatHeader', () => {
         onOpenMealLibrary={onOpenLib}
         colors={colors}
         styles={styles}
-      />
+      />,
     );
 
     // start button should not be present
@@ -62,5 +62,3 @@ describe('ChatHeader', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 });
-
-

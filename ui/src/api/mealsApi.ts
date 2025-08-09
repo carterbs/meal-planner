@@ -109,9 +109,7 @@ export async function getMeals(mealType?: string): Promise<Meal[]> {
 /**
  * Create a new meal
  */
-export async function createMeal(
-  mealData: Omit<GoMeal, 'id'>,
-): Promise<Meal> {
+export async function createMeal(mealData: Omit<GoMeal, 'id'>): Promise<Meal> {
   const mealPayload = {
     id: 0, // Will be assigned by backend
     ...mealData,
@@ -132,7 +130,10 @@ export async function createMeal(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  const parsedMeal =
+    typeof result.data.meal === 'string'
+      ? JSON.parse(result.data.meal)
+      : result.data.meal;
   return mapMeal(parsedMeal);
 }
 
@@ -162,7 +163,10 @@ export async function updateMeal(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  const parsedMeal =
+    typeof result.data.meal === 'string'
+      ? JSON.parse(result.data.meal)
+      : result.data.meal;
   return mapMeal(parsedMeal);
 }
 
@@ -213,7 +217,10 @@ export async function updateMealIngredient(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  const parsedMeal =
+    typeof result.data.meal === 'string'
+      ? JSON.parse(result.data.meal)
+      : result.data.meal;
   return mapMeal(parsedMeal);
 }
 
@@ -244,7 +251,10 @@ export async function createMealIngredient(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  const parsedMeal =
+    typeof result.data.meal === 'string'
+      ? JSON.parse(result.data.meal)
+      : result.data.meal;
   return mapMeal(parsedMeal);
 }
 
@@ -271,7 +281,10 @@ export async function deleteMealIngredient(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  const parsedMeal =
+    typeof result.data.meal === 'string'
+      ? JSON.parse(result.data.meal)
+      : result.data.meal;
   return mapMeal(parsedMeal);
 }
 
@@ -330,7 +343,9 @@ export async function replaceAllSteps(
   }
 }
 
-export async function goGetShoppingList(mealPlan: WeeklyMealPlan): Promise<GoShoppingListItem[]> {
+export async function goGetShoppingList(
+  mealPlan: WeeklyMealPlan,
+): Promise<GoShoppingListItem[]> {
   const request: GoGetShoppingListRequest = {
     plan: mealPlan.days.filter((day) => day.meal).map((day) => day.meal!.id),
   };

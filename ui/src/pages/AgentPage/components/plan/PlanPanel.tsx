@@ -31,7 +31,8 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
   const styles = useMemo(() => getAgentPageStyles(colors), [colors]);
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
 
-  const openMenu = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
+  const openMenu = (e: React.MouseEvent<HTMLElement>) =>
+    setAnchorEl(e.currentTarget);
   const closeMenu = () => setAnchorEl(null);
 
   const hasShopping = !!shoppingList && shoppingList.length > 0;
@@ -53,11 +54,15 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
                     borderRadius: '20px',
                     px: 2,
                     py: 0.5,
-                    backgroundColor: currentTab === 0 ? colors.accent2 : 'transparent',
+                    backgroundColor:
+                      currentTab === 0 ? colors.accent2 : 'transparent',
                     borderColor: colors.accent2,
                     color: currentTab === 0 ? '#ffffff' : colors.accent2,
                     '&:hover': {
-                      backgroundColor: currentTab === 0 ? colors.accent2 : `${colors.accent2}10`,
+                      backgroundColor:
+                        currentTab === 0
+                          ? colors.accent2
+                          : `${colors.accent2}10`,
                     },
                   }}
                 >
@@ -74,11 +79,15 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
                     borderRadius: '20px',
                     px: 2,
                     py: 0.5,
-                    backgroundColor: currentTab === 1 ? colors.accent2 : 'transparent',
+                    backgroundColor:
+                      currentTab === 1 ? colors.accent2 : 'transparent',
                     borderColor: colors.accent2,
                     color: currentTab === 1 ? '#ffffff' : colors.accent2,
                     '&:hover': {
-                      backgroundColor: currentTab === 1 ? colors.accent2 : `${colors.accent2}10`,
+                      backgroundColor:
+                        currentTab === 1
+                          ? colors.accent2
+                          : `${colors.accent2}10`,
                     },
                     '&:disabled': { borderColor: '#cccccc', color: '#cccccc' },
                   }}
@@ -92,7 +101,9 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
                 onOpen={openMenu}
                 onClose={closeMenu}
                 onCopyMealPlan={mealPlan ? onCopyMealPlan : undefined}
-                onCopyShoppingList={hasShopping ? onCopyShoppingList : undefined}
+                onCopyShoppingList={
+                  hasShopping ? onCopyShoppingList : undefined
+                }
                 canCopyMealPlan={!!mealPlan}
                 canCopyShoppingList={hasShopping}
                 colors={colors}
@@ -100,7 +111,11 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
             </Box>
 
             {currentTab === 0 && mealPlan && (
-              <MealPlanDisplay plan={mealPlan} highlights={highlights} colors={colors} />
+              <MealPlanDisplay
+                plan={mealPlan}
+                highlights={highlights}
+                colors={colors}
+              />
             )}
 
             {currentTab === 1 && hasShopping && (
@@ -114,7 +129,8 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
                   No meal plan generated yet
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
-                  Start a conversation with the assistant to generate a personalized meal plan.
+                  Start a conversation with the assistant to generate a
+                  personalized meal plan.
                 </Typography>
               </Box>
             )}
@@ -126,7 +142,8 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
               No meal plan generated yet
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
-              Start a conversation with the assistant to generate a personalized meal plan.
+              Start a conversation with the assistant to generate a personalized
+              meal plan.
             </Typography>
           </Box>
         )}
@@ -136,5 +153,3 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
 };
 
 export default PlanPanel;
-
-

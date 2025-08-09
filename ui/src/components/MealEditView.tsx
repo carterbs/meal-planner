@@ -51,10 +51,12 @@ const MealEditView: React.FC<MealEditViewProps> = ({
   const theme = useTheme();
   const [localMeal, setLocalMeal] = useState<Meal>(meal);
   const [editMode, setEditMode] = useState(false);
-  const [editingIngredientIndex, setEditingIngredientIndex] =
-    useState<number | null>(null);
-  const [editedIngredient, setEditedIngredient] =
-    useState<Ingredient | null>(null);
+  const [editingIngredientIndex, setEditingIngredientIndex] = useState<
+    number | null
+  >(null);
+  const [editedIngredient, setEditedIngredient] = useState<Ingredient | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -80,7 +82,9 @@ const MealEditView: React.FC<MealEditViewProps> = ({
   };
 
   const startEditing = (ingredient: Ingredient) => {
-    const index = localMeal.ingredients.findIndex((i) => i.id === ingredient.id);
+    const index = localMeal.ingredients.findIndex(
+      (i) => i.id === ingredient.id,
+    );
     if (index !== -1) {
       setEditingIngredientIndex(index);
       setEditedIngredient(new Ingredient(ingredient));
@@ -97,10 +101,12 @@ const MealEditView: React.FC<MealEditViewProps> = ({
     value: string | number,
   ) => {
     if (!editedIngredient) return;
-    setEditedIngredient(new Ingredient({
-      ...editedIngredient,
-      [field]: value,
-    }));
+    setEditedIngredient(
+      new Ingredient({
+        ...editedIngredient,
+        [field]: value,
+      }),
+    );
   };
 
   const saveIngredient = () => {
@@ -117,7 +123,11 @@ const MealEditView: React.FC<MealEditViewProps> = ({
 
     const apiCall = isNew
       ? createMealIngredient(localMeal.id, ingredientForApi)
-      : updateMealIngredient(localMeal.id, editedIngredient.id, ingredientForApi);
+      : updateMealIngredient(
+          localMeal.id,
+          editedIngredient.id,
+          ingredientForApi,
+        );
 
     apiCall
       .then((updated) => {
@@ -125,7 +135,11 @@ const MealEditView: React.FC<MealEditViewProps> = ({
         onMealUpdated(updated);
         setEditingIngredientIndex(null);
         setEditedIngredient(null);
-        showToast(isNew ? 'Ingredient added successfully' : 'Ingredient updated successfully');
+        showToast(
+          isNew
+            ? 'Ingredient added successfully'
+            : 'Ingredient updated successfully',
+        );
       })
       .catch((err) => {
         console.error(err);
@@ -137,8 +151,13 @@ const MealEditView: React.FC<MealEditViewProps> = ({
     const isNew = ingredientId < 0;
 
     if (isNew) {
-      const updatedIngredients = localMeal.ingredients.filter((i) => i.id !== ingredientId);
-      const updatedMeal = new Meal({ ...localMeal, ingredients: updatedIngredients });
+      const updatedIngredients = localMeal.ingredients.filter(
+        (i) => i.id !== ingredientId,
+      );
+      const updatedMeal = new Meal({
+        ...localMeal,
+        ingredients: updatedIngredients,
+      });
       setLocalMeal(updatedMeal);
       onMealUpdated(updatedMeal);
       showToast('Ingredient removed');
@@ -184,7 +203,9 @@ const MealEditView: React.FC<MealEditViewProps> = ({
       const mealData: GoMeal = {
         ...mealDataWithoutTimestamp,
         // Convert protobuf Timestamp to RFC3339 string if it exists
-        lastPlanned: lastPlanned ? lastPlanned.toDate().toISOString() : undefined
+        lastPlanned: lastPlanned
+          ? lastPlanned.toDate().toISOString()
+          : undefined,
       };
 
       const result = await updateMealApi(updatedMeal.id, mealData);
@@ -274,7 +295,9 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                       value={localMeal.mealType}
                       label="Meal Type"
                       onChange={(e) =>
-                        setLocalMeal(new Meal({ ...localMeal, mealType: e.target.value }))
+                        setLocalMeal(
+                          new Meal({ ...localMeal, mealType: e.target.value }),
+                        )
                       }
                     >
                       <MenuItem value="breakfast">Breakfast</MenuItem>
@@ -291,17 +314,24 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                     fullWidth
                     value={
                       localMeal.lastPlanned
-                        ? localMeal.lastPlanned.toDate().toISOString().split('T')[0]
+                        ? localMeal.lastPlanned
+                            .toDate()
+                            .toISOString()
+                            .split('T')[0]
                         : ''
                     }
                     onChange={(e) => {
                       const dateValue = e.target.value;
-                      setLocalMeal(new Meal({
-                        ...localMeal,
-                        lastPlanned: dateValue
-                          ? Timestamp.fromDate(new Date(dateValue + 'T00:00:00.000Z'))
-                          : undefined,
-                      }));
+                      setLocalMeal(
+                        new Meal({
+                          ...localMeal,
+                          lastPlanned: dateValue
+                            ? Timestamp.fromDate(
+                                new Date(dateValue + 'T00:00:00.000Z'),
+                              )
+                            : undefined,
+                        }),
+                      );
                     }}
                     InputLabelProps={{
                       shrink: true,
@@ -313,7 +343,11 @@ const MealEditView: React.FC<MealEditViewProps> = ({
           )}
 
           {/* Meta chips */}
-          <Stack direction="row" spacing={2} sx={{ mb: 3, flexWrap: 'wrap', gap: 1 }}>
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ mb: 3, flexWrap: 'wrap', gap: 1 }}
+          >
             <Box
               sx={{
                 display: 'inline-flex',
@@ -327,7 +361,8 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                 fontSize: '0.875rem',
               }}
             >
-              {localMeal.mealType.charAt(0).toUpperCase() + localMeal.mealType.slice(1)}
+              {localMeal.mealType.charAt(0).toUpperCase() +
+                localMeal.mealType.slice(1)}
             </Box>
             <Box
               sx={{
@@ -393,14 +428,27 @@ const MealEditView: React.FC<MealEditViewProps> = ({
               Ingredients:
             </Typography>
             {editMode && (
-              <Button variant="outlined" onClick={addIngredient} startIcon={<AddIcon />} size="small">
+              <Button
+                variant="outlined"
+                onClick={addIngredient}
+                startIcon={<AddIcon />}
+                size="small"
+              >
                 Add Ingredient
               </Button>
             )}
           </Box>
 
           {localMeal.ingredients.length > 0 ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 2, mb: 4 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
+                mt: 2,
+                mb: 4,
+              }}
+            >
               {localMeal.ingredients.map((ing, index) => (
                 <Box
                   key={ing.id || index}
@@ -431,7 +479,9 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                             size="small"
                             fullWidth
                             value={editedIngredient?.name || ''}
-                            onChange={(e) => handleIngredientChange('name', e.target.value)}
+                            onChange={(e) =>
+                              handleIngredientChange('name', e.target.value)
+                            }
                           />
                         </Grid>
                         <Grid item xs={3}>
@@ -441,7 +491,12 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                             type="number"
                             fullWidth
                             value={editedIngredient?.quantity || 0}
-                            onChange={(e) => handleIngredientChange('quantity', parseFloat(e.target.value))}
+                            onChange={(e) =>
+                              handleIngredientChange(
+                                'quantity',
+                                parseFloat(e.target.value),
+                              )
+                            }
                           />
                         </Grid>
                         <Grid item xs={3}>
@@ -450,28 +505,59 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                             size="small"
                             fullWidth
                             value={editedIngredient?.unit || ''}
-                            onChange={(e) => handleIngredientChange('unit', e.target.value)}
+                            onChange={(e) =>
+                              handleIngredientChange('unit', e.target.value)
+                            }
                           />
                         </Grid>
                       </Grid>
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-                        <Button variant="contained" color="primary" onClick={saveIngredient} sx={{ borderRadius: 6 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          gap: 1,
+                          justifyContent: 'flex-end',
+                          mt: 1,
+                        }}
+                      >
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={saveIngredient}
+                          sx={{ borderRadius: 6 }}
+                        >
                           Save
                         </Button>
-                        <Button variant="outlined" onClick={cancelIngredientEdit} sx={{ borderRadius: 6 }}>
+                        <Button
+                          variant="outlined"
+                          onClick={cancelIngredientEdit}
+                          sx={{ borderRadius: 6 }}
+                        >
                           Cancel
                         </Button>
                       </Box>
                     </Box>
                   ) : (
                     <>
-                      <Typography fontWeight={500}>{`${ing.quantity ? ing.quantity + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`.trim()}</Typography>
+                      <Typography fontWeight={500}>
+                        {`${ing.quantity ? ing.quantity + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`.trim()}
+                      </Typography>
                       {editMode && (
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Button variant="outlined" onClick={() => startEditing(ing)} size="small" sx={{ borderRadius: 6 }}>
+                          <Button
+                            variant="outlined"
+                            onClick={() => startEditing(ing)}
+                            size="small"
+                            sx={{ borderRadius: 6 }}
+                          >
                             Edit
                           </Button>
-                          <Button variant="outlined" color="error" onClick={() => deleteIngredient(ing.id)} size="small" sx={{ borderRadius: 6 }}>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => deleteIngredient(ing.id)}
+                            size="small"
+                            sx={{ borderRadius: 6 }}
+                          >
                             Delete
                           </Button>
                         </Box>
@@ -482,7 +568,11 @@ const MealEditView: React.FC<MealEditViewProps> = ({
               ))}
             </Box>
           ) : (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 4, fontStyle: 'italic' }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1, mb: 4, fontStyle: 'italic' }}
+            >
               No ingredients added yet.
             </Typography>
           )}
@@ -495,15 +585,21 @@ const MealEditView: React.FC<MealEditViewProps> = ({
               </Typography>
               <StepsEditor
                 steps={localMeal.steps || []}
-                onChange={(steps) => editMode && setLocalMeal(new Meal({ ...localMeal, steps }))}
+                onChange={(steps) =>
+                  editMode && setLocalMeal(new Meal({ ...localMeal, steps }))
+                }
                 readOnly={!editMode}
               />
               {editMode && (
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                <Box
+                  sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}
+                >
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => handleSaveSteps(localMeal.id, localMeal.steps || [])}
+                    onClick={() =>
+                      handleSaveSteps(localMeal.id, localMeal.steps || [])
+                    }
                     disabled={loading}
                   >
                     Save Steps
@@ -518,4 +614,4 @@ const MealEditView: React.FC<MealEditViewProps> = ({
   );
 };
 
-export default MealEditView; 
+export default MealEditView;

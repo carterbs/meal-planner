@@ -24,7 +24,7 @@ describe('ShareMenu', () => {
         canCopyMealPlan={true}
         canCopyShoppingList={true}
         colors={colors}
-      />
+      />,
     );
 
     const openBtn = screen.getByTestId('share-menu-button');
@@ -32,5 +32,3 @@ describe('ShareMenu', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 });
-
-

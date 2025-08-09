@@ -71,5 +71,3 @@ const ShareMenu: React.FC<ShareMenuProps> = ({
 };
 
 export default ShareMenu;
-
-

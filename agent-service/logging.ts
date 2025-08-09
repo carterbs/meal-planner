@@ -15,7 +15,7 @@ export async function initLogging(_serviceName = 'agent') {
     );
     initialized = true;
     return;
-}
+  }
   const baseUrl = process.env.LOGGING_SERVICE_ADDR || 'localhost:50052';
   // Retry logic for connecting to logging service
   const maxRetries = 30; // 30 attempts
@@ -26,20 +26,25 @@ export async function initLogging(_serviceName = 'agent') {
         `[AGENT] Attempting to connect to logging service (attempt ${attempt}/${maxRetries})...`,
       );
       console.log(`[AGENT] Using baseUrl: "${baseUrl}"`);
-      console.log(`[AGENT] Original LOGGING_SERVICE_ADDR: "${process.env.LOGGING_SERVICE_ADDR}"`);
-      console.log(`[AGENT] baseUrl type: ${typeof baseUrl}, value: "${baseUrl}"`);
-      
+      console.log(
+        `[AGENT] Original LOGGING_SERVICE_ADDR: "${process.env.LOGGING_SERVICE_ADDR}"`,
+      );
+      console.log(
+        `[AGENT] baseUrl type: ${typeof baseUrl}, value: "${baseUrl}"`,
+      );
+
       if (!baseUrl || baseUrl === 'null' || baseUrl === 'undefined') {
         throw new Error(`Invalid baseUrl: "${baseUrl}"`);
       }
-      
+
       // gRPC over HTTP/2 requires a protocol scheme
-      const grpcUrl = baseUrl.startsWith('http://') || baseUrl.startsWith('https://') 
-        ? baseUrl 
-        : `http://${baseUrl}`;
-      
+      const grpcUrl =
+        baseUrl.startsWith('http://') || baseUrl.startsWith('https://')
+          ? baseUrl
+          : `http://${baseUrl}`;
+
       console.log(`[AGENT] Creating gRPC transport with URL: "${grpcUrl}"`);
-      
+
       const transport = createGrpcTransport({
         baseUrl: grpcUrl,
         httpVersion: '2',
