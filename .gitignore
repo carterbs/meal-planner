@@ -32,3 +32,12 @@ api-gateway/api-gateway
 meal-service/mealplanner
 logging-service/loggingservice
 meal-service/tmp/main
+
+# Test coverage reports
+ui/coverage/
+**/coverage/
+.nyc_output/
+lcov.info
+**/lcov.info
+**/lcov-report/
+**/coverage-final.json
