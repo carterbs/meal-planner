@@ -32,7 +32,8 @@ import {
 
 import type { GoMeal } from '@mealplanner/generated/dist/gateway/types.gen';
 
-import { Meal, Ingredient, Step } from '../types';
+import { Meal, Ingredient, Step } from '@mealplanner/generated';
+import { Timestamp } from '@bufbuild/protobuf';
 
 interface MealEditViewProps {
   meal: Meal;
@@ -62,17 +63,17 @@ const MealEditView: React.FC<MealEditViewProps> = ({
 
   /** Ingredient helpers */
   const addIngredient = () => {
-    const newIngredient: Ingredient = {
+    const newIngredient = new Ingredient({
       id: -Date.now(),
-      mealId: localMeal.id!,
+      mealId: localMeal.id,
       name: '',
       quantity: 0,
       unit: '',
-    };
-    const updatedMeal = {
+    });
+    const updatedMeal = new Meal({
       ...localMeal,
       ingredients: [...localMeal.ingredients, newIngredient],
-    };
+    });
     setLocalMeal(updatedMeal);
     setEditingIngredientIndex(updatedMeal.ingredients.length - 1);
     setEditedIngredient(newIngredient);
@@ -82,7 +83,7 @@ const MealEditView: React.FC<MealEditViewProps> = ({
     const index = localMeal.ingredients.findIndex((i) => i.id === ingredient.id);
     if (index !== -1) {
       setEditingIngredientIndex(index);
-      setEditedIngredient({ ...ingredient });
+      setEditedIngredient(new Ingredient(ingredient));
     }
   };
 
@@ -96,27 +97,27 @@ const MealEditView: React.FC<MealEditViewProps> = ({
     value: string | number,
   ) => {
     if (!editedIngredient) return;
-    setEditedIngredient({
+    setEditedIngredient(new Ingredient({
       ...editedIngredient,
       [field]: value,
-    });
+    }));
   };
 
   const saveIngredient = () => {
     if (editingIngredientIndex === null || !editedIngredient) return;
 
-    const isNew = editedIngredient.id! < 0;
+    const isNew = editedIngredient.id < 0;
     const ingredientForApi = {
-      id: isNew ? 0 : editedIngredient.id!,
-      mealId: localMeal.id!,
+      id: isNew ? 0 : editedIngredient.id,
+      mealId: localMeal.id,
       name: editedIngredient.name,
       quantity: editedIngredient.quantity,
       unit: editedIngredient.unit,
     };
 
     const apiCall = isNew
-      ? createMealIngredient(localMeal.id!, ingredientForApi)
-      : updateMealIngredient(localMeal.id!, editedIngredient.id!, ingredientForApi);
+      ? createMealIngredient(localMeal.id, ingredientForApi)
+      : updateMealIngredient(localMeal.id, editedIngredient.id, ingredientForApi);
 
     apiCall
       .then((updated) => {
@@ -137,14 +138,14 @@ const MealEditView: React.FC<MealEditViewProps> = ({
 
     if (isNew) {
       const updatedIngredients = localMeal.ingredients.filter((i) => i.id !== ingredientId);
-      const updatedMeal = { ...localMeal, ingredients: updatedIngredients };
+      const updatedMeal = new Meal({ ...localMeal, ingredients: updatedIngredients });
       setLocalMeal(updatedMeal);
       onMealUpdated(updatedMeal);
       showToast('Ingredient removed');
       return;
     }
 
-    deleteMealIngredient(localMeal.id!, ingredientId)
+    deleteMealIngredient(localMeal.id, ingredientId)
       .then((updated) => {
         setLocalMeal(updated);
         onMealUpdated(updated);
@@ -161,7 +162,7 @@ const MealEditView: React.FC<MealEditViewProps> = ({
     try {
       setLoading(true);
       await replaceAllSteps(mealId, steps);
-      const updatedMeal = { ...localMeal, steps };
+      const updatedMeal = new Meal({ ...localMeal, steps });
       setLocalMeal(updatedMeal);
       onMealUpdated(updatedMeal);
       showToast('Recipe steps saved successfully');
@@ -182,11 +183,8 @@ const MealEditView: React.FC<MealEditViewProps> = ({
       const { lastPlanned, ...mealDataWithoutTimestamp } = updatedMeal;
       const mealData: GoMeal = {
         ...mealDataWithoutTimestamp,
-        // Convert string lastPlanned to TimestamppbTimestamp if it exists
-        lastPlanned: lastPlanned ? {
-          seconds: Math.floor(new Date(lastPlanned).getTime() / 1000),
-          nanos: 0
-        } : undefined
+        // Convert protobuf Timestamp to RFC3339 string if it exists
+        lastPlanned: lastPlanned ? lastPlanned.toDate().toISOString() : undefined
       };
 
       const result = await updateMealApi(updatedMeal.id, mealData);
@@ -276,7 +274,7 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                       value={localMeal.mealType}
                       label="Meal Type"
                       onChange={(e) =>
-                        setLocalMeal({ ...localMeal, mealType: e.target.value })
+                        setLocalMeal(new Meal({ ...localMeal, mealType: e.target.value }))
                       }
                     >
                       <MenuItem value="breakfast">Breakfast</MenuItem>
@@ -293,17 +291,17 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                     fullWidth
                     value={
                       localMeal.lastPlanned
-                        ? localMeal.lastPlanned.split('T')[0]
+                        ? localMeal.lastPlanned.toDate().toISOString().split('T')[0]
                         : ''
                     }
                     onChange={(e) => {
                       const dateValue = e.target.value;
-                      setLocalMeal({
+                      setLocalMeal(new Meal({
                         ...localMeal,
                         lastPlanned: dateValue
-                          ? new Date(dateValue + 'T00:00:00.000Z').toISOString()
+                          ? Timestamp.fromDate(new Date(dateValue + 'T00:00:00.000Z'))
                           : undefined,
-                      });
+                      }));
                     }}
                     InputLabelProps={{
                       shrink: true,
@@ -473,7 +471,7 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                           <Button variant="outlined" onClick={() => startEditing(ing)} size="small" sx={{ borderRadius: 6 }}>
                             Edit
                           </Button>
-                          <Button variant="outlined" color="error" onClick={() => deleteIngredient(ing.id!)} size="small" sx={{ borderRadius: 6 }}>
+                          <Button variant="outlined" color="error" onClick={() => deleteIngredient(ing.id)} size="small" sx={{ borderRadius: 6 }}>
                             Delete
                           </Button>
                         </Box>
@@ -497,7 +495,7 @@ const MealEditView: React.FC<MealEditViewProps> = ({
               </Typography>
               <StepsEditor
                 steps={localMeal.steps || []}
-                onChange={(steps) => editMode && setLocalMeal({ ...localMeal, steps })}
+                onChange={(steps) => editMode && setLocalMeal(new Meal({ ...localMeal, steps }))}
                 readOnly={!editMode}
               />
               {editMode && (
@@ -505,7 +503,7 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => handleSaveSteps(localMeal.id!, localMeal.steps || [])}
+                    onClick={() => handleSaveSteps(localMeal.id, localMeal.steps || [])}
                     disabled={loading}
                   >
                     Save Steps

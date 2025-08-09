@@ -18,7 +18,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Ingredient, Step, Meal } from './types';
+import { Ingredient, Step, Meal } from '@mealplanner/generated';
 import { createMeal } from './api';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RepeatIcon from '@mui/icons-material/Repeat';
@@ -28,18 +28,20 @@ interface AddRecipeFormProps {
   onRecipeAdded: () => void;
 }
 
-const initialMealState: Omit<Meal, 'id'> = {
-  name: '',
-  effort: 3,
-  hasRedMeat: false,
-  url: '',
-  mealType: 'dinner',
-  ingredients: [],
-  steps: [],
+const createInitialMealState = (): Omit<Meal, 'id'> => {
+  return new Meal({
+    name: '',
+    effort: 3,
+    hasRedMeat: false,
+    url: '',
+    mealType: 'dinner',
+    ingredients: [],
+    steps: [],
+  }) as Omit<Meal, 'id'>;
 };
 
 const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
-  const [meal, setMeal] = useState<Omit<Meal, 'id'>>(initialMealState);
+  const [meal, setMeal] = useState<Omit<Meal, 'id'>>(createInitialMealState());
   const [rawIngredients, setRawIngredients] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
@@ -101,10 +103,12 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
   const doubleIngredientQuantities = () => {
     // Double quantities in already processed ingredients
-    const doubledIngredients = meal.ingredients.map((ing: Ingredient) => ({
-      ...ing,
-      quantity: ing.quantity * 2,
-    }));
+    const doubledIngredients = meal.ingredients.map((ing: Ingredient) => 
+      new Ingredient({
+        ...ing,
+        quantity: ing.quantity * 2,
+      })
+    );
 
     setMeal({ ...meal, ingredients: doubledIngredients });
 
@@ -199,22 +203,26 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
           quantity = 0;
         }
 
-        return {
+        return new Ingredient({
+          id: 0, // Will be excluded by Omit
+          mealId: 0, // Will be excluded by Omit
           name: name,
           quantity: quantity,
           unit: unit,
-        };
+        });
       });
 
     setMeal({
       ...meal,
       ingredients: [
         ...meal.ingredients,
-        ...newIngredients.map((ing) => ({
-          ...ing,
-          id: -1, // Temporary ID, will be assigned by backend
-          mealId: 0, // Will be set by backend
-        })),
+        ...newIngredients.map((ing) => 
+          new Ingredient({
+            ...ing,
+            id: -1, // Temporary ID, will be assigned by backend
+            mealId: 0, // Will be set by backend
+          })
+        ),
       ],
     });
     setRawIngredients('');
@@ -263,7 +271,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
       console.log('Successfully created meal:', createdMeal);
 
       setSuccess(true);
-      setMeal(initialMealState);
+      setMeal(createInitialMealState());
       setRawIngredients('');
       onRecipeAdded();
     } catch (err) {

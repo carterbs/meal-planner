@@ -34,6 +34,7 @@
     "test:watch": "react-scripts test --env=jsdom",
     "coverage": "react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "dead-code": "ts-prune",

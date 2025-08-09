@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import MealPlanDisplay from './MealPlanDisplay';
-import type { WeeklyMealPlan } from '../types';
+import type { WeeklyMealPlan } from '@mealplanner/generated';
 import {
   WeeklyMealPlan as WeeklyMealPlanClass,
   MealPlanEntry,

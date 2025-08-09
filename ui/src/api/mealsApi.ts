@@ -21,7 +21,9 @@ import {
   postShoppinglist,
   GoGetShoppingListRequest,
 } from '@mealplanner/generated/dist/gateway/index.js';
-import { Meal, Step, WeeklyMealPlan } from '../types';
+import { Meal, Step, Ingredient } from '@mealplanner/generated';
+import type { WeeklyMealPlan } from '@mealplanner/generated';
+import { Timestamp } from '@bufbuild/protobuf';
 
 // Create the API gateway client
 
@@ -29,38 +31,52 @@ import { Meal, Step, WeeklyMealPlan } from '../types';
  * Map GoStep to UI Step
  */
 function mapStep(s: GoStep): Step {
-  return {
-    id: s.id,
-    mealId: s.mealId,
-    stepNumber: s.stepNumber,
+  return new Step({
+    id: s.id || 0,
+    mealId: s.mealId || 0,
+    stepNumber: s.stepNumber || 0,
     instruction: s.instruction || '',
-  };
+  });
+}
+
+/**
+ * Map GoIngredient to UI Ingredient
+ */
+function mapIngredient(i: GoIngredient): Ingredient {
+  return new Ingredient({
+    id: i.id || 0,
+    mealId: i.mealId || 0,
+    name: i.name || '',
+    quantity: i.quantity || 0,
+    unit: i.unit || '',
+  });
 }
 
 /**
  * Map GoMeal to UI Meal
  */
 function mapMeal(m: GoMeal): Meal {
-  // Type assertion to access lastPlanned field that exists in runtime but not in generated types
-  const mealWithLastPlanned = m as GoMeal & { lastPlanned?: string };
+  // Convert lastPlanned to protobuf Timestamp if present and string-like
+  let lastPlannedTimestamp: Timestamp | undefined;
+  const maybeLastPlanned: unknown = (m as any).lastPlanned;
+  if (typeof maybeLastPlanned === 'string' && maybeLastPlanned) {
+    const date = new Date(maybeLastPlanned);
+    if (!isNaN(date.getTime())) {
+      lastPlannedTimestamp = Timestamp.fromDate(date);
+    }
+  }
 
-  return {
-    id: m.id,
+  return new Meal({
+    id: m.id || 0,
     name: m.name || '',
     effort: m.effort || 0,
-    lastPlanned: mealWithLastPlanned.lastPlanned,
+    lastPlanned: lastPlannedTimestamp,
     hasRedMeat: m.hasRedMeat || false,
     url: m.url || '',
     mealType: m.mealType || '',
-    ingredients: (m.ingredients || []).map((i) => ({
-      id: i.id,
-      mealId: i.mealId,
-      name: i.name || '',
-      quantity: i.quantity || 0,
-      unit: i.unit || '',
-    })),
+    ingredients: (m.ingredients || []).map(mapIngredient),
     steps: (m.steps || []).map(mapStep),
-  };
+  });
 }
 
 // Create the API gateway client
@@ -94,16 +110,16 @@ export async function getMeals(mealType?: string): Promise<Meal[]> {
  * Create a new meal
  */
 export async function createMeal(
-  meal: Omit<GoMeal, 'id'>,
+  mealData: Omit<GoMeal, 'id'>,
 ): Promise<Meal> {
-  const mealData = {
+  const mealPayload = {
     id: 0, // Will be assigned by backend
-    ...meal,
+    ...mealData,
   };
 
   const result = await postMeals({
     client: gatewayClient,
-    body: { meal: mealData },
+    body: { meal: JSON.stringify(mealPayload) },
   });
 
   if (!result.data || result.error) {
@@ -115,7 +131,9 @@ export async function createMeal(
     throw new Error('No meal returned from create request');
   }
 
-  return mapMeal(result.data.meal);
+  // Parse the meal from string if needed
+  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  return mapMeal(parsedMeal);
 }
 
 /**
@@ -123,14 +141,14 @@ export async function createMeal(
  */
 export async function updateMeal(
   mealId: number,
-  meal: GoMeal,
+  mealData: GoMeal,
 ): Promise<Meal> {
   const result = await putMealsByMealId({
     client: gatewayClient,
     path: { mealId: mealId },
     body: {
       mealId: mealId,
-      meal,
+      meal: JSON.stringify(mealData),
     },
   });
 
@@ -143,7 +161,9 @@ export async function updateMeal(
     throw new Error('No meal returned from update request');
   }
 
-  return mapMeal(result.data.meal);
+  // Parse the meal from string if needed
+  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  return mapMeal(parsedMeal);
 }
 
 /**
@@ -176,7 +196,7 @@ export async function updateMealIngredient(
     client: gatewayClient,
     path: { mealId: mealId.toString(), ingredientId: ingredientId.toString() },
     body: {
-      ingredient,
+      ingredient: JSON.stringify(ingredient),
       ingredientId: ingredientId,
       mealId: mealId,
     },
@@ -192,7 +212,9 @@ export async function updateMealIngredient(
     throw new Error('No meal returned from update ingredient request');
   }
 
-  return mapMeal(result.data.meal);
+  // Parse the meal from string if needed
+  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  return mapMeal(parsedMeal);
 }
 
 /**
@@ -206,7 +228,7 @@ export async function createMealIngredient(
     client: gatewayClient,
     path: { mealId: mealId.toString() },
     body: {
-      ingredient,
+      ingredient: JSON.stringify(ingredient),
       mealId: mealId,
     },
   });
@@ -221,7 +243,9 @@ export async function createMealIngredient(
     throw new Error('No meal returned from create ingredient request');
   }
 
-  return mapMeal(result.data.meal);
+  // Parse the meal from string if needed
+  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  return mapMeal(parsedMeal);
 }
 
 /**
@@ -246,7 +270,9 @@ export async function deleteMealIngredient(
     throw new Error('No meal returned from delete ingredient request');
   }
 
-  return mapMeal(result.data.meal);
+  // Parse the meal from string if needed
+  const parsedMeal = typeof result.data.meal === 'string' ? JSON.parse(result.data.meal) : result.data.meal;
+  return mapMeal(parsedMeal);
 }
 
 /**

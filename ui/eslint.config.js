@@ -59,14 +59,14 @@ module.exports = [
       'react/jsx-uses-vars': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      
+
       // TypeScript unused variables and imports
       '@typescript-eslint/no-unused-vars': ['error', {
         'argsIgnorePattern': '^_',
         'varsIgnorePattern': '^_',
         'ignoreRestSiblings': true,
       }],
-      
+
       // Unused imports detection
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [
@@ -78,17 +78,61 @@ module.exports = [
           'argsIgnorePattern': '^_',
         },
       ],
-      
+
       // Disable the default no-unused-vars rule in favor of TypeScript version
       'no-unused-vars': 'off',
-      
+
       // Additional TypeScript rules for dead code
       '@typescript-eslint/no-unused-expressions': 'error',
       '@typescript-eslint/no-unnecessary-condition': 'off', // Often defensive programming
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-      
+      // Discourage type assertions in app source (allow in tests)
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: 'TSAsExpression',
+          message:
+            'Avoid type assertions for API types. Prefer runtime guards or generated classes.',
+        },
+      ],
+      // Enforce generated types as the only source of API models in src/
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '../types',
+              message:
+                'Import API types from @mealplanner/generated instead of ../types in src/.',
+            },
+            {
+              name: './types',
+              message:
+                'Import API types from @mealplanner/generated instead of ./types in src/.',
+            },
+            {
+              name: '../types.ts',
+              message:
+                'Import API types from @mealplanner/generated instead of ../types.ts in src/.',
+            },
+            {
+              name: './types.ts',
+              message:
+                'Import API types from @mealplanner/generated instead of ./types.ts in src/.',
+            },
+          ],
+        },
+      ],
+
       // React hooks - allow missing dependencies for intentional patterns
       'react-hooks/exhaustive-deps': 'off',
+    },
+  },
+  // Allow limited assertions in transitional files only
+  {
+    files: ['src/api/agentApi.ts', 'src/hooks/useSession.ts'],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
   {
@@ -124,6 +168,7 @@ module.exports = [
     rules: {
       // Relax some rules for test files
       '@typescript-eslint/no-unused-expressions': 'off',
+      'no-restricted-syntax': 'off',
     },
   },
 ];
