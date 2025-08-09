@@ -26,6 +26,7 @@ help:
 lint:
 	@echo "Running linting checks..."
 	@./scripts/lint.sh
+	cd ui && yarn format
 
 # Generate Swagger/OpenAPI documentation
 # Depends on lint to ensure code quality before generation
