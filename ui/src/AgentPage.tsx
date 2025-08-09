@@ -1,11 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Button, TextField, Typography, Paper, Avatar, Menu, MenuItem, IconButton } from '@mui/material';
-import {
-  RestaurantMenu as RestaurantMenuIcon,
-  ExitToApp as ExitToAppIcon,
-  IosShare as ShareIcon,
-  MenuBook as MenuBookIcon,
-} from '@mui/icons-material';
+import { Box, Button, Typography, Paper, Menu, MenuItem, IconButton } from '@mui/material';
+import { RestaurantMenu as RestaurantMenuIcon, IosShare as ShareIcon } from '@mui/icons-material';
 import MealPlanDisplay from './components/MealPlanDisplay';
 import { MealManagementTab } from './components/MealManagementTab';
 import { Toast } from './components/Toast';
@@ -19,7 +14,7 @@ import {
   SessionInfo,
   goGetShoppingList,
 } from './api';
-import TypingIndicator from './components/TypingIndicator';
+// TypingIndicator is now rendered inside ChatMessages
 import useSession from './hooks/useSession';
 
 // no local style typings here; styles come from theme helpers
@@ -30,6 +25,7 @@ import useMealPlanHighlights from './hooks/useMealPlanHighlights';
 // Removed unused gateway client
 
 import { colorSchemes, getAgentPageStyles } from './theme';
+import ChatPanel from './pages/AgentPage/components/chat/ChatPanel';
 
 // Clipboard formatting now lives in utils/clipboard
 
@@ -253,132 +249,20 @@ const AgentPage: React.FC = () => {
       ) : (
         <Box sx={styles.mainContainer}>
           {/* Left Side - Chat */}
-          <Paper
-            elevation={0}
-            sx={{ ...styles.chatContainer, boxShadow: 'none' }}
-          >
-            {/* Chat Header */}
-            <Box sx={styles.chatHeader}>
-              <RestaurantMenuIcon sx={{ mr: 2, color: colors.accent2 }} />
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                Meal Planner
-              </Typography>
-
-              {session ? (
-                <Button
-                  onClick={handleLogout}
-                  size="small"
-                  sx={{ color: colors.accent2 }}
-                >
-                  <ExitToAppIcon />
-                </Button>
-              ) : (
-                <Button
-                  onClick={startNewSession}
-                  data-testid="start-session"
-                  size="small"
-                  sx={{ color: colors.apricot }}
-                >
-                  Start Session
-                </Button>
-              )}
-              <Button
-                onClick={() => setShowMealLibrary(true)}
-                size="small"
-                sx={{ color: colors.accent2 }}
-                data-testid="open-meal-library"
-              >
-                <MenuBookIcon />
-              </Button>
-            </Box>
-            <Box
-              ref={chatRef}
-              data-testid="chat-history"
-              sx={styles.chatMessages}
-            >
-              {messages.length === 0 && !isWorking ? (
-                <Box sx={styles.welcomeMessage}>
-                  <RestaurantMenuIcon sx={styles.restaurantIcon} />
-                  <Typography variant="h6" color="text.secondary">
-                    Welcome to Meal Planning Assistant
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 1, maxWidth: '500px' }}>
-                    Start by telling me about your dietary preferences, and I'll
-                    help you create a personalized meal plan.
-                  </Typography>
-                </Box>
-              ) : (
-                <>
-                  {messages.map((message, index) => (
-                    <Box
-                      key={index}
-                      sx={styles.messageContainer(message.sender === 'user')}
-                    >
-                      <Box
-                        sx={styles.messageContent(message.sender === 'user')}
-                      >
-                        <Avatar sx={styles.avatar}>
-                          {message.sender === 'agent' ? 'AI' : 'You'}
-                        </Avatar>
-                        <Box
-                          sx={styles.messageBubble(message.sender === 'user')}
-                        >
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              lineHeight: 1.5,
-                              fontSize: '0.9375rem',
-                              wordBreak: 'break-word',
-                              whiteSpace: 'pre-wrap',
-                            }}
-                          >
-                            {message.text}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                  ))}
-                  {isWorking && <TypingIndicator />}
-                </>
-              )}
-            </Box>
-
-            {/* Chat Input */}
-            <Box sx={styles.chatInputContainer}>
-              <Box sx={styles.inputContainer}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  placeholder="Type your message..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  disabled={isWorking}
-                  inputProps={{ 'data-testid': 'message-input' }}
-                />
-                <Button
-                  variant="contained"
-                  data-testid="send-button"
-                  onClick={sendMessage}
-                  disabled={!input.trim() || isWorking}
-                  sx={{
-                    ...styles.sendButton,
-                    backgroundColor: colors.apricot,
-                    color: '#ffffff',
-                    '&:hover': {
-                      backgroundColor: '#ff9f2b',
-                    },
-                    '&:disabled': {
-                      backgroundColor: '#cccccc',
-                    },
-                  }}
-                >
-                  Send
-                </Button>
-              </Box>
-            </Box>
-          </Paper>
+          <ChatPanel
+            ref={chatRef}
+            hasSession={!!session}
+            isWorking={isWorking}
+            messages={messages}
+            input={input}
+            onInputChange={setInput}
+            onSend={sendMessage}
+            onStartSession={startNewSession}
+            onLogout={handleLogout}
+            onOpenMealLibrary={() => setShowMealLibrary(true)}
+            onEnterKey={handleKeyPress}
+            colors={colors}
+          />
 
           {/* Right Side - Meal Plan */}
           <Box sx={styles.mealPlanContainer}>
