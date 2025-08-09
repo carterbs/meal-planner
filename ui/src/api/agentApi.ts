@@ -43,10 +43,8 @@ export async function startAgentSession(
   workflowType: string = 'meal_planning',
 ): Promise<StartSessionResult> {
   const requestData = {
-    request: JSON.stringify({
-      participants,
-      workflowType,
-    })
+    participants,
+    workflowType,
   };
 
   const result = await postAgentStart({
@@ -66,12 +64,7 @@ export async function startAgentSession(
     throw new Error('No response from agent');
   }
 
-  let agentResponse;
-  try {
-    agentResponse = JSON.parse(data.response);
-  } catch {
-    throw new Error('Failed to parse agent response');
-  }
+  let agentResponse = data.response
 
   if (!agentResponse.threadId || !agentResponse.currentStep) {
     throw new Error('Invalid agent response - missing required fields');
@@ -108,12 +101,10 @@ export async function sendAgentMessage(
   interactive: boolean = false,
 ): Promise<SendMessageResult> {
   const requestData = {
-    request: JSON.stringify({
-      threadId,
-      message,
-      from,
-      interactive,
-    })
+    threadId,
+    message,
+    from,
+    interactive,
   };
 
   const result = await postAgentMessage({
@@ -133,12 +124,7 @@ export async function sendAgentMessage(
     throw new Error('No response from agent');
   }
 
-  let agentResponse;
-  try {
-    agentResponse = JSON.parse(data.response);
-  } catch {
-    throw new Error('Failed to parse agent response');
-  }
+  let agentResponse = data.response;
 
   let initialState;
   if (agentResponse.initialState) {

@@ -64,7 +64,8 @@
                     "type": "integer"
                 },
                 "step": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Step"
                 }
             }
         },
@@ -72,7 +73,8 @@
             "type": "object",
             "properties": {
                 "step": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Step"
                 }
             }
         },
@@ -86,7 +88,8 @@
                     }
                 },
                 "state": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.MealPlanningCheckpointState"
                 },
                 "step": {
                     "type": "integer"
@@ -178,7 +181,8 @@
                     "type": "string"
                 },
                 "tuple": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.CheckpointTuple"
                 }
             }
         },
@@ -186,10 +190,12 @@
             "type": "object",
             "properties": {
                 "checkpoint": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.AgentCheckpoint"
                 },
                 "metadata": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.AgentCheckpointMetadata"
                 }
             }
         },
@@ -197,7 +203,8 @@
             "type": "object",
             "properties": {
                 "ingredient": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Ingredient"
                 },
                 "mealId": {
                     "type": "integer"
@@ -208,7 +215,8 @@
             "type": "object",
             "properties": {
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -216,7 +224,8 @@
             "type": "object",
             "properties": {
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -224,7 +233,8 @@
             "type": "object",
             "properties": {
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -240,7 +250,8 @@
             "type": "object",
             "properties": {
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -300,7 +311,8 @@
             "type": "object",
             "properties": {
                 "plan": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
                 }
             }
         },
@@ -323,7 +335,8 @@
                     "type": "boolean"
                 },
                 "tuple": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.CheckpointTuple"
                 }
             }
         },
@@ -331,7 +344,8 @@
             "type": "object",
             "properties": {
                 "plan": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
                 }
             }
         },
@@ -394,10 +408,12 @@
                     }
                 },
                 "plan": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
                 },
                 "shoppingList": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.ShoppingList"
                 }
             }
         },
@@ -405,7 +421,8 @@
             "type": "object",
             "properties": {
                 "status": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.WorkflowStatus"
                 }
             }
         },
@@ -416,7 +433,10 @@
                     "type": "string"
                 },
                 "services": {
-                    "type": "string"
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "boolean"
+                    }
                 },
                 "status": {
                     "type": "string"
@@ -516,7 +536,8 @@
                     "type": "integer"
                 },
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 },
                 "mealType": {
                     "type": "string"
@@ -548,7 +569,8 @@
                     "type": "integer"
                 },
                 "mealPlan": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
                 },
                 "participants": {
                     "type": "array",
@@ -557,7 +579,8 @@
                     }
                 },
                 "shoppingList": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.ShoppingList"
                 },
                 "threadId": {
                     "type": "string"
@@ -587,19 +610,12 @@
                 }
             }
         },
-        "_go.MessageAgentRequest": {
-            "type": "object",
-            "properties": {
-                "request": {
-                    "type": "string"
-                }
-            }
-        },
         "_go.MessageAgentResponse": {
             "type": "object",
             "properties": {
                 "response": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.AgentResponse"
                 }
             }
         },
@@ -607,13 +623,15 @@
             "type": "object",
             "properties": {
                 "checkpoint": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.AgentCheckpoint"
                 },
                 "checkpointNs": {
                     "type": "string"
                 },
                 "metadata": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.AgentCheckpointMetadata"
                 },
                 "threadId": {
                     "type": "string"
@@ -674,7 +692,8 @@
             "type": "object",
             "properties": {
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -704,19 +723,12 @@
                 }
             }
         },
-        "_go.StartAgentWorkflowRequest": {
-            "type": "object",
-            "properties": {
-                "request": {
-                    "type": "string"
-                }
-            }
-        },
         "_go.StartAgentWorkflowResponse": {
             "type": "object",
             "properties": {
                 "response": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.AgentResponse"
                 }
             }
         },
@@ -752,7 +764,8 @@
             "type": "object",
             "properties": {
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -760,7 +773,8 @@
             "type": "object",
             "properties": {
                 "ingredient": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Ingredient"
                 },
                 "ingredientId": {
                     "type": "integer"
@@ -774,7 +788,8 @@
             "type": "object",
             "properties": {
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -782,7 +797,8 @@
             "type": "object",
             "properties": {
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 },
                 "mealId": {
                     "type": "integer"
@@ -793,7 +809,8 @@
             "type": "object",
             "properties": {
                 "meal": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -804,7 +821,8 @@
                     "type": "integer"
                 },
                 "step": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Step"
                 },
                 "stepId": {
                     "type": "integer"
@@ -815,7 +833,8 @@
             "type": "object",
             "properties": {
                 "step": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.Step"
                 }
             }
         },
@@ -912,7 +931,7 @@
                         "name": "request",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/_go.MessageAgentRequest"
+                            "$ref": "#/definitions/_go.AgentMessageRequest"
                         }
                     }
                 ],
@@ -958,7 +977,7 @@
                         "name": "request",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/_go.StartAgentWorkflowRequest"
+                            "$ref": "#/definitions/_go.AgentStartRequest"
                         }
                     }
                 ],

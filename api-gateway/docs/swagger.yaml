@@ -368,11 +368,6 @@ definitions:
       thread_id:
         type: string
     type: object
-  _go.MessageAgentRequest:
-    properties:
-      request:
-        $ref: '#/definitions/_go.AgentMessageRequest'
-    type: object
   _go.MessageAgentResponse:
     properties:
       response:
@@ -441,11 +436,6 @@ definitions:
         type: string
       quantity:
         type: string
-    type: object
-  _go.StartAgentWorkflowRequest:
-    properties:
-      request:
-        $ref: '#/definitions/_go.AgentStartRequest'
     type: object
   _go.StartAgentWorkflowResponse:
     properties:
@@ -585,7 +575,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/_go.MessageAgentRequest'
+          $ref: '#/definitions/_go.AgentMessageRequest'
       produces:
       - application/json
       responses:
@@ -615,7 +605,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/_go.StartAgentWorkflowRequest'
+          $ref: '#/definitions/_go.AgentStartRequest'
       produces:
       - application/json
       responses:

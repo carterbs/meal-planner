@@ -119,7 +119,7 @@ export async function createMeal(
 
   const result = await postMeals({
     client: gatewayClient,
-    body: { meal: JSON.stringify(mealPayload) },
+    body: { meal: mealPayload },
   });
 
   if (!result.data || result.error) {
@@ -148,7 +148,7 @@ export async function updateMeal(
     path: { mealId: mealId },
     body: {
       mealId: mealId,
-      meal: JSON.stringify(mealData),
+      meal: mealData,
     },
   });
 
@@ -196,7 +196,7 @@ export async function updateMealIngredient(
     client: gatewayClient,
     path: { mealId: mealId.toString(), ingredientId: ingredientId.toString() },
     body: {
-      ingredient: JSON.stringify(ingredient),
+      ingredient: ingredient,
       ingredientId: ingredientId,
       mealId: mealId,
     },
@@ -228,7 +228,7 @@ export async function createMealIngredient(
     client: gatewayClient,
     path: { mealId: mealId.toString() },
     body: {
-      ingredient: JSON.stringify(ingredient),
+      ingredient: ingredient,
       mealId: mealId,
     },
   });

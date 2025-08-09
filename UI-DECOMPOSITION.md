@@ -180,8 +180,6 @@ export async function copyShoppingListToClipboard(items: ShoppingListItem[]): Pr
 - Keep Enter-to-send and Shift+Enter newline behaviors intact
 
 ### Migration plan (low-risk order)
-1. Extract clipboard utils; replace local `formatMealPlan` and copy functions with `clipboard.ts`
-2. Extract `useMealPlanHighlights`; wire `applyHighlights`/`highlights` into current component
 3. Extract `ChatPanel` (plus `ChatHeader`, `ChatMessages`, `ChatInput`) preserving props and `data-testid`s
 4. Extract `PlanPanel` (plus `ShareMenu`, `ShoppingListView`) preserving tab/share behavior
 5. Move `colorSchemes`/`getStyles` to theme; update imports
