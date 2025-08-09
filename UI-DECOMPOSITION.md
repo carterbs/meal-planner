@@ -180,10 +180,7 @@ export async function copyShoppingListToClipboard(items: ShoppingListItem[]): Pr
 - Keep Enter-to-send and Shift+Enter newline behaviors intact
 
 ### Migration plan (low-risk order)
-4. Extract `ChatPanel` (plus `ChatHeader`, `ChatMessages`, `ChatInput`) preserving props and `data-testid`s
-5. Extract `PlanPanel` (plus `ShareMenu`, `ShoppingListView`) preserving tab/share behavior
 6. Introduce `useAgentController` and migrate session/messaging/shopping list logic; simplify container
-7. Run `yarn lint`, `yarn test`; ensure API types import from `@mealplanner/generated`
 
 ### Notes
 - Follow `ui/CLAUDE.md` for component/hook style and testing setup
