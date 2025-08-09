@@ -49,13 +49,12 @@ export async function copyMealPlanToClipboard(plan: WeeklyMealPlan): Promise<voi
     try {
         // Use rich clipboard when available
         if ('ClipboardItem' in globalThis && navigator.clipboard && 'write' in navigator.clipboard) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             const ClipboardItemCtor = (globalThis as any).ClipboardItem as new (items: Record<string, Blob>) => unknown;
             const item = new ClipboardItemCtor({
                 'text/html': new Blob([html], { type: 'text/html' }),
                 'text/plain': new Blob([text], { type: 'text/plain' }),
             });
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (navigator.clipboard as any).write([item]);
             return;
         }
@@ -80,16 +79,17 @@ export async function copyShoppingListToClipboard(items: ShoppingListItem[]): Pr
 
     try {
         if ('ClipboardItem' in globalThis && navigator.clipboard && 'write' in navigator.clipboard) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             const ClipboardItemCtor = (globalThis as any).ClipboardItem as new (items: Record<string, Blob>) => unknown;
             const item = new ClipboardItemCtor({
                 'text/html': new Blob([html], { type: 'text/html' }),
                 'text/plain': new Blob([text], { type: 'text/plain' }),
             });
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             await (navigator.clipboard as any).write([item]);
             return;
         }
+
         await navigator.clipboard.writeText(text);
     } catch {
         await navigator.clipboard.writeText(text);

@@ -22,7 +22,7 @@ function Harness() {
     const { highlights, applyHighlights } = useMealPlanHighlights(plan, (p) => setPlan(p));
 
     // Expose to tests
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (global as any).__apply = applyHighlights;
 
     return plan ? <MealPlanDisplay plan={plan} highlights={highlights} /> : null;
@@ -34,7 +34,7 @@ describe('useMealPlanHighlights integration with MealPlanDisplay', () => {
     });
     afterEach(() => {
         jest.useRealTimers();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         delete (global as any).__apply;
     });
 
@@ -47,7 +47,7 @@ describe('useMealPlanHighlights integration with MealPlanDisplay', () => {
         ]);
 
         act(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             (global as any).__apply(newPlan);
         });
 

@@ -15,7 +15,7 @@ function HookHarness({ initialPlan }: PropsWithChildren<{ initialPlan: WeeklyMea
     const { highlights, applyHighlights, resetHighlights } = useMealPlanHighlights(plan, (p) => setPlan(p));
 
     // Expose controls for tests
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (global as any).__harness = { setPlan, applyHighlights, resetHighlights, getHighlights: () => highlights, getPlan: () => plan };
 
     return (
@@ -33,7 +33,7 @@ describe('useMealPlanHighlights', () => {
 
     afterEach(() => {
         jest.useRealTimers();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         delete (global as any).__harness;
     });
 
@@ -51,13 +51,13 @@ describe('useMealPlanHighlights', () => {
         ]);
 
         act(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             (global as any).__harness.applyHighlights(newPlan);
         });
 
         const count = screen.getByTestId('highlight-count');
         expect(count.textContent).toBe('1');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const highlights: Set<string> = (global as any).__harness.getHighlights();
         expect(highlights.has('0-breakfast')).toBe(true);
 
@@ -78,7 +78,7 @@ describe('useMealPlanHighlights', () => {
         ]);
 
         act(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             (global as any).__harness.applyHighlights(newPlan);
         });
 
@@ -103,14 +103,14 @@ describe('useMealPlanHighlights', () => {
         ]);
 
         act(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             (global as any).__harness.applyHighlights(newPlan);
         });
 
         expect(screen.getByTestId('highlight-count').textContent).toBe('1');
 
         act(() => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             (global as any).__harness.resetHighlights();
         });
 
