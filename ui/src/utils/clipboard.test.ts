@@ -32,7 +32,7 @@ describe('clipboard utils', () => {
     beforeEach(() => {
         jest.resetAllMocks();
         mockClipboard();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         (global as any).ClipboardItem = undefined;
     });
 
@@ -56,7 +56,7 @@ describe('clipboard utils', () => {
     it('copies meal plan using rich clipboard when ClipboardItem is available', async () => {
         const plan = buildPlan();
         // Provide a fake ClipboardItem constructor
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         (global as any).ClipboardItem = function FakeClipboardItem(this: unknown, _items: Record<string, Blob>) {
             // no-op
         } as unknown as typeof ClipboardItem;
@@ -91,7 +91,7 @@ describe('clipboard utils', () => {
             new ShoppingListItem({ ingredient: 'Eggs', quantity: '', category: '' }),
         ];
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         (global as any).ClipboardItem = function FakeClipboardItem(this: unknown, _items: Record<string, Blob>) {
             // no-op
         } as unknown as typeof ClipboardItem;

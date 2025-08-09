@@ -6,6 +6,13 @@ const reactPlugin = require('eslint-plugin-react');
 const reactHooksPlugin = require('eslint-plugin-react-hooks');
 const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 
+// Load local ESLint rule from tools/eslint
+const localPlugin = {
+  rules: {
+    'no-generated-type-assertion': require('./tools/eslint/no-generated-type-assertion'),
+  },
+};
+
 module.exports = [
   js.configs.recommended,
   {
@@ -47,6 +54,7 @@ module.exports = [
       'react': reactPlugin,
       'react-hooks': reactHooksPlugin,
       'jsx-a11y': jsxA11yPlugin,
+      'local': localPlugin,
     },
     settings: {
       react: {
@@ -86,15 +94,8 @@ module.exports = [
       '@typescript-eslint/no-unused-expressions': 'error',
       '@typescript-eslint/no-unnecessary-condition': 'off', // Often defensive programming
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-      // Discourage type assertions in app source (allow in tests)
-      'no-restricted-syntax': [
-        'warn',
-        {
-          selector: 'TSAsExpression',
-          message:
-            'Avoid type assertions for API types. Prefer runtime guards or generated classes.',
-        },
-      ],
+      // Discourage type assertions specifically to generated API types
+      'local/no-generated-type-assertion': 'error',
       // Enforce generated types as the only source of API models in src/
       'no-restricted-imports': [
         'error',
