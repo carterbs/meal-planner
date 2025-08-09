@@ -1060,7 +1060,7 @@ func (gw *Gateway) deleteAllSteps(w http.ResponseWriter, r *http.Request) {
 // @Tags agent
 // @Accept json
 // @Produce json
-// @Param request body apipb.StartAgentWorkflowRequest true "Agent start request"
+// @Param request body apipb.AgentStartRequest true "Agent start request"
 // @Success 200 {object} apipb.StartAgentWorkflowResponse "Agent workflow started successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -1100,7 +1100,7 @@ func (gw *Gateway) startAgentWorkflow(w http.ResponseWriter, r *http.Request) {
 // @Tags agent
 // @Accept json
 // @Produce json
-// @Param request body apipb.MessageAgentRequest true "Agent message request"
+// @Param request body apipb.AgentMessageRequest true "Agent message request"
 // @Success 200 {object} apipb.MessageAgentResponse "Message sent successfully"
 // @Failure 400 {object} ErrorResponse "Bad request"
 // @Failure 500 {object} ErrorResponse "Internal server error"

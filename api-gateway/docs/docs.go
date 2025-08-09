@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/_go.MessageAgentRequest"
+                            "$ref": "#/definitions/_go.AgentMessageRequest"
                         }
                     }
                 ],
@@ -90,7 +90,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/_go.StartAgentWorkflowRequest"
+                            "$ref": "#/definitions/_go.AgentStartRequest"
                         }
                     }
                 ],
@@ -2093,14 +2093,6 @@ const docTemplate = `{
                 }
             }
         },
-        "_go.MessageAgentRequest": {
-            "type": "object",
-            "properties": {
-                "request": {
-                    "$ref": "#/definitions/_go.AgentMessageRequest"
-                }
-            }
-        },
         "_go.MessageAgentResponse": {
             "type": "object",
             "properties": {
@@ -2206,14 +2198,6 @@ const docTemplate = `{
                 },
                 "quantity": {
                     "type": "string"
-                }
-            }
-        },
-        "_go.StartAgentWorkflowRequest": {
-            "type": "object",
-            "properties": {
-                "request": {
-                    "$ref": "#/definitions/_go.AgentStartRequest"
                 }
             }
         },

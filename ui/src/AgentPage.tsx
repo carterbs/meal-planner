@@ -34,20 +34,13 @@ import {
 } from './api';
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
-import {
-  createClient,
-  createConfig,
-} from '@mealplanner/generated/dist/gateway/client/index.js';
 
 import type { SxProps, Theme } from '@mui/material';
 import { convertGatewayMealPlan } from './utils/mealPlanConverter';
 import { copyMealPlanToClipboard, copyShoppingListToClipboard } from './utils/clipboard';
+import useMealPlanHighlights from './hooks/useMealPlanHighlights';
 
-const _gatewayClient = createClient(
-  createConfig({
-    baseUrl: 'http://localhost:8090/api',
-  }),
-);
+// Removed unused gateway client
 
 // Color scheme definitions
 const colorSchemes = {
@@ -362,14 +355,10 @@ const AgentPage: React.FC = () => {
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(null);
-  const [shoppingList, setShoppingList] = useState<ShoppingListItem[] | null>(
-    null,
-  );
-  const [highlights, setHighlights] = useState<Set<string>>(new Set());
+  const [shoppingList, setShoppingList] = useState<ShoppingListItem[] | null>(null);
+  const { highlights, applyHighlights } = useMealPlanHighlights(mealPlan, (p) => setMealPlan(p));
   const [currentTab, setCurrentTab] = useState(0);
-  const [shareMenuAnchor, setShareMenuAnchor] = useState<null | HTMLElement>(
-    null,
-  );
+  const [shareMenuAnchor, setShareMenuAnchor] = useState<null | HTMLElement>(null);
   const [showMealLibrary, setShowMealLibrary] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const currentColorScheme = 'earthyNeutrals';
@@ -385,36 +374,6 @@ const AgentPage: React.FC = () => {
     }
   }, [messages]);
 
-  const applyHighlights = (newPlan: WeeklyMealPlan) => {
-    setHighlights((prev) => {
-      const changed = new Set<string>();
-      if (mealPlan) {
-        newPlan.days.forEach((d) => {
-          const prevEntry = mealPlan.days.find(
-            (p) => p.dayIndex === d.dayIndex && p.mealType === d.mealType,
-          );
-          const prevId = prevEntry?.meal ? prevEntry.meal.id : null;
-          const newId = d.meal ? d.meal.id : null;
-          if (prevId !== newId) {
-            changed.add(`${d.dayIndex}-${d.mealType}`);
-          }
-        });
-      }
-
-      if (changed.size > 0) {
-        setTimeout(() => {
-          setHighlights((h) => {
-            const copy = new Set(h);
-            changed.forEach((k) => copy.delete(k));
-            return copy;
-          });
-        }, 5000);
-      }
-      return new Set([...prev, ...changed]);
-    });
-    setMealPlan(newPlan);
-  };
-
   const startSession = async () => {
     setIsWorking(true);
     try {
@@ -424,10 +383,6 @@ const AgentPage: React.FC = () => {
 
       // Extract meal plan from initial state
       if (result.initialState?.mealPlan) {
-        console.log(
-          'Setting meal plan from session start:',
-          result.initialState.mealPlan,
-        );
         setMealPlan(result.initialState.mealPlan);
         setShoppingList(result.initialState.mealPlan.shoppingList);
       }
@@ -524,7 +479,6 @@ const AgentPage: React.FC = () => {
       // Update meal plan
       if (state.mealPlan) {
         const newPlan = convertGatewayMealPlan(state.mealPlan);
-        setMealPlan(newPlan);
         applyHighlights(newPlan);
         try {
           const shoppingRes = await goGetShoppingList(newPlan);
@@ -546,7 +500,6 @@ const AgentPage: React.FC = () => {
       // Check for meal plan in initial state
       if (result.initialState?.state?.mealPlan) {
         const plan = convertGatewayMealPlan(result.initialState.state.mealPlan);
-        console.log('Applying highlights for new meal plan:', plan);
         applyHighlights(plan);
       }
 
@@ -563,7 +516,6 @@ const AgentPage: React.FC = () => {
 
   const copyMealPlan = () => {
     if (!mealPlan) return;
-    // use rich clipboard util with fallback
     void copyMealPlanToClipboard(mealPlan);
   };
 

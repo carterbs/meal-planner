@@ -109,7 +109,7 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                 {entries.map((e) => {
                   const key = `${e.dayIndex}-${e.mealType}`;
                   const isHighlighted = highlights?.has(key);
-                   const isEmpty = !e.meal;
+                  const isEmpty = !e.meal;
                   return (
                     <Box
                       key={e.mealType}
@@ -140,6 +140,8 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                       </Box>
                       <Box
                         component="span"
+                        data-testid={`meal-name-${key}`}
+                        data-highlighted={isHighlighted ? 'true' : undefined}
                         sx={{
                           fontSize: '0.875rem',
                           color: isEmpty ? '#a0a0a0' : activeColors.text,
@@ -171,7 +173,7 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                       >
                         {e.meal ? e.meal.name : '---'}
                       </Box>
-                       {e.meal && (
+                      {e.meal && (
                         <Box
                           sx={{
                             display: 'flex',

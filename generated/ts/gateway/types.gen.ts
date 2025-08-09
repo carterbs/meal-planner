@@ -28,16 +28,16 @@ export type GoAddMessageResponse = {
 
 export type GoAddStepRequest = {
     mealId?: number;
-    step?: string;
+    step?: GoStep;
 };
 
 export type GoAddStepResponse = {
-    step?: string;
+    step?: GoStep;
 };
 
 export type GoAgentCheckpoint = {
     next?: Array<string>;
-    state?: string;
+    state?: GoMealPlanningCheckpointState;
     step?: number;
 };
 
@@ -80,29 +80,29 @@ export type GoCancelWorkflowResponse = {
 export type GoCheckpointEntry = {
     checkpointNs?: string;
     threadId?: string;
-    tuple?: string;
+    tuple?: GoCheckpointTuple;
 };
 
 export type GoCheckpointTuple = {
-    checkpoint?: string;
-    metadata?: string;
+    checkpoint?: GoAgentCheckpoint;
+    metadata?: GoAgentCheckpointMetadata;
 };
 
 export type GoCreateMealIngredientRequest = {
-    ingredient?: string;
+    ingredient?: GoIngredient;
     mealId?: number;
 };
 
 export type GoCreateMealIngredientResponse = {
-    meal?: string;
+    meal?: GoMeal;
 };
 
 export type GoCreateMealRequest = {
-    meal?: string;
+    meal?: GoMeal;
 };
 
 export type GoCreateMealResponse = {
-    meal?: string;
+    meal?: GoMeal;
 };
 
 export type GoDeleteAllStepsResponse = {
@@ -110,7 +110,7 @@ export type GoDeleteAllStepsResponse = {
 };
 
 export type GoDeleteMealIngredientResponse = {
-    meal?: string;
+    meal?: GoMeal;
 };
 
 export type GoDeleteMealResponse = {
@@ -143,7 +143,7 @@ export type GoFinalizeMealPlanResponse = {
 };
 
 export type GoGenerateMealPlanResponse = {
-    plan?: string;
+    plan?: GoWeeklyMealPlan;
 };
 
 export type GoGetAllMealsResponse = {
@@ -152,11 +152,11 @@ export type GoGetAllMealsResponse = {
 
 export type GoGetCheckpointResponse = {
     found?: boolean;
-    tuple?: string;
+    tuple?: GoCheckpointTuple;
 };
 
 export type GoGetMealPlanResponse = {
-    plan?: string;
+    plan?: GoWeeklyMealPlan;
 };
 
 export type GoGetMessagesResponse = {
@@ -180,17 +180,19 @@ export type GoGetStepsResponse = {
 
 export type GoGetWorkflowStateResponse = {
     messages?: Array<GoMessage>;
-    plan?: string;
-    shoppingList?: string;
+    plan?: GoWeeklyMealPlan;
+    shoppingList?: GoShoppingList;
 };
 
 export type GoGetWorkflowStatusResponse = {
-    status?: string;
+    status?: GoWorkflowStatus;
 };
 
 export type GoHealthCheckResponse = {
     message?: string;
-    services?: string;
+    services?: {
+        [key: string]: boolean;
+    };
     status?: string;
 };
 
@@ -227,7 +229,7 @@ export type GoMeal = {
 
 export type GoMealPlanEntry = {
     dayIndex?: number;
-    meal?: string;
+    meal?: GoMeal;
     mealType?: string;
 };
 
@@ -240,9 +242,9 @@ export type GoMealPlanningCheckpointState = {
     feedbackHistory?: Array<GoFeedbackEntryProto>;
     isFinalized?: boolean;
     iterationCount?: number;
-    mealPlan?: string;
+    mealPlan?: GoWeeklyMealPlan;
     participants?: Array<string>;
-    shoppingList?: string;
+    shoppingList?: GoShoppingList;
     threadId?: string;
     /**
      * RFC3339 timestamp
@@ -260,18 +262,14 @@ export type GoMessage = {
     threadId?: string;
 };
 
-export type GoMessageAgentRequest = {
-    request?: string;
-};
-
 export type GoMessageAgentResponse = {
-    response?: string;
+    response?: GoAgentResponse;
 };
 
 export type GoPutCheckpointRequest = {
-    checkpoint?: string;
+    checkpoint?: GoAgentCheckpoint;
     checkpointNs?: string;
-    metadata?: string;
+    metadata?: GoAgentCheckpointMetadata;
     threadId?: string;
     workflowType?: string;
 };
@@ -297,7 +295,7 @@ export type GoReplaceMealRequest = {
 };
 
 export type GoReplaceMealResponse = {
-    meal?: string;
+    meal?: GoMeal;
 };
 
 export type GoShoppingList = {
@@ -310,12 +308,8 @@ export type GoShoppingListItem = {
     quantity?: string;
 };
 
-export type GoStartAgentWorkflowRequest = {
-    request?: string;
-};
-
 export type GoStartAgentWorkflowResponse = {
-    response?: string;
+    response?: GoAgentResponse;
 };
 
 export type GoStep = {
@@ -331,36 +325,36 @@ export type GoSwapMealRequest = {
 };
 
 export type GoSwapMealResponse = {
-    meal?: string;
+    meal?: GoMeal;
 };
 
 export type GoUpdateMealIngredientRequest = {
-    ingredient?: string;
+    ingredient?: GoIngredient;
     ingredientId?: number;
     mealId?: number;
 };
 
 export type GoUpdateMealIngredientResponse = {
-    meal?: string;
+    meal?: GoMeal;
 };
 
 export type GoUpdateMealRequest = {
-    meal?: string;
+    meal?: GoMeal;
     mealId?: number;
 };
 
 export type GoUpdateMealResponse = {
-    meal?: string;
+    meal?: GoMeal;
 };
 
 export type GoUpdateStepRequest = {
     mealId?: number;
-    step?: string;
+    step?: GoStep;
     stepId?: number;
 };
 
 export type GoUpdateStepResponse = {
-    step?: string;
+    step?: GoStep;
 };
 
 export type GoWeeklyMealPlan = {
@@ -399,7 +393,7 @@ export type PostAgentMessageData = {
     /**
      * Agent message request
      */
-    body: GoMessageAgentRequest;
+    body: GoAgentMessageRequest;
     path?: never;
     query?: never;
     url: '/agent/message';
@@ -431,7 +425,7 @@ export type PostAgentStartData = {
     /**
      * Agent start request
      */
-    body: GoStartAgentWorkflowRequest;
+    body: GoAgentStartRequest;
     path?: never;
     query?: never;
     url: '/agent/start';
