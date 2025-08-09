@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
-import { WeeklyMealPlan } from '../types';
+import { WeeklyMealPlan } from '@mealplanner/generated';
 
 const effortIcons = {
   easy: '🙂',
@@ -109,7 +109,7 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                 {entries.map((e) => {
                   const key = `${e.dayIndex}-${e.mealType}`;
                   const isHighlighted = highlights?.has(key);
-                  const isEmpty = !e.meal;
+                   const isEmpty = !e.meal;
                   return (
                     <Box
                       key={e.mealType}
@@ -171,7 +171,7 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                       >
                         {e.meal ? e.meal.name : '---'}
                       </Box>
-                      {e.meal && (
+                       {e.meal && (
                         <Box
                           sx={{
                             display: 'flex',

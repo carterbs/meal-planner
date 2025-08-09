@@ -22,7 +22,7 @@ import {
 import MealPlanDisplay from './components/MealPlanDisplay';
 import { MealManagementTab } from './components/MealManagementTab';
 import { Toast } from './components/Toast';
-import { ShoppingListItem } from './types';
+import { ShoppingListItem } from '@mealplanner/generated';
 import { WeeklyMealPlan } from '@mealplanner/generated';
 import {
   startAgentSession,
@@ -508,11 +508,13 @@ const AgentPage: React.FC = () => {
 
       // Resume shopping list if available
       if (resumeData.shoppingList?.items) {
-        const items = resumeData.shoppingList.items.map((i) => ({
-          ingredient: i.ingredient ?? '',
-          quantity: i.quantity ?? '',
-          category: i.category ?? '',
-        }));
+        const items = resumeData.shoppingList.items.map((i) => 
+          new ShoppingListItem({
+            ingredient: i.ingredient ?? '',
+            quantity: i.quantity ?? '',
+            category: i.category ?? '',
+          })
+        );
         setShoppingList(items);
       }
 
@@ -568,11 +570,13 @@ const AgentPage: React.FC = () => {
         try {
           const shoppingRes = await goGetShoppingList(newPlan);
           if (shoppingRes) {
-            const items = (shoppingRes).map((i) => ({
-              ingredient: i.ingredient ?? '',
-              quantity: i.quantity ?? '',
-              category: i.category ?? '',
-            }));
+            const items = (shoppingRes).map((i) => 
+              new ShoppingListItem({
+                ingredient: i.ingredient ?? '',
+                quantity: i.quantity ?? '',
+                category: i.category ?? '',
+              })
+            );
             setShoppingList(items);
           }
         } catch (e) {

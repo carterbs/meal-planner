@@ -35,7 +35,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DragHandleIcon from '@mui/icons-material/DragHandle';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import { Step } from '../types';
+import { Step } from '@mealplanner/generated';
 
 interface StepsEditorProps {
   steps: Step[];
@@ -242,12 +242,12 @@ const StepsEditor: React.FC<StepsEditorProps> = ({
     const newSteps = bulkStepsPreview.map((instruction, index) => {
       // Preserve existing step IDs if possible
       const existingStep = steps.length > index ? steps[index] : null;
-      return {
+      return new Step({
         id: existingStep?.id || 0, // Backend will assign a real ID for new steps
         mealId: existingStep?.mealId || 0, // Set by backend
         stepNumber: index + 1,
         instruction,
-      };
+      });
     });
 
     onChange(newSteps);
@@ -261,12 +261,12 @@ const StepsEditor: React.FC<StepsEditorProps> = ({
 
     const updatedSteps = [
       ...steps,
-      {
+      new Step({
         id: 0, // Will be assigned by backend
         mealId: 0, // Will be assigned by backend
         stepNumber: steps.length + 1,
         instruction: newStepText.trim(),
-      },
+      }),
     ];
 
     onChange(updatedSteps);

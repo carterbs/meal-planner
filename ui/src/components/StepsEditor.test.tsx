@@ -1,24 +1,24 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '../test-utils';
 import StepsEditor from './StepsEditor';
+import { Step } from '@mealplanner/generated';
 import '@testing-library/jest-dom';
 
 describe('StepsEditor', () => {
   const mockOnChange = jest.fn();
 
   // Define initial steps for testing
-  let initialSteps = [
-    { id: 1, mealId: 100, stepNumber: 1, instruction: 'First step' },
-    { id: 2, mealId: 100, stepNumber: 2, instruction: 'Second step' },
+  const createInitialSteps = () => [
+    new Step({ id: 1, mealId: 100, stepNumber: 1, instruction: 'First step' }),
+    new Step({ id: 2, mealId: 100, stepNumber: 2, instruction: 'Second step' }),
   ];
+
+  let initialSteps = createInitialSteps();
 
   beforeEach(() => {
     // Reset the mock and initialSteps before each test
     mockOnChange.mockClear();
-    initialSteps = [
-      { id: 1, mealId: 100, stepNumber: 1, instruction: 'First step' },
-      { id: 2, mealId: 100, stepNumber: 2, instruction: 'Second step' },
-    ];
+    initialSteps = createInitialSteps();
   });
 
   test('renders existing steps correctly', () => {

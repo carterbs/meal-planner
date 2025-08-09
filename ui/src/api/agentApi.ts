@@ -43,10 +43,10 @@ export async function startAgentSession(
   workflowType: string = 'meal_planning',
 ): Promise<StartSessionResult> {
   const requestData = {
-    request: {
+    request: JSON.stringify({
       participants,
       workflowType,
-    }
+    })
   };
 
   const result = await postAgentStart({
@@ -61,10 +61,16 @@ export async function startAgentSession(
   }
 
   const data = result.data;
-  const agentResponse = data.response;
 
-  if (!agentResponse) {
+  if (!data.response) {
     throw new Error('No response from agent');
+  }
+
+  let agentResponse;
+  try {
+    agentResponse = JSON.parse(data.response);
+  } catch {
+    throw new Error('Failed to parse agent response');
   }
 
   if (!agentResponse.threadId || !agentResponse.currentStep) {
@@ -102,12 +108,12 @@ export async function sendAgentMessage(
   interactive: boolean = false,
 ): Promise<SendMessageResult> {
   const requestData = {
-    request: {
+    request: JSON.stringify({
       threadId,
       message,
       from,
       interactive,
-    }
+    })
   };
 
   const result = await postAgentMessage({
@@ -122,10 +128,16 @@ export async function sendAgentMessage(
   }
 
   const data = result.data;
-  const agentResponse = data.response;
 
-  if (!agentResponse) {
+  if (!data.response) {
     throw new Error('No response from agent');
+  }
+
+  let agentResponse;
+  try {
+    agentResponse = JSON.parse(data.response);
+  } catch {
+    throw new Error('Failed to parse agent response');
   }
 
   let initialState;
@@ -149,18 +161,24 @@ export async function getAgentCheckpoint(threadId: string) {
     client: gatewayClient,
     path: { thread_id: threadId },
   });
-  if (
-    !result.data ||
-    result.error ||
-    !result.data.tuple ||
-    !result.data.tuple.checkpoint
-  ) {
+  if (!result.data || result.error) {
     if (result.error) {
       throw result.error;
     }
     throw new Error('Failed to get agent checkpoint');
   }
-  return result.data.tuple.checkpoint;
+
+  // Handle case where tuple might be string-encoded
+  let tuple = result.data.tuple;
+  if (typeof tuple === 'string') {
+    tuple = JSON.parse(tuple);
+  }
+
+  if (!tuple || !(tuple as any).checkpoint) {
+    throw new Error('Failed to get agent checkpoint - no checkpoint data');
+  }
+
+  return (tuple as any).checkpoint;
 }
 
 /**

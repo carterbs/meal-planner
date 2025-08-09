@@ -1,6 +1,45 @@
 import React from 'react';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
-import { Meal, WeeklyMealPlan, Ingredient } from './types';
+import { Meal, WeeklyMealPlan, Ingredient } from '@mealplanner/generated';
+
+// Helper functions to create protobuf instances
+const createIngredient = (data: {
+  id?: number;
+  mealId?: number;
+  name: string;
+  quantity: number;
+  unit: string;
+}): Ingredient => {
+  return new Ingredient({
+    id: data.id || 0,
+    mealId: data.mealId || 0,
+    name: data.name,
+    quantity: data.quantity,
+    unit: data.unit,
+  });
+};
+
+const createMeal = (data: {
+  id?: number;
+  name: string;
+  effort: number;
+  hasRedMeat: boolean;
+  mealType: string;
+  url?: string;
+  ingredients?: Ingredient[];
+  steps?: any[];
+}): Meal => {
+  return new Meal({
+    id: data.id || 0,
+    name: data.name,
+    effort: data.effort,
+    hasRedMeat: data.hasRedMeat,
+    mealType: data.mealType,
+    url: data.url || '',
+    ingredients: data.ingredients || [],
+    steps: data.steps || [],
+  });
+};
 
 // Extended meal plan interface for the new structure
 interface ExtendedMealPlan {
@@ -12,58 +51,54 @@ interface ExtendedMealPlan {
 // Shared mock data for tests - updated to new structure
 export const mockMealPlan: ExtendedMealPlan = {
   Monday: {
-    Breakfast: {
+    Breakfast: createMeal({
       id: 0,
       name: 'Test Meal 1',
       effort: 2,
-
       hasRedMeat: false,
       mealType: 'breakfast',
       url: '',
       ingredients: [
-        { id: 0, mealId: 0, name: 'Ingredient 1', quantity: 2, unit: 'cups' },
+        createIngredient({ id: 0, mealId: 0, name: 'Ingredient 1', quantity: 2, unit: 'cups' }),
       ],
       steps: [],
-    },
+    }),
     Lunch: null,
-    Dinner: {
+    Dinner: createMeal({
       id: 0,
       name: 'Test Meal 2',
       effort: 3,
-
       hasRedMeat: true,
       mealType: 'dinner',
       url: '',
       ingredients: [
-        { id: 0, mealId: 0, name: 'Ingredient 2', quantity: 1, unit: 'tbsp' },
+        createIngredient({ id: 0, mealId: 0, name: 'Ingredient 2', quantity: 1, unit: 'tbsp' }),
       ],
       steps: [],
-    },
+    }),
   },
   Tuesday: {
     Breakfast: null,
-    Lunch: {
+    Lunch: createMeal({
       id: 0,
       name: 'Test Lunch Meal',
       effort: 1,
-
       hasRedMeat: false,
       mealType: 'lunch',
       url: '',
       ingredients: [],
       steps: [],
-    },
-    Dinner: {
+    }),
+    Dinner: createMeal({
       id: 0,
       name: 'Test Dinner Meal',
       effort: 2,
-
       hasRedMeat: false,
       mealType: 'dinner',
       url: '',
       ingredients: [],
       steps: [],
-    },
+    }),
   },
   Wednesday: {
     Breakfast: null,
@@ -78,17 +113,16 @@ export const mockMealPlan: ExtendedMealPlan = {
   Friday: {
     Breakfast: null,
     Lunch: null,
-    Dinner: {
+    Dinner: createMeal({
       id: 5,
       name: 'Eating out',
       effort: 1,
-
       hasRedMeat: false,
       mealType: 'dinner',
       url: '',
       ingredients: [],
       steps: [],
-    },
+    }),
   },
   Saturday: {
     Breakfast: null,
@@ -108,84 +142,79 @@ export const mockMealPlanLegacy = {
     {
       dayIndex: 0,
       mealType: 'dinner',
-      meal: {
+      meal: createMeal({
         id: 0,
         name: 'Test Meal 1',
         effort: 2,
-
         hasRedMeat: false,
         mealType: 'dinner',
         url: '',
         ingredients: [
-          { id: 0, mealId: 0, name: 'Ingredient 1', quantity: 2, unit: 'cups' },
+          createIngredient({ id: 0, mealId: 0, name: 'Ingredient 1', quantity: 2, unit: 'cups' }),
         ],
         steps: [],
-      },
+      }),
     },
     {
       dayIndex: 1,
       mealType: 'dinner',
-      meal: {
+      meal: createMeal({
         id: 0,
         name: 'Test Meal 2',
         effort: 3,
-
         hasRedMeat: true,
         mealType: 'dinner',
         url: '',
         ingredients: [
-          { id: 0, mealId: 0, name: 'Ingredient 2', quantity: 1, unit: 'tbsp' },
+          createIngredient({ id: 0, mealId: 0, name: 'Ingredient 2', quantity: 1, unit: 'tbsp' }),
         ],
         steps: [],
-      },
+      }),
     },
     {
       dayIndex: 4,
       mealType: 'dinner',
-      meal: {
+      meal: createMeal({
         id: 0,
         name: 'Eating out',
         effort: 1,
-
         hasRedMeat: false,
         mealType: 'dinner',
         url: '',
         ingredients: [],
         steps: [],
-      },
+      }),
     },
   ],
   shoppingList: [],
 } as unknown as WeeklyMealPlan;
 
 export const mockAvailableMeals: Meal[] = [
-  {
+  createMeal({
     id: 0,
-    url: '',
-    steps: [],
     name: 'Available Test Meal',
     effort: 2,
-
     hasRedMeat: false,
     mealType: 'breakfast',
-    ingredients: [],
-  },
-  {
-    id: 0,
     url: '',
+    ingredients: [],
     steps: [],
+  }),
+  createMeal({
+    id: 0,
     name: 'Another Available Meal',
     effort: 1,
-
     hasRedMeat: true,
     mealType: 'breakfast',
+    url: '',
     ingredients: [],
-  },
+    steps: [],
+  }),
 ];
 
 export const mockShoppingList: Ingredient[] = [
-  { id: 0, mealId: 0, name: 'Ingredient 1', quantity: 2, unit: 'cups' },
-  { id: 0, mealId: 0, name: 'Ingredient 2', quantity: 1, unit: 'tbsp' },
+  createIngredient({ id: 0, mealId: 0, name: 'Ingredient 1', quantity: 2, unit: 'cups' }),
+  createIngredient({ id: 0, mealId: 0, name: 'Ingredient 2', quantity: 1, unit: 'tbsp' }),
 ];
 
 // Helper function to setup common fetch mocks
@@ -242,17 +271,16 @@ export const setupFetchMocks = (options?: {
 
     if (urlStr.includes('/api/meals/swap')) {
       // Return a new meal for swap operations
-      const newMeal = {
+      const newMeal = createMeal({
         id: 0,
         name: 'Swapped Test Meal',
         effort: 1,
-
         hasRedMeat: false,
         mealType: 'dinner',
         url: '',
         ingredients: [],
         steps: [],
-      };
+      });
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(newMeal),

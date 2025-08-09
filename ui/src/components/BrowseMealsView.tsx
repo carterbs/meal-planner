@@ -11,7 +11,7 @@ import {
 import { alpha, useTheme } from '@mui/material/styles';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Meal } from '../types';
+import { Meal } from '@mealplanner/generated';
 
 interface BrowseMealsViewProps {
   meals: Meal[];

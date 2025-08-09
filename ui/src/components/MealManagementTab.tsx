@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Fade } from '@mui/material';
-import { Meal } from '../types';
+import { Meal } from '@mealplanner/generated';
 import MealLibraryMainView from './MealLibraryMainView';
 import BrowseMealsView from './BrowseMealsView';
 import MealEditView from './MealEditView';
@@ -56,7 +56,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
   /** Delete a meal and refresh list */
   const deleteMeal = (meal: Meal) => {
-    deleteMealApi(meal.id!)
+    deleteMealApi(meal.id)
       .then(() => {
         setMeals((prev) => prev.filter((m) => m.id !== meal.id));
         showToast('Meal deleted successfully');

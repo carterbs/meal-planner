@@ -9,4 +9,4 @@ export type {
   Step,
   WeeklyMealPlan,
   ShoppingListItem,
-} from '../types';
+} from '@mealplanner/generated';
