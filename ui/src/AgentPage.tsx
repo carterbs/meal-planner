@@ -1,18 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  Avatar,
-  ThemeProvider,
-  CssBaseline,
-  createTheme,
-  Menu,
-  MenuItem,
-  IconButton,
-} from '@mui/material';
+import { Box, Button, TextField, Typography, Paper, Avatar, Menu, MenuItem, IconButton } from '@mui/material';
 import {
   RestaurantMenu as RestaurantMenuIcon,
   ExitToApp as ExitToAppIcon,
@@ -35,310 +22,14 @@ import {
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
 
-import type { SxProps, Theme } from '@mui/material';
+// no local style typings here; styles come from theme helpers
 import { convertGatewayMealPlan } from './utils/mealPlanConverter';
 import { copyMealPlanToClipboard, copyShoppingListToClipboard } from './utils/clipboard';
 import useMealPlanHighlights from './hooks/useMealPlanHighlights';
 
 // Removed unused gateway client
 
-// Color scheme definitions
-const colorSchemes = {
-  sageAndCream: {
-    name: 'Sage & Cream',
-    mainBg: '#fefcf7',
-    chatBg: '#fefcf7',
-    cardBg: '#e8f0e5',
-    headerBg: '#e8f0e5',
-    headerText: '#4a6741',
-    accent: '#4a6741',
-    accent2: '#c9e0c2',
-    border: '#d4d9d1',
-    text: '#3a3a3a',
-    userMsgBg: '#f4f7f2',
-    aiMsgBg: '#f4f7f2',
-    changedMealHighlight: '#92ca92',
-  },
-  earthyNeutrals: {
-    name: 'Earthy Neutrals',
-    mainBg: '#F7F5F2',
-    chatBg: '#ffffff',
-    cardBg: '#f7f4f2',
-    headerBg: '#f7f4f2',
-    headerText: '#3a3a3a',
-    accent: '#c9e0c2',
-    accent2: '#9aaf94',
-    apricot: '#FFB347',
-    border: '#e0e4e0',
-    text: '#3a3a3a',
-    userMsgBg: '#c9e0c2',
-    aiMsgBg: '#f7f4f2',
-    changedMealHighlight: '#92ca92',
-  },
-  naturalLinen: {
-    name: 'Natural Linen',
-    mainBg: '#faf9f6',
-    chatBg: '#faf9f6',
-    cardBg: '#f0f4f0',
-    headerBg: '#f0f4f0',
-    headerText: '#3a3a3a',
-    accent: '#6b8c5d',
-    accent2: '#c9e0c2',
-    border: '#d4d9d1',
-    text: '#3a3a3a',
-    userMsgBg: '#E8F4EC',
-    aiMsgBg: '#eef2ee',
-    changedMealHighlight: '#92ca92',
-  },
-};
-// Style variables - now a function that takes colors
-const getStyles = (colors: typeof colorSchemes.earthyNeutrals) => ({
-  appBar: {
-    backgroundColor: 'primary.main',
-    color: 'primary.contrastText',
-  } as SxProps<Theme>,
-  mainContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    height: '100vh',
-    width: '100vw',
-    overflow: 'hidden',
-  } as SxProps<Theme>,
-  contentContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    flex: 1,
-    gap: 0,
-    height: '100%',
-    width: '100%',
-    maxWidth: '100vw',
-  } as SxProps<Theme>,
-  chatContainer: {
-    width: '400px',
-    display: 'flex',
-    flexDirection: 'column',
-    borderRadius: 0,
-    height: '100vh',
-  } as SxProps<Theme>,
-  chatHeader: {
-    backgroundColor: colors.headerBg,
-    color: colors.headerText,
-    minHeight: '64px',
-    display: 'flex',
-    alignItems: 'center',
-    px: 2,
-  } as SxProps<Theme>,
-  chatMessages: {
-    flex: 1,
-    overflowY: 'auto',
-    p: 2,
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: 0,
-    '&::-webkit-scrollbar': {
-      width: '6px',
-    },
-    '&::-webkit-scrollbar-track': {
-      backgroundColor: 'transparent',
-    },
-    '&::-webkit-scrollbar-thumb': (theme: Theme) => ({
-      backgroundColor: theme.palette.grey[300],
-      borderRadius: '3px',
-      '&:hover': {
-        backgroundColor: theme.palette.grey[400],
-      },
-    }),
-  } as SxProps<Theme>,
-  welcomeMessage: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    color: 'text.secondary',
-    textAlign: 'center',
-    p: 4,
-  } as SxProps<Theme>,
-  messageContainer: (isUser: boolean) =>
-    ({
-      display: 'flex',
-      justifyContent: isUser ? 'flex-end' : 'flex-start',
-      mb: 2,
-      animation: 'fadeIn 0.3s ease-out',
-      width: '100%',
-      px: 2,
-    }) as SxProps<Theme>,
-  messageContent: (isUser: boolean) =>
-    ({
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: '8px',
-      maxWidth: '85%',
-      flexDirection: isUser ? 'row-reverse' : 'row',
-    }) as SxProps<Theme>,
-  messageBubble: (isUser: boolean) =>
-    ({
-      p: 2,
-      borderRadius: '12px',
-      borderTopLeftRadius: isUser ? '12px' : '4px',
-      borderTopRightRadius: isUser ? '4px' : '12px',
-      bgcolor: isUser ? colors.userMsgBg : colors.aiMsgBg,
-      color: colors.text,
-      boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-      position: 'relative',
-      maxWidth: '100%',
-      marginLeft: isUser ? 0 : '8px',
-      marginRight: isUser ? '8px' : 0,
-    }) as SxProps<Theme>,
-  avatar: {
-    width: 32,
-    height: 32,
-    bgcolor: colors.cardBg,
-    color: colors.text,
-    fontSize: '0.6rem',
-    fontWeight: 'bold',
-    flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: '4px',
-  } as SxProps<Theme>,
-  chatInputContainer: {
-    p: 2,
-    backgroundColor: colors.chatBg,
-    flexShrink: 0,
-  } as SxProps<Theme>,
-  inputContainer: {
-    display: 'flex',
-    gap: 1,
-  } as SxProps<Theme>,
-  sendButton: {
-    minWidth: '100px',
-  } as SxProps<Theme>,
-  mealPlanContainer: {
-    flex: 1,
-    overflow: 'hidden',
-    p: 1.5,
-    height: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-  } as SxProps<Theme>,
-  mealPlanPaper: {
-    pt: 1,
-    px: 2,
-    pb: 1.5,
-    flex: 1,
-    borderRadius: 2,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  } as SxProps<Theme>,
-  sectionHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    mb: 1,
-    pb: 1,
-  } as SxProps<Theme>,
-  sectionTitle: {
-    fontWeight: 600,
-  } as SxProps<Theme>,
-  emptyState: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    color: 'text.secondary',
-    textAlign: 'center',
-    p: 4,
-  } as SxProps<Theme>,
-  restaurantIcon: {
-    fontSize: 64,
-    mb: 2,
-    opacity: 0.3,
-    color: colors.apricot,
-  } as SxProps<Theme>,
-  shoppingListItem: {
-    display: 'block',
-    py: 0.25,
-    pl: 0,
-  } as SxProps<Theme>,
-  checkbox: {
-    marginRight: '8px',
-  } as React.CSSProperties,
-});
-
-// Custom theme with earthy colors
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#6b8c5d', // Sage green
-      light: '#8baa7d',
-      dark: '#4a5e40',
-      contrastText: '#ffffff',
-    },
-    secondary: {
-      main: '#8b7355', // Warm brown
-      light: '#b39f86',
-      dark: '#5f4a2f',
-      contrastText: '#ffffff',
-    },
-    background: {
-      default: '#ffffff', // White
-      paper: '#ffffff',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h5: {
-      fontWeight: 600,
-      letterSpacing: '0.5px',
-      fontSize: '18px',
-    },
-    h6: {
-      fontWeight: 600,
-      fontSize: '18px',
-    },
-    body1: {
-      lineHeight: 1.6,
-      fontSize: '14px',
-    },
-    body2: {
-      fontSize: '14px',
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          borderRadius: '8px',
-          padding: '8px 16px',
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-          },
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 0,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          borderRadius: 0,
-        },
-      },
-    },
-  },
-});
+import { colorSchemes, getAgentPageStyles } from './theme';
 
 // Clipboard formatting now lives in utils/clipboard
 
@@ -365,7 +56,7 @@ const AgentPage: React.FC = () => {
   const chatRef = useRef<HTMLDivElement | null>(null);
 
   const colors = colorSchemes[currentColorScheme];
-  const styles = getStyles(colors);
+  const styles = getAgentPageStyles(colors);
 
   useEffect(() => {
     const el = chatRef.current;
@@ -551,8 +242,7 @@ const AgentPage: React.FC = () => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <>
       {showMealLibrary ? (
         <Box sx={{ position: 'relative', height: '100vh' }}>
           <MealManagementTab
@@ -867,7 +557,7 @@ const AgentPage: React.FC = () => {
         </Box>
       )}
       <Toast message={toast} />
-    </ThemeProvider>
+    </>
   );
 };
 
