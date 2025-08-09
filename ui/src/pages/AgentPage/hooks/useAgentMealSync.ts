@@ -1,11 +1,17 @@
 import { useCallback, useState } from 'react';
 import { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
 import { convertGatewayMealPlan } from '../../../utils/mealPlanConverter';
-import { getAgentCheckpoint, goGetShoppingList, sendAgentMessage } from '../../../api';
+import {
+  getAgentCheckpoint,
+  goGetShoppingList,
+  sendAgentMessage,
+} from '../../../api';
 
 export default function useAgentMealSync() {
   const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(null);
-  const [shoppingList, setShoppingList] = useState<ShoppingListItem[] | null>(null);
+  const [shoppingList, setShoppingList] = useState<ShoppingListItem[] | null>(
+    null,
+  );
 
   const syncFromCheckpoint = useCallback(async (threadId: string) => {
     const checkpoint = await getAgentCheckpoint(threadId);
@@ -18,7 +24,14 @@ export default function useAgentMealSync() {
         const shoppingRes = await goGetShoppingList(newPlan);
         if (shoppingRes) {
           setShoppingList(
-            shoppingRes.map((i) => new ShoppingListItem({ ingredient: i.ingredient ?? '', quantity: i.quantity ?? '', category: i.category ?? '' })),
+            shoppingRes.map(
+              (i) =>
+                new ShoppingListItem({
+                  ingredient: i.ingredient ?? '',
+                  quantity: i.quantity ?? '',
+                  category: i.category ?? '',
+                }),
+            ),
           );
         }
       } catch {
@@ -43,5 +56,3 @@ export default function useAgentMealSync() {
 
   return { mealPlan, shoppingList, syncFromCheckpoint, send, setMealPlan };
 }
-
-

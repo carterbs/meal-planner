@@ -103,11 +103,12 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
   const doubleIngredientQuantities = () => {
     // Double quantities in already processed ingredients
-    const doubledIngredients = meal.ingredients.map((ing: Ingredient) => 
-      new Ingredient({
-        ...ing,
-        quantity: ing.quantity * 2,
-      })
+    const doubledIngredients = meal.ingredients.map(
+      (ing: Ingredient) =>
+        new Ingredient({
+          ...ing,
+          quantity: ing.quantity * 2,
+        }),
     );
 
     setMeal({ ...meal, ingredients: doubledIngredients });
@@ -216,12 +217,13 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
       ...meal,
       ingredients: [
         ...meal.ingredients,
-        ...newIngredients.map((ing) => 
-          new Ingredient({
-            ...ing,
-            id: -1, // Temporary ID, will be assigned by backend
-            mealId: 0, // Will be set by backend
-          })
+        ...newIngredients.map(
+          (ing) =>
+            new Ingredient({
+              ...ing,
+              id: -1, // Temporary ID, will be assigned by backend
+              mealId: 0, // Will be set by backend
+            }),
         ),
       ],
     });

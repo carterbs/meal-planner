@@ -50,9 +50,11 @@ function convertMeal(meal: GoMeal): Meal {
     url: meal.url ?? '',
     mealType: meal.mealType ?? '',
     lastPlanned: meal.lastPlanned
-      ? typeof meal.lastPlanned === 'string' 
+      ? typeof meal.lastPlanned === 'string'
         ? Timestamp.fromDate(new Date(meal.lastPlanned))
-        : Timestamp.fromDate(new Date(((meal.lastPlanned as any).seconds ?? 0) * 1000))
+        : Timestamp.fromDate(
+            new Date(((meal.lastPlanned as any).seconds ?? 0) * 1000),
+          )
       : undefined,
     ingredients: (meal.ingredients ?? []).map(convertIngredient),
     steps: (meal.steps ?? []).map(convertStep),
@@ -76,4 +78,4 @@ function convertStep(s: GoStep): Step {
     stepNumber: s.stepNumber ?? 0,
     instruction: s.instruction ?? '',
   });
-} 
+}

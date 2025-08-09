@@ -26,5 +26,3 @@ export default function useAgentMessages(threadId: string | null | undefined) {
 
   return { messages, fetchMessages };
 }
-
-

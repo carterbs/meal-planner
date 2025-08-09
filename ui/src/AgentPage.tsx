@@ -7,7 +7,10 @@ import { Toast } from './components/Toast';
 import useSession from './hooks/useSession';
 
 // no local style typings here; styles come from theme helpers
-import { copyMealPlanToClipboard, copyShoppingListToClipboard } from './utils/clipboard';
+import {
+  copyMealPlanToClipboard,
+  copyShoppingListToClipboard,
+} from './utils/clipboard';
 import useMealPlanHighlights from './hooks/useMealPlanHighlights';
 import useAutoScroll from './hooks/useAutoScroll';
 import useAgentController from './pages/AgentPage/hooks/useAgentController';
@@ -33,7 +36,10 @@ const AgentPage: React.FC = () => {
     mealPlan,
     shoppingList,
   } = useAgentController();
-  const { highlights, applyHighlights } = useMealPlanHighlights(mealPlan, () => { });
+  const { highlights, applyHighlights } = useMealPlanHighlights(
+    mealPlan,
+    () => {},
+  );
   const [currentTab, setCurrentTab] = React.useState(0);
   const [showMealLibrary, setShowMealLibrary] = React.useState(false);
   const [toast, setToast] = React.useState<string | null>(null);

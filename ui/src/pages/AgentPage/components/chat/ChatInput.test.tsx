@@ -12,7 +12,7 @@ describe('ChatInput', () => {
     const user = userEvent.setup();
     const onInputChange = jest.fn();
     const onSend = jest.fn();
-    const onEnterKey = jest.fn((_e: React.KeyboardEvent<HTMLDivElement>) => { });
+    const onEnterKey = jest.fn((_e: React.KeyboardEvent<HTMLDivElement>) => {});
 
     // Wrap with local state to simulate controlled component behavior
     const Wrapper: React.FC = () => {
@@ -46,5 +46,3 @@ describe('ChatInput', () => {
     expect(onSend).toHaveBeenCalledTimes(1);
   });
 });
-
-

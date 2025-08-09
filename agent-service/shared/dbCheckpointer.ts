@@ -75,7 +75,10 @@ export class DbCheckpointSaver {
         // Also keep a copy under the reserved namespace "latest" so that
         // resume/list endpoints can easily fetch the most-recent checkpoint
         // without needing the caller to supply a namespace.
-        await this.checkpointRepo.updateWorkflowCheckpoint(threadId, checkpoint);
+        await this.checkpointRepo.updateWorkflowCheckpoint(
+          threadId,
+          checkpoint,
+        );
       } catch (e) {
         await infoLog(`[CHECKPOINT] putCheckpoint failed (non-fatal): ${e}`);
         // swallow the error so workflows continue even when persistence isn't available

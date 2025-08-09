@@ -284,4 +284,4 @@ const BrowseMealsView: React.FC<BrowseMealsViewProps> = ({
   );
 };
 
-export default BrowseMealsView; 
+export default BrowseMealsView;

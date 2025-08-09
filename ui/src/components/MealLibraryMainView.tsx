@@ -192,4 +192,4 @@ const MealLibraryMainView: React.FC<MealLibraryMainViewProps> = ({
   );
 };
 
-export default MealLibraryMainView; 
+export default MealLibraryMainView;

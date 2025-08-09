@@ -1,6 +1,4 @@
-import {
-  MealPlanningCheckpointState,
-} from '@mealplanner/generated';
+import { MealPlanningCheckpointState } from '@mealplanner/generated';
 import {
   createClient,
   createConfig,
@@ -64,7 +62,7 @@ export async function startAgentSession(
     throw new Error('No response from agent');
   }
 
-  let agentResponse = data.response
+  let agentResponse = data.response;
 
   if (!agentResponse.threadId || !agentResponse.currentStep) {
     throw new Error('Invalid agent response - missing required fields');

@@ -13,7 +13,13 @@ describe('PlanPanel', () => {
   }
 
   function makeShopping(): ShoppingListItem[] {
-    return [new ShoppingListItem({ ingredient: 'Eggs', quantity: '12', category: '' })];
+    return [
+      new ShoppingListItem({
+        ingredient: 'Eggs',
+        quantity: '12',
+        category: '',
+      }),
+    ];
   }
 
   it('renders empty state when no data', () => {
@@ -22,12 +28,12 @@ describe('PlanPanel', () => {
         mealPlan={null}
         shoppingList={null}
         currentTab={0}
-        onTabChange={() => { }}
+        onTabChange={() => {}}
         highlights={new Set()}
-        onCopyMealPlan={() => { }}
-        onCopyShoppingList={() => { }}
+        onCopyMealPlan={() => {}}
+        onCopyShoppingList={() => {}}
         colors={colors}
-      />
+      />,
     );
     expect(screen.getByText('No meal plan generated yet')).toBeInTheDocument();
   });
@@ -42,10 +48,10 @@ describe('PlanPanel', () => {
         currentTab={0}
         onTabChange={onTabChange}
         highlights={new Set()}
-        onCopyMealPlan={() => { }}
-        onCopyShoppingList={() => { }}
+        onCopyMealPlan={() => {}}
+        onCopyShoppingList={() => {}}
         colors={colors}
-      />
+      />,
     );
 
     const planTab = screen.getByRole('button', { name: 'Meal Plan' });
@@ -62,12 +68,12 @@ describe('PlanPanel', () => {
         mealPlan={makePlan()}
         shoppingList={null}
         currentTab={0}
-        onTabChange={() => { }}
+        onTabChange={() => {}}
         highlights={new Set()}
-        onCopyMealPlan={() => { }}
-        onCopyShoppingList={() => { }}
+        onCopyMealPlan={() => {}}
+        onCopyShoppingList={() => {}}
         colors={colors}
-      />
+      />,
     );
     const listTab = screen.getByRole('button', { name: 'Shopping List' });
     expect(listTab).toBeDisabled();
@@ -79,12 +85,12 @@ describe('PlanPanel', () => {
         mealPlan={null}
         shoppingList={makeShopping()}
         currentTab={0}
-        onTabChange={() => { }}
+        onTabChange={() => {}}
         highlights={new Set()}
-        onCopyMealPlan={() => { }}
-        onCopyShoppingList={() => { }}
+        onCopyMealPlan={() => {}}
+        onCopyShoppingList={() => {}}
         colors={colors}
-      />
+      />,
     );
     expect(screen.getByText('No meal plan generated yet')).toBeInTheDocument();
   });
@@ -97,12 +103,12 @@ describe('PlanPanel', () => {
         mealPlan={makePlan()}
         shoppingList={null}
         currentTab={0}
-        onTabChange={() => { }}
+        onTabChange={() => {}}
         highlights={new Set()}
         onCopyMealPlan={onCopyMealPlan}
-        onCopyShoppingList={() => { }}
+        onCopyShoppingList={() => {}}
         colors={colors}
-      />
+      />,
     );
     const shareBtn = screen.getByTestId('share-menu-button');
     await user.click(shareBtn);
@@ -122,12 +128,12 @@ describe('PlanPanel', () => {
         mealPlan={makePlan()}
         shoppingList={makeShopping()}
         currentTab={0}
-        onTabChange={() => { }}
+        onTabChange={() => {}}
         highlights={new Set()}
         onCopyMealPlan={onCopyMealPlan}
         onCopyShoppingList={onCopyShoppingList}
         colors={colors}
-      />
+      />,
     );
     const shareBtn = screen.getByTestId('share-menu-button');
     await user.click(shareBtn);
@@ -148,15 +154,13 @@ describe('PlanPanel', () => {
         mealPlan={makePlan()}
         shoppingList={makeShopping()}
         currentTab={1}
-        onTabChange={() => { }}
+        onTabChange={() => {}}
         highlights={new Set()}
-        onCopyMealPlan={() => { }}
-        onCopyShoppingList={() => { }}
+        onCopyMealPlan={() => {}}
+        onCopyShoppingList={() => {}}
         colors={colors}
-      />
+      />,
     );
     expect(screen.getByText(/Eggs/)).toBeInTheDocument();
   });
 });
-
-

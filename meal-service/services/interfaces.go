@@ -27,8 +27,6 @@ type MealService interface {
 	UpdateLastPlannedDates(mealIDs []int) error
 }
 
-
-
 // ShoppingListService handles shopping list operations
 type ShoppingListService interface {
 	BuildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error)
@@ -38,8 +36,8 @@ type ShoppingListService interface {
 
 // ServiceContainer holds all service dependencies
 type ServiceContainer struct {
-	MealService            MealService
-	RecipeStepRepository   repositories.RecipeStepRepository
-	MealPlanRepository     repositories.MealPlanRepository
-	ShoppingListService    ShoppingListService
+	MealService          MealService
+	RecipeStepRepository repositories.RecipeStepRepository
+	MealPlanRepository   repositories.MealPlanRepository
+	ShoppingListService  ShoppingListService
 }

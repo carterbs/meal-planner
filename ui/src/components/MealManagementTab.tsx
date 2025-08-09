@@ -27,7 +27,8 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
 
   // Fetch meals whenever the meal type filter changes
   const fetchMeals = () => {
-    const type = mealTypeFilter !== 'All' ? mealTypeFilter.toLowerCase() : undefined;
+    const type =
+      mealTypeFilter !== 'All' ? mealTypeFilter.toLowerCase() : undefined;
     getMeals(type)
       .then((data) => setMeals(data))
       .catch((err) => {
@@ -134,4 +135,4 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
       )}
     </Box>
   );
-}; 
+};

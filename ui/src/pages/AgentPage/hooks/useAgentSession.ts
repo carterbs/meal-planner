@@ -19,14 +19,19 @@ export default function useAgentSession() {
   }, []);
 
   // useSession expects a Promise<void> callback; adapt by ignoring the result
-  const { resumeData, startNewSession } = useSession(async () => { await start(); });
+  const { resumeData, startNewSession } = useSession(async () => {
+    await start();
+  });
   const processedResumeRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!resumeData || !resumeData.threadId) return;
     if (processedResumeRef.current === resumeData.threadId) return;
     processedResumeRef.current = resumeData.threadId;
-    setSession({ threadId: resumeData.threadId, currentStep: resumeData.currentStep ?? '' });
+    setSession({
+      threadId: resumeData.threadId,
+      currentStep: resumeData.currentStep ?? '',
+    });
   }, [resumeData?.threadId]);
 
   const logout = useCallback(() => {
@@ -36,5 +41,3 @@ export default function useAgentSession() {
 
   return { session, isWorking, start, logout, resumeData } as const;
 }
-
-
