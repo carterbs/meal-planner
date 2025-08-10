@@ -100,7 +100,7 @@ describe('AddRecipeForm', () => {
       screen.getByRole('button', { name: /double quantities/i }),
     );
     // After doubling: leading integer doubles from 1 -> 2; fraction stays as converted decimal part
-    expect(screen.getByLabelText(/paste ingredients/i).value).toMatch(
+    expect((screen.getByLabelText(/paste ingredients/i) as HTMLTextAreaElement).value).toMatch(
       /^2\s+0\.5\s+cup sugar/m,
     );
   });
@@ -118,7 +118,7 @@ describe('AddRecipeForm', () => {
     await userEvent.click(doubleBtn);
 
     // Raw textarea lines doubled
-    const current = screen.getByLabelText(/paste ingredients/i).value;
+    const current = (screen.getByLabelText(/paste ingredients/i) as HTMLTextAreaElement).value;
     expect(current).toMatch(/^4 eggs/m);
     expect(current).toMatch(/1 cup milk/m);
     // Non-numeric line remains unchanged

@@ -9,14 +9,15 @@ module.exports = {
   },
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests'],
+  // Discover tests both in legacy tests/ and alongside source files
+  roots: ['<rootDir>'],
   testMatch: ['**/?(*.)+(test).[tj]s?(x)'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   transformIgnorePatterns: [
     'node_modules/(?!(@modelcontextprotocol|@langchain)/)'
   ],
   transform: {
-    '^.+\\.ts$': ['ts-jest', { 
+    '^.+\\.ts$': ['ts-jest', {
       useESM: true,
       tsconfig: {
         target: 'ES2022',
