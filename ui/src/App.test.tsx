@@ -1,7 +1,9 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import App from './App';
 import '@testing-library/jest-dom';
+
+import { getHealth } from '@mealplanner/generated/dist/gateway/sdk.gen';
 
 jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
   createClient: jest.fn(() => ({})),
@@ -12,8 +14,6 @@ jest.mock('@mealplanner/generated/dist/gateway/sdk.gen', () => ({
   getHealth: jest.fn(),
   postReconnect: jest.fn(),
 }));
-
-import { getHealth } from '@mealplanner/generated/dist/gateway/sdk.gen';
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -27,17 +27,13 @@ test('renders AgentPage when backend is healthy', async () => {
 
   render(<App />);
 
-  await waitFor(() =>
-    expect(screen.getByTestId('start-session')).toBeInTheDocument(),
-  );
+  await screen.findByTestId('start-session');
 });
 
-test('shows error page when health check fails', async () => {
+test('shows connecting view when health check fails', async () => {
   (getHealth as jest.Mock).mockRejectedValue(new Error('fail'));
 
   render(<App />);
 
-  await waitFor(() =>
-    expect(screen.getByText('Database Connection Error')).toBeInTheDocument(),
-  );
+  await screen.findByText('Connecting to server...');
 });

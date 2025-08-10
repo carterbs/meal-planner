@@ -9,7 +9,6 @@ import {
   postShoppinglist,
 } from '@mealplanner/generated/dist/gateway/index.js';
 import type {
-  MainCheckpointResponse,
   MainMealPlanEntryResponse,
   MainShoppingListItemResponse,
 } from '@mealplanner/generated/dist/gateway/types.gen';

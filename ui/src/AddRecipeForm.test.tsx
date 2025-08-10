@@ -1,9 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from './test-utils';
 import AddRecipeForm from './AddRecipeForm';
-import { Step } from './types';
 import { setupFetchMocks, cleanupFetchMocks } from './test-utils';
 import '@testing-library/jest-dom';
+
+import { postMeals } from '@mealplanner/generated/dist/gateway/index.js';
 
 // Mock the gateway functions
 jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
@@ -15,8 +16,6 @@ jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
   createClient: jest.fn(() => ({})),
   createConfig: jest.fn(() => ({})),
 }));
-
-import { postMeals } from '@mealplanner/generated/dist/gateway/index.js';
 
 beforeEach(() => {
   setupFetchMocks();

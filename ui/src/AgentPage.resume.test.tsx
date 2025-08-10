@@ -2,6 +2,9 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import AgentPage from './AgentPage';
+import { getMessages } from './api';
+
 // Mock the generated gateway functions
 jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
   getWorkflowsByThreadIdMessages: jest.fn(),
@@ -40,9 +43,6 @@ jest.mock('./hooks/useSession', () => ({
     startNewSession: jest.fn(),
   }),
 }));
-
-import AgentPage from './AgentPage';
-import { getMessages } from './api';
 
 // Reset timeout to default since we fixed the actual issue
 jest.setTimeout(5000);

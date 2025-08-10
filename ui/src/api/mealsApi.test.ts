@@ -1,26 +1,17 @@
 import { updateMeal, createMeal } from './mealsApi';
 import type { 
   MainMealResponse, 
-  MainErrorResponse,
-  PostMealsResponses,
-  PostMealsErrors,
-  PutMealsByMealIdResponses,
-  PutMealsByMealIdErrors
+  MainErrorResponse
 } from '@mealplanner/generated/dist/gateway/types.gen';
-import type { RequestResult } from '@mealplanner/generated/dist/gateway/client/types';
 
-// Define the return types for our mocked functions
-type PostMealsResult = RequestResult<PostMealsResponses, PostMealsErrors, false, 'fields'>;
-type PutMealsResult = RequestResult<PutMealsByMealIdResponses, PutMealsByMealIdErrors, false, 'fields'>;
+// Import the mocked functions
+import { postMeals, putMealsByMealId } from '@mealplanner/generated/dist/gateway/index.js';
 
 // Mock the generated client functions
 jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
   postMeals: jest.fn(),
   putMealsByMealId: jest.fn(),
 }));
-
-// Import the mocked functions
-import { postMeals, putMealsByMealId } from '@mealplanner/generated/dist/gateway/index.js';
 
 const mockPostMeals = postMeals as jest.MockedFunction<any>;
 const mockPutMealsByMealId = putMealsByMealId as jest.MockedFunction<any>;

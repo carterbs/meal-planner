@@ -16,17 +16,14 @@ import {
 import {
   RestaurantMenu as RestaurantMenuIcon,
   ExitToApp as ExitToAppIcon,
-  ExpandMore as ExpandMoreIcon,
-  ShoppingCart as ShoppingCartIcon,
   IosShare as ShareIcon,
   MenuBook as MenuBookIcon,
-  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import MealPlanDisplay from './components/MealPlanDisplay';
 import { MealManagementTab } from './components/MealManagementTab';
 import { Toast } from './components/Toast';
 import { ShoppingListItem } from './types';
-import { MealPlanEntry, WeeklyMealPlan, Meal } from '@mealplanner/generated';
+import { WeeklyMealPlan } from '@mealplanner/generated';
 import {
   startAgentSession,
   sendAgentMessage,
@@ -37,22 +34,11 @@ import {
 } from './api';
 import TypingIndicator from './components/TypingIndicator';
 import useSession from './hooks/useSession';
-import {
-  createClient,
-  createConfig,
-} from '@mealplanner/generated/dist/gateway/client/index.js';
+import { convertGatewayMealPlan } from './utils/mealPlanConverter';
 
 import type { SxProps, Theme } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
 import type { DayOfTheWeek } from '@meal-planner/shared';
-import { Timestamp } from '@bufbuild/protobuf';
-import { convertGatewayMealPlan } from './utils/mealPlanConverter';
-
-const gatewayClient = createClient(
-  createConfig({
-    baseUrl: 'http://localhost:8090/api',
-  }),
-);
 
 // Color scheme definitions
 const colorSchemes = {
@@ -638,10 +624,6 @@ const AgentPage: React.FC = () => {
       event.preventDefault();
       sendMessage();
     }
-  };
-
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
   };
 
   const handleShareMenuOpen = (event: React.MouseEvent<HTMLElement>) => {

@@ -17,11 +17,11 @@ describe('Toast', () => {
   });
 
   test('renders nothing when message is null', () => {
-    const { container } = render(
+    render(
       <ThemeProvider theme={theme}>
         <Toast message={null} />
       </ThemeProvider>,
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByText(/.+/)).toBeNull();
   });
 });

@@ -145,6 +145,7 @@ describe('index.tsx', () => {
 
     // Mock createRoot to throw a non-Error value
     mockCreateRoot.mockImplementationOnce(() => {
+      // eslint-disable-next-line no-throw-literal
       throw 'Some string error';
     });
 

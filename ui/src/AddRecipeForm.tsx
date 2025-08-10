@@ -10,7 +10,6 @@ import {
   Paper,
   Slider,
   Chip,
-  IconButton,
   Snackbar,
   Alert,
   Divider,
@@ -19,6 +18,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import { Ingredient, Step, Meal } from './types';
 import { createMeal } from './api';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -90,8 +90,8 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     setMeal({ ...meal, hasRedMeat: e.target.checked });
   };
 
-  const handleMealTypeChange = (e: any) => {
-    setMeal({ ...meal, mealType: e.target.value });
+  const handleMealTypeChange = (e: SelectChangeEvent<string>) => {
+    setMeal({ ...meal, mealType: e.target.value as string });
   };
 
   const handleRawIngredientsChange = (

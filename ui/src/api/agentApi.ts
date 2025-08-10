@@ -1,5 +1,4 @@
 import {
-  AgentCheckpoint,
   MealPlanningCheckpointState,
 } from '@mealplanner/generated';
 import {
@@ -9,13 +8,9 @@ import {
 import {
   postAgentStart,
   postAgentMessage,
-  PostAgentMessageData,
   MainAgentMessageRequestBody,
   getCheckpointsByThreadId,
-  MainCheckpointResponse,
   getWorkflowsByThreadIdMessages,
-  GetWorkflowsByThreadIdMessagesData,
-  GetWorkflowsByThreadIdMessagesResponses,
 } from '@mealplanner/generated/dist/gateway/index.js';
 
 // Create the API gateway client
@@ -80,7 +75,6 @@ export async function startAgentSession(
     currentStep: agentResponse.currentStep,
   };
 
-  debugger;
   let initialState;
   if (agentResponse.initialState) {
     try {

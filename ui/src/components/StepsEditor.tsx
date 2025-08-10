@@ -9,9 +9,6 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
-  FormControl,
-  FormControlLabel,
-  Switch,
   Divider,
   Paper,
   Grid,
@@ -158,7 +155,7 @@ const StepsEditor: React.FC<StepsEditorProps> = ({
       const stepsText = steps.map((step) => step.instruction).join('\n\n');
       setBulkStepsText(stepsText);
     }
-  }, [steps]);
+  }, [steps, bulkStepsText]);
 
   const parseStepsFromText = (text: string): string[] => {
     text = text.trim();
@@ -274,12 +271,6 @@ const StepsEditor: React.FC<StepsEditorProps> = ({
 
     onChange(updatedSteps);
     setNewStepText('');
-  };
-
-  const updateStep = (index: number, instruction: string) => {
-    const updatedSteps = [...steps];
-    updatedSteps[index].instruction = instruction;
-    onChange(updatedSteps);
   };
 
   const deleteStep = (index: number) => {

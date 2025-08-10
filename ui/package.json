@@ -67,7 +67,12 @@
   },
   "jest": {
     "moduleNameMapper": {
-      "^@bufbuild/protobuf/(.*)$": "<rootDir>/../../node_modules/@bufbuild/protobuf/dist/cjs/$1"
+      "^@bufbuild/protobuf/(.*)$": "<rootDir>/../../node_modules/@bufbuild/protobuf/dist/cjs/$1",
+      "^@mealplanner/generated$": "<rootDir>/../generated/ts/index.ts",
+      "^@mealplanner/generated/dist/gateway/index\\.js$": "<rootDir>/../generated/ts/gateway/index.ts",
+      "^@mealplanner/generated/dist/gateway/client/index\\.js$": "<rootDir>/../generated/ts/gateway/client/index.ts",
+      "^@mealplanner/generated/dist/gateway/sdk\\.gen$": "<rootDir>/../generated/ts/gateway/sdk.gen.ts",
+      "^@mealplanner/generated/dist/gateway/types\\.gen$": "<rootDir>/../generated/ts/gateway/types.gen.ts"
     }
   }
 }

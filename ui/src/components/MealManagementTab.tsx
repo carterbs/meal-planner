@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { Box, Fade } from '@mui/material';
 import { Meal } from '../types';
 import MealLibraryMainView from './MealLibraryMainView';
@@ -26,7 +27,7 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   );
 
   // Fetch meals whenever the meal type filter changes
-  const fetchMeals = () => {
+  const fetchMeals = useCallback(() => {
     const type = mealTypeFilter !== 'All' ? mealTypeFilter.toLowerCase() : undefined;
     getMeals(type)
       .then((data) => setMeals(data))
@@ -34,18 +35,18 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
         console.error(err);
         showToast('Error fetching meals');
       });
-  };
+  }, [mealTypeFilter, showToast]);
 
   useEffect(() => {
     fetchMeals();
-  }, [mealTypeFilter]);
+  }, [fetchMeals]);
 
   // Refetch meals when entering the browse view to ensure latest data (e.g., lastPlanned updates)
   useEffect(() => {
     if (currentView === 'browse') {
       fetchMeals();
     }
-  }, [currentView]);
+  }, [currentView, fetchMeals]);
 
   /** Callback after creating a new recipe */
   const handleRecipeAdded = () => {

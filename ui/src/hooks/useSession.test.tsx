@@ -1,7 +1,12 @@
 import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import useSession from './useSession';
-import { mockLocalStorage, errorUtils, loadingUtils } from '../test-utils';
+
+import {
+  getCheckpointsByThreadId,
+  postWorkflowsByThreadIdAbandon,
+  postShoppinglist,
+} from '@mealplanner/generated/dist/gateway/index.js';
 
 // Mock the generated gateway client
 jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
@@ -15,12 +20,6 @@ jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
   createClient: jest.fn(() => ({})),
   createConfig: jest.fn(() => ({})),
 }));
-
-import {
-  getCheckpointsByThreadId,
-  postWorkflowsByThreadIdAbandon,
-  postShoppinglist,
-} from '@mealplanner/generated/dist/gateway/index.js';
 
 const mockGetCheckpoints = getCheckpointsByThreadId as jest.MockedFunction<
   typeof getCheckpointsByThreadId
@@ -92,10 +91,8 @@ describe('useSession', () => {
     const { result } = renderHook(() => useSession(startSession), { wrapper });
 
     // Wait for the hook to complete its async operations
-    await waitFor(() => {
-      expect(result.current.resumeData?.threadId).toBe('abc');
-      expect(result.current.isResuming).toBe(false);
-    });
+    await waitFor(() => expect(result.current.resumeData?.threadId).toBe('abc'));
+    await waitFor(() => expect(result.current.isResuming).toBe(false));
 
     expect(result.current.resumeData?.currentStep).toBe('planning');
   });
