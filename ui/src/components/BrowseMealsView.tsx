@@ -27,7 +27,7 @@ interface BrowseMealsViewProps {
 const mealTypes = ['All', 'Breakfast', 'Lunch', 'Dinner'];
 
 const BrowseMealsView: React.FC<BrowseMealsViewProps> = ({
-  meals,
+  meals = [],
   mealFilter,
   onMealFilterChange,
   mealTypeFilter,

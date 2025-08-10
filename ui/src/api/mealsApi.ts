@@ -52,7 +52,7 @@ function mapMeal(m: MainMealResponse): Meal {
     hasRedMeat: m.hasRedMeat || false,
     url: m.url || '',
     mealType: m.mealType || '',
-    ingredients: (m.ingredients || []).map((i) => ({
+    ingredients: (m.ingredients || []).map((i: MainIngredientResponse) => ({
       id: i.id,
       mealId: i.mealId,
       name: i.name || '',

@@ -66,7 +66,8 @@ export default function useSession(startSession: () => Promise<void>) {
           postShoppinglist({
             client: gatewayClient,
             body: {
-              plan: state.mealPlan.days?.map((d) => d.meal?.id ?? 0) ?? [],
+              plan:
+                state.mealPlan.days?.map((d: any) => (d.meal?.id as number) ?? 0) ?? [],
             },
           })
             .then((res) => {

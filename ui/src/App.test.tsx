@@ -3,14 +3,14 @@ import { render, screen } from '@testing-library/react';
 import App from './App';
 import '@testing-library/jest-dom';
 
-import { getHealth } from '@mealplanner/generated/dist/gateway/sdk.gen';
+import { getHealth } from '@mealplanner/generated/dist/gateway/index.js';
 
 jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
   createClient: jest.fn(() => ({})),
   createConfig: jest.fn(() => ({})),
 }));
 
-jest.mock('@mealplanner/generated/dist/gateway/sdk.gen', () => ({
+jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
   getHealth: jest.fn(),
   postReconnect: jest.fn(),
 }));

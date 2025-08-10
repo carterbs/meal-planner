@@ -5,9 +5,7 @@ import {
   createClient,
   createConfig,
 } from '@mealplanner/generated/dist/gateway/client/index.js';
-import {
-  getHealth,
-} from '@mealplanner/generated/dist/gateway/sdk.gen';
+import { getHealth } from '@mealplanner/generated/dist/gateway/index.js';
 
 const gatewayClient = createClient(
   createConfig({

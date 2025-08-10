@@ -27,30 +27,31 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
   );
 
   // Fetch meals whenever the meal type filter changes
-  const fetchMeals = useCallback(() => {
+  const fetchMeals = useCallback(async () => {
     const type = mealTypeFilter !== 'All' ? mealTypeFilter.toLowerCase() : undefined;
-    getMeals(type)
-      .then((data) => setMeals(data))
-      .catch((err) => {
-        console.error(err);
-        showToast('Error fetching meals');
-      });
+    try {
+      const data = (await (getMeals(type) as unknown as Promise<Meal[]> | Meal[])) as Meal[];
+      setMeals(data);
+    } catch (err) {
+      console.error(err);
+      showToast('Error fetching meals');
+    }
   }, [mealTypeFilter, showToast]);
 
   useEffect(() => {
-    fetchMeals();
+    void fetchMeals();
   }, [fetchMeals]);
 
   // Refetch meals when entering the browse view to ensure latest data (e.g., lastPlanned updates)
   useEffect(() => {
     if (currentView === 'browse') {
-      fetchMeals();
+      void fetchMeals();
     }
   }, [currentView, fetchMeals]);
 
   /** Callback after creating a new recipe */
   const handleRecipeAdded = () => {
-    fetchMeals();
+    void fetchMeals();
     showToast('New recipe added successfully!');
     setCurrentView('main');
   };
@@ -113,12 +114,12 @@ export const MealManagementTab: React.FC<MealManagementTabProps> = ({
                 handleMealUpdated(m);
                 setSelectedMeal(m);
                 // Re-fetch full list to capture any updates like lastPlanned
-                fetchMeals();
+                void fetchMeals();
               }}
               onBack={() => {
                 setSelectedMeal(null);
                 // Re-fetch meals when leaving edit view
-                fetchMeals();
+                void fetchMeals();
               }}
               showToast={showToast}
             />
