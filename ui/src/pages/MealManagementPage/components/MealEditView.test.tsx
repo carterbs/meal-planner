@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import MealEditView from './MealEditView';
 import { Meal, Ingredient, Step } from '@mealplanner/generated';
+import type { PartialMessage } from '@bufbuild/protobuf';
 
 jest.mock('../../../api', () => ({
   createMealIngredient: jest.fn(),
@@ -30,7 +31,7 @@ function setup(mealOverrides: Partial<Meal> = {}) {
     ingredients: [],
     steps: [],
     ...mealOverrides,
-  } as any);
+  } as PartialMessage<Meal>);
   const onMealUpdated = jest.fn();
   const onBack = jest.fn();
   const showToast = jest.fn();
@@ -69,7 +70,7 @@ describe('MealEditView', () => {
         hasRedMeat: false,
         ingredients: [],
         steps: [],
-      } as any),
+      } as PartialMessage<Meal>),
     );
     const { onBack, onMealUpdated } = setup();
 
@@ -91,10 +92,10 @@ describe('MealEditView', () => {
       effort: 3,
       hasRedMeat: false,
       ingredients: [
-        new Ingredient({ id: 5, name: 'Tomato', quantity: 2, unit: 'pcs' }),
+        new Ingredient({ id: 5, name: 'Tomato', quantity: 2, unit: 'pcs' } as PartialMessage<Ingredient>),
       ],
       steps: [],
-    } as any);
+    } as PartialMessage<Meal>);
     (createMealIngredient as jest.Mock).mockResolvedValue(updated);
     const { onMealUpdated, showToast } = setup();
 
@@ -123,7 +124,7 @@ describe('MealEditView', () => {
       name: 'Salt',
       quantity: 1,
       unit: 'tsp',
-    });
+    } as PartialMessage<Ingredient>);
     const updated = new Meal({
       id: 1,
       name: 'Tasty Meal',
@@ -131,14 +132,14 @@ describe('MealEditView', () => {
       effort: 3,
       hasRedMeat: false,
       ingredients: [
-        new Ingredient({ id: 10, name: 'Salt', quantity: 2, unit: 'tsp' }),
+        new Ingredient({ id: 10, name: 'Salt', quantity: 2, unit: 'tsp' } as PartialMessage<Ingredient>),
       ],
       steps: [],
-    } as any);
+    } as PartialMessage<Meal>);
     (updateMealIngredient as jest.Mock).mockResolvedValue(updated);
     const { onMealUpdated, showToast } = setup({
       ingredients: [existing],
-    } as any);
+    });
 
     fireEvent.click(screen.getByText('Edit Recipe'));
     fireEvent.click(screen.getByText('Edit'));
@@ -159,8 +160,8 @@ describe('MealEditView', () => {
       name: 'Salt',
       quantity: 1,
       unit: 'tsp',
-    });
-    setup({ ingredients: [existing] } as any);
+    } as PartialMessage<Ingredient>);
+    setup({ ingredients: [existing] });
     fireEvent.click(screen.getByText('Edit Recipe'));
     fireEvent.click(screen.getByText('Edit'));
     fireEvent.click(screen.getByText('Cancel'));
@@ -174,10 +175,10 @@ describe('MealEditView', () => {
       name: 'Temp',
       quantity: 1,
       unit: 'g',
-    });
+    } as PartialMessage<Ingredient>);
     const { onMealUpdated, showToast } = setup({
       ingredients: [tempIng],
-    } as any);
+    });
     fireEvent.click(screen.getByText('Edit Recipe'));
     fireEvent.click(screen.getByText('Delete'));
     expect(onMealUpdated).toHaveBeenCalled();
@@ -190,7 +191,7 @@ describe('MealEditView', () => {
       name: 'Oil',
       quantity: 1,
       unit: 'tbsp',
-    });
+    } as PartialMessage<Ingredient>);
     const updated = new Meal({
       id: 1,
       name: 'Tasty Meal',
@@ -199,9 +200,9 @@ describe('MealEditView', () => {
       hasRedMeat: false,
       ingredients: [],
       steps: [],
-    } as any);
+    } as PartialMessage<Meal>);
     (deleteMealIngredient as jest.Mock).mockResolvedValue(updated);
-    const { onMealUpdated, showToast } = setup({ ingredients: [ing] } as any);
+    const { onMealUpdated, showToast } = setup({ ingredients: [ing] });
 
     fireEvent.click(screen.getByText('Edit Recipe'));
     fireEvent.click(screen.getByText('Delete'));
@@ -215,9 +216,9 @@ describe('MealEditView', () => {
 
   it('saves steps successfully and handles error', async () => {
     const steps = [
-      new Step({ id: 1, mealId: 1, stepNumber: 1, instruction: 'Do it' }),
+      new Step({ id: 1, mealId: 1, stepNumber: 1, instruction: 'Do it' } as PartialMessage<Step>),
     ];
-    const { showToast } = setup({ steps } as any);
+    const { showToast } = setup({ steps });
     (replaceAllSteps as jest.Mock).mockResolvedValue({});
 
     fireEvent.click(screen.getByText('Edit Recipe'));

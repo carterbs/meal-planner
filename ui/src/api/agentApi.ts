@@ -1,4 +1,6 @@
 import { MealPlanningCheckpointState } from '@mealplanner/generated';
+import type { GoMealPlanEntry } from '@mealplanner/generated/dist/gateway/types.gen';
+import type { GoCheckpointTuple } from '@mealplanner/generated/dist/gateway/types.gen';
 import {
   createClient,
   createConfig,
@@ -30,7 +32,11 @@ export interface StartSessionResult {
 
 export interface SendMessageResult {
   message?: string;
-  initialState?: any;
+  // API may return a checkpoint-like object with nested state or a top-level mealPlan
+  initialState?: {
+    state?: { mealPlan?: { days?: GoMealPlanEntry[] } };
+    mealPlan?: { shoppingList?: unknown }
+  } | MealPlanningCheckpointState;
 }
 
 /**
@@ -62,7 +68,7 @@ export async function startAgentSession(
     throw new Error('No response from agent');
   }
 
-  let agentResponse = data.response;
+  const agentResponse = data.response;
 
   if (!agentResponse.threadId || !agentResponse.currentStep) {
     throw new Error('Invalid agent response - missing required fields');
@@ -122,7 +128,7 @@ export async function sendAgentMessage(
     throw new Error('No response from agent');
   }
 
-  let agentResponse = data.response;
+  const agentResponse = data.response;
 
   let initialState;
   if (agentResponse.initialState) {
@@ -153,16 +159,20 @@ export async function getAgentCheckpoint(threadId: string) {
   }
 
   // Handle case where tuple might be string-encoded
-  let tuple = result.data.tuple;
+  let tuple: GoCheckpointTuple | string | undefined = result.data.tuple;
   if (typeof tuple === 'string') {
-    tuple = JSON.parse(tuple);
+    try {
+      tuple = JSON.parse(tuple) as GoCheckpointTuple;
+    } catch {
+      throw new Error('Failed to parse checkpoint tuple');
+    }
   }
 
-  if (!tuple || !(tuple as any).checkpoint) {
+  if (!tuple || typeof tuple !== 'object' || !('checkpoint' in tuple)) {
     throw new Error('Failed to get agent checkpoint - no checkpoint data');
   }
 
-  return (tuple as any).checkpoint;
+  return tuple.checkpoint;
 }
 
 /**

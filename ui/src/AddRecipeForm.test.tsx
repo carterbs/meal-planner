@@ -9,9 +9,10 @@ jest.mock('./api', () => ({
 }));
 
 // Mock StepsEditor to keep interactions simple and deterministic
+type MockStep = { instruction: string; stepNumber: number };
 jest.mock('./pages/MealManagementPage/components/StepsEditor', () => ({
   __esModule: true,
-  default: ({ onChange }: { onChange: (steps: any[]) => void }) => (
+  default: ({ onChange }: { onChange: (steps: MockStep[] | undefined) => void }) => (
     <div>
       <button
         onClick={() =>
@@ -20,7 +21,7 @@ jest.mock('./pages/MealManagementPage/components/StepsEditor', () => ({
       >
         Add mock step
       </button>
-      <button onClick={() => (onChange as any)(undefined)}>
+      <button onClick={() => onChange(undefined)}>
         Set undefined steps
       </button>
     </div>

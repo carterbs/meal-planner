@@ -18,6 +18,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
 import { Ingredient, Step, Meal } from '@mealplanner/generated';
 import { createMeal } from './api';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -91,7 +92,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     setMeal({ ...meal, hasRedMeat: e.target.checked });
   };
 
-  const handleMealTypeChange = (e: any) => {
+  const handleMealTypeChange = (e: SelectChangeEvent<string>) => {
     setMeal({ ...meal, mealType: e.target.value });
   };
 
@@ -153,7 +154,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
         const parts = processedLine.trim().split(' ');
 
         // Attempt to extract quantity (assume it's the first part if numeric)
-        let quantityStr = parts[0];
+        const quantityStr = parts[0];
         let quantity = parseFloat(quantityStr);
         let unit = '';
         let name = processedLine.trim();
@@ -277,7 +278,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     } catch (err) {
       setError(
         'Error adding recipe: ' +
-          (err instanceof Error ? err.message : String(err)),
+        (err instanceof Error ? err.message : String(err)),
       );
     } finally {
       setLoading(false);

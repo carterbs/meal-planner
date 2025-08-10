@@ -4,8 +4,8 @@ const mockRender = jest.fn();
 const mockCreateRoot = jest.fn(() => ({ render: mockRender }));
 jest.mock('react-dom/client', () => ({
   __esModule: true,
-  default: { createRoot: (...args: any[]) => mockCreateRoot(...args) },
-  createRoot: (...args: any[]) => mockCreateRoot(...args),
+  default: { createRoot: () => mockCreateRoot() },
+  createRoot: () => mockCreateRoot(),
 }));
 
 // Ensure a root element exists
@@ -19,20 +19,20 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-it('creates root and attempts to render App within providers (no throw)', () => {
-  const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+it('creates root and attempts to render App within providers (no throw)', async () => {
+  const spy = jest.spyOn(console, 'error').mockImplementation(() => { });
   // import after mocks
-
-  require('./index');
+  await import('./index');
   expect(mockCreateRoot).toHaveBeenCalled();
   spy.mockRestore();
 });
 
-it('logs error if root element missing', () => {
+it('logs error if root element missing', async () => {
   document.body.innerHTML = '';
-  const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-  require('./index');
+  const spy = jest.spyOn(console, 'error').mockImplementation(() => { });
+  await import('./index');
   expect(spy).toHaveBeenCalled();
   spy.mockRestore();
 });
+
+export { };

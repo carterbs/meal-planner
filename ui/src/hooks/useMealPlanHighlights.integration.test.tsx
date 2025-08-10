@@ -34,7 +34,8 @@ function Harness() {
 
   // Expose to tests
 
-  (global as any).__apply = applyHighlights;
+  (globalThis as unknown as { __apply: (p: WeeklyMealPlan) => void }).__apply =
+    applyHighlights;
 
   return plan ? <MealPlanDisplay plan={plan} highlights={highlights} /> : null;
 }
@@ -46,7 +47,7 @@ describe('useMealPlanHighlights integration with MealPlanDisplay', () => {
   afterEach(() => {
     jest.useRealTimers();
 
-    delete (global as any).__apply;
+    delete (globalThis as unknown as { __apply?: unknown }).__apply;
   });
 
   it('highlights changed meal rows after applyHighlights', () => {
@@ -58,7 +59,9 @@ describe('useMealPlanHighlights integration with MealPlanDisplay', () => {
     ]);
 
     act(() => {
-      (global as any).__apply(newPlan);
+      (globalThis as unknown as { __apply: (p: WeeklyMealPlan) => void }).__apply(
+        newPlan,
+      );
     });
 
     const el = screen.getByTestId('meal-name-0-breakfast');

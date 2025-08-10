@@ -16,11 +16,11 @@ const mockGoGetShoppingList = jest.fn().mockResolvedValue([]);
 
 jest.mock('../../../api', () => ({
     __esModule: true,
-    startAgentSession: (...args: any[]) => mockStartAgentSession(...args),
-    sendAgentMessage: (...args: any[]) => mockSendAgentMessage(...args),
-    getAgentCheckpoint: (...args: any[]) => mockGetAgentCheckpoint(...args),
-    getMessages: (...args: any[]) => mockGetMessages(...args),
-    goGetShoppingList: (...args: any[]) => mockGoGetShoppingList(...args),
+    startAgentSession: (...args: unknown[]) => mockStartAgentSession(...args),
+    sendAgentMessage: (...args: unknown[]) => mockSendAgentMessage(...args),
+    getAgentCheckpoint: (...args: unknown[]) => mockGetAgentCheckpoint(...args),
+    getMessages: (...args: unknown[]) => mockGetMessages(...args),
+    goGetShoppingList: (...args: unknown[]) => mockGoGetShoppingList(...args),
 }));
 
 // Mock useSession to avoid network
@@ -281,7 +281,7 @@ describe('useAgentController', () => {
 
         it('sendMessage returns newPlan when mealPlan exists', async () => {
             // Mock the useAgentMealSync hook to return a meal plan
-            const mockMealPlan = { days: [] };
+            const mockMealPlan = { days: [] } as unknown as import('@mealplanner/generated').WeeklyMealPlan;
 
             const { result } = renderHook(() => useAgentController());
 
@@ -291,7 +291,7 @@ describe('useAgentController', () => {
 
             // Set meal plan through external setter
             act(() => {
-                result.current.setMealPlanExternal(mockMealPlan as any);
+                result.current.setMealPlanExternal(mockMealPlan);
             });
 
             act(() => {
@@ -378,10 +378,10 @@ describe('useAgentController', () => {
     describe('External Meal Plan Management', () => {
         it('setMealPlanExternal updates meal plan', () => {
             const { result } = renderHook(() => useAgentController());
-            const mockPlan = { days: [{ date: '2023-01-01' }] };
+            const mockPlan = { days: [{ date: '2023-01-01' }] } as unknown as import('@mealplanner/generated').WeeklyMealPlan;
 
             act(() => {
-                result.current.setMealPlanExternal(mockPlan as any);
+                result.current.setMealPlanExternal(mockPlan);
             });
 
             expect(result.current.mealPlan).toBe(mockPlan);

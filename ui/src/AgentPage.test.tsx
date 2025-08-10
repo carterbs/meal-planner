@@ -8,10 +8,25 @@ import {
 } from '@testing-library/react';
 import AgentPage from './AgentPage';
 import { WeeklyMealPlan } from '@mealplanner/generated';
+import useMealPlanHighlights from './hooks/useMealPlanHighlights';
+import useSessionHook from './hooks/useSession';
 
-const mockController: any = {
+type MockController = {
+  session: unknown;
+  startSession: () => Promise<void>;
+  logout: jest.Mock;
+  input: string;
+  setInput: jest.Mock;
+  isWorking: boolean;
+  messages: unknown[];
+  sendMessage: jest.Mock<Promise<unknown>, []>;
+  mealPlan: unknown;
+  shoppingList: unknown;
+};
+
+const mockController: MockController = {
   session: undefined,
-  startSession: async () => {},
+  startSession: async () => { },
   logout: jest.fn(),
   input: '',
   setInput: jest.fn(),
@@ -52,14 +67,20 @@ const mockOnOpenMealLibraryClick = jest.fn();
 
 jest.mock('./pages/AgentPage/components/chat/ChatPanel', () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: {
+    onEnterKey?: (e: unknown) => void;
+    onOpenMealLibrary: () => void;
+    onStartSession: () => void;
+    onLogout: () => void;
+    onSend: () => void;
+  }) => {
     const { onEnterKey, onOpenMealLibrary, onStartSession, onLogout, onSend } =
       props;
     return (
       <div>
         <input
           data-testid="message-input"
-          onKeyDown={(e) => onEnterKey && onEnterKey(e as any)}
+          onKeyDown={(e) => onEnterKey && onEnterKey(e)}
         />
         <button data-testid="send-message" onClick={onSend}>
           Send
@@ -84,10 +105,10 @@ jest.mock('./pages/AgentPage/components/chat/ChatPanel', () => ({
   },
 }));
 
-let capturedPlanHandlers: any = {};
+let capturedPlanHandlers: Record<string, unknown> = {};
 jest.mock('./pages/AgentPage/components/plan/PlanPanel', () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: Record<string, unknown> & { onCopyMealPlan: () => void; onCopyShoppingList: () => void; onTabChange: (v: number) => void }) => {
     capturedPlanHandlers = props;
     return (
       <div>
@@ -107,7 +128,7 @@ jest.mock('./pages/AgentPage/components/plan/PlanPanel', () => ({
 
 jest.mock('./pages/MealManagementPage/MealManagementPage', () => ({
   __esModule: true,
-  default: ({ onClose, showToast }: any) => (
+  default: ({ onClose, showToast }: { onClose: () => void; showToast: (m: string) => void }) => (
     <div>
       <div>MealLibrary</div>
       <button data-testid="close-meal-library" onClick={onClose}>
@@ -125,14 +146,14 @@ jest.mock('./pages/MealManagementPage/MealManagementPage', () => ({
 
 jest.mock('./components/Toast', () => ({
   __esModule: true,
-  Toast: ({ message }: any) =>
+  Toast: ({ message }: { message?: string }) =>
     message ? <div data-testid="toast">{message}</div> : null,
 }));
 
 jest.mock('./utils/clipboard', () => ({
   __esModule: true,
-  copyMealPlanToClipboard: jest.fn(async () => {}),
-  copyShoppingListToClipboard: jest.fn(async () => {}),
+  copyMealPlanToClipboard: jest.fn(async () => { }),
+  copyShoppingListToClipboard: jest.fn(async () => { }),
 }));
 
 import {
@@ -174,9 +195,15 @@ describe('AgentPage', () => {
     render(<AgentPage />);
     const input = screen.getByTestId('message-input');
     await fireEvent.keyDown(input, { key: 'Enter' });
-    // Re-require the hook module factory to get the mock function reference
-    const hookMod: any = require('./hooks/useMealPlanHighlights');
-    expect(hookMod.default().applyHighlights).toHaveBeenCalledWith(plan);
+    // Use the mocked hook directly to assert call
+    // Hook requires two args; our mock returns a function reference regardless of inputs
+    const mocked = useMealPlanHighlights as unknown as (
+      a: unknown,
+      b: unknown,
+    ) => { applyHighlights: jest.Mock };
+    expect(mocked(undefined, undefined).applyHighlights).toHaveBeenCalledWith(
+      plan,
+    );
   });
 
   it('opens meal library view when requested', () => {
@@ -194,9 +221,10 @@ describe('AgentPage', () => {
     expect(copyShoppingListToClipboard).not.toHaveBeenCalled();
 
     unmount();
+    type MockShoppingItem = { ingredient: string; quantity: number };
     Object.assign(mockController, {
       mealPlan: new WeeklyMealPlan({ days: [] }),
-      shoppingList: [{ ingredient: 'Tomato', quantity: 1 }] as any,
+      shoppingList: [{ ingredient: 'Tomato', quantity: 1 }] as MockShoppingItem[],
     });
     render(<AgentPage />);
     fireEvent.click(screen.getAllByTestId('copy-plan')[0]);
@@ -208,8 +236,11 @@ describe('AgentPage', () => {
   it('starts new session via hook', () => {
     render(<AgentPage />);
     fireEvent.click(screen.getByTestId('start-session'));
-    const mod: any = require('./hooks/useSession');
-    expect(mod.default().startNewSession).toBeDefined();
+    // useSession requires a callback arg; our module mock ignores it in the factory
+    const sessionHook = (useSessionHook as unknown as (fn: () => Promise<void>) => { startNewSession: () => void })(
+      async () => { }
+    );
+    expect(sessionHook.startNewSession).toBeDefined();
   });
 
   it('handles logout', () => {

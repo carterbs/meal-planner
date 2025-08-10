@@ -13,10 +13,10 @@ const mockCreateMeal = jest.fn();
 
 jest.mock('../../api/mealsApi', () => ({
   __esModule: true,
-  getMeals: (...args: any[]) => mockGetMeals(...args),
-  updateMeal: (...args: any[]) => mockUpdateMeal(...args),
-  deleteMeal: (...args: any[]) => mockDeleteMeal(...args),
-  createMeal: (...args: any[]) => mockCreateMeal(...args),
+  getMeals: (...args: unknown[]) => mockGetMeals(...args),
+  updateMeal: (...args: unknown[]) => mockUpdateMeal(...args),
+  deleteMeal: (...args: unknown[]) => mockDeleteMeal(...args),
+  createMeal: (...args: unknown[]) => mockCreateMeal(...args),
 }));
 
 function meal(id: number, name: string): Meal {

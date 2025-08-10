@@ -66,7 +66,8 @@ export default function useSession(startSession: () => Promise<void>) {
         }
 
         // Extract checkpoint state
-        const checkpointData = (tuple as any)?.checkpoint;
+        const checkpointData = (tuple as { checkpoint?: unknown } | undefined)
+          ?.checkpoint;
         if (!checkpointData) return;
 
         // Handle case where checkpoint might be a string (from API response)

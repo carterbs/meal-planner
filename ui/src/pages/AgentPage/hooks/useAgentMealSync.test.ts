@@ -7,15 +7,15 @@ const mockSendAgentMessage = jest.fn();
 
 jest.mock('../../../api', () => ({
   __esModule: true,
-  getAgentCheckpoint: (...args: any[]) => mockGetAgentCheckpoint(...args),
-  goGetShoppingList: (...args: any[]) => mockGoGetShoppingList(...args),
-  sendAgentMessage: (...args: any[]) => mockSendAgentMessage(...args),
+  getAgentCheckpoint: (...args: unknown[]) => mockGetAgentCheckpoint(...args),
+  goGetShoppingList: (...args: unknown[]) => mockGoGetShoppingList(...args),
+  sendAgentMessage: (...args: unknown[]) => mockSendAgentMessage(...args),
 }));
 
 // Mock converter and generated classes
 const mockConvertedPlan = {
   days: [{ dayIndex: 0, mealType: 'dinner' }],
-} as any;
+} as unknown;
 jest.mock('../../../utils/mealPlanConverter', () => ({
   __esModule: true,
   convertGatewayMealPlan: jest.fn(() => mockConvertedPlan),

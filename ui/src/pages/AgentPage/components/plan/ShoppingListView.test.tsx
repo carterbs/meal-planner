@@ -1,18 +1,23 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ShoppingListView from './ShoppingListView';
+import { ShoppingListItem } from '@mealplanner/generated';
 
 describe('ShoppingListView', () => {
-  const styles: any = { shoppingListItem: {} };
+  const styles = {
+    shoppingListItem: {},
+  } as unknown as ReturnType<
+    typeof import('../../../../theme').getAgentPageStyles
+  >;
 
   it('renders items with quantity when > 0 and category when present', () => {
-    const items: any[] = [
-      { ingredient: 'Tomatoes', quantity: 2, category: 'produce' },
-      { ingredient: 'Salt', quantity: 0, category: '' },
-      { ingredient: 'Pepper', quantity: undefined },
+    const items: ShoppingListItem[] = [
+      new ShoppingListItem({ ingredient: 'Tomatoes', quantity: '2', category: 'produce' }),
+      new ShoppingListItem({ ingredient: 'Salt', quantity: '0', category: '' }),
+      new ShoppingListItem({ ingredient: 'Pepper' }),
     ];
 
-    render(<ShoppingListView items={items as any} styles={styles} />);
+    render(<ShoppingListView items={items} styles={styles} />);
 
     expect(screen.getByText('2 Tomatoes (produce)')).toBeInTheDocument();
     expect(screen.getByText('Salt')).toBeInTheDocument();
@@ -20,13 +25,13 @@ describe('ShoppingListView', () => {
   });
 
   it('omits quantity when not positive', () => {
-    const items: any[] = [
-      { ingredient: 'Sugar', quantity: '0' },
-      { ingredient: 'Flour', quantity: -1 },
-      { ingredient: 'Oil', quantity: 'not-a-number' },
+    const items: ShoppingListItem[] = [
+      new ShoppingListItem({ ingredient: 'Sugar', quantity: '0' }),
+      new ShoppingListItem({ ingredient: 'Flour', quantity: '-1' }),
+      new ShoppingListItem({ ingredient: 'Oil', quantity: 'not-a-number' }),
     ];
 
-    render(<ShoppingListView items={items as any} styles={styles} />);
+    render(<ShoppingListView items={items} styles={styles} />);
 
     expect(screen.getByText('Sugar')).toBeInTheDocument();
     expect(screen.getByText('Flour')).toBeInTheDocument();

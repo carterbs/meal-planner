@@ -58,7 +58,7 @@ function mapIngredient(i: GoIngredient): Ingredient {
 function mapMeal(m: GoMeal): Meal {
   // Convert lastPlanned to protobuf Timestamp if present and string-like
   let lastPlannedTimestamp: Timestamp | undefined;
-  const maybeLastPlanned: unknown = (m as any).lastPlanned;
+  const maybeLastPlanned: unknown = m.lastPlanned;
   if (typeof maybeLastPlanned === 'string' && maybeLastPlanned) {
     const date = new Date(maybeLastPlanned);
     if (!isNaN(date.getTime())) {

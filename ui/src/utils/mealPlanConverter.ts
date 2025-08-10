@@ -53,8 +53,8 @@ function convertMeal(meal: GoMeal): Meal {
       ? typeof meal.lastPlanned === 'string'
         ? Timestamp.fromDate(new Date(meal.lastPlanned))
         : Timestamp.fromDate(
-            new Date(((meal.lastPlanned as any).seconds ?? 0) * 1000),
-          )
+          new Date(((meal.lastPlanned as unknown as { seconds?: number }).seconds ?? 0) * 1000),
+        )
       : undefined,
     ingredients: (meal.ingredients ?? []).map(convertIngredient),
     steps: (meal.steps ?? []).map(convertStep),

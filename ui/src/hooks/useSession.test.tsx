@@ -273,7 +273,7 @@ describe('useSession', () => {
     localStorage.setItem('sessionId', 't7');
     const cp = {
       tuple: {
-        checkpoint: { state: { mealPlan: { days: [{ meal: {} as any }] } } },
+        checkpoint: { state: { mealPlan: { days: [{ meal: {} as unknown }] } } },
       },
     };
     (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });

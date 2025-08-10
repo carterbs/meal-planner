@@ -32,7 +32,7 @@ describe('clipboard utils', () => {
     const clip = {
       write: jest.fn().mockResolvedValue(undefined),
       writeText: jest.fn().mockResolvedValue(undefined),
-    };
+    } as unknown as Clipboard;
     // Define clipboard on existing navigator for jsdom
     Object.defineProperty(navigator, 'clipboard', {
       value: clip,
@@ -46,7 +46,7 @@ describe('clipboard utils', () => {
     jest.resetAllMocks();
     mockClipboard();
 
-    (global as any).ClipboardItem = undefined;
+    (global as unknown as { ClipboardItem?: unknown }).ClipboardItem = undefined;
   });
 
   it('formats meal plan into html and text', () => {
@@ -70,7 +70,7 @@ describe('clipboard utils', () => {
     const plan = buildPlan();
     // Provide a fake ClipboardItem constructor
 
-    (global as any).ClipboardItem = function FakeClipboardItem(
+    (global as unknown as { ClipboardItem: typeof ClipboardItem }).ClipboardItem = function FakeClipboardItem(
       this: unknown,
       _items: Record<string, Blob>,
     ) {
@@ -79,8 +79,8 @@ describe('clipboard utils', () => {
 
     await copyMealPlanToClipboard(plan);
 
-    const write = (navigator.clipboard as any).write as jest.Mock;
-    const writeText = (navigator.clipboard as any).writeText as jest.Mock;
+    const write = ((navigator.clipboard as unknown) as { write: jest.Mock }).write;
+    const writeText = ((navigator.clipboard as unknown) as { writeText: jest.Mock }).writeText;
 
     expect(write).toHaveBeenCalledTimes(1);
     expect(writeText).not.toHaveBeenCalled();
@@ -91,8 +91,8 @@ describe('clipboard utils', () => {
 
     await copyMealPlanToClipboard(plan);
 
-    const write = (navigator.clipboard as any).write as jest.Mock;
-    const writeText = (navigator.clipboard as any).writeText as jest.Mock;
+    const write = ((navigator.clipboard as unknown) as { write: jest.Mock }).write;
+    const writeText = ((navigator.clipboard as unknown) as { writeText: jest.Mock }).writeText;
 
     expect(write).not.toHaveBeenCalled();
     expect(writeText).toHaveBeenCalledTimes(1);
@@ -111,7 +111,7 @@ describe('clipboard utils', () => {
       new ShoppingListItem({ ingredient: 'Eggs', quantity: '', category: '' }),
     ];
 
-    (global as any).ClipboardItem = function FakeClipboardItem(
+    (global as unknown as { ClipboardItem: typeof ClipboardItem }).ClipboardItem = function FakeClipboardItem(
       this: unknown,
       _items: Record<string, Blob>,
     ) {
@@ -120,8 +120,8 @@ describe('clipboard utils', () => {
 
     await copyShoppingListToClipboard(items);
 
-    const write = (navigator.clipboard as any).write as jest.Mock;
-    const writeText = (navigator.clipboard as any).writeText as jest.Mock;
+    const write = ((navigator.clipboard as unknown) as { write: jest.Mock }).write;
+    const writeText = ((navigator.clipboard as unknown) as { writeText: jest.Mock }).writeText;
 
     expect(write).toHaveBeenCalledTimes(1);
     expect(writeText).not.toHaveBeenCalled();
@@ -135,8 +135,8 @@ describe('clipboard utils', () => {
 
     await copyShoppingListToClipboard(items);
 
-    const write = (navigator.clipboard as any).write as jest.Mock;
-    const writeText = (navigator.clipboard as any).writeText as jest.Mock;
+    const write = ((navigator.clipboard as unknown) as { write: jest.Mock }).write;
+    const writeText = ((navigator.clipboard as unknown) as { writeText: jest.Mock }).writeText;
 
     expect(write).not.toHaveBeenCalled();
     expect(writeText).toHaveBeenCalledTimes(1);

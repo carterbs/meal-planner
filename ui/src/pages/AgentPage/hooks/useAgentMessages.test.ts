@@ -7,7 +7,7 @@ const mockGetMessages = jest.fn().mockResolvedValue([
 
 jest.mock('../../../api', () => ({
   __esModule: true,
-  getMessages: (...args: any[]) => mockGetMessages(...args),
+  getMessages: (...args: unknown[]) => mockGetMessages(...args),
 }));
 
 // Import after mocks are set up

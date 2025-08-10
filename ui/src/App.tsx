@@ -27,14 +27,24 @@ const App: React.FC = () => {
     setChecking(true);
     try {
       const result = await getHealth({ client: gatewayClient });
-      if (result.error) {
-        setServices((result.error as any).services);
-        const ok = Object.values((result.error as any).services || {}).every(
-          Boolean,
-        );
+      if ('data' in result && result.data) {
+        const svc = result.data.services;
+        setServices(svc);
+        const ok = svc ? Object.values(svc).every(Boolean) : false;
         setHealthy(ok);
         setChecking(false);
         return ok;
+      }
+      // Handle error shape that may include service statuses
+      if ('error' in result && (result as { error?: { services?: Record<string, boolean> } }).error) {
+        const svc = (result as { error?: { services?: Record<string, boolean> } }).error?.services;
+        if (svc) {
+          setServices(svc);
+          const ok = Object.values(svc).every(Boolean);
+          setHealthy(ok);
+          setChecking(false);
+          return ok;
+        }
       }
     } catch {
       // ignore

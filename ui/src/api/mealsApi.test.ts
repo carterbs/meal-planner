@@ -62,7 +62,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: { meals: [mockGoMeal] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       const result = await getMeals();
 
@@ -88,7 +88,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: { meals: [mealWithNullValues] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       const result = await getMeals();
 
@@ -113,7 +113,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: { meals: [mealWithUndefinedArrays] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       const result = await getMeals();
 
@@ -146,7 +146,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: { meals: [mealWithNullIngredientAndStep] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       const result = await getMeals();
 
@@ -165,15 +165,15 @@ describe('mealsApi', () => {
     });
 
     it('should handle meals without lastPlanned field', async () => {
-      const mealWithoutLastPlanned = {
+      const mealWithoutLastPlanned: Record<string, unknown> = {
         ...mockGoMeal,
       };
-      delete (mealWithoutLastPlanned as any).lastPlanned;
+      delete mealWithoutLastPlanned.lastPlanned;
 
       mockedGateway.getMeals.mockResolvedValue({
         data: { meals: [mealWithoutLastPlanned] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       const result = await getMeals();
 
@@ -189,7 +189,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: { meals: [mealWithEmptyLastPlanned] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       const result = await getMeals();
 
@@ -200,7 +200,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: { meals: [mockGoMeal] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       await getMeals('DINNER');
 
@@ -214,7 +214,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: null,
         error: 'Network error',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       await expect(getMeals()).rejects.toThrow(
         'Failed to fetch meals: Network error',
@@ -225,7 +225,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: null,
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       await expect(getMeals()).rejects.toThrow(
         'Failed to fetch meals: Unknown error',
@@ -236,7 +236,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: { meals: null },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       const result = await getMeals();
       expect(result).toEqual([]);
@@ -251,7 +251,7 @@ describe('mealsApi', () => {
       mockedGateway.getMeals.mockResolvedValue({
         data: { meals: [mealWithInvalidDate] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getMeals> extends Promise<infer T> ? T : never);
 
       const result = await getMeals();
       expect(result[0].lastPlanned).toBeUndefined();
@@ -263,12 +263,12 @@ describe('mealsApi', () => {
       mockedGateway.postMeals.mockResolvedValue({
         data: { meal: mockGoMeal },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
-      const mealData = { ...mockGoMeal };
-      delete (mealData as any).id;
+      const mealData: Record<string, unknown> = { ...mockGoMeal };
+      delete mealData.id;
 
-      const result = await createMeal(mealData);
+      const result = await createMeal(mealData as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>);
 
       expect(result).toBeInstanceOf(Meal);
       expect(result.name).toBe('Test Meal');
@@ -278,12 +278,12 @@ describe('mealsApi', () => {
       mockedGateway.postMeals.mockResolvedValue({
         data: { meal: JSON.stringify(mockGoMeal) },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
-      const mealData = { ...mockGoMeal };
-      delete (mealData as any).id;
+      const mealData2: Record<string, unknown> = { ...mockGoMeal };
+      delete mealData2.id;
 
-      const result = await createMeal(mealData);
+      const result = await createMeal(mealData2 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>);
 
       expect(result).toBeInstanceOf(Meal);
       expect(result.name).toBe('Test Meal');
@@ -293,12 +293,12 @@ describe('mealsApi', () => {
       mockedGateway.postMeals.mockResolvedValue({
         data: null,
         error: { error: 'Validation failed' },
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
-      const mealData = { ...mockGoMeal };
-      delete (mealData as any).id;
+      const mealData3: Record<string, unknown> = { ...mockGoMeal };
+      delete mealData3.id;
 
-      await expect(createMeal(mealData)).rejects.toThrow(
+      await expect(createMeal(mealData3 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
         'Failed to create meal: Validation failed',
       );
     });
@@ -307,12 +307,12 @@ describe('mealsApi', () => {
       mockedGateway.postMeals.mockResolvedValue({
         data: null,
         error: 'Database error',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
-      const mealData = { ...mockGoMeal };
-      delete (mealData as any).id;
+      const mealData4: Record<string, unknown> = { ...mockGoMeal };
+      delete mealData4.id;
 
-      await expect(createMeal(mealData)).rejects.toThrow(
+      await expect(createMeal(mealData4 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
         'Failed to create meal: Database error',
       );
     });
@@ -321,12 +321,12 @@ describe('mealsApi', () => {
       mockedGateway.postMeals.mockResolvedValue({
         data: null,
         error: { message: 'Something went wrong' }, // No 'error' property
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
-      const mealData = { ...mockGoMeal };
-      delete (mealData as any).id;
+      const mealData5: Record<string, unknown> = { ...mockGoMeal };
+      delete mealData5.id;
 
-      await expect(createMeal(mealData)).rejects.toThrow(
+      await expect(createMeal(mealData5 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
         'Failed to create meal: [object Object]',
       );
     });
@@ -335,12 +335,12 @@ describe('mealsApi', () => {
       mockedGateway.postMeals.mockResolvedValue({
         data: null,
         error: undefined, // This will cause fallback to 'Unknown error'
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
-      const mealData = { ...mockGoMeal };
-      delete (mealData as any).id;
+      const mealData6: Record<string, unknown> = { ...mockGoMeal };
+      delete mealData6.id;
 
-      await expect(createMeal(mealData)).rejects.toThrow(
+      await expect(createMeal(mealData6 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
         'Failed to create meal: Unknown error',
       );
     });
@@ -349,12 +349,12 @@ describe('mealsApi', () => {
       mockedGateway.postMeals.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
-      const mealData = { ...mockGoMeal };
-      delete (mealData as any).id;
+      const mealData7: Record<string, unknown> = { ...mockGoMeal };
+      delete mealData7.id;
 
-      await expect(createMeal(mealData)).rejects.toThrow(
+      await expect(createMeal(mealData7 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
         'No meal returned from create request',
       );
     });
@@ -365,7 +365,7 @@ describe('mealsApi', () => {
       mockedGateway.putMealsByMealId.mockResolvedValue({
         data: { meal: mockGoMeal },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.putMealsByMealId> extends Promise<infer T> ? T : never);
 
       const result = await updateMeal(1, mockGoMeal);
 
@@ -377,7 +377,7 @@ describe('mealsApi', () => {
       mockedGateway.putMealsByMealId.mockResolvedValue({
         data: { meal: JSON.stringify(mockGoMeal) },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.putMealsByMealId> extends Promise<infer T> ? T : never);
 
       const result = await updateMeal(1, mockGoMeal);
 
@@ -389,7 +389,7 @@ describe('mealsApi', () => {
       mockedGateway.putMealsByMealId.mockResolvedValue({
         data: null,
         error: { error: 'Not found' },
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.putMealsByMealId> extends Promise<infer T> ? T : never);
 
       await expect(updateMeal(1, mockGoMeal)).rejects.toThrow(
         'Failed to update meal: Not found',
@@ -400,7 +400,7 @@ describe('mealsApi', () => {
       mockedGateway.putMealsByMealId.mockResolvedValue({
         data: null,
         error: 'Server error',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.putMealsByMealId> extends Promise<infer T> ? T : never);
 
       await expect(updateMeal(1, mockGoMeal)).rejects.toThrow(
         'Failed to update meal: Server error',
@@ -411,7 +411,7 @@ describe('mealsApi', () => {
       mockedGateway.putMealsByMealId.mockResolvedValue({
         data: null,
         error: { status: 500 }, // No 'error' property
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.putMealsByMealId> extends Promise<infer T> ? T : never);
 
       await expect(updateMeal(1, mockGoMeal)).rejects.toThrow(
         'Failed to update meal: [object Object]',
@@ -422,7 +422,7 @@ describe('mealsApi', () => {
       mockedGateway.putMealsByMealId.mockResolvedValue({
         data: null,
         error: undefined, // This will cause fallback to 'Unknown error'
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.putMealsByMealId> extends Promise<infer T> ? T : never);
 
       await expect(updateMeal(1, mockGoMeal)).rejects.toThrow(
         'Failed to update meal: Unknown error',
@@ -433,7 +433,7 @@ describe('mealsApi', () => {
       mockedGateway.putMealsByMealId.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.putMealsByMealId> extends Promise<infer T> ? T : never);
 
       await expect(updateMeal(1, mockGoMeal)).rejects.toThrow(
         'No meal returned from update request',
@@ -446,7 +446,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealId.mockResolvedValue({
         data: { message: 'Deleted successfully' },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealId> extends Promise<infer T> ? T : never);
 
       const result = await deleteMeal(1);
 
@@ -461,7 +461,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealId.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealId> extends Promise<infer T> ? T : never);
 
       const result = await deleteMeal(1);
 
@@ -472,7 +472,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealId.mockResolvedValue({
         data: null,
         error: 'Delete failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealId> extends Promise<infer T> ? T : never);
 
       await expect(deleteMeal(1)).rejects.toThrow(
         'Failed to delete meal: Delete failed',
@@ -483,7 +483,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealId.mockResolvedValue({
         data: null,
         error: null, // This will cause fallback to 'Unknown error'
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealId> extends Promise<infer T> ? T : never);
 
       await expect(deleteMeal(1)).rejects.toThrow(
         'Failed to delete meal: Unknown error',
@@ -497,7 +497,7 @@ describe('mealsApi', () => {
         {
           data: { meal: mockGoMeal },
           error: null,
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.putMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       const result = await updateMealIngredient(1, 1, mockIngredient);
@@ -521,7 +521,7 @@ describe('mealsApi', () => {
         {
           data: { meal: JSON.stringify(mockGoMeal) },
           error: null,
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.putMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       const result = await updateMealIngredient(1, 1, mockIngredient);
@@ -534,7 +534,7 @@ describe('mealsApi', () => {
         {
           data: null,
           error: 'Update failed',
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.putMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       await expect(updateMealIngredient(1, 1, mockIngredient)).rejects.toThrow(
@@ -547,7 +547,7 @@ describe('mealsApi', () => {
         {
           data: null,
           error: { code: 400 }, // No 'error' property
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.putMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       await expect(updateMealIngredient(1, 1, mockIngredient)).rejects.toThrow(
@@ -560,7 +560,7 @@ describe('mealsApi', () => {
         {
           data: null,
           error: undefined, // This will cause fallback to 'Unknown error'
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.putMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       await expect(updateMealIngredient(1, 1, mockIngredient)).rejects.toThrow(
@@ -573,7 +573,7 @@ describe('mealsApi', () => {
         {
           data: {},
           error: null,
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.putMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       await expect(updateMealIngredient(1, 1, mockIngredient)).rejects.toThrow(
@@ -587,7 +587,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdIngredients.mockResolvedValue({
         data: { meal: mockGoMeal },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdIngredients> extends Promise<infer T> ? T : never);
 
       const result = await createMealIngredient(1, mockIngredient);
 
@@ -606,7 +606,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdIngredients.mockResolvedValue({
         data: { meal: JSON.stringify(mockGoMeal) },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdIngredients> extends Promise<infer T> ? T : never);
 
       const result = await createMealIngredient(1, mockIngredient);
 
@@ -617,7 +617,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdIngredients.mockResolvedValue({
         data: null,
         error: 'Creation failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdIngredients> extends Promise<infer T> ? T : never);
 
       await expect(createMealIngredient(1, mockIngredient)).rejects.toThrow(
         'Failed to create ingredient: Creation failed',
@@ -628,7 +628,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdIngredients.mockResolvedValue({
         data: null,
         error: { statusCode: 400 }, // No 'error' property
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdIngredients> extends Promise<infer T> ? T : never);
 
       await expect(createMealIngredient(1, mockIngredient)).rejects.toThrow(
         'Failed to create ingredient: [object Object]',
@@ -639,7 +639,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdIngredients.mockResolvedValue({
         data: null,
         error: undefined, // This will cause fallback to 'Unknown error'
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdIngredients> extends Promise<infer T> ? T : never);
 
       await expect(createMealIngredient(1, mockIngredient)).rejects.toThrow(
         'Failed to create ingredient: Unknown error',
@@ -650,7 +650,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdIngredients.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdIngredients> extends Promise<infer T> ? T : never);
 
       await expect(createMealIngredient(1, mockIngredient)).rejects.toThrow(
         'No meal returned from create ingredient request',
@@ -664,7 +664,7 @@ describe('mealsApi', () => {
         {
           data: { meal: mockGoMeal },
           error: null,
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       const result = await deleteMealIngredient(1, 1);
@@ -683,7 +683,7 @@ describe('mealsApi', () => {
         {
           data: { meal: JSON.stringify(mockGoMeal) },
           error: null,
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       const result = await deleteMealIngredient(1, 1);
@@ -696,7 +696,7 @@ describe('mealsApi', () => {
         {
           data: null,
           error: 'Deletion failed',
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       await expect(deleteMealIngredient(1, 1)).rejects.toThrow(
@@ -709,7 +709,7 @@ describe('mealsApi', () => {
         {
           data: null,
           error: { message: 'Delete failed' }, // No 'error' property
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       await expect(deleteMealIngredient(1, 1)).rejects.toThrow(
@@ -722,7 +722,7 @@ describe('mealsApi', () => {
         {
           data: null,
           error: undefined, // This will cause fallback to 'Unknown error'
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       await expect(deleteMealIngredient(1, 1)).rejects.toThrow(
@@ -735,7 +735,7 @@ describe('mealsApi', () => {
         {
           data: {},
           error: null,
-        } as any,
+        } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdIngredientsByIngredientId> extends Promise<infer T> ? T : never,
       );
 
       await expect(deleteMealIngredient(1, 1)).rejects.toThrow(
@@ -749,7 +749,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdStepsBulk.mockResolvedValue({
         data: { steps: [mockStep] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdStepsBulk> extends Promise<infer T> ? T : never);
 
       const instructions = ['Step 1', 'Step 2'];
       const result = await addBulkSteps(1, instructions);
@@ -767,7 +767,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdStepsBulk.mockResolvedValue({
         data: { steps: null },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdStepsBulk> extends Promise<infer T> ? T : never);
 
       const result = await addBulkSteps(1, ['Step 1']);
 
@@ -778,7 +778,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdStepsBulk.mockResolvedValue({
         data: null,
         error: 'Add steps failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdStepsBulk> extends Promise<infer T> ? T : never);
 
       await expect(addBulkSteps(1, ['Step 1'])).rejects.toThrow(
         'Failed to add steps: Add steps failed',
@@ -789,7 +789,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdStepsBulk.mockResolvedValue({
         data: null,
         error: { details: 'Step creation failed' }, // No 'error' property
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdStepsBulk> extends Promise<infer T> ? T : never);
 
       await expect(addBulkSteps(1, ['Step 1'])).rejects.toThrow(
         'Failed to add steps: [object Object]',
@@ -800,7 +800,7 @@ describe('mealsApi', () => {
       mockedGateway.postMealsByMealIdStepsBulk.mockResolvedValue({
         data: null,
         error: undefined, // This will cause fallback to 'Unknown error'
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdStepsBulk> extends Promise<infer T> ? T : never);
 
       await expect(addBulkSteps(1, ['Step 1'])).rejects.toThrow(
         'Failed to add steps: Unknown error',
@@ -813,7 +813,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealIdSteps.mockResolvedValue({
         data: { message: 'All steps deleted' },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdSteps> extends Promise<infer T> ? T : never);
 
       const result = await deleteAllSteps(1);
 
@@ -828,7 +828,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealIdSteps.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdSteps> extends Promise<infer T> ? T : never);
 
       const result = await deleteAllSteps(1);
 
@@ -839,7 +839,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealIdSteps.mockResolvedValue({
         data: null,
         error: 'Delete steps failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdSteps> extends Promise<infer T> ? T : never);
 
       await expect(deleteAllSteps(1)).rejects.toThrow(
         'Failed to delete steps: Delete steps failed',
@@ -850,7 +850,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealIdSteps.mockResolvedValue({
         data: null,
         error: { info: 'Steps delete failed' }, // No 'error' property
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdSteps> extends Promise<infer T> ? T : never);
 
       await expect(deleteAllSteps(1)).rejects.toThrow(
         'Failed to delete steps: [object Object]',
@@ -861,7 +861,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealIdSteps.mockResolvedValue({
         data: null,
         error: undefined, // This will cause fallback to 'Unknown error'
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdSteps> extends Promise<infer T> ? T : never);
 
       await expect(deleteAllSteps(1)).rejects.toThrow(
         'Failed to delete steps: Unknown error',
@@ -874,12 +874,12 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealIdSteps.mockResolvedValue({
         data: { message: 'Steps deleted' },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdSteps> extends Promise<infer T> ? T : never);
 
       mockedGateway.postMealsByMealIdStepsBulk.mockResolvedValue({
         data: { steps: [mockStep] },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdStepsBulk> extends Promise<infer T> ? T : never);
 
       const newSteps = [new Step({ instruction: 'New step 1' })];
 
@@ -893,7 +893,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealIdSteps.mockResolvedValue({
         data: { message: 'Steps deleted' },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdSteps> extends Promise<infer T> ? T : never);
 
       await replaceAllSteps(1, []);
 
@@ -905,7 +905,7 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealIdSteps.mockResolvedValue({
         data: null,
         error: 'Delete failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdSteps> extends Promise<infer T> ? T : never);
 
       const newSteps = [new Step({ instruction: 'New step 1' })];
 
@@ -918,12 +918,12 @@ describe('mealsApi', () => {
       mockedGateway.deleteMealsByMealIdSteps.mockResolvedValue({
         data: { message: 'Steps deleted' },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.deleteMealsByMealIdSteps> extends Promise<infer T> ? T : never);
 
       mockedGateway.postMealsByMealIdStepsBulk.mockResolvedValue({
         data: null,
         error: 'Add failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postMealsByMealIdStepsBulk> extends Promise<infer T> ? T : never);
 
       const newSteps = [new Step({ instruction: 'New step 1' })];
 
@@ -943,13 +943,12 @@ describe('mealsApi', () => {
       mockedGateway.postShoppinglist.mockResolvedValue({
         data: { items: mockShoppingListItems },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postShoppinglist> extends Promise<infer T> ? T : never);
 
       const mockMealPlan = new WeeklyMealPlan({
         days: [
           { meal: new Meal({ id: 1, name: 'Meal 1' }) },
           { meal: new Meal({ id: 2, name: 'Meal 2' }) },
-          { meal: null },
         ],
       });
 
@@ -966,7 +965,7 @@ describe('mealsApi', () => {
       mockedGateway.postShoppinglist.mockResolvedValue({
         data: null,
         error: 'Shopping list generation failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postShoppinglist> extends Promise<infer T> ? T : never);
 
       const mockMealPlan = new WeeklyMealPlan({
         days: [{ meal: new Meal({ id: 1, name: 'Meal 1' }) }],
@@ -981,7 +980,7 @@ describe('mealsApi', () => {
       mockedGateway.postShoppinglist.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postShoppinglist> extends Promise<infer T> ? T : never);
 
       const mockMealPlan = new WeeklyMealPlan({
         days: [{ meal: new Meal({ id: 1, name: 'Meal 1' }) }],
@@ -993,15 +992,15 @@ describe('mealsApi', () => {
     });
 
     it('should handle meal plan with no meals', async () => {
-      const mockShoppingListItems: any[] = [];
+      const mockShoppingListItems: unknown[] = [];
 
       mockedGateway.postShoppinglist.mockResolvedValue({
         data: { items: mockShoppingListItems },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postShoppinglist> extends Promise<infer T> ? T : never);
 
       const mockMealPlan = new WeeklyMealPlan({
-        days: [{ meal: null }, { meal: null }],
+        days: [],
       });
 
       const result = await goGetShoppingList(mockMealPlan);

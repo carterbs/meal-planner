@@ -10,8 +10,8 @@ const mockGetMessages = jest
 
 jest.mock('../../../api', () => ({
   __esModule: true,
-  getAgentCheckpoint: (...args: any[]) => mockGetAgentCheckpoint(...args),
-  getMessages: (...args: any[]) => mockGetMessages(...args),
+  getAgentCheckpoint: (...args: unknown[]) => mockGetAgentCheckpoint(...args),
+  getMessages: (...args: unknown[]) => mockGetMessages(...args),
   // other API functions unused in this test
 }));
 

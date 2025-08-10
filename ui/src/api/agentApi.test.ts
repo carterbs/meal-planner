@@ -31,7 +31,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: { response: mockAgentResponse },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       const result = await startAgentSession();
 
@@ -53,7 +53,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: { response: mockAgentResponse },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       const participants = ['user', 'agent'];
       const workflowType = 'custom_workflow';
@@ -79,7 +79,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: { response: responseWithoutState },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       const result = await startAgentSession();
 
@@ -95,7 +95,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: { response: responseWithInvalidState },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
 
@@ -114,7 +114,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: null,
         error: 'Session creation failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       await expect(startAgentSession()).rejects.toThrow(
         'Failed to start agent session: Session creation failed',
@@ -125,7 +125,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: null,
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       await expect(startAgentSession()).rejects.toThrow(
         'Failed to start agent session: Unknown error',
@@ -136,7 +136,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       await expect(startAgentSession()).rejects.toThrow(
         'No response from agent',
@@ -152,7 +152,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: { response: invalidResponse },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       await expect(startAgentSession()).rejects.toThrow(
         'Invalid agent response - missing required fields',
@@ -168,7 +168,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: { response: invalidResponse },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       await expect(startAgentSession()).rejects.toThrow(
         'Invalid agent response - missing required fields',
@@ -185,7 +185,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: { response: invalidResponse },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
 
       await expect(startAgentSession()).rejects.toThrow(
         'Invalid agent response - missing required fields',
@@ -206,7 +206,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
         data: { response: mockMessageResponse },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
 
       const result = await sendAgentMessage('test-thread-123', 'Hello');
 
@@ -231,7 +231,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
         data: { response: mockMessageResponse },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
 
       const result = await sendAgentMessage(
         'test-thread-123',
@@ -262,7 +262,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
         data: { response: responseWithoutState },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
 
       const result = await sendAgentMessage('test-thread-123', 'Hello');
 
@@ -278,7 +278,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
         data: { response: responseWithInvalidState },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
 
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
 
@@ -297,7 +297,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
         data: null,
         error: 'Message sending failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
 
       await expect(
         sendAgentMessage('test-thread-123', 'Hello'),
@@ -308,7 +308,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
         data: null,
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
 
       await expect(
         sendAgentMessage('test-thread-123', 'Hello'),
@@ -319,7 +319,7 @@ describe('agentApi', () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
 
       await expect(
         sendAgentMessage('test-thread-123', 'Hello'),
@@ -341,7 +341,7 @@ describe('agentApi', () => {
           },
         },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
 
       const result = await getAgentCheckpoint('test-thread-123');
 
@@ -362,7 +362,7 @@ describe('agentApi', () => {
           tuple: tupleString,
         },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
 
       const result = await getAgentCheckpoint('test-thread-123');
 
@@ -374,7 +374,7 @@ describe('agentApi', () => {
       mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
         data: null,
         error: errorObject,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
 
       await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
         errorObject,
@@ -385,7 +385,7 @@ describe('agentApi', () => {
       mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
         data: null,
         error: 'Database connection failed',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
 
       await expect(getAgentCheckpoint('test-thread-123')).rejects.toBe(
         'Database connection failed',
@@ -396,7 +396,7 @@ describe('agentApi', () => {
       mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
         data: null,
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
 
       await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
         'Failed to get agent checkpoint',
@@ -407,7 +407,7 @@ describe('agentApi', () => {
       mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
 
       await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
         'Failed to get agent checkpoint - no checkpoint data',
@@ -420,7 +420,7 @@ describe('agentApi', () => {
           tuple: {},
         },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
 
       await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
         'Failed to get agent checkpoint - no checkpoint data',
@@ -433,7 +433,7 @@ describe('agentApi', () => {
           tuple: null,
         },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
 
       await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
         'Failed to get agent checkpoint - no checkpoint data',
@@ -461,7 +461,7 @@ describe('agentApi', () => {
       mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
         data: { messages: mockMessages },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
 
       const result = await getMessages('test-thread-123');
 
@@ -478,7 +478,7 @@ describe('agentApi', () => {
       mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
         data: {},
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
 
       const result = await getMessages('test-thread-123');
 
@@ -489,7 +489,7 @@ describe('agentApi', () => {
       mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
         data: { messages: null },
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
 
       const result = await getMessages('test-thread-123');
 
@@ -501,7 +501,7 @@ describe('agentApi', () => {
       mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
         data: null,
         error: errorObject,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
 
       await expect(getMessages('test-thread-123')).rejects.toThrow(errorObject);
     });
@@ -510,7 +510,7 @@ describe('agentApi', () => {
       mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
         data: null,
         error: 'Access denied',
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
 
       await expect(getMessages('test-thread-123')).rejects.toBe(
         'Access denied',
@@ -521,7 +521,7 @@ describe('agentApi', () => {
       mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
         data: null,
         error: null,
-      } as any);
+      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
 
       await expect(getMessages('test-thread-123')).rejects.toThrow(
         'Failed to get messages',

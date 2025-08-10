@@ -7,8 +7,8 @@ const mockDeleteMeal = jest.fn();
 
 jest.mock('../../../api/mealsApi', () => ({
   __esModule: true,
-  getMeals: (...args: any[]) => mockGetMeals(...args),
-  deleteMeal: (...args: any[]) => mockDeleteMeal(...args),
+  getMeals: (...args: unknown[]) => mockGetMeals(...args),
+  deleteMeal: (...args: unknown[]) => mockDeleteMeal(...args),
 }));
 
 // Import after mocks

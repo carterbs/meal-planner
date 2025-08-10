@@ -12,9 +12,11 @@ export default function useAgentMessages(threadId: string | null | undefined) {
   const fetchMessages = useCallback(async () => {
     if (!threadId) return;
     const msgs = (await getMessages(threadId)) || [];
-    const formatted: ChatMessage[] = (msgs as any[]).map((msg: any) => ({
+    const formatted: ChatMessage[] = msgs.map((msg) => ({
       sender: msg.sender === 'user' ? 'user' : 'agent',
-      text: msg.content || msg.message || '',
+      text: (msg as { content?: string; message?: string }).content ??
+        (msg as { content?: string; message?: string }).message ??
+        '',
     }));
     setMessages(formatted);
   }, [threadId]);
