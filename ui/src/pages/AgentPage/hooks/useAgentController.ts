@@ -70,12 +70,13 @@ export default function useAgentController(): UseAgentControllerReturn {
     // Intentionally no resume logic here; handled in useAgentSession.
 
     useEffect(() => {
-        if (!session?.threadId) return;
+        const threadId = session ? session.threadId : null;
+        if (!threadId) return;
         void (async () => {
-            await syncFromCheckpoint(session.threadId);
+            await syncFromCheckpoint(threadId);
             await fetchAndUpdateMessages();
         })();
-    }, [session && session.threadId, syncFromCheckpoint, fetchAndUpdateMessages]);
+    }, [session && session.threadId ? session.threadId : null, syncFromCheckpoint, fetchAndUpdateMessages]);
 
     const sendMessage = useCallback(
         async (text?: string) => {

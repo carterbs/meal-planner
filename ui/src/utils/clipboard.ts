@@ -54,7 +54,7 @@ export async function copyMealPlanToClipboard(
     const { html, text } = formatMealPlanForClipboard(plan);
     try {
         // Use rich clipboard when available
-        if ('ClipboardItem' in globalThis && navigator.clipboard) {
+        if ('ClipboardItem' in globalThis) {
             const ClipboardItemCtor = (globalThis as unknown as {
                 ClipboardItem: new (items: Record<string, Blob>) => ClipboardItem;
             }).ClipboardItem;
@@ -91,7 +91,7 @@ export async function copyShoppingListToClipboard(
         .join('')}</ul>`;
 
     try {
-        if ('ClipboardItem' in globalThis && navigator.clipboard) {
+        if ('ClipboardItem' in globalThis) {
             const ClipboardItemCtor = (globalThis as unknown as {
                 ClipboardItem: new (items: Record<string, Blob>) => ClipboardItem;
             }).ClipboardItem;

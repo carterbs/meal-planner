@@ -41,7 +41,7 @@ module.exports = {
   overrides: [
     {
       files: ['**/*.test.ts', '**/*.test.tsx'],
-      parserOptions: { project: './tsconfig.json', tsconfigRootDir: __dirname },
+      parserOptions: { project: './tsconfig.eslint.json', tsconfigRootDir: __dirname },
       rules: {
         '@typescript-eslint/no-unused-expressions': 'off',
       },

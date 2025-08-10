@@ -578,15 +578,15 @@ const MealEditView: React.FC<MealEditViewProps> = ({
           )}
 
           {/* Steps */}
-          {(localMeal.steps && localMeal.steps.length > 0) || editMode ? (
+          {(localMeal.steps.length > 0) || editMode ? (
             <Box sx={{ mt: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Recipe Steps
               </Typography>
               <StepsEditor
-                steps={localMeal.steps || []}
+                steps={localMeal.steps}
                 onChange={(steps) =>
-                  editMode && setLocalMeal(new Meal({ ...localMeal, steps }))
+                  editMode ? setLocalMeal(new Meal({ ...localMeal, steps })) : undefined
                 }
                 readOnly={!editMode}
               />
@@ -598,7 +598,7 @@ const MealEditView: React.FC<MealEditViewProps> = ({
                     variant="contained"
                     color="primary"
                     onClick={() =>
-                      handleSaveSteps(localMeal.id, localMeal.steps || [])
+                      handleSaveSteps(localMeal.id, localMeal.steps)
                     }
                     disabled={loading}
                   >
