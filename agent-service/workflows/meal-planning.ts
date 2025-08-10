@@ -48,6 +48,8 @@ import { presentPlanNode as presentPlanNodeExternal } from './meal-planning/node
 import { optimizePlanNode as optimizePlanNodeExternal } from './meal-planning/nodes/optimizePlan.js';
 import { finalizePlanNode as finalizePlanNodeExternal } from './meal-planning/nodes/finalizePlan.js';
 import { generateShoppingListNode as generateShoppingListNodeExternal } from './meal-planning/nodes/generateShoppingList.js';
+import { analyzeFeedbackNode as analyzeFeedbackNodeExternal } from './meal-planning/nodes/feedback/analyze.js';
+import { applyFeedbackNode as applyFeedbackNodeExternal } from './meal-planning/nodes/feedback/apply.js';
 const DEBUG_LOGS = false;
 /**
  * Meal planning workflow
@@ -384,9 +386,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               allFeedbackLength: allFeedback.length.toString(),
             });
             // 2. Analyze feedback to determine user satisfaction
-            let analyzeResult = { satisfied: false, reasoning: '' };
+            let analyzeResult = { satisfied: false, reasoning: '' } as any;
             if (newFeedback.length > 0) {
-              analyzeResult = await this.analyzeFeedbackNode(newFeedback);
+              analyzeResult = await analyzeFeedbackNodeExternal(newFeedback, {
+                nanoLlm: this.nanoLlm,
+                extractJsonFromResponse: (s: string) => this.extractJsonFromResponse(s),
+              } as any);
             }
             // 3. If satisfied, finalize plan and break loop
             if (analyzeResult.satisfied) {
@@ -402,8 +407,15 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               const stateWithFeedback = Object.assign(state, {
                 feedback_to_apply: newFeedback,
               });
-              const feedbackResult =
-                await this.applyFeedbackNode(stateWithFeedback);
+              const feedbackResult = await applyFeedbackNodeExternal(stateWithFeedback as any, {
+                getMessages: (threadId: string) => this.getMessages(threadId),
+                applyFeedbackWithLLM: (
+                  plan: GeneratedWeeklyMealPlan,
+                  messages: string[],
+                ) => this.applyFeedbackWithLLM(plan, messages),
+                addMessage: (threadId: string, sender: string, message: string) =>
+                  this.addMessage(threadId, sender, message),
+              } as any);
               state = this.updateState(state, feedbackResult);
               // Feedback applied - continue processing
               const optimizeResult = await this.optimizePlanNode(state);
