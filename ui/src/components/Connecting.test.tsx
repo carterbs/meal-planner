@@ -14,5 +14,3 @@ describe('Connecting', () => {
     expect(screen.getByText('agent: unhealthy')).toBeInTheDocument();
   });
 });
-
-

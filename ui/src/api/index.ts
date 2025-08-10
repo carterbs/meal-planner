@@ -1,3 +1,4 @@
+/* istanbul ignore file -- barrel file with no runtime logic */
 // Export all API services
 export * from './agentApi';
 export * from './mealsApi';

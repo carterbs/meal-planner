@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
-import MealPlanDisplay from './MealPlanDisplay';
+import MealPlanDisplay, { getEffortIcon } from './MealPlanDisplay';
 import { WeeklyMealPlan, MealPlanEntry, Meal } from '@mealplanner/generated';
 
 function makePlan(
@@ -52,5 +52,14 @@ describe('MealPlanDisplay highlights', () => {
     const allEls = screen.getAllByTestId('meal-name-0-breakfast');
     const last = allEls[allEls.length - 1];
     expect(last.getAttribute('data-highlighted')).toBe(null);
+  });
+});
+
+describe('getEffortIcon', () => {
+  it('returns correct icon by effort thresholds', () => {
+    expect(getEffortIcon(2)).toBe('🙂');
+    expect(getEffortIcon(4)).toBe('😅');
+    expect(getEffortIcon(6)).toBe('😫');
+    expect(getEffortIcon(8)).toBe('🥵');
   });
 });

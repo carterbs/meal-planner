@@ -13,5 +13,3 @@ describe('TypingIndicator', () => {
     expect(screen.getByTestId('dot-3')).toBeInTheDocument();
   });
 });
-
-

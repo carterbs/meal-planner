@@ -122,4 +122,35 @@ describe('useMealPlanHighlights', () => {
 
     expect(screen.getByTestId('highlight-count').textContent).toBe('0');
   });
+
+  it('does nothing when plan is unchanged (no highlights scheduled)', () => {
+    const base = makePlan([{ dayIndex: 0, mealType: 'breakfast', mealId: 1 }]);
+    render(<HookHarness initialPlan={base} />);
+
+    act(() => {
+      (global as any).__harness.applyHighlights(base);
+    });
+
+    expect(screen.getByTestId('highlight-count').textContent).toBe('0');
+    act(() => {
+      jest.advanceTimersByTime(6000);
+    });
+    expect(screen.getByTestId('highlight-count').textContent).toBe('0');
+  });
+
+  it('cleans up pending timeout on unmount', () => {
+    const base = makePlan([{ dayIndex: 0, mealType: 'dinner', mealId: 1 }]);
+    const { unmount } = render(<HookHarness initialPlan={base} />);
+    const spy = jest.spyOn(window, 'clearTimeout');
+
+    const newPlan = makePlan([{ dayIndex: 0, mealType: 'dinner', mealId: 2 }]);
+    act(() => {
+      (global as any).__harness.applyHighlights(newPlan);
+    });
+    expect(screen.getByTestId('highlight-count').textContent).toBe('1');
+
+    unmount();
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
 });

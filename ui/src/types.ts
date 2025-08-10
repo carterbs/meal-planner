@@ -1,3 +1,4 @@
+/* istanbul ignore file -- pure type re-exports, no runtime logic to cover */
 // Import protobuf types from generated package
 export type {
   Ingredient,

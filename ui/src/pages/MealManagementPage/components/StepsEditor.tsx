@@ -91,7 +91,14 @@ const SortableItem: React.FC<SortableItemProps> = ({
             value={step.instruction}
             onChange={(e) => {
               const updatedSteps = [...steps];
-              updatedSteps[index].instruction = e.target.value;
+              const current = steps[index];
+              const updated = new Step({
+                id: current.id || 0,
+                mealId: current.mealId || 0,
+                stepNumber: current.stepNumber || index + 1,
+                instruction: e.target.value,
+              });
+              updatedSteps[index] = updated;
               onChange(updatedSteps);
             }}
             autoFocus
@@ -291,8 +298,13 @@ const StepsEditor: React.FC<StepsEditorProps> = ({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = parseInt(active.id.toString().split('-')[1]);
-      const newIndex = parseInt(over.id.toString().split('-')[1]);
+      const oldMatch = active.id.toString().match(/(\d+)$/);
+      const newMatch = over.id.toString().match(/(\d+)$/);
+      if (!oldMatch || !newMatch) {
+        return;
+      }
+      const oldIndex = parseInt(oldMatch[1], 10);
+      const newIndex = parseInt(newMatch[1], 10);
 
       const reorderedSteps = arrayMove([...steps], oldIndex, newIndex);
 
@@ -395,7 +407,7 @@ const StepsEditor: React.FC<StepsEditorProps> = ({
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={steps.map((step, index) => `${index}`)}
+              items={steps.map((step, index) => `step-${index}`)}
               strategy={verticalListSortingStrategy}
             >
               <List
@@ -410,7 +422,7 @@ const StepsEditor: React.FC<StepsEditorProps> = ({
                 {steps.map((step, index) => (
                   <SortableItem
                     key={`step-${index}`}
-                    id={`${index}`}
+                    id={`step-${index}`}
                     step={step}
                     index={index}
                     editingIndex={editingIndex}
