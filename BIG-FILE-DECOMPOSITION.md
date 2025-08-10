@@ -99,27 +99,36 @@
 - Checkpoint persistence: on error, do not persist partial state; surface cause.
 - Add timeouts for MCP/LLM calls; throw `ExternalServiceTimeoutError` with operation metadata.
 
-### Phased implementation plan
-1) Workflow split
-   - Extract `nodes/*`, `adapters/*`, `persistence.ts`, `graph.ts` from `workflows/meal-planning.ts` preserving public API.
-   - Add unit tests for each node and `buildGraph` transitions.
+### Current status
+- Workflow nodes extracted and tested: `initiate`, `generatePlan`, `optimizePlan`, `presentPlan`, `finalizePlan`, `generateShoppingList`, `feedback/analyze`, `feedback/apply`.
+- Persistence/state helpers extracted and tested: `workflows/meal-planning/persistence.ts`, `workflows/meal-planning/state.ts`.
+- Orchestrator `workflows/meal-planning.ts` now delegates directly to extracted nodes via top-level imports; legacy compatibility wrappers and the `__keepReferences` shim have been removed.
+- Server split scaffolding started: `server/handlers/planStart.ts`, `server/wiring.ts`, `server/index.ts` with tests for `planStart`.
+- All `agent-service` tests are green and the build is clean.
 
-2) Server split
+### Next steps (priority order)
+1) Server split
    - Move gRPC handlers into `server/handlers/*`; centralize error translation and validation.
    - Keep existing exports in `main.ts` as thin re-exports during migration.
+   - Add tests per handler (validation, error mapping, happy/edge).
 
-3) Manager/session
+2) Manager/session
    - Create `session/*` and `workflow/executor.ts`; refactor `WorkflowManager` to delegate.
    - Change error returns to throws; update handlers to catch at boundary.
+   - Add unit tests for session lifecycle and executor error propagation.
 
-4) Logging/context
+3) Logging/context
    - Introduce `logger/*`; enrich logs with context and durations; remove raw console.
+   - Ensure logs include `threadId`, `workflow_type`, `step`, and timing for node calls.
 
-5) MCP typing
+4) MCP typing
    - Replace `any` in `shared/mcp-types.ts` with typed client; move to `adapters/mcp/`.
+   - Update nodes to depend on the typed adapter and add unit tests for tool shapes/timeouts.
 
-6) Cleanup
+5) Cleanup
    - Delete dead code, remove duplicated `initializeAgent`, update imports.
+   - Extract `graph.ts` under `workflows/meal-planning/` with explicit transition map and single checkpoint call sites.
+   - Target `workflows/meal-planning.ts` ≤ 200 LOC, acting as a thin orchestrator only.
 
 ### Test plan
 - Shoot for 100% coverage.
