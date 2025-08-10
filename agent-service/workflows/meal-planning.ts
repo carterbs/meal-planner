@@ -45,6 +45,9 @@ import { MessageRepository } from '../database/messages';
 import { initiateNode as initiateNodeExternal } from './meal-planning/nodes/initiate.js';
 import { generatePlanNode as generatePlanNodeExternal } from './meal-planning/nodes/generatePlan.js';
 import { presentPlanNode as presentPlanNodeExternal } from './meal-planning/nodes/presentPlan.js';
+import { optimizePlanNode as optimizePlanNodeExternal } from './meal-planning/nodes/optimizePlan.js';
+import { finalizePlanNode as finalizePlanNodeExternal } from './meal-planning/nodes/finalizePlan.js';
+import { generateShoppingListNode as generateShoppingListNodeExternal } from './meal-planning/nodes/generateShoppingList.js';
 const DEBUG_LOGS = false;
 /**
  * Meal planning workflow
@@ -498,28 +501,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private async optimizePlanNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
-    await infoLog('MealPlanningWorkflow.optimizePlanNode called');
-    await infoLog(
-      `🍽️ [MEAL-WORKFLOW] Optimizing meal plan (iteration ${state.iterationCount + 1})`,
-    );
-    if (!state.mealPlan) {
-      throw new Error('No meal plan to optimize');
-    }
-    const issues = this.validatePlan(state.mealPlan);
-    let optimizedPlan = state.mealPlan;
-    if (issues.length > 0) {
-      await infoLog(
-        `${`📋 [MEAL-WORKFLOW] Found ${issues.length} issues:`} ${issues}`,
-      );
-      optimizedPlan = await this.optimizePlanWithLLM(state.mealPlan, issues);
-    } else {
-      await infoLog(`✅ [MEAL-WORKFLOW] Plan is already valid`);
-    }
-    return {
-      currentStep: MealPlanningStep.PRESENT_PLAN,
-      mealPlan: optimizedPlan,
-      iterationCount: state.iterationCount + 1,
-    };
+    return optimizePlanNodeExternal(state, {
+      validatePlan: (p) => this.validatePlan(p),
+      optimizePlanWithLLM: (p, issues) => this.optimizePlanWithLLM(p, issues),
+    });
   }
   // New: apply feedback using LLM with feedback context
   private async applyFeedbackNode(
@@ -741,190 +726,16 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private async finalizePlanNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
-    await infoLog('🍽️ [FINALIZE] Starting meal plan finalization...');
-
-    if (!state.threadId) {
-      const errorMsg = 'No thread ID available for finalization';
-      await errorLog(`❌ [FINALIZE] ${errorMsg}`);
-      throw new Error(errorMsg);
-    }
-
-    if (!state.mealPlan) {
-      throw new Error('No meal plan to finalize');
-    }
-
-    // Log the current meal plan for debugging
-    const mealIds =
-      state.mealPlan.days
-        ?.map((day) => day.meal?.id)
-        ?.filter((id) => id !== undefined) || [];
-
-    await infoLog(
-      `🍽️ [FINALIZE] About to finalize plan for thread ${state.threadId} with ${mealIds.length} meals: [${mealIds.join(', ')}]`,
-    );
-
-    try {
-      const result = await this.client.callTool({
-        name: 'finalizeMealPlan',
-        arguments: { threadId: state.threadId }, // Simple thread ID instead of complex mealPlan object
-      });
-      await infoLog(
-        `✅ [FINALIZE] MCP tool returned: ${JSON.stringify(result)}`,
-      );
-    } catch (error) {
-      const errorMsg = `Critical failure: Could not save meal plan: ${error}`;
-      await errorLog(`❌ [FINALIZE] ${errorMsg}`);
-      throw new Error(errorMsg);
-    }
-
-    return {
-      currentStep: MealPlanningStep.GENERATE_SHOPPING_LIST,
-      isFinalized: true,
-    };
+    return finalizePlanNodeExternal(state, {
+      callTool: (args) => this.client.callTool(args),
+    });
   }
   private async generateShoppingListNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
-    await infoLog('MealPlanningWorkflow.generateShoppingListNode called');
-    await infoLog(`🍽️ [MEAL-WORKFLOW] Generating shopping list`);
-    if (!state.mealPlan) {
-      throw new Error('No meal plan for shopping list generation');
-    }
-    try {
-      // Extract meal IDs from the meal plan
-      const mealIds = state.mealPlan.days
-        .map((day) => day.meal?.id)
-        .filter((id): id is number => id !== undefined)
-        .filter((id, index, self) => self.indexOf(id) === index); // Deduplicate
-      await infoLog(
-        `${`🛒 [MEAL-WORKFLOW] Generating shopping list for meal IDs:`} ${mealIds}`,
-      );
-      // Call the MCP tool directly with proper typing
-      const result = (await this.client.callTool({
-        name: 'generateShoppingList',
-        arguments: { plan: mealIds },
-      })) as MCPToolResultType;
-      if (result.isError) {
-        const errorContent =
-          Array.isArray(result.content) && result.content[0]?.type === 'text'
-            ? result.content[0].text
-            : 'Unknown error';
-        throw new Error(`MCP tool error: ${errorContent}`);
-      }
-      // Parse the response with proper type checking
-      const responseText =
-        Array.isArray(result.content) && result.content[0]?.type === 'text'
-          ? result.content[0].text
-          : '[]';
-      if (DEBUG_LOGS) {
-        await infoLog(`🛒 [DEBUG] Raw shopping list response: ${responseText}`);
-      }
-      const shoppingList = JSON.parse(responseText) as ShoppingListResponse;
-      if (DEBUG_LOGS) {
-        await infoLog(
-          `🛒 [DEBUG] Parsed shopping list: ${JSON.stringify(shoppingList, null, 2)}`,
-        );
-      }
-      await infoLog(
-        `✅ [MEAL-WORKFLOW] Generated shopping list with ${shoppingList.length} items`,
-      );
-      // Display the shopping list in a nice format
-      await infoLog('\n🛍️  SHOPPING LIST 🛒');
-      await infoLog('===================');
-      if (!Array.isArray(shoppingList) || shoppingList.length === 0) {
-        await infoLog('\nNo items in shopping list');
-        return {
-          currentStep: MealPlanningStep.COMPLETE,
-          shoppingList: undefined,
-        };
-      }
-      let shoppingListFormatted = '';
-      try {
-        // Group items by category if available
-        const groupedItems = shoppingList.reduce(
-          (acc: Record<string, ShoppingListItem[]>, item: ShoppingListItem) => {
-            if (!item || typeof item !== 'object') {
-              console.warn(`Skipping invalid shopping list item: ${item}`);
-              return acc;
-            }
-            const category =
-              item.category && typeof item.category === 'string'
-                ? item.category
-                : 'Other';
-            const ingredient =
-              item.ingredient && typeof item.ingredient === 'string'
-                ? item.ingredient
-                : 'Unknown ingredient';
-            const quantity =
-              item.quantity && typeof item.quantity === 'string'
-                ? item.quantity
-                : '';
-            if (!acc[category]) {
-              acc[category] = [];
-            }
-            acc[category].push(
-              ShoppingListItem.fromJson({ ingredient, quantity, category }),
-            );
-            return acc;
-          },
-          {},
-        );
-        // Format shopping list as a bulleted string (grouped by category)
-        let bulletedList = '';
-        for (const [category, items] of Object.entries(groupedItems)) {
-          bulletedList += `\n${category.toUpperCase()}:\n`.trimStart();
-          (items as ShoppingListItem[]).forEach((item) => {
-            bulletedList += `- ${[item.quantity, item.ingredient].join(' ').trimStart()}\n`;
-          });
-        }
-        bulletedList = bulletedList.trim();
-        // Pantry staples prompt
-        const PANTRY_STAPLES_CATEGORIZATION_PROMPT =
-          getPantryStaplesCategorizationPrompt(bulletedList);
-        try {
-          await infoLog(
-            `\n🛒 [LLM FORMATTED SHOPPING LIST]: Asking LLM to categorize our list: ${bulletedList}...\n`,
-          );
-          const llmResult = await this.llm.invoke([
-            { role: 'user', content: PANTRY_STAPLES_CATEGORIZATION_PROMPT },
-          ]);
-          shoppingListFormatted =
-            typeof llmResult.content === 'string'
-              ? llmResult.content
-              : JSON.stringify(llmResult.content);
-          await infoLog(`
-🛒 [LLM FORMATTED SHOPPING LIST]:
- ${shoppingListFormatted}`);
-        } catch (llmError) {
-          await errorLog(
-            `❌ Error calling LLM for pantry staples formatting: ${llmError}`,
-          );
-          shoppingListFormatted = bulletedList; // fallback
-        }
-        await infoLog('\nHappy shopping! 🛒');
-        await infoLog('===================\n');
-      } catch (error) {
-        await errorLog(`❌ Error formatting shopping list: ${error}`);
-        // Fallback: display raw data if formatting fails
-        await infoLog('\nRaw shopping list data:');
-        await infoLog(JSON.stringify(shoppingList, null, 2));
-      }
-      return {
-        currentStep: MealPlanningStep.COMPLETE,
-        shoppingList: shoppingList
-          ? new ShoppingList({ items: shoppingList })
-          : undefined,
-      };
-    } catch (error) {
-      await errorLog(
-        `${`❌ [MEAL-WORKFLOW] Error generating shopping list:`} ${error}`,
-      );
-      // Continue with empty shopping list on error
-      return {
-        currentStep: MealPlanningStep.COMPLETE,
-        shoppingList: undefined,
-      };
-    }
+    return generateShoppingListNodeExternal(state, {
+      callTool: (args) => this.client.callTool(args),
+    });
   }
   private async completeNode(
     state: MealPlanningState,
