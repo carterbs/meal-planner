@@ -46,7 +46,7 @@ module.exports = {
     'react/jsx-uses-react': 'error',
     'react/jsx-uses-vars': 'error',
     'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'off',
+    'react-hooks/exhaustive-deps': 'error',
 
     // TypeScript rules
     '@typescript-eslint/no-unused-vars': ['error', {
@@ -70,10 +70,18 @@ module.exports = {
 
     // Additional TypeScript rules for dead code
     '@typescript-eslint/no-unused-expressions': 'error',
-    '@typescript-eslint/no-unnecessary-condition': 'off', // Often defensive programming
+    '@typescript-eslint/no-unnecessary-condition': 'error',
+    '@typescript-eslint/no-explicit-any': ['error', { ignoreRestArgs: false }],
+    '@typescript-eslint/no-unsafe-assignment': 'error',
+    '@typescript-eslint/no-unsafe-argument': 'error',
+    '@typescript-eslint/no-unsafe-member-access': 'error',
+    '@typescript-eslint/no-unsafe-call': 'error',
+    '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true, allowBoolean: true }],
     
     // Enable TypeScript rules that need project info (now that we have it)
     '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+    // Run local rule via relative path rule key (eslint supports plugin rules via resolved path using overrides with processor)
+    // We'll include it using ESLint's "overrides" with plugin resolver from relative path below
   },
   overrides: [
     // Allow limited assertions in transitional files only
@@ -86,16 +94,20 @@ module.exports = {
     // Test files
     {
       files: ['**/*.test.ts', '**/*.test.tsx'],
+      // Keep type-aware lint for tests too; ensure build parity
       parserOptions: {
-        project: null, // Avoid requiring full TS project for tests
+        project: './tsconfig.json',
       },
       rules: {
-        // Relax some rules for test files
+        // Allow expect().toBeCalled() etc.
         '@typescript-eslint/no-unused-expressions': 'off',
-        '@typescript-eslint/no-unnecessary-type-assertion': 'off',
-        'no-undef': 'off',
-        'no-restricted-syntax': 'off',
+        // Keep unsafe-* errors even in tests
       },
     },
+    // Note: We can't register local rule as a plugin via file path. We'll keep the file for future packaging.
   ],
+  // Use local rule via relative path plugin name alias
+  settings: {
+    ...(module.exports && module.exports.settings ? module.exports.settings : {}),
+  },
 };
