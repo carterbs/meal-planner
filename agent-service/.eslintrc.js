@@ -48,12 +48,13 @@ module.exports = {
 
     // Additional TypeScript rules for dead code
     '@typescript-eslint/no-unused-expressions': 'error',
-    '@typescript-eslint/no-unnecessary-condition': 'off', // Often defensive programming
-    
-    // Agent service specific rule relaxations
-    '@typescript-eslint/no-explicit-any': 'warn', // Sometimes needed for dynamic agent contexts
-    
-    // Enable TypeScript rules that need project info (now that we have it)
+    '@typescript-eslint/no-unnecessary-condition': 'error',
+    '@typescript-eslint/no-explicit-any': ['error', { ignoreRestArgs: false }],
+    '@typescript-eslint/no-unsafe-assignment': 'error',
+    '@typescript-eslint/no-unsafe-argument': 'error',
+    '@typescript-eslint/no-unsafe-member-access': 'error',
+    '@typescript-eslint/no-unsafe-call': 'error',
+    '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true, allowBoolean: true }],
     '@typescript-eslint/no-unnecessary-type-assertion': 'error',
   },
   overrides: [
@@ -61,12 +62,11 @@ module.exports = {
     {
       files: ['**/*.test.ts', '**/*.test.js', '**/tests/**/*.ts', '**/tests/**/*.js'],
       parserOptions: {
-        project: null, // Avoid requiring full TS project for tests
+        project: './tsconfig.json',
       },
       rules: {
-        '@typescript-eslint/no-explicit-any': 'off',
+        // Keep strict rules but allow unused vars in tests
         '@typescript-eslint/no-unused-vars': 'off',
-        '@typescript-eslint/no-unnecessary-type-assertion': 'off',
       },
     },
     // Mock files

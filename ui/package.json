@@ -35,8 +35,8 @@
     "coverage": "react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject",
     "typecheck": "tsc --project tsconfig.typecheck.json --noEmit",
-    "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "lint": "eslint -c .eslintrc.js src --ext .ts,.tsx --max-warnings 0",
+    "lint:fix": "eslint -c .eslintrc.js src --ext .ts,.tsx --fix",
     "dead-code": "ts-prune",
     "dead-code:check": "yarn dead-code && yarn lint"
   },
