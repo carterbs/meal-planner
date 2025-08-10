@@ -75,7 +75,7 @@ export default function useAgentController(): UseAgentControllerReturn {
             await syncFromCheckpoint(session.threadId);
             await fetchAndUpdateMessages();
         })();
-    }, [session?.threadId, syncFromCheckpoint, fetchAndUpdateMessages]);
+    }, [session && session.threadId, syncFromCheckpoint, fetchAndUpdateMessages]);
 
     const sendMessage = useCallback(
         async (text?: string) => {

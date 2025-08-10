@@ -26,7 +26,9 @@ export function convertGatewayMealPlan(
     let meal: Meal | undefined;
     if (e.meal) {
       // Handle case where meal might be a string (from API response)
-      const mealData = typeof e.meal === 'string' ? JSON.parse(e.meal) : e.meal;
+      const raw = e.meal as unknown;
+      const mealData: GoMeal =
+        typeof raw === 'string' ? (JSON.parse(raw) as GoMeal) : (raw as GoMeal);
       meal = convertMeal(mealData);
     }
     return new MealPlanEntry({
@@ -53,8 +55,11 @@ function convertMeal(meal: GoMeal): Meal {
       ? typeof meal.lastPlanned === 'string'
         ? Timestamp.fromDate(new Date(meal.lastPlanned))
         : Timestamp.fromDate(
-          new Date(((meal.lastPlanned as unknown as { seconds?: number }).seconds ?? 0) * 1000),
-        )
+            new Date(
+              ((meal.lastPlanned as unknown as { seconds?: number }).seconds ?? 0) *
+                1000,
+            ),
+          )
       : undefined,
     ingredients: (meal.ingredients ?? []).map(convertIngredient),
     steps: (meal.steps ?? []).map(convertStep),

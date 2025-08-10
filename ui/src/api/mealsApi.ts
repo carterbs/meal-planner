@@ -73,8 +73,8 @@ function mapMeal(m: GoMeal): Meal {
     hasRedMeat: m.hasRedMeat || false,
     url: m.url || '',
     mealType: m.mealType || '',
-    ingredients: (m.ingredients || []).map(mapIngredient),
-    steps: (m.steps || []).map(mapStep),
+    ingredients: (m.ingredients || []).map((ing: GoIngredient) => mapIngredient(ing)),
+    steps: (m.steps || []).map((st: GoStep) => mapStep(st)),
   });
 }
 
@@ -102,7 +102,7 @@ export async function getMeals(mealType?: string): Promise<Meal[]> {
     );
   }
 
-  return (result.data.meals || []).map(mapMeal);
+  return (result.data.meals || []).map((m: GoMeal) => mapMeal(m));
 }
 
 /**
@@ -129,10 +129,10 @@ export async function createMeal(mealData: Omit<GoMeal, 'id'>): Promise<Meal> {
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -162,10 +162,10 @@ export async function updateMeal(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -216,10 +216,10 @@ export async function updateMealIngredient(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -250,10 +250,10 @@ export async function createMealIngredient(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -280,10 +280,10 @@ export async function deleteMealIngredient(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -304,7 +304,7 @@ export async function addBulkSteps(
     throw new Error(`Failed to add steps: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`);
   }
 
-  return (result.data.steps || []).map(mapStep);
+  return (result.data.steps || []).map((s: GoStep) => mapStep(s));
 }
 
 /**
@@ -359,5 +359,5 @@ export async function goGetShoppingList(
     );
   }
 
-  return result.data.items;
+  return result.data.items as GoShoppingListItem[];
 }
