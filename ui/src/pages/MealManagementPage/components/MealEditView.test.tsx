@@ -244,6 +244,6 @@ describe('MealEditView', () => {
 
     const date = screen.getByLabelText('Last Planned');
     fireEvent.change(date, { target: { value: '2024-01-01' } });
-    expect(date.value).toBe('2024-01-01');
+    expect((date as HTMLInputElement).value).toBe('2024-01-01');
   });
 });

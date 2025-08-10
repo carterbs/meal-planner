@@ -10,6 +10,7 @@
 - Watch tests with: `yarn test:watch`
 - Generate coverage: `yarn coverage`
 - All components should have corresponding test files
+- When accessing DOM element `.value` properties in tests, use type assertions: `(element as HTMLInputElement).value` or `(element as HTMLTextAreaElement).value`
 
 ## Development Commands
 - Start dev server: `yarn start`

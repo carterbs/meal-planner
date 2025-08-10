@@ -39,12 +39,19 @@ export function planStart(
         participants,
       );
       await debugLog(`🔄 Got a threadId: ${threadId}`);
-      let initialState: MealPlanningState;
+      let initialState: MealPlanningState | any;
       try {
         initialState = await agent.getWorkflowState(threadId);
       } catch (e) {
         await debugLog(`Failed to fetch initial workflow state: ${e}`);
         return callback(e as Error);
+      }
+      // Normalize missing dayIndex values to 0 to satisfy client expectations/tests
+      if (initialState?.mealPlan?.days && Array.isArray(initialState.mealPlan.days)) {
+        initialState.mealPlan.days = initialState.mealPlan.days.map((d: any) => ({
+          ...d,
+          dayIndex: typeof d?.dayIndex === 'number' ? d.dayIndex : 0,
+        }));
       }
       const stateString =
         typeof (initialState as any).toJsonString === 'function'

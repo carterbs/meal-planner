@@ -213,9 +213,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     this.llm = isCodex
       ? new FakeChatModel({})
       : new ChatOpenAI({
-          temperature: 0,
-          modelName: isTestMode ? 'gpt-4.1-nano' : 'gpt-4.1',
-        });
+        temperature: 0,
+        modelName: isTestMode ? 'gpt-4.1-nano' : 'gpt-4.1',
+      });
     // Initialize nano LLM for feedback analysis
     this.nanoLlm = new ChatOpenAI({
       temperature: 0,
@@ -258,7 +258,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             isFinalized: false,
           });
           // Generate, optimize, present, pause for feedback
-          const initiateResult = await this.initiateNode(state);
+          // delegate to extracted node
+          const { initiateNode } = await import('./meal-planning/nodes/initiate.js');
+          const initiateResult = await initiateNode(state);
           await infoLog(
             `Debuggyz - Initiated the workflow. Current Step: ${initiateResult.currentStep}`,
           );
@@ -267,7 +269,14 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
           );
-          const generateResult = await this.generatePlanNode(state);
+          const { generatePlanNode } = await import(
+            './meal-planning/nodes/generatePlan.js'
+          );
+          const generateResult = await generatePlanNode(state, {
+            callTool: (args: { name: string; arguments: Record<string, unknown> }) =>
+              this.client.callTool(args),
+            extractJsonFromResponse: (s: string) => this.extractJsonFromResponse(s),
+          });
           await infoLog(
             `Debuggyz - Generated the plan. Current Step: ${generateResult.currentStep}`,
           );
@@ -471,92 +480,24 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       },
     };
   }
-  // Node implementations
+  // Compatibility wrappers for tests that call internal node methods
   private async initiateNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
-    await infoLog('MealPlanningWorkflow.initiateNode called');
-    await infoLog(
-      `🍽️ [MEAL-WORKFLOW] Initiating meal planning for thread ${state.threadId}`,
-    );
-    return {
-      currentStep: MealPlanningStep.GENERATE_PLAN,
-    };
+    const mod = await import('./meal-planning/nodes/initiate.js');
+    return mod.initiateNode(state);
   }
   private async generatePlanNode(
-    _state: MealPlanningState,
+    state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
-    await infoLog('MealPlanningWorkflow.generatePlanNode called');
-    const reqId = uuidv4();
-    await infoLog(`🍽️ [MEAL-WORKFLOW] Generating initial meal plan: ${reqId}`);
-    try {
-      // Generate meal plan using MCP tool
-      await infoLog(
-        `🔧 [MCP-INPUT] About to call generateMealPlan with arguments: {}`,
-      );
-      await infoLog(
-        `🔧 [MCP-INPUT] MCP client state: ${this.client ? 'EXISTS' : 'NULL'}`,
-      );
-      const planResult = await this.client.callTool({
-        name: 'generateMealPlan',
-        arguments: {},
-      });
-      const planResultString = JSON.stringify(planResult);
-      await infoLog(`PLAN RESULT FROM MCP: ${reqId}`);
-      await infoLog(`🔧 [MCP-OUTPUT] Full MCP response: ${planResultString}`);
-      await debugLog(planResultString);
-      // Validate MCP response and guard against missing content
-      if ((planResult as MCPToolResultType).isError) {
-        const errorContent =
-          Array.isArray((planResult as MCPToolResultType).content) &&
-          (planResult as MCPToolResultType).content[0]?.type === 'text'
-            ? (planResult as MCPToolResultType).content[0].text
-            : 'Unknown error';
-        throw new Error(`MCP tool error: ${errorContent}`);
-      }
-      const responseText =
-        Array.isArray((planResult as MCPToolResultType).content) &&
-        (planResult as MCPToolResultType).content[0]?.type === 'text'
-          ? (planResult as MCPToolResultType).content[0].text
-          : '{}';
-      const jsonText = this.extractJsonFromResponse(responseText);
-      const generateResponse = JSON.parse(jsonText);
-      await infoLog(`MEAL PLAN from generate------- req: ${reqId}`);
-      await infoLog(JSON.stringify(generateResponse, null, 2));
-      // DEBUGGING: Log dayIndex values BEFORE fromJson conversion
-      await infoLog(
-        '🔍 [AGENT] dayIndex values BEFORE WeeklyMealPlan.fromJson:',
-      );
-      if (generateResponse.plan?.days) {
-        for (let i = 0; i < generateResponse.plan.days.length; i++) {
-          const day = generateResponse.plan.days[i];
-          await infoLog(
-            `🔍 [AGENT] BEFORE Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`,
-          );
-        }
-      }
-      const mealPlan = WeeklyMealPlan.fromJson(generateResponse.plan);
-      // DEBUGGING: Log dayIndex values AFTER fromJson conversion
-      await infoLog(
-        '🔍 [AGENT] dayIndex values AFTER WeeklyMealPlan.fromJson:',
-      );
-      if (mealPlan.days) {
-        for (let i = 0; i < mealPlan.days.length; i++) {
-          const day = mealPlan.days[i];
-          await infoLog(
-            `🔍 [AGENT] AFTER Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`,
-          );
-        }
-      }
-      return {
-        currentStep: MealPlanningStep.OPTIMIZE_PLAN,
-        mealPlan: mealPlan,
-      };
-    } catch (error) {
-      await errorLog(`${` [MEAL-WORKFLOW] Error generating plan:`} ${error}`);
-      throw error;
-    }
+    const mod = await import('./meal-planning/nodes/generatePlan.js');
+    return mod.generatePlanNode(state, {
+      callTool: (args: { name: string; arguments: Record<string, unknown> }) =>
+        this.client.callTool(args),
+      extractJsonFromResponse: (s: string) => this.extractJsonFromResponse(s),
+    });
   }
+  // Node implementations moved to ./meal-planning/nodes
   private async optimizePlanNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {

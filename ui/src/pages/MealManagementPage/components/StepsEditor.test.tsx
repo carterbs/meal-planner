@@ -209,7 +209,7 @@ describe('StepsEditor', () => {
       await user.type(input, 'New step');
       await user.click(addButton);
 
-      expect(input.value).toBe('');
+      expect((input as HTMLInputElement).value).toBe('');
     });
 
     it('should disable Add button when input is empty', () => {
@@ -633,7 +633,7 @@ describe('StepsEditor', () => {
       );
 
       // The useEffect should populate the textarea with existing steps
-      expect(textarea.value).toBe(
+      expect((textarea as HTMLTextAreaElement).value).toBe(
         'First step instruction\n\nSecond step instruction',
       );
     });
