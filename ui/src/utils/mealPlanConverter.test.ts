@@ -25,7 +25,7 @@ describe('mealPlanConverter', () => {
           meal: { id: 20, name: 'Salad', ingredients: [], steps: [] },
         },
       ],
-    } as any;
+    } as { days?: import('@mealplanner/generated/dist/gateway/types.gen').GoMealPlanEntry[] };
 
     const result = convertGatewayMealPlan(input);
     expect(result.days.length).toBe(2);
@@ -69,7 +69,7 @@ describe('mealPlanConverter', () => {
           },
         },
       ],
-    } as any;
+    } as unknown as { days?: import('@mealplanner/generated/dist/gateway/types.gen').GoMealPlanEntry[] };
 
     const result = convertGatewayMealPlan(input);
     const meal = result.days[0].meal!;
@@ -98,7 +98,7 @@ describe('mealPlanConverter', () => {
           },
         },
       ],
-    } as any;
+    } as { days?: import('@mealplanner/generated/dist/gateway/types.gen').GoMealPlanEntry[] };
     const result = convertGatewayMealPlan(input);
     expect(result.days[0].meal?.lastPlanned).toBeDefined();
   });

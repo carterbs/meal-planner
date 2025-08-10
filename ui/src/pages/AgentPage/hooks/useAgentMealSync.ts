@@ -43,12 +43,12 @@ export default function useAgentMealSync() {
   const send = useCallback(async (threadId: string, text: string) => {
     const result = await sendAgentMessage(threadId, text, 'user', true);
     // Also surface any initial state embedded in the message result
-    const initial = (result as any)?.initialState?.state?.mealPlan;
+    const initial = (result?.initialState as { state?: { mealPlan?: unknown } } | undefined)?.state?.mealPlan;
     if (initial) {
       const plan = convertGatewayMealPlan(initial);
       setMealPlan(plan);
     }
-    const sl = (result as any)?.initialState?.mealPlan?.shoppingList;
+    const sl = (result?.initialState as { mealPlan?: { shoppingList?: ShoppingListItem[] } } | undefined)?.mealPlan?.shoppingList;
     if (sl) {
       setShoppingList(sl);
     }

@@ -26,7 +26,15 @@ function HookHarness({
 
   // Expose controls for tests
 
-  (global as any).__harness = {
+  (globalThis as unknown as {
+    __harness: {
+      setPlan: (p: WeeklyMealPlan | null) => void;
+      applyHighlights: (p: WeeklyMealPlan) => void;
+      resetHighlights: () => void;
+      getHighlights: () => Set<string>;
+      getPlan: () => WeeklyMealPlan | null;
+    };
+  }).__harness = {
     setPlan,
     applyHighlights,
     resetHighlights,
@@ -50,7 +58,7 @@ describe('useMealPlanHighlights', () => {
   afterEach(() => {
     jest.useRealTimers();
 
-    delete (global as any).__harness;
+    delete (globalThis as unknown as { __harness?: unknown }).__harness;
   });
 
   it('detects changed dayIndex-mealType pairs and sets the plan', () => {
@@ -67,13 +75,13 @@ describe('useMealPlanHighlights', () => {
     ]);
 
     act(() => {
-      (global as any).__harness.applyHighlights(newPlan);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(newPlan);
     });
 
     const count = screen.getByTestId('highlight-count');
     expect(count.textContent).toBe('1');
 
-    const highlights: Set<string> = (global as any).__harness.getHighlights();
+    const highlights: Set<string> = (globalThis as unknown as { __harness: { getHighlights: () => Set<string> } }).__harness.getHighlights();
     expect(highlights.has('0-breakfast')).toBe(true);
 
     // plan should be updated
@@ -91,7 +99,7 @@ describe('useMealPlanHighlights', () => {
     ]);
 
     act(() => {
-      (global as any).__harness.applyHighlights(newPlan);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(newPlan);
     });
 
     expect(screen.getByTestId('highlight-count').textContent).toBe('1');
@@ -111,13 +119,13 @@ describe('useMealPlanHighlights', () => {
     const newPlan = makePlan([{ dayIndex: 2, mealType: 'lunch', mealId: 10 }]);
 
     act(() => {
-      (global as any).__harness.applyHighlights(newPlan);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(newPlan);
     });
 
     expect(screen.getByTestId('highlight-count').textContent).toBe('1');
 
     act(() => {
-      (global as any).__harness.resetHighlights();
+      (globalThis as unknown as { __harness: { resetHighlights: () => void } }).__harness.resetHighlights();
     });
 
     expect(screen.getByTestId('highlight-count').textContent).toBe('0');
@@ -128,7 +136,7 @@ describe('useMealPlanHighlights', () => {
     render(<HookHarness initialPlan={base} />);
 
     act(() => {
-      (global as any).__harness.applyHighlights(base);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(base);
     });
 
     expect(screen.getByTestId('highlight-count').textContent).toBe('0');
@@ -145,7 +153,7 @@ describe('useMealPlanHighlights', () => {
 
     const newPlan = makePlan([{ dayIndex: 0, mealType: 'dinner', mealId: 2 }]);
     act(() => {
-      (global as any).__harness.applyHighlights(newPlan);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(newPlan);
     });
     expect(screen.getByTestId('highlight-count').textContent).toBe('1');
 

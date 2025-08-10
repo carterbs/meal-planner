@@ -7,7 +7,7 @@ import { Step } from '@mealplanner/generated';
 import { arrayMove } from '@dnd-kit/sortable';
 
 // Mock @dnd-kit modules
-let mockOnDragEnd: any = null;
+let mockOnDragEnd: ((e: unknown) => void) | null = null;
 
 const mockArrayMove = jest.fn((arr, oldIndex, newIndex) => {
   const newArray = [...arr];
@@ -17,8 +17,8 @@ const mockArrayMove = jest.fn((arr, oldIndex, newIndex) => {
 });
 
 jest.mock('@dnd-kit/core', () => ({
-  DndContext: ({ children, onDragEnd }: any) => {
-    mockOnDragEnd = onDragEnd;
+  DndContext: ({ children, onDragEnd }: { children?: React.ReactNode; onDragEnd?: (e: unknown) => void }) => {
+    mockOnDragEnd = onDragEnd ?? null;
     return <div data-testid="dnd-context">{children}</div>;
   },
   closestCenter: jest.fn(),
@@ -35,7 +35,7 @@ jest.mock('@dnd-kit/sortable', () => ({
     newArray.splice(newIndex, 0, removed);
     return newArray;
   }),
-  SortableContext: ({ children }: any) => (
+  SortableContext: ({ children }: { children?: React.ReactNode }) => (
     <div data-testid="sortable-context">{children}</div>
   ),
   sortableKeyboardCoordinates: jest.fn(),
@@ -572,7 +572,7 @@ describe('StepsEditor', () => {
       const expectedResult = [mockSteps[1], mockSteps[0]];
       (arrayMove as jest.Mock).mockReturnValue(expectedResult);
 
-      mockOnDragEnd(dragEndEvent);
+      mockOnDragEnd!(dragEndEvent);
 
       expect(arrayMove).toHaveBeenCalledWith(mockSteps, 0, 1);
       expect(mockOnChange).toHaveBeenCalled();
@@ -586,7 +586,7 @@ describe('StepsEditor', () => {
         over: { id: '0' },
       };
 
-      mockOnDragEnd(dragEndEvent);
+      mockOnDragEnd!(dragEndEvent);
 
       expect(mockOnChange).not.toHaveBeenCalled();
     });
@@ -599,7 +599,7 @@ describe('StepsEditor', () => {
         over: null,
       };
 
-      mockOnDragEnd(dragEndEvent);
+      mockOnDragEnd!(dragEndEvent);
 
       expect(mockOnChange).not.toHaveBeenCalled();
     });

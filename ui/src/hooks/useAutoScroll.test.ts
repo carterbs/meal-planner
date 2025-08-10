@@ -40,7 +40,7 @@ describe('useAutoScroll', () => {
       const { result, rerender } = renderHook(() => useAutoScroll(deps));
 
       // Assign mock element to ref
-      result.current.current = mockElement;
+      (result.current as { current: HTMLDivElement | null }).current = mockElement;
 
       // Change deps to trigger useEffect
       deps = ['changed'];
@@ -69,22 +69,22 @@ describe('useAutoScroll', () => {
       const { result, rerender } = renderHook(() => useAutoScroll(deps));
 
       // Assign mock element to ref
-      result.current.current = mockElement;
+      (result.current as { current: HTMLDivElement | null }).current = mockElement;
 
       // First change
-      mockElement.scrollHeight = 300;
+      Object.defineProperty(mockElement, 'scrollHeight', { value: 300, configurable: true });
       deps = [2];
       rerender();
       expect(mockElement.scrollTop).toBe(300);
 
       // Second change
-      mockElement.scrollHeight = 400;
+      Object.defineProperty(mockElement, 'scrollHeight', { value: 400, configurable: true });
       deps = [3];
       rerender();
       expect(mockElement.scrollTop).toBe(400);
 
       // Third change
-      mockElement.scrollHeight = 500;
+      Object.defineProperty(mockElement, 'scrollHeight', { value: 500, configurable: true });
       deps = [4];
       rerender();
       expect(mockElement.scrollTop).toBe(500);
@@ -95,7 +95,7 @@ describe('useAutoScroll', () => {
       const { result, rerender } = renderHook(() => useAutoScroll(deps));
 
       // Assign mock element to ref
-      result.current.current = mockElement;
+      (result.current as { current: HTMLDivElement | null }).current = mockElement;
       mockElement.scrollTop = 100; // Set initial scroll position
 
       // Re-render without changing deps
@@ -110,7 +110,7 @@ describe('useAutoScroll', () => {
       const { result, rerender } = renderHook(() => useAutoScroll(deps));
 
       // Assign mock element to ref
-      result.current.current = mockElement;
+      (result.current as { current: HTMLDivElement | null }).current = mockElement;
 
       // Change deps with new object reference
       deps = [{ messages: ['hello', 'world'] }];
@@ -124,7 +124,7 @@ describe('useAutoScroll', () => {
 
       // With empty deps, useEffect runs once on mount when element is null
       // Assign mock element to ref after mount
-      result.current.current = mockElement;
+      (result.current as { current: HTMLDivElement | null }).current = mockElement;
 
       // Since deps is empty [], useEffect won't run again
       // scrollTop should remain at initial value
@@ -146,7 +146,7 @@ describe('useAutoScroll', () => {
       rerender();
 
       // Now set the element
-      result.current.current = mockElement;
+      (result.current as { current: HTMLDivElement | null }).current = mockElement;
 
       // Change deps again to trigger scroll
       deps = ['final'];

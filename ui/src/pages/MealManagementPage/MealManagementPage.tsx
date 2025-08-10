@@ -53,9 +53,9 @@ const MealManagementPage: React.FC<MealManagementPageProps> = ({
         <LibraryPanel
           meals={meals}
           text={filters.text}
-          type={filters.type as any}
+          type={filters.type}
           onTextChange={(text) => setFilters({ text })}
-          onTypeChange={(type) => setFilters({ type: type as any })}
+          onTypeChange={(type) => setFilters({ type })}
           onSelectMeal={(meal: Meal) => selectMeal(meal)}
           onDeleteMeal={deleteMeal}
         />

@@ -78,8 +78,8 @@ describe('useAgentSession', () => {
     });
 
     it('should set isWorking true during API call', async () => {
-      let resolvePromise: (value: any) => void;
-      const promise = new Promise((resolve) => {
+      let resolvePromise!: (value: import('../../../api').StartSessionResult | PromiseLike<import('../../../api').StartSessionResult>) => void;
+      const promise: Promise<import('../../../api').StartSessionResult> = new Promise((resolve) => {
         resolvePromise = resolve;
       });
       mockStartAgentSession.mockReturnValueOnce(promise);
@@ -163,7 +163,7 @@ describe('useAgentSession', () => {
     it('should not set session when resumeData is null', () => {
       mockUseSession.mockReturnValue({
         isResuming: false,
-        resumeData: null,
+        resumeData: undefined,
         startNewSession: mockStartNewSession,
       });
 
@@ -174,8 +174,9 @@ describe('useAgentSession', () => {
 
     it('should not set session when resumeData lacks threadId', () => {
       const resumeData = {
+        threadId: '',
         currentStep: 'step1',
-      };
+      } as import('../../../hooks/useSession').WorkflowState;
       mockUseSession.mockReturnValue({
         isResuming: false,
         resumeData,
@@ -210,7 +211,7 @@ describe('useAgentSession', () => {
       const resumeDataSameThread = {
         threadId: 'test-thread',
         currentStep: 'step2',
-        someOtherProp: 'different' as any, // Add extra prop to make object different
+        someOtherProp: 'different' as unknown, // Add extra prop to make object different
       };
 
       mockUseSession.mockReturnValue({
