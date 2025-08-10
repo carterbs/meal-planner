@@ -10,7 +10,7 @@ const effortIcons = {
   veryHard: '🥵',
 };
 
-const getEffortIcon = (effort: number) => {
+export const getEffortIcon = (effort: number) => {
   if (effort > 7) {
     return effortIcons.veryHard;
   } else if (effort > 5) {

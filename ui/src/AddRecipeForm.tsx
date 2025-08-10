@@ -70,9 +70,9 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     // Handle mixed numbers (e.g., 1½ -> 1.5)
     return input
       .replace(/(\d)([¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (match, digit, fraction) => {
-        return `${digit} ${fractionMap[fraction] || fraction}`;
+        return `${digit} ${fractionMap[fraction]} `;
       })
-      .replace(/[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, (match) => fractionMap[match] || match);
+      .replace(/[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, (match) => fractionMap[match]);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,39 +165,37 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
           // Try to extract unit (assume it's the next word after quantity)
           const unitParts = name.split(' ');
-          if (unitParts.length > 0) {
-            unit = unitParts[0];
-            // Common units - extend this list as needed
-            const commonUnits = [
-              'cup',
-              'cups',
-              'tbsp',
-              'tsp',
-              'oz',
-              'lb',
-              'g',
-              'kg',
-              'ml',
-              'l',
-              'pinch',
-              'dash',
-              'handful',
-              'clove',
-              'cloves',
-              'bunch',
-              'can',
-              'slice',
-              'slices',
-              'piece',
-              'pieces',
-            ];
+          unit = unitParts[0];
+          // Common units - extend this list as needed
+          const commonUnits = [
+            'cup',
+            'cups',
+            'tbsp',
+            'tsp',
+            'oz',
+            'lb',
+            'g',
+            'kg',
+            'ml',
+            'l',
+            'pinch',
+            'dash',
+            'handful',
+            'clove',
+            'cloves',
+            'bunch',
+            'can',
+            'slice',
+            'slices',
+            'piece',
+            'pieces',
+          ];
 
-            if (commonUnits.includes(unit.toLowerCase())) {
-              name = name.substring(unit.length).trim();
-            } else {
-              // If not a common unit, assume it's part of the name
-              unit = '';
-            }
+          if (commonUnits.includes(unit.toLowerCase())) {
+            name = name.substring(unit.length).trim();
+          } else {
+            // If not a common unit, assume it's part of the name
+            unit = '';
           }
         } else {
           // No valid quantity found, treat entire line as name

@@ -24,5 +24,3 @@ describe('Toast', () => {
     expect(screen.getByText('Saved successfully')).toBeInTheDocument();
   });
 });
-
-

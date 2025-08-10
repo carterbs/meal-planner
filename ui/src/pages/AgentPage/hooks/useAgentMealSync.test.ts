@@ -1,57 +1,121 @@
-import { renderHook, act } from '@testing-library/react';
-import useAgentMealSync from './useAgentMealSync';
+import { renderHook, act, waitFor } from '@testing-library/react';
 
-jest.mock('@mealplanner/generated', () => ({
-  __esModule: true,
-  ShoppingListItem: class ShoppingListItem {
-    ingredient: string;
-    quantity: string;
-    category: string;
-    constructor(a: any) {
-      this.ingredient = a.ingredient ?? '';
-      this.quantity = a.quantity ?? '';
-      this.category = a.category ?? '';
-    }
-  },
-  WeeklyMealPlan: class WeeklyMealPlan {},
-}));
+// Mocks for API functions
+const mockGetAgentCheckpoint = jest.fn();
+const mockGoGetShoppingList = jest.fn();
+const mockSendAgentMessage = jest.fn();
 
 jest.mock('../../../api', () => ({
   __esModule: true,
-  getAgentCheckpoint: jest
-    .fn()
-    .mockResolvedValue({ state: { mealPlan: { days: [] } } }),
-  goGetShoppingList: jest
-    .fn()
-    .mockResolvedValue([{ ingredient: 'Eggs', quantity: '12', category: '' }]),
-  sendAgentMessage: jest
-    .fn()
-    .mockResolvedValue({ initialState: { state: { mealPlan: { days: [] } } } }),
+  getAgentCheckpoint: (...args: any[]) => mockGetAgentCheckpoint(...args),
+  goGetShoppingList: (...args: any[]) => mockGoGetShoppingList(...args),
+  sendAgentMessage: (...args: any[]) => mockSendAgentMessage(...args),
 }));
 
+// Mock converter and generated classes
+const mockConvertedPlan = {
+  days: [{ dayIndex: 0, mealType: 'dinner' }],
+} as any;
+jest.mock('../../../utils/mealPlanConverter', () => ({
+  __esModule: true,
+  convertGatewayMealPlan: jest.fn(() => mockConvertedPlan),
+}));
+
+// Use real generated types to avoid state shape mismatches
+
+import useAgentMealSync from './useAgentMealSync';
+
 describe('useAgentMealSync', () => {
-  it('syncs from checkpoint and populates shopping list', async () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('noop when checkpoint has no state', async () => {
+    mockGetAgentCheckpoint.mockResolvedValueOnce({});
     const { result } = renderHook(() => useAgentMealSync());
     await act(async () => {
       await result.current.syncFromCheckpoint('t1');
     });
-    // Assert state updated (shopping list possibly null if goGetShoppingList not invoked in mocked path)
-    // We at least expect no throw and mealPlan to be set via converter path
-    expect(
-      result.current.mealPlan === null ||
-        typeof result.current.mealPlan === 'object',
-    ).toBeTruthy();
+    expect(result.current.mealPlan).toBeNull();
+    expect(result.current.shoppingList).toBeNull();
   });
 
-  it('send triggers message flow and potential initial state application', async () => {
+  it('sets mealPlan and shopping list from checkpoint and gateway shopping list', async () => {
+    mockGetAgentCheckpoint.mockResolvedValueOnce({
+      state: { mealPlan: { days: [{}] } },
+    });
+    mockGoGetShoppingList.mockResolvedValueOnce([
+      { ingredient: 'Tomato', quantity: '2', category: 'produce' },
+      { ingredient: 'Salt', quantity: '', category: '' },
+    ]);
+
+    const { result } = renderHook(() => useAgentMealSync());
+    await act(async () => {
+      await result.current.syncFromCheckpoint('t1');
+    });
+
+    await waitFor(() => {
+      expect(result.current.mealPlan).not.toBeNull();
+      expect(result.current.shoppingList).toEqual([
+        expect.objectContaining({
+          ingredient: 'Tomato',
+          quantity: '2',
+          category: 'produce',
+        }),
+        expect.objectContaining({
+          ingredient: 'Salt',
+          quantity: '',
+          category: '',
+        }),
+      ]);
+    });
+  });
+
+  it('ignores shopping list errors but sets meal plan', async () => {
+    mockGetAgentCheckpoint.mockResolvedValueOnce({
+      state: { mealPlan: { days: [{}] } },
+    });
+    mockGoGetShoppingList.mockRejectedValueOnce(new Error('boom'));
+    const { result } = renderHook(() => useAgentMealSync());
+    await act(async () => {
+      await result.current.syncFromCheckpoint('t1');
+    });
+    await waitFor(() => {
+      expect(result.current.mealPlan).not.toBeNull();
+      expect(result.current.shoppingList).toBeNull();
+    });
+  });
+
+  it('send calls API and applies initial state meal plan and shopping list when present', async () => {
+    mockSendAgentMessage.mockResolvedValueOnce({
+      initialState: {
+        state: { mealPlan: { days: [{}] } },
+        mealPlan: {
+          shoppingList: [
+            { ingredient: 'Oil', quantity: '1', category: 'pantry' },
+          ],
+        },
+      },
+    });
     const { result } = renderHook(() => useAgentMealSync());
     await act(async () => {
       await result.current.send('t1', 'hello');
     });
-    // no throw means success; mealPlan may remain null based on mocked initial state
-    expect(
-      result.current.mealPlan === null ||
-        typeof result.current.mealPlan === 'object',
-    ).toBeTruthy();
+    expect(mockSendAgentMessage).toHaveBeenCalledWith(
+      't1',
+      'hello',
+      'user',
+      true,
+    );
+    await waitFor(() => {
+      expect(result.current.mealPlan).not.toBeNull();
+      expect(result.current.shoppingList).toEqual([
+        expect.objectContaining({
+          ingredient: 'Oil',
+          quantity: '1',
+          category: 'pantry',
+        }),
+      ]);
+    });
   });
 });

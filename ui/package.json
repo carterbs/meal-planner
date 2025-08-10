@@ -36,6 +36,7 @@
     "eject": "react-scripts eject",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
+    "typecheck": "tsc --project tsconfig.typecheck.json --noEmit",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "dead-code": "ts-prune",
     "dead-code:check": "yarn dead-code && yarn lint"

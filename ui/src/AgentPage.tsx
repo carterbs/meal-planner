@@ -85,10 +85,6 @@ const AgentPage: React.FC = () => {
     }
   };
 
-  const _handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
-  };
-
   // share menu handlers removed in favor of PlanPanel's internal menu
 
   return (

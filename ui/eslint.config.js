@@ -139,6 +139,10 @@ module.exports = [
   {
     files: ['**/*.test.{ts,tsx}'],
     languageOptions: {
+      // Avoid requiring a full TS project program for test files to fix parser project errors
+      parserOptions: {
+        project: null,
+      },
       globals: {
         describe: 'readonly',
         it: 'readonly',
@@ -169,6 +173,8 @@ module.exports = [
     rules: {
       // Relax some rules for test files
       '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+      'no-undef': 'off',
       'no-restricted-syntax': 'off',
     },
   },
