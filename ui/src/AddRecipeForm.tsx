@@ -22,7 +22,7 @@ import { Ingredient, Step, Meal } from '@mealplanner/generated';
 import { createMeal } from './api';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RepeatIcon from '@mui/icons-material/Repeat';
-import StepsEditor from './components/StepsEditor';
+import StepsEditor from './pages/MealManagementPage/components/StepsEditor';
 
 interface AddRecipeFormProps {
   onRecipeAdded: () => void;

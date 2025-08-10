@@ -28,7 +28,7 @@ import {
   deleteMealIngredient,
   replaceAllSteps,
   updateMeal as updateMealApi,
-} from '../api';
+} from '../../../api';
 
 import type { GoMeal } from '@mealplanner/generated/dist/gateway/types.gen';
 

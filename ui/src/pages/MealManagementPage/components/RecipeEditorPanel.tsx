@@ -1,6 +1,6 @@
 import React from 'react';
 import { Meal } from '@mealplanner/generated';
-import MealEditView from '../../../components/MealEditView';
+import MealEditView from './MealEditView';
 
 interface RecipeEditorPanelProps {
   meal: Meal;
