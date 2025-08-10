@@ -18,7 +18,11 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
       const feedback = [
         { message: 'looks good', timestamp: new Date().toISOString() },
       ];
-      const res = await workflow.analyzeFeedbackNode(feedback);
+      const { analyzeFeedbackNode } = await import('../workflows/meal-planning/nodes/feedback/analyze.js');
+      const res = await analyzeFeedbackNode(feedback as any, {
+        nanoLlm: workflow.nanoLlm,
+        extractJsonFromResponse: (s: string) => s.replace(/```json|```/g, ''),
+      } as any);
       expect(res).toEqual({ satisfied: true, reasoning: 'Great' });
     });
     it('handles unparsable JSON gracefully', async () => {
@@ -28,8 +32,12 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
       const feedback = [
         { message: 'meh', timestamp: new Date().toISOString() },
       ];
-      const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const res = await workflow.analyzeFeedbackNode(feedback);
+      const spy = jest.spyOn(console, 'error').mockImplementation(() => { });
+      const { analyzeFeedbackNode: analyze2 } = await import('../workflows/meal-planning/nodes/feedback/analyze.js');
+      const res = await analyze2(feedback as any, {
+        nanoLlm: workflow.nanoLlm,
+        extractJsonFromResponse: (s: string) => s,
+      } as any);
       expect(res).toHaveProperty('satisfied', false);
       spy.mockRestore();
     });

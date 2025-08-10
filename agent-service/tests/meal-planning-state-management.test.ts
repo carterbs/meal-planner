@@ -40,7 +40,8 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         currentStep: MealPlanningStep.PRESENT_PLAN,
         mealPlan: TestMockFactory.createMockWeeklyMealPlan(),
       });
-      await workflow.saveCheckpoint(mockConfig, mockState);
+      const { saveCheckpoint } = await import('../workflows/meal-planning/persistence.js');
+      await saveCheckpoint(mockCheckpointer as any, mockConfig as any, mockState as any);
       expect(mockCheckpointer.put).toHaveBeenCalledWith(
         mockConfig,
         expect.any(AgentCheckpoint),
@@ -71,9 +72,8 @@ describe('MealPlanningWorkflow State Management Tests', () => {
       mockState.mealPlan!.toJson = jest.fn().mockImplementation(() => {
         throw new Error('Serialization error');
       });
-      await expect(
-        workflow.saveCheckpoint(mockConfig, mockState),
-      ).rejects.toThrow('Serialization error');
+      const { saveCheckpoint: save2 } = await import('../workflows/meal-planning/persistence.js');
+      await expect(save2(mockCheckpointer as any, mockConfig as any, mockState as any)).rejects.toThrow('Serialization error');
       // Restore the original method
       mockState.mealPlan!.toJson = originalToJson;
     });
@@ -88,7 +88,8 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         currentStep: MealPlanningStep.GENERATE_PLAN,
         iterationCount: 1,
       };
-      const result = workflow.updateState(currentState, updates);
+      const { cloneAndUpdateState } = require('../workflows/meal-planning/state');
+      const result = cloneAndUpdateState(currentState as any, updates as any);
       TestAssertionHelpers.assertStateStructure(result);
       expect(result.currentStep).toBe(MealPlanningStep.GENERATE_PLAN);
       expect(result.iterationCount).toBe(1);
@@ -101,7 +102,8 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         currentStep: MealPlanningStep.PRESENT_PLAN,
         mealPlan: TestMockFactory.createMockWeeklyMealPlan(),
       });
-      const result = workflow.updateState(currentState, {});
+      const { cloneAndUpdateState: clone2 } = require('../workflows/meal-planning/state');
+      const result = clone2(currentState as any, {} as any);
       expect(result.currentStep).toBe(currentState.currentStep);
       expect(result.mealPlan).toBe(currentState.mealPlan);
       expect(result.threadId).toBe(currentState.threadId);
