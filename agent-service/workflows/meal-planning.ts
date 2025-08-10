@@ -41,6 +41,10 @@ import {
 } from './meal-planning-prompts';
 import { v4 as uuidv4 } from 'uuid';
 import { MessageRepository } from '../database/messages';
+// Extracted node imports (keep imports at top of file)
+import { initiateNode as initiateNodeExternal } from './meal-planning/nodes/initiate.js';
+import { generatePlanNode as generatePlanNodeExternal } from './meal-planning/nodes/generatePlan.js';
+import { presentPlanNode as presentPlanNodeExternal } from './meal-planning/nodes/presentPlan.js';
 const DEBUG_LOGS = false;
 /**
  * Meal planning workflow
@@ -258,9 +262,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             isFinalized: false,
           });
           // Generate, optimize, present, pause for feedback
-          // delegate to extracted node
-          const { initiateNode } = await import('./meal-planning/nodes/initiate.js');
-          const initiateResult = await initiateNode(state);
+          const initiateResult = await initiateNodeExternal(state);
           await infoLog(
             `Debuggyz - Initiated the workflow. Current Step: ${initiateResult.currentStep}`,
           );
@@ -269,10 +271,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
           );
-          const { generatePlanNode } = await import(
-            './meal-planning/nodes/generatePlan.js'
-          );
-          const generateResult = await generatePlanNode(state, {
+          const generateResult = await generatePlanNodeExternal(state, {
             callTool: (args: { name: string; arguments: Record<string, unknown> }) =>
               this.client.callTool(args),
             extractJsonFromResponse: (s: string) => this.extractJsonFromResponse(s),
@@ -294,7 +293,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
           );
-          const presentResult = await this.presentPlanNode(state);
+          const presentResult = await presentPlanNodeExternal(state);
           await infoLog(
             `Debuggyz - Presenting the plan. Current Step: ${optimizeResult.currentStep}`,
           );
@@ -484,14 +483,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private async initiateNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
-    const mod = await import('./meal-planning/nodes/initiate.js');
-    return mod.initiateNode(state);
+    return initiateNodeExternal(state);
   }
   private async generatePlanNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
-    const mod = await import('./meal-planning/nodes/generatePlan.js');
-    return mod.generatePlanNode(state, {
+    return generatePlanNodeExternal(state, {
       callTool: (args: { name: string; arguments: Record<string, unknown> }) =>
         this.client.callTool(args),
       extractJsonFromResponse: (s: string) => this.extractJsonFromResponse(s),
@@ -739,18 +736,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
   private async presentPlanNode(
     state: MealPlanningState,
   ): Promise<Partial<MealPlanningState>> {
-    await infoLog('MealPlanningWorkflow.presentPlanNode called');
-    await infoLog(`🍽️ [MEAL-WORKFLOW] Presenting meal plan to participants`);
-    if (!state.mealPlan) {
-      throw new Error('No meal plan to present');
-    }
-    // Format plan for presentation
-    const planPresentation = this.formatPlanForPresentation(state.mealPlan);
-    await infoLog(`📋 [MEAL-PLAN]\n${planPresentation}`);
-    // Check if we have recent feedback that requires processing
-    return {
-      currentStep: MealPlanningStep.AWAIT_FEEDBACK,
-    };
+    return presentPlanNodeExternal(state);
   }
   private async finalizePlanNode(
     state: MealPlanningState,
