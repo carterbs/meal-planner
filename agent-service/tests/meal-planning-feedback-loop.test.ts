@@ -42,7 +42,11 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
         content:
           '{"satisfied": true, "reasoning": "User expressed satisfaction"}',
       });
-      const result = await workflow.analyzeFeedbackNode(mockMessages);
+      const { analyzeFeedbackNode } = await import('../workflows/meal-planning/nodes/feedback/analyze.js');
+      const result = await analyzeFeedbackNode(mockMessages as any, {
+        nanoLlm: workflow.nanoLlm,
+        extractJsonFromResponse: (s: string) => s,
+      } as any);
       expect(result).toEqual({
         satisfied: true,
         reasoning: 'User expressed satisfaction',
@@ -66,7 +70,11 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
         content:
           '{"satisfied": false, "reasoning": "User wants changes to Monday meals"}',
       });
-      const result = await workflow.analyzeFeedbackNode(mockMessages);
+      const { analyzeFeedbackNode: analyze2 } = await import('../workflows/meal-planning/nodes/feedback/analyze.js');
+      const result = await analyze2(mockMessages as any, {
+        nanoLlm: workflow.nanoLlm,
+        extractJsonFromResponse: (s: string) => s,
+      } as any);
       expect(result).toEqual({
         satisfied: false,
         reasoning: 'User wants changes to Monday meals',
@@ -81,7 +89,11 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
       mockNanoLLM.invoke.mockResolvedValue({
         content: 'Not valid JSON',
       });
-      const result = await workflow.analyzeFeedbackNode(mockMessages);
+      const { analyzeFeedbackNode: analyze3 } = await import('../workflows/meal-planning/nodes/feedback/analyze.js');
+      const result = await analyze3(mockMessages as any, {
+        nanoLlm: workflow.nanoLlm,
+        extractJsonFromResponse: (s: string) => s,
+      } as any);
       expect(result).toEqual({
         satisfied: false,
         reasoning: 'Could not parse LLM response.',
@@ -129,7 +141,12 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
           userMessage: "I've updated Monday dinner as requested!",
         }),
       });
-      const result = await workflow.applyFeedbackNode(stateWithFeedback);
+      const { applyFeedbackNode } = await import('../workflows/meal-planning/nodes/feedback/apply.js');
+      const result = await applyFeedbackNode(stateWithFeedback as any, {
+        getMessages: async () => [],
+        applyFeedbackWithLLM: (plan: any, messages: any[]) => workflow.applyFeedbackWithLLM(plan, messages),
+        addMessage: (threadId: string, sender: string, message: string) => mockMessageRepo.addMessage(threadId, sender, message),
+      } as any);
       expect(result.mealPlan).toBeDefined();
       expect(mockMessageRepo.addMessage).toHaveBeenCalledWith(
         'test-thread',
@@ -175,7 +192,12 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
           userMessage: "I've removed Sunday breakfast as requested!",
         }),
       });
-      const result = await workflow.applyFeedbackNode(stateWithFeedback);
+      const { applyFeedbackNode: apply2 } = await import('../workflows/meal-planning/nodes/feedback/apply.js');
+      const result = await apply2(stateWithFeedback as any, {
+        getMessages: async () => [],
+        applyFeedbackWithLLM: (plan: any, messages: any[]) => workflow.applyFeedbackWithLLM(plan, messages),
+        addMessage: (threadId: string, sender: string, message: string) => mockMessageRepo.addMessage(threadId, sender, message),
+      } as any);
       expect(result.mealPlan).toBeDefined();
     });
     it('handles feedback with invalid meal IDs', async () => {
@@ -218,7 +240,12 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
           userMessage: "I've made some adjustments to your meal plan.",
         }),
       });
-      const result = await workflow.applyFeedbackNode(stateWithFeedback);
+      const { applyFeedbackNode: apply3 } = await import('../workflows/meal-planning/nodes/feedback/apply.js');
+      const result = await apply3(stateWithFeedback as any, {
+        getMessages: async () => [],
+        applyFeedbackWithLLM: (plan: any, messages: any[]) => workflow.applyFeedbackWithLLM(plan, messages),
+        addMessage: (threadId: string, sender: string, message: string) => mockMessageRepo.addMessage(threadId, sender, message),
+      } as any);
       expect(result.mealPlan).toBeDefined();
       // The meal plan should remain unchanged for invalid replacements
     });
@@ -236,7 +263,13 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
         feedback_to_apply: mockFeedback,
       };
       await expect(
-        workflow.applyFeedbackNode(stateWithFeedback),
+        (await import('../workflows/meal-planning/nodes/feedback/apply.js')).applyFeedbackNode(stateWithFeedback as any, {
+          getMessages: async () => [],
+          applyFeedbackWithLLM: async () => {
+            throw new Error('LLM error');
+          },
+          addMessage: (threadId: string, sender: string, message: string) => mockMessageRepo.addMessage(threadId, sender, message),
+        } as any),
       ).rejects.toThrow('No meal plan to apply feedback to');
     });
   });
@@ -288,7 +321,12 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
           userMessage: "I've changed Monday dinner to a lighter option!",
         }),
       });
-      const result = await workflow.applyFeedbackNode(stateWithFeedback);
+      const { applyFeedbackNode: apply4 } = await import('../workflows/meal-planning/nodes/feedback/apply.js');
+      const result = await apply4(stateWithFeedback as any, {
+        getMessages: async () => [],
+        applyFeedbackWithLLM: (plan: any, messages: any[]) => workflow.applyFeedbackWithLLM(plan, messages),
+        addMessage: (threadId: string, sender: string, message: string) => mockMessageRepo.addMessage(threadId, sender, message),
+      } as any);
       expect(result.mealPlan).toBeDefined();
       expect(mockMessageRepo.addMessage).toHaveBeenCalledWith(
         'test-thread',
@@ -306,7 +344,11 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
         content:
           '{"satisfied": true, "reasoning": "User expressed satisfaction with the plan"}',
       });
-      const result = await workflow.analyzeFeedbackNode(mockFeedback);
+      const { analyzeFeedbackNode: analyze4 } = await import('../workflows/meal-planning/nodes/feedback/analyze.js');
+      const result = await analyze4(mockFeedback as any, {
+        nanoLlm: workflow.nanoLlm,
+        extractJsonFromResponse: (s: string) => s,
+      } as any);
       expect(result.satisfied).toBe(true);
       expect(result.reasoning).toBe(
         'User expressed satisfaction with the plan',
@@ -322,7 +364,11 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
         content:
           '{"satisfied": false, "reasoning": "User wants more vegetarian options"}',
       });
-      const result = await workflow.analyzeFeedbackNode(mockFeedback);
+      const { analyzeFeedbackNode: analyze5 } = await import('../workflows/meal-planning/nodes/feedback/analyze.js');
+      const result = await analyze5(mockFeedback as any, {
+        nanoLlm: workflow.nanoLlm,
+        extractJsonFromResponse: (s: string) => s,
+      } as any);
       expect(result.satisfied).toBe(false);
       expect(result.reasoning).toBe('User wants more vegetarian options');
     });
@@ -377,7 +423,12 @@ describe('MealPlanningWorkflow Feedback Loop Tests', () => {
             "I've removed breakfast meals and updated Tuesday lunch!",
         }),
       });
-      const result = await workflow.applyFeedbackNode(stateWithFeedback);
+      const { applyFeedbackNode: apply5 } = await import('../workflows/meal-planning/nodes/feedback/apply.js');
+      const result = await apply5(stateWithFeedback as any, {
+        getMessages: async () => [],
+        applyFeedbackWithLLM: (plan: any, messages: any[]) => workflow.applyFeedbackWithLLM(plan, messages),
+        addMessage: (threadId: string, sender: string, message: string) => mockMessageRepo.addMessage(threadId, sender, message),
+      } as any);
       expect(result.mealPlan).toBeDefined();
       expect(mockMessageRepo.addMessage).toHaveBeenCalledWith(
         'test-thread',

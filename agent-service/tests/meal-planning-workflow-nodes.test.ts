@@ -36,7 +36,8 @@ describe('MealPlanningWorkflow Core Node Tests', () => {
       const mockState = TestMockFactory.createMockMealPlanningState({
         currentStep: MealPlanningStep.INITIATE,
       });
-      const result = await workflow.initiateNode(mockState);
+      const { initiateNode } = await import('../workflows/meal-planning/nodes/initiate.js');
+      const result = await initiateNode(mockState);
       expect(result).toEqual({
         currentStep: MealPlanningStep.GENERATE_PLAN,
       });
@@ -54,14 +55,18 @@ describe('MealPlanningWorkflow Core Node Tests', () => {
           { type: 'text', text: JSON.stringify({ plan: mockPlan.toJson() }) },
         ],
       });
-      const result = await workflow.generatePlanNode(mockState);
+      const { generatePlanNode } = await import('../workflows/meal-planning/nodes/generatePlan.js');
+      const result = await generatePlanNode(mockState as any, {
+        callTool: (args: any) => mockClient.callTool(args),
+        extractJsonFromResponse: (s: string) => s,
+      } as any);
       expect(mockClient.callTool).toHaveBeenCalledWith({
         name: 'generateMealPlan',
         arguments: {},
       });
       expect(result.currentStep).toBe(MealPlanningStep.OPTIMIZE_PLAN);
       expect(result.mealPlan).toBeDefined();
-      TestAssertionHelpers.assertMealPlanStructure(result.mealPlan);
+      TestAssertionHelpers.assertMealPlanStructure(result.mealPlan as any);
     });
     it('handles MCP tool errors during plan generation', async () => {
       const mockState = TestMockFactory.createMockMealPlanningState({
@@ -71,7 +76,11 @@ describe('MealPlanningWorkflow Core Node Tests', () => {
         isError: true,
         content: [{ type: 'text', text: 'MCP tool error' }],
       });
-      await expect(workflow.generatePlanNode(mockState)).rejects.toThrow(
+      const { generatePlanNode: gen2 } = await import('../workflows/meal-planning/nodes/generatePlan.js');
+      await expect(gen2(mockState, {
+        callTool: async () => ({ isError: true, content: [{ type: 'text', text: 'MCP tool error' }] }),
+        extractJsonFromResponse: (s: string) => s,
+      } as any)).rejects.toThrow(
         'MCP tool error: MCP tool error',
       );
     });
@@ -83,7 +92,8 @@ describe('MealPlanningWorkflow Core Node Tests', () => {
         currentStep: MealPlanningStep.PRESENT_PLAN,
         mealPlan: mockMealPlan,
       });
-      const result = await workflow.presentPlanNode(mockState);
+      const { presentPlanNode } = await import('../workflows/meal-planning/nodes/presentPlan.js');
+      const result = await presentPlanNode(mockState);
       expect(result).toEqual({
         currentStep: MealPlanningStep.AWAIT_FEEDBACK,
       });
@@ -93,7 +103,8 @@ describe('MealPlanningWorkflow Core Node Tests', () => {
         currentStep: MealPlanningStep.PRESENT_PLAN,
         mealPlan: undefined,
       });
-      await expect(workflow.presentPlanNode(mockState)).rejects.toThrow(
+      const { presentPlanNode: present2 } = await import('../workflows/meal-planning/nodes/presentPlan.js');
+      await expect(present2(mockState)).rejects.toThrow(
         'No meal plan to present',
       );
     });
