@@ -2,12 +2,10 @@ import { renderHook, act } from '@testing-library/react';
 
 jest.mock('../../../api', () => ({
   __esModule: true,
-  startAgentSession: jest
-    .fn()
-    .mockResolvedValue({
-      session: { threadId: 't1', currentStep: '' },
-      message: 'hi',
-    }),
+  startAgentSession: jest.fn().mockResolvedValue({
+    session: { threadId: 't1', currentStep: '' },
+    message: 'hi',
+  }),
 }));
 
 jest.mock('../../../hooks/useSession', () => ({

@@ -1,12 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 
 // Mock API layer used by the hook (names must start with "mock" for jest.mock factory access)
-const mockStartAgentSession = jest
-  .fn()
-  .mockResolvedValue({
-    session: { threadId: 't1', currentStep: '' },
-    message: 'hello',
-  });
+const mockStartAgentSession = jest.fn().mockResolvedValue({
+  session: { threadId: 't1', currentStep: '' },
+  message: 'hello',
+});
 const mockSendAgentMessage = jest.fn().mockResolvedValue({});
 const mockGetAgentCheckpoint = jest
   .fn()

@@ -52,7 +52,7 @@ docker run -p 3000:3000 meal-planner-ui-dev
 ```
 src/
 ├── components/          # Reusable UI components
-│   ├── MealManagementTab.tsx  # Recipe library management
+│   ├── MealManagementPage/    # Meal management full-page experience
 │   ├── MealPlanDisplay.tsx    # Weekly meal plan grid
 │   ├── Toast.tsx             # Notification system
 │   ├── TypingIndicator.tsx   # Chat UI feedback
@@ -73,7 +73,7 @@ src/
 
 ### Core Components
 - **AgentPage**: Main chat interface with AI meal planner agent
-- **MealManagementTab**: Recipe library with full CRUD operations
+- **MealManagementPage**: Recipe library with full CRUD operations (replaces old tab)
 - **MealPlanDisplay**: Interactive weekly meal plan visualization with effort indicators
 - **Session Management**: Auto-resume conversations on page refresh
 - **Health Monitoring**: Real-time backend service availability checks

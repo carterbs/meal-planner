@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box } from '@mui/material';
-import { MealManagementTab } from './components/MealManagementTab';
+import MealManagementPage from './pages/MealManagementPage/MealManagementPage';
 import { Toast } from './components/Toast';
 // types and API handled in hooks
 // TypingIndicator is now rendered inside ChatMessages
@@ -38,7 +38,7 @@ const AgentPage: React.FC = () => {
   } = useAgentController();
   const { highlights, applyHighlights } = useMealPlanHighlights(
     mealPlan,
-    () => {},
+    () => { },
   );
   const [currentTab, setCurrentTab] = React.useState(0);
   const [showMealLibrary, setShowMealLibrary] = React.useState(false);
@@ -95,7 +95,7 @@ const AgentPage: React.FC = () => {
     <>
       {showMealLibrary ? (
         <Box sx={{ position: 'relative', height: '100vh' }}>
-          <MealManagementTab
+          <MealManagementPage
             showToast={showToast}
             onClose={() => setShowMealLibrary(false)}
           />
