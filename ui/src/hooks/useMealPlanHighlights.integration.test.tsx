@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { WeeklyMealPlan, MealPlanEntry, Meal } from '@mealplanner/generated';
 import useMealPlanHighlights from './useMealPlanHighlights';
-import MealPlanDisplay from '../components/MealPlanDisplay';
+import MealPlanDisplay from '../pages/AgentPage/components/plan/MealPlanDisplay';
 
 function makePlan(
   entries: Array<{ dayIndex: number; mealType: string; mealId?: number }>,

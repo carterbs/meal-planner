@@ -38,7 +38,7 @@ const AgentPage: React.FC = () => {
   } = useAgentController();
   const { highlights, applyHighlights } = useMealPlanHighlights(
     mealPlan,
-    () => { },
+    () => {},
   );
   const [currentTab, setCurrentTab] = React.useState(0);
   const [showMealLibrary, setShowMealLibrary] = React.useState(false);

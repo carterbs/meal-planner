@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Box, Button, Paper, Typography } from '@mui/material';
 import { RestaurantMenu as RestaurantMenuIcon } from '@mui/icons-material';
 import type { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
-import MealPlanDisplay from '../../../../components/MealPlanDisplay';
+import MealPlanDisplay from './MealPlanDisplay';
 import { Colors, getAgentPageStyles } from '../../../../theme';
 import ShareMenu from './ShareMenu';
 import ShoppingListView from './ShoppingListView';
