@@ -26,6 +26,8 @@ import {
 } from '../shared/types';
 import { BaseWorkflow } from '../registry';
 import { debugLog } from '../logging';
+import { saveCheckpoint as saveCheckpointExternal } from './meal-planning/persistence.js';
+import { cloneAndUpdateState, deserializeMealPlanFromCheckpoint } from './meal-planning/state.js';
 import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 import { FeedbackHandler } from './feedback-handler';
 import {
@@ -146,49 +148,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     config: ExtendedRunnableConfig,
     state: MealPlanningState,
   ): Promise<void> {
-    await infoLog('MealPlanningWorkflow.saveCheckpoint called');
-    // DEBUGGING: Log meal plan before checkpoint serialization (saveCheckpoint)
-    if (state.mealPlan) {
-      await infoLog(
-        '🔍 [SAVE-CHECKPOINT] mealPlan before checkpoint serialization:',
-      );
-      if (state.mealPlan.days) {
-        for (let i = 0; i < state.mealPlan.days.length; i++) {
-          const day = state.mealPlan.days[i];
-          await infoLog(
-            `🔍 [SAVE-CHECKPOINT] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`,
-          );
-        }
-      }
-    }
-    await infoLog(
-      `🔍 [SAVE-CHECKPOINT] mealPlan before checkpoint serialization: ${JSON.stringify(state)}`,
-    );
-    let checkpoint: AgentCheckpoint;
-    try {
-      checkpoint = new AgentCheckpoint({
-        state: state,
-        next: [],
-        step: 0,
-      });
-    } catch (e) {
-      // log every lastPlanned value
-      if (state.mealPlan) {
-        for (const day of state.mealPlan.days) {
-          if (day.meal) {
-            await infoLog(
-              `🔍 [SAVE-CHECKPOINT] lastPlanned: ${day.meal.lastPlanned}`,
-            );
-          }
-        }
-      }
-      throw e;
-    }
-    const metadata = new AgentCheckpointMetadata({
-      source: 'workflow',
-      step: 0,
-    });
-    await this.checkpointer.put(config, checkpoint, metadata);
+    await saveCheckpointExternal(this.checkpointer, config, state);
   }
   async ensureMCPClient(): Promise<void> {
     await infoLog(
@@ -271,7 +231,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `Debuggyz - Initiated the workflow. Current Step: ${initiateResult.currentStep}`,
           );
-          state = this.updateState(state, initiateResult);
+          state = cloneAndUpdateState(state, initiateResult);
           await this.saveCheckpoint(config, state);
           await infoLog(
             `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
@@ -284,7 +244,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `Debuggyz - Generated the plan. Current Step: ${generateResult.currentStep}`,
           );
-          state = this.updateState(state, generateResult);
+          state = cloneAndUpdateState(state, generateResult);
           await this.saveCheckpoint(config, state);
           await infoLog(
             `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
@@ -293,7 +253,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `Debuggyz - Optimized the plan. ${optimizeResult.currentStep}`,
           );
-          state = this.updateState(state, optimizeResult);
+          state = cloneAndUpdateState(state, optimizeResult);
           await this.saveCheckpoint(config, state);
           await infoLog(
             `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
@@ -302,7 +262,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `Debuggyz - Presenting the plan. Current Step: ${optimizeResult.currentStep}`,
           );
-          state = this.updateState(state, presentResult);
+          state = cloneAndUpdateState(state, presentResult);
           await this.saveCheckpoint(config, state);
           await infoLog(
             `Debuggyz - After updating state. Current Step: ${state.currentStep}`,
@@ -328,38 +288,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             throw new Error('Invalid checkpoint state format');
           }
           // Properly deserialize the meal_plan from checkpoint using fromJson
-          let deserializedMealPlan = null;
-          if (checkpoint.state.mealPlan) {
-            // DEBUGGING: Log mealPlan before deserialization
-            await infoLog(
-              '🔍 [CHECKPOINT] mealPlan before WeeklyMealPlan.fromJson:',
-            );
-            await infoLog(JSON.stringify(checkpoint.state.mealPlan, null, 2));
-            deserializedMealPlan = WeeklyMealPlan.fromJson(
-              checkpoint.state.mealPlan.toJson(),
-            );
-            // DEBUGGING: Log mealPlan after deserialization
-            await infoLog(
-              '🔍 [CHECKPOINT] mealPlan after WeeklyMealPlan.fromJson:',
-            );
-            if (deserializedMealPlan.days) {
-              for (let i = 0; i < deserializedMealPlan.days.length; i++) {
-                const day = deserializedMealPlan.days[i];
-                await infoLog(
-                  `🔍 [CHECKPOINT] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`,
-                );
-              }
-            }
-          }
-          // Use checkpoint state directly since it's already a proto
-          state = checkpoint.state;
-          // Update meal plan if we deserialized it
-          if (deserializedMealPlan) {
-            state = new MealPlanningCheckpointState({
-              ...state,
-              mealPlan: deserializedMealPlan,
-            });
-          }
+          state = deserializeMealPlanFromCheckpoint(checkpoint.state as any);
           await infoLog(
             `🔄 [MEAL-WORKFLOW] Resuming workflow at step ${state.currentStep}`,
           );
@@ -395,7 +324,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             }
             // 3. If satisfied, finalize plan and break loop
             if (analyzeResult.satisfied) {
-              state = this.updateState(state, {
+              state = cloneAndUpdateState(state, {
                 currentStep: MealPlanningStep.FINALIZE_PLAN,
               });
               feedbackSatisfied = true;
@@ -416,15 +345,15 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 addMessage: (threadId: string, sender: string, message: string) =>
                   this.addMessage(threadId, sender, message),
               } as any);
-              state = this.updateState(state, feedbackResult);
+              state = cloneAndUpdateState(state, feedbackResult);
               // Feedback applied - continue processing
               const optimizeResult = await this.optimizePlanNode(state);
-              state = this.updateState(state, optimizeResult);
+              state = cloneAndUpdateState(state, optimizeResult);
               await this.saveCheckpoint(config, state);
             }
             // 5. Present the plan after feedback is processed/applied
             const presentResult = await this.presentPlanNode(state);
-            state = this.updateState(state, presentResult);
+            state = cloneAndUpdateState(state, presentResult);
             await this.saveCheckpoint(config, state);
             // 6. Pause for feedback after presenting the plan
             if (state.currentStep === MealPlanningStep.AWAIT_FEEDBACK) {
@@ -475,7 +404,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           );
           // Finalize, generate shopping list, complete
           const finalizeResult = await this.finalizePlanNode(state);
-          state = this.updateState(state, finalizeResult);
+          state = cloneAndUpdateState(state, finalizeResult);
           await infoLog(
             `🔍 [WORKFLOW] Generating shopping list for thread ${config.configurable?.threadId}`,
           );
@@ -483,12 +412,12 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `🔍 [WORKFLOW] Generated shopping list for thread ${config.configurable?.threadId}`,
           );
-          state = this.updateState(state, shoppingResult);
+          state = cloneAndUpdateState(state, shoppingResult);
           await infoLog(
             `🔍 [WORKFLOW] Completed workflow for thread ${config.configurable?.threadId}`,
           );
           const completeResult = await this.completeNode(state);
-          state = this.updateState(state, completeResult);
+          state = cloneAndUpdateState(state, completeResult);
           return state;
         }
       },
