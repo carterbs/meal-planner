@@ -7,14 +7,14 @@ import { Step } from '@mealplanner/generated';
 import { arrayMove } from '@dnd-kit/sortable';
 
 // Mock @dnd-kit modules
-let mockOnDragEnd: ((e: unknown) => void) | null = null;
+let mockOnDragEnd: ((e: { active: { id: string }; over: { id: string } | null }) => void) | null = null;
 
-const mockArrayMove = jest.fn((arr, oldIndex, newIndex) => {
+const computeArrayMove = <T,>(arr: T[], oldIndex: number, newIndex: number): T[] => {
   const newArray = [...arr];
   const [removed] = newArray.splice(oldIndex, 1);
   newArray.splice(newIndex, 0, removed);
   return newArray;
-});
+};
 
 jest.mock('@dnd-kit/core', () => ({
   DndContext: ({ children, onDragEnd }: { children?: React.ReactNode; onDragEnd?: (e: unknown) => void }) => {
@@ -29,12 +29,12 @@ jest.mock('@dnd-kit/core', () => ({
 }));
 
 jest.mock('@dnd-kit/sortable', () => ({
-  arrayMove: jest.fn((arr, oldIndex, newIndex) => {
+  arrayMove: jest.fn(((arr: unknown[], oldIndex: number, newIndex: number) => {
     const newArray = [...arr];
     const [removed] = newArray.splice(oldIndex, 1);
     newArray.splice(newIndex, 0, removed);
     return newArray;
-  }),
+  }) as unknown as typeof arrayMove),
   SortableContext: ({ children }: { children?: React.ReactNode }) => (
     <div data-testid="sortable-context">{children}</div>
   ),
@@ -78,12 +78,7 @@ describe('StepsEditor', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockArrayMove.mockImplementation((arr, oldIndex, newIndex) => {
-      const newArray = [...arr];
-      const [removed] = newArray.splice(oldIndex, 1);
-      newArray.splice(newIndex, 0, removed);
-      return newArray;
-    });
+    (arrayMove as unknown as jest.Mock).mockImplementation(computeArrayMove);
   });
 
   describe('Component Rendering', () => {

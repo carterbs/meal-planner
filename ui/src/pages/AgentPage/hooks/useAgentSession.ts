@@ -32,7 +32,7 @@ export default function useAgentSession() {
       threadId: resumeData.threadId,
       currentStep: resumeData.currentStep ?? '',
     });
-  }, [resumeData?.threadId]);
+  }, [resumeData]);
 
   const logout = useCallback(() => {
     setSession(null);

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getMessages } from '../../../api';
-import type { GoMessage } from '@mealplanner/generated/dist/gateway/types.gen';
 
 export interface ChatMessage {
   sender: 'user' | 'agent';
@@ -12,12 +11,21 @@ export default function useAgentMessages(threadId: string | null | undefined) {
 
   const fetchMessages = useCallback(async () => {
     if (!threadId) return;
-    const msgs: GoMessage[] = (await getMessages(threadId)) as GoMessage[];
-    const formatted: ChatMessage[] = msgs.map((msg) => ({
-      sender: msg.sender === 'user' ? 'user' : 'agent',
-      text: (msg.content ?? msg.message ?? ''),
-    }));
-    setMessages(formatted);
+    try {
+      const rawMessages = await getMessages(threadId);
+      if (!Array.isArray(rawMessages)) {
+        setMessages([]);
+        return;
+      }
+      const messagesTyped = rawMessages as Array<{ sender?: string; content?: string; message?: string }>;
+      const formatted: ChatMessage[] = messagesTyped.map((msg) => ({
+        sender: msg.sender === 'user' ? 'user' : 'agent',
+        text: (msg.content ?? msg.message ?? ''),
+      }));
+      setMessages(formatted);
+    } catch {
+      // Swallow errors during fetch; leave messages as-is
+    }
   }, [threadId]);
 
   useEffect(() => {

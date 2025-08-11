@@ -18,7 +18,9 @@ function ScrollBox({ keyDep }: { keyDep?: string | number | boolean }) {
 describe('useAutoScroll', () => {
   it('scrolls to bottom when deps change', () => {
     const { rerender, getByTestId } = render(<ScrollBox keyDep={0} />);
-    const box = getByTestId('scroll-box') as HTMLDivElement;
+    const el = getByTestId('scroll-box');
+    expect(el).toBeInstanceOf(HTMLDivElement);
+    const box = el as HTMLDivElement;
     const initial = box.scrollTop;
     rerender(<ScrollBox keyDep={1} />);
     expect(box.scrollTop).toBeGreaterThanOrEqual(initial);

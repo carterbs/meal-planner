@@ -5,6 +5,7 @@ import AddRecipeForm from './AddRecipeForm';
 
 // Mock the API module that AddRecipeForm imports
 jest.mock('./api', () => ({
+  __esModule: true,
   createMeal: jest.fn(),
 }));
 
@@ -28,7 +29,7 @@ jest.mock('./pages/MealManagementPage/components/StepsEditor', () => ({
   ),
 }));
 
-const { createMeal } = jest.requireMock('./api');
+const { createMeal } = jest.requireMock<typeof import('./api')>('./api');
 
 function setup() {
   const onRecipeAdded = jest.fn();
@@ -43,7 +44,8 @@ describe('AddRecipeForm', () => {
 
   it('shows validation error when submitting with no name', async () => {
     const { container } = setup();
-    const form = container.querySelector('form') as HTMLFormElement;
+    const form = container.querySelector('form');
+    if (!form) throw new Error('form not found');
     fireEvent.submit(form);
     expect(
       await screen.findByText(/recipe name is required/i),
@@ -101,7 +103,7 @@ describe('AddRecipeForm', () => {
       screen.getByRole('button', { name: /double quantities/i }),
     );
     // After doubling: leading integer doubles from 1 -> 2; fraction stays as converted decimal part
-    expect((screen.getByLabelText(/paste ingredients/i) as HTMLTextAreaElement).value).toMatch(
+    expect((screen.getByLabelText(/paste ingredients/i) as HTMLInputElement).value).toMatch(
       /^2\s+0\.5\s+cup sugar/m,
     );
   });
@@ -119,7 +121,7 @@ describe('AddRecipeForm', () => {
     await userEvent.click(doubleBtn);
 
     // Raw textarea lines doubled
-    const current = (screen.getByLabelText(/paste ingredients/i) as HTMLTextAreaElement).value;
+    const current = (screen.getByLabelText(/paste ingredients/i) as HTMLInputElement).value;
     expect(current).toMatch(/^4 eggs/m);
     expect(current).toMatch(/1 cup milk/m);
     // Non-numeric line remains unchanged
@@ -221,7 +223,8 @@ describe('AddRecipeForm', () => {
       screen.getByRole('button', { name: /add mock step/i }),
     );
 
-    const form = container.querySelector('form') as HTMLFormElement;
+    const form = container.querySelector('form');
+    if (!form) throw new Error('form not found');
     fireEvent.submit(form);
 
     expect(
@@ -256,7 +259,8 @@ describe('AddRecipeForm', () => {
       screen.getByRole('button', { name: /process ingredients/i }),
     );
 
-    const form = container.querySelector('form') as HTMLFormElement;
+    const form = container.querySelector('form');
+    if (!form) throw new Error('form not found');
     fireEvent.submit(form);
 
     expect(
@@ -283,7 +287,8 @@ describe('AddRecipeForm', () => {
       screen.getByRole('button', { name: /process ingredients/i }),
     );
 
-    const form = container.querySelector('form') as HTMLFormElement;
+    const form = container.querySelector('form');
+    if (!form) throw new Error('form not found');
     fireEvent.submit(form);
 
     expect(

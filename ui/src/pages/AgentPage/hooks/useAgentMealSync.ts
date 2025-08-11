@@ -17,23 +17,22 @@ export default function useAgentMealSync() {
     const checkpoint = await getAgentCheckpoint(threadId);
     const state = checkpoint?.state;
     if (!state) return;
-    if (state.mealPlan) {
-      const newPlan = convertGatewayMealPlan(state.mealPlan);
+    const maybePlan = state.mealPlan;
+    if (maybePlan) {
+      const newPlan = convertGatewayMealPlan(maybePlan);
       setMealPlan(newPlan);
       try {
         const shoppingRes = await goGetShoppingList(newPlan);
-        if (shoppingRes) {
-          setShoppingList(
-            shoppingRes.map(
-              (i) =>
-                new ShoppingListItem({
-                  ingredient: i.ingredient ?? '',
-                  quantity: i.quantity ?? '',
-                  category: i.category ?? '',
-                }),
-            ),
-          );
-        }
+        setShoppingList(
+          shoppingRes.map(
+            (i) =>
+              new ShoppingListItem({
+                ingredient: i.ingredient ?? '',
+                quantity: i.quantity ?? '',
+                category: i.category ?? '',
+              }),
+          ),
+        );
       } catch {
         // ignore
       }

@@ -49,7 +49,7 @@ export default function useSession(startSession: () => Promise<void>) {
         if (typeof cp === 'string') {
           parsedCp = JSON.parse(cp) as GoGetCheckpointResponse;
         }
-        if (!parsedCp) return;
+        // parsedCp is defined when res.data exists
 
         // Handle case where tuple might be string-encoded
         let tuple = parsedCp.tuple as unknown;
