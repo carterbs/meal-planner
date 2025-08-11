@@ -162,7 +162,7 @@ const StepsEditor: React.FC<StepsEditorProps> = ({
       const stepsText = steps.map((step) => step.instruction).join('\n\n');
       setBulkStepsText(stepsText);
     }
-  }, [steps]);
+  }, [steps, bulkStepsText]);
 
   const parseStepsFromText = (text: string): string[] => {
     text = text.trim();
