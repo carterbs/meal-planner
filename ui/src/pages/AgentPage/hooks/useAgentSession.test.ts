@@ -93,7 +93,7 @@ describe('useAgentSession', () => {
       expect(result.current.isWorking).toBe(true);
 
       await act(async () => {
-        resolvePromise!({
+        resolvePromise({
           session: { threadId: 'thread-123', currentStep: 'step1' },
         });
         await promise;

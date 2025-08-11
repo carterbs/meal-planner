@@ -50,7 +50,7 @@ export default function useAgentController(): UseAgentControllerReturn {
             setMessages([{ sender: 'agent', text: result.message }]);
         }
         // Ensure we populate meal plan and messages from the latest checkpoint/state
-        if (result.session?.threadId) {
+        if (result.session.threadId) {
             await syncFromCheckpoint(result.session.threadId);
             await fetchAndUpdateMessages();
         }
@@ -70,13 +70,13 @@ export default function useAgentController(): UseAgentControllerReturn {
     // Intentionally no resume logic here; handled in useAgentSession.
 
     useEffect(() => {
-        const threadId = session ? session.threadId : null;
+        const threadId = session?.threadId;
         if (!threadId) return;
         void (async () => {
             await syncFromCheckpoint(threadId);
             await fetchAndUpdateMessages();
         })();
-    }, [session && session.threadId ? session.threadId : null, syncFromCheckpoint, fetchAndUpdateMessages]);
+    }, [session, syncFromCheckpoint, fetchAndUpdateMessages]);
 
     const sendMessage = useCallback(
         async (text?: string) => {

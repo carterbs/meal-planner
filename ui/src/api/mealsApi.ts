@@ -26,6 +26,15 @@ import { Timestamp } from '@bufbuild/protobuf';
 
 // Create the API gateway client
 
+function formatGatewayError(err: unknown): string {
+  if (typeof err === 'string') return err;
+  const maybeObj = err as { error?: unknown } | undefined;
+  const nested = maybeObj && typeof maybeObj === 'object' ? maybeObj.error : undefined;
+  if (typeof nested === 'string') return nested;
+  if (err != null) return String(err);
+  return 'Unknown error';
+}
+
 /**
  * Map GoStep to UI Step
  */
@@ -96,13 +105,12 @@ export async function getMeals(mealType?: string): Promise<Meal[]> {
     query,
   });
 
-  if (!result.data || result.error) {
-    throw new Error(
-      `Failed to fetch meals: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
-    );
+  const res = result as unknown as { data?: { meals?: unknown[] | null }; error?: unknown };
+  if (!res.data || res.error) {
+    throw new Error(`Failed to fetch meals: ${formatGatewayError(res.error)}`);
   }
 
-  return (result.data.meals || []).map((m: GoMeal) => mapMeal(m));
+  return ((res.data.meals || []) as GoMeal[]).map((m: GoMeal) => mapMeal(m));
 }
 
 /**
@@ -119,20 +127,20 @@ export async function createMeal(mealData: Omit<GoMeal, 'id'>): Promise<Meal> {
     body: { meal: mealPayload },
   });
 
-  if (!result.data || result.error) {
-    const errorMessage = (result.error as { error?: string } | undefined)?.error || (typeof result.error === 'string' ? result.error : result.error) || 'Unknown error';
-    throw new Error(`Failed to create meal: ${errorMessage}`);
+  const res = result as unknown as { data?: { meal?: unknown }; error?: unknown };
+  if (!res.data || res.error) {
+    throw new Error(`Failed to create meal: ${formatGatewayError(res.error)}`);
   }
 
-  if (!result.data || !result.data.meal) {
+  if (!res.data.meal) {
     throw new Error('No meal returned from create request');
   }
 
   // Parse the meal from string if needed
   const parsedMeal: GoMeal =
-    typeof result.data.meal === 'string'
-      ? (JSON.parse(result.data.meal) as GoMeal)
-      : (result.data.meal as GoMeal);
+    typeof res.data.meal === 'string'
+      ? (JSON.parse(res.data.meal) as GoMeal)
+      : (res.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -152,20 +160,20 @@ export async function updateMeal(
     },
   });
 
-  if (!result.data || result.error) {
-    const errorMessage = (result.error as { error?: string } | undefined)?.error || (typeof result.error === 'string' ? result.error : result.error) || 'Unknown error';
-    throw new Error(`Failed to update meal: ${errorMessage}`);
+  const res = result as unknown as { data?: { meal?: unknown }; error?: unknown };
+  if (!res.data || res.error) {
+    throw new Error(`Failed to update meal: ${formatGatewayError(res.error)}`);
   }
 
-  if (!result.data.meal) {
+  if (!res.data.meal) {
     throw new Error('No meal returned from update request');
   }
 
   // Parse the meal from string if needed
   const parsedMeal: GoMeal =
-    typeof result.data.meal === 'string'
-      ? (JSON.parse(result.data.meal) as GoMeal)
-      : (result.data.meal as GoMeal);
+    typeof res.data.meal === 'string'
+      ? (JSON.parse(res.data.meal) as GoMeal)
+      : (res.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -178,13 +186,12 @@ export async function deleteMeal(mealId: number): Promise<string> {
     path: { mealId: mealId.toString() },
   });
 
-  if (!result.data || result.error) {
-    throw new Error(
-      `Failed to delete meal: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
-    );
+  const res = result as unknown as { data?: { message?: string }; error?: unknown };
+  if (!res.data || res.error) {
+    throw new Error(`Failed to delete meal: ${formatGatewayError(res.error)}`);
   }
 
-  return result.data.message || 'Meal deleted successfully';
+  return res.data.message || 'Meal deleted successfully';
 }
 
 /**
@@ -205,21 +212,20 @@ export async function updateMealIngredient(
     },
   });
 
-  if (!result.data || result.error) {
-    throw new Error(
-      `Failed to update ingredient: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
-    );
+  const res = result as unknown as { data?: { meal?: unknown }; error?: unknown };
+  if (!res.data || res.error) {
+    throw new Error(`Failed to update ingredient: ${formatGatewayError(res.error)}`);
   }
 
-  if (!result.data.meal) {
+  if (!res.data.meal) {
     throw new Error('No meal returned from update ingredient request');
   }
 
   // Parse the meal from string if needed
   const parsedMeal: GoMeal =
-    typeof result.data.meal === 'string'
-      ? (JSON.parse(result.data.meal) as GoMeal)
-      : (result.data.meal as GoMeal);
+    typeof res.data.meal === 'string'
+      ? (JSON.parse(res.data.meal) as GoMeal)
+      : (res.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -239,21 +245,20 @@ export async function createMealIngredient(
     },
   });
 
-  if (!result.data || result.error) {
-    throw new Error(
-      `Failed to create ingredient: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
-    );
+  const res = result as unknown as { data?: { meal?: unknown }; error?: unknown };
+  if (!res.data || res.error) {
+    throw new Error(`Failed to create ingredient: ${formatGatewayError(res.error)}`);
   }
 
-  if (!result.data.meal) {
+  if (!res.data.meal) {
     throw new Error('No meal returned from create ingredient request');
   }
 
   // Parse the meal from string if needed
   const parsedMeal: GoMeal =
-    typeof result.data.meal === 'string'
-      ? (JSON.parse(result.data.meal) as GoMeal)
-      : (result.data.meal as GoMeal);
+    typeof res.data.meal === 'string'
+      ? (JSON.parse(res.data.meal) as GoMeal)
+      : (res.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -269,21 +274,20 @@ export async function deleteMealIngredient(
     path: { mealId: mealId.toString(), ingredientId: ingredientId.toString() },
   });
 
-  if (!result.data || result.error) {
-    throw new Error(
-      `Failed to delete ingredient: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
-    );
+  const res = result as unknown as { data?: { meal?: unknown }; error?: unknown };
+  if (!res.data || res.error) {
+    throw new Error(`Failed to delete ingredient: ${formatGatewayError(res.error)}`);
   }
 
-  if (!result.data.meal) {
+  if (!res.data.meal) {
     throw new Error('No meal returned from delete ingredient request');
   }
 
   // Parse the meal from string if needed
   const parsedMeal: GoMeal =
-    typeof result.data.meal === 'string'
-      ? (JSON.parse(result.data.meal) as GoMeal)
-      : (result.data.meal as GoMeal);
+    typeof res.data.meal === 'string'
+      ? (JSON.parse(res.data.meal) as GoMeal)
+      : (res.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -300,11 +304,12 @@ export async function addBulkSteps(
     body: { instructions },
   });
 
-  if (!result.data || result.error) {
-    throw new Error(`Failed to add steps: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`);
+  const res = result as unknown as { data?: { steps?: unknown[] | null }; error?: unknown };
+  if (!res.data || res.error) {
+    throw new Error(`Failed to add steps: ${formatGatewayError(res.error)}`);
   }
 
-  return (result.data.steps || []).map((s: GoStep) => mapStep(s));
+  return ((res.data.steps || []) as GoStep[]).map((s: GoStep) => mapStep(s));
 }
 
 /**
@@ -316,13 +321,12 @@ export async function deleteAllSteps(mealId: number): Promise<string> {
     path: { mealId: mealId.toString() },
   });
 
-  if (!result.data || result.error) {
-    throw new Error(
-      `Failed to delete steps: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
-    );
+  const res = result as unknown as { data?: { message?: string }; error?: unknown };
+  if (!res.data || res.error) {
+    throw new Error(`Failed to delete steps: ${formatGatewayError(res.error)}`);
   }
 
-  return result.data.message || 'Steps deleted successfully';
+  return res.data.message || 'Steps deleted successfully';
 }
 
 /**
@@ -353,11 +357,10 @@ export async function goGetShoppingList(
     body: request,
   });
 
-  if (!result.data || !result.data.items || result.error) {
-    throw new Error(
-      `Failed to generate shopping list: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
-    );
+  const res = result as unknown as { data?: { items?: GoShoppingListItem[] | null }; error?: unknown };
+  if (!res.data || !res.data.items || res.error) {
+    throw new Error(`Failed to generate shopping list: ${formatGatewayError(res.error)}`);
   }
 
-  return result.data.items as GoShoppingListItem[];
+  return res.data.items;
 }

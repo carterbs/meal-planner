@@ -70,10 +70,11 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
     // Handle mixed numbers (e.g., 1½ -> 1.5)
     return input
-      .replace(/(\d)([¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (match, digit, fraction) => {
-        return `${digit} ${fractionMap[fraction]} `;
+      .replace(/(\d)([¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (_match: string, digit: string, fraction: string) => {
+        const key = fraction;
+        return `${digit} ${fractionMap[key]} `;
       })
-      .replace(/[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, (match) => fractionMap[match]);
+      .replace(/[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, (match: string) => fractionMap[match]);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +85,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     setMeal({ ...meal, url: e.target.value });
   };
 
-  const handleEffortChange = (e: Event, newValue: number | number[]) => {
+  const handleEffortChange = (_e: Event, newValue: number | number[]) => {
     setMeal({ ...meal, effort: newValue as number });
   };
 
@@ -436,10 +437,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               Recipe Steps
             </Typography>
 
-            <StepsEditor
-              steps={meal.steps || []}
-              onChange={handleStepsChange}
-            />
+            <StepsEditor steps={meal.steps} onChange={handleStepsChange} />
           </Grid>
 
           <Grid item xs={12}>

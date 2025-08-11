@@ -56,13 +56,13 @@ export async function startAgentSession(
     body: requestData,
   });
 
-  if (!result.data || result.error) {
-    throw new Error(
-      `Failed to start agent session: ${result.error || 'Unknown error'}`,
-    );
+  const resStart = result as unknown as { data?: { response?: unknown }; error?: unknown };
+  if (!resStart.data || resStart.error) {
+    const msg = typeof resStart.error === 'string' ? resStart.error : resStart.error != null ? String(resStart.error) : 'Unknown error';
+    throw new Error(`Failed to start agent session: ${msg}`);
   }
 
-  const data = result.data;
+  const data = resStart.data as { response?: { threadId?: string; currentStep?: string; initialState?: string; message?: string } };
 
   if (!data.response) {
     throw new Error('No response from agent');
@@ -79,7 +79,7 @@ export async function startAgentSession(
     currentStep: agentResponse.currentStep,
   };
 
-  let initialState;
+  let initialState: unknown;
   if (agentResponse.initialState) {
     try {
       initialState = JSON.parse(agentResponse.initialState);
@@ -116,13 +116,13 @@ export async function sendAgentMessage(
     body: requestData,
   });
 
-  if (!result.data || result.error) {
-    throw new Error(
-      `Failed to send message: ${result.error || 'Unknown error'}`,
-    );
+  const resMsg = result as unknown as { data?: { response?: unknown }; error?: unknown };
+  if (!resMsg.data || resMsg.error) {
+    const msg = typeof resMsg.error === 'string' ? resMsg.error : resMsg.error != null ? String(resMsg.error) : 'Unknown error';
+    throw new Error(`Failed to send message: ${msg}`);
   }
 
-  const data = result.data;
+  const data = resMsg.data as { response?: { message?: string; initialState?: string } };
 
   if (!data.response) {
     throw new Error('No response from agent');
@@ -130,7 +130,7 @@ export async function sendAgentMessage(
 
   const agentResponse = data.response;
 
-  let initialState;
+  let initialState: unknown;
   if (agentResponse.initialState) {
     try {
       initialState = JSON.parse(agentResponse.initialState);
@@ -178,18 +178,20 @@ export async function getAgentCheckpoint(threadId: string) {
 /**
  * Get messages for a workflow thread
  */
-export async function getMessages(threadId: string) {
+import type { GoMessage } from '@mealplanner/generated/dist/gateway/types.gen';
+export async function getMessages(threadId: string): Promise<GoMessage[]> {
   const result = await getWorkflowsByThreadIdMessages({
     client: gatewayClient,
     path: { threadId },
   });
 
-  if (!result.data || result.error) {
-    if (result.error) {
-      throw result.error;
+  const res = result as unknown as { data?: { messages?: unknown[] | null }; error?: unknown };
+  if (!res.data || res.error) {
+    if (res.error) {
+      throw res.error;
     }
     throw new Error('Failed to get messages');
   }
 
-  return result.data.messages || [];
+  return (res.data.messages || []) as GoMessage[];
 }

@@ -79,8 +79,8 @@ describe('clipboard utils', () => {
 
     await copyMealPlanToClipboard(plan);
 
-    const write = ((navigator.clipboard as unknown) as { write: jest.Mock }).write;
-    const writeText = ((navigator.clipboard as unknown) as { writeText: jest.Mock }).writeText;
+    const write = (navigator.clipboard as unknown as { write: jest.Mock }).write;
+    const writeText = (navigator.clipboard as unknown as { writeText: jest.Mock }).writeText;
 
     expect(write).toHaveBeenCalledTimes(1);
     expect(writeText).not.toHaveBeenCalled();
@@ -91,14 +91,13 @@ describe('clipboard utils', () => {
 
     await copyMealPlanToClipboard(plan);
 
-    const write = ((navigator.clipboard as unknown) as { write: jest.Mock }).write;
-    const writeText = ((navigator.clipboard as unknown) as { writeText: jest.Mock }).writeText;
+    const write = (navigator.clipboard as unknown as { write: jest.Mock }).write;
+    const writeText = (navigator.clipboard as unknown as { writeText: jest.Mock }).writeText;
 
     expect(write).not.toHaveBeenCalled();
     expect(writeText).toHaveBeenCalledTimes(1);
-    const arg = writeText.mock.calls[0][0] as string;
-    expect(arg).toContain('Day | Meals');
-    expect(arg).toContain('Monday |');
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('Day | Meals'));
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('Monday |'));
   });
 
   it('copies shopping list with rich clipboard when available', async () => {
@@ -140,8 +139,7 @@ describe('clipboard utils', () => {
 
     expect(write).not.toHaveBeenCalled();
     expect(writeText).toHaveBeenCalledTimes(1);
-    const arg = writeText.mock.calls[0][0] as string;
-    expect(arg).toContain('- 2 Milk');
-    expect(arg).toContain('- Eggs');
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('- 2 Milk'));
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('- Eggs'));
   });
 });
