@@ -13,10 +13,10 @@ import {
 } from './mealsApi';
 import { Meal, Step, WeeklyMealPlan } from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';
-import * as gatewayModule from '@mealplanner/generated/dist/gateway/index.js';
+import * as gatewayModule from '@mealplanner/generated/dist/gateway';
 
-jest.mock('@mealplanner/generated/dist/gateway/index.js');
-jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
+jest.mock('@mealplanner/generated/dist/gateway');
+jest.mock('@mealplanner/generated/dist/gateway/client', () => ({
   createClient: jest.fn(() => 'mockClient'),
   createConfig: jest.fn(() => ({})),
 }));

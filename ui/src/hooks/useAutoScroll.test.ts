@@ -8,18 +8,20 @@ describe('useAutoScroll', () => {
 
   describe('ref creation and return', () => {
     it('should return a ref object', () => {
-      const { result } = renderHook(() => useAutoScroll([]));
+      const { result } = renderHook(() => useAutoScroll());
 
       expect(result.current).toHaveProperty('current');
       expect(result.current.current).toBeNull();
     });
 
     it('should return the same ref object on re-renders with same deps', () => {
-      const deps = ['test'];
-      const { result, rerender } = renderHook(() => useAutoScroll(deps));
+      const dep = 'test';
+      const { result, rerender } = renderHook(({ d }) => useAutoScroll(d), {
+        initialProps: { d: dep },
+      });
 
       const firstRef = result.current;
-      rerender();
+      rerender({ d: dep });
 
       expect(result.current).toBe(firstRef);
     });
@@ -36,97 +38,91 @@ describe('useAutoScroll', () => {
     });
 
     it('should scroll to bottom when element exists and deps change', () => {
-      let deps = ['initial'];
-      const { result, rerender } = renderHook(() => useAutoScroll(deps));
+      let dep = 'initial';
+      const { result, rerender } = renderHook(({ d }) => useAutoScroll(d), {
+        initialProps: { d: dep },
+      });
 
       // Assign mock element to ref
       (result.current as { current: HTMLDivElement | null }).current = mockElement;
 
       // Change deps to trigger useEffect
-      deps = ['changed'];
-      rerender();
+      dep = 'changed';
+      rerender({ d: dep });
 
       expect(mockElement.scrollTop).toBe(200);
     });
 
     it('should not scroll when element does not exist', () => {
-      let deps = ['initial'];
-      const { result, rerender } = renderHook(() => useAutoScroll(deps));
+      let dep = 'initial';
+      const { result, rerender } = renderHook(({ d }) => useAutoScroll(d), {
+        initialProps: { d: dep },
+      });
 
       // Keep ref.current as null
       expect(result.current.current).toBeNull();
 
       // Change deps to trigger useEffect
-      deps = ['changed'];
-      rerender();
+      dep = 'changed';
+      rerender({ d: dep });
 
       // Should not throw error and element should remain null
       expect(result.current.current).toBeNull();
     });
 
     it('should handle multiple dependency changes', () => {
-      let deps = [1];
-      const { result, rerender } = renderHook(() => useAutoScroll(deps));
+      let dep = 1;
+      const { result, rerender } = renderHook(({ d }) => useAutoScroll(d), {
+        initialProps: { d: dep },
+      });
 
       // Assign mock element to ref
       (result.current as { current: HTMLDivElement | null }).current = mockElement;
 
       // First change
       Object.defineProperty(mockElement, 'scrollHeight', { value: 300, configurable: true });
-      deps = [2];
-      rerender();
+      dep = 2;
+      rerender({ d: dep });
       expect(mockElement.scrollTop).toBe(300);
 
       // Second change
       Object.defineProperty(mockElement, 'scrollHeight', { value: 400, configurable: true });
-      deps = [3];
-      rerender();
+      dep = 3;
+      rerender({ d: dep });
       expect(mockElement.scrollTop).toBe(400);
 
       // Third change
       Object.defineProperty(mockElement, 'scrollHeight', { value: 500, configurable: true });
-      deps = [4];
-      rerender();
+      dep = 4;
+      rerender({ d: dep });
       expect(mockElement.scrollTop).toBe(500);
     });
 
     it('should not scroll when deps remain the same', () => {
-      const deps = ['constant'];
-      const { result, rerender } = renderHook(() => useAutoScroll(deps));
+      const dep = 'constant';
+      const { result, rerender } = renderHook(({ d }) => useAutoScroll(d), {
+        initialProps: { d: dep },
+      });
 
       // Assign mock element to ref
       (result.current as { current: HTMLDivElement | null }).current = mockElement;
       mockElement.scrollTop = 100; // Set initial scroll position
 
       // Re-render without changing deps
-      rerender();
+      rerender({ d: dep });
 
       // scrollTop should remain unchanged since useEffect didn't run
       expect(mockElement.scrollTop).toBe(100);
     });
 
-    it('should handle complex object dependencies', () => {
-      let deps = [{ messages: ['hello'] }];
-      const { result, rerender } = renderHook(() => useAutoScroll(deps));
+    it('should handle empty dependency', () => {
+      const { result } = renderHook(() => useAutoScroll());
 
-      // Assign mock element to ref
-      (result.current as { current: HTMLDivElement | null }).current = mockElement;
-
-      // Change deps with new object reference
-      deps = [{ messages: ['hello', 'world'] }];
-      rerender();
-
-      expect(mockElement.scrollTop).toBe(200);
-    });
-
-    it('should handle empty dependencies array', () => {
-      const { result } = renderHook(() => useAutoScroll([]));
-
-      // With empty deps, useEffect runs once on mount when element is null
+      // With no dep, useEffect runs once on mount when element is null
       // Assign mock element to ref after mount
       (result.current as { current: HTMLDivElement | null }).current = mockElement;
 
-      // Since deps is empty [], useEffect won't run again
+      // Since dep is undefined, useEffect won't run again
       // scrollTop should remain at initial value
       expect(mockElement.scrollTop).toBe(0);
 
@@ -135,22 +131,24 @@ describe('useAutoScroll', () => {
     });
 
     it('should handle element being set after initial render', () => {
-      let deps = ['test'];
-      const { result, rerender } = renderHook(() => useAutoScroll(deps));
+      let dep = 'test';
+      const { result, rerender } = renderHook(({ d }) => useAutoScroll(d), {
+        initialProps: { d: dep },
+      });
 
       // Initially no element
       expect(result.current.current).toBeNull();
 
-      // Change deps but still no element
-      deps = ['changed'];
-      rerender();
+      // Change dep but still no element
+      dep = 'changed';
+      rerender({ d: dep });
 
       // Now set the element
       (result.current as { current: HTMLDivElement | null }).current = mockElement;
 
-      // Change deps again to trigger scroll
-      deps = ['final'];
-      rerender();
+      // Change dep again to trigger scroll
+      dep = 'final';
+      rerender({ d: dep });
 
       expect(mockElement.scrollTop).toBe(200);
     });
@@ -159,13 +157,13 @@ describe('useAutoScroll', () => {
   describe('TypeScript generics', () => {
     it('should work with different HTML element types', () => {
       const { result: divResult } = renderHook(() =>
-        useAutoScroll<HTMLDivElement>([]),
+        useAutoScroll<HTMLDivElement>(),
       );
       const { result: spanResult } = renderHook(() =>
-        useAutoScroll<HTMLSpanElement>([]),
+        useAutoScroll<HTMLSpanElement>(),
       );
       const { result: pResult } = renderHook(() =>
-        useAutoScroll<HTMLParagraphElement>([]),
+        useAutoScroll<HTMLParagraphElement>(),
       );
 
       expect(divResult.current).toHaveProperty('current');

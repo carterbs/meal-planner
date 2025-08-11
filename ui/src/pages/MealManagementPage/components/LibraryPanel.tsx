@@ -74,7 +74,7 @@ const LibraryPanel: React.FC<LibraryPanelProps> = ({
         <DataGrid
           rows={filteredMeals}
           columns={columns}
-          getRowId={(row) => row.id}
+          getRowId={(row: { id: number }) => row.id}
           hideFooter
           onRowClick={(params) => {
             const meal = meals.find((m) => m.id === params.id);

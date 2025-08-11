@@ -7,7 +7,7 @@ import type {
 import {
   createClient,
   createConfig,
-} from '@mealplanner/generated/dist/gateway/client/index.js';
+} from '@mealplanner/generated/dist/gateway/client';
 import {
   getMeals as getMealsFromGateway,
   postMeals,
@@ -19,8 +19,7 @@ import {
   postMealsByMealIdStepsBulk,
   deleteMealsByMealIdSteps,
   postShoppinglist,
-  GoGetShoppingListRequest,
-} from '@mealplanner/generated/dist/gateway/index.js';
+} from '@mealplanner/generated/dist/gateway';
 import { Meal, Step, Ingredient } from '@mealplanner/generated';
 import type { WeeklyMealPlan } from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';
@@ -74,8 +73,8 @@ function mapMeal(m: GoMeal): Meal {
     hasRedMeat: m.hasRedMeat || false,
     url: m.url || '',
     mealType: m.mealType || '',
-    ingredients: (m.ingredients || []).map(mapIngredient),
-    steps: (m.steps || []).map(mapStep),
+    ingredients: (m.ingredients || []).map((ing: GoIngredient) => mapIngredient(ing)),
+    steps: (m.steps || []).map((st: GoStep) => mapStep(st)),
   });
 }
 
@@ -99,11 +98,11 @@ export async function getMeals(mealType?: string): Promise<Meal[]> {
 
   if (!result.data || result.error) {
     throw new Error(
-      `Failed to fetch meals: ${result.error || 'Unknown error'}`,
+      `Failed to fetch meals: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
     );
   }
 
-  return (result.data.meals || []).map(mapMeal);
+  return (result.data.meals || []).map((m: GoMeal) => mapMeal(m));
 }
 
 /**
@@ -121,7 +120,7 @@ export async function createMeal(mealData: Omit<GoMeal, 'id'>): Promise<Meal> {
   });
 
   if (!result.data || result.error) {
-    const errorMessage = result.error?.error || result.error || 'Unknown error';
+    const errorMessage = (result.error as { error?: string } | undefined)?.error || (typeof result.error === 'string' ? result.error : result.error) || 'Unknown error';
     throw new Error(`Failed to create meal: ${errorMessage}`);
   }
 
@@ -130,10 +129,10 @@ export async function createMeal(mealData: Omit<GoMeal, 'id'>): Promise<Meal> {
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -154,7 +153,7 @@ export async function updateMeal(
   });
 
   if (!result.data || result.error) {
-    const errorMessage = result.error?.error || result.error || 'Unknown error';
+    const errorMessage = (result.error as { error?: string } | undefined)?.error || (typeof result.error === 'string' ? result.error : result.error) || 'Unknown error';
     throw new Error(`Failed to update meal: ${errorMessage}`);
   }
 
@@ -163,10 +162,10 @@ export async function updateMeal(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -181,7 +180,7 @@ export async function deleteMeal(mealId: number): Promise<string> {
 
   if (!result.data || result.error) {
     throw new Error(
-      `Failed to delete meal: ${result.error || 'Unknown error'}`,
+      `Failed to delete meal: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
     );
   }
 
@@ -208,7 +207,7 @@ export async function updateMealIngredient(
 
   if (!result.data || result.error) {
     throw new Error(
-      `Failed to update ingredient: ${result.error || 'Unknown error'}`,
+      `Failed to update ingredient: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
     );
   }
 
@@ -217,10 +216,10 @@ export async function updateMealIngredient(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -242,7 +241,7 @@ export async function createMealIngredient(
 
   if (!result.data || result.error) {
     throw new Error(
-      `Failed to create ingredient: ${result.error || 'Unknown error'}`,
+      `Failed to create ingredient: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
     );
   }
 
@@ -251,10 +250,10 @@ export async function createMealIngredient(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -272,7 +271,7 @@ export async function deleteMealIngredient(
 
   if (!result.data || result.error) {
     throw new Error(
-      `Failed to delete ingredient: ${result.error || 'Unknown error'}`,
+      `Failed to delete ingredient: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
     );
   }
 
@@ -281,10 +280,10 @@ export async function deleteMealIngredient(
   }
 
   // Parse the meal from string if needed
-  const parsedMeal =
+  const parsedMeal: GoMeal =
     typeof result.data.meal === 'string'
-      ? JSON.parse(result.data.meal)
-      : result.data.meal;
+      ? (JSON.parse(result.data.meal) as GoMeal)
+      : (result.data.meal as GoMeal);
   return mapMeal(parsedMeal);
 }
 
@@ -302,10 +301,10 @@ export async function addBulkSteps(
   });
 
   if (!result.data || result.error) {
-    throw new Error(`Failed to add steps: ${result.error || 'Unknown error'}`);
+    throw new Error(`Failed to add steps: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`);
   }
 
-  return (result.data.steps || []).map(mapStep);
+  return (result.data.steps || []).map((s: GoStep) => mapStep(s));
 }
 
 /**
@@ -319,7 +318,7 @@ export async function deleteAllSteps(mealId: number): Promise<string> {
 
   if (!result.data || result.error) {
     throw new Error(
-      `Failed to delete steps: ${result.error || 'Unknown error'}`,
+      `Failed to delete steps: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
     );
   }
 
@@ -346,7 +345,7 @@ export async function replaceAllSteps(
 export async function goGetShoppingList(
   mealPlan: WeeklyMealPlan,
 ): Promise<GoShoppingListItem[]> {
-  const request: GoGetShoppingListRequest = {
+  const request = {
     plan: mealPlan.days.filter((day) => day.meal).map((day) => day.meal!.id),
   };
   const result = await postShoppinglist({
@@ -356,9 +355,9 @@ export async function goGetShoppingList(
 
   if (!result.data || !result.data.items || result.error) {
     throw new Error(
-      `Failed to generate shopping list: ${result.error || 'Unknown error'}`,
+      `Failed to generate shopping list: ${typeof result.error === 'string' ? result.error : (result.error as { error?: string } | undefined)?.error || 'Unknown error'}`,
     );
   }
 
-  return result.data.items;
+  return result.data.items as GoShoppingListItem[];
 }

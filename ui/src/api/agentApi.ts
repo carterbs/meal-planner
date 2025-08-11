@@ -4,13 +4,13 @@ import type { GoCheckpointTuple } from '@mealplanner/generated/dist/gateway/type
 import {
   createClient,
   createConfig,
-} from '@mealplanner/generated/dist/gateway/client/index.js';
+} from '@mealplanner/generated/dist/gateway/client';
 import {
   postAgentStart,
   postAgentMessage,
   getCheckpointsByThreadId,
   getWorkflowsByThreadIdMessages,
-} from '@mealplanner/generated/dist/gateway/index.js';
+} from '@mealplanner/generated/dist/gateway';
 
 // Create the API gateway client
 const gatewayClient = createClient(

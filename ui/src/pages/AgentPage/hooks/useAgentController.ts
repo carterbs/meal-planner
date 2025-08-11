@@ -37,6 +37,10 @@ export default function useAgentController(): UseAgentControllerReturn {
     const { mealPlan, shoppingList, syncFromCheckpoint, send, setMealPlan } =
         useAgentMealSync();
 
+    const fetchAndUpdateMessages = useCallback(async () => {
+        await fetchMessages();
+    }, [fetchMessages]);
+
     const startSession = useCallback(async () => {
         const result = await start();
         if (result.initialState?.mealPlan) {
@@ -50,16 +54,12 @@ export default function useAgentController(): UseAgentControllerReturn {
             await syncFromCheckpoint(result.session.threadId);
             await fetchAndUpdateMessages();
         }
-    }, [start, setMealPlan, fetchMessages]);
+    }, [start, setMealPlan, syncFromCheckpoint, fetchAndUpdateMessages]);
 
     const _logout = useCallback(() => {
         setMessages([]);
         logout();
     }, [logout]);
-
-    const fetchAndUpdateMessages = useCallback(async () => {
-        await fetchMessages();
-    }, [fetchMessages]);
 
     useEffect(() => {
         setMessages(fetchedMessages);
@@ -70,12 +70,13 @@ export default function useAgentController(): UseAgentControllerReturn {
     // Intentionally no resume logic here; handled in useAgentSession.
 
     useEffect(() => {
-        if (!session?.threadId) return;
+        const threadId = session ? session.threadId : null;
+        if (!threadId) return;
         void (async () => {
-            await syncFromCheckpoint(session.threadId);
+            await syncFromCheckpoint(threadId);
             await fetchAndUpdateMessages();
         })();
-    }, [session?.threadId, syncFromCheckpoint, fetchAndUpdateMessages]);
+    }, [session && session.threadId ? session.threadId : null, syncFromCheckpoint, fetchAndUpdateMessages]);
 
     const sendMessage = useCallback(
         async (text?: string) => {
@@ -90,14 +91,7 @@ export default function useAgentController(): UseAgentControllerReturn {
             await fetchAndUpdateMessages();
             return mealPlan ? { newPlan: mealPlan } : undefined;
         },
-        [
-            session,
-            input,
-            send,
-            syncFromCheckpoint,
-            fetchAndUpdateMessages,
-            mealPlan,
-        ],
+        [session, input, send, syncFromCheckpoint, fetchAndUpdateMessages, mealPlan],
     );
 
     return useMemo(

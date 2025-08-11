@@ -2,8 +2,8 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import useAutoScroll from './useAutoScroll';
 
-function ScrollBox({ deps }: { deps: unknown[] }) {
-  const ref = useAutoScroll<HTMLDivElement>(deps);
+function ScrollBox({ keyDep }: { keyDep?: string | number | boolean }) {
+  const ref = useAutoScroll<HTMLDivElement>(keyDep);
   return (
     <div
       ref={ref}
@@ -17,10 +17,10 @@ function ScrollBox({ deps }: { deps: unknown[] }) {
 
 describe('useAutoScroll', () => {
   it('scrolls to bottom when deps change', () => {
-    const { rerender, getByTestId } = render(<ScrollBox deps={[0]} />);
+    const { rerender, getByTestId } = render(<ScrollBox keyDep={0} />);
     const box = getByTestId('scroll-box') as HTMLDivElement;
     const initial = box.scrollTop;
-    rerender(<ScrollBox deps={[1]} />);
+    rerender(<ScrollBox keyDep={1} />);
     expect(box.scrollTop).toBeGreaterThanOrEqual(initial);
   });
 });
