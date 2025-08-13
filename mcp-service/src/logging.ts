@@ -6,7 +6,7 @@ import { LoggingService, LogEntry, LogRequest } from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';
 let loggingClient: ReturnType<typeof createClient<typeof LoggingService>> | null = null;
 let initialized = false;
-let loggingServiceAvailable = false;
+let _loggingServiceAvailable = false;
 export async function initLogging(_serviceName = 'mcp-server') {
     if (initialized) return;
     
@@ -44,17 +44,17 @@ export async function initLogging(_serviceName = 'mcp-server') {
             logToFile('INFO', `Successfully connected to logging service at ${baseUrl}`);
             console.log(`[MCP] Successfully connected to logging service at ${baseUrl}`);
             initialized = true;
-            loggingServiceAvailable = true;
+            _loggingServiceAvailable = true;
             sendLog('INFO', 'MCP server logging initialized');
             return;
         } catch (error) {
-            console.error(`[MCP] Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${error}`);
-            logToFile('ERROR', `Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${error}`);
+            console.error(`[MCP] Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${String(error)}`);
+            logToFile('ERROR', `Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${String(error)}`);
             
             if (attempt === maxRetries) {
                 console.error(`[MCP] Failed to connect to logging service after ${maxRetries} attempts. Continuing without logging service.`);
                 loggingClient = null;
-                loggingServiceAvailable = false;
+                _loggingServiceAvailable = false;
                 initialized = true;
                 return;
             }
@@ -98,7 +98,8 @@ async function sendLog(level: string, message: string, fields: Record<string, st
         await loggingClient.log(new LogRequest({ entry }));
     }
     catch (error) {
-        console.error(`[MCP] Failed to send log to service:`, error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        console.error(`[MCP] Failed to send log to service:`, err);
     }
 }
 export function debugLog(message: string, fields: Record<string, string> = {}) {
