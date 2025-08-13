@@ -15,7 +15,7 @@ export async function retryFetch(url: string, options: RequestInit = {}, maxRetr
             console.log(`[MCP] Fetch failed with status ${response.status} (attempt ${attempt}/${maxRetries})`);
         }
         catch (error) {
-            console.log(`[MCP] Fetch error (attempt ${attempt}/${maxRetries}): ${error}`);
+            console.log(`[MCP] Fetch error (attempt ${attempt}/${maxRetries}): ${String(error)}`);
         }
         if (attempt === maxRetries) {
             throw new Error(`Failed to fetch ${url} after ${maxRetries} attempts`);

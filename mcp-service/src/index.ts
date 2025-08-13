@@ -14,7 +14,6 @@ import { registerDeleteRecipe } from './tools/deleteRecipe.js';
 import { registerGetMeals } from './tools/getMeals.js';
 import { registerGetCurrentMealPlan } from './tools/getCurrentMealPlan.js';
 import { registerRemoveMeal } from './tools/removeMeal.js';
-import { randomUUID } from 'crypto';
 import express from 'express';
 import cors from 'cors';
 const server = new McpServer({ name: 'mealplanner-mcp', version: '1.0.0' });
@@ -62,7 +61,7 @@ async function main() {
             await transport.handleRequest(req, res, req.body);
         }
         catch (error) {
-            await errorLog(`Error handling MCP request: ${error}`);
+            await errorLog(`Error handling MCP request: ${String(error)}`);
             res.status(500).json({ error: 'Internal server error' });
         }
     });
@@ -76,7 +75,7 @@ async function main() {
             await infoLog('Health check test message');
             loggingHealthy = true;
         } catch (error) {
-            healthIssues.push(`Logging service connection failed: ${error}`);
+            healthIssues.push(`Logging service connection failed: ${String(error)}`);
         }
 
         if (loggingHealthy) {
@@ -102,10 +101,11 @@ async function main() {
     await infoLog(`MCP server successfully started and connected via HTTP on port ${port}`);
 }
 main().catch((error) => {
+    const err = error instanceof Error ? error : new Error(String(error));
     console.error('Fatal error in MCP server:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
+        message: err.message,
+        stack: err.stack,
+        name: err.name
     });
     process.exit(1);
 });

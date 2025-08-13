@@ -3299,7 +3299,7 @@ __metadata:
 
 "@mealplanner/generated@file:../generated/ts::locator=meal-planner-agent-service%40workspace%3Aagent-service":
   version: 1.0.0
-  resolution: "@mealplanner/generated@file:../generated/ts#../generated/ts::hash=c2374c&locator=meal-planner-agent-service%40workspace%3Aagent-service"
+  resolution: "@mealplanner/generated@file:../generated/ts#../generated/ts::hash=bd5891&locator=meal-planner-agent-service%40workspace%3Aagent-service"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
   peerDependencies:
@@ -3307,7 +3307,7 @@ __metadata:
     "@connectrpc/connect-node": ^1.6.0
     "@connectrpc/connect-web": ^1.6.0
     typescript: ">=4.0.0"
-  checksum: 10c0/81740ef3ed6020bd2c91e14aefaddfc19f6dca2abb7fec75249b835b49ef9f0cf00eebda7fb86deb95118dbc521b8f80253f63055c9834acacc383bbb543866c
+  checksum: 10c0/eee5a40b7ac4656003d44a1bfab3d742c8103d4d0de519cee97415a66587522ff05418860ae52d54606d72db61828a1fcda6054d57620e8dcf2a8bbe69485f18
   languageName: node
   linkType: hard
 
@@ -12738,7 +12738,14 @@ __metadata:
     "@types/jest": "npm:^29.5.14"
     "@types/node": "npm:^24.0.1"
     "@types/supertest": "npm:^6.0.3"
+    "@typescript-eslint/eslint-plugin": "npm:^8.38.0"
+    "@typescript-eslint/parser": "npm:^8.38.0"
     cors: "npm:^2.8.5"
+    eslint: "npm:^8.57.1"
+    eslint-plugin-jsx-a11y: "npm:^6.10.2"
+    eslint-plugin-react: "npm:^7.37.5"
+    eslint-plugin-react-hooks: "npm:^5.2.0"
+    eslint-plugin-unused-imports: "npm:^4.1.4"
     express: "npm:^5.1.0"
     jest: "npm:^30.0.0"
     nock: "npm:^13.3.0"
