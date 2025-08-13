@@ -151,10 +151,9 @@ export async function getAgentCheckpoint(threadId: string) {
     client: gatewayClient,
     path: { thread_id: threadId },
   });
-  if (!result.data || result.error) {
-    if (result.error) {
-      throw result.error;
-    }
+  const possibleError = (result as unknown as { error?: unknown }).error;
+  if (!result.data) {
+    if (possibleError) throw possibleError as Error;
     throw new Error('Failed to get agent checkpoint');
   }
 
@@ -186,7 +185,7 @@ export async function getMessages(threadId: string): Promise<GoMessage[]> {
   });
 
   const res = result as unknown as { data?: { messages?: unknown[] | null }; error?: unknown };
-  if (!res.data || res.error) {
+  if (!res.data) {
     if (res.error) {
       throw res.error;
     }

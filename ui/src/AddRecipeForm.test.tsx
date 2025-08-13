@@ -31,6 +31,13 @@ jest.mock('./pages/MealManagementPage/components/StepsEditor', () => ({
 
 const { createMeal } = jest.requireMock<typeof import('./api')>('./api');
 
+function getInputValueOrThrow(el: HTMLElement): string {
+  if (!(el instanceof HTMLInputElement)) {
+    throw new Error('Expected HTMLInputElement');
+  }
+  return el.value;
+}
+
 function setup() {
   const onRecipeAdded = jest.fn();
   const utils = render(<AddRecipeForm onRecipeAdded={onRecipeAdded} />);
@@ -103,7 +110,7 @@ describe('AddRecipeForm', () => {
       screen.getByRole('button', { name: /double quantities/i }),
     );
     // After doubling: leading integer doubles from 1 -> 2; fraction stays as converted decimal part
-    expect((screen.getByLabelText(/paste ingredients/i) as HTMLInputElement).value).toMatch(
+    expect(getInputValueOrThrow(screen.getByLabelText(/paste ingredients/i))).toMatch(
       /^2\s+0\.5\s+cup sugar/m,
     );
   });
@@ -121,7 +128,7 @@ describe('AddRecipeForm', () => {
     await userEvent.click(doubleBtn);
 
     // Raw textarea lines doubled
-    const current = (screen.getByLabelText(/paste ingredients/i) as HTMLInputElement).value;
+    const current = getInputValueOrThrow(screen.getByLabelText(/paste ingredients/i));
     expect(current).toMatch(/^4 eggs/m);
     expect(current).toMatch(/1 cup milk/m);
     // Non-numeric line remains unchanged
@@ -200,7 +207,7 @@ describe('AddRecipeForm', () => {
     const { onRecipeAdded, container } = setup();
 
     // Arrange: mock resolved create
-    createMeal.mockResolvedValueOnce({
+    (createMeal as jest.Mock).mockResolvedValueOnce({
       id: 123,
       name: 'Sugar Cookies',
       ingredients: [],
@@ -248,7 +255,7 @@ describe('AddRecipeForm', () => {
 
   it('shows error snackbar when create fails', async () => {
     const { container } = setup();
-    createMeal.mockRejectedValueOnce(new Error('Boom'));
+    (createMeal as jest.Mock).mockRejectedValueOnce(new Error('Boom'));
 
     await userEvent.type(screen.getByLabelText(/recipe name/i), 'Failing Meal');
     await userEvent.type(
@@ -276,7 +283,7 @@ describe('AddRecipeForm', () => {
 
   it('shows error snackbar when create fails with non-Error thrown value', async () => {
     const { container } = setup();
-    createMeal.mockRejectedValueOnce('nope');
+    (createMeal as jest.Mock).mockRejectedValueOnce('nope');
 
     await userEvent.type(screen.getByLabelText(/recipe name/i), 'Failing Meal');
     await userEvent.type(

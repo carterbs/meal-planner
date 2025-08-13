@@ -1,4 +1,7 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import type ReactType from 'react';
 import { render } from '@testing-library/react';
 import useAutoScroll from './useAutoScroll';
 

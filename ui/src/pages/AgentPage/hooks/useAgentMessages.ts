@@ -12,13 +12,16 @@ export default function useAgentMessages(threadId: string | null | undefined) {
   const fetchMessages = useCallback(async () => {
     if (!threadId) return;
     try {
-      const rawMessages = await getMessages(threadId);
+      const rawMessages: unknown = await getMessages(threadId);
       if (!Array.isArray(rawMessages)) {
         setMessages([]);
         return;
       }
-      const messagesTyped = rawMessages as Array<{ sender?: string; content?: string; message?: string }>;
-      const formatted: ChatMessage[] = messagesTyped.map((msg) => ({
+      if (!Array.isArray(rawMessages)) {
+        setMessages([]);
+        return;
+      }
+      const formatted: ChatMessage[] = (rawMessages as Array<{ sender?: string; content?: string; message?: string }>).map((msg) => ({
         sender: msg.sender === 'user' ? 'user' : 'agent',
         text: (msg.content ?? msg.message ?? ''),
       }));
