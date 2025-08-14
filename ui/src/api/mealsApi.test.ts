@@ -23,6 +23,8 @@ jest.mock('@mealplanner/generated/dist/gateway/client', () => ({
 
 const mockedGateway = gatewayModule as jest.Mocked<typeof gatewayModule>;
 
+type GoMealType = import('@mealplanner/generated/dist/gateway/types.gen').GoMeal;
+
 describe('mealsApi', () => {
   const mockGoMeal = {
     id: 1,
@@ -268,7 +270,7 @@ describe('mealsApi', () => {
       const mealData: Record<string, unknown> = { ...mockGoMeal };
       delete mealData.id;
 
-      const result = await createMeal(mealData as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>);
+      const result = await createMeal(mealData as Omit<GoMealType, 'id'>);
 
       expect(result).toBeInstanceOf(Meal);
       expect(result.name).toBe('Test Meal');
@@ -283,7 +285,7 @@ describe('mealsApi', () => {
       const mealData2: Record<string, unknown> = { ...mockGoMeal };
       delete mealData2.id;
 
-      const result = await createMeal(mealData2 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>);
+      const result = await createMeal(mealData2 as Omit<GoMealType, 'id'>);
 
       expect(result).toBeInstanceOf(Meal);
       expect(result.name).toBe('Test Meal');
@@ -298,7 +300,7 @@ describe('mealsApi', () => {
       const mealData3: Record<string, unknown> = { ...mockGoMeal };
       delete mealData3.id;
 
-      await expect(createMeal(mealData3 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
+      await expect(createMeal(mealData3 as Omit<GoMealType, 'id'>)).rejects.toThrow(
         'Failed to create meal: Validation failed',
       );
     });
@@ -312,7 +314,7 @@ describe('mealsApi', () => {
       const mealData4: Record<string, unknown> = { ...mockGoMeal };
       delete mealData4.id;
 
-      await expect(createMeal(mealData4 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
+      await expect(createMeal(mealData4 as Omit<GoMealType, 'id'>)).rejects.toThrow(
         'Failed to create meal: Database error',
       );
     });
@@ -326,7 +328,7 @@ describe('mealsApi', () => {
       const mealData5: Record<string, unknown> = { ...mockGoMeal };
       delete mealData5.id;
 
-      await expect(createMeal(mealData5 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
+      await expect(createMeal(mealData5 as Omit<GoMealType, 'id'>)).rejects.toThrow(
         'Failed to create meal: [object Object]',
       );
     });
@@ -340,7 +342,7 @@ describe('mealsApi', () => {
       const mealData6: Record<string, unknown> = { ...mockGoMeal };
       delete mealData6.id;
 
-      await expect(createMeal(mealData6 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
+      await expect(createMeal(mealData6 as Omit<GoMealType, 'id'>)).rejects.toThrow(
         'Failed to create meal: Unknown error',
       );
     });
@@ -354,7 +356,7 @@ describe('mealsApi', () => {
       const mealData7: Record<string, unknown> = { ...mockGoMeal };
       delete mealData7.id;
 
-      await expect(createMeal(mealData7 as Omit<typeof gatewayModule.GoMeal extends infer T ? T : never, 'id'>)).rejects.toThrow(
+      await expect(createMeal(mealData7 as Omit<GoMealType, 'id'>)).rejects.toThrow(
         'No meal returned from create request',
       );
     });

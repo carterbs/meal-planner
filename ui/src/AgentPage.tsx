@@ -44,7 +44,7 @@ const AgentPage: React.FC = () => {
   const [showMealLibrary, setShowMealLibrary] = React.useState(false);
   const [toast, setToast] = React.useState<string | null>(null);
   const currentColorScheme = 'earthyNeutrals';
-  const chatRef = useAutoScroll<HTMLDivElement>([messages]);
+  const chatRef = useAutoScroll<HTMLDivElement>(messages.length);
 
   const colors = colorSchemes[currentColorScheme];
   const styles = useMemo(() => getAgentPageStyles(colors), [colors]);

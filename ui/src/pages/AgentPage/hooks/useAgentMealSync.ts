@@ -6,6 +6,7 @@ import {
   goGetShoppingList,
   sendAgentMessage,
 } from '../../../api';
+import type { GoMealPlanEntry } from '@mealplanner/generated/dist/gateway/types.gen';
 
 export default function useAgentMealSync() {
   const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(null);
@@ -19,7 +20,7 @@ export default function useAgentMealSync() {
     if (!state) return;
     const maybePlan = state.mealPlan;
     if (maybePlan) {
-      const newPlan = convertGatewayMealPlan(maybePlan);
+      const newPlan = convertGatewayMealPlan(maybePlan as { days?: GoMealPlanEntry[] });
       setMealPlan(newPlan);
       try {
         const shoppingRes = await goGetShoppingList(newPlan);
@@ -44,7 +45,7 @@ export default function useAgentMealSync() {
     // Also surface any initial state embedded in the message result
     const initial = (result.initialState as { state?: { mealPlan?: unknown } } | undefined)?.state?.mealPlan;
     if (initial) {
-      const plan = convertGatewayMealPlan(initial as { days?: unknown[] });
+      const plan = convertGatewayMealPlan(initial as { days?: GoMealPlanEntry[] });
       setMealPlan(plan);
     }
     const sl = (result.initialState as { mealPlan?: { shoppingList?: ShoppingListItem[] } } | undefined)?.mealPlan?.shoppingList;
