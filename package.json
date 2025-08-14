@@ -38,7 +38,8 @@
         "lint:ts": "eslint ui/ agent-service/",
         "lint:ts:fix": "eslint ui/ agent-service/ --fix",
         "swagger": "make swagger",
-        "generate": "make generate"
+        "generate": "make generate",
+        "codemod:wrap-unknown-logs": "yarn node scripts/codemods/wrap-unknown-log-interpolations.js --tsconfig agent-service/tsconfig.json \"agent-service/**/*.ts\""
     },
     "resolutions": {
         "react": "18.2.0",
@@ -54,7 +55,10 @@
         "concurrently": "^7.6.0",
         "eslint": "^8.57.1",
         "eslint-plugin-unused-imports": "^4.1.4",
+        "fast-glob": "^3.3.2",
         "prettier": "^3.6.2",
+        "tree-sitter": "0.21.1",
+        "tree-sitter-typescript": "0.23.2",
         "ts-node": "^10.9.2",
         "ts-proto": "^2.7.5",
         "typescript": "^5.8.3",
