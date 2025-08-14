@@ -84,11 +84,9 @@ export class HttpCheckpointSaver {
       } as ExtendedRunnableConfig;
     } catch (e) {
       await infoLog(`[CHECKPOINT] Save failed: ${String(e)}`);
-      if (checkpoint) {
-        for (const day of checkpoint.state?.mealPlan?.days || []) {
-          if (day.meal) {
-            await infoLog(`[CHECKPOINT] lastPlanned: ${String(day.meal.lastPlanned)}`);
-          }
+      for (const day of (checkpoint.state?.mealPlan?.days ?? [])) {
+        if (day.meal) {
+          await infoLog(`[CHECKPOINT] lastPlanned: ${String(day.meal.lastPlanned)}`);
         }
       }
       throw e;

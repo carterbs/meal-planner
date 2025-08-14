@@ -406,7 +406,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 await infoLog(
                   '🔍 [CHECKPOINT-SAVE-FEEDBACK] mealPlan before checkpoint serialization:',
                 );
-                if (state.mealPlan.days) {
+                if (Array.isArray(state.mealPlan.days)) {
                   for (let i = 0; i < state.mealPlan.days.length; i++) {
                     const day = state.mealPlan.days[i];
                     await infoLog(
@@ -506,11 +506,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       name: 'getMeals',
       arguments: {},
     });
+    const mealsText = (mealsResp as MCPToolResultType).content[0]?.text ?? '[]';
     const availableMeals: GeneratedMeal[] = JSON.parse(
-      this.extractJsonFromResponse(
-        (mealsResp as MCPToolResultType).content[0].text,
-      ),
-    );
+      this.extractJsonFromResponse(mealsText),
+    ) as unknown as GeneratedMeal[];
     const mealOptions = availableMeals
       .map(
         (m) =>
@@ -704,9 +703,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       name: 'getMeals',
       arguments: {},
     });
-    const availableMeals: GeneratedMeal[] = JSON.parse(
-      (mealsResp as MCPToolResultType).content[0].text,
-    );
+    const optMealsText = (mealsResp as MCPToolResultType).content[0]?.text ?? '[]';
+    const availableMeals: GeneratedMeal[] = JSON.parse(optMealsText) as unknown as GeneratedMeal[];
     // Create concise meal options for the prompt
     const mealOptions = availableMeals
       .map(

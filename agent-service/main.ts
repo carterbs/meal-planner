@@ -19,6 +19,7 @@ import {
 import { planStart } from './handlers';
 export { planStart };
 import * as apipb from '@mealplanner/generated/api_pb';
+import type { JsonValue } from '@bufbuild/protobuf';
 // Initialize agent instance
 let agentInstance: LangGraphAgent | null = null;
 async function initializeAgent(): Promise<LangGraphAgent> {
@@ -280,7 +281,7 @@ function getWorkflowStatus(
   })();
 }
 function listWorkflows(
-  _call: grpc.ServerUnaryCall<any, apipb.ListWorkflowsResponse>,
+  _call: grpc.ServerUnaryCall<unknown, apipb.ListWorkflowsResponse>,
   callback: grpc.sendUnaryData<apipb.ListWorkflowsResponse>,
 ): void {
   (async () => {
@@ -477,12 +478,12 @@ function getCheckpoint(
       }
       // Parse checkpoint data and convert to protobuf
       try {
-        const checkpointData = JSON.parse(result.checkpoint.toString());
-        const checkpoint = apipb.AgentCheckpoint.fromJson(checkpointData);
-        const metadataData = result.metadata
+        const checkpointJson = JSON.parse(result.checkpoint.toString()) as unknown as JsonValue;
+        const checkpoint = apipb.AgentCheckpoint.fromJson(checkpointJson);
+        const metadataJson = (result.metadata
           ? JSON.parse(result.metadata.toString())
-          : {};
-        const metadata = apipb.AgentCheckpointMetadata.fromJson(metadataData);
+          : {}) as unknown as JsonValue;
+        const metadata = apipb.AgentCheckpointMetadata.fromJson(metadataJson);
         const tuple = new apipb.CheckpointTuple({
           checkpoint: checkpoint,
           metadata: metadata,
@@ -554,16 +555,14 @@ function listCheckpoints(
         let checkpoint: apipb.AgentCheckpoint;
         let metadata: apipb.AgentCheckpointMetadata;
         try {
-          const checkpointData = JSON.parse(entry.checkpoint_data.toString());
-          checkpoint = apipb.AgentCheckpoint.fromJson(checkpointData);
+          const checkpointJson = JSON.parse(entry.checkpoint_data.toString()) as unknown as JsonValue;
+          checkpoint = apipb.AgentCheckpoint.fromJson(checkpointJson);
         } catch {
           checkpoint = new apipb.AgentCheckpoint({});
         }
         try {
-          const metadataData = entry.metadata
-            ? JSON.parse(entry.metadata.toString())
-            : {};
-          metadata = apipb.AgentCheckpointMetadata.fromJson(metadataData);
+          const metadataJson = (entry.metadata as unknown as JsonValue) || ({} as unknown as JsonValue);
+          metadata = apipb.AgentCheckpointMetadata.fromJson(metadataJson);
         } catch {
           metadata = new apipb.AgentCheckpointMetadata({});
         }
@@ -586,8 +585,8 @@ function listCheckpoints(
 
 // Health Check implementation
 function healthCheck(
-  _call: grpc.ServerUnaryCall<any, any>,
-  callback: grpc.sendUnaryData<any>,
+  _call: grpc.ServerUnaryCall<unknown, unknown>,
+  callback: grpc.sendUnaryData<unknown>,
 ): void {
   (async () => {
     try {
