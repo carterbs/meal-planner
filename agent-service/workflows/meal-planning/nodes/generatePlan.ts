@@ -11,7 +11,7 @@ export async function generatePlanNode(
     deps: GeneratePlanDeps,
 ): Promise<Partial<MealPlanningState>> {
     const planResult = await deps.callTool({ name: 'generateMealPlan', arguments: {} });
-    if (planResult && planResult.isError) {
+    if (planResult.isError) {
         const contentArr = Array.isArray(planResult.content)
             ? (planResult.content as Array<{ type?: string; text?: string }>)
             : [];

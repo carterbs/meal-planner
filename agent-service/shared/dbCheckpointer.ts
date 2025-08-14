@@ -45,7 +45,7 @@ export class DbCheckpointSaver {
       );
       return [checkpoint, metadata];
     } catch (e) {
-      await infoLog(`[CHECKPOINT] getTuple failed: ${e}`);
+      await infoLog(`[CHECKPOINT] getTuple failed: ${String(e)}`);
       return undefined;
     }
   }
@@ -63,26 +63,21 @@ export class DbCheckpointSaver {
       await infoLog(
         `debugyyz: [CHECKPOINT] CurrentStep: ${checkpoint.state?.currentStep}`,
       );
-      try {
-        // Pass strongly typed objects to the database layer for serialization
-        await this.checkpointRepo.putCheckpoint(
-          threadId,
-          checkpointNs,
-          'meal_planning',
-          checkpoint,
-          metadata,
-        );
-        // Also keep a copy under the reserved namespace "latest" so that
-        // resume/list endpoints can easily fetch the most-recent checkpoint
-        // without needing the caller to supply a namespace.
-        await this.checkpointRepo.updateWorkflowCheckpoint(
-          threadId,
-          checkpoint,
-        );
-      } catch (e) {
-        await infoLog(`[CHECKPOINT] putCheckpoint failed (non-fatal): ${e}`);
-        // swallow the error so workflows continue even when persistence isn't available
-      }
+      // Pass strongly typed objects to the database layer for serialization
+      await this.checkpointRepo.putCheckpoint(
+        threadId,
+        checkpointNs,
+        'meal_planning',
+        checkpoint,
+        metadata,
+      );
+      // Also keep a copy under the reserved namespace "latest" so that
+      // resume/list endpoints can easily fetch the most-recent checkpoint
+      // without needing the caller to supply a namespace.
+      await this.checkpointRepo.updateWorkflowCheckpoint(
+        threadId,
+        checkpoint,
+      );
       return {
         configurable: {
           threadId,
@@ -90,7 +85,7 @@ export class DbCheckpointSaver {
         },
       } as ExtendedRunnableConfig;
     } catch (e) {
-      await infoLog(`[CHECKPOINT] Save failed: ${e}`);
+      await infoLog(`[CHECKPOINT] Save failed: ${String(e)}`);
       if (checkpoint) {
         for (const day of checkpoint.state?.mealPlan?.days || []) {
           if (day.meal) {
@@ -128,7 +123,7 @@ export class DbCheckpointSaver {
         ];
       } catch (e) {
         await infoLog(
-          `[CHECKPOINT] Failed to parse checkpoint for thread ${record.thread_id}: ${e}`,
+          `[CHECKPOINT] Failed to parse checkpoint for thread ${record.thread_id}: ${String(e)}`,
         );
         continue;
       }
@@ -148,7 +143,7 @@ export class DbCheckpointSaver {
       return null;
     } catch (e) {
       await infoLog(
-        `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${e}`,
+        `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${String(e)}`,
       );
       return null;
     }
@@ -167,7 +162,7 @@ export class DbCheckpointSaver {
           }) as WorkflowStatus,
       );
     } catch (e) {
-      await infoLog(`[CHECKPOINT] listWorkflows failed: ${e}`);
+      await infoLog(`[CHECKPOINT] listWorkflows failed: ${String(e)}`);
       return [];
     }
   }

@@ -32,7 +32,7 @@ export class ConversationHandler {
       }
       return await this.continueConversation(input);
     } catch (error) {
-      await errorLog(`${`❌ [CONVERSATION] Error handling message:`} ${error}`);
+      await errorLog(`${`❌ [CONVERSATION] Error handling message:`} ${String(error)}`);
       return {
         success: false,
         message:
@@ -207,7 +207,7 @@ export class ConversationHandler {
       };
     } catch (error) {
       await errorLog(
-        `${`❌ [CONVERSATION] Error executing workflow step:`} ${error}`,
+        `${`❌ [CONVERSATION] Error executing workflow step:`} ${String(error)}`,
       );
       return {
         success: false,

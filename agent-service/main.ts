@@ -55,10 +55,10 @@ function planFeedback(
       const agentInstance = await initializeAgent();
       // Check if workflow is awaiting feedback
       await debugLog(
-        `Checking if workflow ${threadId} is awaiting feedback...`,
+        `Checking if workflow ${String(threadId)} is awaiting feedback...`,
       );
       const isAwaiting = await agentInstance.isAwaitingFeedback(threadId);
-      await debugLog(`isAwaitingFeedback returned: ${isAwaiting}`);
+      await debugLog(`isAwaitingFeedback returned: ${String(isAwaiting)}`);
       if (!isAwaiting) {
         return callback(
           new Error('This workflow is not currently awaiting feedback.'),
@@ -74,7 +74,7 @@ function planFeedback(
       callback(null, response);
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      await debugLog(`Error adding feedback: ${errMsg}`);
+      await debugLog(`Error adding feedback: ${String(errMsg)}`);
       callback(new Error(`Error adding feedback: ${errMsg}`));
     }
   })();
@@ -111,7 +111,7 @@ function planFinalize(
         const response = new PlanFinalizeResponse({
           success: true,
           message: 'Meal plan finalized successfully',
-          finalState: (finalState && typeof finalState.toBinary === 'function') ? finalState.toBinary() : new Uint8Array(),
+          finalState: typeof finalState.toBinary === 'function' ? finalState.toBinary() : new Uint8Array(),
         });
         callback(null, response);
       } else {
@@ -119,7 +119,7 @@ function planFinalize(
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      await debugLog(`Error finalizing meal plan: ${errMsg}`);
+      await debugLog(`Error finalizing meal plan: ${String(errMsg)}`);
       callback(new Error(`Error finalizing meal plan: ${errMsg}`));
     }
   })();
@@ -133,14 +133,14 @@ function resumeWorkflow(
     try {
       const request = call.request;
       const threadId = request.threadId || '';
-      const inputMap = request.input || {};
+      const inputMap = request.input;
       if (!validateThreadId(threadId)) {
         return callback(
           new Error('Invalid thread ID format. Expected UUID format.'),
         );
       }
       const agentInstance = await initializeAgent();
-      await debugLog(`🔄 Resuming workflow ${threadId}...`);
+      await debugLog(`🔄 Resuming workflow ${String(threadId)}...`);
       // Convert map<string, string> to Record<string, string>
       const inputObj: Record<string, string> = {};
       for (const [key, value] of Object.entries(inputMap)) {
@@ -161,7 +161,7 @@ function resumeWorkflow(
           success: true,
           message: result.message || 'Workflow resumed successfully',
           currentStep: result.currentStep || '',
-          state: (currentState && typeof currentState.toBinary === 'function') ? currentState.toBinary() : new Uint8Array(),
+          state: typeof currentState.toBinary === 'function' ? currentState.toBinary() : new Uint8Array(),
         });
         callback(null, response);
       } else {
@@ -169,7 +169,7 @@ function resumeWorkflow(
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      await debugLog(`Error resuming workflow: ${errMsg}`);
+      await debugLog(`Error resuming workflow: ${String(errMsg)}`);
       callback(new Error(`Error resuming workflow: ${errMsg}`));
     }
   })();
@@ -188,7 +188,7 @@ function startAgentWorkflow(
       if (!request) {
         return callback(new Error('request is required'));
       }
-      if (!request.participants || request.participants.length === 0) {
+      if (request.participants.length === 0) {
         return callback(new Error('participants required'));
       }
       const agent = await initializeAgent();
@@ -489,7 +489,7 @@ function getCheckpoint(
         });
         callback(null, new apipb.GetCheckpointResponse({ tuple, found: true }));
       } catch (parseError) {
-        callback(new Error(`Error parsing checkpoint data: ${parseError}`));
+        callback(new Error(`Error parsing checkpoint data: ${String(parseError)}`));
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
@@ -604,7 +604,7 @@ function healthCheck(
           dbHealthy = true;
         }
       } catch (error) {
-        healthIssues.push(`Database connection failed: ${error}`);
+        healthIssues.push(`Database connection failed: ${String(error)}`);
       }
 
       // Check logging service health (single attempt)
@@ -612,7 +612,7 @@ function healthCheck(
         await debugLog('Health check test message');
         loggingHealthy = true;
       } catch (error) {
-        healthIssues.push(`Logging service connection failed: ${error}`);
+        healthIssues.push(`Logging service connection failed: ${String(error)}`);
       }
 
       // Check MCP service health (single attempt with timeout)
@@ -629,7 +629,7 @@ function healthCheck(
           healthIssues.push(`MCP service returned status: ${response.status}`);
         }
       } catch (error) {
-        healthIssues.push(`MCP service connection failed: ${error}`);
+        healthIssues.push(`MCP service connection failed: ${String(error)}`);
       }
 
       if (dbHealthy && loggingHealthy && mcpHealthy) {
@@ -716,17 +716,17 @@ function startServer(): void {
     grpc.ServerCredentials.createInsecure(),
     async (err, port) => {
       if (err) {
-        await debugLog(`Failed to start server: ${err.message}`);
+        await debugLog(`Failed to start server: ${String(err.message)}`);
         return;
       }
-      await debugLog(`🚀 Agent service started on port ${port}`);
+      await debugLog(`🚀 Agent service started on port ${String(port)}`);
     },
   );
   process.on('SIGINT', async () => {
     await debugLog('Shutting down agent service...');
     server.tryShutdown(async (err) => {
       if (err) {
-        await debugLog(`Error during shutdown: ${err.message}`);
+        await debugLog(`Error during shutdown: ${String(err.message)}`);
         server.forceShutdown();
       }
       process.exit(0);

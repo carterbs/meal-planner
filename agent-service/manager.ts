@@ -363,7 +363,7 @@ export class WorkflowManager {
         `📚 [WORKFLOW] Loaded ${this.activeSessions.size} active sessions from database`,
       );
     } catch (error) {
-      await errorLog(`❌ [WORKFLOW] Error loading active sessions: ${error}`);
+      await errorLog(`❌ [WORKFLOW] Error loading active sessions: ${String(error)}`);
     }
   }
 }
