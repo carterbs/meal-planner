@@ -34,16 +34,9 @@ const App: React.FC = () => {
         return ok;
       }
       if ('error' in result && (result as { error?: Err }).error) {
-        const svc = (result as { error?: Err }).error?.services as
-          | Record<string, boolean>
-          | undefined;
-        if (svc) {
-          setServices(svc);
-          const ok = Object.values(svc).every(Boolean);
-          setHealthy(ok);
-          setChecking(false);
-          return ok;
-        }
+        setHealthy(false);
+        setChecking(false);
+        return false;
       }
     } catch {
       // ignore

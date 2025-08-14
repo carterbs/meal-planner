@@ -79,10 +79,10 @@ export async function startAgentSession(
     currentStep: agentResponse.currentStep,
   };
 
-  let initialState: unknown;
+  let initialState: MealPlanningCheckpointState | undefined;
   if (agentResponse.initialState) {
     try {
-      initialState = JSON.parse(agentResponse.initialState);
+      initialState = JSON.parse(agentResponse.initialState) as MealPlanningCheckpointState;
     } catch (error) {
       console.warn('Failed to parse initial state:', error);
     }
@@ -130,10 +130,11 @@ export async function sendAgentMessage(
 
   const agentResponse = data.response;
 
-  let initialState: unknown;
+  let initialState: SendMessageResult['initialState'];
   if (agentResponse.initialState) {
     try {
-      initialState = JSON.parse(agentResponse.initialState);
+      // API may return either a MealPlanningCheckpointState or a nested object
+      initialState = JSON.parse(agentResponse.initialState) as SendMessageResult['initialState'];
     } catch (error) {
       console.warn('Failed to parse initial state:', error);
     }
