@@ -13,14 +13,8 @@ export async function analyzeFeedbackNode(
     const latestFeedback = feedbackEntries[feedbackEntries.length - 1];
     const prompt = (deps.getAnalyzeFeedbackPrompt ?? defaultPrompt)(latestFeedback.content);
     const result = await deps.nanoLlm.invoke([{ role: 'user', content: prompt }]);
-    const raw = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
-    let analysis = { satisfied: false, reasoning: 'Could not parse LLM response.' };
-    try {
-        analysis = JSON.parse(deps.extractJsonFromResponse(raw));
-    } catch {
-        // keep default
-    }
-    return analysis;
+    const raw = typeof result.content === 'string' ? result.content : JSON.stringify(result.content as Record<string, unknown>);
+    return JSON.parse(deps.extractJsonFromResponse(raw)) as { satisfied: boolean; reasoning: string };
 }
 
 

@@ -98,10 +98,10 @@ function planFinalize(
       const result = await agentInstance.resumeWorkflow(threadId, {
         action: 'finalize',
       });
-      if (result.success) {
+      if (result.success === true) {
         await debugLog('✅ Meal plan finalized successfully!');
         // Get and display the final meal plan
-        let finalState: any; // Changed from MealPlanningState to any as MealPlanningState is removed
+        let finalState: { toBinary?: () => Uint8Array } | undefined;
         try {
           finalState = await agentInstance.getWorkflowState(threadId);
         } catch (stateError) {
@@ -111,7 +111,7 @@ function planFinalize(
         const response = new PlanFinalizeResponse({
           success: true,
           message: 'Meal plan finalized successfully',
-          finalState: finalState.toBinary(),
+          finalState: (finalState && typeof finalState.toBinary === 'function') ? finalState.toBinary() : new Uint8Array(),
         });
         callback(null, response);
       } else {
@@ -147,10 +147,10 @@ function resumeWorkflow(
         inputObj[key] = value;
       }
       const result = await agentInstance.resumeWorkflow(threadId, inputObj);
-      if (result.success) {
+      if (result.success === true) {
         await debugLog('✅ Workflow resumed successfully!');
         // Get current state
-        let currentState: any; // Changed from MealPlanningState to any
+        let currentState: { toBinary?: () => Uint8Array } | undefined;
         try {
           currentState = await agentInstance.getWorkflowState(threadId);
         } catch (stateError) {
@@ -161,7 +161,7 @@ function resumeWorkflow(
           success: true,
           message: result.message || 'Workflow resumed successfully',
           currentStep: result.currentStep || '',
-          state: currentState.toBinary(),
+          state: (currentState && typeof currentState.toBinary === 'function') ? currentState.toBinary() : new Uint8Array(),
         });
         callback(null, response);
       } else {
@@ -198,10 +198,10 @@ function startAgentWorkflow(
       );
       const state = await agent.getWorkflowState(threadId);
 
-      const stateString =
-        typeof (state as any).toJsonString === 'function'
-          ? (state as any).toJsonString({ emitDefaultValues: true })
-          : JSON.stringify(state);
+      const maybeToJson: ((opts?: unknown) => string) | undefined = (state as unknown as { toJsonString?: (opts?: unknown) => string }).toJsonString;
+      const stateString = typeof maybeToJson === 'function'
+        ? maybeToJson({ emitDefaultValues: true })
+        : JSON.stringify(state);
 
       const resp = new apipb.AgentResponse({
         success: true,

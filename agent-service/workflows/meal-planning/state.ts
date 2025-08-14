@@ -6,7 +6,11 @@ export function cloneAndUpdateState(
     updates: Partial<MealPlanningState>,
 ): MealPlanningState {
     const merged = new MealPlanningCheckpointState(currentState);
-    Object.assign(merged as any, updates);
+    // Apply updates field-by-field to avoid unsafe any
+    for (const [key, value] of Object.entries(updates)) {
+        // @ts-expect-error: indexing into generated message by key
+        (merged as unknown as Record<string, unknown>)[key] = value as unknown;
+    }
     return merged;
 }
 

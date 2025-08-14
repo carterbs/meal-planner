@@ -57,7 +57,7 @@ export interface IngredientData {
   id?: number;
   name: string;
   category?: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 export interface SubstitutionData {
   from_ingredient: string;

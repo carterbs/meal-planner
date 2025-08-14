@@ -9,7 +9,7 @@ async function initializeAgent(): Promise<LangGraphAgent> {
     if (!agentInstance) {
         agentInstance = new LangGraphAgent({
             defaultParticipants: ['brad', 'shannon'],
-        } as any);
+        });
         await agentInstance.initialize();
     }
     return agentInstance;
@@ -22,7 +22,7 @@ export function planStart(
     (async () => {
         try {
             const request = call.request;
-            const participants = request.participants || [];
+            const participants = Array.isArray(request.participants) ? request.participants : [];
             if (participants.length === 0) {
                 return callback(new Error('At least one participant is required.'));
             }
@@ -34,25 +34,28 @@ export function planStart(
                 WorkflowType.MEAL_PLANNING,
                 participants,
             );
-            await debugLog(`🔄 Got a threadId: ${threadId}`);
-            let initialState: MealPlanningState | any;
+            await debugLog(`🔄 Got a threadId: ${String(threadId)}`);
+            let initialState: MealPlanningState;
             try {
                 initialState = await agent.getWorkflowState(threadId);
             } catch (e) {
-                await debugLog(`Failed to fetch initial workflow state: ${e}`);
+                const errMsg = e instanceof Error ? e.message : String(e);
+                await debugLog(`Failed to fetch initial workflow state: ${errMsg}`);
                 return callback(e as Error);
             }
             // Normalize missing dayIndex values to 0 to satisfy client expectations/tests
-            if (initialState?.mealPlan?.days && Array.isArray(initialState.mealPlan.days)) {
-                initialState.mealPlan.days = initialState.mealPlan.days.map((d: any) => ({
-                    ...d,
-                    dayIndex: typeof d?.dayIndex === 'number' ? d.dayIndex : 0,
-                }));
+            const mealPlanDays = initialState.mealPlan?.days;
+            if (Array.isArray(mealPlanDays)) {
+                mealPlanDays.forEach((entry) => {
+                    if (typeof entry.dayIndex !== 'number') {
+                        entry.dayIndex = 0;
+                    }
+                });
             }
-            const stateString =
-                typeof (initialState as any).toJsonString === 'function'
-                    ? (initialState as any).toJsonString({ emitDefaultValues: true })
-                    : JSON.stringify(initialState);
+            const maybeToJson = (initialState as Partial<MealPlanningState> & { toJsonString?: (opts?: unknown) => string }).toJsonString;
+            const stateString = typeof maybeToJson === 'function'
+                ? maybeToJson({ emitDefaultValues: true })
+                : JSON.stringify(initialState);
             const response = new PlanStartResponse({
                 success: true,
                 message: 'Meal planning session started',

@@ -8,7 +8,7 @@ async function initializeAgent(): Promise<LangGraphAgent> {
     if (!agentInstance) {
         agentInstance = new LangGraphAgent({
             defaultParticipants: ['brad', 'shannon'],
-        } as any);
+        });
         await agentInstance.initialize();
     }
     return agentInstance;

@@ -2,7 +2,7 @@ import { ShoppingList, ShoppingListItem } from '@mealplanner/generated';
 import { MealPlanningState, MealPlanningStep } from '../../../shared/types';
 
 export interface GenerateShoppingListDeps {
-    callTool: (args: { name: string; arguments: Record<string, unknown> }) => Promise<unknown>;
+    callTool: (args: { name: string; arguments: Record<string, unknown> }) => Promise<{ isError?: boolean; content?: Array<{ type?: string; text?: string }>|unknown }>;
 }
 
 export async function generateShoppingListNode(
@@ -17,12 +17,12 @@ export async function generateShoppingListNode(
             .map((d) => d.meal?.id)
             .filter((id): id is number => id !== undefined)
             .filter((id, i, self) => self.indexOf(id) === i);
-        const result = (await deps.callTool({ name: 'generateShoppingList', arguments: { plan: mealIds } })) as any;
-        if (result?.isError) {
-            const text = Array.isArray(result.content) && result.content[0]?.type === 'text' ? result.content[0].text : 'Unknown error';
+        const result = await deps.callTool({ name: 'generateShoppingList', arguments: { plan: mealIds } });
+        if (result.isError) {
+            const text = Array.isArray(result.content) && (result.content as Array<{ type?: string; text?: string }>)[0]?.type === 'text' ? (result.content as Array<{ type?: string; text?: string }>)[0].text ?? 'Unknown error' : 'Unknown error';
             throw new Error(`MCP tool error: ${text}`);
         }
-        const responseText = Array.isArray(result?.content) && result.content[0]?.type === 'text' ? result.content[0].text : '[]';
+        const responseText = Array.isArray(result.content) && (result.content as Array<{ type?: string; text?: string }>)[0]?.type === 'text' ? (result.content as Array<{ type?: string; text?: string }>)[0].text ?? '[]' : '[]';
         const parsed = JSON.parse(responseText) as Array<{ ingredient: string; quantity?: string; category?: string }>;
         if (!Array.isArray(parsed) || parsed.length === 0) {
             return { currentStep: MealPlanningStep.COMPLETE, shoppingList: undefined };
@@ -32,7 +32,7 @@ export async function generateShoppingListNode(
             ShoppingListItem.fromJson({ ingredient: it.ingredient, quantity: it.quantity ?? '', category: it.category ?? 'Other' }),
         );
         return { currentStep: MealPlanningStep.COMPLETE, shoppingList: new ShoppingList({ items }) };
-    } catch (_err) {
+    } catch {
         return { currentStep: MealPlanningStep.COMPLETE, shoppingList: undefined };
     }
 }
