@@ -95,8 +95,8 @@ export class CheckpointRepository {
     return result.rows.map((row) => ({
       thread_id: row.thread_id,
       checkpoint_ns: row.checkpoint_ns,
-      checkpoint_data: row.checkpoint_data,
-      metadata: row.metadata,
+      checkpoint_data: Buffer.from(JSON.stringify(row.checkpoint_data), 'utf8'),
+      metadata: row.metadata ? Buffer.from(JSON.stringify(row.metadata), 'utf8') : Buffer.from('null', 'utf8'),
     }));
   }
   // GetWorkflowCheckpoint retrieves the latest checkpoint data for a thread - matches Go models/checkpoint.go

@@ -21,11 +21,12 @@ export async function generatePlanNode(
     const content = Array.isArray(planResult.content)
         ? (planResult.content as Array<{ type?: string; text?: string }>)[0]
         : undefined;
-    const responseText = content?.type === 'text' ? content.text : '{}';
+    const responseText: string = content?.type === 'text' && typeof content.text === 'string' ? content.text : '{}';
     const jsonText = deps.extractJsonFromResponse(responseText);
     const parsed: unknown = JSON.parse(jsonText);
     const planObj = (parsed && typeof parsed === 'object' && (parsed as { plan?: unknown }).plan) || {};
-    const mealPlan = WeeklyMealPlan.fromJson(planObj as Record<string, unknown>);
+    // WeeklyMealPlan.fromJson expects JsonValue; safe to pass object literal here
+    const mealPlan = WeeklyMealPlan.fromJson(planObj as unknown as import('@bufbuild/protobuf').JsonValue);
     return { currentStep: MealPlanningStep.OPTIMIZE_PLAN, mealPlan };
 }
 
