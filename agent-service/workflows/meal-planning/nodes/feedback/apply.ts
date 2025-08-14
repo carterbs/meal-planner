@@ -11,7 +11,7 @@ export interface ApplyFeedbackDeps {
 }
 
 export async function applyFeedbackNode(
-    state: MealPlanningState & { feedback_to_apply?: any[] },
+    state: MealPlanningState & { feedback_to_apply?: Array<{ content: string }> },
     deps: ApplyFeedbackDeps,
 ): Promise<Partial<MealPlanningState>> {
     if (!state.mealPlan) {

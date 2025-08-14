@@ -83,12 +83,12 @@ export class WorkflowManager {
         {},
         {
           configurable: {
-            threadId: threadId,
+            threadId,
           },
         },
       );
       // Add 10 second timeout for workflow startup
-      const timeoutPromise = new Promise((_, reject) => {
+      const timeoutPromise: Promise<never> = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Workflow startup timeout')), 30000);
       });
       await Promise.race([workflowPromise, timeoutPromise]);
@@ -100,7 +100,7 @@ export class WorkflowManager {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       await errorLog(
-        `${`❌ [WORKFLOW] Error starting workflow ${type}:`} ${error}`,
+        `❌ [WORKFLOW] Error starting workflow ${type}: ${String(error)}`,
       );
       throw new Error(`Failed to start workflow: ${errorMessage}`);
     }
@@ -137,7 +137,7 @@ export class WorkflowManager {
     try {
       // Execute the workflow step
       const result = await workflow.graph.invoke(input, config);
-      const stepResult = result as WorkflowGraphResult;
+      const stepResult: WorkflowGraphResult = result as WorkflowGraphResult;
       // Update session
       // todo use type guard to convert from string
       session.currentStep = stepResult.currentStep as MealPlanningStep;
@@ -162,7 +162,7 @@ export class WorkflowManager {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       await errorLog(
-        `${`❌ [WORKFLOW] Error executing step for ${threadId}:`} ${error}`,
+        `❌ [WORKFLOW] Error executing step for ${threadId}: ${String(error)}`,
       );
       return {
         success: false,
@@ -245,7 +245,7 @@ export class WorkflowManager {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       await errorLog(
-        `${`❌ [WORKFLOW] Error resuming workflow ${threadId}:`} ${error}`,
+        `❌ [WORKFLOW] Error resuming workflow ${threadId}: ${String(error)}`,
       );
       return {
         success: false,
@@ -283,7 +283,7 @@ export class WorkflowManager {
     }
     const newSession: WorkflowSession = {
       threadId,
-      workflowType: status.workflowType as WorkflowType,
+       workflowType: status.workflowType as WorkflowType,
       currentStep: status.currentStep,
       isActive: status.currentStep !== 'complete',
     };
@@ -309,18 +309,16 @@ export class WorkflowManager {
       }
       const statusCompat = status as WorkflowStatusCompat;
       const workflowType: WorkflowType =
-        statusCompat.workflowType ??
-        statusCompat.workflowType ??
-        WorkflowType.MEAL_PLANNING;
+        (statusCompat.workflowType ?? statusCompat.workflow_type ?? WorkflowType.MEAL_PLANNING);
       if (type && workflowType !== type) {
         continue;
       }
       const isComplete =
-        (statusCompat.currentStep ?? statusCompat.currentStep) === 'complete';
+        (statusCompat.currentStep ?? statusCompat.current_step) === 'complete';
       const sess: WorkflowSession = {
         threadId: status.threadId,
         workflowType,
-        currentStep: statusCompat.currentStep as MealPlanningStep,
+          currentStep: (statusCompat.currentStep ?? statusCompat.current_step) as MealPlanningStep,
         isActive: !isComplete,
       };
       sessions.push(sess);

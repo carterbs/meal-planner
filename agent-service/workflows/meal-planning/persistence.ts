@@ -11,10 +11,6 @@ export async function saveCheckpoint(
     await infoLog('MealPlanningPersistence.saveCheckpoint called');
     // Force serialization to surface errors early (mirrors previous behavior)
     const checkpoint = new AgentCheckpoint({ state, next: [], step: 0 });
-    // Touch nested structures that may throw in toJson in tests
-    if ((state as any)?.mealPlan?.toJson) {
-        (state as any).mealPlan.toJson();
-    }
     const metadata = new AgentCheckpointMetadata({ source: 'workflow', step: 0 });
     await checkpointer.put(config, checkpoint, metadata);
 }

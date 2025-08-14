@@ -112,7 +112,7 @@ export class LangGraphAgent {
   /**
    * Resume a paused workflow
    */
-  async resumeWorkflow(threadId: string, input: Record<string, any> = {}) {
+  async resumeWorkflow(threadId: string, input: Record<string, unknown> = {}) {
     this.ensureInitialized();
     return await this.workflowManager.resumeWorkflow(threadId, input);
   }
@@ -158,7 +158,7 @@ export class LangGraphAgent {
    */
   async healthCheck(): Promise<{
     status: 'healthy' | 'unhealthy';
-    details: any;
+    details: unknown;
   }> {
     try {
       if (!this.isInitialized) {
@@ -172,7 +172,7 @@ export class LangGraphAgent {
         status: 'healthy',
         details: {
           ...stats,
-          initialized: this.isInitialized,
+          initialized: true,
         },
       };
     } catch (error) {
@@ -209,7 +209,7 @@ export class LangGraphAgent {
     if (!checkpoint.state) {
       throw new Error('Invalid checkpoint state format');
     }
-    return checkpoint.state as MealPlanningState;
+    return checkpoint.state;
   }
 }
 // Example usage and backward compatibility
@@ -235,6 +235,7 @@ async function main() {
       'Welcome to the Meal Planner! Type your messages below.',
       'System',
     );
+    // eslint-disable-next-line
     while (true) {
       const input = await io.receiveInput('Your message', user);
       const response = await agent.handleMessage({
@@ -245,15 +246,14 @@ async function main() {
       });
       threadId = response.threadId;
       await io.sendMessage(response.message, 'Agent');
-      if (response.currentStep === 'complete' || !response.success) {
+      if (response.currentStep === 'complete' || response.success === false) {
         await io.sendMessage('Session ended.', 'System');
         if (threadId) {
           const state = await agent.getWorkflowState(threadId);
           if (state.mealPlan) {
             const { text, html } = formatMealPlan({
               days: state.mealPlan.days,
-              shoppingList: (state.shoppingList ??
-                []) as GeneratedShoppingListItem[],
+              shoppingList: (state.shoppingList || []) as GeneratedShoppingListItem[],
             } as GeneratedWeeklyMealPlan);
             await io.sendMessage(text, 'System');
             await debugLog(`\nHTML version:\n${html}`);

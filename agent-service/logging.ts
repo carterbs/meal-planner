@@ -4,7 +4,7 @@ import { createClient } from '@connectrpc/connect';
 import { createGrpcTransport } from '@connectrpc/connect-node';
 import { LoggingService, LogEntry, LogRequest } from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';
-let loggingClient: ReturnType<typeof createClient<typeof LoggingService>>;
+let loggingClient: ReturnType<typeof createClient<typeof LoggingService>> | undefined;
 let initialized = false;
 export async function initLogging(_serviceName = 'agent') {
   if (initialized) return;
@@ -30,7 +30,7 @@ export async function initLogging(_serviceName = 'agent') {
         `[AGENT] Original LOGGING_SERVICE_ADDR: "${process.env.LOGGING_SERVICE_ADDR}"`,
       );
       console.log(
-        `[AGENT] baseUrl type: ${typeof baseUrl}, value: "${baseUrl}"`,
+        `[AGENT] baseUrl type: ${typeof baseUrl}, value: "${String(baseUrl)}"`,
       );
 
       if (!baseUrl || baseUrl === 'null' || baseUrl === 'undefined') {
@@ -63,11 +63,11 @@ export async function initLogging(_serviceName = 'agent') {
       return;
     } catch (error) {
       console.error(
-        `[AGENT] Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${error}`,
+        `[AGENT] Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${String(error)}`,
       );
       logToFile(
         'ERROR',
-        `Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${error}`,
+        `Failed to connect to logging service (attempt ${attempt}/${maxRetries}): ${String(error)}`,
       );
       if (attempt === maxRetries) {
         console.error(
@@ -113,8 +113,8 @@ async function sendLog(
   });
   logToFile(level, message); // Always log to file for backup
   if (!loggingClient) {
-    // Only log error if not in test environment
-    if (!(process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID)) {
+    // Only log in non-test environments
+    if (process.env.NODE_ENV !== 'test' && !process.env.JEST_WORKER_ID) {
       console.error(`[AGENT] No logging client available`);
     }
     return;
@@ -122,7 +122,8 @@ async function sendLog(
   try {
     await loggingClient.log(new LogRequest({ entry }));
   } catch (error) {
-    console.error(`[AGENT] Failed to send log to service:`, error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error(`[AGENT] Failed to send log to service:`, err);
   }
 }
 export function debugLog(message: string, fields: Record<string, string> = {}) {
