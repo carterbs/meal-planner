@@ -46,7 +46,7 @@ export class HttpCheckpointSaver {
       const metadata = response.tuple.metadata ?? new AgentCheckpointMetadata();
       return [checkpoint, metadata];
     } catch (e) {
-      await infoLog(`[CHECKPOINT] getTuple failed: ${e}`);
+      await infoLog(`[CHECKPOINT] getTuple failed: ${String(e)}`);
       return undefined;
     }
   }
@@ -73,7 +73,7 @@ export class HttpCheckpointSaver {
           metadata,
         });
       } catch (e) {
-        await infoLog(`[CHECKPOINT] putCheckpoint failed (non-fatal): ${e}`);
+        await infoLog(`[CHECKPOINT] putCheckpoint failed (non-fatal): ${String(e)}`);
         // swallow the error so workflows continue even when persistence isn't available
       }
       return {
@@ -83,11 +83,11 @@ export class HttpCheckpointSaver {
         },
       } as ExtendedRunnableConfig;
     } catch (e) {
-      await infoLog(`[CHECKPOINT] Save failed: ${e}`);
+      await infoLog(`[CHECKPOINT] Save failed: ${String(e)}`);
       if (checkpoint) {
         for (const day of checkpoint.state?.mealPlan?.days || []) {
           if (day.meal) {
-            await infoLog(`[CHECKPOINT] lastPlanned: ${day.meal.lastPlanned}`);
+            await infoLog(`[CHECKPOINT] lastPlanned: ${String(day.meal.lastPlanned)}`);
           }
         }
       }
@@ -129,13 +129,13 @@ export class HttpCheckpointSaver {
       return status;
     } catch (e) {
       await infoLog(
-        `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${e}`,
+        `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${String(e)}`,
       );
       return null;
     }
   }
   async listWorkflows(): Promise<WorkflowStatus[]> {
     const resp = await this.client.listWorkflows({});
-    return resp.workflows ?? [];
+    return resp.workflows;
   }
 }

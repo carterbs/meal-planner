@@ -32,7 +32,7 @@ export class FeedbackHandler {
         tuple = await this.checkpointer.getTuple(config);
       } catch (getTupleError) {
         await errorLog(
-          `${`[FEEDBACK] Error calling getTuple:`} ${getTupleError}`,
+          `${`[FEEDBACK] Error calling getTuple:`} ${String(getTupleError)}`,
         );
         throw getTupleError;
       }
@@ -60,7 +60,7 @@ export class FeedbackHandler {
       return proto.currentStep === MealPlanningStep.AWAIT_FEEDBACK;
     } catch (error) {
       await errorLog(
-        `${`❌ [FEEDBACK] Error checking feedback status:`} ${error}`,
+        `${`❌ [FEEDBACK] Error checking feedback status:`} ${String(error)}`,
       );
       await errorLog(`${`[FEEDBACK] Error type:`} ${typeof error}`);
       await errorLog(

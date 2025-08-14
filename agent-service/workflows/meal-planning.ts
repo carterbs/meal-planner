@@ -239,7 +239,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       invoke: async (input: unknown, config: ExtendedRunnableConfig) => {
         await infoLog('MealPlanningWorkflow.invoke called');
         await infoLog(
-          `${`🍽️ [MEAL-WORKFLOW] Invoking workflow; input:`} ${input}`,
+          `${`🍽️ [MEAL-WORKFLOW] Invoking workflow; input:`} ${String(input)}`,
         );
         // Load checkpoint
         const tuple = await this.checkpointer.getTuple(config);
@@ -650,7 +650,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     const finalIssues = state.mealPlan ? this.validatePlan(state.mealPlan) : [];
     if (finalIssues.length > 0) {
       await warnLog(
-        `${`⚠️ [MEAL-WORKFLOW] Final plan has issues:`} ${finalIssues}`,
+        `${`⚠️ [MEAL-WORKFLOW] Final plan has issues:`} ${finalIssues.join(', ')}`,
       );
     }
     return {
