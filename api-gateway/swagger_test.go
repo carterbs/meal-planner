@@ -70,9 +70,9 @@ func extractSwaggerTypes(content string) map[string]bool {
 
 	// Regular expressions to match swagger annotations
 	patterns := []string{
-		`@Param\s+\w+\s+\w+\s+(\S+)`,           // @Param request body TypeName
-		`@Success\s+\d+\s+\{object\}\s+(\S+)`, // @Success 200 {object} TypeName
-		`@Failure\s+\d+\s+\{object\}\s+(\S+)`, // @Failure 400 {object} TypeName
+		`@Param\s+\w+\s+\w+\s+(\S+)`,           // @Param request body apipb.Response
+		`@Success\s+\d+\s+\{object\}\s+(\S+)`, // @Success 200 {object} apipb.Response
+		`@Failure\s+\d+\s+\{object\}\s+(\S+)`, // @Failure 400 {object} apipb.Response
 		`@Param.*\{object\}\s+(\S+)`,          // Other param patterns
 	}
 
