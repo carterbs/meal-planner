@@ -29,12 +29,12 @@ jest.mock('@dnd-kit/core', () => ({
 }));
 
 jest.mock('@dnd-kit/sortable', () => ({
-  arrayMove: jest.fn(((arr: unknown[], oldIndex: number, newIndex: number) => {
+  arrayMove: jest.fn((arr: unknown[], oldIndex: number, newIndex: number) => {
     const newArray = [...arr];
     const [removed] = newArray.splice(oldIndex, 1);
     newArray.splice(newIndex, 0, removed);
     return newArray;
-  }) as unknown as typeof arrayMove),
+  }),
   SortableContext: ({ children }: { children?: React.ReactNode }) => (
     <div data-testid="sortable-context">{children}</div>
   ),

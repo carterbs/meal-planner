@@ -32,10 +32,11 @@ jest.mock('./pages/MealManagementPage/components/StepsEditor', () => ({
 const { createMeal } = jest.requireMock<typeof import('./api')>('./api');
 
 function getInputValueOrThrow(el: HTMLElement): string {
-  if (!(el instanceof HTMLInputElement)) {
+  const input = el as HTMLInputElement | HTMLTextAreaElement;
+  if (typeof input.value !== 'string') {
     throw new Error('Expected HTMLInputElement');
   }
-  return el.value;
+  return input.value;
 }
 
 function setup() {
