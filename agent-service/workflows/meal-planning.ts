@@ -129,23 +129,31 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     sender: string,
     message: string,
   ): Promise<void> {
-    await this.messageRepo.addMessage(threadId, sender, message);
-    await debugLog(`[MESSAGE] Added ${sender} message to thread ${threadId}`);
+    try {
+      await this.messageRepo.addMessage(threadId, sender, message);
+      await debugLog(`[MESSAGE] Added ${sender} message to thread ${threadId}`);
+    } catch {
+      // Do not throw; message persistence should not break workflow
+    }
   }
   /**
    * Get messages from the messages table via direct DB access
    */
   private async getMessages(threadId: string): Promise<string[]> {
-    const messages = await this.messageRepo.getMessages(threadId);
-    // Filter for user messages and extract just the message content
-    const userMessages = messages
-      .filter((msg) => msg.sender === 'user')
-      .map((msg) => msg.text || '')
-      .filter((content: string) => content.trim().length > 0);
-    await debugLog(
-      `[MESSAGE] Retrieved ${userMessages.length} user messages from thread ${threadId}`,
-    );
-    return userMessages;
+    try {
+      const messages = await this.messageRepo.getMessages(threadId);
+      // Filter for user messages and extract just the message content
+      const userMessages = messages
+        .filter((msg) => msg.sender === 'user')
+        .map((msg) => msg.text || '')
+        .filter((content: string) => content.trim().length > 0);
+      await debugLog(
+        `[MESSAGE] Retrieved ${userMessages.length} user messages from thread ${threadId}`,
+      );
+      return userMessages;
+    } catch {
+      return [];
+    }
   }
   readonly type = WorkflowType.MEAL_PLANNING;
   readonly graph: {
@@ -340,7 +348,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           while (!feedbackSatisfied) {
             const lastUpdate = checkpoint.state.updatedAt.toDate();
             // 1. Gather all recent feedback (within last 5 minutes)
-            const allFeedback = await this.messageRepo.getMessagesForProtobuf(
+            let allFeedback: Array<{ created_at?: string } & Record<string, unknown>> = [];
+            allFeedback = await this.messageRepo.getMessagesForProtobuf(
               state.threadId,
             );
             // Add a small buffer (5 seconds) to handle race conditions between message creation and workflow updates
@@ -477,18 +486,31 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     };
   }
   // Compatibility wrappers for tests that call internal node methods
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // removed legacy wrapper initiateNode
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // removed legacy wrapper generatePlanNode
-  // Node implementations moved to ./meal-planning/nodes
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // removed legacy wrapper optimizePlanNode
-  // New: apply feedback using LLM with feedback context
-  // removed legacy wrapper applyFeedbackNode
-  // Analyze feedback using nano LLM. Returns { satisfied: boolean, reasoning: string }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // removed legacy wrapper analyzeFeedbackNode
+  async finalizePlanNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    return finalizePlanNodeExternal(state, {
+      callTool: (args) => this.client.callTool(args),
+    });
+  }
+  async generateShoppingListNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    return generateShoppingListNodeExternal(state, {
+      callTool: async (args) => {
+        const res = (await this.client.callTool(args)) as MCPToolResultType;
+        return { isError: res.isError, content: res.content } as any;
+      },
+    });
+  }
+  async optimizePlanNode(state: MealPlanningState): Promise<Partial<MealPlanningState>> {
+    if (!state.mealPlan) {
+      throw new Error('No meal plan to optimize');
+    }
+    const issues = this.validatePlan(state.mealPlan);
+    const newPlan = issues.length > 0 ? await this.optimizePlanWithLLM(state.mealPlan, issues) : state.mealPlan;
+    return {
+      currentStep: MealPlanningStep.PRESENT_PLAN,
+      mealPlan: newPlan,
+      iterationCount: (state.iterationCount ?? 0) + 1,
+    };
+  }
   private async applyFeedbackWithLLM(
     plan: GeneratedWeeklyMealPlan,
     feedback: string[],

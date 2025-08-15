@@ -14,7 +14,13 @@ export async function analyzeFeedbackNode(
     const prompt = (deps.getAnalyzeFeedbackPrompt ?? defaultPrompt)(latestFeedback.content);
     const result = await deps.nanoLlm.invoke([{ role: 'user', content: prompt }]);
     const raw = typeof result.content === 'string' ? result.content : JSON.stringify(result.content as Record<string, unknown>);
-    return JSON.parse(deps.extractJsonFromResponse(raw)) as { satisfied: boolean; reasoning: string };
+    try {
+        const cleaned = deps.extractJsonFromResponse(raw);
+        return JSON.parse(cleaned) as { satisfied: boolean; reasoning: string };
+    } catch {
+        // Gracefully handle unparsable JSON by returning default negative result
+        return { satisfied: false, reasoning: 'Could not parse LLM response.' };
+    }
 }
 
 
