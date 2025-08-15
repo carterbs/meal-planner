@@ -16,20 +16,6 @@ import { registerGetCurrentMealPlan } from './tools/getCurrentMealPlan.js';
 import { registerRemoveMeal } from './tools/removeMeal.js';
 import express from 'express';
 import cors from 'cors';
-const server = new McpServer({ name: 'mealplanner-mcp', version: '1.0.0' });
-registerWeeklyMealPlan(server);
-registerRecipes(server);
-registerRecipeSteps(server);
-registerGenerateMealPlan(server);
-registerFinalizeMealPlan(server);
-registerSwapMeal(server);
-registerReplaceMeal(server);
-registerGenerateShoppingList(server);
-registerCreateRecipe(server);
-registerDeleteRecipe(server);
-registerGetMeals(server);
-registerGetCurrentMealPlan(server);
-registerRemoveMeal(server);
 async function main() {
     try {
         await initLogging('mcp-server');
@@ -38,6 +24,26 @@ async function main() {
     catch (error) {
         await errorLog('Failed to initialize logging: ' + String(error));
     }
+
+    // Create MCP server
+    const server = new McpServer({ name: 'mealplanner-mcp', version: '1.0.0' });
+    
+    // Register resources
+    registerWeeklyMealPlan(server);
+    registerRecipes(server);
+    registerRecipeSteps(server);
+    
+    // Register tools
+    registerGenerateMealPlan(server);
+    registerFinalizeMealPlan(server);
+    registerSwapMeal(server);
+    registerReplaceMeal(server);
+    registerGenerateShoppingList(server);
+    registerCreateRecipe(server);
+    registerDeleteRecipe(server);
+    registerGetMeals(server);
+    registerGetCurrentMealPlan(server);
+    registerRemoveMeal(server);
     const port = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT) : 3001;
     // Create Express app
     const app = express();
