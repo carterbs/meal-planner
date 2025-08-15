@@ -114,3 +114,10 @@ export function warnLog(message: string, fields: Record<string, string> = {}) {
 export function errorLog(message: string, fields: Record<string, string> = {}) {
     return sendLog('ERROR', message, fields);
 }
+
+// Test-only function to reset module state
+export function __resetForTesting() {
+    loggingClient = null;
+    initialized = false;
+    _loggingServiceAvailable = false;
+}
