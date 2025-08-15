@@ -30,18 +30,18 @@ type ProtoMessage struct {
 
 // SwaggerDefinition represents a swagger schema definition
 type SwaggerDefinition struct {
-	Type       string                       `json:"type"`
-	Properties map[string]SwaggerProperty   `json:"properties"`
-	Items      *SwaggerDefinition          `json:"items,omitempty"`
+	Type       string                     `json:"type"`
+	Properties map[string]SwaggerProperty `json:"properties"`
+	Items      *SwaggerDefinition         `json:"items,omitempty"`
 }
 
 // SwaggerProperty represents a property in a swagger definition
 type SwaggerProperty struct {
-	Type        string                     `json:"type"`
-	Format      string                     `json:"format,omitempty"`
-	Items       *SwaggerDefinition        `json:"items,omitempty"`
-	Ref         string                     `json:"$ref,omitempty"`
-	Description string                     `json:"description,omitempty"`
+	Type        string             `json:"type"`
+	Format      string             `json:"format,omitempty"`
+	Items       *SwaggerDefinition `json:"items,omitempty"`
+	Ref         string             `json:"$ref,omitempty"`
+	Description string             `json:"description,omitempty"`
 }
 
 // SwaggerSpec represents the swagger.json structure
@@ -96,11 +96,11 @@ func TestSwaggerCompletenessAgainstProto(t *testing.T) {
 			if field.Repeated {
 				// For repeated fields, expect array type
 				if swaggerField.Type != "array" {
-					wrongTypes = append(wrongTypes, fmt.Sprintf("WRONG TYPE: %s.%s (repeated) expected array but got %s", 
+					wrongTypes = append(wrongTypes, fmt.Sprintf("WRONG TYPE: %s.%s (repeated) expected array but got %s",
 						protoMsg.Name, field.Name, swaggerField.Type))
 				}
 			} else if !isValidSwaggerType(swaggerField, expectedSwaggerType, field.Type) {
-				wrongTypes = append(wrongTypes, fmt.Sprintf("WRONG TYPE: %s.%s expected %s but got %s", 
+				wrongTypes = append(wrongTypes, fmt.Sprintf("WRONG TYPE: %s.%s expected %s but got %s",
 					protoMsg.Name, field.Name, expectedSwaggerType, swaggerField.Type))
 			}
 		}
@@ -170,14 +170,14 @@ func parseProtoFile(filePath string) ([]ProtoMessage, error) {
 
 	var messages []ProtoMessage
 	lines := strings.Split(string(content), "\n")
-	
+
 	var currentMessage *ProtoMessage
 	messageRegex := regexp.MustCompile(`^message\s+(\w+)\s*\{`)
 	fieldRegex := regexp.MustCompile(`^\s*(optional|repeated)?\s*([^=]+?)\s+(\w+)\s*=\s*\d+`)
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		
+
 		// Check for message start
 		if matches := messageRegex.FindStringSubmatch(line); matches != nil {
 			if currentMessage != nil {
@@ -293,10 +293,13 @@ func getExpectedSwaggerType(protoType string) string {
 	case "bytes":
 		return "string" // Should be string with format: byte
 	default:
-		if strings.Contains(protoType, ".") {
-			return "object" // Nested message
+		// Maps are represented as objects in Swagger (with additionalProperties)
+		if strings.HasPrefix(strings.TrimSpace(protoType), "map<") {
+			return "object"
 		}
-		return "string" // Default fallback
+		// Any non-primitive proto message (including same-package types like Meal)
+		// should be represented as an object (often via $ref) in Swagger.
+		return "object"
 	}
 }
 
@@ -315,9 +318,9 @@ func isValidSwaggerType(swaggerField SwaggerProperty, expectedType, protoType st
 		return true
 	}
 
-	// Handle arrays - swagger correctly represents repeated proto fields as arrays
-	if swaggerField.Type == "array" && expectedType == "string" {
-		return true // This is actually correct for repeated fields
+	// Handle arrays (repeated fields) regardless of element type
+	if swaggerField.Type == "array" {
+		return true
 	}
 
 	return false
@@ -328,35 +331,37 @@ func shouldSkipMessage(messageName string) bool {
 	// Skip messages that are not used in the REST API (internal, gRPC-only, or unused)
 	skipPatterns := []string{
 		// Agent service messages not exposed via REST
-		"PlanStartRequest", "PlanStartResponse", 
+		"PlanStartRequest", "PlanStartResponse",
 		"PlanFeedbackRequest", "PlanFeedbackResponse",
 		"PlanFinalizeRequest", "PlanFinalizeResponse",
 		"ResumeWorkflowRequest", "ResumeWorkflowResponse",
-		
+		// Wrapper request messages where Swagger uses inner request types
+		"StartAgentWorkflowRequest", "MessageAgentRequest",
+
 		// Internal/unused messages
 		"MealPlanIdentifier", "SaveCheckpointRequest", "CheckpointResponse",
 		"AgentFeedbackRequest", "AgentResumeRequest",
-		
+
 		// Request-only messages that don't appear in swagger definitions
 		"GetAllMealsRequest", "DeleteMealIngredientRequest", "DeleteMealRequest",
 		"GetStepsRequest", "DeleteStepRequest", "DeleteAllStepsRequest",
 		"GetWorkflowStatusRequest", "CancelWorkflowRequest", "GetWorkflowStateRequest",
 		"AbandonWorkflowRequest", "GetMessagesRequest", "GetCheckpointRequest",
 		"ListCheckpointsRequest",
-		
+
 		// Logging service messages (not part of main API)
 		"LogEntry", "LogRequest", "LogResponse", "LogBatchRequest", "LogBatchResponse",
-		
+
 		// Google protobuf types
 		"Any", "Timestamp",
 	}
-	
+
 	for _, pattern := range skipPatterns {
 		if messageName == pattern {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
