@@ -13,6 +13,8 @@ module.exports = {
   roots: ['<rootDir>'],
   testMatch: ['**/?(*.)+(test).[tj]s?(x)'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  modulePathIgnorePatterns: ['/dist/'],
+  watchPathIgnorePatterns: ['/dist/'],
   transformIgnorePatterns: [
     'node_modules/(?!(@modelcontextprotocol|@langchain)/)'
   ],

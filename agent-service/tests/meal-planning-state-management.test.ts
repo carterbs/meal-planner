@@ -123,16 +123,17 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         step: 0,
       });
       mockCheckpointer.getTuple.mockResolvedValue([mockCheckpoint, {} as any]);
-      // Mock the backend client to return messages
-      const mockBackendClient = TestMockFactory.createMockBackendClient();
-      mockBackendClient.getMessages.mockResolvedValue({
-        messages: [
-          TestMockFactory.createMockMessage({
-            content: 'User is satisfied with the plan',
-            createdAt: new Date().toISOString(),
-          }),
-        ],
-      });
+      // Mock message repository to avoid DB access during resume and provide feedback
+      const mockMessageRepo = TestMockFactory.createMockMessageRepository();
+      mockMessageRepo.getMessagesForProtobuf.mockResolvedValue([
+        {
+          thread_id: mockState.threadId,
+          sender: 'user',
+          content: 'User is satisfied with the plan',
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      workflow.messageRepo = mockMessageRepo;
       // Mock the LLM to return satisfaction
       mockLLM.invoke.mockResolvedValue({
         content: '{"satisfied": true, "reasoning": "User is happy"}',
