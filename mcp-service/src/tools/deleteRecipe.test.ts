@@ -5,6 +5,10 @@ import fetchMock from 'jest-fetch-mock';
 import { createMockServer } from '../utils/createMockServer.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+interface ToolResult {
+  content: Array<{ type: string; text: string }>;
+}
+
 // Mock the dependencies
 jest.mock('../utils.js', () => ({
   API: 'http://test.com'
@@ -230,7 +234,7 @@ describe('deleteRecipe tool', () => {
       const handler = server.registeredTools['deleteRecipe'].handler;
 
       for (const id of testIds) {
-        const result = await handler({ id });
+        const result = await handler({ id }) as ToolResult;
         expect(result.content[0].text).toBe(JSON.stringify(mockResponse, null, 2));
       }
 

@@ -2,6 +2,12 @@ import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals
 import { retryFetch, API } from './utils.js';
 import fetchMock from 'jest-fetch-mock';
 
+interface MockResponse {
+  ok: boolean;
+  status: number;
+  json: () => Promise<unknown>;
+}
+
 describe('utils', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -33,7 +39,7 @@ describe('utils', () => {
     const mockUrl = 'http://test.com/api';
 
     it('should return response on first successful attempt', async () => {
-      const mockResponse = {
+      const mockResponse: MockResponse = {
         ok: true,
         status: 200,
         json: async () => ({ data: 'test' })
@@ -41,7 +47,7 @@ describe('utils', () => {
       
       fetchMock.enableMocks();
       fetchMock.resetMocks();
-      fetchMock.mockResolvedValue(mockResponse as any);
+      fetchMock.mockResolvedValue(mockResponse as Response);
       console.log = jest.fn();
 
       const result = await retryFetch(mockUrl);
@@ -61,9 +67,9 @@ describe('utils', () => {
 
       fetchMock.enableMocks();
       fetchMock.resetMocks();
-      fetchMock.mockResolvedValueOnce(failResponse as any);
-      fetchMock.mockResolvedValueOnce(failResponse as any);
-      fetchMock.mockResolvedValueOnce(successResponse as any);
+      fetchMock.mockResolvedValueOnce(failResponse as Response);
+      fetchMock.mockResolvedValueOnce(failResponse as Response);
+      fetchMock.mockResolvedValueOnce(successResponse as Response);
       console.log = jest.fn();
 
       const result = await retryFetch(mockUrl, {}, 5, 10);
@@ -82,7 +88,7 @@ describe('utils', () => {
       fetchMock.resetMocks();
       fetchMock.mockRejectedValueOnce(error);
       fetchMock.mockRejectedValueOnce(error);
-      fetchMock.mockResolvedValueOnce(successResponse as any);
+      fetchMock.mockResolvedValueOnce(successResponse as Response);
       console.log = jest.fn();
 
       const result = await retryFetch(mockUrl, {}, 5, 10);
@@ -97,7 +103,7 @@ describe('utils', () => {
       const failResponse = { ok: false, status: 500 };
       fetchMock.enableMocks();
       fetchMock.resetMocks();
-      fetchMock.mockResolvedValue(failResponse as any);
+      fetchMock.mockResolvedValue(failResponse as Response);
       console.log = jest.fn();
 
       await expect(retryFetch(mockUrl, {}, 3, 10)).rejects.toThrow(
@@ -131,7 +137,7 @@ describe('utils', () => {
       
       fetchMock.enableMocks();
       fetchMock.resetMocks();
-      fetchMock.mockResolvedValue(mockResponse as any);
+      fetchMock.mockResolvedValue(mockResponse as Response);
       console.log = jest.fn();
 
       await retryFetch(mockUrl, options);
@@ -146,7 +152,7 @@ describe('utils', () => {
       const failResponse = { ok: false, status: 500 };
       fetchMock.enableMocks();
       fetchMock.resetMocks();
-      fetchMock.mockResolvedValue(failResponse as any);
+      fetchMock.mockResolvedValue(failResponse as Response);
       console.log = jest.fn();
 
       await expect(retryFetch(mockUrl, {}, 2, 5)).rejects.toThrow(
@@ -159,7 +165,7 @@ describe('utils', () => {
     it('should handle timeout via AbortSignal', async () => {
       fetchMock.enableMocks();
       fetchMock.resetMocks();
-      fetchMock.mockResolvedValue({ ok: true, status: 200 } as any);
+      fetchMock.mockResolvedValue({ ok: true, status: 200 } as Response);
       console.log = jest.fn();
 
       await retryFetch(mockUrl);

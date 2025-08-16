@@ -81,7 +81,7 @@ describe('getMeals tool', () => {
     it('should register tool with server', () => {
       const mockServer = {
         tool: jest.fn()
-      };
+      } as unknown as McpServer;
 
       registerGetMeals(mockServer);
 

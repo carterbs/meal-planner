@@ -42,9 +42,6 @@ export default function useAgentMealSync() {
 
   const send = useCallback(async (threadId: string, text: string) => {
     const result = await sendAgentMessage(threadId, text, 'user', true);
-    if (!result) {
-      return;
-    }
     // Also surface any initial state embedded in the message result
     const initial = (result.initialState as { state?: { mealPlan?: unknown } } | undefined)?.state?.mealPlan;
     if (initial) {

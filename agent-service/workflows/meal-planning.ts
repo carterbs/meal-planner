@@ -495,7 +495,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return generateShoppingListNodeExternal(state, {
       callTool: async (args) => {
         const res = (await this.client.callTool(args)) as MCPToolResultType;
-        return { isError: res.isError, content: res.content } as any;
+        return { isError: res.isError, content: res.content };
       },
     });
   }
@@ -508,7 +508,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return {
       currentStep: MealPlanningStep.PRESENT_PLAN,
       mealPlan: newPlan,
-      iterationCount: (state.iterationCount ?? 0) + 1,
+      iterationCount: (state.iterationCount || 0) + 1,
     };
   }
   private async applyFeedbackWithLLM(

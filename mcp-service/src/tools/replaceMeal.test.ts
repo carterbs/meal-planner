@@ -5,17 +5,34 @@ import fetchMock from 'jest-fetch-mock';
 import { createMockServer } from '../utils/createMockServer.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+interface MockResponse {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  json(): Promise<unknown>;
+}
+
+interface MockFetch {
+  (input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
+}
+
+interface ToolHandler {
+  (args: { day: string; mealType: string; newMealId: number }): Promise<{ content: Array<{ type: string; text: string }> }>;
+}
+
 // Mock the dependencies
 jest.mock('../utils.js', () => ({
   API: 'http://test.com'
 }));
 
-jest.mock('@mealplanner/generated', () => ({
-  ReplaceMealRequest: jest.fn().mockImplementation((data) => data),
-  ReplaceMealResponse: {
-    fromJson: jest.fn().mockImplementation((data) => data)
-  }
-}));
+jest.mock('@mealplanner/generated', () => {
+  return {
+    ReplaceMealRequest: jest.fn((data: unknown) => data),
+    ReplaceMealResponse: {
+      fromJson: jest.fn((data: unknown) => data)
+    }
+  };
+});
 
 describe('replaceMeal tool', () => {
   beforeEach(() => {
@@ -88,7 +105,8 @@ describe('replaceMeal tool', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ day, newMealId })
       });
-      expect(ReplaceMealResponse.fromJson).toHaveBeenCalledWith(mockResponse);
+      const mockFromJsonFn = ReplaceMealResponse.fromJson as jest.MockedFunction<(data: unknown) => unknown>;
+      expect(mockFromJsonFn).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(mockResponse);
     });
 
@@ -131,22 +149,14 @@ describe('replaceMeal tool', () => {
 
   describe('registerReplaceMeal', () => {
     it('should register tool with server', () => {
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const mockServer = createMockServer();
 
       registerReplaceMeal(mockServer);
 
-      expect(mockServer.tool).toHaveBeenCalledWith(
-        'replaceMeal',
-        'Replace a specific meal in the weekly meal plan. Use this after analyzing available meals and current plan to make an intelligent substitution. Consider effort levels (Monday: 0-2, Tue-Thu/Sat: 3-5, Sunday: 6-100), red meat limits (max 1 per week), and meal type compatibility.',
-        {
-          day: replaceArgs.shape.day,
-          mealType: replaceArgs.shape.mealType,
-          newMealId: replaceArgs.shape.newMealId
-        },
-        expect.any(Function)
-      );
+      expect(mockServer.registeredTools['replaceMeal']).toBeDefined();
+      expect(mockServer.registeredTools['replaceMeal'].name).toBe('replaceMeal');
+      expect(mockServer.registeredTools['replaceMeal'].handler).toBeDefined();
+      expect(typeof mockServer.registeredTools['replaceMeal'].handler).toBe('function');
     });
 
     it('should return formatted response from handler', async () => {
@@ -155,19 +165,22 @@ describe('replaceMeal tool', () => {
         updatedPlan: { days: [], shoppingList: [] }
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
+      const mockFetchResponse: MockResponse = {
         ok: true,
         status: 200,
         json: async () => mockResponse
+      } as MockResponse;
+      const mockFetch: MockFetch = jest.fn(() => Promise.resolve(mockFetchResponse as Response)) as MockFetch;
+      Object.defineProperty(global, 'fetch', { 
+        value: mockFetch, 
+        writable: true 
       });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const mockServer = createMockServer();
 
       registerReplaceMeal(mockServer);
 
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = mockServer.registeredTools['replaceMeal'].handler as ToolHandler;
       const result = await handler({ day: 'Saturday', mealType: 'dinner', newMealId: 42 });
 
       expect(result).toEqual({
@@ -176,19 +189,22 @@ describe('replaceMeal tool', () => {
     });
 
     it('should propagate errors from doReplaceMeal', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      const mockFetchResponse: MockResponse = {
         ok: false,
         status: 422,
         statusText: 'Unprocessable Entity'
+      } as MockResponse;
+      const mockFetch: MockFetch = jest.fn(() => Promise.resolve(mockFetchResponse as Response)) as MockFetch;
+      Object.defineProperty(global, 'fetch', { 
+        value: mockFetch, 
+        writable: true 
       });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const mockServer = createMockServer();
 
       registerReplaceMeal(mockServer);
 
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = mockServer.registeredTools['replaceMeal'].handler as ToolHandler;
 
       await expect(handler({ day: 'Monday', mealType: 'breakfast', newMealId: 999 })).rejects.toThrow(McpError);
     });

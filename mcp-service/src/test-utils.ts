@@ -1,20 +1,20 @@
-import fetchMock from 'jest-fetch-mock';
+import { beforeEach, afterEach } from '@jest/globals';
 
-/**
- * Helper to configure jest-fetch-mock with a sequence of responses.
- * Each response is the raw body object (which will be JSON.stringified) or
- * a Response-like error indicated by passing an empty body and status.
- */
-export function setupFetchMock(...responses: Array<{ body?: any; status?: number; statusText?: string; reject?: Error }>) {
-  fetchMock.enableMocks();
-  fetchMock.resetMocks();
-  for (const resp of responses) {
-    if (resp.reject) {
-      fetchMock.mockRejectedValueOnce(resp.reject);
-    } else {
-      const body = resp.body === undefined ? '' : JSON.stringify(resp.body);
-      fetchMock.mockResponseOnce(body, { status: resp.status ?? 200, statusText: resp.statusText ?? 'OK' });
+interface MockServer {
+  close: () => Promise<void>;
+}
+
+let mockServer: MockServer | null = null;
+
+export function setupMockServer(server: MockServer): void {
+  (beforeEach as (fn: () => void) => void)((): void => {
+    mockServer = server;
+  });
+
+  (afterEach as (fn: () => Promise<void>) => void)(async (): Promise<void> => {
+    if (mockServer) {
+      await mockServer.close();
+      mockServer = null;
     }
-  }
-  return fetchMock;
+  });
 }

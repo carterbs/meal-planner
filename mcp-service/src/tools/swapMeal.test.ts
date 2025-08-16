@@ -10,15 +10,16 @@ jest.mock('../utils.js', () => ({
   API: 'http://test.com'
 }));
 
-jest.mock('@mealplanner/generated', () => ({
-  SwapMealRequest: jest.fn().mockImplementation((data: SwapMealRequest) => ({
-    ...data,
-    toJson: jest.fn().mockImplementation(() => data)
-  })),
-  SwapMealResponse: {
-    fromJson: jest.fn().mockImplementation((data: SwapMealResponse) => data)
-  }
-}));
+jest.mock('@mealplanner/generated', () => {
+  return {
+    SwapMealRequest: jest.fn((data: unknown) => ({
+      toJson: jest.fn(() => data)
+    })),
+    SwapMealResponse: {
+      fromJson: jest.fn((data: unknown) => data)
+    }
+  };
+});
 
 describe('swapMeal tool', () => {
   beforeEach(() => {
@@ -86,7 +87,8 @@ describe('swapMeal tool', () => {
         })
       });
 
-      expect(SwapMealResponse.fromJson).toHaveBeenCalledWith(mockResponse);
+      const mockFromJsonFn = SwapMealResponse.fromJson as jest.MockedFunction<(data: unknown) => unknown>;
+      expect(mockFromJsonFn).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(mockResponse);
     });
 
@@ -102,7 +104,7 @@ describe('swapMeal tool', () => {
         mealType: 'dinner'
       });
 
-      const mockRequest = (SwapMealRequest as unknown as jest.Mock).mock.results[0].value;
+      const mockRequest = (SwapMealRequest as unknown as jest.Mock).mock.results[0].value as { toJson: jest.Mock };
       expect(mockRequest.toJson).toHaveBeenCalledWith({ emitDefaultValues: true });
     });
 
@@ -119,7 +121,7 @@ describe('swapMeal tool', () => {
     });
 
     it('should handle JSON parsing errors', async () => {
-      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, statusText: 'OK', json: async () => { throw new Error('Invalid JSON response'); } } as Response));
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, statusText: 'OK', json: async () => { throw new Error('Invalid JSON response'); } } as unknown as Response));
 
       await expect(doSwapMeal(4)).rejects.toThrow('Invalid JSON response');
     });
