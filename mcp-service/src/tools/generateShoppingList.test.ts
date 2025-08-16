@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { generateList, registerGenerateShoppingList } from './generateShoppingList.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
 
 // Mock the dependencies
 jest.mock('../logging.js', () => ({
@@ -94,7 +94,7 @@ describe('generateShoppingList tool', () => {
         tool: jest.fn()
       };
 
-      registerGenerateShoppingList(mockServer as any);
+      registerGenerateShoppingList(mockServer);
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'generateShoppingList',
@@ -118,9 +118,9 @@ describe('generateShoppingList tool', () => {
         tool: jest.fn()
       };
 
-      registerGenerateShoppingList(mockServer as any);
+      registerGenerateShoppingList(mockServer);
 
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       const result = await handler({ plan: testPlan });
 
       expect(result).toEqual({

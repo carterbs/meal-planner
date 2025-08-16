@@ -2,6 +2,10 @@ import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals
 import { fetchRecipeSteps, registerRecipeSteps, type RecipeSteps } from './recipeSteps.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
+import { createMockServer } from '../utils/createMockServer.js';
+
+
+type MockedResourceHandler = jest.MockedFunction<() => Promise<{ contents: Array<{ uri: string; text: string; mimeType: string }> }>>;
 
 // Mock the utils module
 jest.mock('../utils.js', () => ({
@@ -102,11 +106,9 @@ describe('recipeSteps resource', () => {
 
   describe('registerRecipeSteps', () => {
     it('should register resource with server', () => {
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerRecipeSteps(mockServer as any);
+      registerRecipeSteps(mockServer);
 
       expect(mockServer.resource).toHaveBeenCalledWith(
         'RecipeSteps',
@@ -120,14 +122,12 @@ describe('recipeSteps resource', () => {
     });
 
     it('should return empty steps data when handler is called', async () => {
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerRecipeSteps(mockServer as any);
+      registerRecipeSteps(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.resource as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
       const result = await handler();
 
       expect(result).toEqual({
@@ -142,14 +142,12 @@ describe('recipeSteps resource', () => {
     it('should not make any API calls in the resource handler', async () => {
       global.fetch = jest.fn();
 
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerRecipeSteps(mockServer as any);
+      registerRecipeSteps(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.resource as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
       await handler();
 
       // The current implementation doesn't fetch data in the resource handler
@@ -157,14 +155,12 @@ describe('recipeSteps resource', () => {
     });
 
     it('should return consistent format regardless of input', async () => {
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerRecipeSteps(mockServer as any);
+      registerRecipeSteps(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.resource as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
       
       // Call multiple times to ensure consistency
       const result1 = await handler();

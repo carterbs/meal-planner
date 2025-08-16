@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { doSwapMeal, registerSwapMeal, swapArgs } from './swapMeal.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
 import type { SwapMealRequest, SwapMealResponse } from '@mealplanner/generated';
 
 // Mock the dependencies
@@ -107,7 +107,7 @@ describe('swapMeal tool', () => {
         mealType: 'dinner'
       });
 
-      const mockRequest = (SwapMealRequest as jest.MockedFunction<any>).mock.results[0].value;
+      const mockRequest = (SwapMealRequest as jest.MockedFunction<typeof mockRequest>).mock.results[0].value;
       expect(mockRequest.toJson).toHaveBeenCalledWith({ emitDefaultValues: true });
     });
 
@@ -164,7 +164,7 @@ describe('swapMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerSwapMeal(mockServer as any);
+      registerSwapMeal(mockServer);
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'swapMeal',
@@ -203,10 +203,10 @@ describe('swapMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerSwapMeal(mockServer as any);
+      registerSwapMeal(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       const result = await handler({ dayIndex });
 
       expect(result).toEqual({
@@ -219,10 +219,10 @@ describe('swapMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerSwapMeal(mockServer as any);
+      registerSwapMeal(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       // The tool handler should receive validated dayIndex from the MCP server
       // so we test with valid values
@@ -248,10 +248,10 @@ describe('swapMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerSwapMeal(mockServer as any);
+      registerSwapMeal(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       await expect(handler({ dayIndex: 2 })).rejects.toThrow(McpError);
       await expect(handler({ dayIndex: 2 })).rejects.toThrow('BackendError: Internal Server Error');
@@ -271,10 +271,10 @@ describe('swapMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerSwapMeal(mockServer as any);
+      registerSwapMeal(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       // Test Monday (0) and Sunday (6)
       await handler({ dayIndex: 0 });

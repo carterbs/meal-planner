@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { deleteRecipe, registerDeleteRecipe, deleteRecipeArgs } from './deleteRecipe.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
 
 // Mock the dependencies
 jest.mock('../utils.js', () => ({
@@ -178,7 +178,7 @@ describe('deleteRecipe tool', () => {
         tool: jest.fn()
       };
 
-      registerDeleteRecipe(mockServer as any);
+      registerDeleteRecipe(mockServer);
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'deleteRecipe',
@@ -210,10 +210,10 @@ describe('deleteRecipe tool', () => {
         tool: jest.fn()
       };
 
-      registerDeleteRecipe(mockServer as any);
+      registerDeleteRecipe(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       const result = await handler({ id: recipeId });
 
       expect(result).toEqual({
@@ -234,10 +234,10 @@ describe('deleteRecipe tool', () => {
         tool: jest.fn()
       };
 
-      registerDeleteRecipe(mockServer as any);
+      registerDeleteRecipe(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       await expect(handler({ id: recipeId })).rejects.toThrow(McpError);
       await expect(handler({ id: recipeId })).rejects.toThrow('BackendError: Conflict');
@@ -257,10 +257,10 @@ describe('deleteRecipe tool', () => {
         tool: jest.fn()
       };
 
-      registerDeleteRecipe(mockServer as any);
+      registerDeleteRecipe(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       const result = await handler({ id: recipeId });
 
       expect(result).toEqual({
@@ -283,10 +283,10 @@ describe('deleteRecipe tool', () => {
         tool: jest.fn()
       };
 
-      registerDeleteRecipe(mockServer as any);
+      registerDeleteRecipe(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       for (const id of testIds) {
         const result = await handler({ id });
@@ -309,10 +309,10 @@ describe('deleteRecipe tool', () => {
         tool: jest.fn()
       };
 
-      registerDeleteRecipe(mockServer as any);
+      registerDeleteRecipe(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       await expect(handler({ id: recipeId })).rejects.toThrow('BackendError: Unprocessable Entity');
       

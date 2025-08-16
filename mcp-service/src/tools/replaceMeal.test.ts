@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { doReplaceMeal, registerReplaceMeal, replaceArgs } from './replaceMeal.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
 
 // Mock the dependencies
 jest.mock('../utils.js', () => ({
@@ -141,7 +141,7 @@ describe('replaceMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerReplaceMeal(mockServer as any);
+      registerReplaceMeal(mockServer);
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'replaceMeal',
@@ -171,9 +171,9 @@ describe('replaceMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerReplaceMeal(mockServer as any);
+      registerReplaceMeal(mockServer);
 
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       const result = await handler({ day: 'Saturday', mealType: 'dinner', newMealId: 42 });
 
       expect(result).toEqual({
@@ -192,9 +192,9 @@ describe('replaceMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerReplaceMeal(mockServer as any);
+      registerReplaceMeal(mockServer);
 
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       await expect(handler({ day: 'Monday', mealType: 'breakfast', newMealId: 999 })).rejects.toThrow(McpError);
       await expect(handler({ day: 'Monday', mealType: 'breakfast', newMealId: 999 })).rejects.toThrow('BackendError: Unprocessable Entity');

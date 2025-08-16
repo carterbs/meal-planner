@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { doRemoveMeal, registerRemoveMeal, removeMealArgs } from './removeMeal.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
 import type { WeeklyMealPlan } from '@mealplanner/generated';
 
 describe('removeMeal tool', () => {
@@ -116,7 +116,7 @@ describe('removeMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerRemoveMeal(mockServer as any);
+      registerRemoveMeal(mockServer);
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'removeMeal',
@@ -146,9 +146,9 @@ describe('removeMeal tool', () => {
         tool: jest.fn()
       };
 
-      registerRemoveMeal(mockServer as any);
+      registerRemoveMeal(mockServer);
 
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       const result = await handler({ plan, dayIndex: 1, mealType: 'breakfast' });
 
       expect(result.content[0].text).toContain('"days"');

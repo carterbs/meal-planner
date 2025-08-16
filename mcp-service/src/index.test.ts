@@ -1,22 +1,43 @@
 import { describe, it, expect, jest, beforeEach, afterEach, beforeAll, afterAll } from '@jest/globals';
+import type * as express from 'express';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+// Type definitions for mocks
+interface MockExpressApp {
+  use: jest.MockedFunction<express.Application['use']>;
+  all: jest.MockedFunction<express.Application['all']>;
+  get: jest.MockedFunction<express.Application['get']>;
+  listen: jest.MockedFunction<express.Application['listen']>;
+}
+
+interface MockMcpServer {
+  connect: jest.MockedFunction<() => Promise<void>>;
+}
+
+interface MockTransport {
+  handleRequest: jest.MockedFunction<(req: express.Request, res: express.Response, body?: unknown) => Promise<void>>;
+}
+
+type MockedConstructor<T> = jest.MockedFunction<new (...args: unknown[]) => T>;
+type MockedRegistrationFunction = jest.MockedFunction<(server: McpServer) => void>;
 
 // Mock all the dependencies first
 jest.mock('@modelcontextprotocol/sdk/server/mcp.js', () => ({
   McpServer: jest.fn().mockImplementation(() => ({
-    connect: jest.fn().mockResolvedValue(undefined)
+    connect: jest.fn()
   }))
 }));
 
 jest.mock('@modelcontextprotocol/sdk/server/streamableHttp.js', () => ({
   StreamableHTTPServerTransport: jest.fn().mockImplementation(() => ({
-    handleRequest: jest.fn().mockResolvedValue(undefined)
+    handleRequest: jest.fn()
   }))
 }));
 
 jest.mock('./logging.js', () => ({
-  initLogging: jest.fn().mockResolvedValue(undefined),
-  infoLog: jest.fn().mockResolvedValue(undefined),
-  errorLog: jest.fn().mockResolvedValue(undefined)
+  initLogging: jest.fn(),
+  infoLog: jest.fn(),
+  errorLog: jest.fn()
 }));
 
 // Mock all resource registrations
@@ -84,11 +105,11 @@ jest.mock('express', () => {
     })
   };
   const expressMock = jest.fn(() => mockApp);
-  expressMock.json = jest.fn(() => (req: any, res: any, next: any) => next());
+  expressMock.json = jest.fn(() => (req: express.Request, res: express.Response, next: express.NextFunction) => next());
   return expressMock;
 });
 
-jest.mock('cors', () => jest.fn(() => (req: any, res: any, next: any) => next()));
+jest.mock('cors', () => jest.fn(() => (req: express.Request, res: express.Response, next: express.NextFunction) => next()));
 
 describe('index (main application)', () => {
   let originalEnv: string | undefined;
@@ -108,7 +129,7 @@ describe('index (main application)', () => {
   beforeEach(() => {
     originalEnv = process.env.MCP_PORT;
     console.error = jest.fn();
-    process.exit = jest.fn() as any;
+    process.exit = jest.fn() as jest.MockedFunction<typeof process.exit>;
     jest.clearAllMocks();
     jest.resetModules();
   });
@@ -123,7 +144,7 @@ describe('index (main application)', () => {
       const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js');
       
       // Import the module to trigger initialization
-      const indexModule = await import('./index.js');
+      await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50)); // Wait for async main
 
       expect(McpServer).toHaveBeenCalledWith({
@@ -138,7 +159,7 @@ describe('index (main application)', () => {
       const { registerRecipeSteps } = await import('./resources/recipeSteps.js');
 
       // Import the module to trigger registration
-      const indexModule = await import('./index.js');
+      await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50)); // Wait for async main
 
       expect(registerWeeklyMealPlan).toHaveBeenCalled();
@@ -160,15 +181,19 @@ describe('index (main application)', () => {
         './tools/removeMeal.js'
       ];
 
-      const registrationFunctions = await Promise.all(
-        tools.map(tool => import(tool).then(module => Object.values(module)[0]))
-      );
+      const registrationFunctions: MockedRegistrationFunction[] = [];
+      for (const tool of tools) {
+        const module = await import(tool) as Record<string, unknown>;
+        const moduleValues = Object.values(module);
+        const firstExport = moduleValues[0] as MockedRegistrationFunction;
+        registrationFunctions.push(firstExport);
+      }
 
       // Import the module to trigger registration
-      const indexModule = await import('./index.js');
+      await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50)); // Wait for async main
 
-      registrationFunctions.forEach(fn => {
+      registrationFunctions.forEach((fn) => {
         expect(fn).toHaveBeenCalled();
       });
     });
@@ -183,7 +208,7 @@ describe('index (main application)', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const express = (await import('express')).default;
-      const mockApp = (express as jest.MockedFunction<any>).mock.results[0].value;
+      const mockApp = (express as MockedConstructor<MockExpressApp>).mock.results[0].value as MockExpressApp;
       expect(mockApp.listen).toHaveBeenCalledWith(3001, expect.any(Function));
     });
 
@@ -195,7 +220,7 @@ describe('index (main application)', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const express = (await import('express')).default;
-      const mockApp = (express as jest.MockedFunction<any>).mock.results[0].value;
+      const mockApp = (express as MockedConstructor<MockExpressApp>).mock.results[0].value as MockExpressApp;
       expect(mockApp.listen).toHaveBeenCalledWith(4000, expect.any(Function));
     });
 
@@ -212,7 +237,7 @@ describe('index (main application)', () => {
       const { initLogging, errorLog } = await import('./logging.js');
       const mockError = new Error('Logging init failed');
       
-      (initLogging as jest.MockedFunction<any>).mockRejectedValueOnce(mockError);
+      (initLogging as jest.MockedFunction<typeof initLogging>).mockRejectedValueOnce(mockError);
 
       await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -232,7 +257,7 @@ describe('index (main application)', () => {
       });
 
       const express = (await import('express')).default;
-      const mockApp = (express as jest.MockedFunction<any>).mock.results[0].value;
+      const mockApp = (express as MockedConstructor<MockExpressApp>).mock.results[0].value as MockExpressApp;
       expect(mockApp.use).toHaveBeenCalledTimes(2); // Should be called twice
       expect(mockApp.use).toHaveBeenNthCalledWith(1, expect.any(Function)); // cors()
       expect(mockApp.use).toHaveBeenNthCalledWith(2, expect.any(Function)); // express.json()
@@ -242,8 +267,8 @@ describe('index (main application)', () => {
       const { StreamableHTTPServerTransport } = await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
       const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js');
       
-      const mockServer = { connect: jest.fn().mockResolvedValue(undefined) };
-      (McpServer as jest.MockedFunction<any>).mockReturnValue(mockServer);
+      const mockServer: MockMcpServer = { connect: jest.fn().mockResolvedValue(undefined) };
+      (McpServer as MockedConstructor<MockMcpServer>).mockReturnValue(mockServer);
 
       await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -260,7 +285,7 @@ describe('index (main application)', () => {
       const mockError = new Error('Fatal error');
       
       // Make McpServer constructor throw an unhandled error (outside try-catch)
-      (McpServer as jest.MockedFunction<any>).mockImplementationOnce(() => {
+      (McpServer as MockedConstructor<MockMcpServer>).mockImplementationOnce(() => {
         throw mockError;
       });
       
@@ -282,7 +307,7 @@ describe('index (main application)', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const express = (await import('express')).default;
-      const mockApp = (express as jest.MockedFunction<any>).mock.results[0].value;
+      const mockApp = (express as MockedConstructor<MockExpressApp>).mock.results[0].value as MockExpressApp;
       expect(mockApp.all).toHaveBeenCalledWith('/mcp', expect.any(Function));
     });
 
@@ -291,25 +316,25 @@ describe('index (main application)', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const express = (await import('express')).default;
-      const mockApp = (express as jest.MockedFunction<any>).mock.results[0].value;
+      const mockApp = (express as MockedConstructor<MockExpressApp>).mock.results[0].value as MockExpressApp;
       expect(mockApp.get).toHaveBeenCalledWith('/health', expect.any(Function));
     });
 
     it('should handle MCP requests successfully', async () => {
       const { StreamableHTTPServerTransport } = await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
       
-      const mockTransport = { handleRequest: jest.fn().mockResolvedValue(undefined) };
-      (StreamableHTTPServerTransport as jest.MockedFunction<any>).mockReturnValue(mockTransport);
+      const mockTransport: MockTransport = { handleRequest: jest.fn().mockResolvedValue(undefined) };
+      (StreamableHTTPServerTransport as MockedConstructor<MockTransport>).mockReturnValue(mockTransport);
       
       await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const express = (await import('express')).default;
-      const mockApp = (express as jest.MockedFunction<any>).mock.results[0].value;
+      const mockApp = (express as MockedConstructor<MockExpressApp>).mock.results[0].value as MockExpressApp;
 
       // Get the /mcp handler
-      const mcpHandler = (mockApp.all as jest.MockedFunction<any>).mock.calls
-        .find(call => call[0] === '/mcp')[1];
+      const mcpHandler = (mockApp.all).mock.calls
+        .find(call => call[0] === '/mcp')![1] as (req: express.Request, res: express.Response) => Promise<void>;
 
       const mockReq = { body: { test: 'data' } };
       const mockRes = { status: jest.fn().mockReturnThis(), json: jest.fn() };
@@ -324,18 +349,18 @@ describe('index (main application)', () => {
       const { errorLog } = await import('./logging.js');
       
       const mockError = new Error('Transport error');
-      const mockTransport = { handleRequest: jest.fn().mockRejectedValue(mockError) };
-      (StreamableHTTPServerTransport as jest.MockedFunction<any>).mockReturnValue(mockTransport);
+      const mockTransport: MockTransport = { handleRequest: jest.fn().mockRejectedValue(mockError) };
+      (StreamableHTTPServerTransport as MockedConstructor<MockTransport>).mockReturnValue(mockTransport);
       
       await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const express = (await import('express')).default;
-      const mockApp = (express as jest.MockedFunction<any>).mock.results[0].value;
+      const mockApp = (express as MockedConstructor<MockExpressApp>).mock.results[0].value as MockExpressApp;
 
       // Get the /mcp handler
-      const mcpHandler = (mockApp.all as jest.MockedFunction<any>).mock.calls
-        .find(call => call[0] === '/mcp')[1];
+      const mcpHandler = (mockApp.all).mock.calls
+        .find(call => call[0] === '/mcp')![1] as (req: express.Request, res: express.Response) => Promise<void>;
 
       const mockReq = { body: { test: 'data' } };
       const mockRes = { status: jest.fn().mockReturnThis(), json: jest.fn() };
@@ -350,17 +375,17 @@ describe('index (main application)', () => {
     it('should handle health check with healthy logging', async () => {
       const { infoLog } = await import('./logging.js');
       
-      (infoLog as jest.MockedFunction<any>).mockResolvedValue(undefined);
+      (infoLog as jest.MockedFunction<typeof infoLog>).mockResolvedValue(undefined);
       
       await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const express = (await import('express')).default;
-      const mockApp = (express as jest.MockedFunction<any>).mock.results[0].value;
+      const mockApp = (express as MockedConstructor<MockExpressApp>).mock.results[0].value as MockExpressApp;
 
       // Get the /health handler
-      const healthHandler = (mockApp.get as jest.MockedFunction<any>).mock.calls
-        .find(call => call[0] === '/health')[1];
+      const healthHandler = (mockApp.get).mock.calls
+        .find(call => call[0] === '/health')![1] as (req: express.Request, res: express.Response) => Promise<void>;
 
       const mockReq = {};
       const mockRes = { json: jest.fn(), status: jest.fn().mockReturnThis() };
@@ -379,17 +404,17 @@ describe('index (main application)', () => {
       const { infoLog } = await import('./logging.js');
       
       const mockError = new Error('Logging service down');
-      (infoLog as jest.MockedFunction<any>).mockRejectedValue(mockError);
+      (infoLog as jest.MockedFunction<typeof infoLog>).mockRejectedValue(mockError);
       
       await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const express = (await import('express')).default;
-      const mockApp = (express as jest.MockedFunction<any>).mock.results[0].value;
+      const mockApp = (express as MockedConstructor<MockExpressApp>).mock.results[0].value as MockExpressApp;
 
       // Get the /health handler
-      const healthHandler = (mockApp.get as jest.MockedFunction<any>).mock.calls
-        .find(call => call[0] === '/health')[1];
+      const healthHandler = (mockApp.get).mock.calls
+        .find(call => call[0] === '/health')![1] as (req: express.Request, res: express.Response) => Promise<void>;
 
       const mockReq = {};
       const mockRes = { json: jest.fn(), status: jest.fn().mockReturnThis() };

@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { generateMealPlan, registerGenerateMealPlan } from './generateMealPlan.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
 import type { GenerateMealPlanResponse } from '@mealplanner/generated';
 
 // Mock the dependencies
@@ -181,7 +181,7 @@ describe('generateMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerGenerateMealPlan(mockServer as any);
+      registerGenerateMealPlan(mockServer);
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'generateMealPlan',
@@ -211,10 +211,10 @@ describe('generateMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerGenerateMealPlan(mockServer as any);
+      registerGenerateMealPlan(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][2];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][2];
       const result = await handler();
 
       expect(result).toEqual({
@@ -236,10 +236,10 @@ describe('generateMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerGenerateMealPlan(mockServer as any);
+      registerGenerateMealPlan(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][2];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][2];
 
       await expect(handler()).rejects.toThrow(McpError);
       await expect(handler()).rejects.toThrow('BackendError: Service Unavailable');

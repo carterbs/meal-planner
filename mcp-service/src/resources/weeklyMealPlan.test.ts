@@ -1,7 +1,14 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { fetchWeeklyMealPlan, registerWeeklyMealPlan } from './weeklyMealPlan.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { API } from '../utils.js';
+import { createMockServer } from '../utils/createMockServer.js';
+// Type definitions for mocks
+
+
+
+type MockedResourceHandler = jest.MockedFunction<() => Promise<{ contents: Array<{ uri: string; text: string; mimeType: string }> }>>;
 
 // Mock the utils module
 jest.mock('../utils.js', () => ({
@@ -28,10 +35,12 @@ describe('weeklyMealPlan resource', () => {
         }
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
+      const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
+      fetchMock.mockResolvedValue({
         ok: true,
         json: async () => mockData
-      });
+      } as unknown as Response);
+      global.fetch = fetchMock;
 
       const result = await fetchWeeklyMealPlan();
 
@@ -40,17 +49,21 @@ describe('weeklyMealPlan resource', () => {
     });
 
     it('should throw McpError when fetch fails', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
+      fetchMock.mockResolvedValue({
         ok: false,
         statusText: 'Internal Server Error'
-      });
+      } as unknown as Response);
+      global.fetch = fetchMock;
 
       await expect(fetchWeeklyMealPlan()).rejects.toThrow(McpError);
       await expect(fetchWeeklyMealPlan()).rejects.toThrow('BackendError: Internal Server Error');
     });
 
     it('should handle network errors', async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+      const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
+      fetchMock.mockRejectedValue(new Error('Network error'));
+      global.fetch = fetchMock;
 
       await expect(fetchWeeklyMealPlan()).rejects.toThrow('Network error');
     });
@@ -58,11 +71,9 @@ describe('weeklyMealPlan resource', () => {
 
   describe('registerWeeklyMealPlan', () => {
     it('should register resource with server', () => {
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerWeeklyMealPlan(mockServer as any);
+      registerWeeklyMealPlan(mockServer as unknown as McpServer);
 
       expect(mockServer.resource).toHaveBeenCalledWith(
         'WeeklyMealPlan',
@@ -83,19 +94,19 @@ describe('weeklyMealPlan resource', () => {
         }
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
+      const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
+      fetchMock.mockResolvedValue({
         ok: true,
         json: async () => mockData
-      });
+      } as unknown as Response);
+      global.fetch = fetchMock;
 
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerWeeklyMealPlan(mockServer as any);
+      registerWeeklyMealPlan(mockServer as unknown as McpServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.resource as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
       const result = await handler();
 
       expect(result).toEqual({
@@ -108,19 +119,19 @@ describe('weeklyMealPlan resource', () => {
     });
 
     it('should propagate errors from fetchWeeklyMealPlan', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
+      fetchMock.mockResolvedValue({
         ok: false,
         statusText: 'Bad Request'
-      });
+      } as unknown as Response);
+      global.fetch = fetchMock;
 
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerWeeklyMealPlan(mockServer as any);
+      registerWeeklyMealPlan(mockServer as unknown as McpServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.resource as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
 
       await expect(handler()).rejects.toThrow(McpError);
       await expect(handler()).rejects.toThrow('BackendError: Bad Request');

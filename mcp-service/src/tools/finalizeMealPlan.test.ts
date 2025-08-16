@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { finalizePlan, registerFinalizeMealPlan, finalzeArgs } from './finalizeMealPlan.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
 import type { FinalizeMealPlanResponse } from '@mealplanner/generated';
 
 // Mock the dependencies
@@ -152,7 +152,7 @@ describe('finalizeMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerFinalizeMealPlan(mockServer as any);
+      registerFinalizeMealPlan(mockServer);
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'finalizeMealPlan',
@@ -179,10 +179,10 @@ describe('finalizeMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerFinalizeMealPlan(mockServer as any);
+      registerFinalizeMealPlan(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       const result = await handler({ threadId });
 
       expect(result).toEqual({
@@ -198,10 +198,10 @@ describe('finalizeMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerFinalizeMealPlan(mockServer as any);
+      registerFinalizeMealPlan(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       await expect(handler({ threadId: '' })).rejects.toThrow(McpError);
       await expect(handler({ threadId: '' })).rejects.toThrow('threadId is required and must be a non-empty string');
@@ -212,10 +212,10 @@ describe('finalizeMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerFinalizeMealPlan(mockServer as any);
+      registerFinalizeMealPlan(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       await expect(handler({ threadId: null })).rejects.toThrow(McpError);
       await expect(handler({ threadId: undefined })).rejects.toThrow(McpError);
@@ -226,10 +226,10 @@ describe('finalizeMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerFinalizeMealPlan(mockServer as any);
+      registerFinalizeMealPlan(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       await expect(handler({ threadId: 123 })).rejects.toThrow(McpError);
       await expect(handler({ threadId: {} })).rejects.toThrow(McpError);
@@ -240,10 +240,10 @@ describe('finalizeMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerFinalizeMealPlan(mockServer as any);
+      registerFinalizeMealPlan(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       await expect(handler({ threadId: '   ' })).rejects.toThrow(McpError);
       await expect(handler({ threadId: '\t\n' })).rejects.toThrow(McpError);
@@ -264,10 +264,10 @@ describe('finalizeMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerFinalizeMealPlan(mockServer as any);
+      registerFinalizeMealPlan(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       await handler({ threadId });
 
       expect(console.log).toHaveBeenCalledWith(`🔧 [MCP-FINALIZE] Args type:`, 'string');
@@ -289,10 +289,10 @@ describe('finalizeMealPlan tool', () => {
         tool: jest.fn()
       };
 
-      registerFinalizeMealPlan(mockServer as any);
+      registerFinalizeMealPlan(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       await expect(handler({ threadId })).rejects.toThrow(McpError);
       await expect(handler({ threadId })).rejects.toThrow('BackendError: Internal Server Error');
