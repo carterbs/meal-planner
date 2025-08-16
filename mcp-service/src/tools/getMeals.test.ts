@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { doGetMeals, registerGetMeals, getMealsArgs } from './getMeals.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
 
 // Mock the dependencies
 jest.mock('../utils.js', () => ({
@@ -91,7 +91,7 @@ describe('getMeals tool', () => {
         tool: jest.fn()
       };
 
-      registerGetMeals(mockServer as any);
+      registerGetMeals(mockServer);
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'getMeals',
@@ -114,9 +114,9 @@ describe('getMeals tool', () => {
         tool: jest.fn()
       };
 
-      registerGetMeals(mockServer as any);
+      registerGetMeals(mockServer);
 
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       const result = await handler({ mealType: 'dinner' });
 
       expect(result).toEqual({

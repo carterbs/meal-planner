@@ -2,6 +2,15 @@ import { describe, it, expect, jest, beforeEach, afterEach, beforeAll, afterAll 
 import { writeFileSync, appendFileSync } from 'fs';
 import { join } from 'path';
 
+// Type definitions for mocks
+interface MockGrpcTransport {
+  mock: string;
+}
+
+interface MockLoggingClient {
+  log: jest.MockedFunction<(request: unknown) => Promise<unknown>>;
+}
+
 // Mock fs functions
 jest.mock('fs', () => ({
   writeFileSync: jest.fn(),
@@ -68,9 +77,9 @@ describe('logging', () => {
     mockCreateGrpcTransport.mockClear();
     
     // Mock setTimeout globally to avoid real delays
-    jest.spyOn(global, 'setTimeout').mockImplementation((cb: any) => {
-      setImmediate(cb);
-      return {} as any;
+    jest.spyOn(global, 'setTimeout').mockImplementation((cb: TimerHandler) => {
+      setImmediate(cb as () => void);
+      return {} as NodeJS.Timeout;
     });
     
     // Reset logging module state
@@ -87,8 +96,8 @@ describe('logging', () => {
     it('should use default baseUrl when LOGGING_SERVICE_ADDR not set', async () => {
       delete process.env.LOGGING_SERVICE_ADDR;
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockResolvedValue({}) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockResolvedValue({}) };
       
       mockCreateGrpcTransport.mockReturnValue(mockTransport);
       mockCreateClient.mockReturnValue(mockClient);
@@ -105,8 +114,8 @@ describe('logging', () => {
     it('should use custom LOGGING_SERVICE_ADDR when set', async () => {
       process.env.LOGGING_SERVICE_ADDR = 'custom-host:50053';
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockResolvedValue({}) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockResolvedValue({}) };
       
       mockCreateGrpcTransport.mockReturnValue(mockTransport);
       mockCreateClient.mockReturnValue(mockClient);
@@ -123,8 +132,8 @@ describe('logging', () => {
     it('should handle baseUrl with http protocol', async () => {
       process.env.LOGGING_SERVICE_ADDR = 'http://custom-host:50053';
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockResolvedValue({}) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockResolvedValue({}) };
       
       mockCreateGrpcTransport.mockReturnValue(mockTransport);
       mockCreateClient.mockReturnValue(mockClient);
@@ -142,8 +151,8 @@ describe('logging', () => {
       // Set a proper baseUrl for this test
       process.env.LOGGING_SERVICE_ADDR = 'localhost:50052';
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockResolvedValue({}) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockResolvedValue({}) };
       
       mockCreateGrpcTransport
         .mockImplementationOnce(() => { throw new Error('Connection failed'); })
@@ -175,8 +184,8 @@ describe('logging', () => {
       // Set a proper baseUrl for this test
       process.env.LOGGING_SERVICE_ADDR = 'localhost:50052';
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockResolvedValue({}) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockResolvedValue({}) };
       
       mockCreateGrpcTransport.mockReturnValue(mockTransport);
       mockCreateClient.mockReturnValue(mockClient);
@@ -195,8 +204,8 @@ describe('logging', () => {
       process.env.LOGGING_SERVICE_ADDR = 'localhost:50052';
       mockAppendFileSync.mockImplementation(() => {});
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockResolvedValue({}) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockResolvedValue({}) };
       mockCreateGrpcTransport.mockReturnValue(mockTransport);
       mockCreateClient.mockReturnValue(mockClient);
       
@@ -215,8 +224,8 @@ describe('logging', () => {
       mockAppendFileSync.mockImplementation(() => { throw new Error('File not found'); });
       mockWriteFileSync.mockImplementation(() => {});
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockResolvedValue({}) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockResolvedValue({}) };
       mockCreateGrpcTransport.mockReturnValue(mockTransport);
       mockCreateClient.mockReturnValue(mockClient);
       
@@ -236,8 +245,8 @@ describe('logging', () => {
       mockAppendFileSync.mockImplementation(() => { throw new Error('Append failed'); });
       mockWriteFileSync.mockImplementation(() => { throw new Error('Write failed'); });
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockResolvedValue({}) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockResolvedValue({}) };
       mockCreateGrpcTransport.mockReturnValue(mockTransport);
       mockCreateClient.mockReturnValue(mockClient);
       
@@ -253,8 +262,8 @@ describe('logging', () => {
       // Set up proper environment for gRPC tests
       process.env.LOGGING_SERVICE_ADDR = 'localhost:50052';
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockResolvedValue({}) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockResolvedValue({}) };
       
       mockCreateGrpcTransport.mockReturnValue(mockTransport);
       mockCreateClient.mockReturnValue(mockClient);
@@ -312,8 +321,8 @@ describe('logging', () => {
       // Set a proper baseUrl for this test
       process.env.LOGGING_SERVICE_ADDR = 'localhost:50052';
       
-      const mockTransport = { mock: 'transport' };
-      const mockClient = { log: jest.fn().mockRejectedValue(new Error('gRPC error')) };
+      const mockTransport: MockGrpcTransport = { mock: 'transport' };
+      const mockClient: MockLoggingClient = { log: jest.fn().mockRejectedValue(new Error('gRPC error')) };
       
       mockCreateGrpcTransport.mockReturnValue(mockTransport);
       mockCreateClient.mockReturnValue(mockClient);

@@ -11,13 +11,13 @@ describe('utils', () => {
   });
 
   describe('API constant', () => {
-    it('should use environment variable when set', () => {
+    it('should use environment variable when set', async () => {
       const originalEnv = process.env.BACKEND_BASE_URL;
       process.env.BACKEND_BASE_URL = 'http://custom-backend:9000';
       
       // Re-import to get updated value
       jest.resetModules();
-      const { API: updatedAPI } = require('./utils.js');
+      const { API: updatedAPI } = await import('./utils.js');
       expect(updatedAPI).toBe('http://custom-backend:9000');
       
       process.env.BACKEND_BASE_URL = originalEnv;

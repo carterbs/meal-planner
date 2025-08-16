@@ -2,6 +2,10 @@ import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals
 import { fetchRecipes, registerRecipes, type RecipeSummary } from './recipes.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
+import { createMockServer } from '../utils/createMockServer.js';
+
+
+type MockedResourceHandler = jest.MockedFunction<() => Promise<{ contents: Array<{ uri: string; text: string; mimeType: string }> }>>;
 
 // Mock the utils module
 jest.mock('../utils.js', () => ({
@@ -67,11 +71,9 @@ describe('recipes resource', () => {
 
   describe('registerRecipes', () => {
     it('should register resource with server', () => {
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerRecipes(mockServer as any);
+      registerRecipes(mockServer);
 
       expect(mockServer.resource).toHaveBeenCalledWith(
         'Recipes',
@@ -95,14 +97,12 @@ describe('recipes resource', () => {
         json: async () => mockData
       });
 
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerRecipes(mockServer as any);
+      registerRecipes(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.resource as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
       const result = await handler();
 
       expect(result).toEqual({
@@ -120,14 +120,12 @@ describe('recipes resource', () => {
         statusText: 'Service Unavailable'
       });
 
-      const mockServer = {
-        resource: jest.fn()
-      };
+      const mockServer = createMockServer();
 
-      registerRecipes(mockServer as any);
+      registerRecipes(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.resource as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
 
       await expect(handler()).rejects.toThrow(McpError);
       await expect(handler()).rejects.toThrow('BackendError: Service Unavailable');

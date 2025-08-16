@@ -1,6 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { createRecipe, registerCreateRecipe, createRecipeArgs } from './createRecipe.js';
-import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
 import type { CreateMealRequest, CreateMealResponse, AddBulkStepsRequest, Meal } from '@mealplanner/generated';
 
 // Mock the dependencies
@@ -405,7 +405,7 @@ describe('createRecipe tool', () => {
         tool: jest.fn()
       };
 
-      registerCreateRecipe(mockServer as any);
+      registerCreateRecipe(mockServer);
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'createRecipe',
@@ -457,10 +457,10 @@ describe('createRecipe tool', () => {
         tool: jest.fn()
       };
 
-      registerCreateRecipe(mockServer as any);
+      registerCreateRecipe(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
       const result = await handler(recipeData);
 
       expect(result).toEqual({
@@ -480,10 +480,10 @@ describe('createRecipe tool', () => {
         tool: jest.fn()
       };
 
-      registerCreateRecipe(mockServer as any);
+      registerCreateRecipe(mockServer);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<any>).mock.calls[0][3];
+      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
 
       const recipeData = {
         name: 'Error Recipe',
