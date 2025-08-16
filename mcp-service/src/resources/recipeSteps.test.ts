@@ -8,8 +8,18 @@ import fetchMock from 'jest-fetch-mock';
 import { Step } from '@mealplanner/generated';
 
 
-// jest.MockedFunction types cause parsing issues in some Jest runs; use any
-type MockedResourceHandler = any;
+// Define proper types for mocked resource handler and result
+interface ResourceContent {
+  uri: string;
+  mimeType: string;
+  text?: string;
+}
+
+interface ResourceResult {
+  contents: ResourceContent[];
+}
+
+type MockedResourceHandler = jest.MockedFunction<(uri: string) => Promise<ResourceResult>>;
 
 // Mock the utils module
 jest.mock('../utils.js', () => ({
@@ -111,7 +121,7 @@ describe('recipeSteps resource', () => {
 
       // Get the handler function that was registered
       const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
-      const result = await handler();
+      const result = await handler('test-uri');
 
       expect(result).toEqual({
         contents: [{
@@ -131,7 +141,7 @@ describe('recipeSteps resource', () => {
 
       // Get the handler function that was registered
       const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
-      await handler();
+      await handler('test-uri');
 
       // The current implementation doesn't fetch data in the resource handler
       expect(fetchMock.mock.calls.length).toBe(0);
@@ -146,8 +156,8 @@ describe('recipeSteps resource', () => {
       const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
       
       // Call multiple times to ensure consistency
-      const result1 = await handler();
-      const result2 = await handler();
+      const result1 = await handler('test-uri');
+      const result2 = await handler('test-uri');
 
       expect(result1).toEqual(result2);
       expect(result1.contents[0].uri).toBe('meal://recipes/steps');

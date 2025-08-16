@@ -4,45 +4,47 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // tests and causing deep/complex type instantiation issues.
 export type TestMcpServer = {
-  tool(name: string, descriptionOrSchema: any, schemaOrHandler?: any, handler?: Function): void;
-  resource?(name: string, template: any, handler: Function): void;
-  prompt?(name: string, schema: any, handler: Function): void;
-  connect?(transport?: any): Promise<void>;
+  tool(name: string, descriptionOrSchema: unknown, schemaOrHandler?: unknown, handler?: (...args: unknown[]) => unknown): void;
+  resource?(name: string, template: unknown, handler: (...args: unknown[]) => unknown): void;
+  prompt?(name: string, schema: unknown, handler: (...args: unknown[]) => unknown): void;
+  connect?(transport?: unknown): Promise<void>;
   close?(): void;
-  registeredTools?: Record<string, { name: string; description?: string; schema?: any; handler: Function }>;
-  callTool(name: string, args: any): Promise<any>;
+  registeredTools?: Record<string, { name: string; description?: string; schema?: unknown; handler: (...args: unknown[]) => unknown }>;
+  callTool(name: string, args: unknown): Promise<unknown>;
 };
 
-export function createMockServer(): McpServer & { registeredTools: Record<string, { name: string; description?: string; schema?: any; handler: Function }> } {
-  const tools: Record<string, { name: string; description?: string; schema?: any; handler: Function }> = {};
+export function createMockServer(): McpServer & { registeredTools: Record<string, { name: string; description?: string; schema?: unknown; handler: (...args: unknown[]) => unknown }> } {
+  const tools: Record<string, { name: string; description?: string; schema?: unknown; handler: (...args: unknown[]) => unknown }> = {};
 
   const serverLike: TestMcpServer = {
-    tool(name: string, descriptionOrSchema: any, schemaOrHandler?: any, handler?: Function) {
+    tool(name: string, descriptionOrSchema: unknown, schemaOrHandler?: unknown, handler?: (...args: unknown[]) => unknown) {
       let description: string | undefined;
-      let schema: any;
-      let fn: Function | undefined;
+      let schema: unknown;
+      let fn: ((...args: unknown[]) => unknown) | undefined;
       if (typeof schemaOrHandler === 'function') {
         schema = descriptionOrSchema;
-        fn = schemaOrHandler as Function;
+        fn = schemaOrHandler as (...args: unknown[]) => unknown;
       } else {
-        description = descriptionOrSchema;
+        description = descriptionOrSchema as string;
         schema = schemaOrHandler;
         fn = handler;
       }
-      tools[name] = { name, description, schema, handler: fn! };
+      if (fn) {
+        tools[name] = { name, description, schema, handler: fn };
+      }
     },
     // Use jest mock functions so tests can inspect calls (handler is often passed as the 4th arg)
-    resource: (typeof jest !== 'undefined' ? jest.fn((..._args: any[]) => { return; }) : (_name: string, _template: any, _schemaOrHandler?: any, _handler?: Function) => { return; }) as any,
-    prompt: (typeof jest !== 'undefined' ? jest.fn((..._args: any[]) => { return; }) : (_name: string, _schema: any, _handler: Function) => { return; }) as any,
-    async connect(_transport?: any) { return; },
+    resource: (typeof jest !== 'undefined' ? jest.fn((..._args: unknown[]) => undefined) : (_name: string, _template: unknown, _schemaOrHandler?: unknown, _handler?: (...args: unknown[]) => unknown) => undefined) as unknown as (...args: unknown[]) => unknown,
+    prompt: (typeof jest !== 'undefined' ? jest.fn((..._args: unknown[]) => undefined) : (_name: string, _schema: unknown, _handler: (...args: unknown[]) => unknown) => undefined) as unknown as (...args: unknown[]) => unknown,
+    async connect(_transport?: unknown) { return; },
     close() { return; },
     registeredTools: tools,
-    async callTool(name: string, args: any) {
+    async callTool(name: string, args: unknown) {
+      if (!(name in tools)) throw new Error(`tool not registered: ${name}`);
       const entry = tools[name];
-      if (!entry) throw new Error(`tool not registered: ${name}`);
       return entry.handler(args);
     }
   };
 
-  return serverLike as unknown as McpServer & { registeredTools: Record<string, { name: string; description?: string; schema?: any; handler: Function }> };
+  return serverLike as unknown as McpServer & { registeredTools: Record<string, { name: string; description?: string; schema?: unknown; handler: (...args: unknown[]) => unknown }> };
 }
