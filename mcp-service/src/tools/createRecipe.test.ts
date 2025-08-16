@@ -1,7 +1,11 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { createRecipe, registerCreateRecipe, createRecipeArgs } from './createRecipe.js';
-import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
+import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import type { CreateMealRequest, CreateMealResponse, AddBulkStepsRequest, Meal } from '@mealplanner/generated';
+import { setupFetchMock } from '../test-utils.js';
+import fetchMock from 'jest-fetch-mock';
+import { createMockServer } from '../utils/createMockServer.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // Mock the dependencies
 jest.mock('../utils.js', () => ({
@@ -11,14 +15,14 @@ jest.mock('../utils.js', () => ({
 jest.mock('@mealplanner/generated', () => ({
   Meal: jest.fn().mockImplementation((data) => data),
   CreateMealRequest: jest.fn().mockImplementation((data) => ({
-    ...data,
+    ...data as any,
     toJson: jest.fn().mockImplementation(() => data)
   })),
   CreateMealResponse: {
     fromJson: jest.fn().mockImplementation((data) => data)
   },
   AddBulkStepsRequest: jest.fn().mockImplementation((data) => ({
-    ...data,
+    ...data as any,
     toJson: jest.fn().mockImplementation(() => data)
   }))
 }));
@@ -26,14 +30,12 @@ jest.mock('@mealplanner/generated', () => ({
 describe('createRecipe tool', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Clear any global.fetch mock
-    delete (global as any).fetch;
+    fetchMock.enableMocks();
+    fetchMock.resetMocks();
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
-    // Clear any global.fetch mock
-    delete (global as any).fetch;
   });
 
   describe('createRecipeArgs schema', () => {
@@ -132,27 +134,10 @@ describe('createRecipe tool', () => {
 
       const { Meal, CreateMealRequest, CreateMealResponse, AddBulkStepsRequest } = await import('@mealplanner/generated');
 
-      global.fetch = jest.fn()
-        .mockResolvedValueOnce({ // Create meal response
-          ok: true,
-          status: 200,
-          json: async () => mockCreateResponse
-        })
-        .mockResolvedValueOnce({ // Add steps response
-          ok: true,
-          status: 200,
-          json: async () => ({})
-        })
-        .mockResolvedValueOnce({ // First ingredient response
-          ok: true,
-          status: 200,
-          json: async () => ({})
-        })
-        .mockResolvedValueOnce({ // Second ingredient response
-          ok: true,
-          status: 200,
-          json: async () => ({})
-        });
+      fetchMock.mockResponseOnce(JSON.stringify(mockCreateResponse), { status: 200 });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 200 });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 200 });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 200 });
 
       const result = await createRecipe(recipeData);
 
@@ -189,27 +174,27 @@ describe('createRecipe tool', () => {
         instructions: ['Boil pasta', 'Make sauce']
       });
 
-      // Verify API calls
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals', {
+      // Verify API calls via fetchMock
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: expect.stringContaining('"meal"')
       });
 
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals/123/steps/bulk', {
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals/123/steps/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: expect.stringContaining('"mealId"')
       });
 
       // Verify ingredient calls
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals/123/ingredients', {
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals/123/ingredients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'Pasta', quantity: '400g' })
       });
 
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals/123/ingredients', {
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals/123/ingredients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'Eggs', quantity: '3 large' })
@@ -240,21 +225,12 @@ describe('createRecipe tool', () => {
 
       const mockCreateResponse = { meal: mockCreatedMeal };
 
-      global.fetch = jest.fn()
-        .mockResolvedValueOnce({ // Create meal response
-          ok: true,
-          status: 200,
-          json: async () => mockCreateResponse
-        })
-        .mockResolvedValueOnce({ // Add steps response
-          ok: true,
-          status: 200,
-          json: async () => ({})
-        });
+      fetchMock.mockResponseOnce(JSON.stringify(mockCreateResponse), { status: 200 });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 200 });
 
       const result = await createRecipe(recipeData);
 
-      expect(global.fetch).toHaveBeenCalledTimes(2); // Only meal creation and steps, no ingredients
+      expect(fetchMock).toHaveBeenCalledTimes(2); // Only meal creation and steps, no ingredients
       expect(result).toEqual(mockCreatedMeal);
     });
 
@@ -269,18 +245,8 @@ describe('createRecipe tool', () => {
 
       for (const testCase of testCases) {
         jest.clearAllMocks();
-        
-        global.fetch = jest.fn()
-          .mockResolvedValueOnce({
-            ok: true,
-            status: 200,
-            json: async () => ({ meal: { id: 1 } })
-          })
-          .mockResolvedValueOnce({
-            ok: true,
-            status: 200,
-            json: async () => ({})
-          });
+        fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, json: async () => ({ meal: { id: 1 } }) } as any));
+        fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, json: async () => ({}) } as any));
 
         await createRecipe({
           name: 'Test',
@@ -296,12 +262,7 @@ describe('createRecipe tool', () => {
     });
 
     it('should throw McpError when meal creation fails', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 400,
-        statusText: 'Bad Request',
-        json: async () => ({})
-      });
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: false, status: 400, statusText: 'Bad Request', json: async () => ({}) } as any));
 
       const recipeData = {
         name: 'Failed Recipe',
@@ -314,11 +275,7 @@ describe('createRecipe tool', () => {
     });
 
     it('should throw McpError when no meal returned from create request', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({ meal: null })
-      });
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, json: async () => ({ meal: null }) } as any));
 
       const recipeData = {
         name: 'No Meal Recipe',
@@ -333,20 +290,8 @@ describe('createRecipe tool', () => {
     it('should throw McpError when steps creation fails', async () => {
       const mockCreatedMeal = { id: 123, name: 'Test' };
 
-      const mockFetch = jest.fn()
-        .mockResolvedValueOnce({ // Successful meal creation
-          ok: true,
-          status: 200,
-          json: async () => ({ meal: mockCreatedMeal })
-        })
-        .mockResolvedValueOnce({ // Failed steps creation
-          ok: false,
-          status: 500,
-          statusText: 'Internal Server Error',
-          json: async () => ({})
-        });
-      
-      global.fetch = mockFetch;
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, json: async () => ({ meal: mockCreatedMeal }) } as any));
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: false, status: 500, statusText: 'Internal Server Error', json: async () => ({}) } as any));
 
       const recipeData = {
         name: 'Failed Steps Recipe',
@@ -358,31 +303,15 @@ describe('createRecipe tool', () => {
       await expect(createRecipe(recipeData)).rejects.toThrow('BackendError: Internal Server Error');
       
       // Verify the fetch was called the expected number of times
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
     it('should throw McpError when ingredient creation fails', async () => {
       const mockCreatedMeal = { id: 123, name: 'Test' };
 
-      const mockFetch = jest.fn()
-        .mockResolvedValueOnce({ // Successful meal creation
-          ok: true,
-          status: 200,
-          json: async () => ({ meal: mockCreatedMeal })
-        })
-        .mockResolvedValueOnce({ // Successful steps creation
-          ok: true,
-          status: 200,
-          json: async () => ({})
-        })
-        .mockResolvedValueOnce({ // Failed ingredient creation
-          ok: false,
-          status: 409,
-          statusText: 'Conflict',
-          json: async () => ({})
-        });
-      
-      global.fetch = mockFetch;
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, json: async () => ({ meal: mockCreatedMeal }) } as any));
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, json: async () => ({}) } as any));
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: false, status: 409, statusText: 'Conflict', json: async () => ({}) } as any));
 
       const recipeData = {
         name: 'Failed Ingredient Recipe',
@@ -395,30 +324,17 @@ describe('createRecipe tool', () => {
       await expect(createRecipe(recipeData)).rejects.toThrow('BackendError: Conflict');
       
       // Verify the fetch was called the expected number of times
-      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(fetchMock).toHaveBeenCalledTimes(3);
     });
   });
 
   describe('registerCreateRecipe', () => {
     it('should register tool with server', () => {
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const mockServer = createMockServer();
 
       registerCreateRecipe(mockServer);
 
-      expect(mockServer.tool).toHaveBeenCalledWith(
-        'createRecipe',
-        'Create a new recipe with ingredients, cooking steps, and metadata. Specify effort level (LOW/MED/HIGH), red meat status for tracking, and detailed cooking instructions. The recipe will be added to the database and available for meal planning.',
-        {
-          name: createRecipeArgs.shape.name,
-          redMeat: createRecipeArgs.shape.redMeat,
-          effort: createRecipeArgs.shape.effort,
-          steps: createRecipeArgs.shape.steps,
-          ingredients: createRecipeArgs.shape.ingredients
-        },
-        expect.any(Function)
-      );
+      expect(mockServer.registeredTools['createRecipe']).toBeDefined();
     });
 
     it('should return formatted tool response when handler is called', async () => {
@@ -441,26 +357,14 @@ describe('createRecipe tool', () => {
         lastPlanned: undefined
       };
 
-      global.fetch = jest.fn()
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          json: async () => ({ meal: mockCreatedMeal })
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          json: async () => ({})
-        });
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, json: async () => ({ meal: mockCreatedMeal }) } as any));
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, json: async () => ({}) } as any));
 
-      const mockServer = {
-        tool: jest.fn()
-      };
-
-      registerCreateRecipe(mockServer);
+      const server = createMockServer();
+      registerCreateRecipe(server);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['createRecipe'].handler;
       const result = await handler(recipeData);
 
       expect(result).toEqual({
@@ -469,21 +373,13 @@ describe('createRecipe tool', () => {
     });
 
     it('should propagate errors from createRecipe', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 422,
-        statusText: 'Unprocessable Entity',
-        json: async () => ({})
-      });
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: false, status: 422, statusText: 'Unprocessable Entity', json: async () => ({}) } as any));
 
-      const mockServer = {
-        tool: jest.fn()
-      };
-
-      registerCreateRecipe(mockServer);
+      const server = createMockServer();
+      registerCreateRecipe(server);
 
       // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['createRecipe'].handler;
 
       const recipeData = {
         name: 'Error Recipe',

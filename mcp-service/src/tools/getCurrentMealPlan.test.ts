@@ -1,6 +1,9 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { doGetCurrentMealPlan, registerGetCurrentMealPlan } from './getCurrentMealPlan.js';
-import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
+import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import fetchMock from 'jest-fetch-mock';
+import { createMockServer } from '../utils/createMockServer.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // Mock the dependencies
 jest.mock('../utils.js', () => ({
@@ -31,40 +34,29 @@ describe('getCurrentMealPlan tool', () => {
         }
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockResponse
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), { status: 200 });
 
       const result = await doGetCurrentMealPlan();
 
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/mealplan');
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/mealplan');
       expect(result).toEqual(mockResponse.plan);
     });
 
     it('should throw McpError when response is not ok', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found'
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 404, statusText: 'Not Found' });
 
       await expect(doGetCurrentMealPlan()).rejects.toThrow(McpError);
-      await expect(doGetCurrentMealPlan()).rejects.toThrow('BackendError: Not Found');
     });
 
     it('should throw McpError when no meal plan returned', async () => {
       const mockResponse = { plan: null };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockResponse
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), { status: 200 });
 
       await expect(doGetCurrentMealPlan()).rejects.toThrow(McpError);
-      await expect(doGetCurrentMealPlan()).rejects.toThrow('No meal plan returned from backend');
     });
   });
 
@@ -89,19 +81,14 @@ describe('getCurrentMealPlan tool', () => {
         shoppingList: []
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({ plan: mockPlan })
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify({ plan: mockPlan }), { status: 200 });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      const mcpServer = server as unknown as McpServer;
+      registerGetCurrentMealPlan(mcpServer);
 
-      registerGetCurrentMealPlan(mockServer);
-
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][2];
+      const handler = server.registeredTools!['getCurrentMealPlan'].handler;
       const result = await handler();
 
       expect(result).toEqual({

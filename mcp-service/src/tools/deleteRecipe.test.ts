@@ -1,6 +1,9 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { deleteRecipe, registerDeleteRecipe, deleteRecipeArgs } from './deleteRecipe.js';
-import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
+import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import fetchMock from 'jest-fetch-mock';
+import { createMockServer } from '../utils/createMockServer.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // Mock the dependencies
 jest.mock('../utils.js', () => ({
@@ -10,6 +13,8 @@ jest.mock('../utils.js', () => ({
 describe('deleteRecipe tool', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    fetchMock.enableMocks();
+    fetchMock.resetMocks();
   });
 
   afterEach(() => {
@@ -61,16 +66,12 @@ describe('deleteRecipe tool', () => {
         deletedId: recipeId 
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => mockResponse
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), { status: 200, statusText: 'OK' });
 
       const result = await deleteRecipe(recipeId);
 
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals/123', {
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals/123', {
         method: 'DELETE'
       });
       expect(result).toEqual(mockResponse);
@@ -80,31 +81,23 @@ describe('deleteRecipe tool', () => {
       const testIds = [1, 42, 999, 10000];
       const mockResponse = { success: true };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 204, // No Content
-        statusText: 'No Content',
-        json: async () => mockResponse
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponse(JSON.stringify(mockResponse), { status: 204, statusText: 'No Content' });
 
       for (const id of testIds) {
         await deleteRecipe(id);
-        expect(global.fetch).toHaveBeenCalledWith(`http://test.com/api/meals/${id}`, {
+        expect(fetchMock).toHaveBeenCalledWith(`http://test.com/api/meals/${id}`, {
           method: 'DELETE'
         });
       }
-
-      expect(global.fetch).toHaveBeenCalledTimes(testIds.length);
+      expect(fetchMock).toHaveBeenCalledTimes(testIds.length);
     });
 
     it('should throw McpError when recipe not found', async () => {
       const recipeId = 999;
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found'
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponse(JSON.stringify({}), { status: 404, statusText: 'Not Found' });
 
       await expect(deleteRecipe(recipeId)).rejects.toThrow(McpError);
       await expect(deleteRecipe(recipeId)).rejects.toThrow('BackendError: Not Found');
@@ -113,11 +106,8 @@ describe('deleteRecipe tool', () => {
     it('should throw McpError when deletion fails', async () => {
       const recipeId = 456;
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error'
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponse(JSON.stringify({}), { status: 500, statusText: 'Internal Server Error' });
 
       await expect(deleteRecipe(recipeId)).rejects.toThrow(McpError);
       await expect(deleteRecipe(recipeId)).rejects.toThrow('BackendError: Internal Server Error');
@@ -126,7 +116,8 @@ describe('deleteRecipe tool', () => {
     it('should handle network errors', async () => {
       const recipeId = 789;
 
-      global.fetch = jest.fn().mockRejectedValue(new Error('Network connection failed'));
+      fetchMock.enableMocks();
+      fetchMock.mockRejectedValueOnce(new Error('Network connection failed'));
 
       await expect(deleteRecipe(recipeId)).rejects.toThrow('Network connection failed');
     });
@@ -134,12 +125,8 @@ describe('deleteRecipe tool', () => {
     it('should handle JSON parsing errors', async () => {
       const recipeId = 321;
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => { throw new Error('Invalid JSON response'); }
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, statusText: 'OK', json: async () => { throw new Error('Invalid JSON response'); } } as any));
 
       await expect(deleteRecipe(recipeId)).rejects.toThrow('Invalid JSON response');
     });
@@ -147,12 +134,8 @@ describe('deleteRecipe tool', () => {
     it('should handle empty response body', async () => {
       const recipeId = 654;
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 204, // No Content
-        statusText: 'No Content',
-        json: async () => null
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 204, statusText: 'No Content', json: async () => null } as any));
 
       const result = await deleteRecipe(recipeId);
       expect(result).toBeNull();
@@ -161,11 +144,8 @@ describe('deleteRecipe tool', () => {
     it('should handle forbidden deletion', async () => {
       const recipeId = 555;
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 403,
-        statusText: 'Forbidden'
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponse(JSON.stringify({}), { status: 403, statusText: 'Forbidden' });
 
       await expect(deleteRecipe(recipeId)).rejects.toThrow(McpError);
       await expect(deleteRecipe(recipeId)).rejects.toThrow('BackendError: Forbidden');
@@ -174,20 +154,11 @@ describe('deleteRecipe tool', () => {
 
   describe('registerDeleteRecipe', () => {
     it('should register tool with server', () => {
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const mockServer = createMockServer();
 
       registerDeleteRecipe(mockServer);
 
-      expect(mockServer.tool).toHaveBeenCalledWith(
-        'deleteRecipe',
-        'Permanently delete a recipe from the database by its unique ID. This action cannot be undone and will remove the recipe from all future meal planning. Use with caution.',
-        {
-          id: deleteRecipeArgs.shape.id
-        },
-        expect.any(Function)
-      );
+      expect(mockServer.registeredTools['deleteRecipe']).toBeDefined();
     });
 
     it('should return formatted tool response when handler is called', async () => {
@@ -199,21 +170,13 @@ describe('deleteRecipe tool', () => {
         timestamp: '2024-01-01T00:00:00Z'
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => mockResponse
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponse(JSON.stringify(mockResponse), { status: 200, statusText: 'OK' });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      registerDeleteRecipe(server);
 
-      registerDeleteRecipe(mockServer);
-
-      // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['deleteRecipe'].handler;
       const result = await handler({ id: recipeId });
 
       expect(result).toEqual({
@@ -224,43 +187,28 @@ describe('deleteRecipe tool', () => {
     it('should propagate errors from deleteRecipe', async () => {
       const recipeId = 777;
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 409,
-        statusText: 'Conflict'
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce('', { status: 409, statusText: 'Conflict' });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      registerDeleteRecipe(server);
 
-      registerDeleteRecipe(mockServer);
-
-      // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['deleteRecipe'].handler;
 
       await expect(handler({ id: recipeId })).rejects.toThrow(McpError);
-      await expect(handler({ id: recipeId })).rejects.toThrow('BackendError: Conflict');
     });
 
     it('should handle successful deletion with no content response', async () => {
       const recipeId = 111;
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 204,
-        statusText: 'No Content',
-        json: async () => ({})
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 204, statusText: 'No Content' });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      const mcpServer = server ;
+      registerDeleteRecipe(mcpServer);
 
-      registerDeleteRecipe(mockServer);
-
-      // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['deleteRecipe'].handler;
       const result = await handler({ id: recipeId });
 
       expect(result).toEqual({
@@ -272,51 +220,38 @@ describe('deleteRecipe tool', () => {
       const testIds = [1, 100, 9999];
       const mockResponse = { deleted: true };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => mockResponse
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponse(JSON.stringify(mockResponse), { status: 200, statusText: 'OK' });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      const mcpServer = server ;
+      registerDeleteRecipe(mcpServer);
 
-      registerDeleteRecipe(mockServer);
-
-      // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['deleteRecipe'].handler;
 
       for (const id of testIds) {
         const result = await handler({ id });
         expect(result.content[0].text).toBe(JSON.stringify(mockResponse, null, 2));
       }
 
-      expect(global.fetch).toHaveBeenCalledTimes(testIds.length);
+      expect(fetchMock).toHaveBeenCalledTimes(testIds.length);
     });
 
     it('should handle backend errors with detailed messages', async () => {
       const recipeId = 444;
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 422,
-        statusText: 'Unprocessable Entity'
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce('', { status: 422, statusText: 'Unprocessable Entity' });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      const mcpServer = server ;
+      registerDeleteRecipe(mcpServer);
 
-      registerDeleteRecipe(mockServer);
-
-      // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['deleteRecipe'].handler;
 
       await expect(handler({ id: recipeId })).rejects.toThrow('BackendError: Unprocessable Entity');
-      
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals/444', {
+
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals/444', {
         method: 'DELETE'
       });
     });

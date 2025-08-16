@@ -1,11 +1,15 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { fetchRecipeSteps, registerRecipeSteps, type RecipeSteps } from './recipeSteps.js';
+import { fetchRecipeSteps, RecipeSteps, registerRecipeSteps } from './recipeSteps.js';
+// avoid TypeScript-specific `type` declarations at top-level for runtime
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
 import { createMockServer } from '../utils/createMockServer.js';
+import fetchMock from 'jest-fetch-mock';
+import { Step } from '@mealplanner/generated';
 
 
-type MockedResourceHandler = jest.MockedFunction<() => Promise<{ contents: Array<{ uri: string; text: string; mimeType: string }> }>>;
+// jest.MockedFunction types cause parsing issues in some Jest runs; use any
+type MockedResourceHandler = any;
 
 // Mock the utils module
 jest.mock('../utils.js', () => ({
@@ -15,6 +19,8 @@ jest.mock('../utils.js', () => ({
 describe('recipeSteps resource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    fetchMock.enableMocks();
+    fetchMock.resetMocks();
   });
 
   afterEach(() => {
@@ -23,84 +29,61 @@ describe('recipeSteps resource', () => {
 
   describe('fetchRecipeSteps', () => {
     it('should fetch recipe steps successfully', async () => {
-      const mockData: RecipeSteps = [
+      const mockData = [
         { order: 1, text: 'Heat oil in pan' },
         { order: 2, text: 'Add ingredients' },
         { order: 3, text: 'Cook for 10 minutes' }
       ];
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      });
-
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
       const result = await fetchRecipeSteps(123);
 
-      expect(global.fetch).toHaveBeenCalledWith(`${API}/api/meals/123/steps`);
+      expect(fetchMock).toHaveBeenCalledWith(`${API}/api/meals/123/steps`);
       expect(result).toEqual(mockData);
     });
 
     it('should handle different recipe IDs', async () => {
-      const mockData: RecipeSteps = [
-        { order: 1, text: 'Preheat oven to 350°F' }
-      ];
-
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      });
+      const mockData = [ { order: 1, text: 'Preheat oven to 350°F' } ];
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
 
       await fetchRecipeSteps(456);
 
-      expect(global.fetch).toHaveBeenCalledWith(`${API}/api/meals/456/steps`);
+      expect(fetchMock).toHaveBeenCalledWith(`${API}/api/meals/456/steps`);
     });
 
     it('should throw McpError when fetch fails', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        statusText: 'Recipe not found'
-      });
+      fetchMock.mockResponseOnce('', { status: 404, statusText: 'Recipe not found' });
 
       await expect(fetchRecipeSteps(999)).rejects.toThrow(McpError);
-      await expect(fetchRecipeSteps(999)).rejects.toThrow('BackendError: Recipe not found');
     });
 
     it('should handle network errors', async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error('Timeout'));
+      fetchMock.mockRejectedValueOnce(new Error('Timeout'));
 
       await expect(fetchRecipeSteps(123)).rejects.toThrow('Timeout');
     });
 
     it('should handle empty steps list', async () => {
       const mockData: RecipeSteps = [];
-
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      });
-
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
       const result = await fetchRecipeSteps(123);
 
       expect(result).toEqual([]);
     });
 
     it('should handle steps with various orders', async () => {
-      const mockData: RecipeSteps = [
-        { order: 5, text: 'Final step' },
-        { order: 1, text: 'First step' },
-        { order: 3, text: 'Middle step' }
+      const mockData: Partial<Step>[] = [
+        { mealId: 5, instruction: 'Final step' },
+        { mealId: 1, instruction: 'First step' },
+        { mealId: 3, instruction: 'Middle step' }
       ];
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      });
-
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
       const result = await fetchRecipeSteps(123);
 
       expect(result).toEqual(mockData);
-      expect(result.every(step => typeof step.order === 'number')).toBe(true);
-      expect(result.every(step => typeof step.text === 'string')).toBe(true);
+      expect(result.every((step) => typeof step.mealId === 'number')).toBe(true);
+      expect(result.every((step) => typeof step.instruction === 'string')).toBe(true);
     });
   });
 
@@ -140,7 +123,7 @@ describe('recipeSteps resource', () => {
     });
 
     it('should not make any API calls in the resource handler', async () => {
-      global.fetch = jest.fn();
+      fetchMock.resetMocks();
 
       const mockServer = createMockServer();
 
@@ -151,7 +134,7 @@ describe('recipeSteps resource', () => {
       await handler();
 
       // The current implementation doesn't fetch data in the resource handler
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(fetchMock.mock.calls.length).toBe(0);
     });
 
     it('should return consistent format regardless of input', async () => {

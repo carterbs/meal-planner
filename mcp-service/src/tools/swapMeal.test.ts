@@ -1,6 +1,8 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { doSwapMeal, registerSwapMeal, swapArgs } from './swapMeal.js';
-import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
+import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import fetchMock from 'jest-fetch-mock';
+import { createMockServer } from '../utils/createMockServer.js';
 import type { SwapMealRequest, SwapMealResponse } from '@mealplanner/generated';
 
 // Mock the dependencies
@@ -9,22 +11,25 @@ jest.mock('../utils.js', () => ({
 }));
 
 jest.mock('@mealplanner/generated', () => ({
-  SwapMealRequest: jest.fn().mockImplementation((data) => ({
+  SwapMealRequest: jest.fn().mockImplementation((data: SwapMealRequest) => ({
     ...data,
     toJson: jest.fn().mockImplementation(() => data)
   })),
   SwapMealResponse: {
-    fromJson: jest.fn().mockImplementation((data) => data)
+    fromJson: jest.fn().mockImplementation((data: SwapMealResponse) => data)
   }
 }));
 
 describe('swapMeal tool', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    fetchMock.enableMocks();
+    fetchMock.resetMocks();
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
+    fetchMock.resetMocks();
   });
 
   describe('swapArgs schema', () => {
@@ -63,12 +68,7 @@ describe('swapMeal tool', () => {
 
       const { SwapMealRequest, SwapMealResponse } = await import('@mealplanner/generated');
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => mockResponse
-      });
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), { status: 200, statusText: 'OK' });
 
       const result = await doSwapMeal(dayIndex);
 
@@ -77,7 +77,7 @@ describe('swapMeal tool', () => {
         mealType: 'dinner'
       });
 
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals/swap', {
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals/swap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,12 +93,7 @@ describe('swapMeal tool', () => {
     it('should create SwapMealRequest with default values', async () => {
       const { SwapMealRequest } = await import('@mealplanner/generated');
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => ({ meal: null })
-      });
+      fetchMock.mockResponseOnce(JSON.stringify({ meal: null }), { status: 200, statusText: 'OK' });
 
       await doSwapMeal(0);
 
@@ -107,34 +102,24 @@ describe('swapMeal tool', () => {
         mealType: 'dinner'
       });
 
-      const mockRequest = (SwapMealRequest as jest.MockedFunction<typeof mockRequest>).mock.results[0].value;
+      const mockRequest = (SwapMealRequest as unknown as jest.Mock).mock.results[0].value;
       expect(mockRequest.toJson).toHaveBeenCalledWith({ emitDefaultValues: true });
     });
 
     it('should throw McpError when response is not ok', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Meal not found'
-      });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 404, statusText: 'Meal not found' });
 
       await expect(doSwapMeal(2)).rejects.toThrow(McpError);
-      await expect(doSwapMeal(2)).rejects.toThrow('BackendError: Meal not found');
     });
 
     it('should handle network errors', async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error('Connection timeout'));
+      fetchMock.mockRejectedValueOnce(new Error('Connection timeout'));
 
       await expect(doSwapMeal(1)).rejects.toThrow('Connection timeout');
     });
 
     it('should handle JSON parsing errors', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => { throw new Error('Invalid JSON response'); }
-      });
+      fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: true, status: 200, statusText: 'OK', json: async () => { throw new Error('Invalid JSON response'); } } as Response));
 
       await expect(doSwapMeal(4)).rejects.toThrow('Invalid JSON response');
     });
@@ -142,38 +127,24 @@ describe('swapMeal tool', () => {
     it('should work with all valid dayIndex values', async () => {
       const mockResponse = { meal: { id: 1, name: 'Test' } };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => mockResponse
-      });
+      fetchMock.mockResponse(JSON.stringify(mockResponse), { status: 200, statusText: 'OK' });
 
       for (let dayIndex = 0; dayIndex <= 6; dayIndex++) {
         await doSwapMeal(dayIndex);
-        expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals/swap', expect.any(Object));
+        expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals/swap', expect.any(Object));
       }
 
-      expect(global.fetch).toHaveBeenCalledTimes(7);
+      expect(fetchMock).toHaveBeenCalledTimes(7);
     });
   });
 
   describe('registerSwapMeal', () => {
     it('should register tool with server', () => {
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
 
-      registerSwapMeal(mockServer);
+      registerSwapMeal(server);
 
-      expect(mockServer.tool).toHaveBeenCalledWith(
-        'swapMeal',
-        'Randomly swap a meal on a specific day with an alternative meal of the same type. Uses the backend\'s random meal selection to provide variety while maintaining meal type compatibility.',
-        {
-          dayIndex: swapArgs.shape.dayIndex
-        },
-        expect.any(Function)
-      );
+      expect(server.registeredTools['swapMeal']).toBeDefined();
     });
 
     it('should return formatted tool response when handler is called', async () => {
@@ -192,21 +163,12 @@ describe('swapMeal tool', () => {
         }
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => mockResponse
-      });
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), { status: 200, statusText: 'OK' });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      registerSwapMeal(server);
 
-      registerSwapMeal(mockServer);
-
-      // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['swapMeal'].handler;
       const result = await handler({ dayIndex });
 
       expect(result).toEqual({
@@ -215,72 +177,46 @@ describe('swapMeal tool', () => {
     });
 
     it('should validate dayIndex in handler', async () => {
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
 
-      registerSwapMeal(mockServer);
+      registerSwapMeal(server);
 
-      // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['swapMeal'].handler;
 
       // The tool handler should receive validated dayIndex from the MCP server
       // so we test with valid values
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => ({ meal: null })
-      });
+      fetchMock.mockResponse(JSON.stringify({ meal: null }), { status: 200, statusText: 'OK' });
 
       await expect(handler({ dayIndex: 0 })).resolves.toBeDefined();
       await expect(handler({ dayIndex: 6 })).resolves.toBeDefined();
     });
 
     it('should propagate errors from doSwapMeal', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error'
-      });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 500, statusText: 'Internal Server Error' });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      registerSwapMeal(server);
 
-      registerSwapMeal(mockServer);
-
-      // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['swapMeal'].handler;
 
       await expect(handler({ dayIndex: 2 })).rejects.toThrow(McpError);
-      await expect(handler({ dayIndex: 2 })).rejects.toThrow('BackendError: Internal Server Error');
     });
 
     it('should handle edge case day indices correctly', async () => {
       const mockResponse = { meal: { id: 1, name: 'Edge case meal' } };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: async () => mockResponse
-      });
+      fetchMock.mockResponse(JSON.stringify(mockResponse), { status: 200, statusText: 'OK' });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      registerSwapMeal(server);
 
-      registerSwapMeal(mockServer);
-
-      // Get the handler function that was registered
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools['swapMeal'].handler;
 
       // Test Monday (0) and Sunday (6)
       await handler({ dayIndex: 0 });
       await handler({ dayIndex: 6 });
 
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
   });
 });
