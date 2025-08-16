@@ -3,6 +3,7 @@ import { fetchRecipes, registerRecipes, type RecipeSummary } from './recipes.js'
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API } from '../utils.js';
 import { createMockServer } from '../utils/createMockServer.js';
+import fetchMock from 'jest-fetch-mock';
 
 
 type MockedResourceHandler = jest.MockedFunction<() => Promise<{ contents: Array<{ uri: string; text: string; mimeType: string }> }>>;
@@ -28,29 +29,27 @@ describe('recipes resource', () => {
         { id: 2, name: 'Steak', redMeat: true, effort: 'HIGH' }
       ];
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
 
       const result = await fetchRecipes();
 
-      expect(global.fetch).toHaveBeenCalledWith(`${API}/api/meals`);
+      expect(fetchMock).toHaveBeenCalledWith(`${API}/api/meals`);
       expect(result).toEqual(mockData);
     });
 
     it('should throw McpError when fetch fails', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        statusText: 'Not Found'
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce('', { status: 404, statusText: 'Not Found' });
 
-      await expect(fetchRecipes()).rejects.toThrow(McpError);
-      await expect(fetchRecipes()).rejects.toThrow('BackendError: Not Found');
+      const p = fetchRecipes();
+      await expect(p).rejects.toThrow(McpError);
+      await expect(p).rejects.toThrow('BackendError: Not Found');
     });
 
     it('should handle network errors', async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error('Connection refused'));
+      fetchMock.enableMocks();
+      fetchMock.mockRejectedValueOnce(new Error('Connection refused'));
 
       await expect(fetchRecipes()).rejects.toThrow('Connection refused');
     });
@@ -58,10 +57,8 @@ describe('recipes resource', () => {
     it('should handle empty recipe list', async () => {
       const mockData: RecipeSummary[] = [];
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
 
       const result = await fetchRecipes();
 
@@ -92,10 +89,8 @@ describe('recipes resource', () => {
         { id: 2, name: 'Burger', redMeat: true, effort: 'MED' }
       ];
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
 
       const mockServer = createMockServer();
 
@@ -115,10 +110,8 @@ describe('recipes resource', () => {
     });
 
     it('should propagate errors from fetchRecipes', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        statusText: 'Service Unavailable'
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce('', { status: 503, statusText: 'Service Unavailable' });
 
       const mockServer = createMockServer();
 
@@ -127,8 +120,9 @@ describe('recipes resource', () => {
       // Get the handler function that was registered
       const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
 
-      await expect(handler()).rejects.toThrow(McpError);
-      await expect(handler()).rejects.toThrow('BackendError: Service Unavailable');
+      const p = handler();
+      await expect(p).rejects.toThrow(McpError);
+      await expect(p).rejects.toThrow('BackendError: Service Unavailable');
     });
 
     it('should handle various effort levels', async () => {
@@ -138,10 +132,9 @@ describe('recipes resource', () => {
         { id: 3, name: 'Beef Wellington', redMeat: true, effort: 'HIGH' }
       ];
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      });
+
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
 
       const result = await fetchRecipes();
 

@@ -1,5 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { retryFetch, API } from './utils.js';
+import fetchMock from 'jest-fetch-mock';
 
 describe('utils', () => {
   beforeEach(() => {
@@ -38,7 +39,9 @@ describe('utils', () => {
         json: async () => ({ data: 'test' })
       };
       
-      global.fetch = jest.fn().mockResolvedValue(mockResponse);
+      fetchMock.enableMocks();
+      fetchMock.resetMocks();
+      fetchMock.mockResolvedValue(mockResponse as any);
       console.log = jest.fn();
 
       const result = await retryFetch(mockUrl);
@@ -56,10 +59,11 @@ describe('utils', () => {
       const failResponse = { ok: false, status: 500 };
       const successResponse = { ok: true, status: 200 };
 
-      global.fetch = jest.fn()
-        .mockResolvedValueOnce(failResponse)
-        .mockResolvedValueOnce(failResponse)
-        .mockResolvedValueOnce(successResponse);
+      fetchMock.enableMocks();
+      fetchMock.resetMocks();
+      fetchMock.mockResolvedValueOnce(failResponse as any);
+      fetchMock.mockResolvedValueOnce(failResponse as any);
+      fetchMock.mockResolvedValueOnce(successResponse as any);
       console.log = jest.fn();
 
       const result = await retryFetch(mockUrl, {}, 5, 10);
@@ -74,10 +78,11 @@ describe('utils', () => {
       const error = new Error('Network error');
       const successResponse = { ok: true, status: 200 };
 
-      global.fetch = jest.fn()
-        .mockRejectedValueOnce(error)
-        .mockRejectedValueOnce(error)
-        .mockResolvedValueOnce(successResponse);
+      fetchMock.enableMocks();
+      fetchMock.resetMocks();
+      fetchMock.mockRejectedValueOnce(error);
+      fetchMock.mockRejectedValueOnce(error);
+      fetchMock.mockResolvedValueOnce(successResponse as any);
       console.log = jest.fn();
 
       const result = await retryFetch(mockUrl, {}, 5, 10);
@@ -90,7 +95,9 @@ describe('utils', () => {
 
     it('should throw error after max retries with non-ok responses', async () => {
       const failResponse = { ok: false, status: 500 };
-      global.fetch = jest.fn().mockResolvedValue(failResponse);
+      fetchMock.enableMocks();
+      fetchMock.resetMocks();
+      fetchMock.mockResolvedValue(failResponse as any);
       console.log = jest.fn();
 
       await expect(retryFetch(mockUrl, {}, 3, 10)).rejects.toThrow(
@@ -102,7 +109,9 @@ describe('utils', () => {
 
     it('should throw error after max retries with fetch errors', async () => {
       const error = new Error('Network error');
-      global.fetch = jest.fn().mockRejectedValue(error);
+      fetchMock.enableMocks();
+      fetchMock.resetMocks();
+      fetchMock.mockRejectedValue(error);
       console.log = jest.fn();
 
       await expect(retryFetch(mockUrl, {}, 3, 10)).rejects.toThrow(
@@ -120,7 +129,9 @@ describe('utils', () => {
         body: JSON.stringify({ test: 'data' })
       };
       
-      global.fetch = jest.fn().mockResolvedValue(mockResponse);
+      fetchMock.enableMocks();
+      fetchMock.resetMocks();
+      fetchMock.mockResolvedValue(mockResponse as any);
       console.log = jest.fn();
 
       await retryFetch(mockUrl, options);
@@ -133,7 +144,9 @@ describe('utils', () => {
 
     it('should use custom retry parameters', async () => {
       const failResponse = { ok: false, status: 500 };
-      global.fetch = jest.fn().mockResolvedValue(failResponse);
+      fetchMock.enableMocks();
+      fetchMock.resetMocks();
+      fetchMock.mockResolvedValue(failResponse as any);
       console.log = jest.fn();
 
       await expect(retryFetch(mockUrl, {}, 2, 5)).rejects.toThrow(
@@ -144,7 +157,9 @@ describe('utils', () => {
     });
 
     it('should handle timeout via AbortSignal', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+      fetchMock.enableMocks();
+      fetchMock.resetMocks();
+      fetchMock.mockResolvedValue({ ok: true, status: 200 } as any);
       console.log = jest.fn();
 
       await retryFetch(mockUrl);

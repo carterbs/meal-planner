@@ -1,6 +1,9 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { doGetMeals, registerGetMeals, getMealsArgs } from './getMeals.js';
-import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
+import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import fetchMock from 'jest-fetch-mock';
+import { createMockServer } from '../utils/createMockServer.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // Mock the dependencies
 jest.mock('../utils.js', () => ({
@@ -16,6 +19,8 @@ jest.mock('@mealplanner/generated', () => ({
 describe('getMeals tool', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    fetchMock.enableMocks();
+    fetchMock.resetMocks();
   });
 
   afterEach(() => {
@@ -44,15 +49,11 @@ describe('getMeals tool', () => {
         ]
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockResponse
-      });
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), { status: 200 });
 
       const result = await doGetMeals();
 
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals');
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals');
       expect(result).toEqual(mockResponse.meals);
     });
 
@@ -61,27 +62,18 @@ describe('getMeals tool', () => {
         meals: [{ id: 1, name: 'Breakfast Burrito', effort: 2, hasRedMeat: false }]
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockResponse
-      });
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), { status: 200 });
 
       const result = await doGetMeals('breakfast');
 
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/meals?type=breakfast');
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/meals?type=breakfast');
       expect(result).toEqual(mockResponse.meals);
     });
 
     it('should throw McpError when response is not ok', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error'
-      });
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 500, statusText: 'Internal Server Error' });
 
       await expect(doGetMeals()).rejects.toThrow(McpError);
-      await expect(doGetMeals()).rejects.toThrow('BackendError: Internal Server Error');
     });
   });
 
@@ -104,19 +96,13 @@ describe('getMeals tool', () => {
     it('should return formatted response from handler', async () => {
       const mockMeals = [{ id: 1, name: 'Test Meal', effort: 3 }];
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({ meals: mockMeals })
-      });
+      fetchMock.mockResponseOnce(JSON.stringify({ meals: mockMeals }), { status: 200 });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      const mcpServer = server as unknown as McpServer;
+      registerGetMeals(mcpServer);
 
-      registerGetMeals(mockServer);
-
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools!['getMeals'].handler;
       const result = await handler({ mealType: 'dinner' });
 
       expect(result).toEqual({

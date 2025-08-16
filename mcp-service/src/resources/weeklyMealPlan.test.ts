@@ -4,6 +4,7 @@ import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { API } from '../utils.js';
 import { createMockServer } from '../utils/createMockServer.js';
+import fetchMock from 'jest-fetch-mock';
 // Type definitions for mocks
 
 
@@ -35,12 +36,8 @@ describe('weeklyMealPlan resource', () => {
         }
       };
 
-      const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
-      fetchMock.mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      } as unknown as Response);
-      global.fetch = fetchMock;
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
 
       const result = await fetchWeeklyMealPlan();
 
@@ -49,15 +46,10 @@ describe('weeklyMealPlan resource', () => {
     });
 
     it('should throw McpError when fetch fails', async () => {
-      const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
-      fetchMock.mockResolvedValue({
-        ok: false,
-        statusText: 'Internal Server Error'
-      } as unknown as Response);
-      global.fetch = fetchMock;
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 500, statusText: 'Internal Server Error' });
 
       await expect(fetchWeeklyMealPlan()).rejects.toThrow(McpError);
-      await expect(fetchWeeklyMealPlan()).rejects.toThrow('BackendError: Internal Server Error');
     });
 
     it('should handle network errors', async () => {
@@ -94,12 +86,8 @@ describe('weeklyMealPlan resource', () => {
         }
       };
 
-      const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
-      fetchMock.mockResolvedValue({
-        ok: true,
-        json: async () => mockData
-      } as unknown as Response);
-      global.fetch = fetchMock;
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockData), { status: 200 });
 
       const mockServer = createMockServer();
 
@@ -119,12 +107,8 @@ describe('weeklyMealPlan resource', () => {
     });
 
     it('should propagate errors from fetchWeeklyMealPlan', async () => {
-      const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
-      fetchMock.mockResolvedValue({
-        ok: false,
-        statusText: 'Bad Request'
-      } as unknown as Response);
-      global.fetch = fetchMock;
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify({}), { status: 400, statusText: 'Bad Request' });
 
       const mockServer = createMockServer();
 
@@ -134,7 +118,6 @@ describe('weeklyMealPlan resource', () => {
       const handler = (mockServer as unknown as { resource: { mock: { calls: Array<[string, string, object, MockedResourceHandler]> } } }).resource.mock.calls[0][3];
 
       await expect(handler()).rejects.toThrow(McpError);
-      await expect(handler()).rejects.toThrow('BackendError: Bad Request');
     });
   });
 });

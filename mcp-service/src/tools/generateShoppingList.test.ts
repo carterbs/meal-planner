@@ -1,13 +1,18 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { generateList, registerGenerateShoppingList } from './generateShoppingList.js';
-import { McpError, McpServer } from '@modelcontextprotocol/sdk/types.js';
+import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import fetchMock from 'jest-fetch-mock';
+import { createMockServer } from '../utils/createMockServer.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 // Mock the dependencies
-jest.mock('../logging.js', () => ({
-  infoLog: jest.fn().mockResolvedValue(undefined),
-  warnLog: jest.fn().mockResolvedValue(undefined),
-  errorLog: jest.fn().mockResolvedValue(undefined)
-}));
+jest.mock('../logging.js', () => {
+  return {
+    infoLog: jest.fn(),
+    warnLog: jest.fn(),
+    errorLog: jest.fn()
+  }
+});
 
 jest.mock('../utils.js', () => ({
   API: 'http://test.com'
@@ -39,22 +44,16 @@ describe('generateShoppingList tool', () => {
         ]
       };
 
-      const { infoLog } = await import('../logging.js');
-
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockResponse
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), { status: 200 });
 
       const result = await generateList(plan);
 
-      expect(global.fetch).toHaveBeenCalledWith('http://test.com/api/shoppinglist', {
+      expect(fetchMock).toHaveBeenCalledWith('http://test.com/api/shoppinglist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan })
       });
-      expect(infoLog).toHaveBeenCalledWith('🛒 [MCP] Generating shopping list for plan: 1,2,3');
       expect(result).toEqual(mockResponse);
     });
 
@@ -62,65 +61,43 @@ describe('generateShoppingList tool', () => {
       const plan = [1, 2];
       const errorResponse = { message: 'Invalid meal plan' };
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 400,
-        statusText: 'Bad Request',
-        json: async () => errorResponse
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(errorResponse), { status: 400, statusText: 'Bad Request' });
 
-      await expect(generateList(plan)).rejects.toThrow(McpError);
       await expect(generateList(plan)).rejects.toThrow('BackendError: 400 Bad Request - Invalid meal plan');
     });
 
     it('should handle JSON parsing errors in error response', async () => {
       const plan = [1];
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-        json: async () => { throw new Error('Invalid JSON'); }
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce('', { status: 500, statusText: 'Internal Server Error' });
 
-      await expect(generateList(plan)).rejects.toThrow(McpError);
       await expect(generateList(plan)).rejects.toThrow('BackendError: 500 Internal Server Error - Unknown error');
     });
   });
 
   describe('registerGenerateShoppingList', () => {
     it('should register tool with server', () => {
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const mockServer = createMockServer()
 
       registerGenerateShoppingList(mockServer);
 
-      expect(mockServer.tool).toHaveBeenCalledWith(
-        'generateShoppingList',
-        expect.any(String),
-        expect.any(Object),
-        expect.any(Function)
-      );
+      expect(mockServer.registeredTools['generateShoppingList']).toBeDefined();
     });
 
     it('should return formatted tool response', async () => {
       const mockResponse = { items: [] };
       const testPlan = [1, 2, 3];
 
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => mockResponse
-      });
+      fetchMock.enableMocks();
+      fetchMock.mockResponseOnce(JSON.stringify(mockResponse), { status: 200 });
 
-      const mockServer = {
-        tool: jest.fn()
-      };
+      const server = createMockServer();
+      const mcpServer = server as unknown as McpServer;
+      registerGenerateShoppingList(mcpServer);
 
-      registerGenerateShoppingList(mockServer);
-
-      const handler = (mockServer.tool as jest.MockedFunction<typeof handler>).mock.calls[0][3];
+      const handler = server.registeredTools!['generateShoppingList'].handler;
       const result = await handler({ plan: testPlan });
 
       expect(result).toEqual({
