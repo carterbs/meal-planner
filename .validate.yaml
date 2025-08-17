@@ -1,21 +1,24 @@
 services:
   - name: ui
     type: node
-    test: "cd ui && yarn test --silent"
-    lint: "cd ui && yarn lint --quiet"
-    build: "cd ui && yarn build"
+    dir: "./ui"
+    test: "yarn test --silent"
+    lint: "yarn lint --quiet"
+    build: "yarn build"
 
   - name: agent-service
     type: node
-    test: "cd agent-service && yarn test --silent"
-    lint: "cd agent-service && yarn lint --quiet"
-    build: "cd agent-service && yarn build"
+    dir: "./agent-service"
+    test: "yarn test --silent"
+    lint: "yarn lint --quiet"
+    build: "yarn build"
 
   - name: mcp-service
     type: node
-    test: "cd mcp-service && yarn test --silent"
-    lint: "cd mcp-service && yarn lint --quiet"
-    build: "cd mcp-service && yarn build"
+    dir: "./mcp-service"
+    test: "yarn test --silent"
+    lint: "yarn lint --quiet"
+    build: "yarn build"
 
   - name: meal-service
     type: go

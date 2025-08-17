@@ -180,8 +180,8 @@ func (o *Orchestrator) ExecuteWithFactory(ctx context.Context, opts Options, fac
 				if spinner, exists := spinners[service.Name]; exists {
 					spinner.UpdateText(fmt.Sprintf("%s: %s running...", service.Name, opts.Phase))
 				}
-			} else if !opts.JSON {
-				// If spinners are disabled and we're not outputting JSON, print lightweight progress
+			} else if !opts.JSON && opts.Verbose {
+				// If spinners are disabled and we're in verbose mode, print lightweight progress
 				fmt.Fprintf(o.output, "%s %s...\n", phaseAction, service.Name)
 			}
 
