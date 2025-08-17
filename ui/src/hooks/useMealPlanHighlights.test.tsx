@@ -146,6 +146,47 @@ describe('useMealPlanHighlights', () => {
     expect(screen.getByTestId('highlight-count').textContent).toBe('0');
   });
 
+  it('replaces highlights when multiple changes occur - only shows most recent changes', () => {
+    const base = makePlan([
+      { dayIndex: 2, mealType: 'lunch', mealId: 1 },
+      { dayIndex: 1, mealType: 'dinner', mealId: 2 }
+    ]);
+    
+    render(<HookHarness initialPlan={base} />);
+
+    // First change: Remove wednesday lunch (change meal ID to simulate removal)
+    const firstChange = makePlan([
+      { dayIndex: 2, mealType: 'lunch', mealId: 999 }, // changed
+      { dayIndex: 1, mealType: 'dinner', mealId: 2 }   // unchanged
+    ]);
+
+    act(() => {
+      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(firstChange);
+    });
+
+    // Should highlight wednesday lunch
+    let highlights: Set<string> = (globalThis as unknown as { __harness: { getHighlights: () => Set<string> } }).__harness.getHighlights();
+    expect(highlights.has('2-lunch')).toBe(true);
+    expect(highlights.has('1-dinner')).toBe(false);
+    expect(highlights.size).toBe(1);
+
+    // Second change: Swap dinner on tuesday (before first timeout clears)
+    const secondChange = makePlan([
+      { dayIndex: 2, mealType: 'lunch', mealId: 999 }, // still different from original
+      { dayIndex: 1, mealType: 'dinner', mealId: 555 } // changed
+    ]);
+
+    act(() => {
+      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(secondChange);
+    });
+
+    // Should only highlight tuesday dinner, not wednesday lunch
+    highlights = (globalThis as unknown as { __harness: { getHighlights: () => Set<string> } }).__harness.getHighlights();
+    expect(highlights.has('1-dinner')).toBe(true);
+    expect(highlights.has('2-lunch')).toBe(false); // This should NOT be highlighted
+    expect(highlights.size).toBe(1);
+  });
+
   it('cleans up pending timeout on unmount', () => {
     const base = makePlan([{ dayIndex: 0, mealType: 'dinner', mealId: 1 }]);
     const { unmount } = render(<HookHarness initialPlan={base} />);
