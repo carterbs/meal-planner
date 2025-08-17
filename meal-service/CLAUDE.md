@@ -21,8 +21,7 @@ gateway.
 6. **Error handling.**  Convert database errors into appropriate gRPC
    status codes.  Log detailed errors via the logging service while
    returning a concise message to clients.
-7. **Validation.**  This service is written in Go, but follow
-   repository‑wide practices: always lint, run tests, and the build.
+7. **Validation.**  Use the validate tool for testing, linting, and building: `yarn test|lint|build --service meal-service`
 
 ## Testing guidelines
 
@@ -38,4 +37,4 @@ gateway.
 3. Implement a handler in `internal/handlers`.
 4. Write unit tests covering the service and storage layers.
 5. Update the API gateway to expose the new endpoint.
-7. Run build, lint, and tests. before committing.
+6. Run `yarn test lint build --service meal-service` from the root of the repo before committing.

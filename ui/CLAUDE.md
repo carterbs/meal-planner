@@ -37,15 +37,15 @@ clients generated from the proto definitions.
 
 ## Development commands
 
-Run these commands from the root of this directory:
+Use the validate tool from the repository root for testing, linting, and building:
 
-* `yarn install` – Install dependencies.
-* `yarn dev` – Start the Vite development server with HMR.
-* `yarn build` – Build the production bundle.
-* `yarn test` – Run unit tests using Vitest and React
-  Testing Library.
-* `yarn lint` – Run ESLint and Prettier.  The project uses
-  strict rules to enforce type safety and code style.
+* `yarn test --service ui` – Run unit tests
+* `yarn lint --service ui` – Run ESLint and Prettier
+* `yarn build --service ui` – Build the production bundle
+
+For development, run from this directory:
+* `yarn install` – Install dependencies
+* `yarn dev` – Start the Vite development server with HMR
 
 ## Implementation guidelines
 
@@ -84,4 +84,5 @@ Run these commands from the root of this directory:
    ones as needed.
    navigation components.
 4. Write tests covering user interactions and error states.
-5. Update this `CLAUDE.md` if you introduce new patterns or utilities.
+5. Run `yarn test lint build --service ui` from the root directory before committing.
+6. Update this `CLAUDE.md` if you introduce new patterns or utilities.
