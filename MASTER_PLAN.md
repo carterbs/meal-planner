@@ -1,10 +1,6 @@
 ## Docker based "prod" env
 For running on my linux box.
 
-# Bugs
-- Background of the plan area is mint green. should match the beige of the chat header.
-- Alignment of the meals looks off. Breafkast is inset a little on certain days while lunch and dinner are aligned.
-
 ## Tasks
 - Have AI normalize all of the ingredients one-time
 - Also have AI normalize ingredients when inserting into the DB
