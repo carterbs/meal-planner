@@ -145,3 +145,67 @@ MCP_SERVICE_ADDR=localhost:3001      # MCP service
 - Unit tests in `swagger_test.go`
 - Integration tests via e2e scripts
 - Linting enforces Swagger annotation consistency
+
+# `api-gateway` – HTTP ↔︎ gRPC bridge in Go
+
+## Purpose
+
+The API gateway is a Go service that exposes a REST/HTTP interface to the
+outside world and proxies requests to the internal gRPC services (agent,
+meal, logging, etc.).  It uses the [`grpc-gateway`](https://github.com/grpc-ecosystem/grpc-gateway)
+runtime to translate between HTTP JSON requests and gRPC messages defined
+in `proto/`.  This service is also responsible for serving the generated
+OpenAPI/Swagger documentation.
+
+## Directory structure
+
+* `cmd/api-gateway/` – The entry point for the gateway.  Contains a
+  `main.go` that reads configuration and starts the HTTP server.
+* `internal/` – Private packages for handling request routing and
+  implementing translation logic.  Separate modules for each downstream
+  service keep the code modular.
+* `proto/` – Generated Go stubs from the shared `.proto` files.  Do not
+  edit manually; update via `make proto` in the repository root.
+* `swagger/` – The generated OpenAPI specification and related static
+  files.  Use `make swagger` to update this when proto files change.
+
+## Development commands
+
+From the repository root run:
+
+* `yarn workspace api-gateway install` – Install any Node dependencies if
+  you extend the gateway’s Swagger tooling.
+* `make proto` – Regenerate Go stubs used by the gateway.
+* `make gateway` – Build the API gateway binary.  Equivalent to
+  `go build ./cmd/api-gateway`.
+* `make gateway-run` – Start the gateway in development mode.
+* `make gateway-test` – Run Go tests.  Tests live under `internal/` and
+  should use Go’s `testing` package with `httptest`.
+* `make swagger` – Generate the OpenAPI JSON (`api.swagger.json`) from
+  the proto definitions.
+
+You can also use `docker-compose up api-gateway` to run the gateway
+alongside its dependencies.
+
+## Implementation guidelines
+
+1. **Single source of truth.**  Do not define API schemas in Go structs.
+   All request/response types are defined in `.proto` files inside the
+   `proto` directory.  When adding a new REST endpoint you must first
+   extend the relevant `.proto` file in the `proto` repository, assign
+   appropriate field numbers, regenerate stubs and update downstream
+   services accordingly.
+2. **Modular handlers.**  Each gRPC method should have a dedicated
+   HTTP handler function under `internal/`.  Keep translation logic
+   focused; do not embed business logic in the gateway.  Forward the
+   request to the gRPC client and return the response.
+3. **Error handling.**  Convert gRPC errors to structured HTTP responses
+   with meaningful status codes.  Use a consistent error format across
+   endpoints.
+4. **Swagger docs.**  When you add or update endpoints, regenerate the
+   Swagger specification by running `yarn generate_code` from the root
+   of the repository (`api.swagger.json`) and commit the updated
+   file.  Do not hand‑edit the JSON; it is generated.
+5. **Plan mode for new APIs.**  Before adding a new route, plan the
+   changes: update the proto, regenerate code, implement handlers and
+   tests.

@@ -1,6 +1,5 @@
-## MCP Primer
-Below is a “need-to-know” overview of the Model Context Protocol (MCP) – Server-side, rev 2025-06-18.
-### Big-picture takeaway
+# MCP Primer
+## Big-picture takeaway
 
 MCP is a JSON-RPC 2.0–based protocol that lets LLM clients discover prompts (user-controlled templates), resources (app-controlled context blobs), and tools (model-controlled functions) from servers.  A three-phase lifecycle (initialize → operate → shutdown) negotiates protocol version and capabilities; once established, structured messages let clients list, read, call, and subscribe to those primitives.  Revision 2025-06-18 is now the current spec, adds first-class structured tool output, removes JSON-RPC batching, and aligns servers with OAuth Resource-Server conventions for tighter auth.  ￼ ￼ ￼
 
@@ -29,9 +28,29 @@ All three return Content Blocks that may be text, image, audio, resource links, 
 	•	Servers declare a capabilities object during initialize; absent sub-keys mean the feature is unsupported.
 	•	Clients should only invoke RPCs that correspond to mutually agreed capabilities.  ￼
 
-⸻
+# `mcp-service` – Model Context Provider Service
 
-4. Versioning & compatibility
-	•	Specs are marked Draft → Current → Final; 2025-06-18 is Current.  ￼
-	•	Clients include an MCP-Protocol-Version header (for HTTP) after initialization.  ￼
-	•	If version mismatch occurs, servers reply with supported versions; clients may reconnect or abort.  ￼
+## Development commands
+* `yarn install` – Install dependencies.
+* `yarn dev` – Start the service in watch mode.
+* `yarn build` – Compile the TypeScript sources.
+* `yarn test` – Run unit tests with Jest.
+* `yarn lint` – Lint and format code with ESLint
+  and Prettier.
+
+You can also run `docker-compose up mcp-service` to start it alongside
+its dependencies.
+
+## Implementation guidelines
+1. **Strict typing.**  Do not use `any`.
+2. **Validation.**  Validate incoming requests using Zod or a similar
+   library at the handler level.  Reject invalid requests with
+   descriptive errors.
+3. **Testing philosophy.** Tests should exercise actual logic.  When 
+   mocking external services, provide realistic stub responses and avoid
+   asserting on the mocks themselves.
+4. **Plan mode.**  Before implementing a new feature, outline the
+   expected flow and interactions with other services.
+
+## Adding a new endpoint
+// todo

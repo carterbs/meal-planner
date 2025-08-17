@@ -54,11 +54,3 @@ client.LogWithDetails(ctx, "INFO", "Processing request", "req-456", "auth", fiel
 zapLogger := logger.NewZapLogger(client)
 zapLogger.Info("Message", zap.String("key", "value"))
 ```
-
-## Development Notes
-
-- No unit tests currently exist
-- Uses air for hot reloading in Docker development
-- Client includes diagnostic logging for connection troubleshooting
-- All logs written to `./logs/unified.log` with automatic rotation
-- Service registers itself with full method introspection on startup
