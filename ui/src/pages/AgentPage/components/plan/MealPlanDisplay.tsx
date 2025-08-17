@@ -116,7 +116,7 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                       data-testid={`meal-${key}`}
                       sx={{
                         display: 'grid',
-                        gridTemplateColumns: '80px 1fr auto',
+                        gridTemplateColumns: '90px 1fr auto',
                         alignItems: 'center',
                         gap: 1,
                         py: 0,
@@ -134,6 +134,8 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                           opacity: 0.5,
                           fontVariant: 'small-caps',
                           letterSpacing: '0.5px',
+                          textAlign: 'left',
+                          width: '100%',
                         }}
                       >
                         {e.mealType}

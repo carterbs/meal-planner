@@ -490,6 +490,7 @@ export const getAgentPageStyles = (colors: Colors) => ({
     flexDirection: 'column',
     borderRadius: 0,
     height: '100vh',
+    backgroundColor: colors.chatBg,
   } as SxProps<Theme>,
   chatHeader: {
     backgroundColor: colors.headerBg,
@@ -506,6 +507,7 @@ export const getAgentPageStyles = (colors: Colors) => ({
     display: 'flex',
     flexDirection: 'column',
     minHeight: 0,
+    backgroundColor: colors.chatBg,
     '&::-webkit-scrollbar': {
       width: '6px',
     },
@@ -593,6 +595,7 @@ export const getAgentPageStyles = (colors: Colors) => ({
     height: '100vh',
     display: 'flex',
     flexDirection: 'column',
+    backgroundColor: colors.headerBg,
   } as SxProps<Theme>,
   mealPlanPaper: {
     pt: 1,
