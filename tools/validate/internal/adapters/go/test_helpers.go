@@ -9,9 +9,9 @@ import (
 
 // TestFakeCommandRunner is a specialized fake command runner for testing.
 type TestFakeCommandRunner struct {
-	Commands      []*execx.FakeCommand
-	NextOutput    string
-	NextError     error
+	Commands        []*execx.FakeCommand
+	NextOutput      string
+	NextError       error
 	NextErrorOutput string
 }
 

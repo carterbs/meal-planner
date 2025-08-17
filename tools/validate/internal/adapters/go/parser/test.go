@@ -39,8 +39,8 @@ func ParseGoTestJSON(output string) (*runner.Result, error) {
 	}
 
 	var totalElapsed float64
-	packageResults := make(map[string]bool) // package -> passed
-	testResults := make(map[string]bool)    // test -> passed
+	packageResults := make(map[string]bool)  // package -> passed
+	testResults := make(map[string]bool)     // test -> passed
 	testOutputs := make(map[string][]string) // test -> output lines
 
 	scanner := bufio.NewScanner(strings.NewReader(output))
@@ -75,7 +75,7 @@ func ParseGoTestJSON(output string) (*runner.Result, error) {
 				// Individual test failed
 				testResults[event.Package+"/"+event.Test] = false
 				result.FailedCount++
-				
+
 				// Create failure from test output
 				testKey := event.Package + "/" + event.Test
 				outputs := testOutputs[testKey]
@@ -83,7 +83,7 @@ func ParseGoTestJSON(output string) (*runner.Result, error) {
 				if message == "" {
 					message = "Test failed"
 				}
-				
+
 				failure := runner.Failure{
 					File:    extractFileFromOutput(outputs),
 					Line:    extractLineFromOutput(outputs),

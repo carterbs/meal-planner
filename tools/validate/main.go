@@ -26,6 +26,35 @@ func (s *stringSliceFlag) Set(value string) error {
 	return nil
 }
 
+// parseFlags parses CLI flags for a given phase and returns orchestrator options.
+func parseFlags(phase runner.Phase, args []string) (orchestrator.Options, error) {
+	var opts orchestrator.Options
+	var services stringSliceFlag
+
+	flags := flag.NewFlagSet("validate", flag.ContinueOnError)
+	flags.BoolVar(&opts.Verbose, "verbose", false, "Show detailed output")
+	flags.BoolVar(&opts.JSON, "json", false, "Output results in JSON format")
+	flags.BoolVar(&opts.NoSpinner, "no-spinner", false, "Disable spinner animations")
+	flags.BoolVar(&opts.CI, "ci", false, "CI mode (implies --no-spinner, --json)")
+	flags.Var(&services, "service", "Filter to specific services (can be used multiple times)")
+	flags.StringVar(&opts.ConfigPath, "config", "", "Path to config file (default: .validate.yaml)")
+	flags.IntVar(&opts.MaxParallel, "max-parallel", 0, "Maximum parallel jobs (default: GOMAXPROCS)")
+
+	if err := flags.Parse(args); err != nil {
+		return opts, err
+	}
+
+	opts.Phase = phase
+	opts.Services = []string(services)
+
+	if opts.CI {
+		opts.JSON = true
+		opts.NoSpinner = true
+	}
+
+	return opts, nil
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		printHelp()
@@ -33,7 +62,7 @@ func main() {
 	}
 
 	command := os.Args[1]
-	
+
 	// Handle help
 	if command == "--help" || command == "-h" || command == "help" {
 		printHelp()
@@ -55,33 +84,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse flags
-	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	
-	var opts orchestrator.Options
-	var services stringSliceFlag
-	
-	flags.BoolVar(&opts.Verbose, "verbose", false, "Show detailed output")
-	flags.BoolVar(&opts.JSON, "json", false, "Output results in JSON format")
-	flags.BoolVar(&opts.NoSpinner, "no-spinner", false, "Disable spinner animations")
-	flags.BoolVar(&opts.CI, "ci", false, "CI mode (implies --no-spinner, --json)")
-	flags.Var(&services, "service", "Filter to specific services (can be used multiple times)")
-	flags.StringVar(&opts.ConfigPath, "config", "", "Path to config file (default: .validate.yaml)")
-	flags.IntVar(&opts.MaxParallel, "max-parallel", 0, "Maximum parallel jobs (default: GOMAXPROCS)")
-	
-	// Parse command line arguments (skip the command itself)
-	if err := flags.Parse(os.Args[2:]); err != nil {
+	opts, err := parseFlags(phase, os.Args[2:])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to parse flags: %v\n", err)
 		os.Exit(1)
-	}
-
-	// Set phase and services
-	opts.Phase = phase
-	opts.Services = []string(services)
-
-	// CI mode implies JSON and no spinner
-	if opts.CI {
-		opts.JSON = true
-		opts.NoSpinner = true
 	}
 
 	// Load configuration

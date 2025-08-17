@@ -15,27 +15,27 @@ type ESLintResult []ESLintFile
 
 // ESLintFile represents a single file in ESLint JSON output.
 type ESLintFile struct {
-	FilePath    string        `json:"filePath"`
-	Messages    []ESLintMessage `json:"messages"`
-	ErrorCount  int           `json:"errorCount"`
-	WarningCount int          `json:"warningCount"`
-	FixableErrorCount int     `json:"fixableErrorCount"`
-	FixableWarningCount int   `json:"fixableWarningCount"`
-	Source      string        `json:"source,omitempty"`
+	FilePath            string          `json:"filePath"`
+	Messages            []ESLintMessage `json:"messages"`
+	ErrorCount          int             `json:"errorCount"`
+	WarningCount        int             `json:"warningCount"`
+	FixableErrorCount   int             `json:"fixableErrorCount"`
+	FixableWarningCount int             `json:"fixableWarningCount"`
+	Source              string          `json:"source,omitempty"`
 }
 
 // ESLintMessage represents a single ESLint message (error or warning).
 type ESLintMessage struct {
-	RuleId      string  `json:"ruleId"`
-	Severity    int     `json:"severity"`
-	Message     string  `json:"message"`
-	Line        int     `json:"line"`
-	Column      int     `json:"column"`
-	NodeType    string  `json:"nodeType,omitempty"`
-	Source      string  `json:"source,omitempty"`
-	EndLine     int     `json:"endLine,omitempty"`
-	EndColumn   int     `json:"endColumn,omitempty"`
-	Fix         *ESLintFix `json:"fix,omitempty"`
+	RuleId    string     `json:"ruleId"`
+	Severity  int        `json:"severity"`
+	Message   string     `json:"message"`
+	Line      int        `json:"line"`
+	Column    int        `json:"column"`
+	NodeType  string     `json:"nodeType,omitempty"`
+	Source    string     `json:"source,omitempty"`
+	EndLine   int        `json:"endLine,omitempty"`
+	EndColumn int        `json:"endColumn,omitempty"`
+	Fix       *ESLintFix `json:"fix,omitempty"`
 }
 
 // ESLintFix represents a fix suggestion from ESLint.
@@ -117,11 +117,11 @@ func ParseESLintTextOutput(output string) *runner.Result {
 	}
 
 	lines := strings.Split(output, "\n")
-	
+
 	// Patterns for parsing ESLint text output
 	messagePattern := regexp.MustCompile(`^\s*(\d+):(\d+)\s+(error|warning)\s+(.+?)\s+([^\s]+)$`)
 	summaryPattern := regexp.MustCompile(`^✖\s+(\d+)\s+problems?\s+\((\d+)\s+errors?,\s+(\d+)\s+warnings?\)`)
-	
+
 	var currentFile string
 	var errorCount int
 
@@ -194,10 +194,10 @@ func parseESLintAlternativeFormat(output string) *runner.Result {
 	}
 
 	lines := strings.Split(output, "\n")
-	
+
 	// Pattern for file:line:column format
 	alternativePattern := regexp.MustCompile(`^(.+?):(\d+):(\d+):\s+(error|warning):\s+(.+)$`)
-	
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if matches := alternativePattern.FindStringSubmatch(line); len(matches) == 6 {

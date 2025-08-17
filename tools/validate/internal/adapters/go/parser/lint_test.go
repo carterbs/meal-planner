@@ -80,7 +80,7 @@ func TestParseGolangciLintJSON_WithIssues(t *testing.T) {
 	foundWarning := false
 	foundError := false
 	foundUnknown := false
-	
+
 	for _, failure := range result.Failures {
 		if contains(failure.Message, "deadcode") && failure.Type == "warning" {
 			foundWarning = true
@@ -91,14 +91,14 @@ func TestParseGolangciLintJSON_WithIssues(t *testing.T) {
 				t.Errorf("Expected warning line 15, got %d", failure.Line)
 			}
 		}
-		
+
 		if contains(failure.Message, "errcheck") && failure.Type == "error" {
 			foundError = true
 			if failure.Line != 20 {
 				t.Errorf("Expected error line 20, got %d", failure.Line)
 			}
 		}
-		
+
 		// Unknown severity should default to error
 		if contains(failure.Message, "govet") && failure.Type == "error" {
 			foundUnknown = true

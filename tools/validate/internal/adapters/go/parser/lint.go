@@ -18,17 +18,17 @@ type GolangciLintResult struct {
 
 // GolangciLintIssue represents a single issue from golangci-lint.
 type GolangciLintIssue struct {
-	FromLinter  string                 `json:"FromLinter"`
-	Text        string                 `json:"Text"`
-	Severity    string                 `json:"Severity"`
-	SourceLines []string               `json:"SourceLines"`
+	FromLinter  string                   `json:"FromLinter"`
+	Text        string                   `json:"Text"`
+	Severity    string                   `json:"Severity"`
+	SourceLines []string                 `json:"SourceLines"`
 	Replacement *GolangciLintReplacement `json:"Replacement"`
-	Pos         GolangciLintPos        `json:"Pos"`
+	Pos         GolangciLintPos          `json:"Pos"`
 }
 
 // GolangciLintReplacement represents a suggested replacement.
 type GolangciLintReplacement struct {
-	NeedOnlyDelete bool   `json:"NeedOnlyDelete"`
+	NeedOnlyDelete bool     `json:"NeedOnlyDelete"`
 	NewLines       []string `json:"NewLines"`
 }
 

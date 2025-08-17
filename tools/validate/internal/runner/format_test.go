@@ -304,7 +304,7 @@ func TestResult_FormatFailures_Truncation(t *testing.T) {
 	formatted := result.FormatFailures()
 
 	lines := strings.Split(formatted, "\n")
-	
+
 	// Should have MaxFailuresDisplayed failures + 1 truncation line
 	expectedLines := MaxFailuresDisplayed + 1
 	if len(lines) != expectedLines {
@@ -334,7 +334,7 @@ func TestResult_FormatFailures_ExactlyMaxDisplayed(t *testing.T) {
 	formatted := result.FormatFailures()
 
 	lines := strings.Split(formatted, "\n")
-	
+
 	// Should have exactly MaxFailuresDisplayed failures, no truncation line
 	if len(lines) != MaxFailuresDisplayed {
 		t.Errorf("Expected %d lines, got %d", MaxFailuresDisplayed, len(lines))

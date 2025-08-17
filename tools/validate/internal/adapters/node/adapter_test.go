@@ -103,7 +103,7 @@ func TestAdapter_Test_JSONMode(t *testing.T) {
 	}
 	adapter := New("test-service", service, executor).WithJSONMode(true)
 
-	// Set up the fake command 
+	// Set up the fake command
 	executor.SetNextResponse("", "", nil)
 	result := adapter.Test()
 
@@ -466,8 +466,8 @@ func TestAdapter_Build_NoCommand(t *testing.T) {
 func TestAdapter_Build_EmptyCommand(t *testing.T) {
 	executor := NewTestFakeCommandRunner()
 	service := &config.Service{
-		Name: "test-service",
-		Type: config.ServiceTypeNode,
+		Name:  "test-service",
+		Type:  config.ServiceTypeNode,
 		Build: "",
 	}
 	adapter := New("test-service", service, executor)
@@ -509,23 +509,23 @@ func TestAdapter_MoreHelperMethods(t *testing.T) {
 func TestTestFakeCommand_AllMethods(t *testing.T) {
 	executor := NewTestFakeCommandRunner()
 	executor.SetNextResponse("output", "error", nil)
-	
+
 	cmd := executor.CommandContext(nil, "test", "arg1", "arg2")
 	fakeCmd := cmd.(*TestFakeCommand)
-	
+
 	// Test all setter methods
 	fakeCmd.SetStdin(nil)
 	fakeCmd.SetEnv([]string{"ENV=test"})
-	
+
 	// Test Start and Wait methods
 	if err := fakeCmd.Start(); err != nil {
 		t.Errorf("Start() returned error: %v", err)
 	}
-	
+
 	if err := fakeCmd.Wait(); err != nil {
 		t.Errorf("Wait() returned error: %v", err)
 	}
-	
+
 	// Test String method
 	expected := "test arg1 arg2"
 	if got := fakeCmd.String(); got != expected {
@@ -541,10 +541,10 @@ func TestAdapter_runTestWithJSON_TempFileError(t *testing.T) {
 		Test: "jest",
 	}
 	adapter := New("test-service", service, executor)
-	
+
 	// This will test the fallback when temp file creation fails in real scenarios
 	result := adapter.Test()
-	
+
 	// Should fall back to regular mode
 	if result.Status != runner.StatusSuccess {
 		t.Errorf("Expected status %s, got %s", runner.StatusSuccess, result.Status)
@@ -598,7 +598,7 @@ func TestAdapter_Test_WithJestSilentReporter(t *testing.T) {
 	service := &config.Service{
 		Name: "test-service",
 		Type: config.ServiceTypeNode,
-		Test: "jest --coverage",  // Jest command without reporter
+		Test: "jest --coverage", // Jest command without reporter
 	}
 	adapter := New("test-service", service, executor)
 
@@ -615,7 +615,7 @@ func TestAdapter_Test_WithJestSilentReporter(t *testing.T) {
 	if len(executor.Commands) != 1 {
 		t.Fatalf("Expected 1 command, got %d", len(executor.Commands))
 	}
-	
+
 	cmd := executor.Commands[0]
 	cmdStr := cmd.String()
 	if !strings.Contains(cmdStr, "jest-silent-reporter") {
@@ -628,7 +628,7 @@ func TestAdapter_Lint_AddQuietFlag(t *testing.T) {
 	service := &config.Service{
 		Name: "test-service",
 		Type: config.ServiceTypeNode,
-		Lint: "eslint src/",  // ESLint command without quiet flag
+		Lint: "eslint src/", // ESLint command without quiet flag
 	}
 	adapter := New("test-service", service, executor)
 
@@ -639,13 +639,13 @@ func TestAdapter_Lint_AddQuietFlag(t *testing.T) {
 	if len(executor.Commands) != 1 {
 		t.Fatalf("Expected 1 command, got %d", len(executor.Commands))
 	}
-	
+
 	cmd := executor.Commands[0]
 	cmdStr := cmd.String()
 	if !strings.Contains(cmdStr, "--quiet") {
 		t.Errorf("Expected --quiet to be added, got command: %s", cmdStr)
 	}
-	
+
 	if result.Status != runner.StatusSuccess {
 		t.Errorf("Expected status %s, got %s", runner.StatusSuccess, result.Status)
 	}

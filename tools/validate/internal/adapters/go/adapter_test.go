@@ -396,14 +396,13 @@ func TestAdapter_Test_CoverageFileExists(t *testing.T) {
 	}
 }
 
-
 func TestAdapter_Build_ParseError(t *testing.T) {
 	executor := &TestFakeCommandRunner{}
 	adapter := New("test-service", "/test/dir", executor)
 
 	// This would be very unusual but let's test for safety
 	executor.SetNextResponse("", "some output", nil)
-	
+
 	// Create a modified adapter that would cause a parse error
 	// We can't actually trigger parse errors easily in the build parser
 	// since it's very forgiving, but we can test the successful path
@@ -414,4 +413,3 @@ func TestAdapter_Build_ParseError(t *testing.T) {
 		t.Errorf("Expected status %s, got %s", runner.StatusSuccess, result.Status)
 	}
 }
-

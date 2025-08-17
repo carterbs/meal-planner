@@ -16,13 +16,13 @@ type Config struct {
 
 // Service represents a service configuration.
 type Service struct {
-	Name string      `yaml:"name"`
-	Type ServiceType `yaml:"type"`
-	Dir  string      `yaml:"dir,omitempty"`
-	Test interface{} `yaml:"test,omitempty"`
-	Lint interface{} `yaml:"lint,omitempty"`
-	Build interface{} `yaml:"build,omitempty"`
-	MinCoverage int  `yaml:"min_coverage,omitempty"`
+	Name        string      `yaml:"name"`
+	Type        ServiceType `yaml:"type"`
+	Dir         string      `yaml:"dir,omitempty"`
+	Test        interface{} `yaml:"test,omitempty"`
+	Lint        interface{} `yaml:"lint,omitempty"`
+	Build       interface{} `yaml:"build,omitempty"`
+	MinCoverage int         `yaml:"min_coverage,omitempty"`
 }
 
 // ServiceType represents the type of service (go or node).
@@ -55,7 +55,7 @@ func (l *Loader) Load() (*Config, error) {
 	if configPath == "" {
 		configPath = ".validate.yaml"
 	}
-	
+
 	// Make path absolute if it's relative
 	if !filepath.IsAbs(configPath) {
 		wd, err := os.Getwd()
@@ -64,21 +64,21 @@ func (l *Loader) Load() (*Config, error) {
 		}
 		configPath = filepath.Join(wd, configPath)
 	}
-	
+
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file %s: %w", configPath, err)
 	}
-	
+
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse config file %s: %w", configPath, err)
 	}
-	
+
 	if err := l.validateConfig(&config); err != nil {
 		return nil, fmt.Errorf("invalid config in %s: %w", configPath, err)
 	}
-	
+
 	return &config, nil
 }
 
@@ -87,44 +87,44 @@ func (l *Loader) validateConfig(config *Config) error {
 	if len(config.Services) == 0 {
 		return fmt.Errorf("no services defined")
 	}
-	
+
 	serviceNames := make(map[string]bool)
 	for i, service := range config.Services {
 		if service.Name == "" {
 			return fmt.Errorf("service at index %d has no name", i)
 		}
-		
+
 		if serviceNames[service.Name] {
 			return fmt.Errorf("duplicate service name: %s", service.Name)
 		}
 		serviceNames[service.Name] = true
-		
+
 		if service.Type != ServiceTypeGo && service.Type != ServiceTypeNode {
 			return fmt.Errorf("service %s has invalid type %q, must be 'go' or 'node'", service.Name, service.Type)
 		}
-		
+
 		// Validate that at least one command is defined
 		testCmd := service.GetTestCommand()
 		lintCmd := service.GetLintCommand()
 		buildCmd := service.GetBuildCommand()
-		
+
 		if testCmd == "" && lintCmd == "" && buildCmd == "" {
 			return fmt.Errorf("service %s has no commands defined", service.Name)
 		}
-		
+
 		// For Go services, validate directory if specified
 		if service.Type == ServiceTypeGo && service.Dir != "" {
 			if !filepath.IsAbs(service.Dir) && !isRelativePath(service.Dir) {
 				return fmt.Errorf("service %s has invalid directory path: %s", service.Name, service.Dir)
 			}
 		}
-		
+
 		// Validate coverage percentage
 		if service.MinCoverage < 0 || service.MinCoverage > 100 {
 			return fmt.Errorf("service %s has invalid min_coverage %d, must be between 0 and 100", service.Name, service.MinCoverage)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -177,7 +177,7 @@ func (s *Service) getCommandString(cmd interface{}) string {
 	if cmd == nil {
 		return ""
 	}
-	
+
 	switch v := cmd.(type) {
 	case string:
 		return v
@@ -188,7 +188,7 @@ func (s *Service) getCommandString(cmd interface{}) string {
 	case Command:
 		return v.Cmd
 	}
-	
+
 	return ""
 }
 
@@ -197,7 +197,7 @@ func (s *Service) getCommandStruct(cmd interface{}) Command {
 	if cmd == nil {
 		return Command{}
 	}
-	
+
 	switch v := cmd.(type) {
 	case string:
 		return Command{Cmd: v}
@@ -213,7 +213,7 @@ func (s *Service) getCommandStruct(cmd interface{}) Command {
 	case Command:
 		return v
 	}
-	
+
 	return Command{}
 }
 
@@ -241,18 +241,18 @@ func (c *Config) FilterServices(names []string) *Config {
 	if len(names) == 0 {
 		return c
 	}
-	
+
 	nameSet := make(map[string]bool)
 	for _, name := range names {
 		nameSet[name] = true
 	}
-	
+
 	filtered := &Config{}
 	for _, service := range c.Services {
 		if nameSet[service.Name] {
 			filtered.Services = append(filtered.Services, service)
 		}
 	}
-	
+
 	return filtered
 }

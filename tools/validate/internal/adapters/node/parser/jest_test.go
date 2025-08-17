@@ -428,7 +428,7 @@ func TestParseJestCoverage_InvalidFile(t *testing.T) {
 
 func TestJestCoverageSummary_UnmarshalJSON_Error(t *testing.T) {
 	invalidJSON := `{"total": invalid}`
-	
+
 	var summary JestCoverageSummary
 	err := summary.UnmarshalJSON([]byte(invalidJSON))
 	if err == nil {

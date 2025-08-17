@@ -13,34 +13,34 @@ import (
 
 // JestTestResult represents the structure of Jest JSON output.
 type JestTestResult struct {
-	TestResults []JestTestFile `json:"testResults"`
-	NumTotalTestSuites int       `json:"numTotalTestSuites"`
-	NumPassedTestSuites int      `json:"numPassedTestSuites"`
-	NumFailedTestSuites int      `json:"numFailedTestSuites"`
-	NumTotalTests       int      `json:"numTotalTests"`
-	NumPassedTests      int      `json:"numPassedTests"`
-	NumFailedTests      int      `json:"numFailedTests"`
-	Success             bool     `json:"success"`
+	TestResults         []JestTestFile              `json:"testResults"`
+	NumTotalTestSuites  int                         `json:"numTotalTestSuites"`
+	NumPassedTestSuites int                         `json:"numPassedTestSuites"`
+	NumFailedTestSuites int                         `json:"numFailedTestSuites"`
+	NumTotalTests       int                         `json:"numTotalTests"`
+	NumPassedTests      int                         `json:"numPassedTests"`
+	NumFailedTests      int                         `json:"numFailedTests"`
+	Success             bool                        `json:"success"`
 	CoverageMap         map[string]JestFileCoverage `json:"coverageMap,omitempty"`
 }
 
 // JestTestFile represents a test file in Jest JSON output.
 type JestTestFile struct {
-	AssertionResults []JestAssertion `json:"assertionResults"`
-	Name             string          `json:"name"`
-	Status           string          `json:"status"`
-	Message          string          `json:"message"`
+	AssertionResults []JestAssertion             `json:"assertionResults"`
+	Name             string                      `json:"name"`
+	Status           string                      `json:"status"`
+	Message          string                      `json:"message"`
 	Coverage         map[string]JestFileCoverage `json:"coverage,omitempty"`
 }
 
 // JestAssertion represents a single test assertion in Jest output.
 type JestAssertion struct {
-	AncestorTitles  []string `json:"ancestorTitles"`
-	FullName        string   `json:"fullName"`
-	Status          string   `json:"status"`
-	Title           string   `json:"title"`
-	Duration        int      `json:"duration,omitempty"`
-	FailureMessages []string `json:"failureMessages,omitempty"`
+	AncestorTitles  []string      `json:"ancestorTitles"`
+	FullName        string        `json:"fullName"`
+	Status          string        `json:"status"`
+	Title           string        `json:"title"`
+	Duration        int           `json:"duration,omitempty"`
+	FailureMessages []string      `json:"failureMessages,omitempty"`
 	Location        *JestLocation `json:"location,omitempty"`
 }
 
@@ -52,13 +52,13 @@ type JestLocation struct {
 
 // JestFileCoverage represents coverage information for a file.
 type JestFileCoverage struct {
-	Path       string                     `json:"path"`
+	Path         string                   `json:"path"`
 	StatementMap map[string]JestStatement `json:"statementMap"`
-	S          map[string]int             `json:"s"`
-	BranchMap  map[string]JestBranch     `json:"branchMap"`
-	B          map[string][]int           `json:"b"`
-	FnMap      map[string]JestFunction   `json:"fnMap"`
-	F          map[string]int             `json:"f"`
+	S            map[string]int           `json:"s"`
+	BranchMap    map[string]JestBranch    `json:"branchMap"`
+	B            map[string][]int         `json:"b"`
+	FnMap        map[string]JestFunction  `json:"fnMap"`
+	F            map[string]int           `json:"f"`
 }
 
 // JestStatement represents a statement for coverage.
@@ -100,14 +100,14 @@ func (j *JestCoverageSummary) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	
+
 	// Extract the "total" field
 	if totalData, exists := raw["total"]; exists {
 		if err := json.Unmarshal(totalData, &j.Total); err != nil {
 			return err
 		}
 	}
-	
+
 	// Extract all other fields as files
 	j.Files = make(map[string]JestCoverageMetrics)
 	for key, value := range raw {
@@ -118,7 +118,7 @@ func (j *JestCoverageSummary) UnmarshalJSON(data []byte) error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -246,14 +246,14 @@ func ParseJestTextOutput(output string) *runner.Result {
 	}
 
 	lines := strings.Split(output, "\n")
-	
+
 	// Patterns for parsing test results
 	testCountPattern := regexp.MustCompile(`Tests:\s+(\d+)\s+failed,\s+(\d+)\s+passed,\s+(\d+)\s+total`)
 	testCountPatternAlt := regexp.MustCompile(`Tests:\s+(\d+)\s+passed,\s+(\d+)\s+total`)
 	failurePattern := regexp.MustCompile(`^\s*✕\s+(.+?)(?:\s+\((\d+)\s*ms\))?$`)
 	passPattern := regexp.MustCompile(`^\s*✓\s+(.+?)(?:\s+\((\d+)\s*ms\))?$`)
 	filePattern := regexp.MustCompile(`^\s*●\s+(.+)$`)
-	
+
 	var currentFile string
 	var inFailureBlock bool
 	var failureLines []string
@@ -276,7 +276,7 @@ func ParseJestTextOutput(output string) *runner.Result {
 			}
 			passedFromSummary = true
 		}
-		
+
 		// Count passed tests from individual test lines only if we don't have summary
 		if !passedFromSummary && passPattern.MatchString(line) {
 			result.PassedCount++
@@ -343,7 +343,7 @@ func extractFailureMessage(message string) string {
 	// Remove ANSI color codes
 	ansiPattern := regexp.MustCompile(`\x1b\[[0-9;]*m`)
 	cleaned := ansiPattern.ReplaceAllString(message, "")
-	
+
 	// Extract the first meaningful line
 	lines := strings.Split(cleaned, "\n")
 	for _, line := range lines {
@@ -352,7 +352,7 @@ func extractFailureMessage(message string) string {
 			return truncateMessage(line)
 		}
 	}
-	
+
 	return truncateMessage(cleaned)
 }
 
