@@ -2,18 +2,34 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 
 	apipb "mealplanner/generated/go"
+	"mealplanner/server"
+	"mealplanner/services"
 )
 
 // TestFinalizeMealPlan_ThreadIDSignature tests the new FinalizeMealPlan implementation
 // that accepts a thread ID and retrieves the meal plan from checkpoint
 func TestFinalizeMealPlan_ThreadIDSignature(t *testing.T) {
 	setupTestEnvironment(t)
-	server := &MealPlannerAPIServer{}
+	
+	// Store original DB and services for restoration
+	originalDB := server.DB
+	originalServices := server.Services
+	
+	t.Cleanup(func() {
+		// Restore original DB and services after test
+		server.DB = originalDB
+		server.Services = originalServices
+	})
+	
+	grpcServer := &MealPlannerAPIServer{}
 
 	tests := []struct {
 		name        string
@@ -54,19 +70,66 @@ func TestFinalizeMealPlan_ThreadIDSignature(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Note: This will fail until we implement the new backend logic
-			// This test documents the expected behavior after refactor
-			resp, err := server.FinalizeMealPlan(context.Background(), tt.request)
+			if !tt.expectError && tt.name == "valid thread ID" {
+				// Setup mock database for successful case
+				db, mock, err := sqlmock.New()
+				if err != nil {
+					t.Fatalf("Failed to create mock db: %v", err)
+				}
+				defer db.Close()
+				
+				// Set up server with mock DB
+				server.DB = db
+				server.Services = services.NewServiceContainer(db)
+				
+				// Create test checkpoint data with a valid meal plan
+				checkpointData := map[string]interface{}{
+					"state": map[string]interface{}{
+						"mealPlan": map[string]interface{}{
+							"days": []interface{}{
+								map[string]interface{}{
+									"meal": map[string]interface{}{
+										"id":   float64(1),
+										"name": "Test Meal",
+									},
+								},
+							},
+						},
+					},
+				}
+				
+				checkpointBytes, _ := json.Marshal(checkpointData)
+				
+				// Set up mock expectations
+				mock.ExpectQuery("SELECT checkpoint_data FROM workflow_checkpoints").
+					WithArgs("abc-123-valid-thread").
+					WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data"}).
+						AddRow(checkpointBytes))
+				
+				// Mock the UpdateLastPlannedDates transaction
+				mock.ExpectBegin()
+				mock.ExpectExec("UPDATE meals").
+					WithArgs(sqlmock.AnyArg()).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectCommit()
+			}
+			
+			resp, err := grpcServer.FinalizeMealPlan(context.Background(), tt.request)
 
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.errorMsg)
 				assert.Nil(t, resp)
 			} else {
-				// For now, we expect this to fail since we haven't implemented yet
-				// After implementation, we should expect success (assuming valid checkpoint)
-				if err != nil {
-					t.Logf("Expected success but got error (implementation pending): %v", err)
+				if tt.name == "valid thread ID" {
+					// Should succeed with proper mock setup
+					assert.NoError(t, err)
+					assert.NotNil(t, resp)
+				} else {
+					// For other non-error cases, we expect this to fail since we don't have proper mocks
+					if err != nil {
+						t.Logf("Expected success but got error (mock setup needed): %v", err)
+					}
 				}
 			}
 		})
@@ -75,6 +138,20 @@ func TestFinalizeMealPlan_ThreadIDSignature(t *testing.T) {
 
 // TestFinalizeMealPlan_CheckpointRetrieval tests checkpoint lookup logic
 func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
+	setupTestEnvironment(t)
+	
+	// Store original DB and services for restoration
+	originalDB := server.DB
+	originalServices := server.Services
+	
+	t.Cleanup(func() {
+		// Restore original DB and services after test
+		server.DB = originalDB
+		server.Services = originalServices
+	})
+	
+	grpcServer := &MealPlannerAPIServer{}
+	
 	tests := []struct {
 		name              string
 		threadId          string
@@ -101,7 +178,7 @@ func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 			threadId:         "thread-no-meal-plan",
 			checkpointExists: true,
 			hasMealPlan:      false,
-			expectedError:    "no meal plan found",
+			expectedError:    "meal plan is missing or invalid",
 		},
 		{
 			name:              "meal plan with zero ID (eating out)",
@@ -115,19 +192,89 @@ func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// This documents the expected checkpoint retrieval behavior
-			// After implementation, the backend should:
-			// 1. Call server.Services.WorkflowService.GetCheckpoint(threadId)
-			// 2. Extract checkpoint.State.MealPlan
-			// 3. Validate meal IDs are not zero
-			// 4. Build mealIDSet for existing finalization logic
-
-			t.Logf("Thread ID: %s", tt.threadId)
-			t.Logf("Expected checkpoint exists: %v", tt.checkpointExists)
-			t.Logf("Expected meal plan exists: %v", tt.hasMealPlan)
-			t.Logf("Expected zero ID error: %v", tt.mealPlanHasZeroId)
+			// Setup mock database
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("Failed to create mock db: %v", err)
+			}
+			defer db.Close()
+			
+			// Set up server with mock DB
+			server.DB = db
+			server.Services = services.NewServiceContainer(db)
+			
+			if tt.checkpointExists {
+				if tt.hasMealPlan {
+					// Create checkpoint with meal plan
+					mealId := float64(1)
+					if tt.mealPlanHasZeroId {
+						mealId = float64(0)
+					}
+					
+					checkpointData := map[string]interface{}{
+						"state": map[string]interface{}{
+							"mealPlan": map[string]interface{}{
+								"days": []interface{}{
+									map[string]interface{}{
+										"meal": map[string]interface{}{
+											"id":   mealId,
+											"name": "Test Meal",
+										},
+									},
+								},
+							},
+						},
+					}
+					
+					checkpointBytes, _ := json.Marshal(checkpointData)
+					
+					mock.ExpectQuery("SELECT checkpoint_data FROM workflow_checkpoints").
+						WithArgs(tt.threadId).
+						WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data"}).
+							AddRow(checkpointBytes))
+					
+					if tt.expectedError == "" {
+						// Mock the UpdateLastPlannedDates transaction
+						mock.ExpectBegin()
+						mock.ExpectExec("UPDATE meals").
+							WithArgs(sqlmock.AnyArg()).
+							WillReturnResult(sqlmock.NewResult(0, 1))
+						mock.ExpectCommit()
+					}
+				} else {
+					// Create checkpoint without meal plan
+					checkpointData := map[string]interface{}{
+						"state": map[string]interface{}{
+							"some_other_field": "value",
+						},
+					}
+					
+					checkpointBytes, _ := json.Marshal(checkpointData)
+					
+					mock.ExpectQuery("SELECT checkpoint_data FROM workflow_checkpoints").
+						WithArgs(tt.threadId).
+						WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data"}).
+							AddRow(checkpointBytes))
+				}
+			} else {
+				// Checkpoint not found
+				mock.ExpectQuery("SELECT checkpoint_data FROM workflow_checkpoints").
+					WithArgs(tt.threadId).
+					WillReturnError(sql.ErrNoRows)
+			}
+			
+			// Execute the test
+			resp, err := grpcServer.FinalizeMealPlan(context.Background(), &apipb.FinalizeMealPlanRequest{
+				ThreadId: tt.threadId,
+			})
+			
 			if tt.expectedError != "" {
-				t.Logf("Expected error containing: %s", tt.expectedError)
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.Nil(t, resp)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, resp)
 			}
 		})
 	}
