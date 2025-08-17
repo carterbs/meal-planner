@@ -5,7 +5,10 @@ const mockStartAgentSession = jest.fn().mockResolvedValue({
     session: { threadId: 't1', currentStep: '' },
     message: 'hello',
 });
-const mockSendAgentMessage = jest.fn().mockResolvedValue({});
+const mockSendAgentMessage = jest.fn().mockResolvedValue({
+    message: 'test response',
+    initialState: undefined,
+});
 const mockGetAgentCheckpoint = jest
     .fn()
     .mockResolvedValue({ state: { mealPlan: { days: [] } } });
@@ -60,6 +63,18 @@ import useAgentController from './useAgentController';
 describe('useAgentController', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        // Re-establish mock return values after clearing
+        mockSendAgentMessage.mockResolvedValue({
+            message: 'test response',
+            initialState: undefined,
+        });
+        mockStartAgentSession.mockResolvedValue({
+            session: { threadId: 't1', currentStep: '' },
+            message: 'hello',
+        });
+        mockGetAgentCheckpoint.mockResolvedValue({ state: {} });
+        mockGetMessages.mockResolvedValue([{ sender: 'agent', content: 'hi' }]);
+        mockGoGetShoppingList.mockResolvedValue([]);
     });
 
     describe('Initial State and Resume', () => {
