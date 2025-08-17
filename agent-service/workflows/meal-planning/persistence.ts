@@ -13,7 +13,7 @@ export async function saveCheckpoint(
     if (state.mealPlan) {
         // This will invoke any overridden toJson implementation and surface serialization issues
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const _ = state.mealPlan.toJson();
+        void state.mealPlan.toJson();
     }
     const checkpoint = new AgentCheckpoint({ state, next: [], step: 0 });
     const metadata = new AgentCheckpointMetadata({ source: 'workflow', step: 0 });

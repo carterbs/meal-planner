@@ -1,6 +1,14 @@
 ## Docker based "prod" env
 For running on my linux box.
 
+# Bugs
+- Agent doesn't show itself as working when processing messages
+- The code for finding the "changed" meals feels wrong. If you say "Remove wednesday lunch" and follow up with another message of "Swap dinner on tuesday", both tuesday dinner and wednesday's lunch glow green.
+- Alignment of the meals looks off. Breafkast is inset a little on certain days while lunch and dinner are aligned.
+- Background of the plan area is green. should match chat.
+- Buttons need a little work. The text on the sened button is gray
+- The pulls that control the view on the plan page should match the button style of the send button
+
 ## Tasks
 - Have AI normalize all of the ingredients one-time
 - Also have AI normalize ingredients when inserting into the DB

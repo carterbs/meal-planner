@@ -348,8 +348,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           while (!feedbackSatisfied) {
             const lastUpdate = checkpoint.state.updatedAt.toDate();
             // 1. Gather all recent feedback (within last 5 minutes)
-            let allFeedback: Array<{ created_at?: string } & Record<string, unknown>> = [];
-            allFeedback = await this.messageRepo.getMessagesForProtobuf(
+            const allFeedback = await this.messageRepo.getMessagesForProtobuf(
               state.threadId,
             );
             // Add a small buffer (5 seconds) to handle race conditions between message creation and workflow updates
@@ -366,7 +365,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             // 2. Analyze feedback to determine user satisfaction
             let analyzeResult = { satisfied: false, reasoning: '' };
             if (newFeedback.length > 0) {
-              analyzeResult = await analyzeFeedbackNodeExternal(newFeedback, {
+              analyzeResult = await analyzeFeedbackNodeExternal(newFeedback as Array<{ content: string }>, {
                 nanoLlm: this.nanoLlm,
                 extractJsonFromResponse: (s: string) => this.extractJsonFromResponse(s),
               });
@@ -383,7 +382,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
             if (newFeedback.length > 0) {
               // Apply feedback via LLM
               const stateWithFeedback = Object.assign(state, {
-                feedback_to_apply: newFeedback,
+                feedback_to_apply: newFeedback as Array<{ content: string }>,
               });
               const feedbackResult = await applyFeedbackNodeExternal(stateWithFeedback, {
                 getMessages: (threadId: string) => this.getMessages(threadId),
