@@ -49,13 +49,12 @@ swag init --parseDependency --parseInternal --propertyStrategy camelcase
 ```
 
 ### Testing & Linting
+Use the validate tool from the repository root:
 ```bash
-# Run tests
-go test ./... -v
-
-# Run linting (from project root)
-make lint
-./scripts/lint.sh
+# Run tests, linting, and building
+yarn test --service api-gateway
+yarn lint --service api-gateway
+yarn build --service api-gateway
 ```
 
 ## Key Features
@@ -134,6 +133,7 @@ MCP_SERVICE_ADDR=localhost:3001      # MCP service
 3. Add route in router setup
 4. Add Swagger annotations
 5. Regenerate docs: `./scripts/gateway-gen.sh`
+6. Run `tools/validate/validate test lint build --service api-gateway` before committing
 
 ### Debugging
 - Health endpoint shows all service status
@@ -145,7 +145,6 @@ MCP_SERVICE_ADDR=localhost:3001      # MCP service
 - Unit tests in `swagger_test.go`
 - Integration tests via e2e scripts
 - Linting enforces Swagger annotation consistency
-
 # `api-gateway` – HTTP ↔︎ gRPC bridge in Go
 
 ## Purpose

@@ -23,9 +23,16 @@ Centralized gRPC-based logging service that aggregates structured logs from all 
 - **gopkg.in/natefinch/lumberjack.v2** - Log rotation
 - **mealplanner/generated/go** - Generated protobuf code
 
-## Build & Run
+## Development commands
+
+Use the validate tool from the repository root for testing, linting, and building:
 
 ```bash
+# Run tests, linting, and building
+yarn test --service logging-service
+yarn lint --service logging-service
+yarn build --service logging-service
+
 # Development (from meal-planner root)
 docker-compose up logging-service
 

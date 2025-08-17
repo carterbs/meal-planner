@@ -31,15 +31,17 @@ All three return Content Blocks that may be text, image, audio, resource links, 
 # `mcp-service` – Model Context Provider Service
 
 ## Development commands
-* `yarn install` – Install dependencies.
-* `yarn dev` – Start the service in watch mode.
-* `yarn build` – Compile the TypeScript sources.
-* `yarn test` – Run unit tests with Jest.
-* `yarn lint` – Lint and format code with ESLint
-  and Prettier.
 
-You can also run `docker-compose up mcp-service` to start it alongside
-its dependencies.
+Use the validate tool from the repository root for testing, linting, and building:
+
+* `yarn test --service mcp-service` – Run unit tests with Jest
+* `yarn lint --service mcp-service` – Lint and format code with ESLint and Prettier
+* `yarn build --service mcp-service` – Compile the TypeScript sources
+
+For development, run from the repository root:
+* `yarn install` – Install dependencies
+* `yarn dev` – Start the service in watch mode
+* `docker-compose up mcp-service` – Start it alongside its dependencies
 
 ## Implementation guidelines
 1. **Strict typing.**  Do not use `any`.

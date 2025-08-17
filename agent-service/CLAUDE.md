@@ -15,16 +15,16 @@
 
 ## Development commands
 
-Run all commands from the repository root using Yarn workspaces:
+Use the validate tool from the repository root for testing, linting, and building:
 
-* `yarn install` – Install dependencies.
-* `yarn build` – Compile TypeScript to JavaScript.
-* `yarn dev` – Run the gRPC server in watch mode.
-* `yarn test` – Execute unit tests with Jest.
-* `yarn lint` – Run ESLint and Prettier.
-* `docker-compose up agent-service` – Start the service in a container.
+* `yarn test --service agent-service` – Execute unit tests
+* `yarn lint --service agent-service` – Run ESLint and Prettier  
+* `yarn build --service agent-service` – Compile TypeScript to JavaScript
 
-When editing code, always run `yarn build`, `yarn lint`, and `yarn test` before committing.
+For development, run from the repository root:
+* `yarn install` – Install dependencies
+* `yarn dev` – Run the gRPC server in watch mode
+* `docker-compose up agent-service` – Start the service in a container
 
 ## Implementation guidelines
 
