@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+BIN="$HERE/validate"
+if [ ! -x "$BIN" ]; then
+  echo "Building validate..."
+  go build -o "$BIN" ./tools/validate
+fi
+exec "$BIN" "$@"
