@@ -34,7 +34,7 @@ export default function useAgentController(): UseAgentControllerReturn {
     const { messages: fetchedMessages, fetchMessages } = useAgentMessages(
         session?.threadId,
     );
-    const { mealPlan, shoppingList, syncFromCheckpoint, send, setMealPlan } =
+    const { mealPlan, shoppingList, syncFromCheckpoint, send, setMealPlan, isSending } =
         useAgentMealSync();
 
     const fetchAndUpdateMessages = useCallback(async () => {
@@ -101,7 +101,7 @@ export default function useAgentController(): UseAgentControllerReturn {
             logout: _logout,
             input,
             setInput,
-            isWorking: isStarting,
+            isWorking: isStarting || isSending,
             messages,
             sendMessage,
             mealPlan,
@@ -114,6 +114,7 @@ export default function useAgentController(): UseAgentControllerReturn {
             _logout,
             input,
             isStarting,
+            isSending,
             messages,
             sendMessage,
             mealPlan,

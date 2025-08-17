@@ -270,6 +270,56 @@ describe('useAgentController', () => {
             expect(result.current.input).toBe(''); // Input cleared after send
         });
 
+        it('shows working state during message sending', async () => {
+            let resolveMessage: () => void;
+            const messagePromise = new Promise<void>((resolve) => {
+                resolveMessage = resolve;
+            });
+            
+            // Mock sendAgentMessage to return a promise that we control
+            mockSendAgentMessage.mockReturnValueOnce(
+                messagePromise.then(() => ({
+                    message: 'test response',
+                    initialState: undefined,
+                }))
+            );
+
+            const { result } = renderHook(() => useAgentController());
+
+            await act(async () => {
+                await Promise.resolve();
+            });
+
+            await waitFor(() => {
+                expect(result.current.session).not.toBeNull();
+            });
+
+            act(() => {
+                result.current.setInput('test message');
+            });
+
+            // Start sending message
+            let sendPromise: Promise<unknown>;
+            act(() => {
+                sendPromise = result.current.sendMessage();
+            });
+
+            // Should be working while message is being sent
+            expect(result.current.isWorking).toBe(true);
+
+            // Resolve the message and wait for completion
+            act(() => {
+                resolveMessage!();
+            });
+
+            await act(async () => {
+                await sendPromise;
+            });
+
+            // Should not be working after message is sent
+            expect(result.current.isWorking).toBe(false);
+        });
+
         it('sendMessage with explicit text parameter', async () => {
             const { result } = renderHook(() => useAgentController());
 
