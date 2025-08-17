@@ -51,18 +51,18 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
                   sx={{
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    borderRadius: '20px',
+                    borderRadius: '6px',
                     px: 2,
                     py: 0.5,
                     backgroundColor:
-                      currentTab === 0 ? colors.accent2 : 'transparent',
-                    borderColor: colors.accent2,
-                    color: currentTab === 0 ? '#ffffff' : colors.accent2,
+                      currentTab === 0 ? colors.apricot : 'transparent',
+                    borderColor: colors.apricot,
+                    color: currentTab === 0 ? '#ffffff' : colors.apricot,
                     '&:hover': {
                       backgroundColor:
                         currentTab === 0
-                          ? colors.accent2
-                          : `${colors.accent2}10`,
+                          ? '#ff9f2b'
+                          : `${colors.apricot}10`,
                     },
                   }}
                 >
@@ -76,20 +76,24 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
                   sx={{
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    borderRadius: '20px',
+                    borderRadius: '6px',
                     px: 2,
                     py: 0.5,
                     backgroundColor:
-                      currentTab === 1 ? colors.accent2 : 'transparent',
-                    borderColor: colors.accent2,
-                    color: currentTab === 1 ? '#ffffff' : colors.accent2,
+                      currentTab === 1 ? colors.apricot : 'transparent',
+                    borderColor: colors.apricot,
+                    color: currentTab === 1 ? '#ffffff' : colors.apricot,
                     '&:hover': {
                       backgroundColor:
                         currentTab === 1
-                          ? colors.accent2
-                          : `${colors.accent2}10`,
+                          ? '#ff9f2b'
+                          : `${colors.apricot}10`,
                     },
-                    '&:disabled': { borderColor: '#cccccc', color: '#cccccc' },
+                    '&:disabled': { 
+                      borderColor: '#cccccc', 
+                      color: '#cccccc',
+                      backgroundColor: 'transparent'
+                    },
                   }}
                 >
                   Shopping List
