@@ -199,9 +199,8 @@ function startAgentWorkflow(
       );
       const state = await agent.getWorkflowState(threadId);
 
-      const maybeToJson: ((opts?: unknown) => string) | undefined = (state as unknown as { toJsonString?: (opts?: unknown) => string }).toJsonString;
-      const stateString = typeof maybeToJson === 'function'
-        ? maybeToJson({ emitDefaultValues: true })
+      const stateString = typeof state.toJsonString === 'function'
+        ? state.toJsonString({ emitDefaultValues: true })
         : JSON.stringify(state);
 
       const resp = new apipb.AgentResponse({
