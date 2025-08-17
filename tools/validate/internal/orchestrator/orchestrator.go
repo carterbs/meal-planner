@@ -120,6 +120,19 @@ func (o *Orchestrator) ExecuteWithFactory(ctx context.Context, opts Options, fac
 	g, _ := errgroup.WithContext(context.Background())
 	g.SetLimit(maxParallel)
 
+	// Friendly action verb for non-spinner output (e.g., "Testing", "Linting", "Building")
+	var phaseAction string
+	switch opts.Phase {
+	case runner.PhaseTest:
+		phaseAction = "Testing"
+	case runner.PhaseLint:
+		phaseAction = "Linting"
+	case runner.PhaseBuild:
+		phaseAction = "Building"
+	default:
+		phaseAction = "Running"
+	}
+
 	// Start spinners if enabled
 	if useSpinners {
 		for i, service := range cfg.Services {
@@ -167,6 +180,9 @@ func (o *Orchestrator) ExecuteWithFactory(ctx context.Context, opts Options, fac
 				if spinner, exists := spinners[service.Name]; exists {
 					spinner.UpdateText(fmt.Sprintf("%s: %s running...", service.Name, opts.Phase))
 				}
+			} else if !opts.JSON {
+				// If spinners are disabled and we're not outputting JSON, print lightweight progress
+				fmt.Fprintf(o.output, "%s %s...\n", phaseAction, service.Name)
 			}
 
 			// Track timing for this service execution
