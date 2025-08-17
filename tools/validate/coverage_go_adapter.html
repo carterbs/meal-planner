@@ -1,0 +1,1046 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>go: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/go/adapter.go (85.1%)</option>
+				
+				<option value="file1">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/go/parser/build.go (96.5%)</option>
+				
+				<option value="file2">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/go/parser/coverage.go (93.8%)</option>
+				
+				<option value="file3">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/go/parser/lint.go (95.5%)</option>
+				
+				<option value="file4">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/go/parser/test.go (95.5%)</option>
+				
+				<option value="file5">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/go/test_helpers.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Package goadapter provides a Go-specific implementation of the runner.Runner interface.
+package goadapter
+
+import (
+        "bytes"
+        "context"
+        "fmt"
+        "path/filepath"
+        "time"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/adapters/go/parser"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/execx"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+)
+
+// Adapter implements the runner.Runner interface for Go services.
+type Adapter struct {
+        serviceName string
+        workingDir  string
+        executor    execx.CommandRunner
+        timeout     time.Duration
+}
+
+// New creates a new Go adapter for the specified service.
+func New(serviceName, workingDir string, executor execx.CommandRunner) *Adapter <span class="cov8" title="1">{
+        return &amp;Adapter{
+                serviceName: serviceName,
+                workingDir:  workingDir,
+                executor:    executor,
+                timeout:     5 * time.Minute, // Default timeout
+        }
+}</span>
+
+// WithTimeout sets the timeout for command execution.
+func (a *Adapter) WithTimeout(timeout time.Duration) *Adapter <span class="cov8" title="1">{
+        a.timeout = timeout
+        return a
+}</span>
+
+// Test runs go test with JSON output and coverage.
+func (a *Adapter) Test() runner.Result <span class="cov8" title="1">{
+        start := time.Now()
+        result := runner.Result{
+                Service:  a.serviceName,
+                Phase:    runner.PhaseTest,
+                Duration: 0,
+                Status:   runner.StatusError,
+        }
+
+        ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+        defer cancel()
+
+        var stdout, stderr bytes.Buffer
+
+        // Run go test with JSON output and coverage
+        cmd := a.executor.CommandContext(ctx, "go", "test", "./...", "-json", "-cover", "-coverprofile=coverage.out")
+        cmd.SetDir(a.workingDir)
+        cmd.SetStdout(&amp;stdout)
+        cmd.SetStderr(&amp;stderr)
+
+        err := cmd.Run()
+        result.Duration = time.Since(start)
+
+        if ctx.Err() == context.DeadlineExceeded || err == context.DeadlineExceeded </span><span class="cov8" title="1">{
+                result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Test execution timed out after %v", a.timeout)
+                return result
+        }</span>
+
+        // Parse the JSON output
+        <span class="cov8" title="1">testResult, parseErr := parser.ParseGoTestJSON(stdout.String())
+        if parseErr != nil </span><span class="cov0" title="0">{
+                result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Failed to parse test output: %v", parseErr)
+                return result
+        }</span>
+
+        // Merge the parsed results
+        <span class="cov8" title="1">result.Status = testResult.Status
+        result.PassedCount = testResult.PassedCount
+        result.FailedCount = testResult.FailedCount
+        result.Failures = testResult.Failures
+
+        // Parse coverage if available
+        if testResult.Coverage != nil </span><span class="cov8" title="1">{
+                result.Coverage = testResult.Coverage
+        }</span> else<span class="cov8" title="1"> {
+                // Try to parse coverage.out file if JSON parsing didn't provide coverage
+                if coverage, coverageErr := parser.ParseCoverageProfile(filepath.Join(a.workingDir, "coverage.out")); coverageErr == nil </span><span class="cov0" title="0">{
+                        result.Coverage = coverage
+                }</span>
+        }
+
+        // If there were command execution errors but parsing succeeded, 
+        // the status from parsing should take precedence
+        <span class="cov8" title="1">if err != nil &amp;&amp; result.Status == runner.StatusSuccess </span>{<span class="cov0" title="0">
+                // Command failed but parsing indicates success - trust the parser
+                // This can happen with go test when tests fail but JSON is still valid
+        }</span>
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// Lint runs golangci-lint with JSON output.
+func (a *Adapter) Lint() runner.Result <span class="cov8" title="1">{
+        start := time.Now()
+        result := runner.Result{
+                Service:  a.serviceName,
+                Phase:    runner.PhaseLint,
+                Duration: 0,
+                Status:   runner.StatusError,
+        }
+
+        ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+        defer cancel()
+
+        var stdout, stderr bytes.Buffer
+
+        // Run golangci-lint with JSON output
+        cmd := a.executor.CommandContext(ctx, "golangci-lint", "run", "--out-format", "json")
+        cmd.SetDir(a.workingDir)
+        cmd.SetStdout(&amp;stdout)
+        cmd.SetStderr(&amp;stderr)
+
+        err := cmd.Run() // golangci-lint returns non-zero on issues, but we check for timeout
+        result.Duration = time.Since(start)
+
+        if ctx.Err() == context.DeadlineExceeded || err == context.DeadlineExceeded </span><span class="cov0" title="0">{
+                result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Lint execution timed out after %v", a.timeout)
+                return result
+        }</span>
+
+        // Parse the JSON output
+        <span class="cov8" title="1">lintResult, parseErr := parser.ParseGolangciLintJSON(stdout.String())
+        if parseErr != nil </span><span class="cov8" title="1">{
+                // Try parsing as text output if JSON parsing fails
+                if textResult, textErr := parser.ParseGolangciLintText(stdout.String()); textErr == nil </span><span class="cov8" title="1">{
+                        result.Status = textResult.Status
+                        result.Failures = textResult.Failures
+                        result.WarningCount = textResult.WarningCount
+                        return result
+                }</span>
+                
+                <span class="cov0" title="0">result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Failed to parse lint output: %v", parseErr)
+                return result</span>
+        }
+
+        // Merge the parsed results
+        <span class="cov8" title="1">result.Status = lintResult.Status
+        result.Failures = lintResult.Failures
+        result.WarningCount = lintResult.WarningCount
+
+        return result</span>
+}
+
+// Build runs go build for all packages.
+func (a *Adapter) Build() runner.Result <span class="cov8" title="1">{
+        start := time.Now()
+        result := runner.Result{
+                Service:  a.serviceName,
+                Phase:    runner.PhaseBuild,
+                Duration: 0,
+                Status:   runner.StatusError,
+        }
+
+        ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+        defer cancel()
+
+        var stdout, stderr bytes.Buffer
+
+        // Run go build
+        cmd := a.executor.CommandContext(ctx, "go", "build", "./...")
+        cmd.SetDir(a.workingDir)
+        cmd.SetStdout(&amp;stdout)
+        cmd.SetStderr(&amp;stderr)
+
+        err := cmd.Run()
+        result.Duration = time.Since(start)
+
+        if ctx.Err() == context.DeadlineExceeded || err == context.DeadlineExceeded </span><span class="cov8" title="1">{
+                result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Build execution timed out after %v", a.timeout)
+                return result
+        }</span>
+
+        // Parse the build output
+        <span class="cov8" title="1">buildResult, parseErr := parser.ParseGoBuildOutput(stderr.String())
+        if parseErr != nil </span><span class="cov0" title="0">{
+                result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Failed to parse build output: %v", parseErr)
+                return result
+        }</span>
+
+        // Merge the parsed results
+        <span class="cov8" title="1">result.Status = buildResult.Status
+        result.Failures = buildResult.Failures
+
+        // If command succeeded, ensure status is success
+        if err == nil &amp;&amp; result.Status != runner.StatusFailure </span><span class="cov8" title="1">{
+                result.Status = runner.StatusSuccess
+        }</span>
+
+        <span class="cov8" title="1">return result</span>
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">package parser
+
+import (
+        "bufio"
+        "regexp"
+        "strconv"
+        "strings"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+)
+
+// ParseGoBuildOutput parses the output from go build and returns build results.
+func ParseGoBuildOutput(output string) (*runner.Result, error) <span class="cov8" title="1">{
+        result := &amp;runner.Result{
+                Status:   runner.StatusSuccess,
+                Failures: []runner.Failure{},
+        }
+
+        if strings.TrimSpace(output) == "" </span><span class="cov8" title="1">{
+                // Empty output usually means successful build
+                return result, nil
+        }</span>
+
+        // Parse build errors from stderr
+        <span class="cov8" title="1">failures := parseBuildErrors(output)
+        if len(failures) &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+                result.Failures = failures
+        }</span>
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+// parseBuildErrors parses build errors from Go compiler output.
+func parseBuildErrors(output string) []runner.Failure <span class="cov8" title="1">{
+        var failures []runner.Failure
+
+        // Common Go compiler error patterns:
+        // 1. filename.go:line:col: error message
+        // 2. filename.go:line: error message
+        // 3. # package-name
+        //    filename.go:line:col: error message
+        errorRegex := regexp.MustCompile(`^(.+\.go):(\d+):(?:(\d+):)?\s*(.+)$`)
+        packageRegex := regexp.MustCompile(`^#\s+(.+)$`)
+
+        var currentPackage string
+        scanner := bufio.NewScanner(strings.NewReader(output))
+        
+        for scanner.Scan() </span><span class="cov8" title="1">{
+                line := strings.TrimSpace(scanner.Text())
+                if line == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                // Check if this is a package line
+                <span class="cov8" title="1">if packageMatches := packageRegex.FindStringSubmatch(line); packageMatches != nil </span><span class="cov8" title="1">{
+                        currentPackage = packageMatches[1]
+                        continue</span>
+                }
+
+                // Check if this is an error line
+                <span class="cov8" title="1">if errorMatches := errorRegex.FindStringSubmatch(line); errorMatches != nil </span><span class="cov8" title="1">{
+                        filename := errorMatches[1]
+                        lineNumStr := errorMatches[2]
+                        message := errorMatches[4]
+
+                        lineNum, err := strconv.Atoi(lineNumStr)
+                        if err != nil </span><span class="cov0" title="0">{
+                                lineNum = 0
+                        }</span>
+
+                        // Clean up the filename - remove package prefix if present
+                        <span class="cov8" title="1">if currentPackage != "" &amp;&amp; !strings.HasPrefix(filename, "/") &amp;&amp; !strings.HasPrefix(filename, "./") </span>{<span class="cov8" title="1">
+                                // This might be a relative filename within the package
+                                // Keep it as is for now
+                        }</span>
+
+                        <span class="cov8" title="1">failure := runner.Failure{
+                                File:    filename,
+                                Line:    lineNum,
+                                Message: message,
+                                Type:    "build",
+                        }
+
+                        failures = append(failures, failure)</span>
+                } else<span class="cov8" title="1"> {
+                        // Handle other error formats that don't match the regex
+                        if strings.Contains(line, "error") || strings.Contains(line, "Error") </span><span class="cov8" title="1">{
+                                // Generic error parsing
+                                failure := runner.Failure{
+                                        File:    extractBuildFileFromLine(line),
+                                        Line:    extractBuildLineFromLine(line),
+                                        Message: line,
+                                        Type:    "build",
+                                }
+                                failures = append(failures, failure)
+                        }</span>
+                }
+        }
+
+        <span class="cov8" title="1">return failures</span>
+}
+
+// extractBuildFileFromLine tries to extract a filename from a build error line.
+func extractBuildFileFromLine(line string) string <span class="cov8" title="1">{
+        // Look for .go files in the line
+        parts := strings.Fields(line)
+        for _, part := range parts </span><span class="cov8" title="1">{
+                if strings.Contains(part, ".go:") </span><span class="cov8" title="1">{
+                        // Find the .go: position
+                        goIdx := strings.Index(part, ".go:")
+                        if goIdx &gt;= 0 </span><span class="cov8" title="1">{
+                                return part[:goIdx+3] // Include ".go" but not the colon
+                        }</span>
+                } else<span class="cov8" title="1"> if strings.HasSuffix(part, ".go") </span><span class="cov8" title="1">{
+                        // Simple case: just ends with .go
+                        return part
+                }</span>
+        }
+        <span class="cov8" title="1">return ""</span>
+}
+
+// extractBuildLineFromLine tries to extract a line number from a build error line.
+func extractBuildLineFromLine(line string) int <span class="cov8" title="1">{
+        // Look for patterns like "filename.go:123:" 
+        parts := strings.Fields(line)
+        for _, part := range parts </span><span class="cov8" title="1">{
+                if strings.Contains(part, ".go:") </span><span class="cov8" title="1">{
+                        // Find the .go: position
+                        goIdx := strings.Index(part, ".go:")
+                        if goIdx &gt;= 0 </span><span class="cov8" title="1">{
+                                remaining := part[goIdx+4:] // Skip ".go:"
+                                // Find the next colon or end of string
+                                colonIdx := strings.Index(remaining, ":")
+                                var lineStr string
+                                if colonIdx &gt;= 0 </span><span class="cov8" title="1">{
+                                        lineStr = remaining[:colonIdx]
+                                }</span> else<span class="cov8" title="1"> {
+                                        lineStr = remaining
+                                }</span>
+                                <span class="cov8" title="1">if lineNum, err := strconv.Atoi(lineStr); err == nil </span><span class="cov8" title="1">{
+                                        return lineNum
+                                }</span>
+                        }
+                }
+        }
+        <span class="cov8" title="1">return 0</span>
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">package parser
+
+import (
+        "bufio"
+        "fmt"
+        "os"
+        "strconv"
+        "strings"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+)
+
+// ParseCoverageProfile parses a Go coverage profile file and returns coverage information.
+func ParseCoverageProfile(profilePath string) (*runner.Coverage, error) <span class="cov8" title="1">{
+        file, err := os.Open(profilePath)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to open coverage profile: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer file.Close()
+
+        coverage := &amp;runner.Coverage{
+                Details: make(map[string]runner.FileCoverage),
+        }
+
+        var totalStatements, coveredStatements int
+        fileStats := make(map[string]*fileCoverageStats)
+
+        scanner := bufio.NewScanner(file)
+        lineNum := 0
+        for scanner.Scan() </span><span class="cov8" title="1">{
+                lineNum++
+                line := strings.TrimSpace(scanner.Text())
+                
+                // Skip the mode line (first line)
+                if lineNum == 1 &amp;&amp; strings.HasPrefix(line, "mode:") </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                
+                <span class="cov8" title="1">if line == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                // Parse coverage line: filename:startline.startcol,endline.endcol numstmt count
+                <span class="cov8" title="1">parts := strings.Fields(line)
+                if len(parts) != 3 </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+
+                // Extract filename
+                <span class="cov8" title="1">colonIdx := strings.LastIndex(parts[0], ":")
+                if colonIdx == -1 </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">filename := parts[0][:colonIdx]
+
+                // Parse number of statements
+                numStmt, err := strconv.Atoi(parts[1])
+                if err != nil </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+
+                // Parse count
+                <span class="cov8" title="1">count, err := strconv.Atoi(parts[2])
+                if err != nil </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+
+                // Initialize file stats if not exists
+                <span class="cov8" title="1">if fileStats[filename] == nil </span><span class="cov8" title="1">{
+                        fileStats[filename] = &amp;fileCoverageStats{}
+                }</span>
+
+                // Update statistics
+                <span class="cov8" title="1">totalStatements += numStmt
+                fileStats[filename].Total += numStmt
+
+                if count &gt; 0 </span><span class="cov8" title="1">{
+                        coveredStatements += numStmt
+                        fileStats[filename].Covered += numStmt
+                }</span>
+        }
+
+        <span class="cov8" title="1">if err := scanner.Err(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("error reading coverage profile: %w", err)
+        }</span>
+
+        // Calculate overall percentage
+        <span class="cov8" title="1">if totalStatements &gt; 0 </span><span class="cov8" title="1">{
+                coverage.Percentage = float64(coveredStatements) / float64(totalStatements) * 100
+        }</span>
+        <span class="cov8" title="1">coverage.Covered = coveredStatements
+        coverage.Total = totalStatements
+
+        // Calculate per-file coverage
+        for filename, stats := range fileStats </span><span class="cov8" title="1">{
+                var percentage float64
+                if stats.Total &gt; 0 </span><span class="cov8" title="1">{
+                        percentage = float64(stats.Covered) / float64(stats.Total) * 100
+                }</span>
+                
+                <span class="cov8" title="1">coverage.Details[filename] = runner.FileCoverage{
+                        Percentage: percentage,
+                        Covered:    stats.Covered,
+                        Total:      stats.Total,
+                }</span>
+        }
+
+        <span class="cov8" title="1">return coverage, nil</span>
+}
+
+type fileCoverageStats struct {
+        Covered int
+        Total   int
+}</pre>
+		
+		<pre class="file" id="file3" style="display: none">package parser
+
+import (
+        "bufio"
+        "encoding/json"
+        "fmt"
+        "regexp"
+        "strconv"
+        "strings"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+)
+
+// GolangciLintResult represents the JSON output from golangci-lint.
+type GolangciLintResult struct {
+        Issues []GolangciLintIssue `json:"Issues"`
+}
+
+// GolangciLintIssue represents a single issue from golangci-lint.
+type GolangciLintIssue struct {
+        FromLinter  string                 `json:"FromLinter"`
+        Text        string                 `json:"Text"`
+        Severity    string                 `json:"Severity"`
+        SourceLines []string               `json:"SourceLines"`
+        Replacement *GolangciLintReplacement `json:"Replacement"`
+        Pos         GolangciLintPos        `json:"Pos"`
+}
+
+// GolangciLintReplacement represents a suggested replacement.
+type GolangciLintReplacement struct {
+        NeedOnlyDelete bool   `json:"NeedOnlyDelete"`
+        NewLines       []string `json:"NewLines"`
+}
+
+// GolangciLintPos represents the position of an issue.
+type GolangciLintPos struct {
+        Filename string `json:"Filename"`
+        Offset   int    `json:"Offset"`
+        Line     int    `json:"Line"`
+        Column   int    `json:"Column"`
+}
+
+// ParseGolangciLintJSON parses JSON output from golangci-lint.
+func ParseGolangciLintJSON(output string) (*runner.Result, error) <span class="cov8" title="1">{
+        if strings.TrimSpace(output) == "" </span><span class="cov8" title="1">{
+                return &amp;runner.Result{
+                        Status:       runner.StatusSuccess,
+                        Failures:     []runner.Failure{},
+                        WarningCount: 0,
+                }, nil
+        }</span>
+
+        <span class="cov8" title="1">var lintResult GolangciLintResult
+        if err := json.Unmarshal([]byte(output), &amp;lintResult); err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to parse golangci-lint JSON: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">result := &amp;runner.Result{
+                Status:       runner.StatusSuccess,
+                Failures:     []runner.Failure{},
+                WarningCount: 0,
+        }
+
+        errorCount := 0
+        for _, issue := range lintResult.Issues </span><span class="cov8" title="1">{
+                failure := runner.Failure{
+                        File:    issue.Pos.Filename,
+                        Line:    issue.Pos.Line,
+                        Message: fmt.Sprintf("[%s] %s", issue.FromLinter, issue.Text),
+                }
+
+                // Determine if this is an error or warning based on severity
+                switch strings.ToLower(issue.Severity) </span>{
+                case "error":<span class="cov8" title="1">
+                        failure.Type = "error"
+                        errorCount++</span>
+                case "warning":<span class="cov8" title="1">
+                        failure.Type = "warning"
+                        result.WarningCount++</span>
+                default:<span class="cov8" title="1">
+                        // Default to error for unknown severities
+                        failure.Type = "error"
+                        errorCount++</span>
+                }
+
+                <span class="cov8" title="1">result.Failures = append(result.Failures, failure)</span>
+        }
+
+        // Set status based on whether there are errors
+        <span class="cov8" title="1">if errorCount &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+// ParseGolangciLintText parses text output from golangci-lint as a fallback.
+func ParseGolangciLintText(output string) (*runner.Result, error) <span class="cov8" title="1">{
+        if strings.TrimSpace(output) == "" </span><span class="cov8" title="1">{
+                return &amp;runner.Result{
+                        Status:       runner.StatusSuccess,
+                        Failures:     []runner.Failure{},
+                        WarningCount: 0,
+                }, nil
+        }</span>
+
+        <span class="cov8" title="1">result := &amp;runner.Result{
+                Status:       runner.StatusSuccess,
+                Failures:     []runner.Failure{},
+                WarningCount: 0,
+        }
+
+        // Regex to match golangci-lint text output format:
+        // filename.go:line:col: message (linter)
+        // or
+        // filename.go:line: message (linter)
+        lineRegex := regexp.MustCompile(`^(.+\.go):(\d+):(?:\d+:)?\s*(.+?)\s*\(([^)]+)\)`)
+
+        errorCount := 0
+        scanner := bufio.NewScanner(strings.NewReader(output))
+        for scanner.Scan() </span><span class="cov8" title="1">{
+                line := strings.TrimSpace(scanner.Text())
+                if line == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">matches := lineRegex.FindStringSubmatch(line)
+                if len(matches) &gt;= 5 </span><span class="cov8" title="1">{
+                        filename := matches[1]
+                        lineNumStr := matches[2]
+                        message := matches[3]
+                        linter := matches[4]
+
+                        lineNum, err := strconv.Atoi(lineNumStr)
+                        if err != nil </span><span class="cov0" title="0">{
+                                lineNum = 0
+                        }</span>
+
+                        <span class="cov8" title="1">failure := runner.Failure{
+                                File:    filename,
+                                Line:    lineNum,
+                                Message: fmt.Sprintf("[%s] %s", linter, message),
+                                Type:    "error", // Default to error since text output doesn't distinguish
+                        }
+
+                        result.Failures = append(result.Failures, failure)
+                        errorCount++</span>
+                } else<span class="cov8" title="1"> {
+                        // Try to parse simpler formats or treat as generic error
+                        if strings.Contains(line, ".go:") </span><span class="cov8" title="1">{
+                                failure := runner.Failure{
+                                        File:    extractFileFromText(line),
+                                        Line:    extractLineFromText(line),
+                                        Message: line,
+                                        Type:    "error",
+                                }
+                                result.Failures = append(result.Failures, failure)
+                                errorCount++
+                        }</span>
+                }
+        }
+
+        <span class="cov8" title="1">if err := scanner.Err(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("error reading lint output: %w", err)
+        }</span>
+
+        // Set status based on whether there are errors
+        <span class="cov8" title="1">if errorCount &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+// extractFileFromText extracts filename from a text line.
+func extractFileFromText(line string) string <span class="cov8" title="1">{
+        parts := strings.Fields(line)
+        for _, part := range parts </span><span class="cov8" title="1">{
+                if strings.Contains(part, ".go:") </span><span class="cov8" title="1">{
+                        if colonIdx := strings.Index(part, ":"); colonIdx &gt; 0 </span><span class="cov8" title="1">{
+                                return part[:colonIdx]
+                        }</span>
+                }
+        }
+        <span class="cov8" title="1">return ""</span>
+}
+
+// extractLineFromText extracts line number from a text line.
+func extractLineFromText(line string) int <span class="cov8" title="1">{
+        parts := strings.Fields(line)
+        for _, part := range parts </span><span class="cov8" title="1">{
+                if strings.Contains(part, ".go:") </span><span class="cov8" title="1">{
+                        if colonIdx := strings.Index(part, ":"); colonIdx &gt; 0 </span><span class="cov8" title="1">{
+                                remaining := part[colonIdx+1:]
+                                if nextColonIdx := strings.Index(remaining, ":"); nextColonIdx &gt; 0 </span><span class="cov8" title="1">{
+                                        lineStr := remaining[:nextColonIdx]
+                                        if lineNum, err := strconv.Atoi(lineStr); err == nil </span><span class="cov8" title="1">{
+                                                return lineNum
+                                        }</span>
+                                }
+                        }
+                }
+        }
+        <span class="cov8" title="1">return 0</span>
+}</pre>
+		
+		<pre class="file" id="file4" style="display: none">package parser
+
+import (
+        "bufio"
+        "encoding/json"
+        "fmt"
+        "strconv"
+        "strings"
+        "time"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+)
+
+// GoTestEvent represents a single event from go test -json output.
+type GoTestEvent struct {
+        Time    *time.Time `json:"Time,omitempty"`
+        Action  string     `json:"Action"`
+        Package string     `json:"Package,omitempty"`
+        Test    string     `json:"Test,omitempty"`
+        Output  string     `json:"Output,omitempty"`
+        Elapsed *float64   `json:"Elapsed,omitempty"`
+}
+
+// ParseGoTestJSON parses the JSON output from go test -json and returns test results.
+func ParseGoTestJSON(output string) (*runner.Result, error) <span class="cov8" title="1">{
+        if strings.TrimSpace(output) == "" </span><span class="cov8" title="1">{
+                return &amp;runner.Result{
+                        Status:      runner.StatusSuccess,
+                        PassedCount: 0,
+                        FailedCount: 0,
+                }, nil
+        }</span>
+
+        <span class="cov8" title="1">result := &amp;runner.Result{
+                Status:      runner.StatusSuccess,
+                PassedCount: 0,
+                FailedCount: 0,
+                Failures:    []runner.Failure{},
+        }
+
+        var totalElapsed float64
+        packageResults := make(map[string]bool) // package -&gt; passed
+        testResults := make(map[string]bool)    // test -&gt; passed
+        testOutputs := make(map[string][]string) // test -&gt; output lines
+
+        scanner := bufio.NewScanner(strings.NewReader(output))
+        for scanner.Scan() </span><span class="cov8" title="1">{
+                line := strings.TrimSpace(scanner.Text())
+                if line == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">var event GoTestEvent
+                if err := json.Unmarshal([]byte(line), &amp;event); err != nil </span><span class="cov8" title="1">{
+                        // Skip malformed JSON lines - go test sometimes outputs non-JSON
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">switch event.Action </span>{
+                case "pass":<span class="cov8" title="1">
+                        if event.Test != "" </span><span class="cov8" title="1">{
+                                // Individual test passed
+                                testResults[event.Package+"/"+event.Test] = true
+                                result.PassedCount++
+                        }</span> else<span class="cov8" title="1"> {
+                                // Package passed
+                                packageResults[event.Package] = true
+                        }</span>
+                        <span class="cov8" title="1">if event.Elapsed != nil </span><span class="cov8" title="1">{
+                                totalElapsed += *event.Elapsed
+                        }</span>
+
+                case "fail":<span class="cov8" title="1">
+                        if event.Test != "" </span><span class="cov8" title="1">{
+                                // Individual test failed
+                                testResults[event.Package+"/"+event.Test] = false
+                                result.FailedCount++
+                                
+                                // Create failure from test output
+                                testKey := event.Package + "/" + event.Test
+                                outputs := testOutputs[testKey]
+                                message := strings.Join(outputs, "\n")
+                                if message == "" </span><span class="cov0" title="0">{
+                                        message = "Test failed"
+                                }</span>
+                                
+                                <span class="cov8" title="1">failure := runner.Failure{
+                                        File:    extractFileFromOutput(outputs),
+                                        Line:    extractLineFromOutput(outputs),
+                                        Message: message,
+                                        Type:    "test",
+                                }
+                                result.Failures = append(result.Failures, failure)</span>
+                        } else<span class="cov8" title="1"> {
+                                // Package failed
+                                packageResults[event.Package] = false
+                                result.Status = runner.StatusFailure
+                        }</span>
+                        <span class="cov8" title="1">if event.Elapsed != nil </span><span class="cov8" title="1">{
+                                totalElapsed += *event.Elapsed
+                        }</span>
+
+                case "output":<span class="cov8" title="1">
+                        if event.Test != "" &amp;&amp; event.Output != "" </span><span class="cov8" title="1">{
+                                // Store test output for failure messages
+                                testKey := event.Package + "/" + event.Test
+                                testOutputs[testKey] = append(testOutputs[testKey], event.Output)
+                        }</span>
+
+                case "skip":<span class="cov8" title="1">
+                        if event.Test != "" </span><span class="cov8" title="1">{
+                                // Test was skipped - count as passed for statistics
+                                testResults[event.Package+"/"+event.Test] = true
+                                result.PassedCount++
+                        }</span>
+                }
+        }
+
+        <span class="cov8" title="1">if err := scanner.Err(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("error reading test output: %w", err)
+        }</span>
+
+        // Set final status based on failures
+        <span class="cov8" title="1">if result.FailedCount &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        // Try to parse coverage from the output
+        <span class="cov8" title="1">coverage := parseCoverageFromOutput(output)
+        if coverage != nil </span><span class="cov8" title="1">{
+                result.Coverage = coverage
+        }</span>
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+// extractFileFromOutput tries to extract a filename from test output lines.
+func extractFileFromOutput(outputs []string) string <span class="cov8" title="1">{
+        for _, line := range outputs </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                // Look for patterns like "filename.go:123:" or "\tfilename.go:123"
+                if strings.Contains(line, ".go:") </span><span class="cov8" title="1">{
+                        parts := strings.Fields(line)
+                        for _, part := range parts </span><span class="cov8" title="1">{
+                                if strings.Contains(part, ".go:") &amp;&amp; !strings.HasPrefix(part, "go:") </span><span class="cov8" title="1">{
+                                        // Find the .go: position
+                                        goIdx := strings.Index(part, ".go:")
+                                        if goIdx &gt; 0 </span><span class="cov8" title="1">{
+                                                return part[:goIdx+3] // Include ".go" but not the colon
+                                        }</span>
+                                }
+                        }
+                }
+        }
+        <span class="cov8" title="1">return ""</span>
+}
+
+// extractLineFromOutput tries to extract a line number from test output lines.
+func extractLineFromOutput(outputs []string) int <span class="cov8" title="1">{
+        for _, line := range outputs </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                // Look for patterns like "filename.go:123:" or "\tfilename.go:123"
+                if strings.Contains(line, ".go:") </span><span class="cov8" title="1">{
+                        parts := strings.Fields(line)
+                        for _, part := range parts </span><span class="cov8" title="1">{
+                                if strings.Contains(part, ".go:") &amp;&amp; !strings.HasPrefix(part, "go:") </span><span class="cov8" title="1">{
+                                        // Find the .go: position
+                                        goIdx := strings.Index(part, ".go:")
+                                        if goIdx &gt;= 0 </span><span class="cov8" title="1">{
+                                                remaining := part[goIdx+4:] // Skip ".go:"
+                                                // Find the next colon or end of string
+                                                colonIdx := strings.Index(remaining, ":")
+                                                var lineStr string
+                                                if colonIdx &gt;= 0 </span><span class="cov8" title="1">{
+                                                        lineStr = remaining[:colonIdx]
+                                                }</span> else<span class="cov0" title="0"> {
+                                                        lineStr = remaining
+                                                }</span>
+                                                <span class="cov8" title="1">if lineNum, err := strconv.Atoi(lineStr); err == nil </span><span class="cov8" title="1">{
+                                                        return lineNum
+                                                }</span>
+                                        }
+                                }
+                        }
+                }
+        }
+        <span class="cov8" title="1">return 0</span>
+}
+
+// parseCoverageFromOutput attempts to parse coverage information from go test output.
+func parseCoverageFromOutput(output string) *runner.Coverage <span class="cov8" title="1">{
+        // Look for coverage lines like "coverage: 85.7% of statements"
+        scanner := bufio.NewScanner(strings.NewReader(output))
+        for scanner.Scan() </span><span class="cov8" title="1">{
+                line := scanner.Text()
+                if strings.Contains(line, "coverage:") &amp;&amp; strings.Contains(line, "% of statements") </span><span class="cov8" title="1">{
+                        // Extract percentage
+                        parts := strings.Fields(line)
+                        for i, part := range parts </span><span class="cov8" title="1">{
+                                if strings.HasSuffix(part, "%") &amp;&amp; i &gt; 0 </span><span class="cov8" title="1">{
+                                        percentStr := strings.TrimSuffix(part, "%")
+                                        if percentage, err := strconv.ParseFloat(percentStr, 64); err == nil </span><span class="cov8" title="1">{
+                                                return &amp;runner.Coverage{
+                                                        Percentage: percentage,
+                                                        // Note: go test doesn't provide covered/total counts in the output
+                                                        // These would need to be parsed from coverage.out file
+                                                }
+                                        }</span>
+                                }
+                        }
+                }
+        }
+        <span class="cov8" title="1">return nil</span>
+}</pre>
+		
+		<pre class="file" id="file5" style="display: none">package goadapter
+
+import (
+        "context"
+        "strings"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/execx"
+)
+
+// TestFakeCommandRunner is a specialized fake command runner for testing.
+type TestFakeCommandRunner struct {
+        Commands      []*execx.FakeCommand
+        NextOutput    string
+        NextError     error
+        NextErrorOutput string
+}
+
+// CommandContext creates a pre-configured fake command.
+func (f *TestFakeCommandRunner) CommandContext(ctx context.Context, name string, args ...string) execx.Command <span class="cov8" title="1">{
+        cmd := &amp;execx.FakeCommand{
+                Name:        name,
+                Args:        args,
+                Context:     ctx,
+                Output:      f.NextOutput,
+                ErrorOutput: f.NextErrorOutput,
+                RunError:    f.NextError,
+        }
+        f.Commands = append(f.Commands, cmd)
+        return cmd
+}</span>
+
+// SetNextResponse configures the response for the next command.
+func (f *TestFakeCommandRunner) SetNextResponse(stdout, stderr string, err error) <span class="cov8" title="1">{
+        f.NextOutput = stdout
+        f.NextErrorOutput = stderr
+        f.NextError = err
+}</span>
+
+// contains is a helper function for tests
+func contains(s, substr string) bool <span class="cov8" title="1">{
+        return strings.Contains(s, substr)
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
