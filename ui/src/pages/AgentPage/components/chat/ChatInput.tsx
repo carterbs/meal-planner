@@ -47,7 +47,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
             backgroundColor: colors.apricot,
             color: '#ffffff',
             '&:hover': { backgroundColor: '#ff9f2b' },
-            '&:disabled': { backgroundColor: '#cccccc' },
+            '&:disabled': { 
+              backgroundColor: '#cccccc',
+              color: '#ffffff'
+            },
           }}
         >
           Send
