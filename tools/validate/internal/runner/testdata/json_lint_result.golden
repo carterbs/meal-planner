@@ -1,0 +1,1 @@
+{"service":"lint-service","phase":"lint","status":"failure","failures":[{"file":"src/main.go","line":15,"message":"unused variable","type":"lint"}],"failed_count":3,"warning_count":6,"duration":"800ms"}

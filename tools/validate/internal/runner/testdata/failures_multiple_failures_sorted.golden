@@ -1,0 +1,3 @@
+a_test.go:10 [test] test a1 failed with assertion error
+a_test.go:20 [test] test a failed with timeout
+z_test.go:10 [test] test z failed with error

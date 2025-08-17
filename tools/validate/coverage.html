@@ -1,0 +1,478 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>runner: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/bradcarter-meal-planner/tools/validate/internal/runner/format.go (98.8%)</option>
+				
+				<option value="file1">github.com/bradcarter-meal-planner/tools/validate/internal/runner/json.go (88.9%)</option>
+				
+				<option value="file2">github.com/bradcarter-meal-planner/tools/validate/internal/runner/types.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package runner
+
+import (
+        "fmt"
+        "sort"
+        "strings"
+        "time"
+)
+
+const (
+        // MaxFailureMessageLength is the maximum length for failure messages before truncation
+        MaxFailureMessageLength = 200
+        // MaxFailuresDisplayed is the maximum number of failures to display
+        MaxFailuresDisplayed = 5
+)
+
+// FormatSummary returns a deterministic quiet mode summary for the result.
+func (r Result) FormatSummary() string <span class="cov8" title="1">{
+        symbol := "✓"
+        if r.Status != StatusSuccess </span><span class="cov8" title="1">{
+                symbol = "✗"
+        }</span>
+
+        <span class="cov8" title="1">switch r.Phase </span>{
+        case PhaseTest:<span class="cov8" title="1">
+                return r.formatTestSummary(symbol)</span>
+        case PhaseLint:<span class="cov8" title="1">
+                return r.formatLintSummary(symbol)</span>
+        case PhaseBuild:<span class="cov8" title="1">
+                return r.formatBuildSummary(symbol)</span>
+        default:<span class="cov8" title="1">
+                return fmt.Sprintf("%s %s: unknown phase %s", symbol, r.Service, r.Phase)</span>
+        }
+}
+
+// formatTestSummary formats the summary for test results.
+func (r Result) formatTestSummary(symbol string) string <span class="cov8" title="1">{
+        parts := []string{fmt.Sprintf("%s %s:", symbol, r.Service)}
+
+        // Add pass/fail counts
+        if r.PassedCount &gt; 0 || r.FailedCount &gt; 0 </span><span class="cov8" title="1">{
+                if r.FailedCount == 0 </span><span class="cov8" title="1">{
+                        parts = append(parts, fmt.Sprintf("%d passed", r.PassedCount))
+                }</span> else<span class="cov8" title="1"> {
+                        parts = append(parts, fmt.Sprintf("%d passed, %d failed", r.PassedCount, r.FailedCount))
+                }</span>
+        }
+
+        // Add duration
+        <span class="cov8" title="1">duration := formatDuration(r.Duration)
+        if duration != "" </span><span class="cov8" title="1">{
+                parts = append(parts, fmt.Sprintf("(%s)", duration))
+        }</span>
+
+        // Add coverage if available
+        <span class="cov8" title="1">if r.Coverage != nil </span><span class="cov8" title="1">{
+                parts = append(parts, fmt.Sprintf("%.0f%% coverage", r.Coverage.Percentage))
+        }</span>
+
+        <span class="cov8" title="1">return strings.Join(parts, " ")</span>
+}
+
+// formatLintSummary formats the summary for lint results.
+func (r Result) formatLintSummary(symbol string) string <span class="cov8" title="1">{
+        parts := []string{fmt.Sprintf("%s %s:", symbol, r.Service)}
+
+        if r.Status == StatusSuccess </span><span class="cov8" title="1">{
+                parts = append(parts, "no issues")
+        }</span> else<span class="cov8" title="1"> {
+                issueParts := []string{}
+                if r.FailedCount &gt; 0 </span><span class="cov8" title="1">{
+                        issueParts = append(issueParts, fmt.Sprintf("%d errors", r.FailedCount))
+                }</span>
+                <span class="cov8" title="1">if r.WarningCount &gt; 0 </span><span class="cov8" title="1">{
+                        issueParts = append(issueParts, fmt.Sprintf("%d warnings", r.WarningCount))
+                }</span>
+                <span class="cov8" title="1">if len(issueParts) &gt; 0 </span><span class="cov8" title="1">{
+                        parts = append(parts, strings.Join(issueParts, ", "))
+                }</span>
+        }
+
+        <span class="cov8" title="1">return strings.Join(parts, " ")</span>
+}
+
+// formatBuildSummary formats the summary for build results.
+func (r Result) formatBuildSummary(symbol string) string <span class="cov8" title="1">{
+        parts := []string{fmt.Sprintf("%s %s:", symbol, r.Service)}
+
+        if r.Status == StatusSuccess </span><span class="cov8" title="1">{
+                parts = append(parts, "build succeeded")
+        }</span> else<span class="cov8" title="1"> {
+                parts = append(parts, "build failed")
+        }</span>
+
+        // Add duration
+        <span class="cov8" title="1">duration := formatDuration(r.Duration)
+        if duration != "" </span><span class="cov8" title="1">{
+                parts = append(parts, fmt.Sprintf("(%s)", duration))
+        }</span>
+
+        <span class="cov8" title="1">return strings.Join(parts, " ")</span>
+}
+
+// formatDuration formats a duration in a human-readable format.
+func formatDuration(d time.Duration) string <span class="cov8" title="1">{
+        if d &lt; time.Millisecond </span><span class="cov8" title="1">{
+                return ""
+        }</span>
+        <span class="cov8" title="1">if d &lt; time.Second </span><span class="cov8" title="1">{
+                return fmt.Sprintf("%dms", d.Milliseconds())
+        }</span>
+        <span class="cov8" title="1">return fmt.Sprintf("%.1fs", d.Seconds())</span>
+}
+
+// FormatFailures returns a formatted string of failures with truncation applied.
+func (r Result) FormatFailures() string <span class="cov8" title="1">{
+        if len(r.Failures) == 0 </span><span class="cov8" title="1">{
+                return ""
+        }</span>
+
+        <span class="cov8" title="1">var lines []string
+
+        // Sort failures for deterministic output
+        failures := make([]Failure, len(r.Failures))
+        copy(failures, r.Failures)
+        sort.Slice(failures, func(i, j int) bool </span><span class="cov8" title="1">{
+                if failures[i].File != failures[j].File </span><span class="cov8" title="1">{
+                        return failures[i].File &lt; failures[j].File
+                }</span>
+                <span class="cov8" title="1">if failures[i].Line != failures[j].Line </span><span class="cov8" title="1">{
+                        return failures[i].Line &lt; failures[j].Line
+                }</span>
+                <span class="cov0" title="0">return failures[i].Message &lt; failures[j].Message</span>
+        })
+
+        // Display up to MaxFailuresDisplayed failures
+        <span class="cov8" title="1">displayCount := len(failures)
+        if displayCount &gt; MaxFailuresDisplayed </span><span class="cov8" title="1">{
+                displayCount = MaxFailuresDisplayed
+        }</span>
+
+        <span class="cov8" title="1">for i := 0; i &lt; displayCount; i++ </span><span class="cov8" title="1">{
+                failure := failures[i]
+                line := formatFailure(failure)
+                lines = append(lines, line)
+        }</span>
+
+        // Add truncation notice if there are more failures
+        <span class="cov8" title="1">if len(failures) &gt; MaxFailuresDisplayed </span><span class="cov8" title="1">{
+                remaining := len(failures) - MaxFailuresDisplayed
+                lines = append(lines, fmt.Sprintf("... and %d more failures", remaining))
+        }</span>
+
+        <span class="cov8" title="1">return strings.Join(lines, "\n")</span>
+}
+
+// formatFailure formats a single failure with truncation.
+func formatFailure(f Failure) string <span class="cov8" title="1">{
+        parts := []string{}
+
+        // Add file and line if available
+        if f.File != "" </span><span class="cov8" title="1">{
+                if f.Line &gt; 0 </span><span class="cov8" title="1">{
+                        parts = append(parts, fmt.Sprintf("%s:%d", f.File, f.Line))
+                }</span> else<span class="cov8" title="1"> {
+                        parts = append(parts, f.File)
+                }</span>
+        }
+
+        // Add type if available
+        <span class="cov8" title="1">if f.Type != "" </span><span class="cov8" title="1">{
+                parts = append(parts, fmt.Sprintf("[%s]", f.Type))
+        }</span>
+
+        // Add message with truncation
+        <span class="cov8" title="1">message := f.Message
+        if len(message) &gt; MaxFailureMessageLength </span><span class="cov8" title="1">{
+                message = message[:MaxFailureMessageLength-3] + "..."
+        }</span>
+        <span class="cov8" title="1">parts = append(parts, message)
+
+        return strings.Join(parts, " ")</span>
+}
+
+// IsSuccess returns true if the result represents a successful operation.
+func (r Result) IsSuccess() bool <span class="cov8" title="1">{
+        return r.Status == StatusSuccess
+}</span>
+
+// HasFailures returns true if the result has any failures.
+func (r Result) HasFailures() bool <span class="cov8" title="1">{
+        return len(r.Failures) &gt; 0
+}</span>
+
+// TotalTests returns the total number of tests (passed + failed).
+func (r Result) TotalTests() int <span class="cov8" title="1">{
+        return r.PassedCount + r.FailedCount
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">package runner
+
+import (
+        "encoding/json"
+        "time"
+)
+
+// MarshalJSON implements custom JSON marshaling for Result.
+func (r Result) MarshalJSON() ([]byte, error) <span class="cov8" title="1">{
+        // Create a type alias to avoid infinite recursion
+        type resultAlias Result
+        
+        // Create an anonymous struct with the duration as a string
+        return json.Marshal(&amp;struct {
+                resultAlias
+                Duration string `json:"duration"`
+        }{
+                resultAlias: resultAlias(r),
+                Duration:    r.Duration.String(),
+        })
+}</span>
+
+// UnmarshalJSON implements custom JSON unmarshaling for Result.
+func (r *Result) UnmarshalJSON(data []byte) error <span class="cov8" title="1">{
+        // Create a type alias to avoid infinite recursion
+        type resultAlias Result
+        
+        // Create an anonymous struct with the duration as a string
+        aux := &amp;struct {
+                *resultAlias
+                Duration string `json:"duration"`
+        }{
+                resultAlias: (*resultAlias)(r),
+        }
+        
+        if err := json.Unmarshal(data, aux); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        
+        // Parse the duration string
+        <span class="cov8" title="1">duration, err := time.ParseDuration(aux.Duration)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">r.Duration = duration
+        
+        return nil</span>
+}
+
+// ToJSON converts the result to a JSON string.
+func (r Result) ToJSON() (string, error) <span class="cov8" title="1">{
+        data, err := json.Marshal(r)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov8" title="1">return string(data), nil</span>
+}
+
+// FromJSON creates a Result from a JSON string.
+func FromJSON(jsonStr string) (Result, error) <span class="cov8" title="1">{
+        var r Result
+        err := json.Unmarshal([]byte(jsonStr), &amp;r)
+        return r, err
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">// Package runner defines the core types and interfaces for running build operations.
+package runner
+
+import (
+        "time"
+)
+
+// Phase represents the type of build operation being performed.
+type Phase string
+
+const (
+        // PhaseTest represents running tests
+        PhaseTest Phase = "test"
+        // PhaseLint represents running linters
+        PhaseLint Phase = "lint"
+        // PhaseBuild represents running builds
+        PhaseBuild Phase = "build"
+)
+
+// String returns the string representation of the phase.
+func (p Phase) String() string <span class="cov8" title="1">{
+        return string(p)
+}</span>
+
+// Status represents the result status of a build operation.
+type Status string
+
+const (
+        // StatusSuccess indicates the operation completed successfully
+        StatusSuccess Status = "success"
+        // StatusFailure indicates the operation failed
+        StatusFailure Status = "failure"
+        // StatusError indicates the operation encountered an error
+        StatusError Status = "error"
+)
+
+// String returns the string representation of the status.
+func (s Status) String() string <span class="cov8" title="1">{
+        return string(s)
+}</span>
+
+// Failure represents a specific failure in a test or lint operation.
+type Failure struct {
+        // File is the file where the failure occurred
+        File string `json:"file"`
+        // Line is the line number where the failure occurred (0 if not available)
+        Line int `json:"line"`
+        // Message is the failure message
+        Message string `json:"message"`
+        // Type is the type of failure (e.g., "test", "lint", "error")
+        Type string `json:"type,omitempty"`
+}
+
+// Coverage represents test coverage information.
+type Coverage struct {
+        // Percentage is the coverage percentage (0-100)
+        Percentage float64 `json:"percentage"`
+        // Covered is the number of covered lines/statements
+        Covered int `json:"covered"`
+        // Total is the total number of lines/statements
+        Total int `json:"total"`
+        // Details contains additional coverage details by file
+        Details map[string]FileCoverage `json:"details,omitempty"`
+}
+
+// FileCoverage represents coverage information for a specific file.
+type FileCoverage struct {
+        // Percentage is the coverage percentage for this file (0-100)
+        Percentage float64 `json:"percentage"`
+        // Covered is the number of covered lines/statements in this file
+        Covered int `json:"covered"`
+        // Total is the total number of lines/statements in this file
+        Total int `json:"total"`
+}
+
+// Result represents the result of a build operation.
+type Result struct {
+        // Service is the name of the service that was built
+        Service string `json:"service"`
+        // Phase is the type of operation that was performed
+        Phase Phase `json:"phase"`
+        // Duration is how long the operation took
+        Duration time.Duration `json:"duration"`
+        // Status is the result status
+        Status Status `json:"status"`
+        // Coverage contains test coverage information (only for test phase)
+        Coverage *Coverage `json:"coverage,omitempty"`
+        // Failures contains any failures that occurred
+        Failures []Failure `json:"failures,omitempty"`
+        // PassedCount is the number of passed tests/checks
+        PassedCount int `json:"passed_count,omitempty"`
+        // FailedCount is the number of failed tests/checks
+        FailedCount int `json:"failed_count,omitempty"`
+        // WarningCount is the number of warnings (for lint phase)
+        WarningCount int `json:"warning_count,omitempty"`
+        // ErrorMessage contains the error message if Status is StatusError
+        ErrorMessage string `json:"error_message,omitempty"`
+}
+
+// Runner defines the interface for running build operations on services.
+type Runner interface {
+        // Test runs tests for the service and returns the result
+        Test() Result
+        // Lint runs linting for the service and returns the result
+        Lint() Result
+        // Build runs the build for the service and returns the result
+        Build() Result
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
