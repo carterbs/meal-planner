@@ -13,6 +13,7 @@ export default function useAgentMealSync() {
   const [shoppingList, setShoppingList] = useState<ShoppingListItem[] | null>(
     null,
   );
+  const [isSending, setIsSending] = useState(false);
 
   const syncFromCheckpoint = useCallback(async (threadId: string) => {
     const checkpoint = await getAgentCheckpoint(threadId);
@@ -41,18 +42,23 @@ export default function useAgentMealSync() {
   }, []);
 
   const send = useCallback(async (threadId: string, text: string) => {
-    const result = await sendAgentMessage(threadId, text, 'user', true);
-    // Also surface any initial state embedded in the message result
-    const initial = (result.initialState as { state?: { mealPlan?: unknown } } | undefined)?.state?.mealPlan;
-    if (initial) {
-      const plan = convertGatewayMealPlan(initial as { days?: GoMealPlanEntry[] });
-      setMealPlan(plan);
-    }
-    const sl = (result.initialState as { mealPlan?: { shoppingList?: ShoppingListItem[] } } | undefined)?.mealPlan?.shoppingList;
-    if (sl) {
-      setShoppingList(sl);
+    setIsSending(true);
+    try {
+      const result = await sendAgentMessage(threadId, text, 'user', true);
+      // Also surface any initial state embedded in the message result
+      const initial = (result.initialState as { state?: { mealPlan?: unknown } } | undefined)?.state?.mealPlan;
+      if (initial) {
+        const plan = convertGatewayMealPlan(initial as { days?: GoMealPlanEntry[] });
+        setMealPlan(plan);
+      }
+      const sl = (result.initialState as { mealPlan?: { shoppingList?: ShoppingListItem[] } } | undefined)?.mealPlan?.shoppingList;
+      if (sl) {
+        setShoppingList(sl);
+      }
+    } finally {
+      setIsSending(false);
     }
   }, []);
 
-  return { mealPlan, shoppingList, syncFromCheckpoint, send, setMealPlan };
+  return { mealPlan, shoppingList, syncFromCheckpoint, send, setMealPlan, isSending };
 }
