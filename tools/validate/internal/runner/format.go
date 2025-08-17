@@ -196,3 +196,13 @@ func (r Result) HasFailures() bool {
 func (r Result) TotalTests() int {
 	return r.PassedCount + r.FailedCount
 }
+
+// FormatSummary returns a formatted summary line for a result.
+func FormatSummary(r Result) string {
+	return r.FormatSummary()
+}
+
+// FormatFailures returns a formatted string of failures for a result.
+func FormatFailures(r Result) string {
+	return r.FormatFailures()
+}

@@ -2,6 +2,7 @@ package runner
 
 import (
 	"encoding/json"
+	"io"
 	"time"
 )
 
@@ -61,4 +62,11 @@ func FromJSON(jsonStr string) (Result, error) {
 	var r Result
 	err := json.Unmarshal([]byte(jsonStr), &r)
 	return r, err
+}
+
+// OutputJSON writes the results as JSON to the given writer.
+func OutputJSON(results []Result, w io.Writer) error {
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(results)
 }
