@@ -1,0 +1,32 @@
+services:
+  - name: ui
+    type: node
+    test: "cd ui && yarn test --silent"
+    lint: "cd ui && yarn lint --quiet"
+    build: "cd ui && yarn build"
+
+  - name: agent-service
+    type: node
+    test: "cd agent-service && yarn test --silent"
+    lint: "cd agent-service && yarn lint --quiet"
+    build: "cd agent-service && yarn build"
+
+  - name: mcp-service
+    type: node
+    test: "cd mcp-service && yarn test --silent"
+    lint: "cd mcp-service && yarn lint --quiet"
+    build: "cd mcp-service && yarn build"
+
+  - name: meal-service
+    type: go
+    dir: "./meal-service"
+    test:
+      cmd: "go test ./... -cover -json"
+      coverage_profile: "coverage.out"
+    lint:
+      cmd: "golangci-lint run --out-format json"
+    build:
+      cmd: "go build ./..."
+    min_coverage: 80
+
+
