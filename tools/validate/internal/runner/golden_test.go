@@ -86,7 +86,7 @@ func TestFormatSummary_Golden(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			actual := tt.result.FormatSummary()
 			goldenFile := filepath.Join("testdata", "summary_"+tt.name+".golden")
-			
+
 			if *update {
 				err := os.WriteFile(goldenFile, []byte(actual), 0644)
 				if err != nil {
@@ -100,7 +100,7 @@ func TestFormatSummary_Golden(t *testing.T) {
 			}
 
 			if actual != strings.TrimSpace(string(expected)) {
-				t.Errorf("FormatSummary() mismatch:\nActual:   %q\nExpected: %q", 
+				t.Errorf("FormatSummary() mismatch:\nActual:   %q\nExpected: %q",
 					actual, strings.TrimSpace(string(expected)))
 			}
 		})
@@ -200,7 +200,7 @@ func TestFormatFailures_Golden(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			actual := tt.result.FormatFailures()
 			goldenFile := filepath.Join("testdata", "failures_"+tt.name+".golden")
-			
+
 			if *update {
 				err := os.WriteFile(goldenFile, []byte(actual), 0644)
 				if err != nil {
@@ -214,7 +214,7 @@ func TestFormatFailures_Golden(t *testing.T) {
 			}
 
 			if actual != strings.TrimSpace(string(expected)) {
-				t.Errorf("FormatFailures() mismatch:\nActual:\n%s\nExpected:\n%s", 
+				t.Errorf("FormatFailures() mismatch:\nActual:\n%s\nExpected:\n%s",
 					actual, strings.TrimSpace(string(expected)))
 			}
 		})
@@ -303,7 +303,7 @@ func TestToJSON_Golden(t *testing.T) {
 			}
 
 			goldenFile := filepath.Join("testdata", "json_"+tt.name+".golden")
-			
+
 			if *update {
 				err := os.WriteFile(goldenFile, []byte(actual), 0644)
 				if err != nil {
@@ -317,7 +317,7 @@ func TestToJSON_Golden(t *testing.T) {
 			}
 
 			if actual != strings.TrimSpace(string(expected)) {
-				t.Errorf("ToJSON() mismatch:\nActual:\n%s\nExpected:\n%s", 
+				t.Errorf("ToJSON() mismatch:\nActual:\n%s\nExpected:\n%s",
 					actual, strings.TrimSpace(string(expected)))
 			}
 		})

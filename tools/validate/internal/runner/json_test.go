@@ -78,26 +78,26 @@ func TestResult_JSONSerialization(t *testing.T) {
 		t.Error("Coverage should not be nil")
 	} else {
 		if unmarshaled.Coverage.Percentage != result.Coverage.Percentage {
-			t.Errorf("Coverage percentage mismatch: got %v, want %v", 
+			t.Errorf("Coverage percentage mismatch: got %v, want %v",
 				unmarshaled.Coverage.Percentage, result.Coverage.Percentage)
 		}
 		if unmarshaled.Coverage.Covered != result.Coverage.Covered {
-			t.Errorf("Coverage covered mismatch: got %v, want %v", 
+			t.Errorf("Coverage covered mismatch: got %v, want %v",
 				unmarshaled.Coverage.Covered, result.Coverage.Covered)
 		}
 		if unmarshaled.Coverage.Total != result.Coverage.Total {
-			t.Errorf("Coverage total mismatch: got %v, want %v", 
+			t.Errorf("Coverage total mismatch: got %v, want %v",
 				unmarshaled.Coverage.Total, result.Coverage.Total)
 		}
 		if len(unmarshaled.Coverage.Details) != len(result.Coverage.Details) {
-			t.Errorf("Coverage details length mismatch: got %v, want %v", 
+			t.Errorf("Coverage details length mismatch: got %v, want %v",
 				len(unmarshaled.Coverage.Details), len(result.Coverage.Details))
 		}
 	}
 
 	// Verify failures
 	if len(unmarshaled.Failures) != len(result.Failures) {
-		t.Errorf("Failures length mismatch: got %v, want %v", 
+		t.Errorf("Failures length mismatch: got %v, want %v",
 			len(unmarshaled.Failures), len(result.Failures))
 	} else if len(unmarshaled.Failures) > 0 {
 		failure := unmarshaled.Failures[0]
@@ -133,10 +133,10 @@ func TestResult_JSONSerialization(t *testing.T) {
 
 func TestResult_ToJSON(t *testing.T) {
 	result := Result{
-		Service:  "test-service",
-		Phase:    PhaseTest,
-		Duration: 1 * time.Second,
-		Status:   StatusSuccess,
+		Service:     "test-service",
+		Phase:       PhaseTest,
+		Duration:    1 * time.Second,
+		Status:      StatusSuccess,
 		PassedCount: 10,
 	}
 
@@ -153,7 +153,7 @@ func TestResult_ToJSON(t *testing.T) {
 	}
 
 	if unmarshaled.Service != result.Service {
-		t.Errorf("Service mismatch after JSON round-trip: got %v, want %v", 
+		t.Errorf("Service mismatch after JSON round-trip: got %v, want %v",
 			unmarshaled.Service, result.Service)
 	}
 }

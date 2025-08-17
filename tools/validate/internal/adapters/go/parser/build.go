@@ -45,7 +45,7 @@ func parseBuildErrors(output string) []runner.Failure {
 
 	var currentPackage string
 	scanner := bufio.NewScanner(strings.NewReader(output))
-	
+
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
@@ -122,7 +122,7 @@ func extractBuildFileFromLine(line string) string {
 
 // extractBuildLineFromLine tries to extract a line number from a build error line.
 func extractBuildLineFromLine(line string) int {
-	// Look for patterns like "filename.go:123:" 
+	// Look for patterns like "filename.go:123:"
 	parts := strings.Fields(line)
 	for _, part := range parts {
 		if strings.Contains(part, ".go:") {

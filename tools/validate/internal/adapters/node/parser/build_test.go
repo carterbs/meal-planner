@@ -352,7 +352,7 @@ func TestParseBuildOutput_AllParsers(t *testing.T) {
 	// Test that all parsers are called
 	viteOutput := `src/main.tsx:5:10: error: Cannot find module 'missing'`
 	result := ParseBuildOutput(viteOutput)
-	
+
 	if result.Status != runner.StatusFailure {
 		t.Errorf("Expected status %s, got %s", runner.StatusFailure, result.Status)
 	}
@@ -380,7 +380,7 @@ SyntaxError: Unexpected token (5:10)
 	if len(result.Failures) != 1 {
 		t.Errorf("Expected 1 failure, got %d", len(result.Failures))
 	}
-	
+
 	failure := result.Failures[0]
 	if failure.File != "src/utils/helper.js" {
 		t.Errorf("Expected file 'src/utils/helper.js', got '%s'", failure.File)

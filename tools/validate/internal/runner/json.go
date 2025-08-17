@@ -10,7 +10,7 @@ import (
 func (r Result) MarshalJSON() ([]byte, error) {
 	// Create a type alias to avoid infinite recursion
 	type resultAlias Result
-	
+
 	// Create an anonymous struct with the duration as a string
 	return json.Marshal(&struct {
 		resultAlias
@@ -25,7 +25,7 @@ func (r Result) MarshalJSON() ([]byte, error) {
 func (r *Result) UnmarshalJSON(data []byte) error {
 	// Create a type alias to avoid infinite recursion
 	type resultAlias Result
-	
+
 	// Create an anonymous struct with the duration as a string
 	aux := &struct {
 		*resultAlias
@@ -33,18 +33,18 @@ func (r *Result) UnmarshalJSON(data []byte) error {
 	}{
 		resultAlias: (*resultAlias)(r),
 	}
-	
+
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	
+
 	// Parse the duration string
 	duration, err := time.ParseDuration(aux.Duration)
 	if err != nil {
 		return err
 	}
 	r.Duration = duration
-	
+
 	return nil
 }
 

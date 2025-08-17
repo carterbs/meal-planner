@@ -105,7 +105,7 @@ func createFailingRunnerFactory() RunnerFactory {
 
 func TestOrchestrator_Execute_Success(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	var stdout, stderr bytes.Buffer
 	orch := New(
 		cfg,
@@ -157,7 +157,7 @@ func TestOrchestrator_Execute_Success(t *testing.T) {
 
 func TestOrchestrator_Execute_WithFailures(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	var stdout, stderr bytes.Buffer
 	orch := New(
 		cfg,
@@ -176,7 +176,7 @@ func TestOrchestrator_Execute_WithFailures(t *testing.T) {
 	}
 
 	err := orch.ExecuteWithFactory(context.Background(), opts, createFailingRunnerFactory())
-	
+
 	// Should return error when services fail
 	if err == nil {
 		t.Error("Expected error when services fail")
@@ -189,7 +189,7 @@ func TestOrchestrator_Execute_WithFailures(t *testing.T) {
 
 func TestOrchestrator_Execute_ServiceFiltering(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	var stdout, stderr bytes.Buffer
 	orch := New(
 		cfg,
@@ -233,7 +233,7 @@ func TestOrchestrator_Execute_ServiceFiltering(t *testing.T) {
 
 func TestOrchestrator_Execute_NoMatchingServices(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	var stdout, stderr bytes.Buffer
 	orch := New(
 		cfg,
@@ -263,7 +263,7 @@ func TestOrchestrator_Execute_NoMatchingServices(t *testing.T) {
 
 func TestOrchestrator_Execute_Spinners(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	spinnerFactory := &ui.FakeSpinnerFactory{}
 	var stdout, stderr bytes.Buffer
 	orch := New(
@@ -307,7 +307,7 @@ func TestOrchestrator_Execute_Spinners(t *testing.T) {
 
 func TestOrchestrator_Execute_NoSpinnersInCI(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	spinnerFactory := &ui.FakeSpinnerFactory{}
 	var stdout, stderr bytes.Buffer
 	orch := New(
@@ -338,7 +338,7 @@ func TestOrchestrator_Execute_NoSpinnersInCI(t *testing.T) {
 
 func TestOrchestrator_Execute_NoSpinnersWhenNotTTY(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	spinnerFactory := &ui.FakeSpinnerFactory{}
 	var stdout, stderr bytes.Buffer
 	orch := New(
@@ -371,7 +371,7 @@ func TestOrchestrator_Execute_NoSpinnersWhenNotTTY(t *testing.T) {
 
 func TestOrchestrator_Execute_VerboseOutput(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	var stdout, stderr bytes.Buffer
 	orch := New(
 		cfg,
@@ -395,7 +395,7 @@ func TestOrchestrator_Execute_VerboseOutput(t *testing.T) {
 	}
 
 	output := stdout.String()
-	
+
 	// Verify human-readable output (not JSON)
 	var jsonResult []runner.Result
 	if json.Unmarshal([]byte(output), &jsonResult) == nil {
@@ -416,12 +416,12 @@ func TestOrchestrator_Execute_VerboseOutput(t *testing.T) {
 
 func TestOrchestrator_Execute_ClockInjection(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	fakeClock := &ui.FakeClock{
 		CurrentTime: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
 		Duration:    2 * time.Second,
 	}
-	
+
 	var stdout, stderr bytes.Buffer
 	orch := New(
 		cfg,
@@ -459,7 +459,7 @@ func TestOrchestrator_Execute_ClockInjection(t *testing.T) {
 
 func TestOrchestrator_Execute_CancelledContext(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	var stdout, stderr bytes.Buffer
 	orch := New(
 		cfg,
@@ -490,7 +490,7 @@ func TestOrchestrator_Execute_CancelledContext(t *testing.T) {
 
 func TestOrchestrator_Execute_MaxParallelDefault(t *testing.T) {
 	cfg := createTestConfig()
-	
+
 	var stdout, stderr bytes.Buffer
 	orch := New(
 		cfg,
@@ -529,7 +529,7 @@ func TestOrchestrator_Execute_AllPhases(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := createTestConfig()
-			
+
 			var stdout, stderr bytes.Buffer
 			orch := New(
 				cfg,

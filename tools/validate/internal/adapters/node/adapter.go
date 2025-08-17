@@ -268,7 +268,7 @@ func (a *Adapter) Lint() runner.Result {
 	}
 
 	output := stdout.String()
-	
+
 	// Try to parse as JSON first if in JSON mode
 	if a.jsonMode {
 		if parsedResult, parseErr := parser.ParseESLintJSON(output); parseErr == nil {
@@ -382,11 +382,11 @@ func (a *Adapter) containsQuiet(parts []string) bool {
 }
 
 func (a *Adapter) isJestCommand(parts []string) bool {
-	return len(parts) > 0 && (strings.Contains(parts[0], "jest") || 
+	return len(parts) > 0 && (strings.Contains(parts[0], "jest") ||
 		(len(parts) > 1 && strings.Contains(parts[1], "jest")))
 }
 
 func (a *Adapter) isESLintCommand(parts []string) bool {
-	return len(parts) > 0 && (strings.Contains(parts[0], "eslint") || 
+	return len(parts) > 0 && (strings.Contains(parts[0], "eslint") ||
 		(len(parts) > 1 && strings.Contains(parts[1], "eslint")))
 }

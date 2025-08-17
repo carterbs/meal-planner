@@ -30,12 +30,12 @@ func ParseCoverageProfile(profilePath string) (*runner.Coverage, error) {
 	for scanner.Scan() {
 		lineNum++
 		line := strings.TrimSpace(scanner.Text())
-		
+
 		// Skip the mode line (first line)
 		if lineNum == 1 && strings.HasPrefix(line, "mode:") {
 			continue
 		}
-		
+
 		if line == "" {
 			continue
 		}
@@ -97,7 +97,7 @@ func ParseCoverageProfile(profilePath string) (*runner.Coverage, error) {
 		if stats.Total > 0 {
 			percentage = float64(stats.Covered) / float64(stats.Total) * 100
 		}
-		
+
 		coverage.Details[filename] = runner.FileCoverage{
 			Percentage: percentage,
 			Covered:    stats.Covered,

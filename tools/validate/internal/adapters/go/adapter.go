@@ -91,7 +91,7 @@ func (a *Adapter) Test() runner.Result {
 		}
 	}
 
-	// If there were command execution errors but parsing succeeded, 
+	// If there were command execution errors but parsing succeeded,
 	// the status from parsing should take precedence
 	if err != nil && result.Status == runner.StatusSuccess {
 		// Command failed but parsing indicates success - trust the parser
@@ -141,7 +141,7 @@ func (a *Adapter) Lint() runner.Result {
 			result.WarningCount = textResult.WarningCount
 			return result
 		}
-		
+
 		result.Status = runner.StatusError
 		result.ErrorMessage = fmt.Sprintf("Failed to parse lint output: %v", parseErr)
 		return result

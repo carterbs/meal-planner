@@ -395,7 +395,7 @@ Artifacts
 
 ⸻
 
-## Milestone 8 — CI Integration & Adoption
+## Milestone 7 — CI Integration & Adoption
 
 Scope
 	•	Replace root scripts with scripts/validate in package.json.

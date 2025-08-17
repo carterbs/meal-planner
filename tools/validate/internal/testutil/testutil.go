@@ -20,7 +20,7 @@ func NewGoldenFile(t *testing.T, name string) *GoldenFile {
 	if err != nil {
 		t.Fatalf("Failed to create test directory: %v", err)
 	}
-	
+
 	return &GoldenFile{
 		Path: filepath.Join(testDir, name+".golden"),
 	}
@@ -40,12 +40,12 @@ func (g *GoldenFile) Compare(t *testing.T, actual []byte) {
 		g.Update(t, actual)
 		return
 	}
-	
+
 	expected, err := os.ReadFile(g.Path)
 	if err != nil {
 		t.Fatalf("Failed to read golden file %s: %v", g.Path, err)
 	}
-	
+
 	if !bytes.Equal(actual, expected) {
 		t.Errorf("Content mismatch.\nExpected:\n%s\nActual:\n%s", expected, actual)
 	}
@@ -57,11 +57,11 @@ func TempDir(t *testing.T) string {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	
+
 	t.Cleanup(func() {
 		os.RemoveAll(dir)
 	})
-	
+
 	return dir
 }
 
@@ -92,11 +92,11 @@ func ChangeWorkingDir(t *testing.T, dir string) string {
 	if err != nil {
 		t.Fatalf("Failed to get current working directory: %v", err)
 	}
-	
+
 	err = os.Chdir(dir)
 	if err != nil {
 		t.Fatalf("Failed to change working directory to %s: %v", dir, err)
 	}
-	
+
 	return oldWd
 }

@@ -30,16 +30,16 @@ func (f *FakeCommandRunner) CommandContext(ctx context.Context, name string, arg
 
 // FakeCommand is a mock implementation of Command for testing.
 type FakeCommand struct {
-	Name     string
-	Args     []string
-	Context  context.Context
-	Dir      string
-	Stdout   io.Writer
-	Stderr   io.Writer
-	Stdin    io.Reader
-	Env      []string
-	RunError error
-	Output   string
+	Name        string
+	Args        []string
+	Context     context.Context
+	Dir         string
+	Stdout      io.Writer
+	Stderr      io.Writer
+	Stdin       io.Reader
+	Env         []string
+	RunError    error
+	Output      string
 	ErrorOutput string
 }
 
