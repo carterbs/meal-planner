@@ -24,6 +24,12 @@ gateway.
 7. **Validation.**  This service is written in Go, but follow
    repository‑wide practices: always lint, run tests, and the build.
 
+## Testing guidelines
+
+- **Avoid global logger initialization.** Use lazy initialization functions like `getMyLogger()` instead of global variables like `var myLogger = logging.GetGrpcLogger("name")` to prevent tests from hanging on gRPC connections.
+- **Use `setupTestEnvironment(t)`** in main package tests to disable gRPC logging during tests.
+- **Package-level tests** should set `os.Setenv("DISABLE_GRPC_LOGGING", "true")` in an `init()` function to prevent connection attempts.
+
 ## Adding a new RPC
 
 1. Update `proto/meal.proto` with the new RPC definition, including

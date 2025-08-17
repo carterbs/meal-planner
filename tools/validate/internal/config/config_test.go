@@ -1,6 +1,7 @@
 package config
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/bradcarter-meal-planner/tools/validate/internal/testutil"
@@ -312,5 +313,189 @@ func TestIsRelativePath(t *testing.T) {
 		if result != tc.expected {
 			t.Errorf("isRelativePath(%q) = %v, expected %v", tc.path, result, tc.expected)
 		}
+	}
+}
+
+func TestValidateCommandNotUsingCD(t *testing.T) {
+	testCases := []struct {
+		name        string
+		serviceName string
+		commandType string
+		command     string
+		expectError bool
+	}{
+		{
+			name:        "empty command",
+			serviceName: "test",
+			commandType: "test",
+			command:     "",
+			expectError: false,
+		},
+		{
+			name:        "valid command without cd",
+			serviceName: "test",
+			commandType: "test",
+			command:     "yarn test --silent",
+			expectError: false,
+		},
+		{
+			name:        "cd pattern with &&",
+			serviceName: "ui",
+			commandType: "test",
+			command:     "cd ui && yarn test",
+			expectError: true,
+		},
+		{
+			name:        "cd pattern with whitespace",
+			serviceName: "ui",
+			commandType: "lint",
+			command:     "  cd ./src && npm run lint  ",
+			expectError: true,
+		},
+		{
+			name:        "cd without &&",
+			serviceName: "test",
+			commandType: "build",
+			command:     "cd /some/path",
+			expectError: false,
+		},
+		{
+			name:        "command containing cd but not at start",
+			serviceName: "test",
+			commandType: "test",
+			command:     "yarn test && cd results",
+			expectError: false,
+		},
+		{
+			name:        "complex cd pattern",
+			serviceName: "agent-service",
+			commandType: "build",
+			command:     "cd agent-service && yarn build --production",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateCommandNotUsingCD(tc.serviceName, tc.commandType, tc.command)
+			
+			if tc.expectError && err == nil {
+				t.Errorf("Expected error for command %q, but got none", tc.command)
+			}
+			
+			if !tc.expectError && err != nil {
+				t.Errorf("Expected no error for command %q, but got: %v", tc.command, err)
+			}
+			
+			if tc.expectError && err != nil {
+				expectedErrMsg := "pattern. Use the 'dir' field instead"
+				if !strings.Contains(err.Error(), expectedErrMsg) {
+					t.Errorf("Error message should mention using 'dir' field. Got: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateConfig_CommandsWithCDPattern(t *testing.T) {
+	loader := NewLoader("")
+	
+	testCases := []struct {
+		name        string
+		config      *Config
+		expectError bool
+	}{
+		{
+			name: "valid commands without cd",
+			config: &Config{
+				Services: []Service{
+					{
+						Name:  "ui",
+						Type:  ServiceTypeNode,
+						Test:  "yarn test",
+						Lint:  "yarn lint", 
+						Build: "yarn build",
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "test command with cd pattern",
+			config: &Config{
+				Services: []Service{
+					{
+						Name:  "ui",
+						Type:  ServiceTypeNode,
+						Test:  "cd ui && yarn test",
+						Lint:  "yarn lint",
+						Build: "yarn build",
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "lint command with cd pattern",
+			config: &Config{
+				Services: []Service{
+					{
+						Name:  "api",
+						Type:  ServiceTypeNode,
+						Test:  "yarn test",
+						Lint:  "cd api && yarn lint",
+						Build: "yarn build",
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "build command with cd pattern",
+			config: &Config{
+				Services: []Service{
+					{
+						Name:  "service",
+						Type:  ServiceTypeNode,
+						Test:  "yarn test",
+						Lint:  "yarn lint",
+						Build: "cd service && yarn build",
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "multiple services, one with cd pattern",
+			config: &Config{
+				Services: []Service{
+					{
+						Name:  "valid-service",
+						Type:  ServiceTypeNode,
+						Test:  "yarn test",
+					},
+					{
+						Name:  "invalid-service",
+						Type:  ServiceTypeNode,
+						Test:  "cd invalid && yarn test",
+					},
+				},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := loader.validateConfig(tc.config)
+			
+			if tc.expectError && err == nil {
+				t.Error("Expected validation error but got none")
+			}
+			
+			if !tc.expectError && err != nil {
+				t.Errorf("Expected no validation error but got: %v", err)
+			}
+		})
 	}
 }

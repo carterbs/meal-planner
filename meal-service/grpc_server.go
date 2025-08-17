@@ -11,10 +11,13 @@ import (
 	"mealplanner/repositories"
 	"mealplanner/server"
 
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-var grpcServerLogger = logging.GetGrpcLogger("grpc-server")
+func getGrpcServerLogger() *zap.SugaredLogger {
+	return logging.GetGrpcLogger("grpc-server")
+}
 
 type MealPlannerAPIServer struct {
 	apipb.UnimplementedMealPlannerAPIServer
@@ -138,28 +141,28 @@ func (s *MealPlannerAPIServer) GenerateMealPlan(ctx context.Context, req *emptyp
 }
 
 func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.FinalizeMealPlanRequest) (*apipb.FinalizeMealPlanResponse, error) {
-	grpcServerLogger.Info("🔧 [BACKEND-FINALIZE] FinalizeMealPlan called")
+	getGrpcServerLogger().Info("🔧 [BACKEND-FINALIZE] FinalizeMealPlan called")
 
 	if req.ThreadId == "" {
-		grpcServerLogger.Error("🔧 [BACKEND-FINALIZE] No thread ID provided in request")
+		getGrpcServerLogger().Error("🔧 [BACKEND-FINALIZE] No thread ID provided in request")
 		return nil, fmt.Errorf("thread ID is required")
 	}
 
-	grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Processing thread: %s", req.ThreadId))
+	getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Processing thread: %s", req.ThreadId))
 
 	// Get checkpoint and extract meal plan
 	checkpoint, err := getCheckpointFromDB(req.ThreadId)
 	if err != nil {
-		grpcServerLogger.Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Failed to get checkpoint: %v", err))
+		getGrpcServerLogger().Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Failed to get checkpoint: %v", err))
 		return nil, fmt.Errorf("failed to get checkpoint: %w", err)
 	}
 
 	if checkpoint.State.MealPlan == nil {
-		grpcServerLogger.Error("🔧 [BACKEND-FINALIZE] No meal plan found in checkpoint")
+		getGrpcServerLogger().Error("🔧 [BACKEND-FINALIZE] No meal plan found in checkpoint")
 		return nil, fmt.Errorf("no meal plan found in checkpoint")
 	}
 
-	grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Processing meal plan with %d days", len(checkpoint.State.MealPlan.Days)))
+	getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Processing meal plan with %d days", len(checkpoint.State.MealPlan.Days)))
 
 	// Collect meal IDs from the finalized plan
 	mealIDSet := make(map[int]struct{})
@@ -167,9 +170,9 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 		if entry != nil && entry.Meal != nil {
 			mealID := int(entry.Meal.GetId())
 			mealIDSet[mealID] = struct{}{}
-			grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Day %d: Found meal ID %d", i, mealID))
+			getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Day %d: Found meal ID %d", i, mealID))
 		} else {
-			grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Day %d: No meal found", i))
+			getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Day %d: No meal found", i))
 		}
 	}
 	var mealIDs []int
@@ -177,21 +180,21 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 		mealIDs = append(mealIDs, id)
 	}
 
-	grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Unique meal IDs to update: %v", mealIDs))
+	getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Unique meal IDs to update: %v", mealIDs))
 
 	// Persist last_planned timestamps
 	if len(mealIDs) > 0 {
-		grpcServerLogger.Info("🔧 [BACKEND-FINALIZE] Calling UpdateLastPlannedDates...")
+		getGrpcServerLogger().Info("🔧 [BACKEND-FINALIZE] Calling UpdateLastPlannedDates...")
 		if err := server.Services.MealService.UpdateLastPlannedDates(mealIDs); err != nil {
-			grpcServerLogger.Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] UpdateLastPlannedDates failed: %v", err))
+			getGrpcServerLogger().Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] UpdateLastPlannedDates failed: %v", err))
 			return nil, fmt.Errorf("failed to update last planned dates: %w", err)
 		}
-		grpcServerLogger.Info("🔧 [BACKEND-FINALIZE] UpdateLastPlannedDates succeeded")
+		getGrpcServerLogger().Info("🔧 [BACKEND-FINALIZE] UpdateLastPlannedDates succeeded")
 	} else {
-		grpcServerLogger.Warn("🔧 [BACKEND-FINALIZE] No meal IDs to update")
+		getGrpcServerLogger().Warn("🔧 [BACKEND-FINALIZE] No meal IDs to update")
 	}
 
-	grpcServerLogger.Info("🔧 [BACKEND-FINALIZE] FinalizeMealPlan completed successfully")
+	getGrpcServerLogger().Info("🔧 [BACKEND-FINALIZE] FinalizeMealPlan completed successfully")
 	return &apipb.FinalizeMealPlanResponse{
 		Message: "Meal plan finalized successfully",
 	}, nil
@@ -498,10 +501,10 @@ func getCheckpointFromDB(threadID string) (*apipb.AgentCheckpoint, error) {
 	for k := range stateData {
 		keys = append(keys, k)
 	}
-	grpcServerLogger.Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Checkpoint state keys: %v", keys))
+	getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Checkpoint state keys: %v", keys))
 	mealPlanData, ok := stateData["mealPlan"].(map[string]interface{})
 	if !ok {
-		grpcServerLogger.Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] mealPlan key not found or wrong type. Available keys: %v", keys))
+		getGrpcServerLogger().Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] mealPlan key not found or wrong type. Available keys: %v", keys))
 		return nil, fmt.Errorf("meal plan is missing or invalid in checkpoint state")
 	}
 

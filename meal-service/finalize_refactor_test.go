@@ -12,6 +12,7 @@ import (
 // TestFinalizeMealPlan_ThreadIDSignature tests the new FinalizeMealPlan implementation
 // that accepts a thread ID and retrieves the meal plan from checkpoint
 func TestFinalizeMealPlan_ThreadIDSignature(t *testing.T) {
+	setupTestEnvironment(t)
 	server := &MealPlannerAPIServer{}
 
 	tests := []struct {

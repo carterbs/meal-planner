@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -112,6 +113,17 @@ func (l *Loader) validateConfig(config *Config) error {
 			return fmt.Errorf("service %s has no commands defined", service.Name)
 		}
 
+		// Validate commands don't contain directory change patterns
+		if err := validateCommandNotUsingCD(service.Name, "test", testCmd); err != nil {
+			return err
+		}
+		if err := validateCommandNotUsingCD(service.Name, "lint", lintCmd); err != nil {
+			return err
+		}
+		if err := validateCommandNotUsingCD(service.Name, "build", buildCmd); err != nil {
+			return err
+		}
+
 		// For Go services, validate directory if specified
 		if service.Type == ServiceTypeGo && service.Dir != "" {
 			if !filepath.IsAbs(service.Dir) && !isRelativePath(service.Dir) {
@@ -140,6 +152,20 @@ func isRelativePath(path string) bool {
 		return true
 	}
 	return false
+}
+
+// validateCommandNotUsingCD validates that a command doesn't use cd patterns.
+func validateCommandNotUsingCD(serviceName, commandType, command string) error {
+	if command == "" {
+		return nil
+	}
+
+	// Check for patterns like "cd <dir> &&" at the start of commands
+	if strings.HasPrefix(strings.TrimSpace(command), "cd ") && strings.Contains(command, "&&") {
+		return fmt.Errorf("service %s %s command contains 'cd <dir> &&' pattern. Use the 'dir' field instead to set the working directory", serviceName, commandType)
+	}
+
+	return nil
 }
 
 // GetTestCommand returns the test command as a string.

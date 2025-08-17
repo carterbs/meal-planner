@@ -1,6 +1,7 @@
 package services
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,6 +12,10 @@ import (
 	"mealplanner/repositories/mocks"
 	"mealplanner/testutil"
 )
+
+func init() {
+	os.Setenv("DISABLE_GRPC_LOGGING", "true")
+}
 
 func TestShoppingListService_BuildShoppingList_Empty(t *testing.T) {
 	mockMealRepo := mocks.NewMockMealRepository(t)

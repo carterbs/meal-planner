@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,6 +12,10 @@ import (
 	"mealplanner/repositories/mocks"
 	"mealplanner/testutil"
 )
+
+func init() {
+	os.Setenv("DISABLE_GRPC_LOGGING", "true")
+}
 
 func TestMealService_GetAllMeals(t *testing.T) {
 	tests := []struct {

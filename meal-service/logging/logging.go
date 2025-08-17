@@ -88,22 +88,27 @@ func InitLogger() {
 			verbose = true
 		}
 
-		// Check if we should use gRPC logging
-		loggingServiceAddr := os.Getenv("LOGGING_SERVICE_ADDR")
-		if loggingServiceAddr == "" {
-			loggingServiceAddr = "localhost:50052"
-		}
-
-		// Try to connect to gRPC logging service
-		var err error
-		grpcLogger, err = logger.NewLoggingClient(loggingServiceAddr, "backend")
-		if err != nil {
-			// Fall back to local logging if gRPC service is not available
+		// Check if gRPC logging is disabled
+		if os.Getenv("DISABLE_GRPC_LOGGING") == "true" {
 			useGrpcLog = false
-			fmt.Printf("gRPC logging service not available at %s: %v\n", loggingServiceAddr, err)
 		} else {
-			useGrpcLog = true
-			fmt.Printf("gRPC logging service connected at %s\n", loggingServiceAddr)
+			// Check if we should use gRPC logging
+			loggingServiceAddr := os.Getenv("LOGGING_SERVICE_ADDR")
+			if loggingServiceAddr == "" {
+				loggingServiceAddr = "localhost:50052"
+			}
+
+			// Try to connect to gRPC logging service
+			var err error
+			grpcLogger, err = logger.NewLoggingClient(loggingServiceAddr, "backend")
+			if err != nil {
+				// Fall back to local logging if gRPC service is not available
+				useGrpcLog = false
+				fmt.Printf("gRPC logging service not available at %s: %v\n", loggingServiceAddr, err)
+			} else {
+				useGrpcLog = true
+				fmt.Printf("gRPC logging service connected at %s\n", loggingServiceAddr)
+			}
 		}
 
 		// Initialize local zap logger (as fallback or for dual logging)
