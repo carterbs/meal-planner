@@ -2,11 +2,8 @@
 For running on my linux box.
 
 # Bugs
-- Buttons need a little work. The text on the sened button is gray instead of white
-- The pulls that control the view on the plan page should match the button style of the send button
-- The code for finding the "changed" meals feels wrong. If you say "Remove wednesday lunch" and follow up with another message of "Swap dinner on tuesday", both tuesday dinner and wednesday's lunch glow green.
+- Background of the plan area is mint green. should match the beige of the chat header.
 - Alignment of the meals looks off. Breafkast is inset a little on certain days while lunch and dinner are aligned.
-- Background of the plan area is green. should match chat.
 
 ## Tasks
 - Have AI normalize all of the ingredients one-time

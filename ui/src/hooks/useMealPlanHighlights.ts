@@ -59,7 +59,13 @@ export default function useMealPlanHighlights(
     const next = currentPlan;
     const changed = computeChangedKeys(prev, next);
     if (changed.size > 0) {
-      setHighlights((prevSet) => new Set([...prevSet, ...changed]));
+      // Clear any existing timeout since we're replacing highlights
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      // Replace highlights with only the most recent changes
+      setHighlights(new Set(changed));
       scheduleClear(changed);
     }
     previousPlanRef.current = currentPlan;
@@ -78,7 +84,13 @@ export default function useMealPlanHighlights(
       const prevPlan = previousPlanRef.current;
       const changed = computeChangedKeys(prevPlan, newPlan);
       if (changed.size > 0) {
-        setHighlights((prev) => new Set([...prev, ...changed]));
+        // Clear any existing timeout since we're replacing highlights
+        if (timeoutRef.current) {
+          window.clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        // Replace highlights with only the most recent changes
+        setHighlights(new Set(changed));
         scheduleClear(changed);
       }
 

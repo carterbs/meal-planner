@@ -13,7 +13,8 @@
       "Write",
       "Glob",
       "Grep",
-      "LS"
+      "LS",
+      "tools/validate/validate"
     ]
   }
 }
