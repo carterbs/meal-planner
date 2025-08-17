@@ -22,7 +22,8 @@ func (f *FakeTTYDetector) IsTerminal(fd uintptr) bool {
 
 // FakeSpinnerFactory is a mock implementation of SpinnerFactory for testing.
 type FakeSpinnerFactory struct {
-	Spinners []*FakeSpinner
+	Spinners           []*FakeSpinner
+	MultiSpinnerManagers []*FakeMultiSpinnerManager
 }
 
 // NewFakeSpinnerFactory creates a new FakeSpinnerFactory.
@@ -35,6 +36,16 @@ func (f *FakeSpinnerFactory) NewSpinner(w io.Writer) Spinner {
 	spinner := &FakeSpinner{Writer: w}
 	f.Spinners = append(f.Spinners, spinner)
 	return spinner
+}
+
+// NewMultiSpinnerManager creates a new fake multi-spinner manager.
+func (f *FakeSpinnerFactory) NewMultiSpinnerManager(w io.Writer) MultiSpinnerManager {
+	manager := &FakeMultiSpinnerManager{
+		Writer:  w,
+		Factory: f,
+	}
+	f.MultiSpinnerManagers = append(f.MultiSpinnerManagers, manager)
+	return manager
 }
 
 // FakeSpinner is a mock implementation of Spinner for testing.
@@ -110,4 +121,27 @@ func (c *FakeClock) Since(t time.Time) time.Duration {
 // Advance advances the fake clock by the given duration.
 func (c *FakeClock) Advance(d time.Duration) {
 	c.CurrentTime = c.CurrentTime.Add(d)
+}
+
+// FakeMultiSpinnerManager is a mock implementation of MultiSpinnerManager for testing.
+type FakeMultiSpinnerManager struct {
+	Writer   io.Writer
+	Factory  *FakeSpinnerFactory
+	Started  bool
+	Stopped  bool
+	Spinners []Spinner
+}
+
+func (m *FakeMultiSpinnerManager) Start() {
+	m.Started = true
+}
+
+func (m *FakeMultiSpinnerManager) Stop() {
+	m.Stopped = true
+}
+
+func (m *FakeMultiSpinnerManager) NewSpinner() Spinner {
+	spinner := m.Factory.NewSpinner(m.Writer)
+	m.Spinners = append(m.Spinners, spinner)
+	return spinner
 }
