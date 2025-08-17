@@ -103,6 +103,7 @@ func (o *Orchestrator) ExecuteWithFactory(ctx context.Context, opts Options, fac
 	// Create execution context and result collection
 	results := make([]runner.Result, len(cfg.Services))
 	spinners := make(map[string]ui.Spinner)
+	var multiSpinnerManager ui.MultiSpinnerManager
 	var mu sync.Mutex
 
 	// Initialize default successful results so unpopulated entries don't
@@ -135,12 +136,24 @@ func (o *Orchestrator) ExecuteWithFactory(ctx context.Context, opts Options, fac
 
 	// Start spinners if enabled
 	if useSpinners {
+		multiSpinnerManager = o.spinnerFactory.NewMultiSpinnerManager(o.output)
+		
+		// Create all spinners first
 		for i, service := range cfg.Services {
-			spinner := o.spinnerFactory.NewSpinner(o.output)
-			spinner.Start(fmt.Sprintf("%s: %s starting...", service.Name, opts.Phase))
+			spinner := multiSpinnerManager.NewSpinner()
 			spinners[service.Name] = spinner
 			// Ensure we capture the index for the closure
 			_ = i
+		}
+		
+		// Start the multi-printer after all spinners are created
+		multiSpinnerManager.Start()
+		
+		// Now start each individual spinner
+		for _, service := range cfg.Services {
+			if spinner, exists := spinners[service.Name]; exists {
+				spinner.Start(fmt.Sprintf("%s: %s starting...", service.Name, opts.Phase))
+			}
 		}
 	}
 
@@ -238,14 +251,11 @@ func (o *Orchestrator) ExecuteWithFactory(ctx context.Context, opts Options, fac
 		for _, spinner := range spinners {
 			spinner.Stop()
 		}
+		if multiSpinnerManager != nil {
+			multiSpinnerManager.Stop()
+		}
 	}
 
-	// DEBUG: Dump results to error output to aid in diagnosing unexpected
-	// missing entries when contexts are cancelled. This writes to stderr so
-	// it won't interfere with JSON/human-readable stdout used by tests.
-	for idx, rr := range results {
-		fmt.Fprintf(o.errorOutput, "DEBUG result[%d]: service=%q status=%q\n", idx, rr.Service, rr.Status)
-	}
 
 	// Output results
 	if err := o.outputResults(results, opts); err != nil {

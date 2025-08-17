@@ -26,10 +26,22 @@ type Spinner interface {
 	Stop()
 }
 
-// SpinnerFactory creates spinners.
+// MultiSpinnerManager manages multiple concurrent spinners.
+type MultiSpinnerManager interface {
+	// Start begins the multi-spinner display.
+	Start()
+	// Stop ends the multi-spinner display.
+	Stop()
+	// NewSpinner creates a new spinner within this manager.
+	NewSpinner() Spinner
+}
+
+// SpinnerFactory creates spinners and spinner managers.
 type SpinnerFactory interface {
 	// NewSpinner creates a new spinner that writes to the given writer.
 	NewSpinner(w io.Writer) Spinner
+	// NewMultiSpinnerManager creates a new multi-spinner manager that writes to the given writer.
+	NewMultiSpinnerManager(w io.Writer) MultiSpinnerManager
 }
 
 // Clock provides an interface for time operations that can be mocked in tests.
