@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-BIN="$HERE/validate"
+ROOT="$(cd "$HERE/.." && pwd)"
+BIN="$HERE/validate-bin"
 if [ ! -x "$BIN" ]; then
   echo "Building validate..."
-  go build -o "$BIN" ./tools/validate
+  cd "$ROOT/tools/validate" && go build -o "$BIN" .
 fi
-exec "$BIN" "$@"
+cd "$ROOT" && exec "$BIN" "$@"

@@ -1,9 +1,10 @@
 @echo off
 setlocal
 set HERE=%~dp0
-set BIN=%HERE%validate.exe
+set ROOT=%HERE%..
+set BIN=%HERE%validate-bin.exe
 if not exist "%BIN%" (
   echo Building validate...
-  go build -o "%BIN%" ./tools/validate
+  cd "%ROOT%\tools\validate" && go build -o "%BIN%" .
 )
-"%BIN%" %*
+cd "%ROOT%" && "%BIN%" %*
