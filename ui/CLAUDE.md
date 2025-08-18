@@ -9,7 +9,7 @@ communicates with the backend via the API gateway and gRPC‑web/HTTP
 clients generated from the proto definitions.
 
 ## Technology stack
-
+* **Yarn** We use yarn for package management.
 * **React 18** with functional components and hooks.  Avoid class
   components unless absolutely necessary.
 * **Vite** for development server and bundling.

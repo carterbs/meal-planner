@@ -133,7 +133,7 @@ MCP_SERVICE_ADDR=localhost:3001      # MCP service
 3. Add route in router setup
 4. Add Swagger annotations
 5. Regenerate docs: `./scripts/gateway-gen.sh`
-6. Run `tools/validate/validate test lint build --service api-gateway` before committing
+6. Run `yarn test lint build --service api-gateway` from the root of the repo before committing
 
 ### Debugging
 - Health endpoint shows all service status
