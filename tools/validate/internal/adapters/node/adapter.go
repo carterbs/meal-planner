@@ -293,6 +293,118 @@ func (a *Adapter) Lint() runner.Result {
 	return result
 }
 
+// LintFile runs ESLint on a specific file.
+func (a *Adapter) LintFile(filePath string) runner.Result {
+	start := time.Now()
+	result := runner.Result{
+		Service:  a.serviceName,
+		Phase:    runner.PhaseLint,
+		Duration: 0,
+		Status:   runner.StatusError,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	lintCmd := a.service.GetLintCommand()
+	if lintCmd == "" {
+		result.Duration = time.Since(start)
+		result.ErrorMessage = "No lint command configured"
+		return result
+	}
+
+	// Get relative path from service directory to avoid absolute paths in output
+	serviceDir := a.service.Dir
+	if !filepath.IsAbs(serviceDir) {
+		var err error
+		serviceDir, err = filepath.Abs(serviceDir)
+		if err != nil {
+			result.Duration = time.Since(start)
+			result.ErrorMessage = fmt.Sprintf("Failed to get absolute service dir: %v", err)
+			return result
+		}
+	}
+	
+	relPath, err := filepath.Rel(serviceDir, filePath)
+	if err != nil {
+		result.Duration = time.Since(start)
+		result.ErrorMessage = fmt.Sprintf("Failed to get relative path: %v", err)
+		return result
+	}
+
+	// For single file linting, construct a direct ESLint command instead of using yarn/npm script
+	// This avoids running the full lint command which lints the entire project
+	var parts []string
+	
+	originalParts := strings.Fields(lintCmd)
+	if len(originalParts) >= 2 && originalParts[0] == "yarn" && originalParts[1] == "lint" {
+		// For yarn lint commands, construct direct ESLint command
+		parts = []string{"yarn", "exec", "eslint", "--format=json", relPath}
+		
+		// Look for additional flags in original command that should be preserved
+		for _, part := range originalParts[2:] {
+			if strings.HasPrefix(part, "--") && part != "--quiet" {
+				// Skip --quiet for single file linting as we want JSON output
+				if !strings.Contains(part, "--format") {
+					parts = append(parts, part)
+				}
+			}
+		}
+	} else if len(originalParts) >= 2 && originalParts[0] == "npm" && originalParts[1] == "run" {
+		// For npm run commands, construct direct ESLint command
+		parts = []string{"npx", "eslint", "--format=json", relPath}
+	} else {
+		// For direct ESLint commands, append the file
+		parts = strings.Fields(lintCmd)
+		parts = append(parts, relPath)
+		
+		// Ensure JSON format for better parsing
+		if !a.containsFormat(parts) {
+			parts = append(parts, "--format=json")
+		}
+	}
+
+	var stdout, stderr bytes.Buffer
+	cmd := a.executor.CommandContext(ctx, parts[0], parts[1:]...)
+	if a.service.Dir != "" {
+		cmd.SetDir(a.service.Dir)
+	}
+	cmd.SetStdout(&stdout)
+	cmd.SetStderr(&stderr)
+
+	err = cmd.Run() // ESLint returns non-zero on issues
+	result.Duration = time.Since(start)
+
+	if ctx.Err() == context.DeadlineExceeded || err == context.DeadlineExceeded {
+		result.Status = runner.StatusError
+		result.ErrorMessage = fmt.Sprintf("Lint execution timed out after %v", a.timeout)
+		return result
+	}
+
+	output := stdout.String()
+
+	// Try to parse as JSON first
+	if parsedResult, parseErr := parser.ParseESLintJSON(output); parseErr == nil {
+		result.Status = parsedResult.Status
+		result.Failures = parsedResult.Failures
+		result.WarningCount = parsedResult.WarningCount
+		return result
+	}
+
+	// Fallback to text parsing
+	parsedResult := parser.ParseESLintTextOutput(output)
+	result.Status = parsedResult.Status
+	result.Failures = parsedResult.Failures
+	result.WarningCount = parsedResult.WarningCount
+
+	// If command succeeded and no issues found, mark as success
+	if err == nil && len(result.Failures) == 0 {
+		result.Status = runner.StatusSuccess
+	}
+
+	return result
+}
+
 // Build runs the configured build command.
 func (a *Adapter) Build() runner.Result {
 	start := time.Now()
