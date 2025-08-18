@@ -155,6 +155,79 @@ func (a *Adapter) Lint() runner.Result {
 	return result
 }
 
+// LintFile runs golangci-lint on a specific file.
+func (a *Adapter) LintFile(filePath string) runner.Result {
+	start := time.Now()
+	result := runner.Result{
+		Service:  a.serviceName,
+		Phase:    runner.PhaseLint,
+		Duration: 0,
+		Status:   runner.StatusError,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	var stdout, stderr bytes.Buffer
+
+	// Get relative path from working directory to avoid absolute paths in output
+	workingDir := a.workingDir
+	if !filepath.IsAbs(workingDir) {
+		var err error
+		workingDir, err = filepath.Abs(workingDir)
+		if err != nil {
+			result.Duration = time.Since(start)
+			result.ErrorMessage = fmt.Sprintf("Failed to get absolute working dir: %v", err)
+			return result
+		}
+	}
+	
+	relPath, err := filepath.Rel(workingDir, filePath)
+	if err != nil {
+		result.Duration = time.Since(start)
+		result.ErrorMessage = fmt.Sprintf("Failed to get relative path: %v", err)
+		return result
+	}
+
+	// Run golangci-lint on the specific file with JSON output
+	cmd := a.executor.CommandContext(ctx, "golangci-lint", "run", "--out-format", "json", relPath)
+	cmd.SetDir(a.workingDir)
+	cmd.SetStdout(&stdout)
+	cmd.SetStderr(&stderr)
+
+	err = cmd.Run() // golangci-lint returns non-zero on issues, but we check for timeout
+	result.Duration = time.Since(start)
+
+	if ctx.Err() == context.DeadlineExceeded || err == context.DeadlineExceeded {
+		result.Status = runner.StatusError
+		result.ErrorMessage = fmt.Sprintf("Lint execution timed out after %v", a.timeout)
+		return result
+	}
+
+	// Parse the JSON output
+	lintResult, parseErr := parser.ParseGolangciLintJSON(stdout.String())
+	if parseErr != nil {
+		// Try parsing as text output if JSON parsing fails
+		if textResult, textErr := parser.ParseGolangciLintText(stdout.String()); textErr == nil {
+			result.Status = textResult.Status
+			result.Failures = textResult.Failures
+			result.WarningCount = textResult.WarningCount
+			return result
+		}
+
+		result.Status = runner.StatusError
+		result.ErrorMessage = fmt.Sprintf("Failed to parse lint output: %v", parseErr)
+		return result
+	}
+
+	// Merge the parsed results
+	result.Status = lintResult.Status
+	result.Failures = lintResult.Failures
+	result.WarningCount = lintResult.WarningCount
+
+	return result
+}
+
 // Build runs go build for all packages.
 func (a *Adapter) Build() runner.Result {
 	start := time.Now()

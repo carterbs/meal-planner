@@ -55,6 +55,37 @@ func parseFlags(phase runner.Phase, args []string) (orchestrator.Options, error)
 	return opts, nil
 }
 
+// parseWatchFlags parses CLI flags for the watch command and returns watch orchestrator options.
+func parseWatchFlags(args []string) (orchestrator.WatchOptions, error) {
+	var opts orchestrator.WatchOptions
+	var services stringSliceFlag
+	var extensions stringSliceFlag
+
+	flags := flag.NewFlagSet("validate watch", flag.ContinueOnError)
+	flags.BoolVar(&opts.Verbose, "verbose", false, "Show detailed output")
+	flags.BoolVar(&opts.JSON, "json", false, "Output results in JSON format")
+	flags.BoolVar(&opts.NoSpinner, "no-spinner", false, "Disable spinner animations")
+	flags.BoolVar(&opts.CI, "ci", false, "CI mode (implies --no-spinner, --json)")
+	flags.Var(&services, "service", "Filter to specific services (can be used multiple times)")
+	flags.Var(&extensions, "extensions", "File extensions to watch (can be used multiple times, e.g., .go,.ts)")
+	flags.StringVar(&opts.ConfigPath, "config", "", "Path to config file (default: .validate.yaml)")
+	flags.IntVar(&opts.MaxParallel, "max-parallel", 0, "Maximum parallel jobs (default: GOMAXPROCS)")
+
+	if err := flags.Parse(args); err != nil {
+		return opts, err
+	}
+
+	opts.Services = []string(services)
+	opts.Extensions = []string(extensions)
+
+	if opts.CI {
+		opts.JSON = true
+		opts.NoSpinner = true
+	}
+
+	return opts, nil
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		printHelp()
@@ -66,6 +97,50 @@ func main() {
 	// Handle help
 	if command == "--help" || command == "-h" || command == "help" {
 		printHelp()
+		return
+	}
+
+	// Handle watch command separately
+	if command == "watch" {
+		watchOpts, err := parseWatchFlags(os.Args[2:])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to parse flags: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Load configuration
+		loader := config.NewLoader(watchOpts.ConfigPath)
+		cfg, err := loader.Load()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Create dependencies
+		commandRunner := execx.NewRealCommandRunner()
+		spinnerFactory := ui.NewRealSpinnerFactory()
+		ttyDetector := ui.NewRealTTYDetector()
+		clock := ui.NewRealClock()
+
+		// Create watch orchestrator
+		watchOrch := orchestrator.NewWatchOrchestrator(
+			cfg,
+			commandRunner,
+			spinnerFactory,
+			ttyDetector,
+			clock,
+			os.Stdout,
+			os.Stderr,
+		)
+
+		// Execute watch
+		ctx := context.Background()
+		if err := watchOrch.Watch(ctx, watchOpts); err != nil {
+			if !watchOpts.JSON && !watchOpts.CI {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			}
+			os.Exit(1)
+		}
 		return
 	}
 
@@ -129,12 +204,13 @@ func printHelp() {
 	fmt.Print(`validate - Unified build tool for Go and TypeScript projects
 
 Usage:
-  validate [test|lint|build] [flags]
+  validate [test|lint|build|watch] [flags]
 
 Commands:
   test     Run tests across all services
   lint     Run linters across all services  
   build    Build all services
+  watch    Watch for file changes and run linters automatically
 
 Flags:
   --verbose      Show detailed output
@@ -146,9 +222,14 @@ Flags:
   --max-parallel Maximum parallel jobs (default: GOMAXPROCS)
   -h, --help     Show this help message
 
+Watch-specific flags:
+  --extensions   File extensions to watch (default: .go,.ts,.tsx,.js,.jsx)
+
 Examples:
   validate test
   validate lint --verbose
   validate build --service ui --service api-gateway
+  validate watch
+  validate watch --service ui --extensions .ts,.tsx
 `)
 }
