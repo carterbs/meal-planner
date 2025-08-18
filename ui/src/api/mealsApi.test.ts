@@ -263,7 +263,7 @@ describe('mealsApi', () => {
   describe('createMeal', () => {
     it('should create meal successfully', async () => {
       mockedGateway.postMeals.mockResolvedValue({
-        data: { meal: mockGoMeal },
+        data: JSON.stringify({ meal: mockGoMeal }),
         error: null,
       } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
@@ -278,7 +278,7 @@ describe('mealsApi', () => {
 
     it('should handle string-encoded meal response', async () => {
       mockedGateway.postMeals.mockResolvedValue({
-        data: { meal: JSON.stringify(mockGoMeal) },
+        data: JSON.stringify({ meal: mockGoMeal }),
         error: null,
       } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
@@ -333,23 +333,23 @@ describe('mealsApi', () => {
       );
     });
 
-    it('should handle null error object fallback', async () => {
+    it('should handle invalid JSON in data field', async () => {
       mockedGateway.postMeals.mockResolvedValue({
-        data: null,
-        error: undefined, // This will cause fallback to 'Unknown error'
+        data: 'invalid json{',
+        error: undefined,
       } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
       const mealData6: Record<string, unknown> = { ...mockGoMeal };
       delete mealData6.id;
 
       await expect(createMeal(mealData6 as Omit<GoMealType, 'id'>)).rejects.toThrow(
-        'Failed to create meal: Unknown error',
+        /Failed to parse meal response/,
       );
     });
 
     it('should throw error when no meal returned', async () => {
       mockedGateway.postMeals.mockResolvedValue({
-        data: {},
+        data: JSON.stringify({}), // Empty object in JSON string format
         error: null,
       } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
 
@@ -359,6 +359,24 @@ describe('mealsApi', () => {
       await expect(createMeal(mealData7 as Omit<GoMealType, 'id'>)).rejects.toThrow(
         'No meal returned from create request',
       );
+    });
+
+    it('should handle JSON string response format from HTTP client', async () => {
+      // Simulate actual HTTP client behavior - JSON stringified response
+      mockedGateway.postMeals.mockResolvedValue({
+        data: JSON.stringify({ meal: mockGoMeal }),
+      } as unknown as ReturnType<typeof mockedGateway.postMeals> extends Promise<infer T> ? T : never);
+
+      const mealData8: Record<string, unknown> = { ...mockGoMeal };
+      delete mealData8.id;
+
+      const result = await createMeal(mealData8 as Omit<GoMealType, 'id'>);
+
+      expect(result).toBeInstanceOf(Meal);
+      expect(result.id).toBe(1);
+      expect(result.name).toBe('Test Meal');
+      expect(result.effort).toBe(3);
+      expect(result.hasRedMeat).toBe(false);
     });
   });
 

@@ -127,21 +127,26 @@ export async function createMeal(mealData: Omit<GoMeal, 'id'>): Promise<Meal> {
     body: { meal: mealPayload },
   });
 
-  const res = result as unknown as { data?: { meal?: unknown }; error?: unknown };
-  if (!res.data || res.error) {
+  const res = result as unknown as { data: string; error?: unknown };
+  
+  if (res.error) {
     throw new Error(`Failed to create meal: ${formatGatewayError(res.error)}`);
   }
 
-  if (!res.data.meal) {
+  // HTTP client returns JSON string in data field - parse it
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(res.data);
+  } catch (parseError) {
+    throw new Error(`Failed to parse meal response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+  }
+
+  // Type guard to ensure parsed response has the expected structure
+  if (!parsed || typeof parsed !== 'object' || !('meal' in parsed) || !parsed.meal) {
     throw new Error('No meal returned from create request');
   }
 
-  // Parse the meal from string if needed
-  const parsedMeal: GoMeal =
-    typeof res.data.meal === 'string'
-      ? (JSON.parse(res.data.meal) as GoMeal)
-      : (res.data.meal as GoMeal);
-  return mapMeal(parsedMeal);
+  return mapMeal(parsed.meal as GoMeal);
 }
 
 /**
