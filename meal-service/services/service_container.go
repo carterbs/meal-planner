@@ -16,10 +16,9 @@ func NewServiceContainer(db *sql.DB) *ServiceContainer {
 
 	// Create services with repository dependencies
 	return &ServiceContainer{
-		MealService:         NewMealService(mealRepo, ingredientRepo),
-		IngredientService:   NewIngredientService(ingredientRepo),
-		RecipeStepService:   NewRecipeStepService(recipeStepRepo),
-		MealPlanService:     NewMealPlanService(mealPlanRepo),
-		ShoppingListService: NewShoppingListService(mealRepo, shoppingListRepo),
+		MealService:          NewMealService(mealRepo, ingredientRepo),
+		RecipeStepRepository: recipeStepRepo,
+		MealPlanRepository:   mealPlanRepo,
+		ShoppingListService:  NewShoppingListService(mealRepo, shoppingListRepo),
 	}
 }

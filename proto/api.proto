@@ -54,12 +54,6 @@ message WeeklyMealPlan {
   repeated ShoppingListItem shopping_list = 2;
 }
 
-message SaveMealPlanRequest {
-  string thread_id = 1;
-  int32 version = 2;
-  repeated MealPlanEntry entries = 3;
-}
-
 message MealPlanIdentifier {
   int32 id = 1;
   string thread_id = 2;
@@ -135,11 +129,7 @@ message WorkflowStatus {
 message HealthCheckResponse {
   string status = 1;
   string message = 2;
-}
-
-message ReconnectResponse {
-  string status = 1;
-  string message = 2;
+  map<string, bool> services = 3;
 }
 
 // Meal plan endpoints
@@ -152,15 +142,11 @@ message GenerateMealPlanResponse {
 }
 
 message FinalizeMealPlanRequest {
-  WeeklyMealPlan plan = 1;
+  string thread_id = 1;
 }
 
 message FinalizeMealPlanResponse {
   string message = 1;
-}
-
-message MealPlanICSResponse {
-  bytes ics_data = 1;
 }
 
 // Shopping list endpoints
@@ -389,18 +375,6 @@ message GetMessagesResponse {
   repeated Message messages = 1;
 }
 
-message UpdateSessionStateRequest {
-  string thread_id = 1;
-  string meal_plan = 2; // JSON string
-  string shopping_list = 3; // JSON string
-  string current_step = 4;
-  string status = 5;
-}
-
-message UpdateSessionStateResponse {
-  string message = 1;
-}
-
 // Workflow persistence structures without google.protobuf.Any
 
 // Feedback entry reused inside MealPlanningState and checkpoints
@@ -521,13 +495,11 @@ service LoggingService {
 service MealPlannerAPI {
   // Health endpoints
   rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse);
-  rpc Reconnect(google.protobuf.Empty) returns (ReconnectResponse);
 
   // Meal plan endpoints
   rpc GetMealPlan(google.protobuf.Empty) returns (GetMealPlanResponse);
   rpc GenerateMealPlan(google.protobuf.Empty) returns (GenerateMealPlanResponse);
   rpc FinalizeMealPlan(FinalizeMealPlanRequest) returns (FinalizeMealPlanResponse);
-  rpc GetMealPlanICS(google.protobuf.Empty) returns (MealPlanICSResponse);
 
   // Shopping list endpoints
   rpc GetShoppingList(GetShoppingListRequest) returns (GetShoppingListResponse);
@@ -562,7 +534,6 @@ service MealPlannerAPI {
   rpc AbandonWorkflow(AbandonWorkflowRequest) returns (AbandonWorkflowResponse);
   rpc AddMessage(AddMessageRequest) returns (AddMessageResponse);
   rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
-  rpc UpdateSessionState(UpdateSessionStateRequest) returns (UpdateSessionStateResponse);
 
   // Checkpoint persistence endpoints
   rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse);

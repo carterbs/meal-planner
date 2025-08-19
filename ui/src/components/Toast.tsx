@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, Typography, Fade, useTheme } from '@mui/material';
+import { Paper, Typography, Fade, useTheme } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 interface ToastProps {

@@ -57,15 +57,6 @@ func (m *MockMealPlanRepository) RemoveMealFromPlan(ctx context.Context, plan *m
     return args.Error(0)
 }
 
-// SaveMealPlan
-func (m *MockMealPlanRepository) SaveMealPlan(ctx context.Context, threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
-    args := m.Called(ctx, threadID, version, entries)
-    if args.Get(0) == nil {
-        return nil, args.Error(1)
-    }
-    return args.Get(0).(*models.MealPlanIdentifier), args.Error(1)
-}
-
 // GetLatestMealPlan
 func (m *MockMealPlanRepository) GetLatestMealPlan(ctx context.Context, threadID string) (*models.MealPlanIdentifier, error) {
     args := m.Called(ctx, threadID)
@@ -100,14 +91,6 @@ func NewMockMealPlanRepository(t interface {
 
 func (m *MockMealPlanRepository) GetLatestMealPlan(threadID string) (*models.MealPlan, error) {
 	args := m.Called(threadID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.MealPlan), args.Error(1)
-}
-
-func (m *MockMealPlanRepository) SaveMealPlan(threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlan, error) {
-	args := m.Called(threadID, version, entries)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

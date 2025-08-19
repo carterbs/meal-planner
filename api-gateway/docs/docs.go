@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.AgentMessageRequestBody"
+                            "$ref": "#/definitions/_go.AgentMessageRequest"
                         }
                     }
                 ],
@@ -52,7 +52,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Message sent successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.AgentMessageResponse"
+                            "$ref": "#/definitions/_go.MessageAgentResponse"
                         }
                     },
                     "400": {
@@ -90,7 +90,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.AgentStartRequestBody"
+                            "$ref": "#/definitions/_go.AgentStartRequest"
                         }
                     }
                 ],
@@ -98,7 +98,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Agent workflow started successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.AgentStartResponse"
+                            "$ref": "#/definitions/_go.StartAgentWorkflowResponse"
                         }
                     },
                     "400": {
@@ -142,7 +142,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Workflow status retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.WorkflowStatusResponse"
+                            "$ref": "#/definitions/_go.GetWorkflowStatusResponse"
                         }
                     },
                     "400": {
@@ -177,7 +177,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Workflows listed successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.WorkflowsResponse"
+                            "$ref": "#/definitions/_go.ListWorkflowsResponse"
                         }
                     },
                     "500": {
@@ -215,7 +215,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Workflow cancelled successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.CancelWorkflowResponse"
                         }
                     },
                     "400": {
@@ -264,7 +264,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Checkpoints listed successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.CheckpointListResponse"
+                            "$ref": "#/definitions/_go.ListCheckpointsResponse"
                         }
                     },
                     "500": {
@@ -302,7 +302,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Checkpoint saved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.PutCheckpointResponse"
                         }
                     },
                     "400": {
@@ -352,7 +352,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Checkpoint retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.CheckpointResponse"
+                            "$ref": "#/definitions/_go.GetCheckpointResponse"
                         }
                     },
                     "404": {
@@ -387,7 +387,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Health check successful",
                         "schema": {
-                            "$ref": "#/definitions/main.HealthResponse"
+                            "$ref": "#/definitions/_go.HealthCheckResponse"
                         }
                     },
                     "500": {
@@ -416,55 +416,11 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal plan retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealPlanResponse"
+                            "$ref": "#/definitions/_go.GetMealPlanResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Save the current meal plan",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "mealplan"
-                ],
-                "summary": "Save Meal Plan",
-                "parameters": [
-                    {
-                        "description": "Save meal plan request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/_go.SaveMealPlanRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Meal plan saved successfully",
-                        "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "501": {
-                        "description": "Not implemented",
                         "schema": {
                             "$ref": "#/definitions/main.ErrorResponse"
                         }
@@ -500,7 +456,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal plan finalized successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.FinalizeMealPlanResponse"
                         }
                     },
                     "400": {
@@ -535,36 +491,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal plan generated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealPlanResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/mealplan/ics": {
-            "get": {
-                "description": "Get meal plan as ICS calendar file",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "text/calendar"
-                ],
-                "tags": [
-                    "mealplan"
-                ],
-                "summary": "Get Meal Plan ICS",
-                "responses": {
-                    "200": {
-                        "description": "ICS calendar file",
-                        "schema": {
-                            "type": "file"
+                            "$ref": "#/definitions/_go.GenerateMealPlanResponse"
                         }
                     },
                     "500": {
@@ -604,7 +531,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal replaced successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.ReplaceMealResponse"
                         }
                     },
                     "400": {
@@ -647,7 +574,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meals retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealsResponse"
+                            "$ref": "#/definitions/_go.GetAllMealsResponse"
                         }
                     },
                     "500": {
@@ -685,7 +612,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Meal created successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.CreateMealResponse"
                         }
                     },
                     "400": {
@@ -731,7 +658,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal swapped successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.SwapMealResponse"
                         }
                     },
                     "400": {
@@ -784,7 +711,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.UpdateMealResponse"
                         }
                     },
                     "400": {
@@ -832,7 +759,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Meal deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.DeleteMealResponse"
                         }
                     },
                     "400": {
@@ -945,7 +872,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Ingredient updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.UpdateMealIngredientResponse"
                         }
                     },
                     "400": {
@@ -994,7 +921,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Ingredient deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.MealResponse"
+                            "$ref": "#/definitions/_go.DeleteMealIngredientResponse"
                         }
                     },
                     "400": {
@@ -1038,7 +965,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Steps retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.StepsResponse"
+                            "$ref": "#/definitions/_go.GetStepsResponse"
                         }
                     },
                     "400": {
@@ -1089,7 +1016,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Step added successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.StepResponse"
+                            "$ref": "#/definitions/_go.AddStepResponse"
                         }
                     },
                     "400": {
@@ -1131,7 +1058,7 @@ const docTemplate = `{
                     "200": {
                         "description": "All steps deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.DeleteAllStepsResponse"
                         }
                     },
                     "400": {
@@ -1184,7 +1111,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Steps added successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.StepsResponse"
+                            "$ref": "#/definitions/_go.AddBulkStepsResponse"
                         }
                     },
                     "400": {
@@ -1237,7 +1164,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Steps reordered successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.ReorderStepsResponse"
                         }
                     },
                     "400": {
@@ -1297,7 +1224,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Step updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.StepResponse"
+                            "$ref": "#/definitions/_go.UpdateStepResponse"
                         }
                     },
                     "400": {
@@ -1346,42 +1273,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Step deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.DeleteStepResponse"
                         }
                     },
                     "400": {
                         "description": "Bad request",
                         "schema": {
                             "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/reconnect": {
-            "post": {
-                "description": "Reconnect to backend services",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Reconnect",
-                "responses": {
-                    "200": {
-                        "description": "Reconnect successful",
-                        "schema": {
-                            "$ref": "#/definitions/main.HealthResponse"
                         }
                     },
                     "500": {
@@ -1421,7 +1319,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Shopping list retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.ShoppingListResponse"
+                            "$ref": "#/definitions/_go.GetShoppingListResponse"
                         }
                     },
                     "400": {
@@ -1465,7 +1363,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Workflow state retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.WorkflowStateResponse"
+                            "$ref": "#/definitions/_go.GetWorkflowStateResponse"
                         }
                     },
                     "400": {
@@ -1509,7 +1407,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Workflow abandoned successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.AbandonWorkflowResponse"
                         }
                     },
                     "400": {
@@ -1553,7 +1451,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Messages retrieved successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.GetMessagesResponse"
+                            "$ref": "#/definitions/_go.GetMessagesResponse"
                         }
                     },
                     "400": {
@@ -1604,60 +1502,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Message added successfully",
                         "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/workflows/{threadId}/state": {
-            "put": {
-                "description": "Update the state of a workflow session",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "workflow"
-                ],
-                "summary": "Update Session State",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Thread ID",
-                        "name": "threadId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update session state request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/_go.UpdateSessionStateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Session state updated successfully",
-                        "schema": {
-                            "$ref": "#/definitions/main.SimpleMessageResponse"
+                            "$ref": "#/definitions/_go.AddMessageResponse"
                         }
                     },
                     "400": {
@@ -1677,6 +1522,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "_go.AbandonWorkflowResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "_go.AddBulkStepsRequest": {
             "type": "object",
             "properties": {
@@ -1688,6 +1541,17 @@ const docTemplate = `{
                 },
                 "meal_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "_go.AddBulkStepsResponse": {
+            "type": "object",
+            "properties": {
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/_go.Step"
+                    }
                 }
             }
         },
@@ -1706,12 +1570,28 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.AddMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "_go.AddStepRequest": {
             "type": "object",
             "properties": {
                 "meal_id": {
                     "type": "integer"
                 },
+                "step": {
+                    "$ref": "#/definitions/_go.Step"
+                }
+            }
+        },
+        "_go.AddStepResponse": {
+            "type": "object",
+            "properties": {
                 "step": {
                     "$ref": "#/definitions/_go.Step"
                 }
@@ -1745,6 +1625,95 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.AgentMessageRequest": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "interactive": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "thread_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "_go.AgentResponse": {
+            "type": "object",
+            "properties": {
+                "current_step": {
+                    "type": "string"
+                },
+                "initial_state": {
+                    "description": "JSON string",
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "raw": {
+                    "description": "JSON string",
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "thread_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "_go.AgentStartRequest": {
+            "type": "object",
+            "properties": {
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "workflow_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "_go.CancelWorkflowResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "_go.CheckpointEntry": {
+            "type": "object",
+            "properties": {
+                "checkpoint_ns": {
+                    "type": "string"
+                },
+                "thread_id": {
+                    "type": "string"
+                },
+                "tuple": {
+                    "$ref": "#/definitions/_go.CheckpointTuple"
+                }
+            }
+        },
+        "_go.CheckpointTuple": {
+            "type": "object",
+            "properties": {
+                "checkpoint": {
+                    "$ref": "#/definitions/_go.AgentCheckpoint"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/_go.AgentCheckpointMetadata"
+                }
+            }
+        },
         "_go.CreateMealIngredientRequest": {
             "type": "object",
             "properties": {
@@ -1772,6 +1741,46 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.CreateMealResponse": {
+            "type": "object",
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            }
+        },
+        "_go.DeleteAllStepsResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "_go.DeleteMealIngredientResponse": {
+            "type": "object",
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            }
+        },
+        "_go.DeleteMealResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "_go.DeleteStepResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "_go.FeedbackEntryProto": {
             "type": "object",
             "properties": {
@@ -1793,8 +1802,65 @@ const docTemplate = `{
         "_go.FinalizeMealPlanRequest": {
             "type": "object",
             "properties": {
+                "thread_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "_go.FinalizeMealPlanResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "_go.GenerateMealPlanResponse": {
+            "type": "object",
+            "properties": {
                 "plan": {
                     "$ref": "#/definitions/_go.WeeklyMealPlan"
+                }
+            }
+        },
+        "_go.GetAllMealsResponse": {
+            "type": "object",
+            "properties": {
+                "meals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/_go.Meal"
+                    }
+                }
+            }
+        },
+        "_go.GetCheckpointResponse": {
+            "type": "object",
+            "properties": {
+                "found": {
+                    "type": "boolean"
+                },
+                "tuple": {
+                    "$ref": "#/definitions/_go.CheckpointTuple"
+                }
+            }
+        },
+        "_go.GetMealPlanResponse": {
+            "type": "object",
+            "properties": {
+                "plan": {
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                }
+            }
+        },
+        "_go.GetMessagesResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/_go.Message"
+                    }
                 }
             }
         },
@@ -1807,6 +1873,70 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "_go.GetShoppingListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/_go.ShoppingListItem"
+                    }
+                }
+            }
+        },
+        "_go.GetStepsResponse": {
+            "type": "object",
+            "properties": {
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/_go.Step"
+                    }
+                }
+            }
+        },
+        "_go.GetWorkflowStateResponse": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/_go.Message"
+                    }
+                },
+                "plan": {
+                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                },
+                "shopping_list": {
+                    "$ref": "#/definitions/_go.ShoppingList"
+                }
+            }
+        },
+        "_go.GetWorkflowStatusResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "$ref": "#/definitions/_go.WorkflowStatus"
+                }
+            }
+        },
+        "_go.HealthCheckResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "services": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "boolean"
+                    }
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },
@@ -1827,6 +1957,28 @@ const docTemplate = `{
                 },
                 "unit": {
                     "type": "string"
+                }
+            }
+        },
+        "_go.ListCheckpointsResponse": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/_go.CheckpointEntry"
+                    }
+                }
+            }
+        },
+        "_go.ListWorkflowsResponse": {
+            "type": "object",
+            "properties": {
+                "workflows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/_go.WorkflowStatus"
+                    }
                 }
             }
         },
@@ -1923,6 +2075,32 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.Message": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "sender": {
+                    "description": "\"user\" or \"agent\"",
+                    "type": "string"
+                },
+                "thread_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "_go.MessageAgentResponse": {
+            "type": "object",
+            "properties": {
+                "response": {
+                    "$ref": "#/definitions/_go.AgentResponse"
+                }
+            }
+        },
         "_go.PutCheckpointRequest": {
             "type": "object",
             "properties": {
@@ -1943,6 +2121,20 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.PutCheckpointResponse": {
+            "type": "object",
+            "properties": {
+                "checkpoint_ns": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "thread_id": {
+                    "type": "string"
+                }
+            }
+        },
         "_go.ReorderStepsRequest": {
             "type": "object",
             "properties": {
@@ -1957,6 +2149,14 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.ReorderStepsResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "_go.ReplaceMealRequest": {
             "type": "object",
             "properties": {
@@ -1968,20 +2168,11 @@ const docTemplate = `{
                 }
             }
         },
-        "_go.SaveMealPlanRequest": {
+        "_go.ReplaceMealResponse": {
             "type": "object",
             "properties": {
-                "entries": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.MealPlanEntry"
-                    }
-                },
-                "thread_id": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "integer"
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -2007,6 +2198,14 @@ const docTemplate = `{
                 },
                 "quantity": {
                     "type": "string"
+                }
+            }
+        },
+        "_go.StartAgentWorkflowResponse": {
+            "type": "object",
+            "properties": {
+                "response": {
+                    "$ref": "#/definitions/_go.AgentResponse"
                 }
             }
         },
@@ -2038,6 +2237,14 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.SwapMealResponse": {
+            "type": "object",
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            }
+        },
         "_go.UpdateMealIngredientRequest": {
             "type": "object",
             "properties": {
@@ -2052,6 +2259,14 @@ const docTemplate = `{
                 }
             }
         },
+        "_go.UpdateMealIngredientResponse": {
+            "type": "object",
+            "properties": {
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
+                }
+            }
+        },
         "_go.UpdateMealRequest": {
             "type": "object",
             "properties": {
@@ -2063,25 +2278,11 @@ const docTemplate = `{
                 }
             }
         },
-        "_go.UpdateSessionStateRequest": {
+        "_go.UpdateMealResponse": {
             "type": "object",
             "properties": {
-                "current_step": {
-                    "type": "string"
-                },
-                "meal_plan": {
-                    "description": "JSON string",
-                    "type": "string"
-                },
-                "shopping_list": {
-                    "description": "JSON string",
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "thread_id": {
-                    "type": "string"
+                "meal": {
+                    "$ref": "#/definitions/_go.Meal"
                 }
             }
         },
@@ -2096,6 +2297,14 @@ const docTemplate = `{
                 },
                 "step_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "_go.UpdateStepResponse": {
+            "type": "object",
+            "properties": {
+                "step": {
+                    "$ref": "#/definitions/_go.Step"
                 }
             }
         },
@@ -2116,176 +2325,23 @@ const docTemplate = `{
                 }
             }
         },
-        "main.AgentMessageRequestBody": {
+        "_go.WorkflowStatus": {
             "type": "object",
             "properties": {
-                "from": {
+                "current_step": {
                     "type": "string"
                 },
-                "interactive": {
-                    "type": "boolean"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "threadId": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.AgentMessageResponse": {
-            "type": "object",
-            "properties": {
-                "response": {
-                    "$ref": "#/definitions/main.AgentResponseBody"
-                }
-            }
-        },
-        "main.AgentResponseBody": {
-            "type": "object",
-            "properties": {
-                "currentStep": {
-                    "type": "string"
-                },
-                "initialState": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                },
-                "threadId": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.AgentStartRequestBody": {
-            "type": "object",
-            "properties": {
                 "participants": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "workflowType": {
+                "thread_id": {
                     "type": "string"
-                }
-            }
-        },
-        "main.AgentStartResponse": {
-            "type": "object",
-            "properties": {
-                "response": {
-                    "$ref": "#/definitions/main.AgentResponseBody"
-                }
-            }
-        },
-        "main.CheckpointListResponse": {
-            "type": "object",
-            "properties": {
-                "entries": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "checkpointNs": {
-                                "type": "string"
-                            },
-                            "threadId": {
-                                "type": "string"
-                            },
-                            "tuple": {
-                                "$ref": "#/definitions/main.CheckpointTupleResponse"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "main.CheckpointResponse": {
-            "type": "object",
-            "properties": {
-                "found": {
-                    "type": "boolean"
                 },
-                "tuple": {
-                    "type": "object",
-                    "properties": {
-                        "checkpoint": {
-                            "type": "object",
-                            "properties": {
-                                "state": {
-                                    "type": "object",
-                                    "properties": {
-                                        "currentStep": {
-                                            "type": "string"
-                                        },
-                                        "mealPlan": {
-                                            "type": "object",
-                                            "properties": {
-                                                "days": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "$ref": "#/definitions/main.MealPlanEntryResponse"
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        "participants": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "threadId": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "main.CheckpointTupleResponse": {
-            "type": "object",
-            "properties": {
-                "checkpoint": {
-                    "type": "object",
-                    "properties": {
-                        "state": {
-                            "type": "object",
-                            "properties": {
-                                "currentStep": {
-                                    "type": "string"
-                                },
-                                "mealPlan": {
-                                    "type": "object",
-                                    "properties": {
-                                        "days": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/main.MealPlanEntryResponse"
-                                            }
-                                        }
-                                    }
-                                },
-                                "participants": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                },
-                                "threadId": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
+                "workflow_type": {
+                    "type": "string"
                 }
             }
         },
@@ -2294,304 +2350,6 @@ const docTemplate = `{
             "properties": {
                 "error": {
                     "type": "string"
-                }
-            }
-        },
-        "main.GetMessagesResponse": {
-            "type": "object",
-            "properties": {
-                "messages": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.MessageResponse"
-                    }
-                }
-            }
-        },
-        "main.HealthResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "services": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "boolean"
-                    }
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.IngredientResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "mealId": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "quantity": {
-                    "type": "number"
-                },
-                "unit": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.MealPlanEntryResponse": {
-            "type": "object",
-            "properties": {
-                "dayIndex": {
-                    "type": "integer"
-                },
-                "meal": {
-                    "$ref": "#/definitions/main.MealResponse"
-                },
-                "mealType": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.MealPlanResponse": {
-            "type": "object",
-            "properties": {
-                "plan": {
-                    "type": "object",
-                    "properties": {
-                        "days": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.MealPlanEntryResponse"
-                            }
-                        },
-                        "shoppingList": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.ShoppingListItemResponse"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "main.MealResponse": {
-            "type": "object",
-            "properties": {
-                "effort": {
-                    "type": "integer"
-                },
-                "hasRedMeat": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "ingredients": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.IngredientResponse"
-                    }
-                },
-                "lastPlanned": {
-                    "type": "string",
-                    "format": "date-time"
-                },
-                "mealType": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "steps": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.StepResponse"
-                    }
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.MealsResponse": {
-            "type": "object",
-            "properties": {
-                "meals": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.MealResponse"
-                    }
-                }
-            }
-        },
-        "main.MessageResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "sender": {
-                    "type": "string"
-                },
-                "threadId": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.ShoppingListItemResponse": {
-            "type": "object",
-            "properties": {
-                "category": {
-                    "type": "string"
-                },
-                "ingredient": {
-                    "type": "string"
-                },
-                "quantity": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.ShoppingListResponse": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.ShoppingListItemResponse"
-                    }
-                }
-            }
-        },
-        "main.SimpleMessageResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.StepResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "instruction": {
-                    "type": "string"
-                },
-                "mealId": {
-                    "type": "integer"
-                },
-                "stepNumber": {
-                    "type": "integer"
-                }
-            }
-        },
-        "main.StepsResponse": {
-            "type": "object",
-            "properties": {
-                "steps": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.StepResponse"
-                    }
-                }
-            }
-        },
-        "main.WorkflowMessageResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "sender": {
-                    "type": "string"
-                },
-                "threadId": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.WorkflowStateResponse": {
-            "type": "object",
-            "properties": {
-                "messages": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.WorkflowMessageResponse"
-                    }
-                },
-                "plan": {
-                    "type": "object",
-                    "properties": {
-                        "days": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.MealPlanEntryResponse"
-                            }
-                        }
-                    }
-                },
-                "shoppingList": {
-                    "type": "object",
-                    "properties": {
-                        "items": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.ShoppingListItemResponse"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "main.WorkflowStatusResponse": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "object",
-                    "properties": {
-                        "currentStep": {
-                            "type": "string"
-                        },
-                        "participants": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        },
-                        "threadId": {
-                            "type": "string"
-                        },
-                        "workflowType": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "main.WorkflowsResponse": {
-            "type": "object",
-            "properties": {
-                "workflows": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/main.WorkflowStatusResponse"
-                    }
                 }
             }
         },

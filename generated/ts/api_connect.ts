@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddBulkStepsRequest, AddBulkStepsResponse, AddMessageRequest, AddMessageResponse, AddStepRequest, AddStepResponse, CancelWorkflowRequest, CancelWorkflowResponse, CreateMealIngredientRequest, CreateMealIngredientResponse, CreateMealRequest, CreateMealResponse, DeleteAllStepsRequest, DeleteAllStepsResponse, DeleteMealIngredientRequest, DeleteMealIngredientResponse, DeleteMealRequest, DeleteMealResponse, DeleteStepRequest, DeleteStepResponse, FinalizeMealPlanRequest, FinalizeMealPlanResponse, GenerateMealPlanResponse, GetAllMealsRequest, GetAllMealsResponse, GetCheckpointRequest, GetCheckpointResponse, GetMealPlanResponse, GetMessagesRequest, GetMessagesResponse, GetShoppingListRequest, GetShoppingListResponse, GetStepsRequest, GetStepsResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, HealthCheckResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, LogBatchRequest, LogBatchResponse, LogRequest, LogResponse, MealPlanICSResponse, PutCheckpointRequest, PutCheckpointResponse, ReconnectResponse, ReorderStepsRequest, ReorderStepsResponse, ReplaceMealRequest, ReplaceMealResponse, SwapMealRequest, SwapMealResponse, UpdateMealIngredientRequest, UpdateMealIngredientResponse, UpdateMealRequest, UpdateMealResponse, UpdateSessionStateRequest, UpdateSessionStateResponse, UpdateStepRequest, UpdateStepResponse } from "./api_pb.js";
+import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddBulkStepsRequest, AddBulkStepsResponse, AddMessageRequest, AddMessageResponse, AddStepRequest, AddStepResponse, CancelWorkflowRequest, CancelWorkflowResponse, CreateMealIngredientRequest, CreateMealIngredientResponse, CreateMealRequest, CreateMealResponse, DeleteAllStepsRequest, DeleteAllStepsResponse, DeleteMealIngredientRequest, DeleteMealIngredientResponse, DeleteMealRequest, DeleteMealResponse, DeleteStepRequest, DeleteStepResponse, FinalizeMealPlanRequest, FinalizeMealPlanResponse, GenerateMealPlanResponse, GetAllMealsRequest, GetAllMealsResponse, GetCheckpointRequest, GetCheckpointResponse, GetMealPlanResponse, GetMessagesRequest, GetMessagesResponse, GetShoppingListRequest, GetShoppingListResponse, GetStepsRequest, GetStepsResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, HealthCheckResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, LogBatchRequest, LogBatchResponse, LogRequest, LogResponse, PutCheckpointRequest, PutCheckpointResponse, ReorderStepsRequest, ReorderStepsResponse, ReplaceMealRequest, ReplaceMealResponse, SwapMealRequest, SwapMealResponse, UpdateMealIngredientRequest, UpdateMealIngredientResponse, UpdateMealRequest, UpdateMealResponse, UpdateStepRequest, UpdateStepResponse } from "./api_pb.js";
 import { Empty, MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -55,15 +55,6 @@ export const MealPlannerAPI = {
       kind: MethodKind.Unary,
     },
     /**
-     * @generated from rpc mealplanner.api.MealPlannerAPI.Reconnect
-     */
-    reconnect: {
-      name: "Reconnect",
-      I: Empty,
-      O: ReconnectResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
      * Meal plan endpoints
      *
      * @generated from rpc mealplanner.api.MealPlannerAPI.GetMealPlan
@@ -90,15 +81,6 @@ export const MealPlannerAPI = {
       name: "FinalizeMealPlan",
       I: FinalizeMealPlanRequest,
       O: FinalizeMealPlanResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc mealplanner.api.MealPlannerAPI.GetMealPlanICS
-     */
-    getMealPlanICS: {
-      name: "GetMealPlanICS",
-      I: Empty,
-      O: MealPlanICSResponse,
       kind: MethodKind.Unary,
     },
     /**
@@ -325,15 +307,6 @@ export const MealPlannerAPI = {
       name: "GetMessages",
       I: GetMessagesRequest,
       O: GetMessagesResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc mealplanner.api.MealPlannerAPI.UpdateSessionState
-     */
-    updateSessionState: {
-      name: "UpdateSessionState",
-      I: UpdateSessionStateRequest,
-      O: UpdateSessionStateResponse,
       kind: MethodKind.Unary,
     },
     /**

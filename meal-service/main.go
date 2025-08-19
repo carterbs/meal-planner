@@ -16,12 +16,15 @@ import (
 	"mealplanner/services"
 
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-var mainLogger = logging.GetLogger("main")
+func getMainLogger() *zap.SugaredLogger {
+	return logging.GetLogger("main")
+}
 
 // HTTP server components removed - all HTTP traffic now handled by API Gateway
 
@@ -63,7 +66,7 @@ func main() {
 	if err != nil {
 		if !db.IsConnectionError(err) {
 			// Only show fatal errors for config issues, not connection issues
-			mainLogger.Fatalw("Error connecting to the database", "error", err)
+			getMainLogger().Fatalw("Error connecting to the database", "error", err)
 		}
 		// For connection errors, just continue silently with nil DB
 	}
@@ -73,7 +76,7 @@ func main() {
 
 		// Run migrations (only if we have a connection)
 		if err := models.Migrate(connection); err != nil {
-			mainLogger.Errorw("Migration error", "error", err)
+			getMainLogger().Errorw("Migration error", "error", err)
 		}
 	}
 
@@ -88,7 +91,7 @@ func main() {
 	// Start gRPC server (HTTP server removed as part of gRPC migration)
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		mainLogger.Fatalw("Failed to listen on gRPC port", "error", err)
+		getMainLogger().Fatalw("Failed to listen on gRPC port", "error", err)
 	}
 
 	grpcServer := grpc.NewServer()
@@ -110,18 +113,18 @@ func main() {
 		if err := connection.Ping(); err == nil {
 			dbHealthy = true
 		} else {
-			mainLogger.Warn("Health check: Database ping failed")
+			getMainLogger().Warn("Health check: Database ping failed")
 		}
 	} else {
-		mainLogger.Warn("Health check: No database connection")
+		getMainLogger().Warn("Health check: No database connection")
 	}
 
 	if dbHealthy {
 		healthStatus = grpc_health_v1.HealthCheckResponse_SERVING
-		mainLogger.Info("Health check: Database connected - service SERVING")
+		getMainLogger().Info("Health check: Database connected - service SERVING")
 	} else {
 		healthStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
-		mainLogger.Warn("Health check: Database not connected - service NOT_SERVING")
+		getMainLogger().Warn("Health check: Database not connected - service NOT_SERVING")
 	}
 
 	healthServer.SetServingStatus("mealplanner.api.MealPlannerAPI", healthStatus)
@@ -141,17 +144,17 @@ func main() {
 				if err := server.DB.Ping(); err == nil {
 					dbHealthy = true
 				} else {
-					mainLogger.Warnw("Health check: Database ping failed", "error", err)
+					getMainLogger().Warnw("Health check: Database ping failed", "error", err)
 				}
 			} else {
-				mainLogger.Warn("Health check: No database connection")
+				getMainLogger().Warn("Health check: No database connection")
 			}
 
 			if dbHealthy {
 				currentStatus = grpc_health_v1.HealthCheckResponse_SERVING
 			} else {
 				currentStatus = grpc_health_v1.HealthCheckResponse_NOT_SERVING
-				mainLogger.Warn("Health check: Database not connected")
+				getMainLogger().Warn("Health check: Database not connected")
 			}
 
 			// Update health status if it changed
@@ -160,8 +163,8 @@ func main() {
 		}
 	}()
 
-	mainLogger.Info("gRPC server starting on :50051 (HTTP server removed, health checks enabled)")
+	getMainLogger().Info("gRPC server starting on :50051 (HTTP server removed, health checks enabled)")
 	if err := grpcServer.Serve(lis); err != nil {
-		mainLogger.Fatalw("Error starting gRPC server", "error", err)
+		getMainLogger().Fatalw("Error starting gRPC server", "error", err)
 	}
 }

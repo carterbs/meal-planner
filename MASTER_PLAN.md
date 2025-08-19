@@ -10,7 +10,6 @@ For running on my linux box.
 - UI returns an error despite the backend completing properly
 - "Process ingredients" Shouldn't be a necessary step. I should be able to just have a textarea full of ingredients and the processing should just happen.
 
-
 ## Agent mode for recipe management
 Add, edit, etc
 - Basically a free form text area and have the AI figure out all of the pieces of the receipe, then insert into the DB.
@@ -18,5 +17,4 @@ Add, edit, etc
 
 ## Refactors
 - Extract handlers out of main.ts in the agent-service so we can unit test them properly.
-
-We are approaching perfection.
+- Fix HTTP client response parsing: The generated @hey-api/openapi-ts client is treating JSON responses as strings instead of parsing them. This causes double-JSON-parsing in the UI. Options: configure parseAs: 'json', update swagger generation, or switch to a more protobuf-friendly HTTP client.

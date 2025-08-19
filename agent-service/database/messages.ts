@@ -16,14 +16,20 @@ export class MessageRepository {
       INSERT INTO messages (thread_id, sender, content)
       VALUES ($1, $2, $3)
       RETURNING id, thread_id, sender, content, created_at`;
-    const result = await this.db.query(query, [threadID, sender, content]);
+    const result = await this.db.query<{
+      id: number;
+      thread_id: string;
+      sender: string;
+      content: string;
+      created_at: string | Date;
+    }>(query, [threadID, sender, content]);
     const row = result.rows[0];
     return {
       id: row.id,
       thread_id: row.thread_id,
       sender: row.sender,
       content: row.content,
-      created_at: row.created_at,
+      created_at: row.created_at instanceof Date ? row.created_at : new Date(row.created_at),
     };
   }
   // GetMessagesForThread retrieves all messages for a thread ordered by creation time - matches Go models/message_sql.go
@@ -33,13 +39,19 @@ export class MessageRepository {
       FROM messages
       WHERE thread_id = $1
       ORDER BY created_at`;
-    const result = await this.db.query(query, [threadID]);
+    const result = await this.db.query<{
+      id: number;
+      thread_id: string;
+      sender: string;
+      content: string;
+      created_at: string | Date;
+    }>(query, [threadID]);
     return result.rows.map((row) => ({
       id: row.id,
       thread_id: row.thread_id,
       sender: row.sender,
       content: row.content,
-      created_at: row.created_at,
+      created_at: row.created_at instanceof Date ? row.created_at : new Date(row.created_at),
     }));
   }
   // AddMessage stores a message in the messages table - matches Go models/checkpoint.go
@@ -54,7 +66,7 @@ export class MessageRepository {
     try {
       await this.db.query(query, [threadID, sender, content]);
     } catch (error) {
-      throw new Error(`Failed to insert message: ${error}`);
+      throw new Error(`Failed to insert message: ${String(error)}`);
     }
   }
   // GetMessages retrieves all messages for a thread - matches Go models/checkpoint.go
@@ -64,13 +76,13 @@ export class MessageRepository {
       WHERE thread_id = $1 
       ORDER BY created_at ASC`;
     try {
-      const result = await this.db.query(query, [threadID]);
+      const result = await this.db.query<{ sender: string; content: string }>(query, [threadID]);
       return result.rows.map((row) => ({
         sender: row.sender,
         text: row.content,
       }));
     } catch (error) {
-      throw new Error(`Failed to query messages: ${error}`);
+      throw new Error(`Failed to query messages: ${String(error)}`);
     }
   }
   // GetMessagesForProtobuf retrieves all messages for a thread in protobuf format - matches Go models/checkpoint.go
@@ -87,7 +99,7 @@ export class MessageRepository {
       WHERE thread_id = $1 
       ORDER BY created_at ASC`;
     try {
-      const result = await this.db.query(query, [threadID]);
+      const result = await this.db.query<{ sender: string; content: string; created_at: Date }>(query, [threadID]);
       return result.rows.map((row) => ({
         thread_id: threadID,
         sender: row.sender,
@@ -95,7 +107,7 @@ export class MessageRepository {
         created_at: row.created_at.toISOString(),
       }));
     } catch (error) {
-      throw new Error(`Failed to query messages: ${error}`);
+      throw new Error(`Failed to query messages: ${String(error)}`);
     }
   }
   // AddMessageLegacy appends a message and returns it (for backward compatibility) - matches Go models/checkpoint.go

@@ -21,7 +21,7 @@ export class CheckpointRepository {
     found: boolean;
   }> {
     let query: string;
-    let args: any[];
+    let args: Array<string | number>;
     if (ns !== 'latest') {
       query = `SELECT checkpoint_data, metadata FROM workflow_checkpoints WHERE thread_id=$1 AND checkpoint_ns=$2`;
       args = [threadID, ns];
@@ -30,7 +30,10 @@ export class CheckpointRepository {
       args = [threadID];
     }
     try {
-      const result = await this.db.query(query, args);
+      const result = await this.db.query<{
+        checkpoint_data: unknown;
+        metadata: unknown;
+      }>(query, args);
       if (result.rows.length === 0) {
         return { checkpoint: null, metadata: null, found: false };
       }
@@ -49,7 +52,7 @@ export class CheckpointRepository {
         found: true,
       };
     } catch (error) {
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
   }
   // PutCheckpoint stores or updates a checkpoint - matches Go repository implementation
@@ -83,12 +86,17 @@ export class CheckpointRepository {
   ): Promise<CheckpointRecord[]> {
     const query = `SELECT thread_id, checkpoint_ns, checkpoint_data, metadata FROM workflow_checkpoints ORDER BY thread_id DESC LIMIT $1`;
     const args = [limit];
-    const result = await this.db.query(query, args);
+    const result = await this.db.query<{
+      thread_id: string;
+      checkpoint_ns: string;
+      checkpoint_data: unknown;
+      metadata: unknown;
+    }>(query, args);
     return result.rows.map((row) => ({
       thread_id: row.thread_id,
       checkpoint_ns: row.checkpoint_ns,
-      checkpoint_data: row.checkpoint_data,
-      metadata: row.metadata,
+      checkpoint_data: Buffer.from(JSON.stringify(row.checkpoint_data), 'utf8'),
+      metadata: row.metadata ? Buffer.from(JSON.stringify(row.metadata), 'utf8') : Buffer.from('null', 'utf8'),
     }));
   }
   // GetWorkflowCheckpoint retrieves the latest checkpoint data for a thread - matches Go models/checkpoint.go
@@ -103,7 +111,10 @@ export class CheckpointRepository {
       ORDER BY updated_at DESC
       LIMIT 1`;
     try {
-      const result = await this.db.query(query, [threadID]);
+      const result = await this.db.query<{
+        checkpoint_data: Buffer | null;
+        checkpoint_ns: string;
+      }>(query, [threadID]);
       if (result.rows.length === 0) {
         return { data: null, ns: null };
       }
@@ -113,13 +124,13 @@ export class CheckpointRepository {
         ns: row.checkpoint_ns,
       };
     } catch (error) {
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
   }
   // UpdateWorkflowCheckpoint upserts checkpoint_data for a thread under namespace "latest" - matches Go models/checkpoint.go
   async updateWorkflowCheckpoint(
     threadID: string,
-    data: Buffer,
+    data: AgentCheckpoint,
   ): Promise<void> {
     // Extract workflow_type from the checkpoint JSON so that the `latest`
     // row always has a non-empty workflow_type. This prevents downstream
@@ -127,22 +138,25 @@ export class CheckpointRepository {
     // value when they load the most-recent checkpoint.
     let wfType = '';
     try {
-      const generic = JSON.parse(data.toString());
-      // First try nested state.workflow_type (canonical)
-      if (
-        generic.state &&
-        generic.state.workflow_type &&
-        generic.state.workflow_type !== ''
-      ) {
-        wfType = generic.state.workflow_type;
-      }
-      // Fallback to top-level workflow_type if present (legacy)
-      if (
-        wfType === '' &&
-        generic.workflow_type &&
-        generic.workflow_type !== ''
-      ) {
-        wfType = generic.workflow_type;
+      const generic: unknown = JSON.parse(JSON.stringify(data));
+      const isRecord = (v: unknown): v is Record<string, unknown> =>
+        typeof v === 'object' && v !== null;
+      if (isRecord(generic)) {
+          const candidateState = generic.state;
+          const state = isRecord(candidateState) ? candidateState : undefined;
+        if (
+          state &&
+          typeof state.workflow_type === 'string' &&
+          state.workflow_type !== ''
+        ) {
+          wfType = state.workflow_type;
+        }
+        if (wfType === '') {
+          const topWorkflowType = generic.workflow_type;
+          if (typeof topWorkflowType === 'string' && topWorkflowType !== '') {
+            wfType = topWorkflowType;
+          }
+        }
       }
     } catch {
       // If parsing fails, continue with default
@@ -165,13 +179,17 @@ export class CheckpointRepository {
       ORDER BY updated_at DESC
       LIMIT $1`;
     const args = [limit];
-    const result = await this.db.query(query, args);
+    const result = await this.db.query<{
+      thread_id: string;
+      workflow_type: string;
+      checkpoint_data: unknown;
+    }>(query, args);
     const seen = new Set<string>();
     const results: WorkflowStatus[] = [];
     for (const row of result.rows) {
       const threadID = row.thread_id;
       const wfType = row.workflow_type;
-      const data = row.checkpoint_data;
+      const data: unknown = row.checkpoint_data;
       if (seen.has(threadID)) {
         continue; // already took latest row for this thread
       }
@@ -179,18 +197,25 @@ export class CheckpointRepository {
       let participants: string[] = [];
       let currentStep = '';
       try {
-        // Extract participants
-        if (data.state && Array.isArray(data.state.participants)) {
-          participants = data.state.participants.filter(
-            (p: any) => typeof p === 'string',
-          );
-        }
-        // Extract currentStep either from top-level "step" or state.current_step
-       if (data.state && data.state.currentStep) {
-          currentStep = String(data.state.currentStep);
+        const isRecord = (v: unknown): v is Record<string, unknown> =>
+          typeof v === 'object' && v !== null;
+        if (isRecord(data) && isRecord((data as { state?: unknown }).state)) {
+          const state = (data as { state?: Record<string, unknown> }).state!;
+          const maybeParticipants = state.participants;
+          if (Array.isArray(maybeParticipants)) {
+            participants = maybeParticipants.filter(
+              (p: unknown): p is string => typeof p === 'string',
+            );
+          }
+          const maybeCurrent = (state).currentStep;
+          if (maybeCurrent !== undefined) {
+            currentStep = String(maybeCurrent);
+          }
         }
       } catch (e) {
-        await errorLog(`[CHECKPOINT] listWorkflows, error: ${e instanceof Error ? e.message : String(e)}`);
+        await errorLog(
+          `[CHECKPOINT] listWorkflows, error: ${e instanceof Error ? e.message : String(e)}`,
+        );
         // skip malformed rows but continue processing others
         continue;
       }

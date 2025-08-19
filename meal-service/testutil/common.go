@@ -59,110 +59,59 @@ const (
 
 // CreateTestMealSet creates a set of test meals for different scenarios
 func CreateTestMealSet() []*models.Meal {
-	return []*models.Meal{
-		NewMealBuilder().
-			WithID(TestMealID1).
-			WithName("Spaghetti Carbonara").
-			WithMealType(MealTypeDinner).
-			WithEffort(3).
-			WithIngredients([]*models.Ingredient{
-				NewIngredientBuilder().WithID(1).WithName("Spaghetti").WithQuantity(1.0).WithUnit(UnitPound).WithMealID(TestMealID1).Build(),
-				NewIngredientBuilder().WithID(2).WithName("Eggs").WithQuantity(4.0).WithUnit(UnitWhole).WithMealID(TestMealID1).Build(),
-				NewIngredientBuilder().WithID(3).WithName("Parmesan").WithQuantity(0.5).WithUnit(UnitCup).WithMealID(TestMealID1).Build(),
-			}).
-			WithSteps([]*models.Step{
-				NewStepBuilder().WithID(1).WithMealID(TestMealID1).WithOrder(1).WithInstruction("Boil water and cook spaghetti").Build(),
-				NewStepBuilder().WithID(2).WithMealID(TestMealID1).WithOrder(2).WithInstruction("Mix eggs and cheese").Build(),
-				NewStepBuilder().WithID(3).WithMealID(TestMealID1).WithOrder(3).WithInstruction("Combine pasta with egg mixture").Build(),
-			}).
-			Build(),
-
-		NewMealBuilder().
-			WithID(TestMealID2).
-			WithName("Chicken Tacos").
-			WithMealType(MealTypeDinner).
-			WithEffort(2).
-			WithIngredients([]*models.Ingredient{
-				NewIngredientBuilder().WithID(4).WithName("Chicken Breast").WithQuantity(1.0).WithUnit(UnitPound).WithMealID(TestMealID2).Build(),
-				NewIngredientBuilder().WithID(5).WithName("Tortillas").WithQuantity(8.0).WithUnit(UnitWhole).WithMealID(TestMealID2).Build(),
-				NewIngredientBuilder().WithID(6).WithName("Lime").WithQuantity(2.0).WithUnit(UnitWhole).WithMealID(TestMealID2).Build(),
-			}).
-			WithSteps([]*models.Step{
-				NewStepBuilder().WithID(4).WithMealID(TestMealID2).WithOrder(1).WithInstruction("Season and cook chicken").Build(),
-				NewStepBuilder().WithID(5).WithMealID(TestMealID2).WithOrder(2).WithInstruction("Warm tortillas").Build(),
-				NewStepBuilder().WithID(6).WithMealID(TestMealID2).WithOrder(3).WithInstruction("Assemble tacos").Build(),
-			}).
-			Build(),
-
-		NewMealBuilder().
-			WithID(TestMealID3).
-			WithName("Scrambled Eggs").
-			WithMealType(MealTypeBreakfast).
-			WithEffort(1).
-			WithIngredients([]*models.Ingredient{
-				NewIngredientBuilder().WithID(7).WithName("Eggs").WithQuantity(3.0).WithUnit(UnitWhole).WithMealID(TestMealID3).Build(),
-				NewIngredientBuilder().WithID(8).WithName("Butter").WithQuantity(1.0).WithUnit(UnitTablespoon).WithMealID(TestMealID3).Build(),
-				NewIngredientBuilder().WithID(9).WithName("Salt").WithQuantity(0.25).WithUnit(UnitTeaspoon).WithMealID(TestMealID3).Build(),
-			}).
-			WithSteps([]*models.Step{
-				NewStepBuilder().WithID(7).WithMealID(TestMealID3).WithOrder(1).WithInstruction("Crack eggs into bowl").Build(),
-				NewStepBuilder().WithID(8).WithMealID(TestMealID3).WithOrder(2).WithInstruction("Heat butter in pan").Build(),
-				NewStepBuilder().WithID(9).WithMealID(TestMealID3).WithOrder(3).WithInstruction("Scramble eggs").Build(),
-			}).
-			Build(),
-	}
-}
-
-// CreateTestWeeklyMealPlan creates a test weekly meal plan
-func CreateTestWeeklyMealPlan() *models.WeeklyMealPlan {
-	meals := CreateTestMealSet()
-	return NewWeeklyMealPlanBuilder().
-		WithBreakfast(0, meals[2]). // Monday breakfast
-		WithDinner(0, meals[0]).    // Monday dinner
-		WithDinner(1, meals[1]).    // Tuesday dinner
+	// Meal 1: Spaghetti Carbonara (Dinner)
+	meal1 := NewMealBuilder().
+		WithID(TestMealID1).
+		WithName("Spaghetti Carbonara").
+		WithMealType(MealTypeDinner).
+		WithEffort(3).
+		WithIngredients(
+			NewIngredientBuilder().WithID(TestIngredientID1).WithName("Spaghetti").WithQuantity(1).WithUnit("lb").Build(),
+			NewIngredientBuilder().WithID(TestIngredientID2).WithName("Eggs").WithQuantity(3).WithUnit("large").Build(),
+			NewIngredientBuilder().WithID(TestIngredientID3).WithName("Parmesan").WithQuantity(1).WithUnit("cup").Build(),
+		).
+		WithSteps(
+			NewStepBuilder().WithID(TestStepID1).WithInstruction("Boil spaghetti").Build(),
+			NewStepBuilder().WithID(TestStepID2).WithInstruction("Mix eggs and cheese").Build(),
+			NewStepBuilder().WithID(TestStepID3).WithInstruction("Combine and serve").Build(),
+		).
 		Build()
-}
 
-// CreateTestShoppingList creates a test shopping list
-func CreateTestShoppingList() []*models.ShoppingListItem {
-	return []*models.ShoppingListItem{
-		NewShoppingListItemBuilder().WithIngredient("Chicken Breast").WithQuantity("1.0 lb").Build(),
-		NewShoppingListItemBuilder().WithIngredient("Eggs").WithQuantity("7 whole").Build(),
-		NewShoppingListItemBuilder().WithIngredient("Parmesan").WithQuantity("0.5 cup").Build(),
-		NewShoppingListItemBuilder().WithIngredient("Spaghetti").WithQuantity("1.0 lb").Build(),
-		NewShoppingListItemBuilder().WithIngredient("Tortillas").WithQuantity("8 whole").Build(),
-	}
-}
+	// Meal 2: Chicken Tacos (Dinner)
+	meal2 := NewMealBuilder().
+		WithID(TestMealID2).
+		WithName("Chicken Tacos").
+		WithMealType(MealTypeDinner).
+		WithEffort(2).
+		WithIngredients(
+			NewIngredientBuilder().WithID(4).WithName("Chicken Breast").WithQuantity(2).WithUnit("lbs").Build(),
+			NewIngredientBuilder().WithID(5).WithName("Tortillas").WithQuantity(8).WithUnit("whole").Build(),
+			NewIngredientBuilder().WithID(6).WithName("Salsa").WithQuantity(1).WithUnit("cup").Build(),
+		).
+		WithSteps(
+			NewStepBuilder().WithID(4).WithInstruction("Cook chicken").Build(),
+			NewStepBuilder().WithID(5).WithInstruction("Warm tortillas").Build(),
+			NewStepBuilder().WithID(6).WithInstruction("Assemble tacos").Build(),
+		).
+		Build()
 
-// CreateTestLastPlannedMeals creates test last planned meals data
-func CreateTestLastPlannedMeals() *models.LastPlannedMeals {
-	return &models.LastPlannedMeals{
-		BreakfastMeals: []*models.Meal{},
-		LunchMeals:     []*models.Meal{},
-		DinnerMeals:    []*models.Meal{},
-	}
-}
+	// Meal 3: Scrambled Eggs (Breakfast)
+	meal3 := NewMealBuilder().
+		WithID(TestMealID3).
+		WithName("Scrambled Eggs").
+		WithMealType(MealTypeBreakfast).
+		WithEffort(1).
+		WithIngredients(
+			NewIngredientBuilder().WithID(7).WithName("Eggs").WithQuantity(3).WithUnit("large").Build(),
+			NewIngredientBuilder().WithID(8).WithName("Milk").WithQuantity(2).WithUnit("tbsp").Build(),
+			NewIngredientBuilder().WithID(9).WithName("Butter").WithQuantity(1).WithUnit("tbsp").Build(),
+		).
+		WithSteps(
+			NewStepBuilder().WithID(7).WithInstruction("Whisk eggs and milk").Build(),
+			NewStepBuilder().WithID(8).WithInstruction("Melt butter in pan").Build(),
+			NewStepBuilder().WithID(9).WithInstruction("Scramble eggs").Build(),
+		).
+		Build()
 
-// GetTestMealIDs returns a slice of test meal IDs
-func GetTestMealIDs() []int {
-	return []int{TestMealID1, TestMealID2, TestMealID3}
-}
-
-// GetTestIngredientIDs returns a slice of test ingredient IDs
-func GetTestIngredientIDs() []int {
-	return []int{TestIngredientID1, TestIngredientID2, TestIngredientID3}
-}
-
-// GetTestStepIDs returns a slice of test step IDs
-func GetTestStepIDs() []int {
-	return []int{TestStepID1, TestStepID2, TestStepID3}
-}
-
-// GetTestInstructions returns a slice of test instructions
-func GetTestInstructions() []string {
-	return []string{
-		"First test instruction",
-		"Second test instruction",
-		"Third test instruction",
-	}
+	return []*models.Meal{meal1, meal2, meal3}
 }

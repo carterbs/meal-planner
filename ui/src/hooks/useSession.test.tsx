@@ -1,417 +1,303 @@
-import React from 'react';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import React, { useEffect } from 'react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import useSession from './useSession';
-import { mockLocalStorage, errorUtils, loadingUtils } from '../test-utils';
 
-// Mock the generated gateway client
-jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
-  getCheckpointsByThreadId: jest.fn(),
-  postWorkflowsByThreadIdAbandon: jest.fn(),
-  postShoppinglist: jest.fn(),
-}));
-
-// Mock the client creation
+// Mock generated gateway client and APIs
 jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
   createClient: jest.fn(() => ({})),
   createConfig: jest.fn(() => ({})),
 }));
 
+jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
+  getCheckpointsByThreadId: jest.fn(),
+  postShoppinglist: jest.fn(),
+  postWorkflowsByThreadIdAbandon: jest.fn(),
+}));
+
 import {
   getCheckpointsByThreadId,
-  postWorkflowsByThreadIdAbandon,
   postShoppinglist,
+  postWorkflowsByThreadIdAbandon,
 } from '@mealplanner/generated/dist/gateway/index.js';
 
-const mockGetCheckpoints = getCheckpointsByThreadId as jest.MockedFunction<
-  typeof getCheckpointsByThreadId
->;
-const mockAbandonWorkflow =
-  postWorkflowsByThreadIdAbandon as jest.MockedFunction<
-    typeof postWorkflowsByThreadIdAbandon
-  >;
-const mockShoppingList = postShoppinglist as jest.MockedFunction<
-  typeof postShoppinglist
->;
+function TestHarness({
+  triggerStart = false,
+  startSessionMock,
+}: {
+  triggerStart?: boolean;
+  startSessionMock: jest.Mock;
+}) {
+  const { isResuming, resumeData, startNewSession } =
+    useSession(startSessionMock);
 
-// Helper component for renderHook with React 18
-function wrapper({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  useEffect(() => {
+    if (triggerStart) {
+      // fire and forget
+      void startNewSession();
+    }
+  }, [triggerStart, startNewSession]);
+
+  return (
+    <div>
+      <div data-testid="isResuming">{String(isResuming)}</div>
+      <div data-testid="hasResumeData">{resumeData ? 'yes' : 'no'}</div>
+      <div data-testid="shoppingItems">
+        {resumeData?.shoppingList?.items?.length ?? 0}
+      </div>
+      <button data-testid="start" onClick={() => startNewSession()}>
+        start
+      </button>
+    </div>
+  );
 }
 
 describe('useSession', () => {
+  const startSessionMock = jest.fn(async () => {});
+
   beforeEach(() => {
-    // Use real timers for proper async behavior
-    jest.useRealTimers();
-    localStorage.clear();
     jest.clearAllMocks();
-
-    // Set up default mock implementations that return promises
-    mockGetCheckpoints.mockResolvedValue({
-      data: { tuple: null },
-      error: null,
-    } as any);
-
-    mockAbandonWorkflow.mockResolvedValue({
-      data: null,
-      error: null,
-    } as any);
-
-    mockShoppingList.mockResolvedValue({
-      data: { items: [] },
-      error: null,
-    } as any);
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks();
     localStorage.clear();
   });
 
-  test('resumes existing session', async () => {
-    localStorage.setItem('sessionId', 'abc');
-    mockGetCheckpoints.mockResolvedValueOnce({
-      data: {
-        tuple: {
-          checkpoint: {
-            state: {
-              threadId: 'abc',
-              currentStep: 'planning',
-              mealPlan: { days: [] },
-            },
-          },
-        },
-      },
-      error: null,
-    } as any);
-    mockShoppingList.mockResolvedValueOnce({
-      data: { items: [] },
-      error: null,
-    } as any);
+  it('does nothing when no session id exists', async () => {
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({});
 
-    const startSession = jest.fn();
-    const { result } = renderHook(() => useSession(startSession), { wrapper });
+    render(<TestHarness startSessionMock={startSessionMock} />);
 
-    // Wait for the hook to complete its async operations
-    await waitFor(() => {
-      expect(result.current.resumeData?.threadId).toBe('abc');
-      expect(result.current.isResuming).toBe(false);
+    expect(screen.getByTestId('isResuming').textContent).toBe('false');
+    expect(screen.getByTestId('hasResumeData').textContent).toBe('no');
+    expect(getCheckpointsByThreadId).not.toHaveBeenCalled();
+  });
+
+  it('clears invalid session when checkpoints call returns error/no data', async () => {
+    localStorage.setItem('sessionId', 't1');
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({
+      data: null,
+      error: 'boom',
     });
 
-    expect(result.current.resumeData?.currentStep).toBe('planning');
-  });
+    render(<TestHarness startSessionMock={startSessionMock} />);
 
-  test('clears session when workflow complete', async () => {
-    localStorage.setItem('sessionId', 'done');
-    mockGetCheckpoints.mockResolvedValueOnce({
-      data: {
-        tuple: {
-          checkpoint: {
-            state: null, // No state means workflow is complete
-          },
-        },
-      },
-      error: null,
-    } as any);
-
-    const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-
-    // Wait for the hook to complete its async operations
     await waitFor(() => {
+      expect(screen.getByTestId('isResuming').textContent).toBe('false');
       expect(localStorage.getItem('sessionId')).toBeNull();
     });
-
-    expect(result.current.resumeData).toBeUndefined();
   });
 
-  test('handles missing checkpoint gracefully', async () => {
-    localStorage.setItem('sessionId', 'missing');
-    mockGetCheckpoints.mockResolvedValueOnce({
-      data: { tuple: null },
-      error: null,
-    } as any);
+  it('parses string-encoded checkpoint and fetches shopping list successfully', async () => {
+    localStorage.setItem('sessionId', 't2');
 
-    const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-
-    // Wait for the hook to complete its async operations
-    await waitFor(() => {
-      expect(result.current.resumeData).toBeUndefined();
+    const checkpointState = {
+      currentStep: 'step-1',
+      mealPlan: {
+        days: [{ meal: JSON.stringify({ id: 12 }) }, { meal: { id: 34 } }],
+      },
+      participants: ['x'],
+    };
+    const cp = {
+      tuple: JSON.stringify({
+        checkpoint: JSON.stringify({ state: checkpointState }),
+      }),
+    };
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({
+      data: JSON.stringify(cp),
+    });
+    (postShoppinglist as jest.Mock).mockResolvedValue({
+      data: { items: [{ name: 'a' }, { name: 'b' }] },
     });
 
-    expect(localStorage.getItem('sessionId')).toBeNull();
-  });
+    render(<TestHarness startSessionMock={startSessionMock} />);
 
-  test('handles checkpoint fetch error', async () => {
-    localStorage.setItem('sessionId', 'error');
-    mockGetCheckpoints.mockRejectedValueOnce(new Error('Network error'));
-
-    const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-
-    // Wait for the hook to complete its async operations
     await waitFor(() => {
-      expect(result.current.resumeData).toBeUndefined();
+      expect(screen.getByTestId('isResuming').textContent).toBe('false');
+      expect(screen.getByTestId('hasResumeData').textContent).toBe('yes');
+      expect(screen.getByTestId('shoppingItems').textContent).toBe('2');
     });
 
-    expect(localStorage.getItem('sessionId')).toBeNull();
+    expect(getCheckpointsByThreadId).toHaveBeenCalledWith({
+      client: expect.any(Object),
+      path: { thread_id: 't2' },
+    });
+    expect(postShoppinglist).toHaveBeenCalledWith({
+      client: expect.any(Object),
+      body: { plan: [12, 34] },
+    });
   });
 
-  test('starts new session when none exists', async () => {
-    const startSession = jest.fn();
-    const { result } = renderHook(() => useSession(startSession), { wrapper });
+  it('ignores shopping list errors', async () => {
+    localStorage.setItem('sessionId', 't3');
+    const cp = {
+      tuple: {
+        checkpoint: { state: { mealPlan: { days: [{ meal: { id: 1 } }] } } },
+      },
+    };
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });
+    (postShoppinglist as jest.Mock).mockRejectedValue(new Error('sl fail'));
 
-    expect(result.current.resumeData).toBeUndefined();
-    expect(result.current.isResuming).toBe(false);
-    expect(startSession).not.toHaveBeenCalled();
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('isResuming').textContent).toBe('false');
+      expect(screen.getByTestId('hasResumeData').textContent).toBe('yes');
+      expect(screen.getByTestId('shoppingItems').textContent).toBe('0');
+    });
   });
 
-  test('starts new session and abandons existing', async () => {
-    localStorage.setItem('sessionId', 'abandon');
-    mockAbandonWorkflow.mockResolvedValueOnce({
+  it('removes session id when checkpoint has no state', async () => {
+    localStorage.setItem('sessionId', 't4');
+    const cp = { tuple: { checkpoint: {} } };
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });
+
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
+    await waitFor(() => {
+      expect(localStorage.getItem('sessionId')).toBeNull();
+      expect(screen.getByTestId('hasResumeData').textContent).toBe('no');
+    });
+  });
+
+  it('sets resume data when state exists without mealPlan and skips shopping list fetch', async () => {
+    localStorage.setItem('sessionId', 't4b');
+    const cp = {
+      tuple: {
+        checkpoint: { state: { currentStep: 'x', participants: ['a'] } },
+      },
+    };
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });
+
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('isResuming').textContent).toBe('false');
+      expect(screen.getByTestId('hasResumeData').textContent).toBe('yes');
+      expect(screen.getByTestId('shoppingItems').textContent).toBe('0');
+    });
+
+    expect(postShoppinglist).not.toHaveBeenCalled();
+  });
+
+  it('returns early when checkpoint key is missing', async () => {
+    localStorage.setItem('sessionId', 't5');
+    const cp = { tuple: {} };
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });
+
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('isResuming').textContent).toBe('false');
+      // sessionId remains, since we did not hit catch branch
+      expect(localStorage.getItem('sessionId')).toBe('t5');
+      expect(screen.getByTestId('hasResumeData').textContent).toBe('no');
+    });
+  });
+
+  it('startNewSession without existing session simply starts a new session', async () => {
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
+    fireEvent.click(screen.getByTestId('start'));
+
+    await waitFor(() => {
+      expect(postWorkflowsByThreadIdAbandon).not.toHaveBeenCalled();
+      expect(startSessionMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('startNewSession with existing session abandons and clears id before starting', async () => {
+    localStorage.setItem('sessionId', 'old-123');
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({
+      data: { tuple: { checkpoint: { state: {} } } },
+    });
+    (postWorkflowsByThreadIdAbandon as jest.Mock).mockResolvedValue({});
+
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
+    fireEvent.click(screen.getByTestId('start'));
+
+    await waitFor(() => {
+      expect(postWorkflowsByThreadIdAbandon).toHaveBeenCalledWith({
+        client: expect.any(Object),
+        path: { threadId: 'old-123' },
+      });
+      expect(localStorage.getItem('sessionId')).toBeNull();
+      expect(startSessionMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('startNewSession with existing session proceeds even if abandon fails', async () => {
+    localStorage.setItem('sessionId', 'old-err');
+    (postWorkflowsByThreadIdAbandon as jest.Mock).mockRejectedValue(
+      new Error('abandon fail'),
+    );
+    // Mock checkpoints fetch to avoid undefined .then during mount
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({
+      data: { tuple: { checkpoint: { state: {} } } },
+    });
+
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
+    fireEvent.click(screen.getByTestId('start'));
+
+    await waitFor(() => {
+      expect(postWorkflowsByThreadIdAbandon).toHaveBeenCalledWith({
+        client: expect.any(Object),
+        path: { threadId: 'old-err' },
+      });
+      expect(localStorage.getItem('sessionId')).toBeNull();
+      expect(startSessionMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('handles shopping list resolved error payload without updating items', async () => {
+    localStorage.setItem('sessionId', 't3b');
+    const cp = {
+      tuple: {
+        checkpoint: { state: { mealPlan: { days: [{ meal: { id: 2 } }] } } },
+      },
+    };
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });
+    (postShoppinglist as jest.Mock).mockResolvedValue({
       data: null,
-      error: null,
-    } as any);
-
-    const startSession = jest.fn();
-    const { result } = renderHook(() => useSession(startSession), { wrapper });
-
-    act(() => {
-      result.current.startNewSession();
+      error: 'bad',
     });
 
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
     await waitFor(() => {
-      expect(mockAbandonWorkflow).toHaveBeenCalledWith({
-        client: {},
-        path: { threadId: 'abandon' },
+      expect(screen.getByTestId('isResuming').textContent).toBe('false');
+      expect(screen.getByTestId('hasResumeData').textContent).toBe('yes');
+      expect(screen.getByTestId('shoppingItems').textContent).toBe('0');
+    });
+  });
+
+  it('maps missing meal id to 0 when building shopping list request', async () => {
+    localStorage.setItem('sessionId', 't7');
+    const cp = {
+      tuple: {
+        checkpoint: { state: { mealPlan: { days: [{ meal: {} as unknown }] } } },
+      },
+    };
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });
+    (postShoppinglist as jest.Mock).mockResolvedValue({ data: { items: [] } });
+
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
+    await waitFor(() => {
+      expect(postShoppinglist).toHaveBeenCalledWith({
+        client: expect.any(Object),
+        body: { plan: [0] },
       });
     });
-
-    expect(localStorage.getItem('sessionId')).toBeNull();
-    expect(startSession).toHaveBeenCalled();
   });
 
-  test('handles abandon workflow error during start new session', async () => {
-    localStorage.setItem('sessionId', 'abandon-error');
-    mockAbandonWorkflow.mockRejectedValueOnce(new Error('Abandon failed'));
+  it('handles fetch checkpoints rejection and clears id', async () => {
+    localStorage.setItem('sessionId', 't6');
+    (getCheckpointsByThreadId as jest.Mock).mockRejectedValue(new Error('bad'));
 
-    const startSession = jest.fn();
-    const { result } = renderHook(() => useSession(startSession), { wrapper });
-
-    act(() => {
-      result.current.startNewSession();
-    });
+    render(<TestHarness startSessionMock={startSessionMock} />);
 
     await waitFor(() => {
-      expect(mockAbandonWorkflow).toHaveBeenCalledWith({
-        client: {},
-        path: { threadId: 'abandon-error' },
-      });
+      expect(localStorage.getItem('sessionId')).toBeNull();
+      expect(screen.getByTestId('isResuming').textContent).toBe('false');
     });
-
-    // Session should still be cleared even if abandon fails
-    expect(localStorage.getItem('sessionId')).toBeNull();
-    expect(startSession).toHaveBeenCalled();
-  });
-
-  test('resumes session with shopping list', async () => {
-    localStorage.setItem('sessionId', 'shopping');
-    mockGetCheckpoints.mockResolvedValueOnce({
-      data: {
-        tuple: {
-          checkpoint: {
-            state: {
-              threadId: 'shopping',
-              currentStep: 'shopping',
-              mealPlan: { days: [] },
-            },
-          },
-        },
-      },
-      error: null,
-    } as any);
-    mockShoppingList.mockResolvedValueOnce({
-      data: { items: ['item1', 'item2'] },
-      error: null,
-    } as any);
-
-    const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-
-    // Wait for the hook to complete its async operations
-    await waitFor(() => {
-      expect(result.current.resumeData?.shoppingList).toEqual([
-        'item1',
-        'item2',
-      ]);
-    });
-  });
-
-  test('handles shopping list fetch error', async () => {
-    localStorage.setItem('sessionId', 'shopping-error');
-    mockGetCheckpoints.mockResolvedValueOnce({
-      data: {
-        tuple: {
-          checkpoint: {
-            state: {
-              threadId: 'shopping-error',
-              currentStep: 'shopping',
-              mealPlan: { days: [] },
-            },
-          },
-        },
-      },
-      error: null,
-    } as any);
-    mockShoppingList.mockResolvedValueOnce({
-      data: null,
-      error: { message: 'Failed to fetch shopping list' },
-    } as any);
-
-    const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-
-    // Wait for the hook to complete its async operations
-    await waitFor(() => {
-      expect(result.current.resumeData?.threadId).toBe('shopping-error');
-    });
-
-    expect(result.current.resumeData?.shoppingList).toBeUndefined();
-  });
-
-  test('handles checkpoint rejection', async () => {
-    localStorage.setItem('sessionId', 'rejected');
-    mockGetCheckpoints.mockResolvedValueOnce({
-      data: {
-        tuple: {
-          checkpoint: {
-            state: {
-              threadId: 'rejected',
-              currentStep: 'rejected',
-              mealPlan: { days: [] },
-            },
-          },
-        },
-      },
-      error: null,
-    } as any);
-
-    const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-
-    // Wait for the hook to complete its async operations
-    await waitFor(() => {
-      expect(result.current.resumeData?.threadId).toBe('rejected');
-    });
-
-    expect(result.current.resumeData?.currentStep).toBe('rejected');
-  });
-
-  test('handles meal plan with finalized state', async () => {
-    localStorage.setItem('sessionId', 'finalized');
-    mockGetCheckpoints.mockResolvedValueOnce({
-      data: {
-        tuple: {
-          checkpoint: {
-            state: {
-              threadId: 'finalized',
-              currentStep: 'finalized',
-              mealPlan: { days: ['Monday', 'Tuesday'] },
-            },
-          },
-        },
-      },
-      error: null,
-    } as any);
-
-    const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-
-    // Wait for the hook to complete its async operations
-    await waitFor(() => {
-      expect(result.current.resumeData?.threadId).toBe('finalized');
-    });
-
-    expect(result.current.resumeData?.currentStep).toBe('finalized');
-    expect(result.current.resumeData?.mealPlan).toEqual({
-      days: ['Monday', 'Tuesday'],
-    });
-  });
-
-  test('handles multiple session operations', async () => {
-    localStorage.setItem('sessionId', 'multi');
-    mockGetCheckpoints.mockResolvedValueOnce({
-      data: {
-        tuple: {
-          checkpoint: {
-            state: {
-              threadId: 'multi',
-              currentStep: 'planning',
-              mealPlan: { days: [] },
-            },
-          },
-        },
-      },
-      error: null,
-    } as any);
-    mockShoppingList.mockResolvedValueOnce({
-      data: { items: [] },
-      error: null,
-    } as any);
-    mockAbandonWorkflow.mockResolvedValueOnce({
-      data: null,
-      error: null,
-    } as any);
-
-    const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-
-    // Wait for initial load
-    await waitFor(() => {
-      expect(result.current.resumeData?.threadId).toBe('multi');
-    });
-
-    // Test start new session which abandons existing
-    const startSession = jest.fn();
-    const { result: newResult } = renderHook(() => useSession(startSession), {
-      wrapper,
-    });
-
-    act(() => {
-      newResult.current.startNewSession();
-    });
-
-    await waitFor(() => {
-      expect(mockAbandonWorkflow).toHaveBeenCalledWith({
-        client: {},
-        path: { threadId: 'multi' },
-      });
-    });
-
-    expect(localStorage.getItem('sessionId')).toBeNull();
-  });
-
-  test('handles session state transitions', async () => {
-    localStorage.setItem('sessionId', 'transition');
-    mockGetCheckpoints.mockResolvedValueOnce({
-      data: {
-        tuple: {
-          checkpoint: {
-            state: {
-              threadId: 'transition',
-              currentStep: 'planning',
-              mealPlan: { days: [] },
-            },
-          },
-        },
-      },
-      error: null,
-    } as any);
-    mockShoppingList.mockResolvedValueOnce({
-      data: { items: [] },
-      error: null,
-    } as any);
-
-    const { result } = renderHook(() => useSession(jest.fn()), { wrapper });
-
-    // Wait for the hook to complete its async operations
-    await waitFor(() => {
-      expect(result.current.resumeData?.threadId).toBe('transition');
-    });
-
-    expect(result.current.resumeData?.currentStep).toBe('planning');
-    expect(result.current.isResuming).toBe(false);
   });
 });

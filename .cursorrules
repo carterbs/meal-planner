@@ -1,1 +1,2 @@
-We use yarn, not npm.
+Follow the rules in the root level @CLAUDE.md rigidly.
+Look for a @CLAUDE.md in the root of each subdirectory in this repo.

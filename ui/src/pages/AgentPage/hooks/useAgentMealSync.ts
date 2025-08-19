@@ -1,0 +1,64 @@
+import { useCallback, useState } from 'react';
+import { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
+import { convertGatewayMealPlan } from '../../../utils/mealPlanConverter';
+import {
+  getAgentCheckpoint,
+  goGetShoppingList,
+  sendAgentMessage,
+} from '../../../api';
+import type { GoMealPlanEntry } from '@mealplanner/generated/dist/gateway/types.gen';
+
+export default function useAgentMealSync() {
+  const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(null);
+  const [shoppingList, setShoppingList] = useState<ShoppingListItem[] | null>(
+    null,
+  );
+  const [isSending, setIsSending] = useState(false);
+
+  const syncFromCheckpoint = useCallback(async (threadId: string) => {
+    const checkpoint = await getAgentCheckpoint(threadId);
+    const state = checkpoint?.state;
+    if (!state) return;
+    const maybePlan = state.mealPlan;
+    if (maybePlan) {
+      const newPlan = convertGatewayMealPlan(maybePlan as { days?: GoMealPlanEntry[] });
+      setMealPlan(newPlan);
+      try {
+        const shoppingRes = await goGetShoppingList(newPlan);
+        setShoppingList(
+          shoppingRes.map(
+            (i) =>
+              new ShoppingListItem({
+                ingredient: i.ingredient ?? '',
+                quantity: i.quantity ?? '',
+                category: i.category ?? '',
+              }),
+          ),
+        );
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const send = useCallback(async (threadId: string, text: string) => {
+    setIsSending(true);
+    try {
+      const result = await sendAgentMessage(threadId, text, 'user', true);
+      // Also surface any initial state embedded in the message result
+      const initial = (result.initialState as { state?: { mealPlan?: unknown } } | undefined)?.state?.mealPlan;
+      if (initial) {
+        const plan = convertGatewayMealPlan(initial as { days?: GoMealPlanEntry[] });
+        setMealPlan(plan);
+      }
+      const sl = (result.initialState as { mealPlan?: { shoppingList?: ShoppingListItem[] } } | undefined)?.mealPlan?.shoppingList;
+      if (sl) {
+        setShoppingList(sl);
+      }
+    } finally {
+      setIsSending(false);
+    }
+  }, []);
+
+  return { mealPlan, shoppingList, syncFromCheckpoint, send, setMealPlan, isSending };
+}

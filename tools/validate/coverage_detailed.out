@@ -1,0 +1,528 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>validate: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/bradcarter-meal-planner/tools/validate/main.go (55.3%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "context"
+        "encoding/json"
+        "flag"
+        "fmt"
+        "os"
+        "path/filepath"
+        "strings"
+
+        goadapter "github.com/bradcarter-meal-planner/tools/validate/internal/adapters/go"
+        nodeadapter "github.com/bradcarter-meal-planner/tools/validate/internal/adapters/node"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/config"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/execx"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/orchestrator"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/ui"
+)
+
+// stringSliceFlag implements flag.Value for accumulating multiple string values.
+type stringSliceFlag []string
+
+func (s *stringSliceFlag) String() string <span class="cov8" title="1">{
+        return strings.Join(*s, ",")
+}</span>
+
+func (s *stringSliceFlag) Set(value string) error <span class="cov8" title="1">{
+        *s = append(*s, value)
+        return nil
+}</span>
+
+// parseLintFileFlags parses CLI flags for the lint-file command and returns file path and orchestrator options.
+func parseLintFileFlags(args []string) (string, orchestrator.Options, error) <span class="cov8" title="1">{
+        var opts orchestrator.Options
+
+        flags := flag.NewFlagSet("validate lint-file", flag.ContinueOnError)
+        flags.BoolVar(&amp;opts.Verbose, "verbose", false, "Show detailed output")
+        flags.BoolVar(&amp;opts.JSON, "json", false, "Output results in JSON format")
+        flags.BoolVar(&amp;opts.NoSpinner, "no-spinner", false, "Disable spinner animations")
+        flags.BoolVar(&amp;opts.CI, "ci", false, "CI mode (implies --no-spinner, --json)")
+        flags.StringVar(&amp;opts.ConfigPath, "config", "", "Path to config file (default: .validate.yaml)")
+
+        if err := flags.Parse(args); err != nil </span><span class="cov8" title="1">{
+                return "", opts, err
+        }</span>
+
+        // Get the file path from remaining args
+        <span class="cov8" title="1">if len(flags.Args()) != 1 </span><span class="cov8" title="1">{
+                return "", opts, fmt.Errorf("lint-file requires exactly one file path argument")
+        }</span>
+
+        <span class="cov8" title="1">filePath := flags.Args()[0]
+        opts.Phase = runner.PhaseLint
+
+        if opts.CI </span><span class="cov8" title="1">{
+                opts.JSON = true
+                opts.NoSpinner = true
+        }</span>
+
+        <span class="cov8" title="1">return filePath, opts, nil</span>
+}
+
+// parseFlags parses CLI flags for a given phase and returns orchestrator options.
+func parseFlags(phase runner.Phase, args []string) (orchestrator.Options, error) <span class="cov8" title="1">{
+        var opts orchestrator.Options
+        var services stringSliceFlag
+
+        flags := flag.NewFlagSet("validate", flag.ContinueOnError)
+        flags.BoolVar(&amp;opts.Verbose, "verbose", false, "Show detailed output")
+        flags.BoolVar(&amp;opts.JSON, "json", false, "Output results in JSON format")
+        flags.BoolVar(&amp;opts.NoSpinner, "no-spinner", false, "Disable spinner animations")
+        flags.BoolVar(&amp;opts.CI, "ci", false, "CI mode (implies --no-spinner, --json)")
+        flags.Var(&amp;services, "service", "Filter to specific services (can be used multiple times)")
+        flags.StringVar(&amp;opts.ConfigPath, "config", "", "Path to config file (default: .validate.yaml)")
+        flags.IntVar(&amp;opts.MaxParallel, "max-parallel", 0, "Maximum parallel jobs (default: GOMAXPROCS)")
+
+        if err := flags.Parse(args); err != nil </span><span class="cov8" title="1">{
+                return opts, err
+        }</span>
+
+        <span class="cov8" title="1">opts.Phase = phase
+        opts.Services = []string(services)
+
+        if opts.CI </span><span class="cov8" title="1">{
+                opts.JSON = true
+                opts.NoSpinner = true
+        }</span>
+
+        <span class="cov8" title="1">return opts, nil</span>
+}
+
+// parseWatchFlags parses CLI flags for the watch command and returns watch orchestrator options.
+func parseWatchFlags(args []string) (orchestrator.WatchOptions, error) <span class="cov8" title="1">{
+        var opts orchestrator.WatchOptions
+        var services stringSliceFlag
+        var extensions stringSliceFlag
+
+        flags := flag.NewFlagSet("validate watch", flag.ContinueOnError)
+        flags.BoolVar(&amp;opts.Verbose, "verbose", false, "Show detailed output")
+        flags.BoolVar(&amp;opts.JSON, "json", false, "Output results in JSON format")
+        flags.BoolVar(&amp;opts.NoSpinner, "no-spinner", false, "Disable spinner animations")
+        flags.BoolVar(&amp;opts.CI, "ci", false, "CI mode (implies --no-spinner, --json)")
+        flags.Var(&amp;services, "service", "Filter to specific services (can be used multiple times)")
+        flags.Var(&amp;extensions, "extensions", "File extensions to watch (can be used multiple times, e.g., .go,.ts)")
+        flags.StringVar(&amp;opts.ConfigPath, "config", "", "Path to config file (default: .validate.yaml)")
+        flags.IntVar(&amp;opts.MaxParallel, "max-parallel", 0, "Maximum parallel jobs (default: GOMAXPROCS)")
+
+        if err := flags.Parse(args); err != nil </span><span class="cov8" title="1">{
+                return opts, err
+        }</span>
+
+        <span class="cov8" title="1">opts.Services = []string(services)
+        opts.Extensions = []string(extensions)
+
+        if opts.CI </span><span class="cov8" title="1">{
+                opts.JSON = true
+                opts.NoSpinner = true
+        }</span>
+
+        <span class="cov8" title="1">return opts, nil</span>
+}
+
+func main() <span class="cov0" title="0">{
+        if len(os.Args) &lt; 2 </span><span class="cov0" title="0">{
+                printHelp()
+                os.Exit(1)
+        }</span>
+
+        <span class="cov0" title="0">command := os.Args[1]
+
+        // Handle help
+        if command == "--help" || command == "-h" || command == "help" </span><span class="cov0" title="0">{
+                printHelp()
+                return
+        }</span>
+
+        // Handle lint-file command
+        <span class="cov0" title="0">if command == "lint-file" </span><span class="cov0" title="0">{
+                filePath, opts, err := parseLintFileFlags(os.Args[2:])
+                if err != nil </span><span class="cov0" title="0">{
+                        fmt.Fprintf(os.Stderr, "Failed to parse flags: %v\n", err)
+                        os.Exit(1)
+                }</span>
+
+                // Load configuration
+                <span class="cov0" title="0">loader := config.NewLoader(opts.ConfigPath)
+                cfg, err := loader.Load()
+                if err != nil </span><span class="cov0" title="0">{
+                        fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+                        os.Exit(1)
+                }</span>
+
+                // Create dependencies
+                <span class="cov0" title="0">commandRunner := execx.NewRealCommandRunner()
+
+                // Execute lint-file
+                ctx := context.Background()
+                result, err := lintFile(ctx, cfg, commandRunner, filePath)
+                if err != nil </span><span class="cov0" title="0">{
+                        if !opts.JSON &amp;&amp; !opts.CI </span><span class="cov0" title="0">{
+                                fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+                        }</span>
+                        <span class="cov0" title="0">os.Exit(1)</span>
+                }
+
+                // Output result
+                <span class="cov0" title="0">if opts.JSON </span><span class="cov0" title="0">{
+                        if err := outputJSON(result); err != nil </span><span class="cov0" title="0">{
+                                fmt.Fprintf(os.Stderr, "Error outputting JSON: %v\n", err)
+                                os.Exit(1)
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        outputText(result, opts.Verbose)
+                }</span>
+
+                // Exit with appropriate code
+                <span class="cov0" title="0">if result.Status == runner.StatusFailure || result.Status == runner.StatusError </span><span class="cov0" title="0">{
+                        os.Exit(1)
+                }</span>
+                <span class="cov0" title="0">return</span>
+        }
+
+        // Handle watch command separately
+        <span class="cov0" title="0">if command == "watch" </span><span class="cov0" title="0">{
+                watchOpts, err := parseWatchFlags(os.Args[2:])
+                if err != nil </span><span class="cov0" title="0">{
+                        fmt.Fprintf(os.Stderr, "Failed to parse flags: %v\n", err)
+                        os.Exit(1)
+                }</span>
+
+                // Load configuration
+                <span class="cov0" title="0">loader := config.NewLoader(watchOpts.ConfigPath)
+                cfg, err := loader.Load()
+                if err != nil </span><span class="cov0" title="0">{
+                        fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+                        os.Exit(1)
+                }</span>
+
+                // Create dependencies
+                <span class="cov0" title="0">commandRunner := execx.NewRealCommandRunner()
+                spinnerFactory := ui.NewRealSpinnerFactory()
+                ttyDetector := ui.NewRealTTYDetector()
+                clock := ui.NewRealClock()
+
+                // Create watch orchestrator
+                watchOrch := orchestrator.NewWatchOrchestrator(
+                        cfg,
+                        commandRunner,
+                        spinnerFactory,
+                        ttyDetector,
+                        clock,
+                        os.Stdout,
+                        os.Stderr,
+                )
+
+                // Execute watch
+                ctx := context.Background()
+                if err := watchOrch.Watch(ctx, watchOpts); err != nil </span><span class="cov0" title="0">{
+                        if !watchOpts.JSON &amp;&amp; !watchOpts.CI </span><span class="cov0" title="0">{
+                                fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+                        }</span>
+                        <span class="cov0" title="0">os.Exit(1)</span>
+                }
+                <span class="cov0" title="0">return</span>
+        }
+
+        // Validate command
+        <span class="cov0" title="0">var phase runner.Phase
+        switch command </span>{
+        case "test":<span class="cov0" title="0">
+                phase = runner.PhaseTest</span>
+        case "lint":<span class="cov0" title="0">
+                phase = runner.PhaseLint</span>
+        case "build":<span class="cov0" title="0">
+                phase = runner.PhaseBuild</span>
+        default:<span class="cov0" title="0">
+                fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
+                printHelp()
+                os.Exit(1)</span>
+        }
+
+        <span class="cov0" title="0">opts, err := parseFlags(phase, os.Args[2:])
+        if err != nil </span><span class="cov0" title="0">{
+                fmt.Fprintf(os.Stderr, "Failed to parse flags: %v\n", err)
+                os.Exit(1)
+        }</span>
+
+        // Load configuration
+        <span class="cov0" title="0">loader := config.NewLoader(opts.ConfigPath)
+        cfg, err := loader.Load()
+        if err != nil </span><span class="cov0" title="0">{
+                fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+                os.Exit(1)
+        }</span>
+
+        // Create dependencies
+        <span class="cov0" title="0">commandRunner := execx.NewRealCommandRunner()
+        spinnerFactory := ui.NewRealSpinnerFactory()
+        ttyDetector := ui.NewRealTTYDetector()
+        clock := ui.NewRealClock()
+
+        // Create orchestrator
+        orch := orchestrator.New(
+                cfg,
+                commandRunner,
+                spinnerFactory,
+                ttyDetector,
+                clock,
+                os.Stdout,
+                os.Stderr,
+        )
+
+        // Execute
+        ctx := context.Background()
+        if err := orch.Execute(ctx, opts); err != nil </span><span class="cov0" title="0">{
+                if !opts.JSON &amp;&amp; !opts.CI </span><span class="cov0" title="0">{
+                        fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+                }</span>
+                <span class="cov0" title="0">os.Exit(1)</span>
+        }
+}
+
+
+// lintFile lints a single file by determining which service it belongs to.
+func lintFile(ctx context.Context, cfg *config.Config, commandRunner execx.CommandRunner, filePath string) (runner.Result, error) <span class="cov8" title="1">{
+        // Convert to absolute path
+        absPath, err := filepath.Abs(filePath)
+        if err != nil </span><span class="cov0" title="0">{
+                return runner.Result{}, fmt.Errorf("failed to get absolute path: %w", err)
+        }</span>
+
+        // Find which service this file belongs to
+        <span class="cov8" title="1">service, err := findServiceForFile(cfg, absPath)
+        if err != nil </span><span class="cov8" title="1">{
+                return runner.Result{}, err
+        }</span>
+
+        // Route to appropriate adapter based on service type
+        <span class="cov8" title="1">switch service.Type </span>{
+        case config.ServiceTypeGo:<span class="cov8" title="1">
+                adapter := goadapter.New(service.Name, service.Dir, commandRunner)
+                return adapter.LintFile(absPath), nil</span>
+        case config.ServiceTypeNode:<span class="cov8" title="1">
+                adapter := nodeadapter.New(service.Name, service, commandRunner)
+                return adapter.LintFile(absPath), nil</span>
+        default:<span class="cov8" title="1">
+                return runner.Result{}, fmt.Errorf("unsupported service type: %s", service.Type)</span>
+        }
+}
+
+// findServiceForFile determines which service a file belongs to based on its path.
+func findServiceForFile(cfg *config.Config, filePath string) (*config.Service, error) <span class="cov8" title="1">{
+        var bestMatch *config.Service
+        var bestMatchLen int
+
+        for i := range cfg.Services </span><span class="cov8" title="1">{
+                service := &amp;cfg.Services[i]
+                
+                // Get absolute service directory
+                serviceDir := service.Dir
+                if serviceDir == "" </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                
+                <span class="cov8" title="1">if !filepath.IsAbs(serviceDir) </span><span class="cov8" title="1">{
+                        absDir, err := filepath.Abs(serviceDir)
+                        if err != nil </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+                        <span class="cov8" title="1">serviceDir = absDir</span>
+                }
+
+                // Check if file is within this service directory
+                <span class="cov8" title="1">relPath, err := filepath.Rel(serviceDir, filePath)
+                if err != nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                // If relative path doesn't start with "..", the file is within this service
+                <span class="cov8" title="1">if !strings.HasPrefix(relPath, "..") </span><span class="cov8" title="1">{
+                        // Find the service with the longest matching path (most specific)
+                        if len(serviceDir) &gt; bestMatchLen </span><span class="cov8" title="1">{
+                                bestMatch = service
+                                bestMatchLen = len(serviceDir)
+                        }</span>
+                }
+        }
+
+        <span class="cov8" title="1">if bestMatch == nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("no service found for file: %s", filePath)
+        }</span>
+
+        <span class="cov8" title="1">return bestMatch, nil</span>
+}
+
+// outputJSON outputs the result in JSON format.
+func outputJSON(result runner.Result) error <span class="cov8" title="1">{
+        encoder := json.NewEncoder(os.Stdout)
+        encoder.SetIndent("", "  ")
+        return encoder.Encode(result)
+}</span>
+
+// outputText outputs the result in human-readable format.
+func outputText(result runner.Result, verbose bool) <span class="cov8" title="1">{
+        switch result.Status </span>{
+        case runner.StatusSuccess:<span class="cov8" title="1">
+                if verbose </span><span class="cov8" title="1">{
+                        fmt.Printf("✓ %s lint passed\n", result.Service)
+                }</span>
+        case runner.StatusFailure:<span class="cov8" title="1">
+                fmt.Printf("✗ %s lint failed\n", result.Service)
+                if len(result.Failures) &gt; 0 </span><span class="cov8" title="1">{
+                        for _, failure := range result.Failures </span><span class="cov8" title="1">{
+                                if failure.File != "" &amp;&amp; failure.Line &gt; 0 </span><span class="cov8" title="1">{
+                                        fmt.Printf("  %s:%d %s\n", failure.File, failure.Line, failure.Message)
+                                }</span> else<span class="cov8" title="1"> if failure.File != "" </span><span class="cov8" title="1">{
+                                        fmt.Printf("  %s: %s\n", failure.File, failure.Message)
+                                }</span> else<span class="cov8" title="1"> {
+                                        fmt.Printf("  %s\n", failure.Message)
+                                }</span>
+                        }
+                }
+        case runner.StatusError:<span class="cov8" title="1">
+                fmt.Printf("✗ %s lint error: %s\n", result.Service, result.ErrorMessage)</span>
+        }
+}
+
+
+func printHelp() <span class="cov0" title="0">{
+        fmt.Print(`validate - Unified build tool for Go and TypeScript projects
+
+Usage:
+  validate [test|lint|build|watch|lint-file] [flags]
+
+Commands:
+  test       Run tests across all services
+  lint       Run linters across all services  
+  build      Build all services
+  watch      Watch for file changes and run linters automatically
+  lint-file  Lint a single file by routing to appropriate service linter
+
+Flags:
+  --verbose      Show detailed output
+  --json         Output results in JSON format
+  --no-spinner   Disable spinner animations
+  --ci           CI mode (implies --no-spinner, --json)
+  --service      Filter to specific services (can be used multiple times)
+  --config       Path to config file (default: .validate.yaml)
+  --max-parallel Maximum parallel jobs (default: GOMAXPROCS)
+  -h, --help     Show this help message
+
+Watch-specific flags:
+  --extensions   File extensions to watch (default: .go,.ts,.tsx,.js,.jsx)
+
+Examples:
+  validate test
+  validate lint --verbose
+  validate build --service ui --service api-gateway
+  validate watch
+  validate watch --service ui --extensions .ts,.tsx
+  validate lint-file ./ui/src/components/Header.tsx
+  validate lint-file ./meal-service/main.go --json
+`)
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

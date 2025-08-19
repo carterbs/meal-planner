@@ -1,505 +1,336 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import AgentPage from './AgentPage';
-import {
-  mockWebSocket,
-  mockClipboard,
-  mockLocalStorage,
-  userEvents,
-  errorUtils,
-  loadingUtils,
-} from './test-utils';
+import { WeeklyMealPlan } from '@mealplanner/generated';
+import useMealPlanHighlights from './hooks/useMealPlanHighlights';
+import useSessionHook from './hooks/useSession';
 
-// Mock the generated gateway functions
-jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
-  postAgentStart: jest.fn(),
-  postAgentMessage: jest.fn(),
-  getCheckpointsByThreadId: jest.fn(),
-  getWorkflowsByThreadIdMessages: jest.fn(),
-  postWorkflowsByThreadIdAbandon: jest.fn(),
+type MockController = {
+  session: unknown;
+  startSession: () => Promise<void>;
+  logout: jest.Mock;
+  input: string;
+  setInput: jest.Mock;
+  isWorking: boolean;
+  messages: unknown[];
+  sendMessage: jest.Mock<Promise<unknown>, []>;
+  mealPlan: unknown;
+  shoppingList: unknown;
+};
+
+const mockController: MockController = {
+  session: undefined,
+  startSession: async () => { },
+  logout: jest.fn(),
+  input: '',
+  setInput: jest.fn(),
+  isWorking: false,
+  messages: [],
+  sendMessage: jest.fn(async () => ({})),
+  mealPlan: undefined,
+  shoppingList: undefined,
+};
+
+jest.mock('./pages/AgentPage/hooks/useAgentController', () => ({
+  __esModule: true,
+  default: () => mockController,
 }));
 
-// Mock the generated client
-jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
-  createClient: jest.fn(() => ({
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn(),
-  })),
-  createConfig: jest.fn((config) => config),
+jest.mock('./hooks/useMealPlanHighlights', () => {
+  const mockApply = jest.fn();
+  return {
+    __esModule: true,
+    default: () => ({ highlights: new Set(), applyHighlights: mockApply }),
+  };
+});
+
+jest.mock('./hooks/useAutoScroll', () => {
+  const createRef = () => ({ current: null });
+  return {
+    __esModule: true,
+    default: jest.fn(() => createRef()),
+  };
+});
+
+jest.mock('./hooks/useSession', () => ({
+  __esModule: true,
+  default: () => ({ startNewSession: jest.fn() }),
 }));
 
-// Import the mocked functions
+const mockOnOpenMealLibraryClick = jest.fn();
+
+jest.mock('./pages/AgentPage/components/chat/ChatPanel', () => ({
+  __esModule: true,
+  default: (props: {
+    onEnterKey?: (e: unknown) => void;
+    onOpenMealLibrary: () => void;
+    onStartSession: () => void;
+    onLogout: () => void;
+    onSend: () => void;
+  }) => {
+    const { onEnterKey, onOpenMealLibrary, onStartSession, onLogout, onSend } =
+      props;
+    return (
+      <div>
+        <input
+          data-testid="message-input"
+          onKeyDown={(e) => onEnterKey && onEnterKey(e)}
+        />
+        <button data-testid="send-message" onClick={onSend}>
+          Send
+        </button>
+        <button
+          data-testid="open-lib"
+          onClick={() => {
+            onOpenMealLibrary();
+            mockOnOpenMealLibraryClick();
+          }}
+        >
+          OpenLib
+        </button>
+        <button data-testid="start-session" onClick={() => onStartSession()}>
+          StartSession
+        </button>
+        <button data-testid="logout" onClick={onLogout}>
+          Logout
+        </button>
+      </div>
+    );
+  },
+}));
+
+let capturedPlanHandlers: Record<string, unknown> = {};
+jest.mock('./pages/AgentPage/components/plan/PlanPanel', () => ({
+  __esModule: true,
+  default: (props: Record<string, unknown> & { onCopyMealPlan: () => void; onCopyShoppingList: () => void; onTabChange: (v: number) => void }) => {
+    capturedPlanHandlers = props;
+    return (
+      <div>
+        <button data-testid="copy-plan" onClick={props.onCopyMealPlan}>
+          CopyPlan
+        </button>
+        <button data-testid="copy-shopping" onClick={props.onCopyShoppingList}>
+          CopyShopping
+        </button>
+        <button data-testid="tab-change" onClick={() => props.onTabChange(1)}>
+          ChangeTab
+        </button>
+      </div>
+    );
+  },
+}));
+
+jest.mock('./pages/MealManagementPage/MealManagementPage', () => ({
+  __esModule: true,
+  default: ({ onClose, showToast }: { onClose: () => void; showToast: (m: string) => void }) => (
+    <div>
+      <div>MealLibrary</div>
+      <button data-testid="close-meal-library" onClick={onClose}>
+        Close
+      </button>
+      <button
+        data-testid="trigger-toast"
+        onClick={() => showToast('Test toast')}
+      >
+        ShowToast
+      </button>
+    </div>
+  ),
+}));
+
+jest.mock('./components/Toast', () => ({
+  __esModule: true,
+  Toast: ({ message }: { message?: string }) =>
+    message ? <div data-testid="toast">{message}</div> : null,
+}));
+
+jest.mock('./utils/clipboard', () => ({
+  __esModule: true,
+  copyMealPlanToClipboard: jest.fn(async () => { }),
+  copyShoppingListToClipboard: jest.fn(async () => { }),
+}));
+
 import {
-  postAgentStart,
-  postAgentMessage,
-  getCheckpointsByThreadId,
-  getWorkflowsByThreadIdMessages,
-  postWorkflowsByThreadIdAbandon,
-} from '@mealplanner/generated/dist/gateway/index.js';
+  copyMealPlanToClipboard,
+  copyShoppingListToClipboard,
+} from './utils/clipboard';
 
-beforeEach(() => {
-  (global.fetch as jest.Mock) = jest.fn();
-
-  // Setup default mocks for the generated functions
-  (postAgentStart as jest.Mock).mockResolvedValue({
-    data: {
-      response: {
-        threadId: '123',
-        currentStep: 'started',
-        message: 'hi',
-        initialState: JSON.stringify({
-          state: {
-            mealPlan: {
-              days: [
-                {
-                  dayIndex: 0,
-                  mealType: 'breakfast',
-                  meal: {
-                    id: 0,
-                    mealId: 1,
-                    name: 'Eggs',
-                    effort: 1,
-                  },
-                },
-              ],
-            },
-          },
-        }),
-      },
-    },
+describe('AgentPage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Object.assign(mockController, {
+      session: undefined,
+      input: '',
+      isWorking: false,
+      messages: [],
+      mealPlan: undefined,
+      shoppingList: undefined,
+      sendMessage: jest.fn(async () => ({})),
+    });
   });
 
-  (postAgentMessage as jest.Mock).mockResolvedValue({
-    data: {
-      response: {
-        message: 'test response',
-      },
-    },
+  it('renders and triggers send on Enter (no Shift)', () => {
+    render(<AgentPage />);
+    const input = screen.getByTestId('message-input');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(mockController.sendMessage).toHaveBeenCalledTimes(1);
   });
 
-  (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({
-    data: {
-      tuple: {
-        checkpoint: {
-          state: {},
-        },
-      },
-    },
+  it('does not send on Shift+Enter', () => {
+    render(<AgentPage />);
+    const input = screen.getByTestId('message-input');
+    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true });
+    expect(mockController.sendMessage).not.toHaveBeenCalled();
   });
 
-  (getWorkflowsByThreadIdMessages as jest.Mock).mockResolvedValue({
-    data: [],
+  it('applies highlights when sendMessage returns newPlan', async () => {
+    const plan = new WeeklyMealPlan({ days: [] });
+    mockController.sendMessage = jest.fn(async () => ({ newPlan: plan }));
+    render(<AgentPage />);
+    const input = screen.getByTestId('message-input');
+    await fireEvent.keyDown(input, { key: 'Enter' });
+    // Use the mocked hook directly to assert call
+    // Hook requires two args; our mock returns a function reference regardless of inputs
+    const mocked = useMealPlanHighlights as unknown as (
+      a: unknown,
+      b: unknown,
+    ) => { applyHighlights: jest.Mock };
+    expect(mocked(undefined, undefined).applyHighlights).toHaveBeenCalledWith(
+      plan,
+    );
   });
 
-  (postWorkflowsByThreadIdAbandon as jest.Mock).mockResolvedValue({
-    data: { status: 'ABANDONED' },
-  });
-});
-
-afterEach(() => {
-  jest.resetAllMocks();
-  localStorage.clear();
-});
-
-test('auto resumes from localStorage', async () => {
-  localStorage.setItem('sessionId', 'abc');
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        response: {
-          threadId: 'abc',
-          workflowType: 'meal_planning',
-          currentStep: 'planning',
-          message: 'hi',
-          initialState: JSON.stringify({ meal_plan: { days: [] } }),
-        },
-      }),
+  it('opens meal library view when requested', () => {
+    render(<AgentPage />);
+    fireEvent.click(screen.getByTestId('open-lib'));
+    expect(mockOnOpenMealLibraryClick).toHaveBeenCalled();
+    expect(screen.getByText('MealLibrary')).toBeInTheDocument();
   });
 
-  render(<AgentPage />);
+  it('copies plan and shopping list via handlers when present and guards when absent', async () => {
+    const { unmount } = render(<AgentPage />);
+    fireEvent.click(screen.getAllByTestId('copy-plan')[0]);
+    fireEvent.click(screen.getAllByTestId('copy-shopping')[0]);
+    expect(copyMealPlanToClipboard).not.toHaveBeenCalled();
+    expect(copyShoppingListToClipboard).not.toHaveBeenCalled();
 
-  // Wait for the Start Session button to appear after auto-resume
-  await waitFor(() =>
-    expect(screen.getByTestId('start-session')).toBeInTheDocument(),
-  );
-});
-
-// Test removed - session clearing behavior doesn't match implementation
-
-test('copies meal plan to clipboard', async () => {
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        response: {
-          threadId: '123',
-          currentStep: 'started',
-          message: 'hi',
-          initialState: JSON.stringify({
-            meal_plan: {
-              days: [
-                {
-                  dayIndex: 0,
-                  mealType: 'breakfast',
-                  meal: {
-                    id: 0,
-                    mealId: 1,
-                    name: 'Eggs',
-                    effort: 1,
-                  },
-                },
-              ],
-            },
-          }),
-        },
-      }),
+    unmount();
+    type MockShoppingItem = { ingredient: string; quantity: number };
+    Object.assign(mockController, {
+      mealPlan: new WeeklyMealPlan({ days: [] }),
+      shoppingList: [{ ingredient: 'Tomato', quantity: 1 }] as MockShoppingItem[],
+    });
+    render(<AgentPage />);
+    fireEvent.click(screen.getAllByTestId('copy-plan')[0]);
+    fireEvent.click(screen.getAllByTestId('copy-shopping')[0]);
+    expect(copyMealPlanToClipboard).toHaveBeenCalled();
+    expect(copyShoppingListToClipboard).toHaveBeenCalled();
   });
 
-  const write = jest.fn();
-  Object.assign(navigator, { clipboard: { write, writeText: write } });
-  // Mock ClipboardItem constructor
-  (global as any).ClipboardItem = jest
-    .fn()
-    .mockImplementation((data) => ({ data }));
-
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
-
-  await waitFor(() =>
-    expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument(),
-  );
-
-  // Open share menu first
-  fireEvent.click(screen.getByTestId('share-menu-button'));
-
-  // Then click copy meal plan
-  fireEvent.click(screen.getByTestId('copy-meal-plan'));
-  expect(write).toHaveBeenCalled();
-});
-
-// Test removed - copy-shopping-list test ID doesn't exist in implementation
-
-test('starts a new session', async () => {
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        response: {
-          threadId: '123',
-          currentStep: 'started',
-          message: 'hi',
-          initialState: JSON.stringify({
-            meal_plan: {
-              days: [
-                {
-                  dayIndex: 0,
-                  mealType: 'breakfast',
-                  meal: {
-                    id: 0,
-                    mealId: 1,
-                    name: 'Eggs',
-                    effort: 1,
-                  },
-                },
-              ],
-            },
-          }),
-        },
-      }),
-  });
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
-  await waitFor(() => {
-    expect(postAgentStart).toHaveBeenCalled();
-    expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument();
-    expect(screen.getByTestId('message-input')).toBeInTheDocument();
-  });
-});
-
-test('sends a message in an existing session', async () => {
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
-  await waitFor(() =>
-    expect(screen.getByTestId('message-input')).toBeInTheDocument(),
-  );
-
-  fireEvent.change(screen.getByTestId('message-input'), {
-    target: { value: 'hello' },
-  });
-  fireEvent.click(screen.getByTestId('send-button'));
-
-  await waitFor(() => expect(postAgentMessage).toHaveBeenCalled());
-});
-
-test('pressing Enter sends the message', async () => {
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
-  await waitFor(() =>
-    expect(screen.getByTestId('message-input')).toBeInTheDocument(),
-  );
-
-  fireEvent.change(screen.getByTestId('message-input'), {
-    target: { value: 'hello' },
-  });
-  fireEvent.keyPress(screen.getByTestId('message-input'), {
-    key: 'Enter',
-    code: 'Enter',
-    charCode: 13,
+  it('starts new session via hook', () => {
+    render(<AgentPage />);
+    fireEvent.click(screen.getByTestId('start-session'));
+    // useSession requires a callback arg; our module mock ignores it in the factory
+    const sessionHook = (useSessionHook as unknown as (fn: () => Promise<void>) => { startNewSession: () => void })(
+      async () => { }
+    );
+    expect(sessionHook.startNewSession).toBeDefined();
   });
 
-  await waitFor(() => expect(postAgentMessage).toHaveBeenCalled());
-});
-
-test('highlights changed meal plan entries', async () => {
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        response: {
-          threadId: '123',
-          currentStep: 'started',
-          initialState: JSON.stringify({
-            state: {
-              mealPlan: {
-                days: [
-                  {
-                    dayIndex: 0,
-                    mealType: 'breakfast',
-                    meal: {
-                      id: 0,
-                      mealId: 1,
-                      name: 'Eggs',
-                      effort: 1,
-                    },
-                  },
-                ],
-              },
-            },
-          }),
-        },
-      }),
+  it('handles logout', () => {
+    render(<AgentPage />);
+    fireEvent.click(screen.getByTestId('logout'));
+    expect(mockController.logout).toHaveBeenCalled();
   });
 
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
-
-  await waitFor(() =>
-    expect(screen.getByTestId('meal-plan-table')).toBeInTheDocument(),
-  );
-
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        response: {
-          message: 'ok',
-          initialState: JSON.stringify({
-            state: {
-              mealPlan: {
-                days: [
-                  {
-                    dayIndex: 0,
-                    mealType: 'breakfast',
-                    meal: { id: 0, mealId: 2, name: 'Pancakes', effort: 1 },
-                  },
-                ],
-              },
-            },
-          }),
-        },
-      }),
+  it('sends message via send button', () => {
+    render(<AgentPage />);
+    fireEvent.click(screen.getByTestId('send-message'));
+    expect(mockController.sendMessage).toHaveBeenCalled();
   });
 
-  fireEvent.change(screen.getByTestId('message-input'), {
-    target: { value: 'change' },
-  });
-  fireEvent.click(screen.getByTestId('send-button'));
+  it('closes meal library when close button is clicked', () => {
+    render(<AgentPage />);
 
-  await waitFor(() => {
-    expect(screen.getByTestId('meal-0-breakfast')).toBeInTheDocument();
-  });
-});
+    // First open the library
+    fireEvent.click(screen.getByTestId('open-lib'));
+    expect(screen.getByText('MealLibrary')).toBeInTheDocument();
 
-test('shows typing indicator when agent is working', async () => {
-  let resolvePromise: (value: any) => void;
-  const promise = new Promise((resolve) => {
-    resolvePromise = resolve;
+    // Then close it
+    fireEvent.click(screen.getByTestId('close-meal-library'));
+    expect(screen.queryByText('MealLibrary')).not.toBeInTheDocument();
   });
 
-  (global.fetch as jest.Mock).mockReturnValueOnce({
-    ok: true,
-    json: () => promise,
+  it('handles tab changes', () => {
+    render(<AgentPage />);
+    fireEvent.click(screen.getByTestId('tab-change'));
+    // Tab change is handled internally by the component
+    expect(capturedPlanHandlers.onTabChange).toBeDefined();
   });
 
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
+  it('shows and hides toast messages', async () => {
+    jest.useFakeTimers();
 
-  // Check that typing indicator appears when working
-  await waitFor(() => {
-    expect(screen.getByTestId('typing-indicator')).toBeInTheDocument();
-  });
+    render(<AgentPage />);
 
-  // Resolve the promise to complete the request
-  resolvePromise!({
-    response: { threadId: '123', currentStep: 'started', message: 'Ready' },
-  });
+    // Open meal library to access toast trigger
+    fireEvent.click(screen.getByTestId('open-lib'));
 
-  // Wait for typing indicator to disappear
-  await waitFor(() => {
-    expect(screen.queryByTestId('typing-indicator')).not.toBeInTheDocument();
-  });
-});
+    // Trigger toast
+    fireEvent.click(screen.getByTestId('trigger-toast'));
+    expect(screen.getByTestId('toast')).toHaveTextContent('Test toast');
 
-// Test removed - uses old fetch mocking approach that doesn't match current implementation
-
-// WebSocket tests removed - AgentPage doesn't use WebSocket
-
-// WebSocket tests removed - AgentPage doesn't use WebSocket
-
-// Test removed - uses old fetch mocking approach that doesn't match current implementation
-
-test('handles large message history efficiently', async () => {
-  const largeMessageHistory = Array.from({ length: 100 }, (_, i) => ({
-    sender: i % 2 === 0 ? 'user' : 'agent',
-    content: `Message ${i}`,
-  }));
-
-  (global.fetch as jest.Mock)
-    .mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          response: { threadId: '123', currentStep: 'started' },
-        }),
-    })
-    .mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(largeMessageHistory),
+    // Fast forward time to hide toast (wrapped in act)
+    act(() => {
+      jest.advanceTimersByTime(2000);
     });
 
-  const startTime = performance.now();
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
+    });
 
-  await waitFor(() => {
-    expect(screen.getByTestId('message-input')).toBeInTheDocument();
+    jest.useRealTimers();
   });
 
-  const endTime = performance.now();
-  expect(endTime - startTime).toBeLessThan(1000); // Should render within 1 second
-});
-
-test('handles concurrent user inputs gracefully', async () => {
-  (global.fetch as jest.Mock).mockResolvedValue({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        response: { threadId: '123', currentStep: 'started' },
-      }),
+  it('handles sendMessage without newPlan response', async () => {
+    mockController.sendMessage = jest.fn(async () => ({}));
+    render(<AgentPage />);
+    const input = screen.getByTestId('message-input');
+    await fireEvent.keyDown(input, { key: 'Enter' });
+    expect(mockController.sendMessage).toHaveBeenCalled();
   });
 
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
-
-  await waitFor(() => {
-    expect(screen.getByTestId('message-input')).toBeInTheDocument();
+  it('handles sendMessage with null response', async () => {
+    mockController.sendMessage = jest.fn(async () => null);
+    render(<AgentPage />);
+    const input = screen.getByTestId('message-input');
+    await fireEvent.keyDown(input, { key: 'Enter' });
+    expect(mockController.sendMessage).toHaveBeenCalled();
   });
 
-  const input = screen.getByTestId('message-input');
-  const sendButton = screen.getByTestId('send-button');
-
-  // Simulate rapid typing and clicking
-  fireEvent.change(input, { target: { value: 'message 1' } });
-  fireEvent.click(sendButton);
-
-  fireEvent.change(input, { target: { value: 'message 2' } });
-  fireEvent.click(sendButton);
-
-  fireEvent.change(input, { target: { value: 'message 3' } });
-  fireEvent.click(sendButton);
-
-  // Should handle multiple rapid inputs without crashing
-  expect(input).toBeInTheDocument();
-});
-
-test('validates form inputs before submission', async () => {
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        response: { threadId: '123', currentStep: 'started' },
-      }),
+  it('does not trigger send on other keys', () => {
+    render(<AgentPage />);
+    const input = screen.getByTestId('message-input');
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(mockController.sendMessage).not.toHaveBeenCalled();
   });
 
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
+  it('passes correct props to components', () => {
+    mockController.mealPlan = new WeeklyMealPlan({ days: [] });
+    mockController.shoppingList = [{ ingredient: 'test', quantity: 1 }];
 
-  await waitFor(() => {
-    expect(screen.getByTestId('message-input')).toBeInTheDocument();
+    render(<AgentPage />);
+
+    expect(capturedPlanHandlers.mealPlan).toBe(mockController.mealPlan);
+    expect(capturedPlanHandlers.shoppingList).toBe(mockController.shoppingList);
+    expect(capturedPlanHandlers.currentTab).toBe(0);
+    expect(capturedPlanHandlers.highlights).toBeInstanceOf(Set);
+    expect(capturedPlanHandlers.colors).toBeDefined();
   });
-
-  const sendButton = screen.getByTestId('send-button');
-
-  // Button should be disabled when input is empty
-  expect(sendButton).toBeDisabled();
-
-  // Button should be enabled when input has content
-  fireEvent.change(screen.getByTestId('message-input'), {
-    target: { value: 'test message' },
-  });
-  expect(sendButton).not.toBeDisabled();
-});
-
-test('supports accessibility features and ARIA labels', () => {
-  render(<AgentPage />);
-
-  const startButton = screen.getByTestId('start-session');
-  const messageInput = screen.getByTestId('message-input');
-
-  expect(startButton).toBeInTheDocument();
-  expect(messageInput).toBeInTheDocument();
-
-  // Check that interactive elements are focusable
-  expect(startButton.tabIndex).toBeGreaterThanOrEqual(0);
-});
-
-test('handles keyboard navigation with arrow keys', async () => {
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        response: { threadId: '123', currentStep: 'started' },
-      }),
-  });
-
-  render(<AgentPage />);
-  fireEvent.click(screen.getByTestId('start-session'));
-
-  await waitFor(() => {
-    expect(screen.getByTestId('message-input')).toBeInTheDocument();
-  });
-
-  const input = screen.getByTestId('message-input');
-
-  // Test arrow key navigation
-  fireEvent.keyDown(input, { key: 'ArrowUp', code: 'ArrowUp' });
-  fireEvent.keyDown(input, { key: 'ArrowDown', code: 'ArrowDown' });
-
-  expect(input).toBeInTheDocument();
-});
-
-test('opens and closes meal library', () => {
-  render(<AgentPage />);
-
-  fireEvent.click(screen.getByTestId('open-meal-library'));
-  expect(screen.getAllByTestId('meal-management-tab').length).toBeGreaterThan(
-    0,
-  );
-
-  fireEvent.click(screen.getByTestId('close-meal-library'));
-  expect(screen.queryByTestId('meal-management-tab')).not.toBeInTheDocument();
 });

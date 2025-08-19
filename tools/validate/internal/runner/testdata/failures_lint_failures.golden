@@ -1,0 +1,2 @@
+src/main.go:15 [lint] unused variable 'result'
+src/utils.go:8 [style] line too long (120 > 100 characters)

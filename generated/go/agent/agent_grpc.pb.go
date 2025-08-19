@@ -35,7 +35,6 @@ const (
 	AgentService_AbandonWorkflow_FullMethodName    = "/agent.AgentService/AbandonWorkflow"
 	AgentService_GetMessages_FullMethodName        = "/agent.AgentService/GetMessages"
 	AgentService_AddMessage_FullMethodName         = "/agent.AgentService/AddMessage"
-	AgentService_UpdateSessionState_FullMethodName = "/agent.AgentService/UpdateSessionState"
 	AgentService_GetCheckpoint_FullMethodName      = "/agent.AgentService/GetCheckpoint"
 	AgentService_PutCheckpoint_FullMethodName      = "/agent.AgentService/PutCheckpoint"
 	AgentService_ListCheckpoints_FullMethodName    = "/agent.AgentService/ListCheckpoints"
@@ -67,7 +66,6 @@ type AgentServiceClient interface {
 	// Message management endpoints
 	GetMessages(ctx context.Context, in *_go.GetMessagesRequest, opts ...grpc.CallOption) (*_go.GetMessagesResponse, error)
 	AddMessage(ctx context.Context, in *_go.AddMessageRequest, opts ...grpc.CallOption) (*_go.AddMessageResponse, error)
-	UpdateSessionState(ctx context.Context, in *_go.UpdateSessionStateRequest, opts ...grpc.CallOption) (*_go.UpdateSessionStateResponse, error)
 	// Checkpoint management endpoints
 	GetCheckpoint(ctx context.Context, in *_go.GetCheckpointRequest, opts ...grpc.CallOption) (*_go.GetCheckpointResponse, error)
 	PutCheckpoint(ctx context.Context, in *_go.PutCheckpointRequest, opts ...grpc.CallOption) (*_go.PutCheckpointResponse, error)
@@ -222,16 +220,6 @@ func (c *agentServiceClient) AddMessage(ctx context.Context, in *_go.AddMessageR
 	return out, nil
 }
 
-func (c *agentServiceClient) UpdateSessionState(ctx context.Context, in *_go.UpdateSessionStateRequest, opts ...grpc.CallOption) (*_go.UpdateSessionStateResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(_go.UpdateSessionStateResponse)
-	err := c.cc.Invoke(ctx, AgentService_UpdateSessionState_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *agentServiceClient) GetCheckpoint(ctx context.Context, in *_go.GetCheckpointRequest, opts ...grpc.CallOption) (*_go.GetCheckpointResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(_go.GetCheckpointResponse)
@@ -288,7 +276,6 @@ type AgentServiceServer interface {
 	// Message management endpoints
 	GetMessages(context.Context, *_go.GetMessagesRequest) (*_go.GetMessagesResponse, error)
 	AddMessage(context.Context, *_go.AddMessageRequest) (*_go.AddMessageResponse, error)
-	UpdateSessionState(context.Context, *_go.UpdateSessionStateRequest) (*_go.UpdateSessionStateResponse, error)
 	// Checkpoint management endpoints
 	GetCheckpoint(context.Context, *_go.GetCheckpointRequest) (*_go.GetCheckpointResponse, error)
 	PutCheckpoint(context.Context, *_go.PutCheckpointRequest) (*_go.PutCheckpointResponse, error)
@@ -344,9 +331,6 @@ func (UnimplementedAgentServiceServer) GetMessages(context.Context, *_go.GetMess
 }
 func (UnimplementedAgentServiceServer) AddMessage(context.Context, *_go.AddMessageRequest) (*_go.AddMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMessage not implemented")
-}
-func (UnimplementedAgentServiceServer) UpdateSessionState(context.Context, *_go.UpdateSessionStateRequest) (*_go.UpdateSessionStateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateSessionState not implemented")
 }
 func (UnimplementedAgentServiceServer) GetCheckpoint(context.Context, *_go.GetCheckpointRequest) (*_go.GetCheckpointResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCheckpoint not implemented")
@@ -630,24 +614,6 @@ func _AgentService_AddMessage_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AgentService_UpdateSessionState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(_go.UpdateSessionStateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AgentServiceServer).UpdateSessionState(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AgentService_UpdateSessionState_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AgentServiceServer).UpdateSessionState(ctx, req.(*_go.UpdateSessionStateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _AgentService_GetCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(_go.GetCheckpointRequest)
 	if err := dec(in); err != nil {
@@ -764,10 +730,6 @@ var AgentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddMessage",
 			Handler:    _AgentService_AddMessage_Handler,
-		},
-		{
-			MethodName: "UpdateSessionState",
-			Handler:    _AgentService_UpdateSessionState_Handler,
 		},
 		{
 			MethodName: "GetCheckpoint",

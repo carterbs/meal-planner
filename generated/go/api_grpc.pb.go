@@ -165,11 +165,9 @@ var LoggingService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	MealPlannerAPI_HealthCheck_FullMethodName          = "/mealplanner.api.MealPlannerAPI/HealthCheck"
-	MealPlannerAPI_Reconnect_FullMethodName            = "/mealplanner.api.MealPlannerAPI/Reconnect"
 	MealPlannerAPI_GetMealPlan_FullMethodName          = "/mealplanner.api.MealPlannerAPI/GetMealPlan"
 	MealPlannerAPI_GenerateMealPlan_FullMethodName     = "/mealplanner.api.MealPlannerAPI/GenerateMealPlan"
 	MealPlannerAPI_FinalizeMealPlan_FullMethodName     = "/mealplanner.api.MealPlannerAPI/FinalizeMealPlan"
-	MealPlannerAPI_GetMealPlanICS_FullMethodName       = "/mealplanner.api.MealPlannerAPI/GetMealPlanICS"
 	MealPlannerAPI_GetShoppingList_FullMethodName      = "/mealplanner.api.MealPlannerAPI/GetShoppingList"
 	MealPlannerAPI_GetAllMeals_FullMethodName          = "/mealplanner.api.MealPlannerAPI/GetAllMeals"
 	MealPlannerAPI_CreateMeal_FullMethodName           = "/mealplanner.api.MealPlannerAPI/CreateMeal"
@@ -194,7 +192,6 @@ const (
 	MealPlannerAPI_AbandonWorkflow_FullMethodName      = "/mealplanner.api.MealPlannerAPI/AbandonWorkflow"
 	MealPlannerAPI_AddMessage_FullMethodName           = "/mealplanner.api.MealPlannerAPI/AddMessage"
 	MealPlannerAPI_GetMessages_FullMethodName          = "/mealplanner.api.MealPlannerAPI/GetMessages"
-	MealPlannerAPI_UpdateSessionState_FullMethodName   = "/mealplanner.api.MealPlannerAPI/UpdateSessionState"
 	MealPlannerAPI_GetCheckpoint_FullMethodName        = "/mealplanner.api.MealPlannerAPI/GetCheckpoint"
 	MealPlannerAPI_PutCheckpoint_FullMethodName        = "/mealplanner.api.MealPlannerAPI/PutCheckpoint"
 	MealPlannerAPI_ListCheckpoints_FullMethodName      = "/mealplanner.api.MealPlannerAPI/ListCheckpoints"
@@ -208,12 +205,10 @@ const (
 type MealPlannerAPIClient interface {
 	// Health endpoints
 	HealthCheck(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HealthCheckResponse, error)
-	Reconnect(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ReconnectResponse, error)
 	// Meal plan endpoints
 	GetMealPlan(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetMealPlanResponse, error)
 	GenerateMealPlan(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GenerateMealPlanResponse, error)
 	FinalizeMealPlan(ctx context.Context, in *FinalizeMealPlanRequest, opts ...grpc.CallOption) (*FinalizeMealPlanResponse, error)
-	GetMealPlanICS(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MealPlanICSResponse, error)
 	// Shopping list endpoints
 	GetShoppingList(ctx context.Context, in *GetShoppingListRequest, opts ...grpc.CallOption) (*GetShoppingListResponse, error)
 	// Meals endpoints
@@ -243,7 +238,6 @@ type MealPlannerAPIClient interface {
 	AbandonWorkflow(ctx context.Context, in *AbandonWorkflowRequest, opts ...grpc.CallOption) (*AbandonWorkflowResponse, error)
 	AddMessage(ctx context.Context, in *AddMessageRequest, opts ...grpc.CallOption) (*AddMessageResponse, error)
 	GetMessages(ctx context.Context, in *GetMessagesRequest, opts ...grpc.CallOption) (*GetMessagesResponse, error)
-	UpdateSessionState(ctx context.Context, in *UpdateSessionStateRequest, opts ...grpc.CallOption) (*UpdateSessionStateResponse, error)
 	// Checkpoint persistence endpoints
 	GetCheckpoint(ctx context.Context, in *GetCheckpointRequest, opts ...grpc.CallOption) (*GetCheckpointResponse, error)
 	PutCheckpoint(ctx context.Context, in *PutCheckpointRequest, opts ...grpc.CallOption) (*PutCheckpointResponse, error)
@@ -262,16 +256,6 @@ func (c *mealPlannerAPIClient) HealthCheck(ctx context.Context, in *emptypb.Empt
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthCheckResponse)
 	err := c.cc.Invoke(ctx, MealPlannerAPI_HealthCheck_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *mealPlannerAPIClient) Reconnect(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ReconnectResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ReconnectResponse)
-	err := c.cc.Invoke(ctx, MealPlannerAPI_Reconnect_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -302,16 +286,6 @@ func (c *mealPlannerAPIClient) FinalizeMealPlan(ctx context.Context, in *Finaliz
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FinalizeMealPlanResponse)
 	err := c.cc.Invoke(ctx, MealPlannerAPI_FinalizeMealPlan_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *mealPlannerAPIClient) GetMealPlanICS(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MealPlanICSResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MealPlanICSResponse)
-	err := c.cc.Invoke(ctx, MealPlannerAPI_GetMealPlanICS_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -558,16 +532,6 @@ func (c *mealPlannerAPIClient) GetMessages(ctx context.Context, in *GetMessagesR
 	return out, nil
 }
 
-func (c *mealPlannerAPIClient) UpdateSessionState(ctx context.Context, in *UpdateSessionStateRequest, opts ...grpc.CallOption) (*UpdateSessionStateResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateSessionStateResponse)
-	err := c.cc.Invoke(ctx, MealPlannerAPI_UpdateSessionState_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *mealPlannerAPIClient) GetCheckpoint(ctx context.Context, in *GetCheckpointRequest, opts ...grpc.CallOption) (*GetCheckpointResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetCheckpointResponse)
@@ -606,12 +570,10 @@ func (c *mealPlannerAPIClient) ListCheckpoints(ctx context.Context, in *ListChec
 type MealPlannerAPIServer interface {
 	// Health endpoints
 	HealthCheck(context.Context, *emptypb.Empty) (*HealthCheckResponse, error)
-	Reconnect(context.Context, *emptypb.Empty) (*ReconnectResponse, error)
 	// Meal plan endpoints
 	GetMealPlan(context.Context, *emptypb.Empty) (*GetMealPlanResponse, error)
 	GenerateMealPlan(context.Context, *emptypb.Empty) (*GenerateMealPlanResponse, error)
 	FinalizeMealPlan(context.Context, *FinalizeMealPlanRequest) (*FinalizeMealPlanResponse, error)
-	GetMealPlanICS(context.Context, *emptypb.Empty) (*MealPlanICSResponse, error)
 	// Shopping list endpoints
 	GetShoppingList(context.Context, *GetShoppingListRequest) (*GetShoppingListResponse, error)
 	// Meals endpoints
@@ -641,7 +603,6 @@ type MealPlannerAPIServer interface {
 	AbandonWorkflow(context.Context, *AbandonWorkflowRequest) (*AbandonWorkflowResponse, error)
 	AddMessage(context.Context, *AddMessageRequest) (*AddMessageResponse, error)
 	GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error)
-	UpdateSessionState(context.Context, *UpdateSessionStateRequest) (*UpdateSessionStateResponse, error)
 	// Checkpoint persistence endpoints
 	GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error)
 	PutCheckpoint(context.Context, *PutCheckpointRequest) (*PutCheckpointResponse, error)
@@ -659,9 +620,6 @@ type UnimplementedMealPlannerAPIServer struct{}
 func (UnimplementedMealPlannerAPIServer) HealthCheck(context.Context, *emptypb.Empty) (*HealthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
 }
-func (UnimplementedMealPlannerAPIServer) Reconnect(context.Context, *emptypb.Empty) (*ReconnectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Reconnect not implemented")
-}
 func (UnimplementedMealPlannerAPIServer) GetMealPlan(context.Context, *emptypb.Empty) (*GetMealPlanResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMealPlan not implemented")
 }
@@ -670,9 +628,6 @@ func (UnimplementedMealPlannerAPIServer) GenerateMealPlan(context.Context, *empt
 }
 func (UnimplementedMealPlannerAPIServer) FinalizeMealPlan(context.Context, *FinalizeMealPlanRequest) (*FinalizeMealPlanResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinalizeMealPlan not implemented")
-}
-func (UnimplementedMealPlannerAPIServer) GetMealPlanICS(context.Context, *emptypb.Empty) (*MealPlanICSResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMealPlanICS not implemented")
 }
 func (UnimplementedMealPlannerAPIServer) GetShoppingList(context.Context, *GetShoppingListRequest) (*GetShoppingListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetShoppingList not implemented")
@@ -746,9 +701,6 @@ func (UnimplementedMealPlannerAPIServer) AddMessage(context.Context, *AddMessage
 func (UnimplementedMealPlannerAPIServer) GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMessages not implemented")
 }
-func (UnimplementedMealPlannerAPIServer) UpdateSessionState(context.Context, *UpdateSessionStateRequest) (*UpdateSessionStateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateSessionState not implemented")
-}
 func (UnimplementedMealPlannerAPIServer) GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCheckpoint not implemented")
 }
@@ -793,24 +745,6 @@ func _MealPlannerAPI_HealthCheck_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MealPlannerAPIServer).HealthCheck(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MealPlannerAPI_Reconnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MealPlannerAPIServer).Reconnect(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MealPlannerAPI_Reconnect_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MealPlannerAPIServer).Reconnect(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -865,24 +799,6 @@ func _MealPlannerAPI_FinalizeMealPlan_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MealPlannerAPIServer).FinalizeMealPlan(ctx, req.(*FinalizeMealPlanRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MealPlannerAPI_GetMealPlanICS_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MealPlannerAPIServer).GetMealPlanICS(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MealPlannerAPI_GetMealPlanICS_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MealPlannerAPIServer).GetMealPlanICS(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1319,24 +1235,6 @@ func _MealPlannerAPI_GetMessages_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MealPlannerAPI_UpdateSessionState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateSessionStateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MealPlannerAPIServer).UpdateSessionState(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MealPlannerAPI_UpdateSessionState_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MealPlannerAPIServer).UpdateSessionState(ctx, req.(*UpdateSessionStateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _MealPlannerAPI_GetCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetCheckpointRequest)
 	if err := dec(in); err != nil {
@@ -1403,10 +1301,6 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MealPlannerAPI_HealthCheck_Handler,
 		},
 		{
-			MethodName: "Reconnect",
-			Handler:    _MealPlannerAPI_Reconnect_Handler,
-		},
-		{
 			MethodName: "GetMealPlan",
 			Handler:    _MealPlannerAPI_GetMealPlan_Handler,
 		},
@@ -1417,10 +1311,6 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FinalizeMealPlan",
 			Handler:    _MealPlannerAPI_FinalizeMealPlan_Handler,
-		},
-		{
-			MethodName: "GetMealPlanICS",
-			Handler:    _MealPlannerAPI_GetMealPlanICS_Handler,
 		},
 		{
 			MethodName: "GetShoppingList",
@@ -1517,10 +1407,6 @@ var MealPlannerAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMessages",
 			Handler:    _MealPlannerAPI_GetMessages_Handler,
-		},
-		{
-			MethodName: "UpdateSessionState",
-			Handler:    _MealPlannerAPI_UpdateSessionState_Handler,
 		},
 		{
 			MethodName: "GetCheckpoint",

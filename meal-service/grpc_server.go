@@ -2,16 +2,22 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
+	"mealplanner/repositories"
 	"mealplanner/server"
 
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-var grpcServerLogger = logging.GetGrpcLogger("grpc-server")
+func getGrpcServerLogger() *zap.SugaredLogger {
+	return logging.GetGrpcLogger("grpc-server")
+}
 
 type MealPlannerAPIServer struct {
 	apipb.UnimplementedMealPlannerAPIServer
@@ -90,42 +96,19 @@ func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Emp
 	}, nil
 }
 
-func (s *MealPlannerAPIServer) Reconnect(ctx context.Context, req *emptypb.Empty) (*apipb.ReconnectResponse, error) {
-	// Check database connection
-	if server.DB == nil {
-		return &apipb.ReconnectResponse{
-			Status:  "error",
-			Message: "Database not connected. Make sure Docker is running and the database container is started.",
-		}, nil
-	}
-
-	if err := server.DB.Ping(); err == nil {
-		return &apipb.ReconnectResponse{
-			Status:  "ok",
-			Message: "Database connection is already established and healthy",
-		}, nil
-	}
-
-	// For now, just return error as actual reconnection logic is complex
-	return &apipb.ReconnectResponse{
-		Status:  "error",
-		Message: "Database reconnection not implemented in gRPC server. Use HTTP endpoint for reconnection.",
-	}, nil
-}
-
 func (s *MealPlannerAPIServer) GetMealPlan(ctx context.Context, req *emptypb.Empty) (*apipb.GetMealPlanResponse, error) {
 	var plan *apipb.WeeklyMealPlan
 	var err error
 
-	plan, err = server.Services.MealPlanService.GetLastPlannedMeals()
+	plan, err = server.Services.MealPlanRepository.GetLastPlannedMeals(ctx)
 	if err != nil {
-		plan, err = server.Services.MealPlanService.GenerateWeeklyMealPlan()
+		plan, err = server.Services.MealPlanRepository.GenerateWeeklyMealPlan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error generating meal plan: %w", err)
 		}
 	}
 
-	detailedPlan, err := server.Services.MealPlanService.PopulateMealDetails(plan)
+	detailedPlan, err := server.Services.MealPlanRepository.PopulateMealDetails(ctx, plan)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching meal details: %w", err)
 	}
@@ -138,12 +121,12 @@ func (s *MealPlannerAPIServer) GetMealPlan(ctx context.Context, req *emptypb.Emp
 }
 
 func (s *MealPlannerAPIServer) GenerateMealPlan(ctx context.Context, req *emptypb.Empty) (*apipb.GenerateMealPlanResponse, error) {
-	plan, err := server.Services.MealPlanService.GenerateWeeklyMealPlan()
+	plan, err := server.Services.MealPlanRepository.GenerateWeeklyMealPlan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error generating meal plan: %w", err)
 	}
 
-	detailedPlan, err := server.Services.MealPlanService.PopulateMealDetails(plan)
+	detailedPlan, err := server.Services.MealPlanRepository.PopulateMealDetails(ctx, plan)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching meal details: %w", err)
 	}
@@ -158,15 +141,38 @@ func (s *MealPlannerAPIServer) GenerateMealPlan(ctx context.Context, req *emptyp
 }
 
 func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.FinalizeMealPlanRequest) (*apipb.FinalizeMealPlanResponse, error) {
-	if req.Plan == nil {
-		return nil, fmt.Errorf("meal plan is required")
+	getGrpcServerLogger().Info("🔧 [BACKEND-FINALIZE] FinalizeMealPlan called")
+
+	if req.ThreadId == "" {
+		getGrpcServerLogger().Error("🔧 [BACKEND-FINALIZE] No thread ID provided in request")
+		return nil, fmt.Errorf("thread ID is required")
 	}
+
+	getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Processing thread: %s", req.ThreadId))
+
+	// Get checkpoint and extract meal plan
+	checkpoint, err := getCheckpointFromDB(req.ThreadId)
+	if err != nil {
+		getGrpcServerLogger().Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Failed to get checkpoint: %v", err))
+		return nil, fmt.Errorf("failed to get checkpoint: %w", err)
+	}
+
+	if checkpoint.State.MealPlan == nil {
+		getGrpcServerLogger().Error("🔧 [BACKEND-FINALIZE] No meal plan found in checkpoint")
+		return nil, fmt.Errorf("no meal plan found in checkpoint")
+	}
+
+	getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Processing meal plan with %d days", len(checkpoint.State.MealPlan.Days)))
 
 	// Collect meal IDs from the finalized plan
 	mealIDSet := make(map[int]struct{})
-	for _, entry := range req.Plan.Days {
+	for i, entry := range checkpoint.State.MealPlan.Days {
 		if entry != nil && entry.Meal != nil {
-			mealIDSet[int(entry.Meal.GetId())] = struct{}{}
+			mealID := int(entry.Meal.GetId())
+			mealIDSet[mealID] = struct{}{}
+			getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Day %d: Found meal ID %d", i, mealID))
+		} else {
+			getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Day %d: No meal found", i))
 		}
 	}
 	var mealIDs []int
@@ -174,21 +180,23 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 		mealIDs = append(mealIDs, id)
 	}
 
+	getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Unique meal IDs to update: %v", mealIDs))
+
 	// Persist last_planned timestamps
 	if len(mealIDs) > 0 {
+		getGrpcServerLogger().Info("🔧 [BACKEND-FINALIZE] Calling UpdateLastPlannedDates...")
 		if err := server.Services.MealService.UpdateLastPlannedDates(mealIDs); err != nil {
+			getGrpcServerLogger().Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] UpdateLastPlannedDates failed: %v", err))
 			return nil, fmt.Errorf("failed to update last planned dates: %w", err)
 		}
+		getGrpcServerLogger().Info("🔧 [BACKEND-FINALIZE] UpdateLastPlannedDates succeeded")
+	} else {
+		getGrpcServerLogger().Warn("🔧 [BACKEND-FINALIZE] No meal IDs to update")
 	}
 
+	getGrpcServerLogger().Info("🔧 [BACKEND-FINALIZE] FinalizeMealPlan completed successfully")
 	return &apipb.FinalizeMealPlanResponse{
 		Message: "Meal plan finalized successfully",
-	}, nil
-}
-
-func (s *MealPlannerAPIServer) GetMealPlanICS(ctx context.Context, req *emptypb.Empty) (*apipb.MealPlanICSResponse, error) {
-	return &apipb.MealPlanICSResponse{
-		IcsData: []byte(""),
 	}, nil
 }
 
@@ -298,7 +306,8 @@ func (s *MealPlannerAPIServer) CreateMealIngredient(ctx context.Context, req *ap
 		return nil, fmt.Errorf("ingredient is required")
 	}
 
-	err := server.Services.IngredientService.CreateMealIngredient(int(req.MealId), req.Ingredient)
+	ingredientRepo := repositories.NewIngredientRepository(server.DB)
+	err := ingredientRepo.CreateMealIngredient(ctx, int(req.MealId), req.Ingredient)
 	if err != nil {
 		return nil, fmt.Errorf("error creating meal ingredient: %w", err)
 	}
@@ -319,7 +328,8 @@ func (s *MealPlannerAPIServer) UpdateMealIngredient(ctx context.Context, req *ap
 		return nil, fmt.Errorf("ingredient is required")
 	}
 
-	err := server.Services.IngredientService.UpdateMealIngredient(int(req.MealId), req.Ingredient)
+	ingredientRepo := repositories.NewIngredientRepository(server.DB)
+	err := ingredientRepo.UpdateMealIngredient(ctx, int(req.MealId), req.Ingredient)
 	if err != nil {
 		return nil, fmt.Errorf("error updating meal ingredient: %w", err)
 	}
@@ -336,7 +346,8 @@ func (s *MealPlannerAPIServer) UpdateMealIngredient(ctx context.Context, req *ap
 }
 
 func (s *MealPlannerAPIServer) DeleteMealIngredient(ctx context.Context, req *apipb.DeleteMealIngredientRequest) (*apipb.DeleteMealIngredientResponse, error) {
-	err := server.Services.IngredientService.DeleteMealIngredient(int(req.IngredientId))
+	ingredientRepo := repositories.NewIngredientRepository(server.DB)
+	err := ingredientRepo.DeleteMealIngredient(ctx, int(req.IngredientId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting meal ingredient: %w", err)
 	}
@@ -364,7 +375,7 @@ func (s *MealPlannerAPIServer) DeleteMeal(ctx context.Context, req *apipb.Delete
 }
 
 func (s *MealPlannerAPIServer) GetSteps(ctx context.Context, req *apipb.GetStepsRequest) (*apipb.GetStepsResponse, error) {
-	steps, err := server.Services.RecipeStepService.GetStepsForMeal(int(req.MealId))
+	steps, err := server.Services.RecipeStepRepository.GetStepsForMeal(context.Background(), int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error getting steps: %w", err)
 	}
@@ -379,9 +390,9 @@ func (s *MealPlannerAPIServer) AddStep(ctx context.Context, req *apipb.AddStepRe
 		return nil, fmt.Errorf("step is required")
 	}
 
-	// The service expects a protobuf Step
+	// The repository expects a protobuf Step
 	req.Step.MealId = req.MealId
-	createdStep, err := server.Services.RecipeStepService.AddStepToMeal(req.Step)
+	createdStep, err := server.Services.RecipeStepRepository.AddStepToMeal(context.Background(), req.Step)
 	if err != nil {
 		return nil, fmt.Errorf("error adding step: %w", err)
 	}
@@ -392,7 +403,7 @@ func (s *MealPlannerAPIServer) AddStep(ctx context.Context, req *apipb.AddStepRe
 }
 
 func (s *MealPlannerAPIServer) AddBulkSteps(ctx context.Context, req *apipb.AddBulkStepsRequest) (*apipb.AddBulkStepsResponse, error) {
-	steps, err := server.Services.RecipeStepService.AddMultipleStepsToMeal(int(req.MealId), req.Instructions)
+	steps, err := server.Services.RecipeStepRepository.AddMultipleStepsToMeal(context.Background(), int(req.MealId), req.Instructions)
 	if err != nil {
 		return nil, fmt.Errorf("error adding bulk steps: %w", err)
 	}
@@ -411,7 +422,7 @@ func (s *MealPlannerAPIServer) UpdateStep(ctx context.Context, req *apipb.Update
 	req.Step.Id = req.StepId
 	req.Step.MealId = req.MealId
 
-	err := server.Services.RecipeStepService.UpdateStep(req.Step)
+	err := server.Services.RecipeStepRepository.UpdateStep(context.Background(), req.Step)
 	if err != nil {
 		return nil, fmt.Errorf("error updating step: %w", err)
 	}
@@ -422,7 +433,7 @@ func (s *MealPlannerAPIServer) UpdateStep(ctx context.Context, req *apipb.Update
 }
 
 func (s *MealPlannerAPIServer) DeleteStep(ctx context.Context, req *apipb.DeleteStepRequest) (*apipb.DeleteStepResponse, error) {
-	err := server.Services.RecipeStepService.DeleteStep(int(req.StepId), int(req.MealId))
+	err := server.Services.RecipeStepRepository.DeleteStep(context.Background(), int(req.StepId), int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting step: %w", err)
 	}
@@ -438,7 +449,7 @@ func (s *MealPlannerAPIServer) ReorderSteps(ctx context.Context, req *apipb.Reor
 		stepIds[i] = int(id)
 	}
 
-	err := server.Services.RecipeStepService.ReorderSteps(int(req.MealId), stepIds)
+	err := server.Services.RecipeStepRepository.ReorderSteps(context.Background(), int(req.MealId), stepIds)
 	if err != nil {
 		return nil, fmt.Errorf("error reordering steps: %w", err)
 	}
@@ -449,12 +460,109 @@ func (s *MealPlannerAPIServer) ReorderSteps(ctx context.Context, req *apipb.Reor
 }
 
 func (s *MealPlannerAPIServer) DeleteAllSteps(ctx context.Context, req *apipb.DeleteAllStepsRequest) (*apipb.DeleteAllStepsResponse, error) {
-	err := server.Services.RecipeStepService.DeleteAllStepsForMeal(int(req.MealId))
+	err := server.Services.RecipeStepRepository.DeleteAllStepsForMeal(context.Background(), int(req.MealId))
 	if err != nil {
 		return nil, fmt.Errorf("error deleting all steps: %w", err)
 	}
 
 	return &apipb.DeleteAllStepsResponse{
 		Message: "All steps deleted successfully",
+	}, nil
+}
+
+// getCheckpointFromDB retrieves and parses checkpoint data from the database
+func getCheckpointFromDB(threadID string) (*apipb.AgentCheckpoint, error) {
+	// Query the database for checkpoint data
+	query := `SELECT checkpoint_data FROM workflow_checkpoints WHERE thread_id = $1 ORDER BY updated_at DESC LIMIT 1`
+
+	var checkpointDataJSON []byte
+	err := server.DB.QueryRow(query, threadID).Scan(&checkpointDataJSON)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("checkpoint not found for thread ID: %s", threadID)
+		}
+		return nil, fmt.Errorf("failed to query checkpoint: %w", err)
+	}
+
+	// Parse the JSON data to extract the checkpoint structure
+	var rawCheckpoint map[string]interface{}
+	if err := json.Unmarshal(checkpointDataJSON, &rawCheckpoint); err != nil {
+		return nil, fmt.Errorf("failed to parse checkpoint JSON: %w", err)
+	}
+
+	// Extract the state portion
+	stateData, ok := rawCheckpoint["state"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("checkpoint state is missing or invalid")
+	}
+
+	// Extract meal plan from state
+	var keys []string
+	for k := range stateData {
+		keys = append(keys, k)
+	}
+	getGrpcServerLogger().Info(fmt.Sprintf("🔧 [BACKEND-FINALIZE] Checkpoint state keys: %v", keys))
+	mealPlanData, ok := stateData["mealPlan"].(map[string]interface{})
+	if !ok {
+		getGrpcServerLogger().Error(fmt.Sprintf("🔧 [BACKEND-FINALIZE] mealPlan key not found or wrong type. Available keys: %v", keys))
+		return nil, fmt.Errorf("meal plan is missing or invalid in checkpoint state")
+	}
+
+	// Convert meal plan data to protobuf WeeklyMealPlan
+	mealPlan, err := convertToWeeklyMealPlan(mealPlanData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert meal plan: %w", err)
+	}
+
+	// Create the checkpoint structure
+	checkpoint := &apipb.AgentCheckpoint{
+		State: &apipb.MealPlanningCheckpointState{
+			MealPlan: mealPlan,
+		},
+	}
+
+	return checkpoint, nil
+}
+
+// convertToWeeklyMealPlan converts raw JSON meal plan data to protobuf WeeklyMealPlan
+func convertToWeeklyMealPlan(mealPlanData map[string]interface{}) (*apipb.WeeklyMealPlan, error) {
+	daysData, ok := mealPlanData["days"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("meal plan days data is missing or invalid")
+	}
+
+	var days []*apipb.MealPlanEntry
+	for _, dayData := range daysData {
+		dayMap, ok := dayData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		entry := &apipb.MealPlanEntry{}
+
+		// Extract meal data
+		if mealData, ok := dayMap["meal"].(map[string]interface{}); ok {
+			if mealID, ok := mealData["id"].(float64); ok {
+				entry.Meal = &apipb.Meal{
+					Id: int32(mealID),
+				}
+			}
+		}
+
+		// Extract day_index if available
+		if dayIndex, ok := dayMap["day_index"].(float64); ok {
+			entry.DayIndex = int32(dayIndex)
+		}
+
+		// Extract meal_type if available
+		if mealType, ok := dayMap["meal_type"].(string); ok {
+			entry.MealType = mealType
+		}
+
+		days = append(days, entry)
+	}
+
+	return &apipb.WeeklyMealPlan{
+		Days: days,
 	}, nil
 }

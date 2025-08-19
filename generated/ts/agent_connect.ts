@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { Empty, MethodKind } from "@bufbuild/protobuf";
-import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddMessageRequest, AddMessageResponse, CancelWorkflowRequest, CancelWorkflowResponse, GetCheckpointRequest, GetCheckpointResponse, GetMessagesRequest, GetMessagesResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, HealthCheckResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, MessageAgentRequest, MessageAgentResponse, PutCheckpointRequest, PutCheckpointResponse, StartAgentWorkflowRequest, StartAgentWorkflowResponse, UpdateSessionStateRequest, UpdateSessionStateResponse } from "./api_pb.js";
+import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddMessageRequest, AddMessageResponse, CancelWorkflowRequest, CancelWorkflowResponse, GetCheckpointRequest, GetCheckpointResponse, GetMessagesRequest, GetMessagesResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, HealthCheckResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, MessageAgentRequest, MessageAgentResponse, PutCheckpointRequest, PutCheckpointResponse, StartAgentWorkflowRequest, StartAgentWorkflowResponse } from "./api_pb.js";
 import { PlanFeedbackRequest, PlanFeedbackResponse, PlanFinalizeRequest, PlanFinalizeResponse, PlanStartRequest, PlanStartResponse, ResumeWorkflowRequest, ResumeWorkflowResponse } from "./agent_pb.js";
 
 /**
@@ -151,15 +151,6 @@ export const AgentService = {
       name: "AddMessage",
       I: AddMessageRequest,
       O: AddMessageResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc agent.AgentService.UpdateSessionState
-     */
-    updateSessionState: {
-      name: "UpdateSessionState",
-      I: UpdateSessionStateRequest,
-      O: UpdateSessionStateResponse,
       kind: MethodKind.Unary,
     },
     /**

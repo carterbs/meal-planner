@@ -1,0 +1,1628 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>node: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/node/adapter.go (82.2%)</option>
+				
+				<option value="file1">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/node/parser/build.go (87.2%)</option>
+				
+				<option value="file2">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/node/parser/eslint.go (100.0%)</option>
+				
+				<option value="file3">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/node/parser/jest.go (75.6%)</option>
+				
+				<option value="file4">github.com/bradcarter-meal-planner/tools/validate/internal/adapters/node/test_helpers.go (68.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Package nodeadapter provides a Node.js-specific implementation of the runner.Runner interface.
+package nodeadapter
+
+import (
+        "bytes"
+        "context"
+        "fmt"
+        "os"
+        "path/filepath"
+        "strings"
+        "time"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/adapters/node/parser"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/config"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/execx"
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+)
+
+// Adapter implements the runner.Runner interface for Node.js services.
+type Adapter struct {
+        serviceName string
+        service     *config.Service
+        executor    execx.CommandRunner
+        timeout     time.Duration
+        jsonMode    bool
+}
+
+// New creates a new Node adapter for the specified service.
+func New(serviceName string, service *config.Service, executor execx.CommandRunner) *Adapter <span class="cov8" title="1">{
+        return &amp;Adapter{
+                serviceName: serviceName,
+                service:     service,
+                executor:    executor,
+                timeout:     5 * time.Minute, // Default timeout
+                jsonMode:    false,
+        }
+}</span>
+
+// WithTimeout sets the timeout for command execution.
+func (a *Adapter) WithTimeout(timeout time.Duration) *Adapter <span class="cov8" title="1">{
+        a.timeout = timeout
+        return a
+}</span>
+
+// WithJSONMode enables JSON output mode.
+func (a *Adapter) WithJSONMode(enabled bool) *Adapter <span class="cov8" title="1">{
+        a.jsonMode = enabled
+        return a
+}</span>
+
+// Test runs Jest tests with optional JSON output.
+func (a *Adapter) Test() runner.Result <span class="cov8" title="1">{
+        start := time.Now()
+        result := runner.Result{
+                Service:  a.serviceName,
+                Phase:    runner.PhaseTest,
+                Duration: 0,
+                Status:   runner.StatusError,
+        }
+
+        ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+        defer cancel()
+
+        testCmd := a.service.GetTestCommand()
+        if testCmd == "" </span><span class="cov8" title="1">{
+                result.Duration = time.Since(start)
+                result.ErrorMessage = "No test command configured"
+                return result
+        }</span>
+
+        // If JSON mode is enabled, try to run with JSON output
+        <span class="cov8" title="1">if a.jsonMode </span><span class="cov8" title="1">{
+                if jsonResult, err := a.runTestWithJSON(ctx, testCmd); err == nil </span><span class="cov8" title="1">{
+                        jsonResult.Duration = time.Since(start)
+                        return jsonResult
+                }</span>
+                // If JSON mode fails, fall back to regular mode
+        }
+
+        // Run regular test command
+        <span class="cov8" title="1">result = a.runTestCommand(ctx, testCmd)
+        result.Duration = time.Since(start)
+        return result</span>
+}
+
+// runTestWithJSON attempts to run tests with JSON output by re-running with JSON flags.
+func (a *Adapter) runTestWithJSON(ctx context.Context, testCmd string) (runner.Result, error) <span class="cov8" title="1">{
+        result := runner.Result{
+                Service: a.serviceName,
+                Phase:   runner.PhaseTest,
+                Status:  runner.StatusError,
+        }
+
+        // Create a temporary file for JSON output
+        tempFile, err := os.CreateTemp("", "jest-output-*.json")
+        if err != nil </span><span class="cov0" title="0">{
+                return result, fmt.Errorf("failed to create temp file: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer os.Remove(tempFile.Name())
+        defer tempFile.Close()
+
+        // Parse the test command and add JSON flags
+        parts := strings.Fields(testCmd)
+        if len(parts) == 0 </span><span class="cov0" title="0">{
+                return result, fmt.Errorf("empty test command")
+        }</span>
+
+        // Add JSON output flags for Jest
+        <span class="cov8" title="1">jsonArgs := append(parts, "--json", "--outputFile="+tempFile.Name())
+
+        var stdout, stderr bytes.Buffer
+        cmd := a.executor.CommandContext(ctx, jsonArgs[0], jsonArgs[1:]...)
+        if a.service.Dir != "" </span><span class="cov0" title="0">{
+                cmd.SetDir(a.service.Dir)
+        }</span>
+        <span class="cov8" title="1">cmd.SetStdout(&amp;stdout)
+        cmd.SetStderr(&amp;stderr)
+
+        err = cmd.Run()
+
+        if ctx.Err() == context.DeadlineExceeded || err == context.DeadlineExceeded </span><span class="cov0" title="0">{
+                result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Test execution timed out after %v", a.timeout)
+                return result, fmt.Errorf("timeout")
+        }</span>
+
+        // Read the JSON output file
+        <span class="cov8" title="1">jsonData, readErr := os.ReadFile(tempFile.Name())
+        if readErr != nil </span><span class="cov0" title="0">{
+                return result, fmt.Errorf("failed to read JSON output: %w", readErr)
+        }</span>
+
+        // Parse the JSON output
+        <span class="cov8" title="1">parsedResult, parseErr := parser.ParseJestJSON(string(jsonData))
+        if parseErr != nil </span><span class="cov0" title="0">{
+                return result, fmt.Errorf("failed to parse Jest JSON: %w", parseErr)
+        }</span>
+
+        // Merge the parsed results
+        <span class="cov8" title="1">result.Status = parsedResult.Status
+        result.PassedCount = parsedResult.PassedCount
+        result.FailedCount = parsedResult.FailedCount
+        result.Failures = parsedResult.Failures
+        result.Coverage = parsedResult.Coverage
+
+        return result, nil</span>
+}
+
+// runTestCommand runs the test command in regular mode with failure extraction.
+func (a *Adapter) runTestCommand(ctx context.Context, testCmd string) runner.Result <span class="cov8" title="1">{
+        result := runner.Result{
+                Service: a.serviceName,
+                Phase:   runner.PhaseTest,
+                Status:  runner.StatusError,
+        }
+
+        parts := strings.Fields(testCmd)
+        if len(parts) == 0 </span><span class="cov0" title="0">{
+                result.ErrorMessage = "Empty test command"
+                return result
+        }</span>
+
+        // For quiet mode, ensure we use jest-silent-reporter or similar
+        <span class="cov8" title="1">if !a.containsReporter(parts) </span><span class="cov8" title="1">{
+                // Add silent reporter for Jest if no reporter is specified
+                if a.isJestCommand(parts) </span><span class="cov8" title="1">{
+                        parts = append(parts, "--reporters=jest-silent-reporter")
+                }</span>
+        }
+
+        <span class="cov8" title="1">var stdout, stderr bytes.Buffer
+        cmd := a.executor.CommandContext(ctx, parts[0], parts[1:]...)
+        if a.service.Dir != "" </span><span class="cov8" title="1">{
+                cmd.SetDir(a.service.Dir)
+        }</span>
+        <span class="cov8" title="1">cmd.SetStdout(&amp;stdout)
+        cmd.SetStderr(&amp;stderr)
+
+        err := cmd.Run()
+
+        if ctx.Err() == context.DeadlineExceeded || err == context.DeadlineExceeded </span><span class="cov8" title="1">{
+                result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Test execution timed out after %v", a.timeout)
+                return result
+        }</span>
+
+        // Parse the test output for failures
+        <span class="cov8" title="1">output := stdout.String() + stderr.String()
+        parsedResult := parser.ParseJestTextOutput(output)
+
+        result.Status = parsedResult.Status
+        result.PassedCount = parsedResult.PassedCount
+        result.FailedCount = parsedResult.FailedCount
+        result.Failures = parsedResult.Failures
+
+        // If command succeeded but we found failures, status should be failure
+        if err == nil &amp;&amp; len(result.Failures) == 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusSuccess
+        }</span> else<span class="cov8" title="1"> if len(result.Failures) &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        // Try to parse coverage from coverage-summary.json if available
+        <span class="cov8" title="1">if a.service.Dir != "" </span><span class="cov8" title="1">{
+                coveragePath := filepath.Join(a.service.Dir, "coverage", "coverage-summary.json")
+                if coverage, coverageErr := parser.ParseJestCoverage(coveragePath); coverageErr == nil </span><span class="cov0" title="0">{
+                        result.Coverage = coverage
+                }</span>
+        }
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// Lint runs ESLint with optional JSON output.
+func (a *Adapter) Lint() runner.Result <span class="cov8" title="1">{
+        start := time.Now()
+        result := runner.Result{
+                Service:  a.serviceName,
+                Phase:    runner.PhaseLint,
+                Duration: 0,
+                Status:   runner.StatusError,
+        }
+
+        ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+        defer cancel()
+
+        lintCmd := a.service.GetLintCommand()
+        if lintCmd == "" </span><span class="cov0" title="0">{
+                result.Duration = time.Since(start)
+                result.ErrorMessage = "No lint command configured"
+                return result
+        }</span>
+
+        <span class="cov8" title="1">parts := strings.Fields(lintCmd)
+        if len(parts) == 0 </span><span class="cov0" title="0">{
+                result.Duration = time.Since(start)
+                result.ErrorMessage = "Empty lint command"
+                return result
+        }</span>
+
+        // Add JSON format for ESLint if in JSON mode
+        <span class="cov8" title="1">if a.jsonMode &amp;&amp; a.isESLintCommand(parts) </span><span class="cov8" title="1">{
+                if !a.containsFormat(parts) </span><span class="cov8" title="1">{
+                        parts = append(parts, "--format=json")
+                }</span>
+        } else<span class="cov8" title="1"> {
+                // Ensure quiet mode for non-JSON output
+                if !a.containsQuiet(parts) &amp;&amp; a.isESLintCommand(parts) </span><span class="cov8" title="1">{
+                        parts = append(parts, "--quiet")
+                }</span>
+        }
+
+        <span class="cov8" title="1">var stdout, stderr bytes.Buffer
+        cmd := a.executor.CommandContext(ctx, parts[0], parts[1:]...)
+        if a.service.Dir != "" </span><span class="cov0" title="0">{
+                cmd.SetDir(a.service.Dir)
+        }</span>
+        <span class="cov8" title="1">cmd.SetStdout(&amp;stdout)
+        cmd.SetStderr(&amp;stderr)
+
+        err := cmd.Run() // ESLint returns non-zero on issues
+        result.Duration = time.Since(start)
+
+        if ctx.Err() == context.DeadlineExceeded || err == context.DeadlineExceeded </span><span class="cov0" title="0">{
+                result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Lint execution timed out after %v", a.timeout)
+                return result
+        }</span>
+
+        <span class="cov8" title="1">output := stdout.String()
+        
+        // Try to parse as JSON first if in JSON mode
+        if a.jsonMode </span><span class="cov8" title="1">{
+                if parsedResult, parseErr := parser.ParseESLintJSON(output); parseErr == nil </span><span class="cov8" title="1">{
+                        result.Status = parsedResult.Status
+                        result.Failures = parsedResult.Failures
+                        result.WarningCount = parsedResult.WarningCount
+                        return result
+                }</span>
+        }
+
+        // Fallback to text parsing
+        <span class="cov8" title="1">parsedResult := parser.ParseESLintTextOutput(output)
+        result.Status = parsedResult.Status
+        result.Failures = parsedResult.Failures
+        result.WarningCount = parsedResult.WarningCount
+
+        // If command succeeded and no issues found, mark as success
+        if err == nil &amp;&amp; len(result.Failures) == 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusSuccess
+        }</span>
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// Build runs the configured build command.
+func (a *Adapter) Build() runner.Result <span class="cov8" title="1">{
+        start := time.Now()
+        result := runner.Result{
+                Service:  a.serviceName,
+                Phase:    runner.PhaseBuild,
+                Duration: 0,
+                Status:   runner.StatusError,
+        }
+
+        ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+        defer cancel()
+
+        buildCmd := a.service.GetBuildCommand()
+        if buildCmd == "" </span><span class="cov0" title="0">{
+                result.Duration = time.Since(start)
+                result.ErrorMessage = "No build command configured"
+                return result
+        }</span>
+
+        <span class="cov8" title="1">parts := strings.Fields(buildCmd)
+        if len(parts) == 0 </span><span class="cov0" title="0">{
+                result.Duration = time.Since(start)
+                result.ErrorMessage = "Empty build command"
+                return result
+        }</span>
+
+        <span class="cov8" title="1">var stdout, stderr bytes.Buffer
+        cmd := a.executor.CommandContext(ctx, parts[0], parts[1:]...)
+        if a.service.Dir != "" </span><span class="cov0" title="0">{
+                cmd.SetDir(a.service.Dir)
+        }</span>
+        <span class="cov8" title="1">cmd.SetStdout(&amp;stdout)
+        cmd.SetStderr(&amp;stderr)
+
+        err := cmd.Run()
+        result.Duration = time.Since(start)
+
+        if ctx.Err() == context.DeadlineExceeded || err == context.DeadlineExceeded </span><span class="cov0" title="0">{
+                result.Status = runner.StatusError
+                result.ErrorMessage = fmt.Sprintf("Build execution timed out after %v", a.timeout)
+                return result
+        }</span>
+
+        // Parse the build output for failures
+        <span class="cov8" title="1">output := stderr.String() + stdout.String()
+        parsedResult := parser.ParseBuildOutput(output)
+
+        result.Status = parsedResult.Status
+        result.Failures = parsedResult.Failures
+
+        // If command succeeded, ensure status is success
+        if err == nil &amp;&amp; result.Status != runner.StatusFailure </span><span class="cov8" title="1">{
+                result.Status = runner.StatusSuccess
+        }</span>
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// Helper methods
+
+func (a *Adapter) containsReporter(parts []string) bool <span class="cov8" title="1">{
+        for _, part := range parts </span><span class="cov8" title="1">{
+                if strings.Contains(part, "--reporter") || strings.Contains(part, "--reporters") </span><span class="cov8" title="1">{
+                        return true
+                }</span>
+        }
+        <span class="cov8" title="1">return false</span>
+}
+
+func (a *Adapter) containsFormat(parts []string) bool <span class="cov8" title="1">{
+        for _, part := range parts </span><span class="cov8" title="1">{
+                if strings.Contains(part, "--format") || strings.Contains(part, "-f") </span><span class="cov0" title="0">{
+                        return true
+                }</span>
+        }
+        <span class="cov8" title="1">return false</span>
+}
+
+func (a *Adapter) containsQuiet(parts []string) bool <span class="cov8" title="1">{
+        for _, part := range parts </span><span class="cov8" title="1">{
+                if strings.Contains(part, "--quiet") || strings.Contains(part, "-q") </span><span class="cov8" title="1">{
+                        return true
+                }</span>
+        }
+        <span class="cov8" title="1">return false</span>
+}
+
+func (a *Adapter) isJestCommand(parts []string) bool <span class="cov8" title="1">{
+        return len(parts) &gt; 0 &amp;&amp; (strings.Contains(parts[0], "jest") || 
+                (len(parts) &gt; 1 &amp;&amp; strings.Contains(parts[1], "jest")))
+}</span>
+
+func (a *Adapter) isESLintCommand(parts []string) bool <span class="cov8" title="1">{
+        return len(parts) &gt; 0 &amp;&amp; (strings.Contains(parts[0], "eslint") || 
+                (len(parts) &gt; 1 &amp;&amp; strings.Contains(parts[1], "eslint")))
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">package parser
+
+import (
+        "fmt"
+        "regexp"
+        "strconv"
+        "strings"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+)
+
+// ParseBuildOutput parses build output from various Node.js build tools (Webpack, Vite, TypeScript, etc.).
+func ParseBuildOutput(output string) *runner.Result <span class="cov8" title="1">{
+        result := &amp;runner.Result{
+                Status:   runner.StatusSuccess,
+                Failures: []runner.Failure{},
+        }
+
+        if strings.TrimSpace(output) == "" </span><span class="cov8" title="1">{
+                return result
+        }</span>
+
+        // Try different parsers in order of specificity
+        <span class="cov8" title="1">if webpackResult := parseWebpackOutput(output); len(webpackResult.Failures) &gt; 0 </span><span class="cov0" title="0">{
+                return webpackResult
+        }</span>
+
+        <span class="cov8" title="1">if viteResult := parseViteOutput(output); len(viteResult.Failures) &gt; 0 </span><span class="cov0" title="0">{
+                return viteResult
+        }</span>
+
+        <span class="cov8" title="1">if tscResult := parseTypeScriptOutput(output); len(tscResult.Failures) &gt; 0 </span><span class="cov0" title="0">{
+                return tscResult
+        }</span>
+
+        // Generic error parsing as fallback
+        <span class="cov8" title="1">return parseGenericBuildOutput(output)</span>
+}
+
+// parseWebpackOutput parses Webpack build errors.
+func parseWebpackOutput(output string) *runner.Result <span class="cov8" title="1">{
+        result := &amp;runner.Result{
+                Status:   runner.StatusSuccess,
+                Failures: []runner.Failure{},
+        }
+
+        lines := strings.Split(output, "\n")
+        
+        // Patterns for Webpack errors
+        errorPattern := regexp.MustCompile(`^ERROR in (.+?)$`)
+        moduleErrorPattern := regexp.MustCompile(`^Module build failed \(from (.+?)\):`)
+        
+        var currentFile string
+        var inErrorBlock bool
+        var errorLines []string
+
+        for _, line := range lines </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                
+                // Check for error start
+                if matches := errorPattern.FindStringSubmatch(line); len(matches) &gt; 1 </span><span class="cov8" title="1">{
+                        currentFile = matches[1]
+                        inErrorBlock = true
+                        errorLines = []string{}
+                        continue</span>
+                }
+
+                // Check for module build failed
+                <span class="cov8" title="1">if matches := moduleErrorPattern.FindStringSubmatch(line); len(matches) &gt; 1 </span><span class="cov8" title="1">{
+                        inErrorBlock = true
+                        errorLines = []string{}
+                        continue</span>
+                }
+
+                // Collect error lines
+                <span class="cov8" title="1">if inErrorBlock </span><span class="cov8" title="1">{
+                        if line == "" || strings.HasPrefix(line, "ERROR in") </span><span class="cov8" title="1">{
+                                // End of current error block
+                                if len(errorLines) &gt; 0 &amp;&amp; currentFile != "" </span><span class="cov8" title="1">{
+                                        failure := runner.Failure{
+                                                File:    extractFileName(currentFile),
+                                                Type:    "error",
+                                                Message: extractErrorMessage(errorLines),
+                                        }
+                                        
+                                        // Try to extract line number
+                                        if lineNum := extractLineNumber(currentFile, errorLines); lineNum &gt; 0 </span><span class="cov8" title="1">{
+                                                failure.Line = lineNum
+                                        }</span>
+                                        
+                                        <span class="cov8" title="1">result.Failures = append(result.Failures, failure)</span>
+                                }
+                                <span class="cov8" title="1">inErrorBlock = false
+                                currentFile = ""
+                                errorLines = []string{}</span>
+                        } else<span class="cov8" title="1"> {
+                                errorLines = append(errorLines, line)
+                        }</span>
+                }
+        }
+
+        // Handle last error block
+        <span class="cov8" title="1">if inErrorBlock &amp;&amp; len(errorLines) &gt; 0 &amp;&amp; currentFile != "" </span><span class="cov0" title="0">{
+                failure := runner.Failure{
+                        File:    extractFileName(currentFile),
+                        Type:    "error",
+                        Message: extractErrorMessage(errorLines),
+                }
+                
+                if lineNum := extractLineNumber(currentFile, errorLines); lineNum &gt; 0 </span><span class="cov0" title="0">{
+                        failure.Line = lineNum
+                }</span>
+                
+                <span class="cov0" title="0">result.Failures = append(result.Failures, failure)</span>
+        }
+
+        <span class="cov8" title="1">if len(result.Failures) &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// parseViteOutput parses Vite build errors.
+func parseViteOutput(output string) *runner.Result <span class="cov8" title="1">{
+        result := &amp;runner.Result{
+                Status:   runner.StatusSuccess,
+                Failures: []runner.Failure{},
+        }
+
+        lines := strings.Split(output, "\n")
+        
+        // Patterns for Vite errors
+        viteErrorPattern := regexp.MustCompile(`^(.+?):(\d+):(\d+): error: (.+)$`)
+        
+        for i, line := range lines </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                
+                // Check for Vite error pattern
+                if matches := viteErrorPattern.FindStringSubmatch(line); len(matches) == 5 </span><span class="cov8" title="1">{
+                        lineNum := parseInt(matches[2])
+                        
+                        failure := runner.Failure{
+                                File:    matches[1],
+                                Line:    lineNum,
+                                Type:    "error",
+                                Message: matches[4],
+                        }
+                        
+                        // Look ahead for more context
+                        if i+1 &lt; len(lines) </span><span class="cov8" title="1">{
+                                nextLine := strings.TrimSpace(lines[i+1])
+                                if nextLine != "" &amp;&amp; !strings.Contains(nextLine, ":") </span><span class="cov8" title="1">{
+                                        failure.Message += ": " + truncateMessage(nextLine)
+                                }</span>
+                        }
+                        
+                        <span class="cov8" title="1">result.Failures = append(result.Failures, failure)</span>
+                }
+        }
+
+        <span class="cov8" title="1">if len(result.Failures) &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// parseTypeScriptOutput parses TypeScript compiler errors.
+func parseTypeScriptOutput(output string) *runner.Result <span class="cov8" title="1">{
+        result := &amp;runner.Result{
+                Status:   runner.StatusSuccess,
+                Failures: []runner.Failure{},
+        }
+
+        lines := strings.Split(output, "\n")
+        
+        // Patterns for TypeScript errors
+        tscErrorPattern := regexp.MustCompile(`^(.+?)\((\d+),(\d+)\): error TS(\d+): (.+)$`)
+        tscAltPattern := regexp.MustCompile(`^(.+?):(\d+):(\d+) - error TS(\d+): (.+)$`)
+        
+        for _, line := range lines </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                
+                // Check for TypeScript error pattern (Windows style)
+                if matches := tscErrorPattern.FindStringSubmatch(line); len(matches) == 6 </span><span class="cov8" title="1">{
+                        lineNum := parseInt(matches[2])
+                        errorCode := matches[4]
+                        message := matches[5]
+                        
+                        failure := runner.Failure{
+                                File:    matches[1],
+                                Line:    lineNum,
+                                Type:    "error",
+                                Message: fmt.Sprintf("TS%s: %s", errorCode, message),
+                        }
+                        
+                        result.Failures = append(result.Failures, failure)
+                }</span>
+                
+                // Check for TypeScript error pattern (Unix style)
+                <span class="cov8" title="1">if matches := tscAltPattern.FindStringSubmatch(line); len(matches) == 6 </span><span class="cov8" title="1">{
+                        lineNum := parseInt(matches[2])
+                        errorCode := matches[4]
+                        message := matches[5]
+                        
+                        failure := runner.Failure{
+                                File:    matches[1],
+                                Line:    lineNum,
+                                Type:    "error",
+                                Message: fmt.Sprintf("TS%s: %s", errorCode, message),
+                        }
+                        
+                        result.Failures = append(result.Failures, failure)
+                }</span>
+        }
+
+        <span class="cov8" title="1">if len(result.Failures) &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// parseGenericBuildOutput provides fallback parsing for generic build errors.
+func parseGenericBuildOutput(output string) *runner.Result <span class="cov8" title="1">{
+        result := &amp;runner.Result{
+                Status:   runner.StatusSuccess,
+                Failures: []runner.Failure{},
+        }
+
+        lines := strings.Split(output, "\n")
+        
+        // Generic patterns
+        genericErrorPattern := regexp.MustCompile(`(?i)error|failed|exception`)
+        fileLinePattern := regexp.MustCompile(`(.+?):(\d+):?(\d+)?`)
+        
+        for _, line := range lines </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                
+                // Skip empty lines and common noise
+                if line == "" || strings.HasPrefix(line, "npm") || strings.HasPrefix(line, "yarn") </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                
+                // Look for lines that contain error indicators
+                <span class="cov8" title="1">if genericErrorPattern.MatchString(line) </span><span class="cov8" title="1">{
+                        failure := runner.Failure{
+                                Type:    "error",
+                                Message: truncateMessage(line),
+                        }
+                        
+                        // Try to extract file and line number
+                        if matches := fileLinePattern.FindStringSubmatch(line); len(matches) &gt;= 3 </span><span class="cov0" title="0">{
+                                failure.File = matches[1]
+                                if len(matches) &gt; 2 &amp;&amp; matches[2] != "" </span><span class="cov0" title="0">{
+                                        failure.Line = parseInt(matches[2])
+                                }</span>
+                        }
+                        
+                        <span class="cov8" title="1">result.Failures = append(result.Failures, failure)</span>
+                }
+        }
+
+        <span class="cov8" title="1">if len(result.Failures) &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// Helper functions
+
+func extractFileName(filePath string) string <span class="cov8" title="1">{
+        // Remove webpack loader prefixes (handle multiple loaders)
+        loaderPattern := regexp.MustCompile(`^.+!([^!]+)$`)
+        if matches := loaderPattern.FindStringSubmatch(filePath); len(matches) &gt; 1 </span><span class="cov8" title="1">{
+                filePath = matches[1]
+        }</span>
+        
+        // Remove line:column information
+        <span class="cov8" title="1">linePattern := regexp.MustCompile(`^(.+?):\d+:\d+`)
+        if matches := linePattern.FindStringSubmatch(filePath); len(matches) &gt; 1 </span><span class="cov8" title="1">{
+                filePath = matches[1]
+        }</span>
+        
+        // Extract just the file path part (remove query params)
+        <span class="cov8" title="1">filePattern := regexp.MustCompile(`^(.+?)(?:\?|$)`)
+        if matches := filePattern.FindStringSubmatch(filePath); len(matches) &gt; 1 </span><span class="cov8" title="1">{
+                return matches[1]
+        }</span>
+        
+        <span class="cov0" title="0">return filePath</span>
+}
+
+func extractLineNumber(filePath string, errorLines []string) int <span class="cov8" title="1">{
+        // First try to extract from file path
+        linePattern := regexp.MustCompile(`:(\d+):`)
+        if matches := linePattern.FindStringSubmatch(filePath); len(matches) &gt; 1 </span><span class="cov8" title="1">{
+                return parseInt(matches[1])
+        }</span>
+        
+        // Then try to extract from error lines
+        <span class="cov8" title="1">for _, line := range errorLines </span><span class="cov8" title="1">{
+                if matches := linePattern.FindStringSubmatch(line); len(matches) &gt; 1 </span><span class="cov8" title="1">{
+                        return parseInt(matches[1])
+                }</span>
+        }
+        
+        <span class="cov8" title="1">return 0</span>
+}
+
+func extractErrorMessage(errorLines []string) string <span class="cov8" title="1">{
+        if len(errorLines) == 0 </span><span class="cov8" title="1">{
+                return "Build error"
+        }</span>
+        
+        // Find the most meaningful error line
+        <span class="cov8" title="1">for _, line := range errorLines </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                if line != "" &amp;&amp; !strings.HasPrefix(line, "at ") &amp;&amp; !strings.HasPrefix(line, "    at ") &amp;&amp; !strings.Contains(line, "at Object.&lt;anonymous&gt;") </span><span class="cov8" title="1">{
+                        return truncateMessage(line)
+                }</span>
+        }
+        
+        // Check if all lines are stack traces
+        <span class="cov8" title="1">allStackTraces := true
+        for _, line := range errorLines </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                if line != "" &amp;&amp; !strings.HasPrefix(line, "at ") &amp;&amp; !strings.HasPrefix(line, "    at ") &amp;&amp; !strings.Contains(line, "at Object.&lt;anonymous&gt;") </span><span class="cov0" title="0">{
+                        allStackTraces = false
+                        break</span>
+                }
+        }
+        
+        <span class="cov8" title="1">if allStackTraces </span><span class="cov8" title="1">{
+                return "Build error"
+        }</span>
+        
+        // Fallback to first non-empty line
+        <span class="cov0" title="0">for _, line := range errorLines </span><span class="cov0" title="0">{
+                line = strings.TrimSpace(line)
+                if line != "" </span><span class="cov0" title="0">{
+                        return truncateMessage(line)
+                }</span>
+        }
+        
+        <span class="cov0" title="0">return "Build error"</span>
+}
+
+func parseInt(s string) int <span class="cov8" title="1">{
+        if i, err := strconv.Atoi(s); err == nil </span><span class="cov8" title="1">{
+                return i
+        }</span>
+        <span class="cov8" title="1">return 0</span>
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">package parser
+
+import (
+        "encoding/json"
+        "fmt"
+        "regexp"
+        "strconv"
+        "strings"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+)
+
+// ESLintResult represents the structure of ESLint JSON output.
+type ESLintResult []ESLintFile
+
+// ESLintFile represents a single file in ESLint JSON output.
+type ESLintFile struct {
+        FilePath    string        `json:"filePath"`
+        Messages    []ESLintMessage `json:"messages"`
+        ErrorCount  int           `json:"errorCount"`
+        WarningCount int          `json:"warningCount"`
+        FixableErrorCount int     `json:"fixableErrorCount"`
+        FixableWarningCount int   `json:"fixableWarningCount"`
+        Source      string        `json:"source,omitempty"`
+}
+
+// ESLintMessage represents a single ESLint message (error or warning).
+type ESLintMessage struct {
+        RuleId      string  `json:"ruleId"`
+        Severity    int     `json:"severity"`
+        Message     string  `json:"message"`
+        Line        int     `json:"line"`
+        Column      int     `json:"column"`
+        NodeType    string  `json:"nodeType,omitempty"`
+        Source      string  `json:"source,omitempty"`
+        EndLine     int     `json:"endLine,omitempty"`
+        EndColumn   int     `json:"endColumn,omitempty"`
+        Fix         *ESLintFix `json:"fix,omitempty"`
+}
+
+// ESLintFix represents a fix suggestion from ESLint.
+type ESLintFix struct {
+        Range []int  `json:"range"`
+        Text  string `json:"text"`
+}
+
+// ParseESLintJSON parses ESLint JSON output and returns lint results.
+func ParseESLintJSON(output string) (*runner.Result, error) <span class="cov8" title="1">{
+        if strings.TrimSpace(output) == "" </span><span class="cov8" title="1">{
+                return &amp;runner.Result{
+                        Status:       runner.StatusSuccess,
+                        Failures:     []runner.Failure{},
+                        WarningCount: 0,
+                }, nil
+        }</span>
+
+        <span class="cov8" title="1">var eslintResult ESLintResult
+        if err := json.Unmarshal([]byte(output), &amp;eslintResult); err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to parse ESLint JSON: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">result := &amp;runner.Result{
+                Status:       runner.StatusSuccess,
+                Failures:     []runner.Failure{},
+                WarningCount: 0,
+        }
+
+        var totalErrors int
+        var totalWarnings int
+
+        // Process each file
+        for _, file := range eslintResult </span><span class="cov8" title="1">{
+                totalErrors += file.ErrorCount
+                totalWarnings += file.WarningCount
+
+                // Process each message
+                for _, message := range file.Messages </span><span class="cov8" title="1">{
+                        failure := runner.Failure{
+                                File:    file.FilePath,
+                                Line:    message.Line,
+                                Message: formatESLintMessage(message),
+                        }
+
+                        // Determine failure type based on severity
+                        if message.Severity == 2 </span><span class="cov8" title="1">{ // Error
+                                failure.Type = "error"
+                                result.Failures = append(result.Failures, failure)
+                        }</span> else<span class="cov8" title="1"> if message.Severity == 1 </span><span class="cov8" title="1">{ // Warning
+                                failure.Type = "warning"
+                                result.Failures = append(result.Failures, failure)
+                        }</span>
+                }
+        }
+
+        <span class="cov8" title="1">result.WarningCount = totalWarnings
+
+        // Determine overall status
+        if totalErrors &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span> else<span class="cov8" title="1"> {
+                result.Status = runner.StatusSuccess
+        }</span>
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+// ParseESLintTextOutput parses ESLint text output for errors and warnings.
+func ParseESLintTextOutput(output string) *runner.Result <span class="cov8" title="1">{
+        result := &amp;runner.Result{
+                Status:       runner.StatusSuccess,
+                Failures:     []runner.Failure{},
+                WarningCount: 0,
+        }
+
+        if strings.TrimSpace(output) == "" </span><span class="cov8" title="1">{
+                return result
+        }</span>
+
+        <span class="cov8" title="1">lines := strings.Split(output, "\n")
+        
+        // Patterns for parsing ESLint text output
+        messagePattern := regexp.MustCompile(`^\s*(\d+):(\d+)\s+(error|warning)\s+(.+?)\s+([^\s]+)$`)
+        summaryPattern := regexp.MustCompile(`^✖\s+(\d+)\s+problems?\s+\((\d+)\s+errors?,\s+(\d+)\s+warnings?\)`)
+        
+        var currentFile string
+        var errorCount int
+
+        for _, line := range lines </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                if line == "" </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+
+                // Check if this is a summary line
+                <span class="cov8" title="1">if matches := summaryPattern.FindStringSubmatch(line); len(matches) == 4 </span><span class="cov8" title="1">{
+                        if errors, err := strconv.Atoi(matches[2]); err == nil </span><span class="cov8" title="1">{
+                                errorCount = errors
+                        }</span>
+                        <span class="cov8" title="1">if warnings, err := strconv.Atoi(matches[3]); err == nil </span><span class="cov8" title="1">{
+                                result.WarningCount = warnings
+                        }</span>
+                        <span class="cov8" title="1">continue</span>
+                }
+
+                // Check if this is a message line
+                <span class="cov8" title="1">if matches := messagePattern.FindStringSubmatch(line); len(matches) == 6 </span><span class="cov8" title="1">{
+                        lineNum, _ := strconv.Atoi(matches[1])
+                        severity := matches[3]
+                        message := matches[4]
+                        rule := matches[5]
+
+                        failure := runner.Failure{
+                                File:    currentFile,
+                                Line:    lineNum,
+                                Message: fmt.Sprintf("%s (%s)", message, rule),
+                        }
+
+                        if severity == "error" </span><span class="cov8" title="1">{
+                                failure.Type = "error"
+                        }</span> else<span class="cov8" title="1"> {
+                                failure.Type = "warning"
+                        }</span>
+
+                        <span class="cov8" title="1">result.Failures = append(result.Failures, failure)
+                        continue</span>
+                }
+
+                // Check if this might be a file path
+                <span class="cov8" title="1">if !strings.Contains(line, ":") &amp;&amp; !strings.HasPrefix(line, " ") </span><span class="cov8" title="1">{
+                        // This might be a file path
+                        currentFile = line
+                }</span>
+        }
+
+        // Determine overall status
+        <span class="cov8" title="1">if errorCount &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        // Alternative parsing for different ESLint output formats
+        <span class="cov8" title="1">if len(result.Failures) == 0 &amp;&amp; strings.Contains(output, "error") </span><span class="cov8" title="1">{
+                result = parseESLintAlternativeFormat(output)
+        }</span>
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// parseESLintAlternativeFormat handles alternative ESLint output formats.
+func parseESLintAlternativeFormat(output string) *runner.Result <span class="cov8" title="1">{
+        result := &amp;runner.Result{
+                Status:       runner.StatusSuccess,
+                Failures:     []runner.Failure{},
+                WarningCount: 0,
+        }
+
+        lines := strings.Split(output, "\n")
+        
+        // Pattern for file:line:column format
+        alternativePattern := regexp.MustCompile(`^(.+?):(\d+):(\d+):\s+(error|warning):\s+(.+)$`)
+        
+        for _, line := range lines </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                if matches := alternativePattern.FindStringSubmatch(line); len(matches) == 6 </span><span class="cov8" title="1">{
+                        lineNum, _ := strconv.Atoi(matches[2])
+                        severity := matches[4]
+                        message := matches[5]
+
+                        failure := runner.Failure{
+                                File:    matches[1],
+                                Line:    lineNum,
+                                Message: message,
+                                Type:    severity,
+                        }
+
+                        result.Failures = append(result.Failures, failure)
+
+                        if severity == "warning" </span><span class="cov8" title="1">{
+                                result.WarningCount++
+                        }</span> else<span class="cov8" title="1"> if severity == "error" </span><span class="cov8" title="1">{
+                                result.Status = runner.StatusFailure
+                        }</span>
+                }
+        }
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// formatESLintMessage formats an ESLint message for display.
+func formatESLintMessage(message ESLintMessage) string <span class="cov8" title="1">{
+        result := message.Message
+        if message.RuleId != "" </span><span class="cov8" title="1">{
+                result += fmt.Sprintf(" (%s)", message.RuleId)
+        }</span>
+        <span class="cov8" title="1">return result</span>
+}</pre>
+		
+		<pre class="file" id="file3" style="display: none">package parser
+
+import (
+        "encoding/json"
+        "fmt"
+        "os"
+        "regexp"
+        "strconv"
+        "strings"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/runner"
+)
+
+// JestTestResult represents the structure of Jest JSON output.
+type JestTestResult struct {
+        TestResults []JestTestFile `json:"testResults"`
+        NumTotalTestSuites int       `json:"numTotalTestSuites"`
+        NumPassedTestSuites int      `json:"numPassedTestSuites"`
+        NumFailedTestSuites int      `json:"numFailedTestSuites"`
+        NumTotalTests       int      `json:"numTotalTests"`
+        NumPassedTests      int      `json:"numPassedTests"`
+        NumFailedTests      int      `json:"numFailedTests"`
+        Success             bool     `json:"success"`
+        CoverageMap         map[string]JestFileCoverage `json:"coverageMap,omitempty"`
+}
+
+// JestTestFile represents a test file in Jest JSON output.
+type JestTestFile struct {
+        AssertionResults []JestAssertion `json:"assertionResults"`
+        Name             string          `json:"name"`
+        Status           string          `json:"status"`
+        Message          string          `json:"message"`
+        Coverage         map[string]JestFileCoverage `json:"coverage,omitempty"`
+}
+
+// JestAssertion represents a single test assertion in Jest output.
+type JestAssertion struct {
+        AncestorTitles  []string `json:"ancestorTitles"`
+        FullName        string   `json:"fullName"`
+        Status          string   `json:"status"`
+        Title           string   `json:"title"`
+        Duration        int      `json:"duration,omitempty"`
+        FailureMessages []string `json:"failureMessages,omitempty"`
+        Location        *JestLocation `json:"location,omitempty"`
+}
+
+// JestLocation represents the location of a test.
+type JestLocation struct {
+        Line   int `json:"line"`
+        Column int `json:"column"`
+}
+
+// JestFileCoverage represents coverage information for a file.
+type JestFileCoverage struct {
+        Path       string                     `json:"path"`
+        StatementMap map[string]JestStatement `json:"statementMap"`
+        S          map[string]int             `json:"s"`
+        BranchMap  map[string]JestBranch     `json:"branchMap"`
+        B          map[string][]int           `json:"b"`
+        FnMap      map[string]JestFunction   `json:"fnMap"`
+        F          map[string]int             `json:"f"`
+}
+
+// JestStatement represents a statement for coverage.
+type JestStatement struct {
+        Start JestPosition `json:"start"`
+        End   JestPosition `json:"end"`
+}
+
+// JestBranch represents a branch for coverage.
+type JestBranch struct {
+        Line      int            `json:"line"`
+        Type      string         `json:"type"`
+        Locations []JestPosition `json:"locations"`
+}
+
+// JestFunction represents a function for coverage.
+type JestFunction struct {
+        Name string       `json:"name"`
+        Line int          `json:"line"`
+        Loc  JestLocation `json:"loc"`
+}
+
+// JestPosition represents a position in code.
+type JestPosition struct {
+        Line   int `json:"line"`
+        Column int `json:"column"`
+}
+
+// JestCoverageSummary represents the coverage summary JSON structure.
+type JestCoverageSummary struct {
+        Total JestCoverageMetrics            `json:"total"`
+        Files map[string]JestCoverageMetrics `json:"-"`
+}
+
+// UnmarshalJSON custom unmarshaling for JestCoverageSummary
+func (j *JestCoverageSummary) UnmarshalJSON(data []byte) error <span class="cov8" title="1">{
+        // First unmarshal into a map to capture all fields
+        var raw map[string]json.RawMessage
+        if err := json.Unmarshal(data, &amp;raw); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        
+        // Extract the "total" field
+        <span class="cov8" title="1">if totalData, exists := raw["total"]; exists </span><span class="cov8" title="1">{
+                if err := json.Unmarshal(totalData, &amp;j.Total); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+        
+        // Extract all other fields as files
+        <span class="cov8" title="1">j.Files = make(map[string]JestCoverageMetrics)
+        for key, value := range raw </span><span class="cov8" title="1">{
+                if key != "total" </span><span class="cov8" title="1">{
+                        var metrics JestCoverageMetrics
+                        if err := json.Unmarshal(value, &amp;metrics); err == nil </span><span class="cov8" title="1">{
+                                j.Files[key] = metrics
+                        }</span>
+                }
+        }
+        
+        <span class="cov8" title="1">return nil</span>
+}
+
+// JestCoverageMetrics represents coverage metrics for statements, branches, functions, and lines.
+type JestCoverageMetrics struct {
+        Lines      JestCoverageData `json:"lines"`
+        Functions  JestCoverageData `json:"functions"`
+        Statements JestCoverageData `json:"statements"`
+        Branches   JestCoverageData `json:"branches"`
+}
+
+// JestCoverageData represents coverage data with total, covered, skipped, and percentage.
+type JestCoverageData struct {
+        Total   int     `json:"total"`
+        Covered int     `json:"covered"`
+        Skipped int     `json:"skipped"`
+        Pct     float64 `json:"pct"`
+}
+
+// ParseJestJSON parses Jest JSON output and returns test results.
+func ParseJestJSON(output string) (*runner.Result, error) <span class="cov8" title="1">{
+        if strings.TrimSpace(output) == "" </span><span class="cov8" title="1">{
+                return &amp;runner.Result{
+                        Status:      runner.StatusSuccess,
+                        PassedCount: 0,
+                        FailedCount: 0,
+                }, nil
+        }</span>
+
+        <span class="cov8" title="1">var jestResult JestTestResult
+        if err := json.Unmarshal([]byte(output), &amp;jestResult); err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to parse Jest JSON: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">result := &amp;runner.Result{
+                Status:      runner.StatusSuccess,
+                PassedCount: jestResult.NumPassedTests,
+                FailedCount: jestResult.NumFailedTests,
+                Failures:    []runner.Failure{},
+        }
+
+        // Determine status
+        if !jestResult.Success || jestResult.NumFailedTests &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        // Extract failures
+        <span class="cov8" title="1">for _, testFile := range jestResult.TestResults </span><span class="cov8" title="1">{
+                for _, assertion := range testFile.AssertionResults </span><span class="cov8" title="1">{
+                        if assertion.Status == "failed" </span><span class="cov8" title="1">{
+                                failure := runner.Failure{
+                                        File: testFile.Name,
+                                        Type: "test",
+                                }
+
+                                // Extract line number if available
+                                if assertion.Location != nil </span><span class="cov8" title="1">{
+                                        failure.Line = assertion.Location.Line
+                                }</span>
+
+                                // Extract failure message
+                                <span class="cov8" title="1">if len(assertion.FailureMessages) &gt; 0 </span><span class="cov8" title="1">{
+                                        failure.Message = extractFailureMessage(assertion.FailureMessages[0])
+                                }</span> else<span class="cov0" title="0"> {
+                                        failure.Message = fmt.Sprintf("Test failed: %s", assertion.FullName)
+                                }</span>
+
+                                <span class="cov8" title="1">result.Failures = append(result.Failures, failure)</span>
+                        }
+                }
+        }
+
+        // Parse coverage if available
+        <span class="cov8" title="1">if len(jestResult.CoverageMap) &gt; 0 </span><span class="cov0" title="0">{
+                result.Coverage = parseCoverageFromMap(jestResult.CoverageMap)
+        }</span>
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+// ParseJestCoverage parses Jest coverage-summary.json file.
+func ParseJestCoverage(coveragePath string) (*runner.Coverage, error) <span class="cov8" title="1">{
+        data, err := os.ReadFile(coveragePath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to read coverage file: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">var summary JestCoverageSummary
+        if err := json.Unmarshal(data, &amp;summary); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to parse coverage JSON: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">coverage := &amp;runner.Coverage{
+                Details: make(map[string]runner.FileCoverage),
+        }
+
+        // Extract total coverage
+        if summary.Total.Statements.Total &gt; 0 </span><span class="cov8" title="1">{
+                coverage.Percentage = summary.Total.Statements.Pct
+                coverage.Covered = summary.Total.Statements.Covered
+                coverage.Total = summary.Total.Statements.Total
+        }</span>
+
+        // Extract file-level coverage (exclude 'total' key)
+        <span class="cov8" title="1">for filePath, metrics := range summary.Files </span><span class="cov8" title="1">{
+                if filePath != "total" </span><span class="cov8" title="1">{
+                        coverage.Details[filePath] = runner.FileCoverage{
+                                Percentage: metrics.Statements.Pct,
+                                Covered:    metrics.Statements.Covered,
+                                Total:      metrics.Statements.Total,
+                        }
+                }</span>
+        }
+
+        <span class="cov8" title="1">return coverage, nil</span>
+}
+
+// ParseJestTextOutput parses Jest text output for failures when JSON is not available.
+func ParseJestTextOutput(output string) *runner.Result <span class="cov8" title="1">{
+        result := &amp;runner.Result{
+                Status:      runner.StatusSuccess,
+                PassedCount: 0,
+                FailedCount: 0,
+                Failures:    []runner.Failure{},
+        }
+
+        lines := strings.Split(output, "\n")
+        
+        // Patterns for parsing test results
+        testCountPattern := regexp.MustCompile(`Tests:\s+(\d+)\s+failed,\s+(\d+)\s+passed,\s+(\d+)\s+total`)
+        testCountPatternAlt := regexp.MustCompile(`Tests:\s+(\d+)\s+passed,\s+(\d+)\s+total`)
+        failurePattern := regexp.MustCompile(`^\s*✕\s+(.+?)(?:\s+\((\d+)\s*ms\))?$`)
+        passPattern := regexp.MustCompile(`^\s*✓\s+(.+?)(?:\s+\((\d+)\s*ms\))?$`)
+        filePattern := regexp.MustCompile(`^\s*●\s+(.+)$`)
+        
+        var currentFile string
+        var inFailureBlock bool
+        var failureLines []string
+        var passedFromSummary bool
+
+        for i, line := range lines </span><span class="cov8" title="1">{
+                // Extract test counts
+                if matches := testCountPattern.FindStringSubmatch(line); len(matches) == 4 </span><span class="cov8" title="1">{
+                        if failed, err := strconv.Atoi(matches[1]); err == nil </span><span class="cov8" title="1">{
+                                result.FailedCount = failed
+                        }</span>
+                        <span class="cov8" title="1">if passed, err := strconv.Atoi(matches[2]); err == nil </span><span class="cov8" title="1">{
+                                result.PassedCount = passed
+                        }</span>
+                        <span class="cov8" title="1">passedFromSummary = true</span>
+                } else<span class="cov8" title="1"> if matches := testCountPatternAlt.FindStringSubmatch(line); len(matches) == 3 </span><span class="cov8" title="1">{
+                        if passed, err := strconv.Atoi(matches[1]); err == nil </span><span class="cov8" title="1">{
+                                result.PassedCount = passed
+                                result.FailedCount = 0
+                        }</span>
+                        <span class="cov8" title="1">passedFromSummary = true</span>
+                }
+                
+                // Count passed tests from individual test lines only if we don't have summary
+                <span class="cov8" title="1">if !passedFromSummary &amp;&amp; passPattern.MatchString(line) </span><span class="cov8" title="1">{
+                        result.PassedCount++
+                }</span>
+
+                // Detect failure blocks
+                <span class="cov8" title="1">if matches := filePattern.FindStringSubmatch(line); len(matches) &gt; 1 </span><span class="cov0" title="0">{
+                        currentFile = strings.TrimSpace(matches[1])
+                        inFailureBlock = true
+                        failureLines = []string{}
+                        continue</span>
+                }
+
+                // Detect individual test failures
+                <span class="cov8" title="1">if matches := failurePattern.FindStringSubmatch(line); len(matches) &gt; 1 </span><span class="cov8" title="1">{
+                        failure := runner.Failure{
+                                File:    currentFile,
+                                Type:    "test",
+                                Message: extractTestName(matches[1]),
+                        }
+
+                        // Look ahead for error message
+                        if i+1 &lt; len(lines) </span><span class="cov8" title="1">{
+                                nextLine := strings.TrimSpace(lines[i+1])
+                                if nextLine != "" &amp;&amp; !strings.HasPrefix(nextLine, "✕") &amp;&amp; !strings.HasPrefix(nextLine, "●") </span><span class="cov0" title="0">{
+                                        failure.Message += ": " + truncateMessage(nextLine)
+                                }</span>
+                        }
+
+                        <span class="cov8" title="1">result.Failures = append(result.Failures, failure)
+                        inFailureBlock = false</span>
+                }
+
+                // Collect failure block lines
+                <span class="cov8" title="1">if inFailureBlock &amp;&amp; line != "" </span><span class="cov0" title="0">{
+                        failureLines = append(failureLines, line)
+                }</span>
+        }
+
+        // Determine overall status
+        <span class="cov8" title="1">if result.FailedCount &gt; 0 || len(result.Failures) &gt; 0 </span><span class="cov8" title="1">{
+                result.Status = runner.StatusFailure
+        }</span>
+
+        // Try to extract coverage percentage if present
+        <span class="cov8" title="1">coveragePattern := regexp.MustCompile(`All files\s+\|\s+([\d.]+)`)
+        for _, line := range lines </span><span class="cov8" title="1">{
+                if matches := coveragePattern.FindStringSubmatch(line); len(matches) &gt; 1 </span><span class="cov8" title="1">{
+                        if percentage, err := strconv.ParseFloat(matches[1], 64); err == nil </span><span class="cov8" title="1">{
+                                result.Coverage = &amp;runner.Coverage{
+                                        Percentage: percentage,
+                                }
+                        }</span>
+                        <span class="cov8" title="1">break</span>
+                }
+        }
+
+        <span class="cov8" title="1">return result</span>
+}
+
+// Helper functions
+
+func extractFailureMessage(message string) string <span class="cov8" title="1">{
+        // Remove ANSI color codes
+        ansiPattern := regexp.MustCompile(`\x1b\[[0-9;]*m`)
+        cleaned := ansiPattern.ReplaceAllString(message, "")
+        
+        // Extract the first meaningful line
+        lines := strings.Split(cleaned, "\n")
+        for _, line := range lines </span><span class="cov8" title="1">{
+                line = strings.TrimSpace(line)
+                if line != "" &amp;&amp; !strings.HasPrefix(line, "at ") </span><span class="cov8" title="1">{
+                        return truncateMessage(line)
+                }</span>
+        }
+        
+        <span class="cov0" title="0">return truncateMessage(cleaned)</span>
+}
+
+func extractTestName(testName string) string <span class="cov8" title="1">{
+        // Remove any timing information in parentheses
+        timingPattern := regexp.MustCompile(`\s*\(\d+\s*ms\)$`)
+        return strings.TrimSpace(timingPattern.ReplaceAllString(testName, ""))
+}</span>
+
+func truncateMessage(message string) string <span class="cov8" title="1">{
+        const maxLength = 200
+        if len(message) &lt;= maxLength </span><span class="cov8" title="1">{
+                return message
+        }</span>
+        <span class="cov8" title="1">return message[:maxLength] + "..."</span>
+}
+
+func parseCoverageFromMap(coverageMap map[string]JestFileCoverage) *runner.Coverage <span class="cov0" title="0">{
+        coverage := &amp;runner.Coverage{
+                Details: make(map[string]runner.FileCoverage),
+        }
+
+        var totalStatements, coveredStatements int
+
+        for filePath, fileCoverage := range coverageMap </span><span class="cov0" title="0">{
+                // Calculate coverage for this file
+                total := len(fileCoverage.S)
+                covered := 0
+                for _, count := range fileCoverage.S </span><span class="cov0" title="0">{
+                        if count &gt; 0 </span><span class="cov0" title="0">{
+                                covered++
+                        }</span>
+                }
+
+                <span class="cov0" title="0">var percentage float64
+                if total &gt; 0 </span><span class="cov0" title="0">{
+                        percentage = float64(covered) / float64(total) * 100
+                }</span>
+
+                <span class="cov0" title="0">coverage.Details[filePath] = runner.FileCoverage{
+                        Percentage: percentage,
+                        Covered:    covered,
+                        Total:      total,
+                }
+
+                totalStatements += total
+                coveredStatements += covered</span>
+        }
+
+        // Calculate overall coverage
+        <span class="cov0" title="0">if totalStatements &gt; 0 </span><span class="cov0" title="0">{
+                coverage.Percentage = float64(coveredStatements) / float64(totalStatements) * 100
+                coverage.Covered = coveredStatements
+                coverage.Total = totalStatements
+        }</span>
+
+        <span class="cov0" title="0">return coverage</span>
+}</pre>
+		
+		<pre class="file" id="file4" style="display: none">package nodeadapter
+
+import (
+        "context"
+        "io"
+
+        "github.com/bradcarter-meal-planner/tools/validate/internal/execx"
+)
+
+// TestFakeCommandRunner is a test helper that implements execx.CommandRunner for testing.
+type TestFakeCommandRunner struct {
+        Commands  []*TestFakeCommand
+        responses []TestResponse
+        index     int
+}
+
+// TestResponse represents a configured response for a command.
+type TestResponse struct {
+        Stdout string
+        Stderr string
+        Error  error
+}
+
+// NewTestFakeCommandRunner creates a new test fake command runner.
+func NewTestFakeCommandRunner() *TestFakeCommandRunner <span class="cov8" title="1">{
+        return &amp;TestFakeCommandRunner{
+                Commands:  []*TestFakeCommand{},
+                responses: []TestResponse{},
+        }
+}</span>
+
+// SetNextResponse configures the next command response.
+func (f *TestFakeCommandRunner) SetNextResponse(stdout, stderr string, err error) <span class="cov8" title="1">{
+        f.responses = append(f.responses, TestResponse{
+                Stdout: stdout,
+                Stderr: stderr,
+                Error:  err,
+        })
+}</span>
+
+// CommandContext creates a new fake command.
+func (f *TestFakeCommandRunner) CommandContext(ctx context.Context, name string, args ...string) execx.Command <span class="cov8" title="1">{
+        cmd := &amp;TestFakeCommand{
+                Name:    name,
+                Args:    args,
+                Context: ctx,
+                runner:  f,
+        }
+        f.Commands = append(f.Commands, cmd)
+        return cmd
+}</span>
+
+// TestFakeCommand is a test implementation of execx.Command.
+type TestFakeCommand struct {
+        Name    string
+        Args    []string
+        Context context.Context
+        Dir     string
+        Stdout  io.Writer
+        Stderr  io.Writer
+        Stdin   io.Reader
+        Env     []string
+        runner  *TestFakeCommandRunner
+}
+
+func (c *TestFakeCommand) SetDir(dir string) <span class="cov8" title="1">{
+        c.Dir = dir
+}</span>
+
+func (c *TestFakeCommand) SetStdout(w io.Writer) <span class="cov8" title="1">{
+        c.Stdout = w
+}</span>
+
+func (c *TestFakeCommand) SetStderr(w io.Writer) <span class="cov8" title="1">{
+        c.Stderr = w
+}</span>
+
+func (c *TestFakeCommand) SetStdin(r io.Reader) <span class="cov0" title="0">{
+        c.Stdin = r
+}</span>
+
+func (c *TestFakeCommand) SetEnv(env []string) <span class="cov0" title="0">{
+        c.Env = env
+}</span>
+
+func (c *TestFakeCommand) Run() error <span class="cov8" title="1">{
+        if c.runner.index &gt;= len(c.runner.responses) </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+
+        <span class="cov8" title="1">response := c.runner.responses[c.runner.index]
+        c.runner.index++
+
+        if c.Stdout != nil &amp;&amp; response.Stdout != "" </span><span class="cov8" title="1">{
+                c.Stdout.Write([]byte(response.Stdout))
+        }</span>
+        <span class="cov8" title="1">if c.Stderr != nil &amp;&amp; response.Stderr != "" </span><span class="cov8" title="1">{
+                c.Stderr.Write([]byte(response.Stderr))
+        }</span>
+
+        <span class="cov8" title="1">return response.Error</span>
+}
+
+func (c *TestFakeCommand) Start() error <span class="cov0" title="0">{
+        return c.Run()
+}</span>
+
+func (c *TestFakeCommand) Wait() error <span class="cov0" title="0">{
+        return nil
+}</span>
+
+func (c *TestFakeCommand) String() string <span class="cov0" title="0">{
+        result := c.Name
+        for _, arg := range c.Args </span><span class="cov0" title="0">{
+                result += " " + arg
+        }</span>
+        <span class="cov0" title="0">return result</span>
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

@@ -21,6 +21,3 @@ pushd api-gateway
 popd
 
 yarn generate_code
-yarn workspace @meal-planner/shared build
-yarn build:agent
-yarn build:mcp

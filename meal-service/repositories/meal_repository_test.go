@@ -12,12 +12,12 @@ import (
 func TestMealRepository_UpdateMeal(t *testing.T) {
 	// This test would require a real database connection for integration testing
 	// For now, we'll test the business logic without the actual database
-	
+
 	tests := []struct {
-		name         string
-		meal         *models.Meal
-		expectedErr  bool
-		errMessage   string
+		name        string
+		meal        *models.Meal
+		expectedErr bool
+		errMessage  string
 	}{
 		{
 			name: "successful update with valid meal",
@@ -39,7 +39,7 @@ func TestMealRepository_UpdateMeal(t *testing.T) {
 				WithMealType("dinner").
 				Build(),
 			expectedErr: true,
-			errMessage: "meal name cannot be empty",
+			errMessage:  "meal name cannot be empty",
 		},
 		{
 			name: "update meal with invalid ID should fail",
@@ -49,7 +49,7 @@ func TestMealRepository_UpdateMeal(t *testing.T) {
 				WithMealType("dinner").
 				Build(),
 			expectedErr: true,
-			errMessage: "meal ID must be greater than 0",
+			errMessage:  "meal ID must be greater than 0",
 		},
 		{
 			name: "update meal with invalid meal type",
@@ -59,7 +59,7 @@ func TestMealRepository_UpdateMeal(t *testing.T) {
 				WithMealType("").
 				Build(),
 			expectedErr: true,
-			errMessage: "meal type cannot be empty",
+			errMessage:  "meal type cannot be empty",
 		},
 	}
 
@@ -67,7 +67,7 @@ func TestMealRepository_UpdateMeal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Validate business logic without database
 			err := validateMealForUpdate(tt.meal)
-			
+
 			if tt.expectedErr {
 				assert.Error(t, err)
 				if tt.errMessage != "" {
@@ -85,15 +85,15 @@ func validateMealForUpdate(meal *models.Meal) error {
 	if meal.GetId() <= 0 {
 		return &ValidationError{Field: "id", Message: "meal ID must be greater than 0"}
 	}
-	
+
 	if meal.GetName() == "" {
 		return &ValidationError{Field: "name", Message: "meal name cannot be empty"}
 	}
-	
+
 	if meal.GetMealType() == "" {
 		return &ValidationError{Field: "mealType", Message: "meal type cannot be empty"}
 	}
-	
+
 	return nil
 }
 
@@ -120,7 +120,7 @@ func TestMealRepository_UpdateMeal_Integration(t *testing.T) {
 		// 2. Test data insertion
 		// 3. Actual UpdateMeal call
 		// 4. Verification of database state
-		
+
 		// For now, just document the test structure
 		t.Skip("Integration test requires database setup")
 	})
@@ -128,9 +128,9 @@ func TestMealRepository_UpdateMeal_Integration(t *testing.T) {
 
 func TestMealRepository_UpdateMeal_SQLGeneration(t *testing.T) {
 	tests := []struct {
-		name         string
-		meal         *models.Meal
-		expectedSQL  string
+		name        string
+		meal        *models.Meal
+		expectedSQL string
 	}{
 		{
 			name: "generates correct SQL for basic update",
@@ -191,12 +191,12 @@ func TestMealRepository_UpdateMeal_Parameters(t *testing.T) {
 				WithMealType("breakfast").
 				Build(),
 			expectedParams: []interface{}{
-				"Test Meal",    // meal_name
-				int32(3),       // relative_effort  
-				true,           // red_meat
+				"Test Meal",        // meal_name
+				int32(3),           // relative_effort
+				true,               // red_meat
 				"https://test.com", // url
-				"breakfast",    // meal_type
-				int32(123),     // id (WHERE clause)
+				"breakfast",        // meal_type
+				int32(123),         // id (WHERE clause)
 			},
 		},
 		{
