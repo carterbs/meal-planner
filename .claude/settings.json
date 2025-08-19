@@ -16,5 +16,18 @@
       "LS",
       "tools/validate/validate"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | { read file_path; $CLAUDE_PROJECT_DIR/tools/validate/validate lint-file \"$file_path\"; }"
+          }
+        ]
+      }
+    ]
   }
 }
