@@ -1,38 +1,13 @@
-// UI types - plain TypeScript interfaces (no proto dependencies)
-export interface Ingredient {
-  id?: number;
-  mealId?: number;
-  quantity: number;
-  unit: string;
-  name: string;
-}
+/* istanbul ignore file -- pure type re-exports, no runtime logic to cover */
+// Import protobuf types from generated package
+export type {
+  Ingredient,
+  Step,
+  Meal,
+  ShoppingListItem,
+} from '@mealplanner/generated';
 
-export interface Step {
-  id?: number;
-  mealId?: number;
-  stepNumber?: number;
-  instruction: string;
-}
-
-export interface ShoppingListItem {
-  ingredient: string;
-  quantity: string;
-  category: string;
-}
-
-export interface Meal {
-  id?: number;
-  name: string;
-  effort: number;
-  lastPlanned?: string;
-  hasRedMeat: boolean;
-  url: string;
-  mealType: string;
-  ingredients: Ingredient[];
-  steps: Step[];
-}
-
-// Re-export remaining types from proto-generated package
+// Re-export all other types from proto-generated package
 export type {
   WeeklyMealPlan,
   AgentStartRequest,
@@ -42,12 +17,10 @@ export type {
   AgentResponse,
   WorkflowStatus,
   HealthCheckResponse,
-  ReconnectResponse,
   GetMealPlanResponse,
   GenerateMealPlanResponse,
   FinalizeMealPlanRequest,
   FinalizeMealPlanResponse,
-  MealPlanICSResponse,
   GetShoppingListRequest,
   GetShoppingListResponse,
   GetAllMealsRequest,
@@ -93,6 +66,4 @@ export type {
   AbandonWorkflowResponse,
   AddMessageRequest,
   AddMessageResponse,
-  UpdateSessionStateRequest,
-  UpdateSessionStateResponse,
 } from '@mealplanner/generated';

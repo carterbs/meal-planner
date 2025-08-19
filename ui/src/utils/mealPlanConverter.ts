@@ -6,24 +6,31 @@ import {
   WeeklyMealPlan,
 } from '@mealplanner/generated';
 import type {
-  MainMealPlanEntryResponse,
-  MainMealResponse,
-  MainIngredientResponse,
-  MainStepResponse,
+  GoMealPlanEntry,
+  GoMeal,
+  GoIngredient,
+  GoStep,
 } from '@mealplanner/generated/dist/gateway/types.gen';
 import { Timestamp } from '@bufbuild/protobuf';
 
 /**
- * Convert a list of MainMealPlanEntryResponse objects (from the REST gateway)
+ * Convert a list of GoMealPlanEntry objects (from the REST gateway)
  * into a protobuf WeeklyMealPlan instance that the UI / gRPC layer expects.
  */
 export function convertGatewayMealPlan(
-  mealPlan: { days?: MainMealPlanEntryResponse[] } | undefined,
+  mealPlan: { days?: GoMealPlanEntry[] } | undefined,
 ): WeeklyMealPlan {
-  const entries: MainMealPlanEntryResponse[] = mealPlan?.days ?? [];
+  const entries: GoMealPlanEntry[] = mealPlan?.days ?? [];
 
   const convertedEntries: MealPlanEntry[] = entries.map((e) => {
-    const meal = e.meal ? convertMeal(e.meal) : undefined;
+    let meal: Meal | undefined;
+    if (e.meal) {
+      // Handle case where meal might be a string (from API response)
+      const raw = e.meal as unknown;
+      const mealData: GoMeal =
+        typeof raw === 'string' ? (JSON.parse(raw) as GoMeal) : (raw as GoMeal);
+      meal = convertMeal(mealData);
+    }
     return new MealPlanEntry({
       dayIndex: e.dayIndex ?? 0,
       mealType: e.mealType ?? '',
@@ -36,7 +43,7 @@ export function convertGatewayMealPlan(
   });
 }
 
-function convertMeal(meal: MainMealResponse): Meal {
+function convertMeal(meal: GoMeal): Meal {
   return new Meal({
     id: meal.id ?? 0,
     name: meal.name ?? '',
@@ -45,14 +52,21 @@ function convertMeal(meal: MainMealResponse): Meal {
     url: meal.url ?? '',
     mealType: meal.mealType ?? '',
     lastPlanned: meal.lastPlanned
-      ? Timestamp.fromDate(new Date(meal.lastPlanned))
+      ? typeof meal.lastPlanned === 'string'
+        ? Timestamp.fromDate(new Date(meal.lastPlanned))
+        : Timestamp.fromDate(
+            new Date(
+              ((meal.lastPlanned as unknown as { seconds?: number }).seconds ?? 0) *
+                1000,
+            ),
+          )
       : undefined,
     ingredients: (meal.ingredients ?? []).map(convertIngredient),
     steps: (meal.steps ?? []).map(convertStep),
   });
 }
 
-function convertIngredient(i: MainIngredientResponse): Ingredient {
+function convertIngredient(i: GoIngredient): Ingredient {
   return new Ingredient({
     id: i.id ?? 0,
     mealId: i.mealId ?? 0,
@@ -62,11 +76,11 @@ function convertIngredient(i: MainIngredientResponse): Ingredient {
   });
 }
 
-function convertStep(s: MainStepResponse): Step {
+function convertStep(s: GoStep): Step {
   return new Step({
     id: s.id ?? 0,
     mealId: s.mealId ?? 0,
     stepNumber: s.stepNumber ?? 0,
     instruction: s.instruction ?? '',
   });
-} 
+}

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 )
 
@@ -28,28 +29,23 @@ func (r *MealPlanRepositoryImpl) GetMealPlanItems(ctx context.Context, mealPlanI
 	return models.GetMealPlanItems(r.db, mealPlanID)
 }
 
-// SaveMealPlan saves a meal plan to the database
-func (r *MealPlanRepositoryImpl) SaveMealPlan(ctx context.Context, threadID string, version int, entries []models.MealPlanEntry) (*models.MealPlanIdentifier, error) {
-	return models.SaveMealPlan(r.db, threadID, version, entries)
-}
-
 // RemoveMealFromPlan removes a meal from a specific plan slot
-func (r *MealPlanRepositoryImpl) RemoveMealFromPlan(ctx context.Context, plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
+func (r *MealPlanRepositoryImpl) RemoveMealFromPlan(ctx context.Context, plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error {
 	return models.RemoveMealFromPlan(plan, dayIndex, mealType)
 }
 
 // GenerateWeeklyMealPlan delegates to models layer
-func (r *MealPlanRepositoryImpl) GenerateWeeklyMealPlan(ctx context.Context) (*models.WeeklyMealPlan, error) {
+func (r *MealPlanRepositoryImpl) GenerateWeeklyMealPlan(ctx context.Context) (*apipb.WeeklyMealPlan, error) {
 	return models.GenerateWeeklyMealPlan(r.db)
 }
 
 // GetLastPlannedMeals delegates to models layer
-func (r *MealPlanRepositoryImpl) GetLastPlannedMeals(ctx context.Context) (*models.WeeklyMealPlan, error) {
+func (r *MealPlanRepositoryImpl) GetLastPlannedMeals(ctx context.Context) (*apipb.WeeklyMealPlan, error) {
 	return models.GetLastPlannedMeals(r.db)
 }
 
 // PopulateMealDetails populates meal objects inside the plan with full details
-func (r *MealPlanRepositoryImpl) PopulateMealDetails(ctx context.Context, plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
+func (r *MealPlanRepositoryImpl) PopulateMealDetails(ctx context.Context, plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error) {
 	if plan == nil {
 		return nil, fmt.Errorf("plan is nil")
 	}

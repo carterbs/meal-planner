@@ -10,6 +10,7 @@ import (
 	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
 
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -19,7 +20,9 @@ type PlanDay = apipb.MealPlanEntry
 // WeeklyMealPlan is an alias to the generated protobuf type
 type WeeklyMealPlan = apipb.WeeklyMealPlan
 
-var mealPlanServiceLogger = logging.GetGrpcLogger("meal-plan-service")
+func getMealPlanServiceLogger() *zap.SugaredLogger {
+	return logging.GetGrpcLogger("meal-plan-service")
+}
 
 // GenerateWeeklyMealPlan generates a weekly plan with breakfast, lunch, and dinner.
 func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
@@ -56,9 +59,9 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 			}
 			//log the day that we're adding to the plan
 			if meal != nil {
-				mealPlanServiceLogger.Debugw("Adding meal to plan with dayIndex", "dayIndex", int32(i), "mealName", meal.Name)
+				getMealPlanServiceLogger().Debugw("Adding meal to plan with dayIndex", "dayIndex", int32(i), "mealName", meal.Name)
 			} else {
-				mealPlanServiceLogger.Debugw("Adding nil meal to plan with dayIndex", "dayIndex", int32(i))
+				getMealPlanServiceLogger().Debugw("Adding nil meal to plan with dayIndex", "dayIndex", int32(i))
 			}
 
 			plan.Days = append(plan.Days, &apipb.MealPlanEntry{Meal: meal, DayIndex: int32(i), MealType: mealType})
@@ -74,13 +77,13 @@ func GenerateWeeklyMealPlan(db *sql.DB) (*WeeklyMealPlan, error) {
 	}
 
 	// log dayIndex for the 8th meal
-	mealPlanServiceLogger.Debugw("In the model, 8th meal", "dayIndex", plan.Days[7].DayIndex)
+	getMealPlanServiceLogger().Debugw("In the model, 8th meal", "dayIndex", plan.Days[7].DayIndex)
 
 	if logging.IsVerbose() {
 		// DEBUGGING: Log all dayIndex values after generation
-		mealPlanServiceLogger.Infow("🔍 [BACKEND] GenerateWeeklyMealPlan complete - dayIndex values:")
+		getMealPlanServiceLogger().Infow("🔍 [BACKEND] GenerateWeeklyMealPlan complete - dayIndex values:")
 		for i, day := range plan.Days {
-			mealPlanServiceLogger.Infow("🔍 [BACKEND] Meal entry", "index", i, "dayIndex", day.DayIndex, "mealType", day.MealType, "mealName", func() string {
+			getMealPlanServiceLogger().Infow("🔍 [BACKEND] Meal entry", "index", i, "dayIndex", day.DayIndex, "mealType", day.MealType, "mealName", func() string {
 				if day.Meal != nil {
 					return day.Meal.Name
 				}

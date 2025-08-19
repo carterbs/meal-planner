@@ -1,96 +1,103 @@
 # Meal Planner Monorepo
 
-This repository contains a personal meal planning application composed of several services written in Go and TypeScript.  All projects are managed in a single Yarn workspace.
+A microservices-based meal planning application with AI-powered meal plan generation. Built with Go backend services, TypeScript frontend/agents, and containerized development environment.
 
-## Repository Structure
-
-- **meal-service/** – Go REST API and business logic. Contains handlers, models, migrations and dummy data for offline use.
-- **typescript/**
-  - **ui/** – React application for the user interface.
-  - **agent/** – LangGraph agent CLI for meal planning workflows.
-  - **mcp/** – Express based MCP server used by the agent.
-  - **shared/** – Reusable TypeScript types and utilities shared across packages.
-- **scripts/** – Node and shell helpers for starting servers, running tests and database management.
-- **db-backups/** – Example PostgreSQL backup files.
-- **docker-compose.yml** – Local development services (PostgreSQL & pgAdmin).
-- **codex-setup.sh** – Install and setup script used by Codex environments.
-
-## Architecture Overview
-
-The system is split into a Go backend and several TypeScript packages.  The backend exposes REST endpoints on port `8090` and persists data in PostgreSQL.  The React UI communicates directly with the backend during development.  The LangGraph agent is a command line tool that orchestrates meal plan generation and communicates with the backend or MCP server.  The MCP server exposes a Model Context Protocol API that proxies backend calls for the agent.  Shared TypeScript code lives in `shared` and is published to the workspace so all packages share a single set of types. The React UI is located in the `ui` directory.
+## Services Architecture
 
 ```
-[React UI]  --->  [Go Backend]  --->  [PostgreSQL]
-        ^              ^
-        |              |
-    [Agent CLI] ----> [MCP Server]
+[React UI] ---> [API Gateway] ---> [Meal Service] ---> [PostgreSQL]
+                      |                 |
+                      v                 v
+            [Agent Service] <---> [Logging Service]
+                      |
+                      v
+              [MCP Service]
 ```
 
-## Development Setup
+### Core Services
+- **api-gateway/** – Go HTTP-to-gRPC proxy, main API entry point (port 8090)
+- **meal-service/** – Go gRPC service for meal/recipe data and business logic (port 50051)  
+- **agent-service/** – TypeScript LangGraph AI agent for meal planning workflows (port 50053)
+- **mcp-service/** – Model Context Protocol server for agent interactions (port 3001)
+- **logging-service/** – Centralized Go gRPC logging service (port 50052)
+- **ui/** – React frontend application
+- **shared/** – Shared TypeScript types across services
 
-1. **Install dependencies**
-   ```bash
-   yarn install
-   (cd typescript && yarn install)
-   (cd meal-service && go mod download)
-   ```
-
-2. **Install code generation tools**
-   ```bash
-   cd meal-service && make tools
-   ```
-
-3. **Generate code** (Protocol Buffers, OpenAPI, etc.)
-   ```bash
-   yarn generate_code
-   ```
-
-4. **Start Docker services** (PostgreSQL database)
-   ```bash
-   docker compose up -d
-   ```
-
-5. **Restore sample database**
-   ```bash
-   ./scripts/restore-db.js
-   ```
-
-6. **Build TypeScript packages** (required for tests and services)
-   ```bash
-   yarn workspace @meal-planner/shared build
-   yarn build:agent
-   yarn build:mcp
-   ```
-
-7. **Start the development servers**
-   - Full environment (starts Docker and all servers):
-     ```bash
-     yarn dev
-     ```
-
-
-## Testing
-
-Run the full test suite from the repository root:
+## Quick Start
 
 ```bash
-yarn workspace @meal-planner/shared build   # ensure shared types are compiled
-yarn test
+# Install dependencies
+yarn install
+
+# Generate code (protobuf, OpenAPI, TypeScript clients)
+make generate
+
+# Start all services (PostgreSQL + all microservices)
+docker-compose up -d
+
+# Restore sample database
+yarn db:restore
+
+# Access the application
+# UI: http://localhost:3000
+# API: http://localhost:8090
+# Swagger: http://localhost:8090/swagger/index.html
 ```
 
-`yarn test` aggregates results for backend Go tests, frontend React tests and agent tests. Individual suites can be executed via `yarn test:backend`, `yarn test:frontend`, or `yarn test:agent`.
 
-## Environment Configuration
+## Development Commands
 
-- Go 1.22+ and Node.js 22 are expected. Versions are set in `codex-setup.sh`.
-- Local development requires Docker for the PostgreSQL database. The backend can also run with the `--dummy` flag to use in-memory data.
-- Environment variables for database configuration can be set in a `.env` file at the repository root.
+```bash
+# Build all services
+make build
 
-## Contributing Workflow
+# Run all tests
+make test
+yarn test                    # Aggregate test results
 
-1. Install dependencies with `yarn` and run `yarn test` to verify a clean state.
-2. Make code or documentation changes.
-3. Format code with `yarn format` and ensure `yarn test` passes.
-4. Commit your changes following the guidelines in `CLAUDE.md` and `AGENTS.md`.
+# Individual service tests
+yarn test:backend           # Go services
+yarn test:frontend          # React UI
+yarn test:agent            # Agent service
+yarn test:mcp              # MCP service
 
-For additional design notes and high-level feature descriptions see `docs/MealPlannerSummary.md` if available.
+# Code generation
+make generate              # All code generation
+yarn generate_code         # TypeScript only
+
+# Database operations
+yarn db:backup             # Backup current database
+yarn db:restore            # Restore from backup
+
+# Formatting & linting
+yarn format               # Format TypeScript + Go
+make lint                 # Run all linters
+
+# Individual service commands
+yarn start:agent          # Run agent CLI
+yarn start:mcp           # Run MCP server
+yarn dev                 # Start UI in dev mode
+```
+
+## Tech Stack
+
+- **Backend**: Go 1.24, gRPC, PostgreSQL, Protocol Buffers
+- **Frontend**: React 18, TypeScript 5.8, Yarn 4.9
+- **AI/Agent**: LangGraph, OpenAI, Model Context Protocol
+- **Infrastructure**: Docker Compose, Air (hot reload)
+- **Code Gen**: protoc, Swagger/OpenAPI, Connect RPC
+
+## Requirements
+
+- Go 1.22+
+- Node.js 22+  
+- Docker & Docker Compose
+- Protocol Buffers compiler (`protoc`)
+
+## Key Files
+
+- `CLAUDE.md` – Project development guidelines
+- `Makefile` – Build automation and code generation
+- `docker-compose.yml` – Full development environment
+- `package.json` – Yarn workspace configuration
+- Each service has its own `CLAUDE.md` with specific dev notes

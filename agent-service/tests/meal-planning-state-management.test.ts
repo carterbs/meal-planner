@@ -40,7 +40,8 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         currentStep: MealPlanningStep.PRESENT_PLAN,
         mealPlan: TestMockFactory.createMockWeeklyMealPlan(),
       });
-      await workflow.saveCheckpoint(mockConfig, mockState);
+      const { saveCheckpoint } = await import('../workflows/meal-planning/persistence.js');
+      await saveCheckpoint(mockCheckpointer as any, mockConfig as any, mockState as any);
       expect(mockCheckpointer.put).toHaveBeenCalledWith(
         mockConfig,
         expect.any(AgentCheckpoint),
@@ -71,9 +72,8 @@ describe('MealPlanningWorkflow State Management Tests', () => {
       mockState.mealPlan!.toJson = jest.fn().mockImplementation(() => {
         throw new Error('Serialization error');
       });
-      await expect(
-        workflow.saveCheckpoint(mockConfig, mockState),
-      ).rejects.toThrow('Serialization error');
+      const { saveCheckpoint: save2 } = await import('../workflows/meal-planning/persistence.js');
+      await expect(save2(mockCheckpointer as any, mockConfig as any, mockState as any)).rejects.toThrow('Serialization error');
       // Restore the original method
       mockState.mealPlan!.toJson = originalToJson;
     });
@@ -88,7 +88,8 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         currentStep: MealPlanningStep.GENERATE_PLAN,
         iterationCount: 1,
       };
-      const result = workflow.updateState(currentState, updates);
+      const { cloneAndUpdateState } = require('../workflows/meal-planning/state');
+      const result = cloneAndUpdateState(currentState as any, updates as any);
       TestAssertionHelpers.assertStateStructure(result);
       expect(result.currentStep).toBe(MealPlanningStep.GENERATE_PLAN);
       expect(result.iterationCount).toBe(1);
@@ -101,7 +102,8 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         currentStep: MealPlanningStep.PRESENT_PLAN,
         mealPlan: TestMockFactory.createMockWeeklyMealPlan(),
       });
-      const result = workflow.updateState(currentState, {});
+      const { cloneAndUpdateState: clone2 } = require('../workflows/meal-planning/state');
+      const result = clone2(currentState as any, {} as any);
       expect(result.currentStep).toBe(currentState.currentStep);
       expect(result.mealPlan).toBe(currentState.mealPlan);
       expect(result.threadId).toBe(currentState.threadId);
@@ -121,16 +123,17 @@ describe('MealPlanningWorkflow State Management Tests', () => {
         step: 0,
       });
       mockCheckpointer.getTuple.mockResolvedValue([mockCheckpoint, {} as any]);
-      // Mock the backend client to return messages
-      const mockBackendClient = TestMockFactory.createMockBackendClient();
-      mockBackendClient.getMessages.mockResolvedValue({
-        messages: [
-          TestMockFactory.createMockMessage({
-            content: 'User is satisfied with the plan',
-            createdAt: new Date().toISOString(),
-          }),
-        ],
-      });
+      // Mock message repository to avoid DB access during resume and provide feedback
+      const mockMessageRepo = TestMockFactory.createMockMessageRepository();
+      mockMessageRepo.getMessagesForProtobuf.mockResolvedValue([
+        {
+          thread_id: mockState.threadId,
+          sender: 'user',
+          content: 'User is satisfied with the plan',
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      workflow.messageRepo = mockMessageRepo;
       // Mock the LLM to return satisfaction
       mockLLM.invoke.mockResolvedValue({
         content: '{"satisfied": true, "reasoning": "User is happy"}',

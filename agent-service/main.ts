@@ -17,7 +17,9 @@ import {
   ResumeWorkflowResponse,
 } from '@mealplanner/generated/agent_pb';
 import { planStart } from './handlers';
+export { planStart };
 import * as apipb from '@mealplanner/generated/api_pb';
+import type { JsonValue } from '@bufbuild/protobuf';
 // Initialize agent instance
 let agentInstance: LangGraphAgent | null = null;
 async function initializeAgent(): Promise<LangGraphAgent> {
@@ -54,10 +56,10 @@ function planFeedback(
       const agentInstance = await initializeAgent();
       // Check if workflow is awaiting feedback
       await debugLog(
-        `Checking if workflow ${threadId} is awaiting feedback...`,
+        `Checking if workflow ${String(threadId)} is awaiting feedback...`,
       );
       const isAwaiting = await agentInstance.isAwaitingFeedback(threadId);
-      await debugLog(`isAwaitingFeedback returned: ${isAwaiting}`);
+      await debugLog(`isAwaitingFeedback returned: ${String(isAwaiting)}`);
       if (!isAwaiting) {
         return callback(
           new Error('This workflow is not currently awaiting feedback.'),
@@ -73,7 +75,7 @@ function planFeedback(
       callback(null, response);
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      await debugLog(`Error adding feedback: ${errMsg}`);
+      await debugLog(`Error adding feedback: ${String(errMsg)}`);
       callback(new Error(`Error adding feedback: ${errMsg}`));
     }
   })();
@@ -97,10 +99,10 @@ function planFinalize(
       const result = await agentInstance.resumeWorkflow(threadId, {
         action: 'finalize',
       });
-      if (result.success) {
+      if (result.success === true) {
         await debugLog('✅ Meal plan finalized successfully!');
         // Get and display the final meal plan
-        let finalState: any; // Changed from MealPlanningState to any as MealPlanningState is removed
+        let finalState: { toBinary?: () => Uint8Array } | undefined;
         try {
           finalState = await agentInstance.getWorkflowState(threadId);
         } catch (stateError) {
@@ -110,7 +112,7 @@ function planFinalize(
         const response = new PlanFinalizeResponse({
           success: true,
           message: 'Meal plan finalized successfully',
-          finalState: finalState.toBinary(),
+          finalState: typeof finalState.toBinary === 'function' ? finalState.toBinary() : new Uint8Array(),
         });
         callback(null, response);
       } else {
@@ -118,7 +120,7 @@ function planFinalize(
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      await debugLog(`Error finalizing meal plan: ${errMsg}`);
+      await debugLog(`Error finalizing meal plan: ${String(errMsg)}`);
       callback(new Error(`Error finalizing meal plan: ${errMsg}`));
     }
   })();
@@ -132,24 +134,24 @@ function resumeWorkflow(
     try {
       const request = call.request;
       const threadId = request.threadId || '';
-      const inputMap = request.input || {};
+      const inputMap = request.input;
       if (!validateThreadId(threadId)) {
         return callback(
           new Error('Invalid thread ID format. Expected UUID format.'),
         );
       }
       const agentInstance = await initializeAgent();
-      await debugLog(`🔄 Resuming workflow ${threadId}...`);
+      await debugLog(`🔄 Resuming workflow ${String(threadId)}...`);
       // Convert map<string, string> to Record<string, string>
       const inputObj: Record<string, string> = {};
       for (const [key, value] of Object.entries(inputMap)) {
         inputObj[key] = value;
       }
       const result = await agentInstance.resumeWorkflow(threadId, inputObj);
-      if (result.success) {
+      if (result.success === true) {
         await debugLog('✅ Workflow resumed successfully!');
         // Get current state
-        let currentState: any; // Changed from MealPlanningState to any
+        let currentState: { toBinary?: () => Uint8Array } | undefined;
         try {
           currentState = await agentInstance.getWorkflowState(threadId);
         } catch (stateError) {
@@ -160,7 +162,7 @@ function resumeWorkflow(
           success: true,
           message: result.message || 'Workflow resumed successfully',
           currentStep: result.currentStep || '',
-          state: currentState.toBinary(),
+          state: typeof currentState.toBinary === 'function' ? currentState.toBinary() : new Uint8Array(),
         });
         callback(null, response);
       } else {
@@ -168,7 +170,7 @@ function resumeWorkflow(
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      await debugLog(`Error resuming workflow: ${errMsg}`);
+      await debugLog(`Error resuming workflow: ${String(errMsg)}`);
       callback(new Error(`Error resuming workflow: ${errMsg}`));
     }
   })();
@@ -187,7 +189,7 @@ function startAgentWorkflow(
       if (!request) {
         return callback(new Error('request is required'));
       }
-      if (!request.participants || request.participants.length === 0) {
+      if (request.participants.length === 0) {
         return callback(new Error('participants required'));
       }
       const agent = await initializeAgent();
@@ -196,11 +198,11 @@ function startAgentWorkflow(
         request.participants,
       );
       const state = await agent.getWorkflowState(threadId);
-      
-      const stateString = typeof (state as any).toJsonString === 'function' 
-        ? (state as any).toJsonString({ emitDefaultValues: true }) 
+
+      const stateString = typeof state.toJsonString === 'function'
+        ? state.toJsonString({ emitDefaultValues: true })
         : JSON.stringify(state);
-      
+
       const resp = new apipb.AgentResponse({
         success: true,
         message: 'Workflow started',
@@ -278,7 +280,7 @@ function getWorkflowStatus(
   })();
 }
 function listWorkflows(
-  _call: grpc.ServerUnaryCall<any, apipb.ListWorkflowsResponse>,
+  _call: grpc.ServerUnaryCall<unknown, apipb.ListWorkflowsResponse>,
   callback: grpc.sendUnaryData<apipb.ListWorkflowsResponse>,
 ): void {
   (async () => {
@@ -454,40 +456,6 @@ function addMessage(
     }
   })();
 }
-function updateSessionState(
-  call: grpc.ServerUnaryCall<
-    apipb.UpdateSessionStateRequest,
-    apipb.UpdateSessionStateResponse
-  >,
-  callback: grpc.sendUnaryData<apipb.UpdateSessionStateResponse>,
-): void {
-  (async () => {
-    try {
-      const { threadId, mealPlan, shoppingList, currentStep, status } =
-        call.request;
-      if (!threadId) return callback(new Error('threadId required'));
-      // Create state update and store as checkpoint
-      const stateUpdate = {
-        meal_plan: mealPlan,
-        shopping_list: shoppingList,
-        current_step: currentStep,
-        status: status,
-      };
-      const checkpointRepo = new CheckpointRepository();
-      const data = Buffer.from(JSON.stringify(stateUpdate), 'utf8');
-      await checkpointRepo.updateWorkflowCheckpoint(threadId, data);
-      callback(
-        null,
-        new apipb.UpdateSessionStateResponse({
-          message: 'Session state updated successfully',
-        }),
-      );
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      callback(new Error(`Error updating session state: ${errMsg}`));
-    }
-  })();
-}
 // Checkpoint Management Methods
 function getCheckpoint(
   call: grpc.ServerUnaryCall<
@@ -509,19 +477,19 @@ function getCheckpoint(
       }
       // Parse checkpoint data and convert to protobuf
       try {
-        const checkpointData = JSON.parse(result.checkpoint.toString());
-        const checkpoint = apipb.AgentCheckpoint.fromJson(checkpointData);
-        const metadataData = result.metadata
+        const checkpointJson = JSON.parse(result.checkpoint.toString()) as unknown as JsonValue;
+        const checkpoint = apipb.AgentCheckpoint.fromJson(checkpointJson);
+        const metadataJson = (result.metadata
           ? JSON.parse(result.metadata.toString())
-          : {};
-        const metadata = apipb.AgentCheckpointMetadata.fromJson(metadataData);
+          : {}) as unknown as JsonValue;
+        const metadata = apipb.AgentCheckpointMetadata.fromJson(metadataJson);
         const tuple = new apipb.CheckpointTuple({
           checkpoint: checkpoint,
           metadata: metadata,
         });
         callback(null, new apipb.GetCheckpointResponse({ tuple, found: true }));
       } catch (parseError) {
-        callback(new Error(`Error parsing checkpoint data: ${parseError}`));
+        callback(new Error(`Error parsing checkpoint data: ${String(parseError)}`));
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
@@ -586,16 +554,14 @@ function listCheckpoints(
         let checkpoint: apipb.AgentCheckpoint;
         let metadata: apipb.AgentCheckpointMetadata;
         try {
-          const checkpointData = JSON.parse(entry.checkpoint_data.toString());
-          checkpoint = apipb.AgentCheckpoint.fromJson(checkpointData);
+          const checkpointJson = JSON.parse(entry.checkpoint_data.toString()) as unknown as JsonValue;
+          checkpoint = apipb.AgentCheckpoint.fromJson(checkpointJson);
         } catch {
           checkpoint = new apipb.AgentCheckpoint({});
         }
         try {
-          const metadataData = entry.metadata
-            ? JSON.parse(entry.metadata.toString())
-            : {};
-          metadata = apipb.AgentCheckpointMetadata.fromJson(metadataData);
+          const metadataJson = (entry.metadata as unknown as JsonValue) || ({} as unknown as JsonValue);
+          metadata = apipb.AgentCheckpointMetadata.fromJson(metadataJson);
         } catch {
           metadata = new apipb.AgentCheckpointMetadata({});
         }
@@ -618,8 +584,8 @@ function listCheckpoints(
 
 // Health Check implementation
 function healthCheck(
-  _call: grpc.ServerUnaryCall<any, any>,
-  callback: grpc.sendUnaryData<any>,
+  _call: grpc.ServerUnaryCall<unknown, unknown>,
+  callback: grpc.sendUnaryData<unknown>,
 ): void {
   (async () => {
     try {
@@ -636,7 +602,7 @@ function healthCheck(
           dbHealthy = true;
         }
       } catch (error) {
-        healthIssues.push(`Database connection failed: ${error}`);
+        healthIssues.push(`Database connection failed: ${String(error)}`);
       }
 
       // Check logging service health (single attempt)
@@ -644,7 +610,7 @@ function healthCheck(
         await debugLog('Health check test message');
         loggingHealthy = true;
       } catch (error) {
-        healthIssues.push(`Logging service connection failed: ${error}`);
+        healthIssues.push(`Logging service connection failed: ${String(error)}`);
       }
 
       // Check MCP service health (single attempt with timeout)
@@ -661,7 +627,7 @@ function healthCheck(
           healthIssues.push(`MCP service returned status: ${response.status}`);
         }
       } catch (error) {
-        healthIssues.push(`MCP service connection failed: ${error}`);
+        healthIssues.push(`MCP service connection failed: ${String(error)}`);
       }
 
       if (dbHealthy && loggingHealthy && mcpHealthy) {
@@ -671,8 +637,8 @@ function healthCheck(
           services: {
             database: true,
             logging: true,
-            mcp: true
-          }
+            mcp: true,
+          },
         });
       } else {
         callback(null, {
@@ -681,8 +647,8 @@ function healthCheck(
           services: {
             database: dbHealthy,
             logging: loggingHealthy,
-            mcp: mcpHealthy
-          }
+            mcp: mcpHealthy,
+          },
         });
       }
     } catch (error) {
@@ -738,7 +704,6 @@ function startServer(): void {
     abandonWorkflow,
     getMessages,
     addMessage,
-    updateSessionState,
     getCheckpoint,
     putCheckpoint,
     listCheckpoints,
@@ -749,17 +714,17 @@ function startServer(): void {
     grpc.ServerCredentials.createInsecure(),
     async (err, port) => {
       if (err) {
-        await debugLog(`Failed to start server: ${err.message}`);
+        await debugLog(`Failed to start server: ${String(err.message)}`);
         return;
       }
-      await debugLog(`🚀 Agent service started on port ${port}`);
+      await debugLog(`🚀 Agent service started on port ${String(port)}`);
     },
   );
   process.on('SIGINT', async () => {
     await debugLog('Shutting down agent service...');
     server.tryShutdown(async (err) => {
       if (err) {
-        await debugLog(`Error during shutdown: ${err.message}`);
+        await debugLog(`Error during shutdown: ${String(err.message)}`);
         server.forceShutdown();
       }
       process.exit(0);

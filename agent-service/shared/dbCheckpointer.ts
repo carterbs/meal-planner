@@ -10,6 +10,7 @@ import {
   AgentCheckpoint,
   AgentCheckpointMetadata,
 } from '@mealplanner/generated/api_pb';
+import type { JsonValue } from '@bufbuild/protobuf';
 import { infoLog } from '../logging';
 import { CheckpointRepository } from '../database/checkpoints';
 export class DbCheckpointSaver {
@@ -32,10 +33,10 @@ export class DbCheckpointSaver {
       );
       if (!result.found || !result.checkpoint) return undefined;
       // Deserialize the checkpoint and metadata from Buffer to protobuf objects
-      const checkpointData = JSON.parse(result.checkpoint.toString());
-      const metadataData = result.metadata
+      const checkpointData = JSON.parse(result.checkpoint.toString()) as unknown as JsonValue;
+      const metadataData = (result.metadata
         ? JSON.parse(result.metadata.toString())
-        : {};
+        : {}) as unknown as JsonValue;
       // Use the generated fromJson helper so that google.protobuf.Timestamp and other
       // well-known types are deserialized properly (e.g. createdAt / updatedAt).
       const checkpoint = AgentCheckpoint.fromJson(checkpointData);
@@ -45,7 +46,7 @@ export class DbCheckpointSaver {
       );
       return [checkpoint, metadata];
     } catch (e) {
-      await infoLog(`[CHECKPOINT] getTuple failed: ${e}`);
+      await infoLog(`[CHECKPOINT] getTuple failed: ${String(e)}`);
       return undefined;
     }
   }
@@ -60,27 +61,26 @@ export class DbCheckpointSaver {
       await infoLog(
         `debugyyz: [CHECKPOINT] Saving checkpoint for thread ${threadId}: ${JSON.stringify(checkpoint)}`,
       );
-      await infoLog(
-        `debugyyz: [CHECKPOINT] CurrentStep: ${checkpoint.state?.currentStep}`,
-      );
-      try {
-        // Pass strongly typed objects to the database layer for serialization
-        await this.checkpointRepo.putCheckpoint(
-          threadId,
-          checkpointNs,
-          'meal_planning',
-          checkpoint,
-          metadata,
+      if (checkpoint.state && typeof checkpoint.state.currentStep !== 'undefined') {
+        await infoLog(
+          `debugyyz: [CHECKPOINT] CurrentStep: ${String(checkpoint.state.currentStep)}`,
         );
-        // Also keep a copy under the reserved namespace "latest" so that
-        // resume/list endpoints can easily fetch the most-recent checkpoint
-        // without needing the caller to supply a namespace.
-        const latestJson = checkpoint.toJsonString();
-        await this.checkpointRepo.updateWorkflowCheckpoint(threadId, Buffer.from(latestJson, 'utf8'));
-      } catch (e) {
-        await infoLog(`[CHECKPOINT] putCheckpoint failed (non-fatal): ${e}`);
-        // swallow the error so workflows continue even when persistence isn't available
       }
+      // Pass strongly typed objects to the database layer for serialization
+      await this.checkpointRepo.putCheckpoint(
+        threadId,
+        checkpointNs,
+        'meal_planning',
+        checkpoint,
+        metadata,
+      );
+      // Also keep a copy under the reserved namespace "latest" so that
+      // resume/list endpoints can easily fetch the most-recent checkpoint
+      // without needing the caller to supply a namespace.
+      await this.checkpointRepo.updateWorkflowCheckpoint(
+        threadId,
+        checkpoint,
+      );
       return {
         configurable: {
           threadId,
@@ -88,12 +88,10 @@ export class DbCheckpointSaver {
         },
       } as ExtendedRunnableConfig;
     } catch (e) {
-      await infoLog(`[CHECKPOINT] Save failed: ${e}`);
-      if (checkpoint) {
-        for (const day of checkpoint.state?.mealPlan?.days || []) {
-          if (day.meal) {
-            await infoLog(`[CHECKPOINT] lastPlanned: ${day.meal.lastPlanned}`);
-          }
+      await infoLog(`[CHECKPOINT] Save failed: ${String(e)}`);
+      for (const day of (checkpoint.state?.mealPlan?.days ?? [])) {
+        if (day.meal) {
+          await infoLog(`[CHECKPOINT] lastPlanned: ${String(day.meal.lastPlanned)}`);
         }
       }
       throw e;
@@ -108,12 +106,10 @@ export class DbCheckpointSaver {
     const records = await this.checkpointRepo.listCheckpoints(limit ?? 100, '');
     for (const record of records) {
       try {
-        const checkpointData = JSON.parse(record.checkpoint_data.toString());
-        const metadataData = record.metadata
-          ? JSON.parse(record.metadata.toString())
-          : {};
-        const checkpoint = AgentCheckpoint.fromJson(checkpointData);
-        const metadata = AgentCheckpointMetadata.fromJson(metadataData);
+        const checkpointJson = JSON.parse(record.checkpoint_data.toString()) as unknown as JsonValue;
+        const metadataJson = JSON.parse(record.metadata.toString()) as unknown as JsonValue;
+        const checkpoint = AgentCheckpoint.fromJson(checkpointJson);
+        const metadata = AgentCheckpointMetadata.fromJson(metadataJson);
         yield [
           {
             configurable: {
@@ -126,7 +122,7 @@ export class DbCheckpointSaver {
         ];
       } catch (e) {
         await infoLog(
-          `[CHECKPOINT] Failed to parse checkpoint for thread ${record.thread_id}: ${e}`,
+          `[CHECKPOINT] Failed to parse checkpoint for thread ${record.thread_id}: ${String(e)}`,
         );
         continue;
       }
@@ -146,7 +142,7 @@ export class DbCheckpointSaver {
       return null;
     } catch (e) {
       await infoLog(
-        `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${e}`,
+        `[CHECKPOINT] Workflow status request failed for thread ${threadId}: ${String(e)}`,
       );
       return null;
     }
@@ -165,7 +161,7 @@ export class DbCheckpointSaver {
           }) as WorkflowStatus,
       );
     } catch (e) {
-      await infoLog(`[CHECKPOINT] listWorkflows failed: ${e}`);
+      await infoLog(`[CHECKPOINT] listWorkflows failed: ${String(e)}`);
       return [];
     }
   }

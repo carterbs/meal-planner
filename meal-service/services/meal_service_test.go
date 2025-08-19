@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,6 +12,10 @@ import (
 	"mealplanner/repositories/mocks"
 	"mealplanner/testutil"
 )
+
+func init() {
+	os.Setenv("DISABLE_GRPC_LOGGING", "true")
+}
 
 func TestMealService_GetAllMeals(t *testing.T) {
 	tests := []struct {
@@ -258,6 +263,8 @@ func TestMealService_UpdateMeal(t *testing.T) {
 			setupMocks: func(mealRepo *mocks.MockMealRepository, ingredientRepo *mocks.MockIngredientRepository) {
 				updatedMeal := testutil.NewMealBuilder().WithID(testutil.TestMealID1).WithName("Updated Meal").WithMealType("lunch").Build()
 				mealRepo.On("UpdateMeal", mock.Anything, mock.Anything).Return(updatedMeal, nil)
+				// Mock the GetMealByID call that happens after update to fetch complete meal data
+				mealRepo.On("GetMealByID", mock.Anything, testutil.TestMealID1).Return(updatedMeal, nil)
 			},
 			expectedErr: "",
 		},
@@ -275,6 +282,8 @@ func TestMealService_UpdateMeal(t *testing.T) {
 			setupMocks: func(mealRepo *mocks.MockMealRepository, ingredientRepo *mocks.MockIngredientRepository) {
 				updatedMeal := testutil.NewMealBuilder().WithID(testutil.TestMealID1).WithMealType("breakfast").Build()
 				mealRepo.On("UpdateMeal", mock.Anything, mock.Anything).Return(updatedMeal, nil)
+				// Mock the GetMealByID call that happens after update to fetch complete meal data
+				mealRepo.On("GetMealByID", mock.Anything, testutil.TestMealID1).Return(updatedMeal, nil)
 			},
 			expectedErr: "",
 		},

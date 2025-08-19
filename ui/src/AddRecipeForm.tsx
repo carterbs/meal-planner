@@ -10,7 +10,6 @@ import {
   Paper,
   Slider,
   Chip,
-  IconButton,
   Snackbar,
   Alert,
   Divider,
@@ -19,28 +18,31 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Ingredient, Step, Meal } from './types';
+import { SelectChangeEvent } from '@mui/material/Select';
+import { Ingredient, Step, Meal } from '@mealplanner/generated';
 import { createMeal } from './api';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RepeatIcon from '@mui/icons-material/Repeat';
-import StepsEditor from './components/StepsEditor';
+import StepsEditor from './pages/MealManagementPage/components/StepsEditor';
 
 interface AddRecipeFormProps {
   onRecipeAdded: () => void;
 }
 
-const initialMealState: Omit<Meal, 'id'> = {
-  name: '',
-  effort: 3,
-  hasRedMeat: false,
-  url: '',
-  mealType: 'dinner',
-  ingredients: [],
-  steps: [],
+const createInitialMealState = (): Omit<Meal, 'id'> => {
+  return new Meal({
+    name: '',
+    effort: 3,
+    hasRedMeat: false,
+    url: '',
+    mealType: 'dinner',
+    ingredients: [],
+    steps: [],
+  }) as Omit<Meal, 'id'>;
 };
 
 const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
-  const [meal, setMeal] = useState<Omit<Meal, 'id'>>(initialMealState);
+  const [meal, setMeal] = useState<Omit<Meal, 'id'>>(createInitialMealState());
   const [rawIngredients, setRawIngredients] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
@@ -68,10 +70,11 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
     // Handle mixed numbers (e.g., 1½ -> 1.5)
     return input
-      .replace(/(\d)([¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (match, digit, fraction) => {
-        return `${digit} ${fractionMap[fraction] || fraction}`;
+      .replace(/(\d)([¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/g, (_match: string, digit: string, fraction: string) => {
+        const key = fraction;
+        return `${digit} ${fractionMap[key]} `;
       })
-      .replace(/[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, (match) => fractionMap[match] || match);
+      .replace(/[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/g, (match: string) => fractionMap[match]);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +85,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     setMeal({ ...meal, url: e.target.value });
   };
 
-  const handleEffortChange = (e: Event, newValue: number | number[]) => {
+  const handleEffortChange = (_e: Event, newValue: number | number[]) => {
     setMeal({ ...meal, effort: newValue as number });
   };
 
@@ -90,7 +93,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
     setMeal({ ...meal, hasRedMeat: e.target.checked });
   };
 
-  const handleMealTypeChange = (e: any) => {
+  const handleMealTypeChange = (e: SelectChangeEvent<string>) => {
     setMeal({ ...meal, mealType: e.target.value });
   };
 
@@ -102,10 +105,13 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
   const doubleIngredientQuantities = () => {
     // Double quantities in already processed ingredients
-    const doubledIngredients = meal.ingredients.map((ing: Ingredient) => ({
-      ...ing,
-      quantity: ing.quantity * 2,
-    }));
+    const doubledIngredients = meal.ingredients.map(
+      (ing: Ingredient) =>
+        new Ingredient({
+          ...ing,
+          quantity: ing.quantity * 2,
+        }),
+    );
 
     setMeal({ ...meal, ingredients: doubledIngredients });
 
@@ -149,7 +155,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
         const parts = processedLine.trim().split(' ');
 
         // Attempt to extract quantity (assume it's the first part if numeric)
-        let quantityStr = parts[0];
+        const quantityStr = parts[0];
         let quantity = parseFloat(quantityStr);
         let unit = '';
         let name = processedLine.trim();
@@ -161,61 +167,64 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
 
           // Try to extract unit (assume it's the next word after quantity)
           const unitParts = name.split(' ');
-          if (unitParts.length > 0) {
-            unit = unitParts[0];
-            // Common units - extend this list as needed
-            const commonUnits = [
-              'cup',
-              'cups',
-              'tbsp',
-              'tsp',
-              'oz',
-              'lb',
-              'g',
-              'kg',
-              'ml',
-              'l',
-              'pinch',
-              'dash',
-              'handful',
-              'clove',
-              'cloves',
-              'bunch',
-              'can',
-              'slice',
-              'slices',
-              'piece',
-              'pieces',
-            ];
+          unit = unitParts[0];
+          // Common units - extend this list as needed
+          const commonUnits = [
+            'cup',
+            'cups',
+            'tbsp',
+            'tsp',
+            'oz',
+            'lb',
+            'g',
+            'kg',
+            'ml',
+            'l',
+            'pinch',
+            'dash',
+            'handful',
+            'clove',
+            'cloves',
+            'bunch',
+            'can',
+            'slice',
+            'slices',
+            'piece',
+            'pieces',
+          ];
 
-            if (commonUnits.includes(unit.toLowerCase())) {
-              name = name.substring(unit.length).trim();
-            } else {
-              // If not a common unit, assume it's part of the name
-              unit = '';
-            }
+          if (commonUnits.includes(unit.toLowerCase())) {
+            name = name.substring(unit.length).trim();
+          } else {
+            // If not a common unit, assume it's part of the name
+            unit = '';
           }
         } else {
           // No valid quantity found, treat entire line as name
           quantity = 0;
         }
 
-        return {
+        return new Ingredient({
+          id: 0, // Will be excluded by Omit
+          mealId: 0, // Will be excluded by Omit
           name: name,
           quantity: quantity,
           unit: unit,
-        };
+        });
       });
 
     setMeal({
       ...meal,
       ingredients: [
         ...meal.ingredients,
-        ...newIngredients.map((ing) => ({
-          ...ing,
-          id: -1, // Temporary ID, will be assigned by backend
-          mealId: 0, // Will be set by backend
-        })),
+        ...newIngredients.map(
+          (ing) =>
+            new Ingredient({
+              ...ing,
+              id: -1, // Temporary ID, will be assigned by backend
+              mealId: 0, // Will be set by backend
+            }),
+        ),
       ],
     });
     setRawIngredients('');
@@ -264,13 +273,13 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
       console.log('Successfully created meal:', createdMeal);
 
       setSuccess(true);
-      setMeal(initialMealState);
+      setMeal(createInitialMealState());
       setRawIngredients('');
       onRecipeAdded();
     } catch (err) {
       setError(
         'Error adding recipe: ' +
-          (err instanceof Error ? err.message : String(err)),
+        (err instanceof Error ? err.message : String(err)),
       );
     } finally {
       setLoading(false);
@@ -428,10 +437,7 @@ const AddRecipeForm: React.FC<AddRecipeFormProps> = ({ onRecipeAdded }) => {
               Recipe Steps
             </Typography>
 
-            <StepsEditor
-              steps={meal.steps || []}
-              onChange={handleStepsChange}
-            />
+            <StepsEditor steps={meal.steps} onChange={handleStepsChange} />
           </Grid>
 
           <Grid item xs={12}>

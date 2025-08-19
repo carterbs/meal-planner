@@ -349,55 +349,6 @@ export class WeeklyMealPlan extends Message$1<WeeklyMealPlan> {
 }
 
 /**
- * @generated from message mealplanner.api.SaveMealPlanRequest
- */
-export class SaveMealPlanRequest extends Message$1<SaveMealPlanRequest> {
-  /**
-   * @generated from field: string thread_id = 1;
-   */
-  threadId = "";
-
-  /**
-   * @generated from field: int32 version = 2;
-   */
-  version = 0;
-
-  /**
-   * @generated from field: repeated mealplanner.api.MealPlanEntry entries = 3;
-   */
-  entries: MealPlanEntry[] = [];
-
-  constructor(data?: PartialMessage<SaveMealPlanRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.SaveMealPlanRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "version", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 3, name: "entries", kind: "message", T: MealPlanEntry, repeated: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SaveMealPlanRequest {
-    return new SaveMealPlanRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SaveMealPlanRequest {
-    return new SaveMealPlanRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SaveMealPlanRequest {
-    return new SaveMealPlanRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: SaveMealPlanRequest | PlainMessage<SaveMealPlanRequest> | undefined, b: SaveMealPlanRequest | PlainMessage<SaveMealPlanRequest> | undefined): boolean {
-    return proto3.util.equals(SaveMealPlanRequest, a, b);
-  }
-}
-
-/**
  * @generated from message mealplanner.api.MealPlanIdentifier
  */
 export class MealPlanIdentifier extends Message$1<MealPlanIdentifier> {
@@ -964,6 +915,11 @@ export class HealthCheckResponse extends Message$1<HealthCheckResponse> {
    */
   message = "";
 
+  /**
+   * @generated from field: map<string, bool> services = 3;
+   */
+  services: { [key: string]: boolean } = {};
+
   constructor(data?: PartialMessage<HealthCheckResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -974,6 +930,7 @@ export class HealthCheckResponse extends Message$1<HealthCheckResponse> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "services", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 8 /* ScalarType.BOOL */} },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): HealthCheckResponse {
@@ -990,49 +947,6 @@ export class HealthCheckResponse extends Message$1<HealthCheckResponse> {
 
   static equals(a: HealthCheckResponse | PlainMessage<HealthCheckResponse> | undefined, b: HealthCheckResponse | PlainMessage<HealthCheckResponse> | undefined): boolean {
     return proto3.util.equals(HealthCheckResponse, a, b);
-  }
-}
-
-/**
- * @generated from message mealplanner.api.ReconnectResponse
- */
-export class ReconnectResponse extends Message$1<ReconnectResponse> {
-  /**
-   * @generated from field: string status = 1;
-   */
-  status = "";
-
-  /**
-   * @generated from field: string message = 2;
-   */
-  message = "";
-
-  constructor(data?: PartialMessage<ReconnectResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.ReconnectResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReconnectResponse {
-    return new ReconnectResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReconnectResponse {
-    return new ReconnectResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReconnectResponse {
-    return new ReconnectResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ReconnectResponse | PlainMessage<ReconnectResponse> | undefined, b: ReconnectResponse | PlainMessage<ReconnectResponse> | undefined): boolean {
-    return proto3.util.equals(ReconnectResponse, a, b);
   }
 }
 
@@ -1117,9 +1031,9 @@ export class GenerateMealPlanResponse extends Message$1<GenerateMealPlanResponse
  */
 export class FinalizeMealPlanRequest extends Message$1<FinalizeMealPlanRequest> {
   /**
-   * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+   * @generated from field: string thread_id = 1;
    */
-  plan?: WeeklyMealPlan;
+  threadId = "";
 
   constructor(data?: PartialMessage<FinalizeMealPlanRequest>) {
     super();
@@ -1129,7 +1043,7 @@ export class FinalizeMealPlanRequest extends Message$1<FinalizeMealPlanRequest> 
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "mealplanner.api.FinalizeMealPlanRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "plan", kind: "message", T: WeeklyMealPlan },
+    { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FinalizeMealPlanRequest {
@@ -1183,43 +1097,6 @@ export class FinalizeMealPlanResponse extends Message$1<FinalizeMealPlanResponse
 
   static equals(a: FinalizeMealPlanResponse | PlainMessage<FinalizeMealPlanResponse> | undefined, b: FinalizeMealPlanResponse | PlainMessage<FinalizeMealPlanResponse> | undefined): boolean {
     return proto3.util.equals(FinalizeMealPlanResponse, a, b);
-  }
-}
-
-/**
- * @generated from message mealplanner.api.MealPlanICSResponse
- */
-export class MealPlanICSResponse extends Message$1<MealPlanICSResponse> {
-  /**
-   * @generated from field: bytes ics_data = 1;
-   */
-  icsData = new Uint8Array(0);
-
-  constructor(data?: PartialMessage<MealPlanICSResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.MealPlanICSResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "ics_data", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanICSResponse {
-    return new MealPlanICSResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlanICSResponse {
-    return new MealPlanICSResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlanICSResponse {
-    return new MealPlanICSResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: MealPlanICSResponse | PlainMessage<MealPlanICSResponse> | undefined, b: MealPlanICSResponse | PlainMessage<MealPlanICSResponse> | undefined): boolean {
-    return proto3.util.equals(MealPlanICSResponse, a, b);
   }
 }
 
@@ -3225,108 +3102,6 @@ export class GetMessagesResponse extends Message$1<GetMessagesResponse> {
 
   static equals(a: GetMessagesResponse | PlainMessage<GetMessagesResponse> | undefined, b: GetMessagesResponse | PlainMessage<GetMessagesResponse> | undefined): boolean {
     return proto3.util.equals(GetMessagesResponse, a, b);
-  }
-}
-
-/**
- * @generated from message mealplanner.api.UpdateSessionStateRequest
- */
-export class UpdateSessionStateRequest extends Message$1<UpdateSessionStateRequest> {
-  /**
-   * @generated from field: string thread_id = 1;
-   */
-  threadId = "";
-
-  /**
-   * JSON string
-   *
-   * @generated from field: string meal_plan = 2;
-   */
-  mealPlan = "";
-
-  /**
-   * JSON string
-   *
-   * @generated from field: string shopping_list = 3;
-   */
-  shoppingList = "";
-
-  /**
-   * @generated from field: string current_step = 4;
-   */
-  currentStep = "";
-
-  /**
-   * @generated from field: string status = 5;
-   */
-  status = "";
-
-  constructor(data?: PartialMessage<UpdateSessionStateRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.UpdateSessionStateRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "meal_plan", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "shopping_list", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "current_step", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateSessionStateRequest {
-    return new UpdateSessionStateRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateSessionStateRequest {
-    return new UpdateSessionStateRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateSessionStateRequest {
-    return new UpdateSessionStateRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateSessionStateRequest | PlainMessage<UpdateSessionStateRequest> | undefined, b: UpdateSessionStateRequest | PlainMessage<UpdateSessionStateRequest> | undefined): boolean {
-    return proto3.util.equals(UpdateSessionStateRequest, a, b);
-  }
-}
-
-/**
- * @generated from message mealplanner.api.UpdateSessionStateResponse
- */
-export class UpdateSessionStateResponse extends Message$1<UpdateSessionStateResponse> {
-  /**
-   * @generated from field: string message = 1;
-   */
-  message = "";
-
-  constructor(data?: PartialMessage<UpdateSessionStateResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.UpdateSessionStateResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateSessionStateResponse {
-    return new UpdateSessionStateResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateSessionStateResponse {
-    return new UpdateSessionStateResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateSessionStateResponse {
-    return new UpdateSessionStateResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateSessionStateResponse | PlainMessage<UpdateSessionStateResponse> | undefined, b: UpdateSessionStateResponse | PlainMessage<UpdateSessionStateResponse> | undefined): boolean {
-    return proto3.util.equals(UpdateSessionStateResponse, a, b);
   }
 }
 

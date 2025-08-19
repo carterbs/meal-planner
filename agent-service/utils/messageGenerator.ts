@@ -68,7 +68,7 @@ Your Response (just the message, no quotes or formatting):`;
       await debugLog(`[MESSAGE_GENERATOR] Generated message: ${message}`);
       return message.trim();
     } catch (error) {
-      await debugLog(`[MESSAGE_GENERATOR] Error generating message: ${error}`);
+      await debugLog(`[MESSAGE_GENERATOR] Error generating message: ${String(error)}`);
       // Fallback to generic message
       return "I'm working on your meal plan now!";
     }
@@ -128,7 +128,7 @@ Response (just the message, no quotes or formatting):`;
       return message.trim();
     } catch (error) {
       await debugLog(
-        `[MESSAGE_GENERATOR] Error generating completion message: ${error}`,
+        `[MESSAGE_GENERATOR] Error generating completion message: ${String(error)}`,
       );
       // Fallback to generic message
       return 'Your meal plan is ready!';

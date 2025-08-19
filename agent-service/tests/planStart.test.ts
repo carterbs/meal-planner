@@ -1,5 +1,8 @@
-import { planStart } from '../main';
-import { PlanStartRequest, PlanStartResponse } from '@mealplanner/generated/agent_pb';
+import { planStart } from '../handlers';
+import {
+  PlanStartRequest,
+  PlanStartResponse,
+} from '@mealplanner/generated/agent_pb';
 
 // Mock LangGraphAgent to control startWorkflow and initial state
 jest.mock('../langgraph-agent', () => {
@@ -17,8 +20,15 @@ jest.mock('../langgraph-agent', () => {
           id: 1,
           // Monday missing dayIndex should default to 0
           days: [
-            { mealType: 'breakfast', meal: { id: 1, name: 'A', effort: 1, hasRedMeat: false } },
-            { dayIndex: 1, mealType: 'lunch', meal: { id: 2, name: 'B', effort: 2, hasRedMeat: false } },
+            {
+              mealType: 'breakfast',
+              meal: { id: 1, name: 'A', effort: 1, hasRedMeat: false },
+            },
+            {
+              dayIndex: 1,
+              mealType: 'lunch',
+              meal: { id: 2, name: 'B', effort: 2, hasRedMeat: false },
+            },
           ],
         },
         feedbackHistory: [],
@@ -61,4 +71,4 @@ describe('planStart handler', () => {
     // Lunch entry preserved
     expect(state.mealPlan.days[1].dayIndex).toBe(1);
   });
-}); 
+});

@@ -6,10 +6,12 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src",
-    "../../shared/ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "../../shared/ts/**/*.ts",
     "src/test-utils.tsx",
     "src/setupTests.js",
-    "../../shared/days.ts"
+    "../../shared/days.ts",
+    "../../generated/ts/**/*.ts"
   ]
 }

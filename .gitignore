@@ -29,5 +29,25 @@ Thumbs.db
 
 # Build artifacts
 api-gateway/api-gateway
+api-gateway/main
+api-gateway/tmp/main
 meal-service/mealplanner
+meal-service/meal-service
+meal-service/tmp/main
+logging-service/logging-service
 logging-service/loggingservice
+logging-service/tmp/main
+
+# Validate tool binaries
+scripts/validate-bin
+scripts/validate-bin.exe
+tools/validate/validate
+
+# Test coverage reports
+ui/coverage/
+**/coverage/
+.nyc_output/
+lcov.info
+**/lcov.info
+**/lcov-report/
+**/coverage-final.json

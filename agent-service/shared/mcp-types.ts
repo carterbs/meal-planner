@@ -1,4 +1,4 @@
-import type { ShoppingListItem } from './types';
+import type { ShoppingListItem } from '@mealplanner/generated';
 export type { ShoppingListItem };
 // Types for MCP tool calls and responses
 export type MCPToolResult = {
@@ -12,7 +12,7 @@ export type MCPToolResult = {
 export interface ShoppingListRequest {
   plan: number[]; // Array of meal IDs
 }
-export interface ShoppingListResponse extends Array<ShoppingListItem> {}
+export type ShoppingListResponse = ShoppingListItem[];
 // MCP Tool Names
 export type MCPToolName =
   | 'generateMealPlan'
@@ -21,8 +21,8 @@ export type MCPToolName =
   | 'swapMeal'
   | 'replaceMeal';
 // Type-safe MCP tool call function
-export async function callMCPTool<TArgs, TResponse>(
-  client: any, // TODO: Replace with proper MCP client type
+export async function callMCPTool<TArgs extends Record<string, unknown>, TResponse>(
+  client: { callTool: (req: { name: string; arguments: Record<string, unknown> }) => Promise<MCPToolResult> },
   toolName: MCPToolName,
   args: TArgs,
 ): Promise<TResponse> {
@@ -38,6 +38,7 @@ export async function callMCPTool<TArgs, TResponse>(
   try {
     return JSON.parse(result.content[0]?.text || '{}') as TResponse;
   } catch (error) {
-    throw new Error(`Failed to parse MCP tool response: ${error}`);
+    const err = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse MCP tool response: ${err}`);
   }
 }
