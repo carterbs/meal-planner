@@ -11,8 +11,8 @@ COPY mcp-service/package.json ./mcp-service/
 COPY shared/package.json ./shared/
 COPY generated/ts/package.json ./generated/ts/
 
-# Install all workspace dependencies
-RUN yarn install
+# Install only the workspaces we need to avoid building native deps from the whole monorepo
+RUN yarn workspaces focus mcp @mealplanner/generated
 
 # Copy source code
 COPY mcp-service/ ./mcp-service/
@@ -20,7 +20,8 @@ COPY shared/ ./shared/
 COPY generated/ ./generated/
 
 # Build from root to ensure workspace linking works
-RUN yarn workspace @mealplanner/generated install
+# Build the generated TypeScript package so gateway/* is available as JS at runtime
+RUN yarn workspace @mealplanner/generated build
 RUN yarn workspace mcp build
 
 # Use nodemon for hot reloading in development
