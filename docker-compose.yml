@@ -77,13 +77,14 @@ services:
     build:
       context: .
       dockerfile: ./mcp-service/Dockerfile.dev
+    ports:
+      - "3001:3001"
     environment:
       - LOGGING_SERVICE_ADDR=logging-service:50052
       - BACKEND_BASE_URL=http://api-gateway:8090
     volumes:
       - ./mcp-service:/app/mcp-service
       - ./shared:/app/shared
-      - ./generated:/app/generated
       - /app/node_modules
     working_dir: /app/mcp-service
     command: ["yarn", "start"]

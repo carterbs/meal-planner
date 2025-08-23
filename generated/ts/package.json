@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./gateway": "./gateway/index.js",
+    "./gateway/client": "./gateway/client/index.js",
+    "./gateway/types.gen": "./gateway/types.gen.js",
+    "./*": "./*.js"
+  },
   "files": [
     "index.ts",
     "index.js",
@@ -21,8 +28,14 @@
     "agent_connect.d.ts",
     "gateway/**/*"
   ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
   },
   "peerDependencies": {
     "@connectrpc/connect": "^1.6.0",
