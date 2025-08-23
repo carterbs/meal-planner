@@ -5,7 +5,6 @@ For running on my linux box.
 - "Process ingredients" Shouldn't be a necessary step. I should be able to just have a textarea full of ingredients and the processing should just happen.
 
 ## Tasks
-- Have AI normalize all of the ingredients one-time
 - Also have AI normalize ingredients when inserting into the DB
 - Have a repeatable script for this
 
