@@ -5,9 +5,10 @@
   "types": "index.d.ts",
   "exports": {
     ".": "./index.js",
-    "./gateway": "./gateway/index.js",
-    "./gateway/client": "./gateway/client/index.js",
-    "./gateway/types.gen": "./gateway/types.gen.js",
+    "./gateway": "./dist/gateway/index.js",
+    "./gateway/client": "./dist/gateway/client/index.js",
+    "./gateway/types.gen": "./dist/gateway/types.gen.js",
+    "./dist/*": "./dist/*",
     "./*": "./*.js"
   },
   "files": [
