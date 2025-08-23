@@ -1,4 +1,4 @@
-import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddBulkStepsRequest, AddBulkStepsResponse, AddMessageRequest, AddMessageResponse, AddStepRequest, AddStepResponse, CancelWorkflowRequest, CancelWorkflowResponse, CreateMealRequest, CreateMealResponse, DeleteAllStepsRequest, DeleteAllStepsResponse, DeleteMealIngredientRequest, DeleteMealIngredientResponse, DeleteMealRequest, DeleteMealResponse, DeleteStepRequest, DeleteStepResponse, FinalizeMealPlanRequest, FinalizeMealPlanResponse, GenerateMealPlanResponse, GetAllMealsRequest, GetAllMealsResponse, GetCheckpointRequest, GetCheckpointResponse, GetMealPlanResponse, GetMessagesRequest, GetMessagesResponse, GetShoppingListRequest, GetShoppingListResponse, GetStepsRequest, GetStepsResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, HealthCheckResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, LogBatchRequest, LogBatchResponse, LogRequest, LogResponse, MealPlanICSResponse, MessageAgentRequest, MessageAgentResponse, PutCheckpointRequest, PutCheckpointResponse, ReconnectResponse, RemoveMealRequest, RemoveMealResponse, ReorderStepsRequest, ReorderStepsResponse, ReplaceMealRequest, ReplaceMealResponse, StartAgentWorkflowRequest, StartAgentWorkflowResponse, SwapMealRequest, SwapMealResponse, UpdateMealIngredientRequest, UpdateMealIngredientResponse, UpdateSessionStateRequest, UpdateSessionStateResponse, UpdateStepRequest, UpdateStepResponse } from "./api_pb.js";
+import { AbandonWorkflowRequest, AbandonWorkflowResponse, AddBulkStepsRequest, AddBulkStepsResponse, AddMessageRequest, AddMessageResponse, AddStepRequest, AddStepResponse, CancelWorkflowRequest, CancelWorkflowResponse, CreateMealIngredientRequest, CreateMealIngredientResponse, CreateMealRequest, CreateMealResponse, DeleteAllStepsRequest, DeleteAllStepsResponse, DeleteMealIngredientRequest, DeleteMealIngredientResponse, DeleteMealRequest, DeleteMealResponse, DeleteStepRequest, DeleteStepResponse, FinalizeMealPlanRequest, FinalizeMealPlanResponse, GenerateMealPlanResponse, GetAllMealsRequest, GetAllMealsResponse, GetCheckpointRequest, GetCheckpointResponse, GetMealPlanResponse, GetMessagesRequest, GetMessagesResponse, GetShoppingListRequest, GetShoppingListResponse, GetStepsRequest, GetStepsResponse, GetWorkflowStateRequest, GetWorkflowStateResponse, GetWorkflowStatusRequest, GetWorkflowStatusResponse, HealthCheckResponse, ListCheckpointsRequest, ListCheckpointsResponse, ListWorkflowsResponse, LogBatchRequest, LogBatchResponse, LogRequest, LogResponse, PutCheckpointRequest, PutCheckpointResponse, ReorderStepsRequest, ReorderStepsResponse, ReplaceMealRequest, ReplaceMealResponse, SwapMealRequest, SwapMealResponse, UpdateMealIngredientRequest, UpdateMealIngredientResponse, UpdateMealRequest, UpdateMealResponse, UpdateStepRequest, UpdateStepResponse } from "./api_pb.js";
 import { Empty, MethodKind } from "@bufbuild/protobuf";
 /**
  * Logging Service definition
@@ -48,15 +48,6 @@ export declare const MealPlannerAPI: {
             readonly kind: MethodKind.Unary;
         };
         /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.Reconnect
-         */
-        readonly reconnect: {
-            readonly name: "Reconnect";
-            readonly I: typeof Empty;
-            readonly O: typeof ReconnectResponse;
-            readonly kind: MethodKind.Unary;
-        };
-        /**
          * Meal plan endpoints
          *
          * @generated from rpc mealplanner.api.MealPlannerAPI.GetMealPlan
@@ -83,15 +74,6 @@ export declare const MealPlannerAPI: {
             readonly name: "FinalizeMealPlan";
             readonly I: typeof FinalizeMealPlanRequest;
             readonly O: typeof FinalizeMealPlanResponse;
-            readonly kind: MethodKind.Unary;
-        };
-        /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.GetMealPlanICS
-         */
-        readonly getMealPlanICS: {
-            readonly name: "GetMealPlanICS";
-            readonly I: typeof Empty;
-            readonly O: typeof MealPlanICSResponse;
             readonly kind: MethodKind.Unary;
         };
         /**
@@ -126,6 +108,15 @@ export declare const MealPlannerAPI: {
             readonly kind: MethodKind.Unary;
         };
         /**
+         * @generated from rpc mealplanner.api.MealPlannerAPI.UpdateMeal
+         */
+        readonly updateMeal: {
+            readonly name: "UpdateMeal";
+            readonly I: typeof UpdateMealRequest;
+            readonly O: typeof UpdateMealResponse;
+            readonly kind: MethodKind.Unary;
+        };
+        /**
          * @generated from rpc mealplanner.api.MealPlannerAPI.SwapMeal
          */
         readonly swapMeal: {
@@ -135,21 +126,21 @@ export declare const MealPlannerAPI: {
             readonly kind: MethodKind.Unary;
         };
         /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.RemoveMeal
-         */
-        readonly removeMeal: {
-            readonly name: "RemoveMeal";
-            readonly I: typeof RemoveMealRequest;
-            readonly O: typeof RemoveMealResponse;
-            readonly kind: MethodKind.Unary;
-        };
-        /**
          * @generated from rpc mealplanner.api.MealPlannerAPI.ReplaceMeal
          */
         readonly replaceMeal: {
             readonly name: "ReplaceMeal";
             readonly I: typeof ReplaceMealRequest;
             readonly O: typeof ReplaceMealResponse;
+            readonly kind: MethodKind.Unary;
+        };
+        /**
+         * @generated from rpc mealplanner.api.MealPlannerAPI.CreateMealIngredient
+         */
+        readonly createMealIngredient: {
+            readonly name: "CreateMealIngredient";
+            readonly I: typeof CreateMealIngredientRequest;
+            readonly O: typeof CreateMealIngredientResponse;
             readonly kind: MethodKind.Unary;
         };
         /**
@@ -245,26 +236,8 @@ export declare const MealPlannerAPI: {
             readonly kind: MethodKind.Unary;
         };
         /**
-         * Agent workflow endpoints
+         * Agent workflow endpoints handled by the agent service
          *
-         * @generated from rpc mealplanner.api.MealPlannerAPI.StartAgentWorkflow
-         */
-        readonly startAgentWorkflow: {
-            readonly name: "StartAgentWorkflow";
-            readonly I: typeof StartAgentWorkflowRequest;
-            readonly O: typeof StartAgentWorkflowResponse;
-            readonly kind: MethodKind.Unary;
-        };
-        /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.MessageAgent
-         */
-        readonly messageAgent: {
-            readonly name: "MessageAgent";
-            readonly I: typeof MessageAgentRequest;
-            readonly O: typeof MessageAgentResponse;
-            readonly kind: MethodKind.Unary;
-        };
-        /**
          * @generated from rpc mealplanner.api.MealPlannerAPI.GetWorkflowStatus
          */
         readonly getWorkflowStatus: {
@@ -327,15 +300,6 @@ export declare const MealPlannerAPI: {
             readonly name: "GetMessages";
             readonly I: typeof GetMessagesRequest;
             readonly O: typeof GetMessagesResponse;
-            readonly kind: MethodKind.Unary;
-        };
-        /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.UpdateSessionState
-         */
-        readonly updateSessionState: {
-            readonly name: "UpdateSessionState";
-            readonly I: typeof UpdateSessionStateRequest;
-            readonly O: typeof UpdateSessionStateResponse;
             readonly kind: MethodKind.Unary;
         };
         /**

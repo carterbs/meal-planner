@@ -18,7 +18,8 @@
     "agent_pb.d.ts",
     "agent_connect.ts",
     "agent_connect.js",
-    "agent_connect.d.ts"
+    "agent_connect.d.ts",
+    "gateway/**/*"
   ],
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.0"

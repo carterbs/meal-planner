@@ -52,6 +52,10 @@ All tools use Zod schema validation and return structured JSON responses. Error 
 | `getMeals` | `mealType?: enum` | Retrieve all available meals with metadata, optionally filtered by type |
 | `getCurrentMealPlan` | None | Fetch active meal plan with all scheduled meals |
 | `removeMeal` | `day: string, mealType: enum` | Remove specific meal from current plan |
+| `getMealIngredients` | `mealId: number` | Fetch all ingredients for a specific meal, including quantities, units, and names |
+| `addMealIngredient` | `mealId: number, ingredient: {name, quantity, unit}` | Add a new ingredient to an existing meal with specified quantity and unit |
+| `updateMealIngredient` | `mealId: number, ingredientId: number, ingredient: {name?, quantity?, unit?}` | Update an existing ingredient in a meal with new quantity, unit, or name |
+| `removeMealIngredient` | `mealId: number, ingredientId: number` | Remove an ingredient from a meal by ingredient ID |
 
 ### Tool Parameter Details
 
