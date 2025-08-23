@@ -27,6 +27,10 @@ fi
 
 echo "TypeScript client generated successfully at generated/ts/gateway/"
 
+# Fix the import path in client.gen.ts
+echo "Fixing import paths in generated client..."
+sed -i '' "s|from './client';|from './client/index';|g" generated/ts/gateway/client.gen.ts
+
 # Compile TypeScript to JavaScript
 echo "Compiling TypeScript to JavaScript..."
 pushd generated/ts/gateway

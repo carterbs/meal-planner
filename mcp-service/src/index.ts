@@ -14,6 +14,10 @@ import { registerDeleteRecipe } from './tools/deleteRecipe.js';
 import { registerGetMeals } from './tools/getMeals.js';
 import { registerGetCurrentMealPlan } from './tools/getCurrentMealPlan.js';
 import { registerRemoveMeal } from './tools/removeMeal.js';
+import { registerGetMealIngredients } from './tools/getMealIngredients.js';
+import { registerAddMealIngredient } from './tools/addMealIngredient.js';
+import { registerUpdateMealIngredient } from './tools/updateMealIngredient.js';
+import { registerRemoveMealIngredient } from './tools/removeMealIngredient.js';
 import express from 'express';
 import cors from 'cors';
 async function main() {
@@ -44,6 +48,10 @@ async function main() {
     registerGetMeals(server);
     registerGetCurrentMealPlan(server);
     registerRemoveMeal(server);
+    registerGetMealIngredients(server);
+    registerAddMealIngredient(server);
+    registerUpdateMealIngredient(server);
+    registerRemoveMealIngredient(server);
     const port = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT) : 3001;
     // Create Express app
     const app = express();

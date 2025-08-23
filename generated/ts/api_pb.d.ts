@@ -183,31 +183,6 @@ export declare class WeeklyMealPlan extends Message$1<WeeklyMealPlan> {
     static equals(a: WeeklyMealPlan | PlainMessage<WeeklyMealPlan> | undefined, b: WeeklyMealPlan | PlainMessage<WeeklyMealPlan> | undefined): boolean;
 }
 /**
- * @generated from message mealplanner.api.SaveMealPlanRequest
- */
-export declare class SaveMealPlanRequest extends Message$1<SaveMealPlanRequest> {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId: string;
-    /**
-     * @generated from field: int32 version = 2;
-     */
-    version: number;
-    /**
-     * @generated from field: repeated mealplanner.api.MealPlanEntry entries = 3;
-     */
-    entries: MealPlanEntry[];
-    constructor(data?: PartialMessage<SaveMealPlanRequest>);
-    static readonly runtime: typeof proto3;
-    static readonly typeName = "mealplanner.api.SaveMealPlanRequest";
-    static readonly fields: FieldList;
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SaveMealPlanRequest;
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SaveMealPlanRequest;
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SaveMealPlanRequest;
-    static equals(a: SaveMealPlanRequest | PlainMessage<SaveMealPlanRequest> | undefined, b: SaveMealPlanRequest | PlainMessage<SaveMealPlanRequest> | undefined): boolean;
-}
-/**
  * @generated from message mealplanner.api.MealPlanIdentifier
  */
 export declare class MealPlanIdentifier extends Message$1<MealPlanIdentifier> {
@@ -506,6 +481,12 @@ export declare class HealthCheckResponse extends Message$1<HealthCheckResponse> 
      * @generated from field: string message = 2;
      */
     message: string;
+    /**
+     * @generated from field: map<string, bool> services = 3;
+     */
+    services: {
+        [key: string]: boolean;
+    };
     constructor(data?: PartialMessage<HealthCheckResponse>);
     static readonly runtime: typeof proto3;
     static readonly typeName = "mealplanner.api.HealthCheckResponse";
@@ -514,27 +495,6 @@ export declare class HealthCheckResponse extends Message$1<HealthCheckResponse> 
     static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): HealthCheckResponse;
     static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): HealthCheckResponse;
     static equals(a: HealthCheckResponse | PlainMessage<HealthCheckResponse> | undefined, b: HealthCheckResponse | PlainMessage<HealthCheckResponse> | undefined): boolean;
-}
-/**
- * @generated from message mealplanner.api.ReconnectResponse
- */
-export declare class ReconnectResponse extends Message$1<ReconnectResponse> {
-    /**
-     * @generated from field: string status = 1;
-     */
-    status: string;
-    /**
-     * @generated from field: string message = 2;
-     */
-    message: string;
-    constructor(data?: PartialMessage<ReconnectResponse>);
-    static readonly runtime: typeof proto3;
-    static readonly typeName = "mealplanner.api.ReconnectResponse";
-    static readonly fields: FieldList;
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReconnectResponse;
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReconnectResponse;
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReconnectResponse;
-    static equals(a: ReconnectResponse | PlainMessage<ReconnectResponse> | undefined, b: ReconnectResponse | PlainMessage<ReconnectResponse> | undefined): boolean;
 }
 /**
  * Meal plan endpoints
@@ -577,9 +537,9 @@ export declare class GenerateMealPlanResponse extends Message$1<GenerateMealPlan
  */
 export declare class FinalizeMealPlanRequest extends Message$1<FinalizeMealPlanRequest> {
     /**
-     * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+     * @generated from field: string thread_id = 1;
      */
-    plan?: WeeklyMealPlan;
+    threadId: string;
     constructor(data?: PartialMessage<FinalizeMealPlanRequest>);
     static readonly runtime: typeof proto3;
     static readonly typeName = "mealplanner.api.FinalizeMealPlanRequest";
@@ -605,23 +565,6 @@ export declare class FinalizeMealPlanResponse extends Message$1<FinalizeMealPlan
     static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FinalizeMealPlanResponse;
     static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FinalizeMealPlanResponse;
     static equals(a: FinalizeMealPlanResponse | PlainMessage<FinalizeMealPlanResponse> | undefined, b: FinalizeMealPlanResponse | PlainMessage<FinalizeMealPlanResponse> | undefined): boolean;
-}
-/**
- * @generated from message mealplanner.api.MealPlanICSResponse
- */
-export declare class MealPlanICSResponse extends Message$1<MealPlanICSResponse> {
-    /**
-     * @generated from field: bytes ics_data = 1;
-     */
-    icsData: Uint8Array<ArrayBuffer>;
-    constructor(data?: PartialMessage<MealPlanICSResponse>);
-    static readonly runtime: typeof proto3;
-    static readonly typeName = "mealplanner.api.MealPlanICSResponse";
-    static readonly fields: FieldList;
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanICSResponse;
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlanICSResponse;
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlanICSResponse;
-    static equals(a: MealPlanICSResponse | PlainMessage<MealPlanICSResponse> | undefined, b: MealPlanICSResponse | PlainMessage<MealPlanICSResponse> | undefined): boolean;
 }
 /**
  * Shopping list endpoints
@@ -772,48 +715,6 @@ export declare class SwapMealResponse extends Message$1<SwapMealResponse> {
     static equals(a: SwapMealResponse | PlainMessage<SwapMealResponse> | undefined, b: SwapMealResponse | PlainMessage<SwapMealResponse> | undefined): boolean;
 }
 /**
- * @generated from message mealplanner.api.RemoveMealRequest
- */
-export declare class RemoveMealRequest extends Message$1<RemoveMealRequest> {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId: string;
-    /**
-     * @generated from field: int32 day_index = 2;
-     */
-    dayIndex: number;
-    /**
-     * @generated from field: string meal_type = 3;
-     */
-    mealType: string;
-    constructor(data?: PartialMessage<RemoveMealRequest>);
-    static readonly runtime: typeof proto3;
-    static readonly typeName = "mealplanner.api.RemoveMealRequest";
-    static readonly fields: FieldList;
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RemoveMealRequest;
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RemoveMealRequest;
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RemoveMealRequest;
-    static equals(a: RemoveMealRequest | PlainMessage<RemoveMealRequest> | undefined, b: RemoveMealRequest | PlainMessage<RemoveMealRequest> | undefined): boolean;
-}
-/**
- * @generated from message mealplanner.api.RemoveMealResponse
- */
-export declare class RemoveMealResponse extends Message$1<RemoveMealResponse> {
-    /**
-     * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
-     */
-    plan?: WeeklyMealPlan;
-    constructor(data?: PartialMessage<RemoveMealResponse>);
-    static readonly runtime: typeof proto3;
-    static readonly typeName = "mealplanner.api.RemoveMealResponse";
-    static readonly fields: FieldList;
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RemoveMealResponse;
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RemoveMealResponse;
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RemoveMealResponse;
-    static equals(a: RemoveMealResponse | PlainMessage<RemoveMealResponse> | undefined, b: RemoveMealResponse | PlainMessage<RemoveMealResponse> | undefined): boolean;
-}
-/**
  * @generated from message mealplanner.api.ReplaceMealRequest
  */
 export declare class ReplaceMealRequest extends Message$1<ReplaceMealRequest> {
@@ -850,6 +751,44 @@ export declare class ReplaceMealResponse extends Message$1<ReplaceMealResponse> 
     static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReplaceMealResponse;
     static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReplaceMealResponse;
     static equals(a: ReplaceMealResponse | PlainMessage<ReplaceMealResponse> | undefined, b: ReplaceMealResponse | PlainMessage<ReplaceMealResponse> | undefined): boolean;
+}
+/**
+ * @generated from message mealplanner.api.CreateMealIngredientRequest
+ */
+export declare class CreateMealIngredientRequest extends Message$1<CreateMealIngredientRequest> {
+    /**
+     * @generated from field: int32 meal_id = 1;
+     */
+    mealId: number;
+    /**
+     * @generated from field: mealplanner.api.Ingredient ingredient = 2;
+     */
+    ingredient?: Ingredient;
+    constructor(data?: PartialMessage<CreateMealIngredientRequest>);
+    static readonly runtime: typeof proto3;
+    static readonly typeName = "mealplanner.api.CreateMealIngredientRequest";
+    static readonly fields: FieldList;
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateMealIngredientRequest;
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateMealIngredientRequest;
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateMealIngredientRequest;
+    static equals(a: CreateMealIngredientRequest | PlainMessage<CreateMealIngredientRequest> | undefined, b: CreateMealIngredientRequest | PlainMessage<CreateMealIngredientRequest> | undefined): boolean;
+}
+/**
+ * @generated from message mealplanner.api.CreateMealIngredientResponse
+ */
+export declare class CreateMealIngredientResponse extends Message$1<CreateMealIngredientResponse> {
+    /**
+     * @generated from field: mealplanner.api.Meal meal = 1;
+     */
+    meal?: Meal;
+    constructor(data?: PartialMessage<CreateMealIngredientResponse>);
+    static readonly runtime: typeof proto3;
+    static readonly typeName = "mealplanner.api.CreateMealIngredientResponse";
+    static readonly fields: FieldList;
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateMealIngredientResponse;
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateMealIngredientResponse;
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateMealIngredientResponse;
+    static equals(a: CreateMealIngredientResponse | PlainMessage<CreateMealIngredientResponse> | undefined, b: CreateMealIngredientResponse | PlainMessage<CreateMealIngredientResponse> | undefined): boolean;
 }
 /**
  * @generated from message mealplanner.api.UpdateMealIngredientRequest
@@ -930,6 +869,44 @@ export declare class DeleteMealIngredientResponse extends Message$1<DeleteMealIn
     static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteMealIngredientResponse;
     static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteMealIngredientResponse;
     static equals(a: DeleteMealIngredientResponse | PlainMessage<DeleteMealIngredientResponse> | undefined, b: DeleteMealIngredientResponse | PlainMessage<DeleteMealIngredientResponse> | undefined): boolean;
+}
+/**
+ * @generated from message mealplanner.api.UpdateMealRequest
+ */
+export declare class UpdateMealRequest extends Message$1<UpdateMealRequest> {
+    /**
+     * @generated from field: int32 meal_id = 1;
+     */
+    mealId: number;
+    /**
+     * @generated from field: mealplanner.api.Meal meal = 2;
+     */
+    meal?: Meal;
+    constructor(data?: PartialMessage<UpdateMealRequest>);
+    static readonly runtime: typeof proto3;
+    static readonly typeName = "mealplanner.api.UpdateMealRequest";
+    static readonly fields: FieldList;
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateMealRequest;
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateMealRequest;
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateMealRequest;
+    static equals(a: UpdateMealRequest | PlainMessage<UpdateMealRequest> | undefined, b: UpdateMealRequest | PlainMessage<UpdateMealRequest> | undefined): boolean;
+}
+/**
+ * @generated from message mealplanner.api.UpdateMealResponse
+ */
+export declare class UpdateMealResponse extends Message$1<UpdateMealResponse> {
+    /**
+     * @generated from field: mealplanner.api.Meal meal = 1;
+     */
+    meal?: Meal;
+    constructor(data?: PartialMessage<UpdateMealResponse>);
+    static readonly runtime: typeof proto3;
+    static readonly typeName = "mealplanner.api.UpdateMealResponse";
+    static readonly fields: FieldList;
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateMealResponse;
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateMealResponse;
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateMealResponse;
+    static equals(a: UpdateMealResponse | PlainMessage<UpdateMealResponse> | undefined, b: UpdateMealResponse | PlainMessage<UpdateMealResponse> | undefined): boolean;
 }
 /**
  * @generated from message mealplanner.api.DeleteMealRequest
@@ -1539,60 +1516,6 @@ export declare class GetMessagesResponse extends Message$1<GetMessagesResponse> 
     static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetMessagesResponse;
     static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetMessagesResponse;
     static equals(a: GetMessagesResponse | PlainMessage<GetMessagesResponse> | undefined, b: GetMessagesResponse | PlainMessage<GetMessagesResponse> | undefined): boolean;
-}
-/**
- * @generated from message mealplanner.api.UpdateSessionStateRequest
- */
-export declare class UpdateSessionStateRequest extends Message$1<UpdateSessionStateRequest> {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId: string;
-    /**
-     * JSON string
-     *
-     * @generated from field: string meal_plan = 2;
-     */
-    mealPlan: string;
-    /**
-     * JSON string
-     *
-     * @generated from field: string shopping_list = 3;
-     */
-    shoppingList: string;
-    /**
-     * @generated from field: string current_step = 4;
-     */
-    currentStep: string;
-    /**
-     * @generated from field: string status = 5;
-     */
-    status: string;
-    constructor(data?: PartialMessage<UpdateSessionStateRequest>);
-    static readonly runtime: typeof proto3;
-    static readonly typeName = "mealplanner.api.UpdateSessionStateRequest";
-    static readonly fields: FieldList;
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateSessionStateRequest;
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateSessionStateRequest;
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateSessionStateRequest;
-    static equals(a: UpdateSessionStateRequest | PlainMessage<UpdateSessionStateRequest> | undefined, b: UpdateSessionStateRequest | PlainMessage<UpdateSessionStateRequest> | undefined): boolean;
-}
-/**
- * @generated from message mealplanner.api.UpdateSessionStateResponse
- */
-export declare class UpdateSessionStateResponse extends Message$1<UpdateSessionStateResponse> {
-    /**
-     * @generated from field: string message = 1;
-     */
-    message: string;
-    constructor(data?: PartialMessage<UpdateSessionStateResponse>);
-    static readonly runtime: typeof proto3;
-    static readonly typeName = "mealplanner.api.UpdateSessionStateResponse";
-    static readonly fields: FieldList;
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateSessionStateResponse;
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateSessionStateResponse;
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateSessionStateResponse;
-    static equals(a: UpdateSessionStateResponse | PlainMessage<UpdateSessionStateResponse> | undefined, b: UpdateSessionStateResponse | PlainMessage<UpdateSessionStateResponse> | undefined): boolean;
 }
 /**
  * Feedback entry reused inside MealPlanningState and checkpoints

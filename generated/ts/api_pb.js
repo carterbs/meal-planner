@@ -4,8 +4,8 @@
 /* eslint-disable */
 // @ts-nocheck
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateStepRequest = exports.AddBulkStepsResponse = exports.AddBulkStepsRequest = exports.AddStepResponse = exports.AddStepRequest = exports.GetStepsResponse = exports.GetStepsRequest = exports.DeleteMealResponse = exports.DeleteMealRequest = exports.DeleteMealIngredientResponse = exports.DeleteMealIngredientRequest = exports.UpdateMealIngredientResponse = exports.UpdateMealIngredientRequest = exports.ReplaceMealResponse = exports.ReplaceMealRequest = exports.RemoveMealResponse = exports.RemoveMealRequest = exports.SwapMealResponse = exports.SwapMealRequest = exports.CreateMealResponse = exports.CreateMealRequest = exports.GetAllMealsResponse = exports.GetAllMealsRequest = exports.GetShoppingListResponse = exports.GetShoppingListRequest = exports.MealPlanICSResponse = exports.FinalizeMealPlanResponse = exports.FinalizeMealPlanRequest = exports.GenerateMealPlanResponse = exports.GetMealPlanResponse = exports.ReconnectResponse = exports.HealthCheckResponse = exports.WorkflowStatus = exports.AgentResponse = exports.AgentMessageRequest = exports.AgentResumeRequest = exports.AgentFeedbackRequest = exports.AgentStartRequest = exports.ShoppingList = exports.Message = exports.CheckpointResponse = exports.SaveCheckpointRequest = exports.MealPlanIdentifier = exports.SaveMealPlanRequest = exports.WeeklyMealPlan = exports.ShoppingListItem = exports.MealPlanEntry = exports.Meal = exports.Step = exports.Ingredient = void 0;
-exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata = exports.AgentCheckpoint = exports.MealPlanningCheckpointState = exports.FeedbackEntryProto = exports.UpdateSessionStateResponse = exports.UpdateSessionStateRequest = exports.GetMessagesResponse = exports.GetMessagesRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = exports.UpdateStepResponse = void 0;
+exports.UpdateStepResponse = exports.UpdateStepRequest = exports.AddBulkStepsResponse = exports.AddBulkStepsRequest = exports.AddStepResponse = exports.AddStepRequest = exports.GetStepsResponse = exports.GetStepsRequest = exports.DeleteMealResponse = exports.DeleteMealRequest = exports.UpdateMealResponse = exports.UpdateMealRequest = exports.DeleteMealIngredientResponse = exports.DeleteMealIngredientRequest = exports.UpdateMealIngredientResponse = exports.UpdateMealIngredientRequest = exports.CreateMealIngredientResponse = exports.CreateMealIngredientRequest = exports.ReplaceMealResponse = exports.ReplaceMealRequest = exports.SwapMealResponse = exports.SwapMealRequest = exports.CreateMealResponse = exports.CreateMealRequest = exports.GetAllMealsResponse = exports.GetAllMealsRequest = exports.GetShoppingListResponse = exports.GetShoppingListRequest = exports.FinalizeMealPlanResponse = exports.FinalizeMealPlanRequest = exports.GenerateMealPlanResponse = exports.GetMealPlanResponse = exports.HealthCheckResponse = exports.WorkflowStatus = exports.AgentResponse = exports.AgentMessageRequest = exports.AgentResumeRequest = exports.AgentFeedbackRequest = exports.AgentStartRequest = exports.ShoppingList = exports.Message = exports.CheckpointResponse = exports.SaveCheckpointRequest = exports.MealPlanIdentifier = exports.WeeklyMealPlan = exports.ShoppingListItem = exports.MealPlanEntry = exports.Meal = exports.Step = exports.Ingredient = void 0;
+exports.LogBatchResponse = exports.LogBatchRequest = exports.LogResponse = exports.LogRequest = exports.LogEntry = exports.CheckpointEntry = exports.ListCheckpointsResponse = exports.ListCheckpointsRequest = exports.PutCheckpointResponse = exports.PutCheckpointRequest = exports.GetCheckpointResponse = exports.GetCheckpointRequest = exports.CheckpointTuple = exports.AgentCheckpointMetadata = exports.AgentCheckpoint = exports.MealPlanningCheckpointState = exports.FeedbackEntryProto = exports.GetMessagesResponse = exports.GetMessagesRequest = exports.AddMessageResponse = exports.AddMessageRequest = exports.AbandonWorkflowResponse = exports.AbandonWorkflowRequest = exports.GetWorkflowStateResponse = exports.GetWorkflowStateRequest = exports.CancelWorkflowResponse = exports.CancelWorkflowRequest = exports.ListWorkflowsResponse = exports.GetWorkflowStatusResponse = exports.GetWorkflowStatusRequest = exports.MessageAgentResponse = exports.MessageAgentRequest = exports.StartAgentWorkflowResponse = exports.StartAgentWorkflowRequest = exports.DeleteAllStepsResponse = exports.DeleteAllStepsRequest = exports.ReorderStepsResponse = exports.ReorderStepsRequest = exports.DeleteStepResponse = exports.DeleteStepRequest = void 0;
 const protobuf_1 = require("@bufbuild/protobuf");
 /**
  * @generated from message mealplanner.api.Ingredient
@@ -293,47 +293,6 @@ class WeeklyMealPlan extends protobuf_1.Message {
     }
 }
 exports.WeeklyMealPlan = WeeklyMealPlan;
-/**
- * @generated from message mealplanner.api.SaveMealPlanRequest
- */
-class SaveMealPlanRequest extends protobuf_1.Message {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId = "";
-    /**
-     * @generated from field: int32 version = 2;
-     */
-    version = 0;
-    /**
-     * @generated from field: repeated mealplanner.api.MealPlanEntry entries = 3;
-     */
-    entries = [];
-    constructor(data) {
-        super();
-        protobuf_1.proto3.util.initPartial(data, this);
-    }
-    static runtime = protobuf_1.proto3;
-    static typeName = "mealplanner.api.SaveMealPlanRequest";
-    static fields = protobuf_1.proto3.util.newFieldList(() => [
-        { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-        { no: 2, name: "version", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-        { no: 3, name: "entries", kind: "message", T: MealPlanEntry, repeated: true },
-    ]);
-    static fromBinary(bytes, options) {
-        return new SaveMealPlanRequest().fromBinary(bytes, options);
-    }
-    static fromJson(jsonValue, options) {
-        return new SaveMealPlanRequest().fromJson(jsonValue, options);
-    }
-    static fromJsonString(jsonString, options) {
-        return new SaveMealPlanRequest().fromJsonString(jsonString, options);
-    }
-    static equals(a, b) {
-        return protobuf_1.proto3.util.equals(SaveMealPlanRequest, a, b);
-    }
-}
-exports.SaveMealPlanRequest = SaveMealPlanRequest;
 /**
  * @generated from message mealplanner.api.MealPlanIdentifier
  */
@@ -810,6 +769,10 @@ class HealthCheckResponse extends protobuf_1.Message {
      * @generated from field: string message = 2;
      */
     message = "";
+    /**
+     * @generated from field: map<string, bool> services = 3;
+     */
+    services = {};
     constructor(data) {
         super();
         protobuf_1.proto3.util.initPartial(data, this);
@@ -819,6 +782,7 @@ class HealthCheckResponse extends protobuf_1.Message {
     static fields = protobuf_1.proto3.util.newFieldList(() => [
         { no: 1, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
         { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 3, name: "services", kind: "map", K: 9 /* ScalarType.STRING */, V: { kind: "scalar", T: 8 /* ScalarType.BOOL */ } },
     ]);
     static fromBinary(bytes, options) {
         return new HealthCheckResponse().fromBinary(bytes, options);
@@ -834,42 +798,6 @@ class HealthCheckResponse extends protobuf_1.Message {
     }
 }
 exports.HealthCheckResponse = HealthCheckResponse;
-/**
- * @generated from message mealplanner.api.ReconnectResponse
- */
-class ReconnectResponse extends protobuf_1.Message {
-    /**
-     * @generated from field: string status = 1;
-     */
-    status = "";
-    /**
-     * @generated from field: string message = 2;
-     */
-    message = "";
-    constructor(data) {
-        super();
-        protobuf_1.proto3.util.initPartial(data, this);
-    }
-    static runtime = protobuf_1.proto3;
-    static typeName = "mealplanner.api.ReconnectResponse";
-    static fields = protobuf_1.proto3.util.newFieldList(() => [
-        { no: 1, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-        { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    ]);
-    static fromBinary(bytes, options) {
-        return new ReconnectResponse().fromBinary(bytes, options);
-    }
-    static fromJson(jsonValue, options) {
-        return new ReconnectResponse().fromJson(jsonValue, options);
-    }
-    static fromJsonString(jsonString, options) {
-        return new ReconnectResponse().fromJsonString(jsonString, options);
-    }
-    static equals(a, b) {
-        return protobuf_1.proto3.util.equals(ReconnectResponse, a, b);
-    }
-}
-exports.ReconnectResponse = ReconnectResponse;
 /**
  * Meal plan endpoints
  *
@@ -939,9 +867,9 @@ exports.GenerateMealPlanResponse = GenerateMealPlanResponse;
  */
 class FinalizeMealPlanRequest extends protobuf_1.Message {
     /**
-     * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+     * @generated from field: string thread_id = 1;
      */
-    plan;
+    threadId = "";
     constructor(data) {
         super();
         protobuf_1.proto3.util.initPartial(data, this);
@@ -949,7 +877,7 @@ class FinalizeMealPlanRequest extends protobuf_1.Message {
     static runtime = protobuf_1.proto3;
     static typeName = "mealplanner.api.FinalizeMealPlanRequest";
     static fields = protobuf_1.proto3.util.newFieldList(() => [
-        { no: 1, name: "plan", kind: "message", T: WeeklyMealPlan },
+        { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     ]);
     static fromBinary(bytes, options) {
         return new FinalizeMealPlanRequest().fromBinary(bytes, options);
@@ -996,37 +924,6 @@ class FinalizeMealPlanResponse extends protobuf_1.Message {
     }
 }
 exports.FinalizeMealPlanResponse = FinalizeMealPlanResponse;
-/**
- * @generated from message mealplanner.api.MealPlanICSResponse
- */
-class MealPlanICSResponse extends protobuf_1.Message {
-    /**
-     * @generated from field: bytes ics_data = 1;
-     */
-    icsData = new Uint8Array(0);
-    constructor(data) {
-        super();
-        protobuf_1.proto3.util.initPartial(data, this);
-    }
-    static runtime = protobuf_1.proto3;
-    static typeName = "mealplanner.api.MealPlanICSResponse";
-    static fields = protobuf_1.proto3.util.newFieldList(() => [
-        { no: 1, name: "ics_data", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    ]);
-    static fromBinary(bytes, options) {
-        return new MealPlanICSResponse().fromBinary(bytes, options);
-    }
-    static fromJson(jsonValue, options) {
-        return new MealPlanICSResponse().fromJson(jsonValue, options);
-    }
-    static fromJsonString(jsonString, options) {
-        return new MealPlanICSResponse().fromJsonString(jsonString, options);
-    }
-    static equals(a, b) {
-        return protobuf_1.proto3.util.equals(MealPlanICSResponse, a, b);
-    }
-}
-exports.MealPlanICSResponse = MealPlanICSResponse;
 /**
  * Shopping list endpoints
  *
@@ -1289,78 +1186,6 @@ class SwapMealResponse extends protobuf_1.Message {
 }
 exports.SwapMealResponse = SwapMealResponse;
 /**
- * @generated from message mealplanner.api.RemoveMealRequest
- */
-class RemoveMealRequest extends protobuf_1.Message {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId = "";
-    /**
-     * @generated from field: int32 day_index = 2;
-     */
-    dayIndex = 0;
-    /**
-     * @generated from field: string meal_type = 3;
-     */
-    mealType = "";
-    constructor(data) {
-        super();
-        protobuf_1.proto3.util.initPartial(data, this);
-    }
-    static runtime = protobuf_1.proto3;
-    static typeName = "mealplanner.api.RemoveMealRequest";
-    static fields = protobuf_1.proto3.util.newFieldList(() => [
-        { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-        { no: 2, name: "day_index", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-        { no: 3, name: "meal_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    ]);
-    static fromBinary(bytes, options) {
-        return new RemoveMealRequest().fromBinary(bytes, options);
-    }
-    static fromJson(jsonValue, options) {
-        return new RemoveMealRequest().fromJson(jsonValue, options);
-    }
-    static fromJsonString(jsonString, options) {
-        return new RemoveMealRequest().fromJsonString(jsonString, options);
-    }
-    static equals(a, b) {
-        return protobuf_1.proto3.util.equals(RemoveMealRequest, a, b);
-    }
-}
-exports.RemoveMealRequest = RemoveMealRequest;
-/**
- * @generated from message mealplanner.api.RemoveMealResponse
- */
-class RemoveMealResponse extends protobuf_1.Message {
-    /**
-     * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
-     */
-    plan;
-    constructor(data) {
-        super();
-        protobuf_1.proto3.util.initPartial(data, this);
-    }
-    static runtime = protobuf_1.proto3;
-    static typeName = "mealplanner.api.RemoveMealResponse";
-    static fields = protobuf_1.proto3.util.newFieldList(() => [
-        { no: 1, name: "plan", kind: "message", T: WeeklyMealPlan },
-    ]);
-    static fromBinary(bytes, options) {
-        return new RemoveMealResponse().fromBinary(bytes, options);
-    }
-    static fromJson(jsonValue, options) {
-        return new RemoveMealResponse().fromJson(jsonValue, options);
-    }
-    static fromJsonString(jsonString, options) {
-        return new RemoveMealResponse().fromJsonString(jsonString, options);
-    }
-    static equals(a, b) {
-        return protobuf_1.proto3.util.equals(RemoveMealResponse, a, b);
-    }
-}
-exports.RemoveMealResponse = RemoveMealResponse;
-/**
  * @generated from message mealplanner.api.ReplaceMealRequest
  */
 class ReplaceMealRequest extends protobuf_1.Message {
@@ -1427,6 +1252,73 @@ class ReplaceMealResponse extends protobuf_1.Message {
     }
 }
 exports.ReplaceMealResponse = ReplaceMealResponse;
+/**
+ * @generated from message mealplanner.api.CreateMealIngredientRequest
+ */
+class CreateMealIngredientRequest extends protobuf_1.Message {
+    /**
+     * @generated from field: int32 meal_id = 1;
+     */
+    mealId = 0;
+    /**
+     * @generated from field: mealplanner.api.Ingredient ingredient = 2;
+     */
+    ingredient;
+    constructor(data) {
+        super();
+        protobuf_1.proto3.util.initPartial(data, this);
+    }
+    static runtime = protobuf_1.proto3;
+    static typeName = "mealplanner.api.CreateMealIngredientRequest";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "meal_id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+        { no: 2, name: "ingredient", kind: "message", T: Ingredient },
+    ]);
+    static fromBinary(bytes, options) {
+        return new CreateMealIngredientRequest().fromBinary(bytes, options);
+    }
+    static fromJson(jsonValue, options) {
+        return new CreateMealIngredientRequest().fromJson(jsonValue, options);
+    }
+    static fromJsonString(jsonString, options) {
+        return new CreateMealIngredientRequest().fromJsonString(jsonString, options);
+    }
+    static equals(a, b) {
+        return protobuf_1.proto3.util.equals(CreateMealIngredientRequest, a, b);
+    }
+}
+exports.CreateMealIngredientRequest = CreateMealIngredientRequest;
+/**
+ * @generated from message mealplanner.api.CreateMealIngredientResponse
+ */
+class CreateMealIngredientResponse extends protobuf_1.Message {
+    /**
+     * @generated from field: mealplanner.api.Meal meal = 1;
+     */
+    meal;
+    constructor(data) {
+        super();
+        protobuf_1.proto3.util.initPartial(data, this);
+    }
+    static runtime = protobuf_1.proto3;
+    static typeName = "mealplanner.api.CreateMealIngredientResponse";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "meal", kind: "message", T: Meal },
+    ]);
+    static fromBinary(bytes, options) {
+        return new CreateMealIngredientResponse().fromBinary(bytes, options);
+    }
+    static fromJson(jsonValue, options) {
+        return new CreateMealIngredientResponse().fromJson(jsonValue, options);
+    }
+    static fromJsonString(jsonString, options) {
+        return new CreateMealIngredientResponse().fromJsonString(jsonString, options);
+    }
+    static equals(a, b) {
+        return protobuf_1.proto3.util.equals(CreateMealIngredientResponse, a, b);
+    }
+}
+exports.CreateMealIngredientResponse = CreateMealIngredientResponse;
 /**
  * @generated from message mealplanner.api.UpdateMealIngredientRequest
  */
@@ -1566,6 +1458,73 @@ class DeleteMealIngredientResponse extends protobuf_1.Message {
     }
 }
 exports.DeleteMealIngredientResponse = DeleteMealIngredientResponse;
+/**
+ * @generated from message mealplanner.api.UpdateMealRequest
+ */
+class UpdateMealRequest extends protobuf_1.Message {
+    /**
+     * @generated from field: int32 meal_id = 1;
+     */
+    mealId = 0;
+    /**
+     * @generated from field: mealplanner.api.Meal meal = 2;
+     */
+    meal;
+    constructor(data) {
+        super();
+        protobuf_1.proto3.util.initPartial(data, this);
+    }
+    static runtime = protobuf_1.proto3;
+    static typeName = "mealplanner.api.UpdateMealRequest";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "meal_id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+        { no: 2, name: "meal", kind: "message", T: Meal },
+    ]);
+    static fromBinary(bytes, options) {
+        return new UpdateMealRequest().fromBinary(bytes, options);
+    }
+    static fromJson(jsonValue, options) {
+        return new UpdateMealRequest().fromJson(jsonValue, options);
+    }
+    static fromJsonString(jsonString, options) {
+        return new UpdateMealRequest().fromJsonString(jsonString, options);
+    }
+    static equals(a, b) {
+        return protobuf_1.proto3.util.equals(UpdateMealRequest, a, b);
+    }
+}
+exports.UpdateMealRequest = UpdateMealRequest;
+/**
+ * @generated from message mealplanner.api.UpdateMealResponse
+ */
+class UpdateMealResponse extends protobuf_1.Message {
+    /**
+     * @generated from field: mealplanner.api.Meal meal = 1;
+     */
+    meal;
+    constructor(data) {
+        super();
+        protobuf_1.proto3.util.initPartial(data, this);
+    }
+    static runtime = protobuf_1.proto3;
+    static typeName = "mealplanner.api.UpdateMealResponse";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "meal", kind: "message", T: Meal },
+    ]);
+    static fromBinary(bytes, options) {
+        return new UpdateMealResponse().fromBinary(bytes, options);
+    }
+    static fromJson(jsonValue, options) {
+        return new UpdateMealResponse().fromJson(jsonValue, options);
+    }
+    static fromJsonString(jsonString, options) {
+        return new UpdateMealResponse().fromJsonString(jsonString, options);
+    }
+    static equals(a, b) {
+        return protobuf_1.proto3.util.equals(UpdateMealResponse, a, b);
+    }
+}
+exports.UpdateMealResponse = UpdateMealResponse;
 /**
  * @generated from message mealplanner.api.DeleteMealRequest
  */
@@ -2647,92 +2606,6 @@ class GetMessagesResponse extends protobuf_1.Message {
     }
 }
 exports.GetMessagesResponse = GetMessagesResponse;
-/**
- * @generated from message mealplanner.api.UpdateSessionStateRequest
- */
-class UpdateSessionStateRequest extends protobuf_1.Message {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId = "";
-    /**
-     * JSON string
-     *
-     * @generated from field: string meal_plan = 2;
-     */
-    mealPlan = "";
-    /**
-     * JSON string
-     *
-     * @generated from field: string shopping_list = 3;
-     */
-    shoppingList = "";
-    /**
-     * @generated from field: string current_step = 4;
-     */
-    currentStep = "";
-    /**
-     * @generated from field: string status = 5;
-     */
-    status = "";
-    constructor(data) {
-        super();
-        protobuf_1.proto3.util.initPartial(data, this);
-    }
-    static runtime = protobuf_1.proto3;
-    static typeName = "mealplanner.api.UpdateSessionStateRequest";
-    static fields = protobuf_1.proto3.util.newFieldList(() => [
-        { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-        { no: 2, name: "meal_plan", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-        { no: 3, name: "shopping_list", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-        { no: 4, name: "current_step", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-        { no: 5, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    ]);
-    static fromBinary(bytes, options) {
-        return new UpdateSessionStateRequest().fromBinary(bytes, options);
-    }
-    static fromJson(jsonValue, options) {
-        return new UpdateSessionStateRequest().fromJson(jsonValue, options);
-    }
-    static fromJsonString(jsonString, options) {
-        return new UpdateSessionStateRequest().fromJsonString(jsonString, options);
-    }
-    static equals(a, b) {
-        return protobuf_1.proto3.util.equals(UpdateSessionStateRequest, a, b);
-    }
-}
-exports.UpdateSessionStateRequest = UpdateSessionStateRequest;
-/**
- * @generated from message mealplanner.api.UpdateSessionStateResponse
- */
-class UpdateSessionStateResponse extends protobuf_1.Message {
-    /**
-     * @generated from field: string message = 1;
-     */
-    message = "";
-    constructor(data) {
-        super();
-        protobuf_1.proto3.util.initPartial(data, this);
-    }
-    static runtime = protobuf_1.proto3;
-    static typeName = "mealplanner.api.UpdateSessionStateResponse";
-    static fields = protobuf_1.proto3.util.newFieldList(() => [
-        { no: 1, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    ]);
-    static fromBinary(bytes, options) {
-        return new UpdateSessionStateResponse().fromBinary(bytes, options);
-    }
-    static fromJson(jsonValue, options) {
-        return new UpdateSessionStateResponse().fromJson(jsonValue, options);
-    }
-    static fromJsonString(jsonString, options) {
-        return new UpdateSessionStateResponse().fromJsonString(jsonString, options);
-    }
-    static equals(a, b) {
-        return protobuf_1.proto3.util.equals(UpdateSessionStateResponse, a, b);
-    }
-}
-exports.UpdateSessionStateResponse = UpdateSessionStateResponse;
 /**
  * Feedback entry reused inside MealPlanningState and checkpoints
  *

@@ -12,14 +12,19 @@ const protobuf_1 = require("@bufbuild/protobuf");
  * @generated from message agent.PlanStartRequest
  */
 class PlanStartRequest extends protobuf_1.Message {
+    /**
+     * @generated from field: repeated string participants = 1;
+     */
+    participants = [];
     constructor(data) {
         super();
-        /**
-         * @generated from field: repeated string participants = 1;
-         */
-        this.participants = [];
         protobuf_1.proto3.util.initPartial(data, this);
     }
+    static runtime = protobuf_1.proto3;
+    static typeName = "agent.PlanStartRequest";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "participants", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    ]);
     static fromBinary(bytes, options) {
         return new PlanStartRequest().fromBinary(bytes, options);
     }
@@ -34,41 +39,45 @@ class PlanStartRequest extends protobuf_1.Message {
     }
 }
 exports.PlanStartRequest = PlanStartRequest;
-PlanStartRequest.runtime = protobuf_1.proto3;
-PlanStartRequest.typeName = "agent.PlanStartRequest";
-PlanStartRequest.fields = protobuf_1.proto3.util.newFieldList(() => [
-    { no: 1, name: "participants", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-]);
 /**
  * @generated from message agent.PlanStartResponse
  */
 class PlanStartResponse extends protobuf_1.Message {
+    /**
+     * @generated from field: bool success = 1;
+     */
+    success = false;
+    /**
+     * @generated from field: string message = 2;
+     */
+    message = "";
+    /**
+     * @generated from field: string thread_id = 3;
+     */
+    threadId = "";
+    /**
+     * @generated from field: string current_step = 4;
+     */
+    currentStep = "";
+    /**
+     * JSON-encoded state
+     *
+     * @generated from field: bytes initial_state = 5;
+     */
+    initialState = new Uint8Array(0);
     constructor(data) {
         super();
-        /**
-         * @generated from field: bool success = 1;
-         */
-        this.success = false;
-        /**
-         * @generated from field: string message = 2;
-         */
-        this.message = "";
-        /**
-         * @generated from field: string thread_id = 3;
-         */
-        this.threadId = "";
-        /**
-         * @generated from field: string current_step = 4;
-         */
-        this.currentStep = "";
-        /**
-         * JSON-encoded state
-         *
-         * @generated from field: bytes initial_state = 5;
-         */
-        this.initialState = new Uint8Array(0);
         protobuf_1.proto3.util.initPartial(data, this);
     }
+    static runtime = protobuf_1.proto3;
+    static typeName = "agent.PlanStartResponse";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+        { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 3, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 4, name: "current_step", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 5, name: "initial_state", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+    ]);
     static fromBinary(bytes, options) {
         return new PlanStartResponse().fromBinary(bytes, options);
     }
@@ -83,37 +92,35 @@ class PlanStartResponse extends protobuf_1.Message {
     }
 }
 exports.PlanStartResponse = PlanStartResponse;
-PlanStartResponse.runtime = protobuf_1.proto3;
-PlanStartResponse.typeName = "agent.PlanStartResponse";
-PlanStartResponse.fields = protobuf_1.proto3.util.newFieldList(() => [
-    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "current_step", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 5, name: "initial_state", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-]);
 /**
  * Plan Feedback
  *
  * @generated from message agent.PlanFeedbackRequest
  */
 class PlanFeedbackRequest extends protobuf_1.Message {
+    /**
+     * @generated from field: string thread_id = 1;
+     */
+    threadId = "";
+    /**
+     * @generated from field: string message = 2;
+     */
+    message = "";
+    /**
+     * @generated from field: string from = 3;
+     */
+    from = "";
     constructor(data) {
         super();
-        /**
-         * @generated from field: string thread_id = 1;
-         */
-        this.threadId = "";
-        /**
-         * @generated from field: string message = 2;
-         */
-        this.message = "";
-        /**
-         * @generated from field: string from = 3;
-         */
-        this.from = "";
         protobuf_1.proto3.util.initPartial(data, this);
     }
+    static runtime = protobuf_1.proto3;
+    static typeName = "agent.PlanFeedbackRequest";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 3, name: "from", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    ]);
     static fromBinary(bytes, options) {
         return new PlanFeedbackRequest().fromBinary(bytes, options);
     }
@@ -128,29 +135,28 @@ class PlanFeedbackRequest extends protobuf_1.Message {
     }
 }
 exports.PlanFeedbackRequest = PlanFeedbackRequest;
-PlanFeedbackRequest.runtime = protobuf_1.proto3;
-PlanFeedbackRequest.typeName = "agent.PlanFeedbackRequest";
-PlanFeedbackRequest.fields = protobuf_1.proto3.util.newFieldList(() => [
-    { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "from", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-]);
 /**
  * @generated from message agent.PlanFeedbackResponse
  */
 class PlanFeedbackResponse extends protobuf_1.Message {
+    /**
+     * @generated from field: bool success = 1;
+     */
+    success = false;
+    /**
+     * @generated from field: string message = 2;
+     */
+    message = "";
     constructor(data) {
         super();
-        /**
-         * @generated from field: bool success = 1;
-         */
-        this.success = false;
-        /**
-         * @generated from field: string message = 2;
-         */
-        this.message = "";
         protobuf_1.proto3.util.initPartial(data, this);
     }
+    static runtime = protobuf_1.proto3;
+    static typeName = "agent.PlanFeedbackResponse";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+        { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    ]);
     static fromBinary(bytes, options) {
         return new PlanFeedbackResponse().fromBinary(bytes, options);
     }
@@ -165,26 +171,25 @@ class PlanFeedbackResponse extends protobuf_1.Message {
     }
 }
 exports.PlanFeedbackResponse = PlanFeedbackResponse;
-PlanFeedbackResponse.runtime = protobuf_1.proto3;
-PlanFeedbackResponse.typeName = "agent.PlanFeedbackResponse";
-PlanFeedbackResponse.fields = protobuf_1.proto3.util.newFieldList(() => [
-    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-]);
 /**
  * Plan Finalize
  *
  * @generated from message agent.PlanFinalizeRequest
  */
 class PlanFinalizeRequest extends protobuf_1.Message {
+    /**
+     * @generated from field: string thread_id = 1;
+     */
+    threadId = "";
     constructor(data) {
         super();
-        /**
-         * @generated from field: string thread_id = 1;
-         */
-        this.threadId = "";
         protobuf_1.proto3.util.initPartial(data, this);
     }
+    static runtime = protobuf_1.proto3;
+    static typeName = "agent.PlanFinalizeRequest";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    ]);
     static fromBinary(bytes, options) {
         return new PlanFinalizeRequest().fromBinary(bytes, options);
     }
@@ -199,33 +204,35 @@ class PlanFinalizeRequest extends protobuf_1.Message {
     }
 }
 exports.PlanFinalizeRequest = PlanFinalizeRequest;
-PlanFinalizeRequest.runtime = protobuf_1.proto3;
-PlanFinalizeRequest.typeName = "agent.PlanFinalizeRequest";
-PlanFinalizeRequest.fields = protobuf_1.proto3.util.newFieldList(() => [
-    { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-]);
 /**
  * @generated from message agent.PlanFinalizeResponse
  */
 class PlanFinalizeResponse extends protobuf_1.Message {
+    /**
+     * @generated from field: bool success = 1;
+     */
+    success = false;
+    /**
+     * @generated from field: string message = 2;
+     */
+    message = "";
+    /**
+     * JSON-encoded state
+     *
+     * @generated from field: bytes final_state = 3;
+     */
+    finalState = new Uint8Array(0);
     constructor(data) {
         super();
-        /**
-         * @generated from field: bool success = 1;
-         */
-        this.success = false;
-        /**
-         * @generated from field: string message = 2;
-         */
-        this.message = "";
-        /**
-         * JSON-encoded state
-         *
-         * @generated from field: bytes final_state = 3;
-         */
-        this.finalState = new Uint8Array(0);
         protobuf_1.proto3.util.initPartial(data, this);
     }
+    static runtime = protobuf_1.proto3;
+    static typeName = "agent.PlanFinalizeResponse";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+        { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 3, name: "final_state", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+    ]);
     static fromBinary(bytes, options) {
         return new PlanFinalizeResponse().fromBinary(bytes, options);
     }
@@ -240,33 +247,32 @@ class PlanFinalizeResponse extends protobuf_1.Message {
     }
 }
 exports.PlanFinalizeResponse = PlanFinalizeResponse;
-PlanFinalizeResponse.runtime = protobuf_1.proto3;
-PlanFinalizeResponse.typeName = "agent.PlanFinalizeResponse";
-PlanFinalizeResponse.fields = protobuf_1.proto3.util.newFieldList(() => [
-    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "final_state", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-]);
 /**
  * Resume Workflow
  *
  * @generated from message agent.ResumeWorkflowRequest
  */
 class ResumeWorkflowRequest extends protobuf_1.Message {
+    /**
+     * @generated from field: string thread_id = 1;
+     */
+    threadId = "";
+    /**
+     * Additional input parameters
+     *
+     * @generated from field: map<string, string> input = 2;
+     */
+    input = {};
     constructor(data) {
         super();
-        /**
-         * @generated from field: string thread_id = 1;
-         */
-        this.threadId = "";
-        /**
-         * Additional input parameters
-         *
-         * @generated from field: map<string, string> input = 2;
-         */
-        this.input = {};
         protobuf_1.proto3.util.initPartial(data, this);
     }
+    static runtime = protobuf_1.proto3;
+    static typeName = "agent.ResumeWorkflowRequest";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 2, name: "input", kind: "map", K: 9 /* ScalarType.STRING */, V: { kind: "scalar", T: 9 /* ScalarType.STRING */ } },
+    ]);
     static fromBinary(bytes, options) {
         return new ResumeWorkflowRequest().fromBinary(bytes, options);
     }
@@ -281,38 +287,40 @@ class ResumeWorkflowRequest extends protobuf_1.Message {
     }
 }
 exports.ResumeWorkflowRequest = ResumeWorkflowRequest;
-ResumeWorkflowRequest.runtime = protobuf_1.proto3;
-ResumeWorkflowRequest.typeName = "agent.ResumeWorkflowRequest";
-ResumeWorkflowRequest.fields = protobuf_1.proto3.util.newFieldList(() => [
-    { no: 1, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "input", kind: "map", K: 9 /* ScalarType.STRING */, V: { kind: "scalar", T: 9 /* ScalarType.STRING */ } },
-]);
 /**
  * @generated from message agent.ResumeWorkflowResponse
  */
 class ResumeWorkflowResponse extends protobuf_1.Message {
+    /**
+     * @generated from field: bool success = 1;
+     */
+    success = false;
+    /**
+     * @generated from field: string message = 2;
+     */
+    message = "";
+    /**
+     * @generated from field: string current_step = 3;
+     */
+    currentStep = "";
+    /**
+     * JSON-encoded state
+     *
+     * @generated from field: bytes state = 4;
+     */
+    state = new Uint8Array(0);
     constructor(data) {
         super();
-        /**
-         * @generated from field: bool success = 1;
-         */
-        this.success = false;
-        /**
-         * @generated from field: string message = 2;
-         */
-        this.message = "";
-        /**
-         * @generated from field: string current_step = 3;
-         */
-        this.currentStep = "";
-        /**
-         * JSON-encoded state
-         *
-         * @generated from field: bytes state = 4;
-         */
-        this.state = new Uint8Array(0);
         protobuf_1.proto3.util.initPartial(data, this);
     }
+    static runtime = protobuf_1.proto3;
+    static typeName = "agent.ResumeWorkflowResponse";
+    static fields = protobuf_1.proto3.util.newFieldList(() => [
+        { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+        { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 3, name: "current_step", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+        { no: 4, name: "state", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+    ]);
     static fromBinary(bytes, options) {
         return new ResumeWorkflowResponse().fromBinary(bytes, options);
     }
@@ -327,11 +335,3 @@ class ResumeWorkflowResponse extends protobuf_1.Message {
     }
 }
 exports.ResumeWorkflowResponse = ResumeWorkflowResponse;
-ResumeWorkflowResponse.runtime = protobuf_1.proto3;
-ResumeWorkflowResponse.typeName = "agent.ResumeWorkflowResponse";
-ResumeWorkflowResponse.fields = protobuf_1.proto3.util.newFieldList(() => [
-    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "current_step", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "state", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-]);
