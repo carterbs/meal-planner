@@ -1,5 +1,4 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { initLogging, infoLog, errorLog } from './logging.js';
 import { registerWeeklyMealPlan } from './resources/weeklyMealPlan.js';
 import { registerRecipes } from './resources/recipes.js';
@@ -63,6 +62,7 @@ async function main() {
     // Parse JSON bodies
     app.use(express.json());
     // Create MCP transport in stateless mode to allow multiple workflow sessions
+    const { StreamableHTTPServerTransport } = await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
     const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined, // Stateless mode
         enableJsonResponse: false, // Use SSE streaming
