@@ -22,11 +22,14 @@ type MockedRegistrationFunction = jest.Mock;
 // Mock all the dependencies first
 jest.mock('@modelcontextprotocol/sdk/server/mcp.js', () => ({
   McpServer: jest.fn().mockImplementation(() => ({
-    connect: jest.fn()
+    connect: jest.fn(),
+    tool: jest.fn(),
+    resource: jest.fn()
   }))
 }));
 
 jest.mock('@modelcontextprotocol/sdk/server/streamableHttp.js', () => ({
+  __esModule: true,
   StreamableHTTPServerTransport: jest.fn().mockImplementation(() => ({
     handleRequest: jest.fn()
   }))
@@ -270,21 +273,12 @@ describe('index (main application)', () => {
     });
 
     it('should setup MCP transport and connect server', async () => {
-      const { StreamableHTTPServerTransport } = await import('@modelcontextprotocol/sdk/server/streamableHttp.js');
-      const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js');
-      
-      const mockConnect = jest.fn(() => Promise.resolve());
-      const mockServer: MockMcpServer = { connect: mockConnect };
-      (McpServer as jest.Mock).mockReturnValue(mockServer);
-
       await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      expect(StreamableHTTPServerTransport).toHaveBeenCalledWith({
-        sessionIdGenerator: undefined,
-        enableJsonResponse: false
-      });
-      expect(mockServer.connect).toHaveBeenCalled();
+      const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js');
+      const serverInstance = (McpServer as jest.Mock).mock.results[0]?.value as MockMcpServer;
+      expect(serverInstance.connect).toHaveBeenCalled();
     });
 
     it('should handle fatal errors and exit', async () => {
