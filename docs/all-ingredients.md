@@ -9,12 +9,12 @@
 | 33 | 234 | frozen broccoli |
 | 33 | 232 | mustard |
 | 33 | 235 | microwave brown rice |
-| 34 | 237 | Salad greens |
+| 34 | 237 | salad greens |
 | 34 | 238 | Potato chips |
 | 34 | 239 | cheddar cheese |
 | 34 | 240 | pepperjack cheese |
 | 34 | 236 | 93% lean ground beef |
-| 34 | 566 | Brioche Hamburger Buns |
+| 34 | 566 | Brioche buns |
 | 15 | 110 | mustard |
 | 15 | 109 | Pork chops |
 | 15 | 111 | Peach preserves |
@@ -23,7 +23,7 @@
 | 16 | 119 | pepperjack cheese |
 | 16 | 114 | 93% lean ground beef |
 | 16 | 115 | feta cheese |
-| 16 | 116 | Salad greens |
+| 16 | 116 | salad greens |
 | 16 | 117 | Potato chips |
 | 16 | 118 | cheddar cheese |
 | 18 | 136 | garlic |
@@ -38,7 +38,7 @@
 | 24 | 166 | clove, coarsely |
 | 24 | 167 | torn, bite-size pieces of crusty bread (6 to 8 ounces) |
 | 24 | 168 | arugula |
-| 24 | 170 | Finely grated Parmesan, for serving |
+| 24 | 170 | parmesan cheese |
 | 24 | 169 | .5 cup coarsely fresh parsley leaves |
 | 25 | 173 | olive oil |
 | 25 | 171 | 12 eggs |
@@ -72,9 +72,9 @@
 | 29 | 200 | boneless, skinless chicken thighs |
 | 29 | 207 | 1(15-ounce) can black beans, rinsed and drained |
 | 29 | 208 | Juice of 1 lime |
-| 29 | 209 | Warmed tortillas, for serving |
-| 29 | 210 | Pickled onion, for serving (see Tip) |
-| 29 | 211 | Sliced or cubed avocado, for serving |
+| 29 | 209 | tortillas |
+| 29 | 210 | pickled onion |
+| 29 | 211 | avocado |
 | 32 | 219 | olive oil |
 | 32 | 222 | salt |
 | 32 | 223 | garlic |
@@ -84,8 +84,8 @@
 | 32 | 221 | bunch kale, leaves only, coarsely |
 | 32 | 224 | tomato paste |
 | 32 | 227 | low-sodium chicken broth or water |
-| 32 | 229 | ounces shredded sharp Cheddar |
-| 32 | 230 | hot sauce, plus more to taste |
+| 32 | 229 | cheddar cheese |
+| 32 | 230 | hot sauce |
 | 32 | 220 | .5 white onion |
 | 38 | 275 | onion powder |
 | 38 | 278 | pepper |
@@ -103,7 +103,7 @@
 | 39 | 282 | ground beef, 80 percent lean, 20 percent fat |
 | 39 | 283 | cloves |
 | 39 | 286 | chipotle powder |
-| 39 | 284 | 1(6-ounce) can tomato paste |
+| 39 | 284 | tomato paste |
 | 39 | 296 | 1(14-ounce) can or crushed tomatoes in juice |
 | 39 | 302 | 2(14-ounce) cans kidney beans, drained and rinsed |
 | 39 | 303 | 2(14-ounce) cans pinto beans, drained and rinsed |
@@ -122,7 +122,7 @@
 | 39 | 291 | paprika |
 | 39 | 297 | cider vinegar |
 | 10 | 80 | .5 cup roughly cilantro |
-| 10 | 82 | .25 cup mayonnaise |
+| 10 | 82 | mayonnaise |
 | 10 | 83 | .5 cup sour cream |
 | 10 | 88 | .5 cup flour, preferably Wondra or other fine-milled flour |
 | 10 | 90 | .5 cup milk |
@@ -145,7 +145,7 @@
 | 51 | 423 | pepperoni slices |
 | 51 | 424 | mozzarella cheese sticks |
 | 51 | 425 | butter |
-| 51 | 426 | grated parmesan cheese |
+| 51 | 426 | parmesan cheese |
 | 51 | 427 | marinara sauce for dipping |
 | 52 | 428 | 5 cheese freschetta frozen pizza |
 | 52 | 429 | pepperoni freschetta frozen pizza |
@@ -159,17 +159,17 @@
 | 1 | 7 | Swiss cheese (2 cups) |
 | 2 | 9 | tortellini |
 | 2 | 10 | rotisserie chicken |
-| 3 | 11 | Frozen pancakes |
+| 3 | 11 | frozen pancakes |
 | 3 | 12 | 18 eggs |
 | 3 | 13 | thick cut bacon |
-| 3 | 140 | Eggs |
-| 3 | 139 | Thick cut bacon |
-| 3 | 141 | Cheddar cheese |
-| 3 | 142 | Frozen Pancakes |
+| 3 | 140 | eggs |
+| 3 | 139 | thick cut bacon |
+| 3 | 141 | cheddar cheese |
+| 3 | 142 | frozen pancakes |
 | 4 | 16 | .5 cup onion |
 | 4 | 17 | .5 cup drained capers |
 | 4 | 18 | .5 cup yogurt |
-| 4 | 19 | .75 cup mayonnaise, preferably homemade |
+| 4 | 19 | mayonnaise |
 | 4 | 15 | celery |
 | 4 | 14 | chicken, 3.5 pounds |
 | 4 | 23 | parsley |
@@ -192,17 +192,17 @@
 | 7 | 41 | apples |
 | 7 | 42 | Brioche buns |
 | 7 | 47 | Lays potato chips |
-| 7 | 44 | Cheddar cheese |
+| 7 | 44 | cheddar cheese |
 | 7 | 45 | white cheddar cabot |
 | 7 | 46 | Harvest farms salad |
-| 7 | 43 | Pepperjack Cheese |
+| 7 | 43 | pepperjack cheese |
 | 8 | 51 | celery stalk |
 | 8 | 52 | onion |
 | 8 | 55 | lemon juice |
 | 8 | 59 | sandwich rolls |
 | 8 | 48 | 2(5-ounce) cans tuna in water |
-| 8 | 60 | Potato chips, for serving |
-| 8 | 49 | .25 cup plus 2 tablespoons mayonnaise |
+| 8 | 60 | potato chips |
+| 8 | 49 | mayonnaise |
 | 8 | 50 | .5 cup sour dill pickles (from 2 small) |
 | 8 | 53 | .25 cup fresh dill or 1 tablespoon dried dill |
 | 8 | 54 | .5 cup fresh parsley |
@@ -219,11 +219,11 @@
 | 9 | 76 | plain naan |
 | 9 | 61 | boneless, skinless chicken breasts, or 6 chicken cutlets (about 2.25 pounds total), patted dry |
 | 9 | 69 | Red-pepper flakes, to taste |
-| 9 | 74 | Fresh basil, for serving |
+| 9 | 74 | fresh basil |
 | 9 | 63 | .25 cup all-purpose flour |
 | 9 | 68 | .5 teaspoon dried oregano |
 | 9 | 71 | .5 to .75 cup heavy cream |
-| 9 | 72 | .5 cup (1.5 ounces) Parmesan |
+| 9 | 72 | parmesan cheese |
 | 9 | 73 | .33 cup sliced sun-dried tomatoes, packed in oil |
 | 9 | 62 | (such as Diamond Crystal) and black pepper |
 | 9 | 64 | olive oil |
@@ -242,14 +242,14 @@
 | 13 | 104 | tyson dinosaur nuggets |
 | 13 | 105 | kraft deluxe macaroni and cheese |
 | 19 | 143 | fish sticks |
-| 19 | 145 | Frozen vegetables |
+| 19 | 145 | frozen vegetables |
 | 19 | 144 | Kraft Deluxe Macaroni and Cheese |
 | 21 | 150 | linguine |
 | 21 | 151 | small frozen shrimp |
 | 21 | 152 | 1 lemon |
 | 23 | 157 | of hot dogs |
 | 23 | 158 | Potato chips |
-| 23 | 159 | Salad greens |
+| 23 | 159 | salad greens |
 | 23 | 160 | Melon |
 | 26 | 178 | tomatoes |
 | 26 | 179 | cheddar block |
@@ -267,12 +267,12 @@
 | 22 | 153 | Salmon filet (2-3 lbs) |
 | 35 | 242 | ricotta cheese |
 | 35 | 243 | sweet italian sausage |
-| 35 | 244 | prego sauce |
-| 35 | 245 | shredded mozzarella |
-| 35 | 246 | shredded parmesan |
+| 35 | 244 | prego spaghetti sauce |
+| 35 | 245 | mozzarella cheese |
+| 35 | 246 | parmesan cheese |
 | 35 | 241 | barilla lasagna noodles |
 | 30 | 212 | Rotisserie Chicken |
-| 30 | 214 | Frozen vegetables |
+| 30 | 214 | frozen vegetables |
 | 30 | 213 | Kraft deluxe macaroni and cheese |
 | 42 | 328 | lean ground beef |
 | 42 | 340 | Tzatziki |
@@ -324,14 +324,14 @@
 | 50 | 415 | ground beef (at least 85-percent lean) |
 | 50 | 410 | yellow onion |
 | 50 | 420 | egg |
-| 50 | 421 | ounces shredded low-moisture mozzarella |
+| 50 | 421 | mozzarella cheese |
 | 50 | 412 | fresh thyme |
 | 50 | 418 | ricotta cheese |
-| 50 | 413 | dried oregano, plus more for serving |
+| 50 | 413 | dried oregano |
 | 50 | 406 | Unsalted butter, for greasing the pan |
 | 50 | 416 | 1(32- to 35-ounce) jar marinara sauce |
-| 50 | 417 | .5 cup fresh basil or parsley leaves, plus more for serving |
-| 50 | 419 | .75 cup Parmesan |
+| 50 | 417 | fresh basil or parsley leaves |
+| 50 | 419 | parmesan cheese |
 | 50 | 407 | (such as Diamond Crystal) and black pepper |
 | 50 | 409 | olive oil |
 | 50 | 411 | garlic |
@@ -340,7 +340,7 @@
 | 48 | 393 | rib, finely |
 | 48 | 395 | finely red onion, shallot or scallions |
 | 48 | 396 | finely fresh parsley, chives, tarragon or a mix (optional) |
-| 48 | 397 | mayonnaise, plus more for spreading (see Tip) |
+| 48 | 397 | mayonnaise |
 | 48 | 398 | sweet pickle relish or dill pickles (optional) |
 | 48 | 399 | freshly squeezed lemon juice |
 | 48 | 402 | thick, soft sandwich bread, such as Texas toast, toasted, if desired |
@@ -356,7 +356,7 @@
 | 47 | 387 | salt |
 | 47 | 389 | pepper |
 | 79 | 549 | cream cheese |
-| 79 | 548 | Thomas' plain bagel |
+| 79 | 548 | Thomas' Plain bagels |
 | 79 | 550 | sliced turkey |
 | 79 | 551 | Cantaloupe |
 | 79 | 552 | Goldfish crackers |
@@ -445,23 +445,23 @@
 | 72 | 514 | blueberries |
 | 72 | 515 | cheese stick |
 | 72 | 516 | Nutri-grain bar |
-| 73 | 517 | Tortilla |
+| 73 | 517 | tortillas |
 | 73 | 518 | sliced turkey |
 | 73 | 519 | cheddar cheese |
 | 73 | 520 | Cucumber slices |
 | 73 | 521 | Goldfish crackers |
-| 75 | 527 | Tortilla |
+| 75 | 527 | tortillas |
 | 75 | 528 | shredded cheese |
 | 75 | 529 | Grape tomatoes |
 | 75 | 530 | Ritz crackers |
 | 75 | 531 | Apple Sauce pouch |
-| 77 | 537 | Tortilla |
+| 77 | 537 | tortillas |
 | 77 | 538 | Peanut Butter |
 | 77 | 539 | Welch's Grape Jelly |
 | 77 | 540 | banana |
 | 77 | 541 | Baby carrots |
 | 77 | 542 | Graham crackers |
-| 78 | 543 | Tortilla |
+| 78 | 543 | tortillas |
 | 78 | 544 | sunbutter |
 | 78 | 545 | banana |
 | 78 | 546 | Baby carrots |
@@ -479,7 +479,7 @@
 | 83 | 568 | teaspoons kosher salt |
 | 83 | 569 | teaspoon freshly ground black pepper |
 | 83 | 570 | to 0.75 cup all-purpose flour |
-| 83 | 571 | tablespoons olive oil |
+| 83 | 571 | olive oil |
 | 83 | 572 | herbes de Provence |
 | 83 | 573 | lemon, quartered |
 | 83 | 574 | garlic, peeled |
@@ -489,7 +489,7 @@
 | 84 | 578 | pint cherry tomatoes, halved |
 | 84 | 579 | shallots |
 | 84 | 580 | teaspoons minced garlic (about 2 large cloves) |
-| 84 | 581 | tablespoons olive oil, plus more for brushing |
+| 84 | 581 | olive oil |
 | 84 | 582 | tablespoon sherry or red wine vinegar |
 | 84 | 583 | teaspoon honey |
 | 84 | 584 | teaspoon kosher salt, plus more to taste |
@@ -503,31 +503,31 @@
 | 85 | 592 | pound turkey or smoked turkey, sliced |
 | 85 | 593 | apple, thinly sliced |
 | 86 | 594 | tablespoons red wine vinegar, plus more to taste |
-| 86 | 595 | garlic clove, finely grated or minced |
+| 86 | 595 | garlic clove |
 | 86 | 596 | teaspoon dried oregano |
 | 86 | 597 | Salt and freshly ground black pepper |
-| 86 | 598 | extra-virgin olive oil, plus more for drizzling |
+| 86 | 598 | olive oil |
 | 86 | 599 | pound short-cut pasta, such as farfalle |
 | 86 | 600 | pint cherry or grape tomatoes, halved |
-| 86 | 601 | ounces mozzarella, cubed (or use small mozzarella balls) |
+| 86 | 601 | mozzarella cheese |
 | 86 | 602 | ounces sliced salami, cut into 0.25-inch ribbons |
 | 86 | 603 | thinly sliced cucumber |
 | 86 | 604 | tablespoons diced red onion |
 | 86 | 605 | coarsely chopped fresh parsley and basil leaves |
-| 87 | 606 | 1/2 cup old fashioned oats divided |
+| 87 | 606 | rolled oats |
 | 87 | 607 | 1/2 cup honeycrisp apple |
 | 87 | 608 | 1/4 cup milk of your choice |
 | 87 | 609 | cinnamon |
 | 87 | 610 | maple syrup or honey |
 | 87 | 611 | walnuts |
 | 88 | 612 | mashed ripe banana |
-| 88 | 613 | rolled oats, regular or gluten free |
+| 88 | 613 | rolled oats |
 | 88 | 614 | milk of choice |
-| 88 | 615 | T chopped pecans or walnuts |
+| 88 | 615 | chopped pecans or walnuts |
 | 88 | 616 | vanilla extract |
 | 88 | 617 | cinnamon |
 | 88 | 618 | Dash of sea salt |
-| 88 | 619 | T chia seeds |
+| 88 | 619 | chia seeds |
 | 88 | 620 | 100% pure maple syrup |
 | 89 | 621 | tablespoons granulated or brown sugar |
 | 89 | 622 | teaspoons ground cinnamon |
@@ -535,16 +535,16 @@
 | 89 | 624 | Unsalted butter, for cooking |
 | 89 | 625 | of bread, such as white, whole wheat or brioche |
 | 91 | 632 | eggs |
-| 91 | 633 | large garlic clove |
+| 91 | 633 | garlic clove |
 | 91 | 634 | panko bread crumbs |
 | 91 | 635 | white sandwich bread, crusts removed |
-| 91 | 636 | pound low-moisture mozzarella (not shredded) |
-| 91 | 637 | Olive oil, for frying |
+| 91 | 636 | mozzarella cheese |
+| 91 | 637 | olive oil |
 | 92 | 638 | pound thin-cut bacon |
 | 92 | 639 | beefsteak tomatoes (or similar) |
-| 92 | 640 | Bag of shredded iceberg lettuce |
+| 92 | 640 | shredded iceberg lettuce |
 | 92 | 641 | airy white bread |
-| 92 | 642 | Mayonnaise |
+| 92 | 642 | mayonnaise |
 | 93 | 643 | tablespoons unsalted butter, plus more as needed |
 | 93 | 644 | large Granny Smith apple |
 | 93 | 645 | small shallot |
@@ -554,4 +554,4 @@
 | 93 | 649 | ounces sharp Cheddar, sliced 0.25-inch thick |
 | 94 | 650 | lbs of whole fish (snapper, trout, etc) |
 | 94 | 651 | Crusty sourdough boule |
-| 94 | 652 | Salad greens |
+| 94 | 652 | salad greens |
