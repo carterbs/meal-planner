@@ -5,8 +5,9 @@
 // @ts-nocheck
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AgentService = void 0;
-const agent_pb_js_1 = require("./agent_pb.js");
 const protobuf_1 = require("@bufbuild/protobuf");
+const api_pb_js_1 = require("./api_pb.js");
+const agent_pb_js_1 = require("./agent_pb.js");
 /**
  * Agent Service - provides gRPC endpoints for all CLI commands
  *
@@ -15,6 +16,17 @@ const protobuf_1 = require("@bufbuild/protobuf");
 exports.AgentService = {
     typeName: "agent.AgentService",
     methods: {
+        /**
+         * Health check endpoint
+         *
+         * @generated from rpc agent.AgentService.HealthCheck
+         */
+        healthCheck: {
+            name: "HealthCheck",
+            I: protobuf_1.Empty,
+            O: api_pb_js_1.HealthCheckResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
         /**
          * Plan commands
          *
@@ -53,6 +65,122 @@ exports.AgentService = {
             name: "ResumeWorkflow",
             I: agent_pb_js_1.ResumeWorkflowRequest,
             O: agent_pb_js_1.ResumeWorkflowResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * High level workflow endpoints for API gateway
+         *
+         * @generated from rpc agent.AgentService.StartAgentWorkflow
+         */
+        startAgentWorkflow: {
+            name: "StartAgentWorkflow",
+            I: api_pb_js_1.StartAgentWorkflowRequest,
+            O: api_pb_js_1.StartAgentWorkflowResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc agent.AgentService.MessageAgent
+         */
+        messageAgent: {
+            name: "MessageAgent",
+            I: api_pb_js_1.MessageAgentRequest,
+            O: api_pb_js_1.MessageAgentResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * Workflow management endpoints
+         *
+         * @generated from rpc agent.AgentService.GetWorkflowStatus
+         */
+        getWorkflowStatus: {
+            name: "GetWorkflowStatus",
+            I: api_pb_js_1.GetWorkflowStatusRequest,
+            O: api_pb_js_1.GetWorkflowStatusResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc agent.AgentService.ListWorkflows
+         */
+        listWorkflows: {
+            name: "ListWorkflows",
+            I: protobuf_1.Empty,
+            O: api_pb_js_1.ListWorkflowsResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc agent.AgentService.CancelWorkflow
+         */
+        cancelWorkflow: {
+            name: "CancelWorkflow",
+            I: api_pb_js_1.CancelWorkflowRequest,
+            O: api_pb_js_1.CancelWorkflowResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc agent.AgentService.GetWorkflowState
+         */
+        getWorkflowState: {
+            name: "GetWorkflowState",
+            I: api_pb_js_1.GetWorkflowStateRequest,
+            O: api_pb_js_1.GetWorkflowStateResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc agent.AgentService.AbandonWorkflow
+         */
+        abandonWorkflow: {
+            name: "AbandonWorkflow",
+            I: api_pb_js_1.AbandonWorkflowRequest,
+            O: api_pb_js_1.AbandonWorkflowResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * Message management endpoints
+         *
+         * @generated from rpc agent.AgentService.GetMessages
+         */
+        getMessages: {
+            name: "GetMessages",
+            I: api_pb_js_1.GetMessagesRequest,
+            O: api_pb_js_1.GetMessagesResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc agent.AgentService.AddMessage
+         */
+        addMessage: {
+            name: "AddMessage",
+            I: api_pb_js_1.AddMessageRequest,
+            O: api_pb_js_1.AddMessageResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * Checkpoint management endpoints
+         *
+         * @generated from rpc agent.AgentService.GetCheckpoint
+         */
+        getCheckpoint: {
+            name: "GetCheckpoint",
+            I: api_pb_js_1.GetCheckpointRequest,
+            O: api_pb_js_1.GetCheckpointResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc agent.AgentService.PutCheckpoint
+         */
+        putCheckpoint: {
+            name: "PutCheckpoint",
+            I: api_pb_js_1.PutCheckpointRequest,
+            O: api_pb_js_1.PutCheckpointResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc agent.AgentService.ListCheckpoints
+         */
+        listCheckpoints: {
+            name: "ListCheckpoints",
+            I: api_pb_js_1.ListCheckpointsRequest,
+            O: api_pb_js_1.ListCheckpointsResponse,
             kind: protobuf_1.MethodKind.Unary,
         },
     }

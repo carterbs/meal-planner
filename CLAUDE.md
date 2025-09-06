@@ -22,3 +22,4 @@ The tool automatically detects service types (Go/Node) and runs appropriate comm
 ## General Guidelines
 - Avoid using npm.  All JavaScript/TypeScript packages in this monorepo use Yarn workspaces, so use yarn install and yarn workspace <pkg> <command> to run package‑specific scripts.
 - If you encounter ambiguous instructions or missing information, document your assumptions and ask clarifying questions.
+- do not use fetch for new tools in the mcp-service

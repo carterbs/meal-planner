@@ -18,3 +18,4 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./api_pb.js"), exports);
 // Export Connect RPC service definitions
 __exportStar(require("./api_connect.js"), exports);
+__exportStar(require("./agent_pb.js"), exports);

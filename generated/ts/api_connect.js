@@ -55,15 +55,6 @@ exports.MealPlannerAPI = {
             kind: protobuf_1.MethodKind.Unary,
         },
         /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.Reconnect
-         */
-        reconnect: {
-            name: "Reconnect",
-            I: protobuf_1.Empty,
-            O: api_pb_js_1.ReconnectResponse,
-            kind: protobuf_1.MethodKind.Unary,
-        },
-        /**
          * Meal plan endpoints
          *
          * @generated from rpc mealplanner.api.MealPlannerAPI.GetMealPlan
@@ -90,15 +81,6 @@ exports.MealPlannerAPI = {
             name: "FinalizeMealPlan",
             I: api_pb_js_1.FinalizeMealPlanRequest,
             O: api_pb_js_1.FinalizeMealPlanResponse,
-            kind: protobuf_1.MethodKind.Unary,
-        },
-        /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.GetMealPlanICS
-         */
-        getMealPlanICS: {
-            name: "GetMealPlanICS",
-            I: protobuf_1.Empty,
-            O: api_pb_js_1.MealPlanICSResponse,
             kind: protobuf_1.MethodKind.Unary,
         },
         /**
@@ -133,6 +115,15 @@ exports.MealPlannerAPI = {
             kind: protobuf_1.MethodKind.Unary,
         },
         /**
+         * @generated from rpc mealplanner.api.MealPlannerAPI.UpdateMeal
+         */
+        updateMeal: {
+            name: "UpdateMeal",
+            I: api_pb_js_1.UpdateMealRequest,
+            O: api_pb_js_1.UpdateMealResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
          * @generated from rpc mealplanner.api.MealPlannerAPI.SwapMeal
          */
         swapMeal: {
@@ -142,21 +133,21 @@ exports.MealPlannerAPI = {
             kind: protobuf_1.MethodKind.Unary,
         },
         /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.RemoveMeal
-         */
-        removeMeal: {
-            name: "RemoveMeal",
-            I: api_pb_js_1.RemoveMealRequest,
-            O: api_pb_js_1.RemoveMealResponse,
-            kind: protobuf_1.MethodKind.Unary,
-        },
-        /**
          * @generated from rpc mealplanner.api.MealPlannerAPI.ReplaceMeal
          */
         replaceMeal: {
             name: "ReplaceMeal",
             I: api_pb_js_1.ReplaceMealRequest,
             O: api_pb_js_1.ReplaceMealResponse,
+            kind: protobuf_1.MethodKind.Unary,
+        },
+        /**
+         * @generated from rpc mealplanner.api.MealPlannerAPI.CreateMealIngredient
+         */
+        createMealIngredient: {
+            name: "CreateMealIngredient",
+            I: api_pb_js_1.CreateMealIngredientRequest,
+            O: api_pb_js_1.CreateMealIngredientResponse,
             kind: protobuf_1.MethodKind.Unary,
         },
         /**
@@ -252,26 +243,8 @@ exports.MealPlannerAPI = {
             kind: protobuf_1.MethodKind.Unary,
         },
         /**
-         * Agent workflow endpoints
+         * Agent workflow endpoints handled by the agent service
          *
-         * @generated from rpc mealplanner.api.MealPlannerAPI.StartAgentWorkflow
-         */
-        startAgentWorkflow: {
-            name: "StartAgentWorkflow",
-            I: api_pb_js_1.StartAgentWorkflowRequest,
-            O: api_pb_js_1.StartAgentWorkflowResponse,
-            kind: protobuf_1.MethodKind.Unary,
-        },
-        /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.MessageAgent
-         */
-        messageAgent: {
-            name: "MessageAgent",
-            I: api_pb_js_1.MessageAgentRequest,
-            O: api_pb_js_1.MessageAgentResponse,
-            kind: protobuf_1.MethodKind.Unary,
-        },
-        /**
          * @generated from rpc mealplanner.api.MealPlannerAPI.GetWorkflowStatus
          */
         getWorkflowStatus: {
@@ -334,15 +307,6 @@ exports.MealPlannerAPI = {
             name: "GetMessages",
             I: api_pb_js_1.GetMessagesRequest,
             O: api_pb_js_1.GetMessagesResponse,
-            kind: protobuf_1.MethodKind.Unary,
-        },
-        /**
-         * @generated from rpc mealplanner.api.MealPlannerAPI.UpdateSessionState
-         */
-        updateSessionState: {
-            name: "UpdateSessionState",
-            I: api_pb_js_1.UpdateSessionStateRequest,
-            O: api_pb_js_1.UpdateSessionStateResponse,
             kind: protobuf_1.MethodKind.Unary,
         },
         /**
