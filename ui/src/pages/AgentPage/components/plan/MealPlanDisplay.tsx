@@ -98,99 +98,125 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                 border: `1px solid ${activeColors.border}`,
               }}
             >
-              {/* Meals grid */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 0.5,
-                }}
-              >
-                {entries.map((e) => {
-                  const key = `${e.dayIndex}-${e.mealType}`;
-                  const isHighlighted = highlights?.has(key);
-                  const isEmpty = !e.meal;
-                  return (
-                    <Box
-                      key={e.mealType}
-                      data-testid={`meal-${key}`}
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '90px 1fr auto',
-                        alignItems: 'center',
-                        gap: 1,
-                        py: 0,
-                        borderBottom: '1px solid rgba(0,0,0,0.05)',
-                        '&:last-child': {
-                          borderBottom: 'none',
-                        },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          fontSize: '1rem',
-                          fontWeight: 400,
-                          color: activeColors.text,
-                          opacity: 0.5,
-                          fontVariant: 'small-caps',
-                          letterSpacing: '0.5px',
-                          textAlign: 'left',
-                          width: '100%',
-                        }}
-                      >
-                        {e.mealType}
-                      </Box>
-                      <Box
-                        component="span"
-                        data-testid={`meal-name-${key}`}
-                        data-highlighted={isHighlighted ? 'true' : undefined}
-                        sx={{
-                          fontSize: '0.875rem',
-                          color: isEmpty ? '#a0a0a0' : activeColors.text,
-                          borderLeft: `2px solid transparent`,
-                          fontStyle: isEmpty ? 'italic' : 'normal',
-                          ...(isHighlighted && {
-                            backgroundColor: `${activeColors.changedMealHighlight}100`,
-                            borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            transition: 'all 2s ease-out',
-                            animation: 'highlightFade 5s forwards',
-                            '@keyframes highlightFade': {
-                              '0%': {
-                                backgroundColor: `${activeColors.changedMealHighlight}40`,
-                                borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
-                              },
-                              '50%': {
-                                backgroundColor: `${activeColors.changedMealHighlight}25`,
-                                borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
-                              },
-                              '100%': {
-                                backgroundColor: 'transparent',
-                                borderLeft: '2px solid transparent',
-                              },
-                            },
-                          }),
-                        }}
-                      >
-                        {e.meal ? e.meal.name : '---'}
-                      </Box>
-                      {e.meal && (
+              {/* Meals laid out horizontally: Breakfast | Lunch | Dinner */}
+              {(() => {
+                // Keep a deterministic order and ensure placeholders exist
+                const order: Array<'breakfast' | 'lunch' | 'dinner'> = [
+                  'breakfast',
+                  'lunch',
+                  'dinner',
+                ];
+                type EntryLike = {
+                  dayIndex: number;
+                  mealType: string;
+                  meal?: { name: string; effort: number } | null;
+                };
+                const byType: Record<string, EntryLike | undefined> = {};
+                entries.forEach((e) => {
+                  byType[e.mealType] = e as unknown as EntryLike;
+                });
+                const ordered: EntryLike[] = order.map((t) =>
+                  byType[t] ?? {
+                    dayIndex: entries[0].dayIndex,
+                    mealType: t,
+                    meal: null,
+                  },
+                );
+
+                return (
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'repeat(3, 1fr)',
+                      },
+                      gap: 1,
+                      alignItems: 'stretch',
+                    }}
+                  >
+                    {ordered.map((e) => {
+                      const key = `${e.dayIndex}-${e.mealType}`;
+                      const isHighlighted = highlights?.has(key);
+                      const isEmpty = !e.meal;
+                      return (
                         <Box
+                          key={e.mealType}
+                          data-testid={`meal-${key}`}
                           sx={{
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.3,
-                            fontSize: '1.2rem',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            gap: 0.5,
+                            p: 1,
+                            border: '1px solid rgba(0,0,0,0.05)',
+                            borderRadius: '10px',
+                            backgroundColor: 'transparent',
                           }}
                         >
-                          {getEffortIcon(e.meal.effort)}
+                          <Box
+                            sx={{
+                              fontSize: '0.8rem',
+                              fontWeight: 500,
+                              color: activeColors.text,
+                              opacity: 0.6,
+                              fontVariant: 'small-caps',
+                              letterSpacing: '0.5px',
+                              textAlign: 'left',
+                            }}
+                          >
+                            {e.mealType}
+                          </Box>
+                          <Box
+                            component="span"
+                            data-testid={`meal-name-${key}`}
+                            data-highlighted={isHighlighted ? 'true' : undefined}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 0.5,
+                              fontSize: '0.95rem',
+                              color: isEmpty ? '#a0a0a0' : activeColors.text,
+                              borderLeft: `2px solid transparent`,
+                              fontStyle: isEmpty ? 'italic' : 'normal',
+                              ...(isHighlighted && {
+                                backgroundColor: `${activeColors.changedMealHighlight}100`,
+                                borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                transition: 'all 2s ease-out',
+                                animation: 'highlightFade 5s forwards',
+                                '@keyframes highlightFade': {
+                                  '0%': {
+                                    backgroundColor: `${activeColors.changedMealHighlight}40`,
+                                    borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
+                                  },
+                                  '50%': {
+                                    backgroundColor: `${activeColors.changedMealHighlight}25`,
+                                    borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
+                                  },
+                                  '100%': {
+                                    backgroundColor: 'transparent',
+                                    borderLeft: '2px solid transparent',
+                                  },
+                                },
+                              }),
+                            }}
+                          >
+                            {e.meal ? e.meal.name : '---'}
+                            {e.meal && (
+                              <Box sx={{ fontSize: '1.1rem' }}>
+                                {getEffortIcon(e.meal.effort)}
+                              </Box>
+                            )}
+                          </Box>
                         </Box>
-                      )}
-                    </Box>
-                  );
-                })}
-              </Box>
+                      );
+                    })}
+                  </Box>
+                );
+              })()}
             </Box>
           </Box>
         ) : null,
