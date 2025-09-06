@@ -1,26 +1,9 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, Divider } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
 import { WeeklyMealPlan } from '@mealplanner/generated';
-
-const effortIcons = {
-  easy: '🙂',
-  medium: '😅',
-  hard: '😫',
-  veryHard: '🥵',
-};
-
-export const getEffortIcon = (effort: number) => {
-  if (effort > 7) {
-    return effortIcons.veryHard;
-  } else if (effort > 5) {
-    return effortIcons.hard;
-  } else if (effort > 3) {
-    return effortIcons.medium;
-  } else {
-    return effortIcons.easy;
-  }
-};
+import MealTypeChip from './MealTypeChip';
 
 interface MealPlanDisplayProps {
   plan: WeeklyMealPlan;
@@ -41,18 +24,20 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
   colors,
 }) => {
   // Default colors if none provided
+  const theme = useTheme();
   const defaultColors = {
-    cardBg: '#faf9f6',
-    border: 'rgba(139, 115, 85, 0.1)',
-    text: '#2c2c2c',
-    accent: '#6b8c5d',
-    changedMealHighlight: '#92ca92',
+    cardBg: theme.palette.background.paper,
+    border: theme.palette.divider,
+    text: theme.palette.text.primary,
+    accent: theme.palette.primary.main,
+    changedMealHighlight: theme.palette.secondary.main,
   };
   const activeColors = colors || defaultColors;
   const grouped = DAYS_OF_THE_WEEK.map((day, idx) => ({
     day,
     entries: plan.days.filter((d) => d.dayIndex === idx),
   }));
+  const visibleGroups = grouped.filter((g) => g.entries.length > 0);
 
   return (
     <Box
@@ -60,15 +45,14 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 1.5,
+        gap: 2,
         flex: 1,
         overflow: 'auto',
       }}
     >
-      {grouped.map(({ day, entries }) =>
-        entries.length > 0 ? (
+      {visibleGroups.map(({ day, entries }, idx) => (
+        <React.Fragment key={day}>
           <Box
-            key={day}
             sx={{
               display: 'flex',
               flexDirection: 'column',
@@ -82,7 +66,11 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                 fontWeight: 600,
                 color: activeColors.text,
                 letterSpacing: '0.3px',
-                mb: 0.5,
+                position: 'sticky',
+                top: 0,
+                zIndex: 1,
+                backgroundColor: 'background.default',
+                py: 1,
               }}
             >
               {day}
@@ -92,9 +80,9 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
             <Box
               sx={{
                 backgroundColor: activeColors.cardBg,
-                borderRadius: '16px',
-                p: 1.5,
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                borderRadius: theme.shape.borderRadius,
+                p: 2,
+                boxShadow: theme.shadows[1],
                 border: `1px solid ${activeColors.border}`,
               }}
             >
@@ -145,71 +133,68 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                           data-testid={`meal-${key}`}
                           sx={{
                             display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                            gap: 0.5,
+                            alignItems: 'center',
                             p: 1,
-                            border: '1px solid rgba(0,0,0,0.05)',
+                            border: `1px solid ${activeColors.border}`,
                             borderRadius: '10px',
                             backgroundColor: 'transparent',
                           }}
                         >
                           <Box
                             sx={{
-                              fontSize: '0.8rem',
-                              fontWeight: 500,
-                              color: activeColors.text,
-                              opacity: 0.6,
-                              fontVariant: 'small-caps',
-                              letterSpacing: '0.5px',
-                              textAlign: 'left',
-                            }}
-                          >
-                            {e.mealType}
-                          </Box>
-                          <Box
-                            component="span"
-                            data-testid={`meal-name-${key}`}
-                            data-highlighted={isHighlighted ? 'true' : undefined}
-                            sx={{
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: 0.5,
-                              fontSize: '0.95rem',
-                              color: isEmpty ? '#a0a0a0' : activeColors.text,
-                              borderLeft: `2px solid transparent`,
-                              fontStyle: isEmpty ? 'italic' : 'normal',
-                              ...(isHighlighted && {
-                                backgroundColor: `${activeColors.changedMealHighlight}100`,
-                                borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                transition: 'all 2s ease-out',
-                                animation: 'highlightFade 5s forwards',
-                                '@keyframes highlightFade': {
-                                  '0%': {
-                                    backgroundColor: `${activeColors.changedMealHighlight}40`,
-                                    borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
-                                  },
-                                  '50%': {
-                                    backgroundColor: `${activeColors.changedMealHighlight}25`,
-                                    borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
-                                  },
-                                  '100%': {
-                                    backgroundColor: 'transparent',
-                                    borderLeft: '2px solid transparent',
-                                  },
-                                },
-                              }),
+                              gap: 1,
+                              width: '100%',
                             }}
                           >
-                            {e.meal ? e.meal.name : '---'}
-                            {e.meal && (
-                              <Box sx={{ fontSize: '1.1rem' }}>
-                                {getEffortIcon(e.meal.effort)}
-                              </Box>
-                            )}
+                            <MealTypeChip mealType={e.mealType} />
+                            <Box
+                              component="span"
+                              data-testid={`meal-name-${key}`}
+                              data-highlighted={isHighlighted ? 'true' : undefined}
+                              sx={{
+                                fontSize: '0.95rem',
+                                color: isEmpty
+                                  ? theme.palette.text.disabled
+                                  : activeColors.text,
+                                borderLeft: `2px solid transparent`,
+                                fontStyle: isEmpty ? 'italic' : 'normal',
+                                ...(isHighlighted && {
+                                  backgroundColor: alpha(
+                                    activeColors.changedMealHighlight,
+                                    0.25,
+                                  ),
+                                  borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  transition: 'all 2s ease-out',
+                                  animation: 'highlightFade 5s forwards',
+                                  '@keyframes highlightFade': {
+                                    '0%': {
+                                      backgroundColor: alpha(
+                                        activeColors.changedMealHighlight,
+                                        0.25,
+                                      ),
+                                      borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
+                                    },
+                                    '50%': {
+                                      backgroundColor: alpha(
+                                        activeColors.changedMealHighlight,
+                                        0.15,
+                                      ),
+                                      borderLeft: `2px solid ${activeColors.changedMealHighlight}`,
+                                    },
+                                    '100%': {
+                                      backgroundColor: 'transparent',
+                                      borderLeft: '2px solid transparent',
+                                    },
+                                  },
+                                }),
+                              }}
+                            >
+                              {e.meal ? e.meal.name : '---'}
+                            </Box>
                           </Box>
                         </Box>
                       );
@@ -219,8 +204,11 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
               })()}
             </Box>
           </Box>
-        ) : null,
-      )}
+          {idx < visibleGroups.length - 1 && (
+            <Divider sx={{ my: 1, opacity: 0.5 }} />
+          )}
+        </React.Fragment>
+      ))}
     </Box>
   );
 };

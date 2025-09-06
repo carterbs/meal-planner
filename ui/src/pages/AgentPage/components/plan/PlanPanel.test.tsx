@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PlanPanel from './PlanPanel';
 import { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
-import { colorSchemes } from '../../../../theme';
+import { colorSchemes } from '../../../../agentTheme';
 
 describe('PlanPanel', () => {
   const colors = colorSchemes['earthyNeutrals'];
@@ -54,11 +54,12 @@ describe('PlanPanel', () => {
       />,
     );
 
-    const planTab = screen.getByRole('button', { name: 'Meal Plan' });
-    const listTab = screen.getByRole('button', { name: 'Shopping List' });
+    const planTab = screen.getByRole('tab', { name: 'Meal Plan' });
+    const listTab = screen.getByRole('tab', { name: 'Shopping List' });
     expect(planTab).toBeEnabled();
     expect(listTab).toBeEnabled();
     await user.click(listTab);
+    expect(onTabChange).toHaveBeenCalledTimes(1);
     expect(onTabChange).toHaveBeenCalledWith(1);
   });
 
@@ -75,7 +76,7 @@ describe('PlanPanel', () => {
         colors={colors}
       />,
     );
-    const listTab = screen.getByRole('button', { name: 'Shopping List' });
+    const listTab = screen.getByRole('tab', { name: 'Shopping List' });
     expect(listTab).toBeDisabled();
   });
 

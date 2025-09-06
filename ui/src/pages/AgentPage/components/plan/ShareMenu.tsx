@@ -1,7 +1,7 @@
 import React from 'react';
 import { IconButton, Menu, MenuItem } from '@mui/material';
 import { IosShare as ShareIcon } from '@mui/icons-material';
-import { Colors } from '../../../../theme';
+import { Colors } from '../../../../agentTheme';
 
 interface ShareMenuProps {
   anchorEl: HTMLElement | null;

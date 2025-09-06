@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Avatar, Typography } from '@mui/material';
 import { RestaurantMenu as RestaurantMenuIcon } from '@mui/icons-material';
 import TypingIndicator from '../../../../components/TypingIndicator';
-import { getAgentPageStyles } from '../../../../theme';
+import { getAgentPageStyles } from '../../../../agentTheme';
 import type { ChatMessage } from './ChatPanel';
 
 type AgentStyles = ReturnType<typeof getAgentPageStyles>;
