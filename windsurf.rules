@@ -1,5 +1,0 @@
-# windsurf.rules
-# This file defines Windsurf agentic rules for referencing project documentation.
-
-# Rule: Point to CLAUDE.md for project-specific guidelines
-DOCUMENTATION: CLAUDE.md
