@@ -5,7 +5,7 @@ import {
   ExitToApp as ExitToAppIcon,
   MenuBook as MenuBookIcon,
 } from '@mui/icons-material';
-import { Colors, getAgentPageStyles } from '../../../../theme';
+import { Colors, getAgentPageStyles } from '../../../../agentTheme';
 
 type AgentStyles = ReturnType<typeof getAgentPageStyles>;
 

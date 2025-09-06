@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ChatInput from './ChatInput';
-import { colorSchemes, getAgentPageStyles } from '../../../../theme';
+import { colorSchemes, getAgentPageStyles } from '../../../../agentTheme';
 
 describe('ChatInput', () => {
   const colors = colorSchemes['earthyNeutrals'];

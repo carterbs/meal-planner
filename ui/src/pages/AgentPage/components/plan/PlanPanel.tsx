@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
-import { Box, Button, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, Tabs, Tab } from '@mui/material';
 import { RestaurantMenu as RestaurantMenuIcon } from '@mui/icons-material';
 import type { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
 import MealPlanDisplay from './MealPlanDisplay';
-import { Colors, getAgentPageStyles } from '../../../../theme';
+import { Colors, getAgentPageStyles } from '../../../../agentTheme';
 import ShareMenu from './ShareMenu';
 import ShoppingListView from './ShoppingListView';
 
@@ -42,76 +42,45 @@ const PlanPanel: React.FC<PlanPanelProps> = ({
       <Paper elevation={0} sx={{ ...styles.mealPlanPaper, boxShadow: 'none' }}>
         {mealPlan || hasShopping ? (
           <>
-            <Box sx={styles.sectionHeader}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  onClick={() => onTabChange(0)}
-                  variant={currentTab === 0 ? 'contained' : 'outlined'}
-                  size="small"
-                  sx={{
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    borderRadius: '6px',
-                    px: 2,
-                    py: 0.5,
-                    backgroundColor:
-                      currentTab === 0 ? colors.apricot : 'transparent',
-                    borderColor: colors.apricot,
-                    color: currentTab === 0 ? '#ffffff' : colors.apricot,
-                    '&:hover': {
-                      backgroundColor:
-                        currentTab === 0
-                          ? '#ff9f2b'
-                          : `${colors.apricot}10`,
-                    },
-                  }}
-                >
-                  Meal Plan
-                </Button>
-                <Button
-                  onClick={() => onTabChange(1)}
-                  variant={currentTab === 1 ? 'contained' : 'outlined'}
-                  size="small"
-                  disabled={!hasShopping}
-                  sx={{
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    borderRadius: '6px',
-                    px: 2,
-                    py: 0.5,
-                    backgroundColor:
-                      currentTab === 1 ? colors.apricot : 'transparent',
-                    borderColor: colors.apricot,
-                    color: currentTab === 1 ? '#ffffff' : colors.apricot,
-                    '&:hover': {
-                      backgroundColor:
-                        currentTab === 1
-                          ? '#ff9f2b'
-                          : `${colors.apricot}10`,
-                    },
-                    '&:disabled': { 
-                      borderColor: '#cccccc', 
-                      color: '#cccccc',
-                      backgroundColor: 'transparent'
-                    },
-                  }}
-                >
-                  Shopping List
-                </Button>
+            <Box
+              sx={{
+                ...styles.sectionHeader,
+                display: 'grid',
+                gridTemplateColumns: '1fr auto 1fr',
+                alignItems: 'center',
+                justifyContent: 'initial',
+              }}
+            >
+              <Box />
+              <Tabs
+                value={currentTab}
+                onChange={(_, v) => onTabChange(v)}
+                aria-label="Plan panel tabs"
+                sx={{
+                  minHeight: 40,
+                  borderRadius: 999,
+                  px: 1,
+                  backgroundColor: 'background.paper',
+                  border: (t) => `1px solid ${t.palette.divider}`,
+                }}
+              >
+                <Tab label="Meal Plan" value={0} />
+                <Tab label="Shopping List" value={1} disabled={!hasShopping} />
+              </Tabs>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <ShareMenu
+                  anchorEl={anchorEl}
+                  onOpen={openMenu}
+                  onClose={closeMenu}
+                  onCopyMealPlan={mealPlan ? onCopyMealPlan : undefined}
+                  onCopyShoppingList={
+                    hasShopping ? onCopyShoppingList : undefined
+                  }
+                  canCopyMealPlan={!!mealPlan}
+                  canCopyShoppingList={hasShopping}
+                  colors={colors}
+                />
               </Box>
-
-              <ShareMenu
-                anchorEl={anchorEl}
-                onOpen={openMenu}
-                onClose={closeMenu}
-                onCopyMealPlan={mealPlan ? onCopyMealPlan : undefined}
-                onCopyShoppingList={
-                  hasShopping ? onCopyShoppingList : undefined
-                }
-                canCopyMealPlan={!!mealPlan}
-                canCopyShoppingList={hasShopping}
-                colors={colors}
-              />
             </Box>
 
             {currentTab === 0 && mealPlan && (

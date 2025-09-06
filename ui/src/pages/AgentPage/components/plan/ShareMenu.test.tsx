@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ShareMenu from './ShareMenu';
-import { colorSchemes } from '../../../../theme';
+import { colorSchemes } from '../../../../agentTheme';
 
 describe('ShareMenu', () => {
   const colors = colorSchemes['earthyNeutrals'];

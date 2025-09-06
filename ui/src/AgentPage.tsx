@@ -17,7 +17,7 @@ import useAgentController from './pages/AgentPage/hooks/useAgentController';
 
 // Removed unused gateway client
 
-import { colorSchemes, getAgentPageStyles } from './theme';
+import { colorSchemes, getAgentPageStyles } from './agentTheme';
 import ChatPanel from './pages/AgentPage/components/chat/ChatPanel';
 import PlanPanel from './pages/AgentPage/components/plan/PlanPanel';
 

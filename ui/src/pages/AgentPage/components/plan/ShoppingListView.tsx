@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import type { ShoppingListItem } from '@mealplanner/generated';
-import { getAgentPageStyles } from '../../../../theme';
+import { getAgentPageStyles } from '../../../../agentTheme';
 
 type AgentStyles = ReturnType<typeof getAgentPageStyles>;
 

@@ -7,12 +7,16 @@ describe('ShoppingListView', () => {
   const styles = {
     shoppingListItem: {},
   } as unknown as ReturnType<
-    typeof import('../../../../theme').getAgentPageStyles
+    typeof import('../../../../agentTheme').getAgentPageStyles
   >;
 
   it('renders items with quantity when > 0 and category when present', () => {
     const items: ShoppingListItem[] = [
-      new ShoppingListItem({ ingredient: 'Tomatoes', quantity: '2', category: 'produce' }),
+      new ShoppingListItem({
+        ingredient: 'Tomatoes',
+        quantity: '2',
+        category: 'produce',
+      }),
       new ShoppingListItem({ ingredient: 'Salt', quantity: '0', category: '' }),
       new ShoppingListItem({ ingredient: 'Pepper' }),
     ];

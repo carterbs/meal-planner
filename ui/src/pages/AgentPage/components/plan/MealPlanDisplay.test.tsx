@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
-import MealPlanDisplay, { getEffortIcon } from './MealPlanDisplay';
+import MealPlanDisplay from './MealPlanDisplay';
 import { WeeklyMealPlan, MealPlanEntry, Meal } from '@mealplanner/generated';
 
 function makePlan(
@@ -55,11 +55,32 @@ describe('MealPlanDisplay highlights', () => {
   });
 });
 
-describe('getEffortIcon', () => {
-  it('returns correct icon by effort thresholds', () => {
-    expect(getEffortIcon(2)).toBe('🙂');
-    expect(getEffortIcon(4)).toBe('😅');
-    expect(getEffortIcon(6)).toBe('😫');
-    expect(getEffortIcon(8)).toBe('🥵');
+describe('MealPlanDisplay layout', () => {
+  it('renders meal type chips and no effort emojis', () => {
+    const plan = makePlan([
+      { dayIndex: 0, mealType: 'breakfast', mealId: 1 },
+    ]);
+
+    render(<MealPlanDisplay plan={plan} />);
+
+    expect(screen.getByText('Breakfast')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('meal-name-0-breakfast'),
+    ).toHaveTextContent(/^Meal 1$/);
+  });
+
+  it('keeps day headers sticky and inserts dividers between days', () => {
+    const plan = makePlan([
+      { dayIndex: 0, mealType: 'breakfast', mealId: 1 },
+      { dayIndex: 1, mealType: 'breakfast', mealId: 2 },
+    ]);
+
+    render(<MealPlanDisplay plan={plan} />);
+
+    const monday = screen.getByText('Monday');
+    expect(window.getComputedStyle(monday).position).toBe('sticky');
+
+    const separators = screen.getAllByRole('separator');
+    expect(separators).toHaveLength(1);
   });
 });

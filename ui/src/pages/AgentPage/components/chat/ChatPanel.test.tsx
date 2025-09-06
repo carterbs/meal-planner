@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ChatPanel from './ChatPanel';
-import { colorSchemes } from '../../../../theme';
+import { colorSchemes } from '../../../../agentTheme';
 
 describe('ChatPanel', () => {
   const colors = colorSchemes['earthyNeutrals'];

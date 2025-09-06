@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ChatMessages from './ChatMessages';
-import { colorSchemes, getAgentPageStyles } from '../../../../theme';
+import { colorSchemes, getAgentPageStyles } from '../../../../agentTheme';
 
 describe('ChatMessages', () => {
   const colors = colorSchemes['earthyNeutrals'];

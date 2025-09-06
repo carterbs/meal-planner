@@ -1,6 +1,6 @@
 import React, { forwardRef, useMemo } from 'react';
 import { Box, Paper } from '@mui/material';
-import { getAgentPageStyles, Colors } from '../../../../theme';
+import { getAgentPageStyles, Colors } from '../../../../agentTheme';
 import ChatHeader from './ChatHeader';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';

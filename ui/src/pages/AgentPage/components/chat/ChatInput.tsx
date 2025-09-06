@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Button, TextField } from '@mui/material';
-import { Colors, getAgentPageStyles } from '../../../../theme';
+import { Colors, getAgentPageStyles } from '../../../../agentTheme';
 
 type AgentStyles = ReturnType<typeof getAgentPageStyles>;
 
@@ -47,9 +47,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
             backgroundColor: colors.apricot,
             color: '#ffffff',
             '&:hover': { backgroundColor: '#ff9f2b' },
-            '&:disabled': { 
+            '&:disabled': {
               backgroundColor: '#cccccc',
-              color: '#ffffff'
+              color: '#ffffff',
             },
           }}
         >

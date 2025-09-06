@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import MealManagementPage from './MealManagementPage';
@@ -93,7 +93,7 @@ describe('MealManagementPage integration', () => {
     await userEvent.click(deleteButtons[0]);
 
     // Row A should be gone
-    expect(screen.queryByText('A')).toBeNull();
+    await waitFor(() => expect(screen.queryByText('A')).toBeNull());
     expect(mockDeleteMeal).toHaveBeenCalledWith(1);
   });
 
