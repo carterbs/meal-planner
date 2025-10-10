@@ -5,6 +5,7 @@ pkg/
 *.dll
 *.so
 *.dylib
+*.gocache
 
 # Go module files (optional: you can version go.mod, but if you want to ignore go.sum, uncomment the next line)
 # go.sum
