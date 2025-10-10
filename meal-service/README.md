@@ -28,6 +28,7 @@ meal-service/
 ## Core Features
 
 - **Meal Management**: Full CRUD operations for meals with ingredients and recipe steps
+- **Meal Plan Management**: First-class database entities with versioning, status tracking, and week boundaries
 - **Meal Plan Generation**: Weekly meal planning with dietary constraints and red meat rotation
 - **Shopping Lists**: Auto-generated consolidated shopping lists from selected meals
 - **Recipe Steps**: Step-by-step cooking instructions with bulk operations and reordering
@@ -91,10 +92,43 @@ make clean
 - `meals` - Core meal data with metadata (name, effort, red meat flag, meal type)
 - `ingredients` - Meal ingredients with quantities, units, and normalized names
 - `recipe_steps` - Cooking instructions with step numbers and reordering support
-- `meal_plans` - Generated meal plans with thread ID and version tracking
-- `meal_plan_items` - Individual meal plan entries with day and meal type
+- `meal_plans` - First-class meal plan entities with status lifecycle and week boundaries
+- `meal_plan_items` - Individual meal slots with point-in-time meal snapshots
 - `workflow_checkpoints` - Agent workflow state persistence with JSONB data
 - `messages` - Conversation history for agent workflows
+
+### Meal Plan Schema (Migration 009)
+
+The meal plan tables were rebuilt as first-class database entities, replacing the previous workflow-centric design:
+
+**meal_plans table:**
+- `id` - Primary key
+- `week_start_date` - Monday of the meal plan week (TIMESTAMPTZ)
+- `week_end_date` - Sunday of the meal plan week (TIMESTAMPTZ)
+- `status` - Lifecycle state: `draft`, `finalized`, `archived`, `abandoned`
+- `version` - Integer version for tracking updates (default: 1)
+- `thread_id` - Optional reference to agent workflow threads
+- `created_at`, `updated_at` - Automatic timestamps with trigger-based updates
+- Unique constraint on `(week_start_date, week_end_date)`
+- Indexed on `(status, week_start_date DESC)` and `thread_id`
+
+**meal_plan_items table:**
+- `id` - Primary key
+- `meal_plan_id` - Foreign key to meal_plans (CASCADE delete)
+- `day_index` - Day of week as integer (0=Monday, 6=Sunday)
+- `meal_type` - Meal slot: `breakfast`, `lunch`, `dinner` (enum)
+- `meal_id` - Optional foreign key to meals table (for active meals)
+- `meal_snapshot` - JSONB point-in-time snapshot of meal data (name, effort, ingredients, steps)
+- `created_at`, `updated_at` - Automatic timestamps
+- Unique constraint on `(meal_plan_id, day_index, meal_type)`
+- Indexed on `meal_id` and `(meal_plan_id, day_index)` for efficient queries
+
+**Key Design Decisions:**
+- Meal snapshots preserve historical data even if source meals are modified or deleted
+- Week boundaries enforce unique meal plans per week with explicit date ranges
+- Status enum supports the full meal plan lifecycle from draft to archival
+- Optional thread_id maintains backward compatibility with agent workflows
+- Automatic timestamp updates via database triggers ensure data consistency
 
 ### Connection Pool Configuration
 - Max Open Connections: 25
@@ -103,6 +137,48 @@ make clean
 - Connection Max Idle Time: 1 minute
 - Connect Timeout: 5 seconds
 - Ping Timeout: 3 seconds
+
+## Protobuf Messages
+
+### Meal Plan Types
+
+**MealPlan** - Complete meal plan with all items:
+- `id`, `week_start_date`, `week_end_date`, `status`, `version`, `thread_id`
+- `created_at`, `updated_at`
+- `items` - Repeated MealPlanItem messages
+
+**MealPlanItem** - Individual meal slot:
+- `id`, `meal_plan_id`, `day_index` (0-6), `meal_type` (enum)
+- `meal_id` - Optional reference to meals table
+- `meal_snapshot` - Point-in-time Meal message
+- `created_at`, `updated_at`
+
+**MealPlanSummary** - Lightweight meal plan metadata:
+- Same fields as MealPlan except `items`
+- `item_count` - Number of items without loading them
+
+**Enums:**
+- `MealPlanStatus` - DRAFT, FINALIZED, ARCHIVED, ABANDONED
+- `MealSlot` - BREAKFAST, LUNCH, DINNER
+
+### Repository Methods
+
+**MealPlanRepository** provides CRUD operations for meal plans:
+
+**First-Class Operations:**
+- `InsertMealPlan(ctx, weekStart, weekEnd, status, threadID)` - Create new meal plan with transaction
+- `GetMealPlanByID(ctx, id)` - Retrieve complete meal plan with items
+- `GetMealPlanByWeek(ctx, weekStart)` - Get latest meal plan for specific week
+- `ListMealPlansInRange(ctx, start, end, status)` - Query meal plan summaries by date range
+- `UpdateMealPlanStatus(ctx, id, status)` - Update lifecycle status with transaction
+- `UpsertMealPlanItems(ctx, mealPlanID, items)` - Bulk insert/update items with transaction
+
+**Legacy Operations (backward compatibility):**
+- `GetLatestMealPlan(ctx, threadID)` - Retrieve latest plan for workflow thread
+- `GetMealPlanItems(ctx, mealPlanID)` - Get items in legacy format
+- `GenerateWeeklyMealPlan(ctx)` - Generate new weekly plan using algorithm
+- `GetLastPlannedMeals(ctx)` - Reconstruct plan from last planned meals
+- `PopulateMealDetails(ctx, plan)` - Hydrate meal objects with full data
 
 ## gRPC Service Definition
 

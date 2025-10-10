@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	apipb "mealplanner/generated/go"
 	"mealplanner/models"
@@ -51,12 +52,20 @@ type RecipeStepRepository interface {
 
 // MealPlanRepository handles meal plan-related database operations
 type MealPlanRepository interface {
-	// Meal plan persistence
+	// New first-class meal plan CRUD operations
+	InsertMealPlan(ctx context.Context, weekStart, weekEnd time.Time, status models.MealPlanStatus, threadID *string) (int, error)
+	GetMealPlanByID(ctx context.Context, id int) (*models.MealPlan, error)
+	GetMealPlanByWeek(ctx context.Context, weekStart time.Time) (*models.MealPlan, error)
+	ListMealPlansInRange(ctx context.Context, start, end time.Time, status *models.MealPlanStatus) ([]*models.MealPlanSummary, error)
+	UpdateMealPlanStatus(ctx context.Context, id int, status models.MealPlanStatus) error
+	UpsertMealPlanItems(ctx context.Context, mealPlanID int, items []*models.MealPlanItem) error
+
+	// Legacy meal plan persistence (for backward compatibility)
 	GetLatestMealPlan(ctx context.Context, threadID string) (*models.MealPlanIdentifier, error)
 	GetMealPlanItems(ctx context.Context, mealPlanID int) ([]models.MealPlanEntry, error)
 	RemoveMealFromPlan(ctx context.Context, plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error
 
-	// Meal plan generation & retrieval
+	// Meal plan generation & retrieval (legacy WeeklyMealPlan format)
 	GenerateWeeklyMealPlan(ctx context.Context) (*apipb.WeeklyMealPlan, error)
 	GetLastPlannedMeals(ctx context.Context) (*apipb.WeeklyMealPlan, error)
 	PopulateMealDetails(ctx context.Context, plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error)

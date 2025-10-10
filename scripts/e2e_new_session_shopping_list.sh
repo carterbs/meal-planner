@@ -54,7 +54,7 @@ echo "--- Step 2: Extract meal plan from session ---"
 # The session already contains a meal plan in initialState
 MEAL_PLAN=$(echo "$SESSION_JSON" | jq '.initialState.entries')
 echo "Meal plan from session (first 3 entries):"
-echo "$MEAL_PLAN" | jq '.[0:3] | map({day_of_week, meal_type, mealName: (.meal | fromjson | .name // "null")})' 2>/dev/null || echo "Error parsing meal plan"
+echo "$MEAL_PLAN" | jq '.[0:3] | map({day_index, meal_type, mealName: (.meal_snapshot | fromjson | .name // "null")})' 2>/dev/null || echo "Error parsing meal plan"
 
 # Verify meal plan was created
 MEAL_COUNT=$(echo "$MEAL_PLAN" | jq '. | length' 2>/dev/null || echo "0")
@@ -67,7 +67,7 @@ fi
 
 echo "--- Step 3: Generate shopping list from meal plan ---"
 # Extract meal IDs from the session meal plan
-MEAL_IDS=$(echo "$MEAL_PLAN" | jq '[.[] | select(.meal != null and .meal != "") | .meal | fromjson | .id] // []' 2>/dev/null || echo "[]")
+MEAL_IDS=$(echo "$MEAL_PLAN" | jq '[.[] | select(.meal_snapshot != null and .meal_snapshot != "") | .meal_snapshot | fromjson | .id] // []' 2>/dev/null || echo "[]")
 echo "Meal IDs for shopping list: $(echo "$MEAL_IDS" | jq 'length') meals"
 
 SHOPPING_LIST=$(curl -s -X POST -H 'Content-Type: application/json' \

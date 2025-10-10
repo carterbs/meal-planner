@@ -38,12 +38,12 @@ echo "Initial plan generated with $(echo "$INITIAL_PLAN" | jq '.days | length') 
 echo "--- Step 2: Check Saturday meals before operations ---"
 CURRENT_PLAN=$(curl -s -X GET -H 'Content-Type: application/json' \
   http://localhost:8080/api/mealplan)
-SATURDAY_BEFORE=$(echo "$CURRENT_PLAN" | jq '.entries[] | select(.day_of_week == 5)')
+SATURDAY_BEFORE=$(echo "$CURRENT_PLAN" | jq '.entries[] | select(.day_index == 5)')
 echo "Saturday meals before operations:"
-echo "$SATURDAY_BEFORE" | jq '.meal_type + ": " + (.meal | fromjson | .name // "null")' 2>/dev/null || echo "$SATURDAY_BEFORE"
+echo "$SATURDAY_BEFORE" | jq '.meal_type + ": " + (.meal_snapshot | fromjson | .name // "null")' 2>/dev/null || echo "$SATURDAY_BEFORE"
 
 echo "--- Step 3: Test meal swapping (Saturday breakfast) ---"
-SATURDAY_BREAKFAST_ID=$(echo "$CURRENT_PLAN" | jq -r '.entries[] | select(.day_of_week == 5 and .meal_type == "breakfast") | .meal | fromjson | .id' 2>/dev/null || echo "null")
+SATURDAY_BREAKFAST_ID=$(echo "$CURRENT_PLAN" | jq -r '.entries[] | select(.day_index == 5 and .meal_type == "breakfast") | .meal_snapshot | fromjson | .id' 2>/dev/null || echo "null")
 if [ "$SATURDAY_BREAKFAST_ID" != "null" ] && [ -n "$SATURDAY_BREAKFAST_ID" ]; then
   echo "Swapping Saturday breakfast (ID: $SATURDAY_BREAKFAST_ID)"
   SWAP_RESULT=$(curl -s -X POST -H 'Content-Type: application/json' \
@@ -66,18 +66,18 @@ FILTERED_PLAN=$(curl -s -X POST -H 'Content-Type: application/json' \
   -d '{"skip_days":["Saturday","Sunday"]}' \
   http://localhost:8080/api/mealplan/generate)
 echo "Filtered plan excludes Saturday and Sunday:"
-WEEKEND_MEALS=$(echo "$FILTERED_PLAN" | jq '[.entries[] | select(.day_of_week >= 5)] | length' 2>/dev/null || echo "0")
+WEEKEND_MEALS=$(echo "$FILTERED_PLAN" | jq '[.entries[] | select(.day_index >= 5)] | length' 2>/dev/null || echo "0")
 echo "Weekend meals in filtered plan: $WEEKEND_MEALS"
 
 echo "--- Step 6: Check final meal plan state ---"
 FINAL_PLAN=$(curl -s -X GET -H 'Content-Type: application/json' \
   http://localhost:8080/api/mealplan)
-SATURDAY_AFTER=$(echo "$FINAL_PLAN" | jq '.entries[] | select(.day_of_week == 5)')
+SATURDAY_AFTER=$(echo "$FINAL_PLAN" | jq '.entries[] | select(.day_index == 5)')
 echo "Saturday meals after operations:"
-echo "$SATURDAY_AFTER" | jq '.meal_type + ": " + (.meal | fromjson | .name // "null")' 2>/dev/null || echo "$SATURDAY_AFTER"
+echo "$SATURDAY_AFTER" | jq '.meal_type + ": " + (.meal_snapshot | fromjson | .name // "null")' 2>/dev/null || echo "$SATURDAY_AFTER"
 
 echo "--- Step 7: Test shopping list generation ---"
-MEALS_FOR_SHOPPING=$(echo "$FINAL_PLAN" | jq '[.entries[] | select(.meal != null and .meal != "") | .meal | fromjson | .id] | .[0:3]' 2>/dev/null || echo "[]")
+MEALS_FOR_SHOPPING=$(echo "$FINAL_PLAN" | jq '[.entries[] | select(.meal_snapshot != null and .meal_snapshot != "") | .meal_snapshot | fromjson | .id] | .[0:3]' 2>/dev/null || echo "[]")
 SHOPPING_LIST=$(curl -s -X POST -H 'Content-Type: application/json' \
   -d "{\"plan\":$MEALS_FOR_SHOPPING}" \
   http://localhost:8080/api/shoppinglist)
