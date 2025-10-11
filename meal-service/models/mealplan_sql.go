@@ -122,11 +122,12 @@ func GetMealPlanByID(ctx context.Context, db *sql.DB, id int) (*MealPlan, error)
 	var statusStr string
 	var threadID sql.NullString
 	var createdAt, updatedAt time.Time
+	var weekStart, weekEnd time.Time
 
 	err := db.QueryRowContext(ctx, planQuery, id).Scan(
 		&plan.Id,
-		&plan.WeekStartDate,
-		&plan.WeekEndDate,
+		&weekStart,
+		&weekEnd,
 		&statusStr,
 		&plan.Version,
 		&threadID,
@@ -146,6 +147,8 @@ func GetMealPlanByID(ctx context.Context, db *sql.DB, id int) (*MealPlan, error)
 	if threadID.Valid {
 		plan.ThreadId = &threadID.String
 	}
+	plan.WeekStartDate = timestamppb.New(weekStart)
+	plan.WeekEndDate = timestamppb.New(weekEnd)
 	plan.CreatedAt = timestamppb.New(createdAt)
 	plan.UpdatedAt = timestamppb.New(updatedAt)
 
@@ -180,11 +183,12 @@ func GetMealPlanByWeek(ctx context.Context, db *sql.DB, weekStart time.Time) (*M
 	var statusStr string
 	var threadID sql.NullString
 	var createdAt, updatedAt time.Time
+	var weekStartDB, weekEndDB time.Time
 
 	err := db.QueryRowContext(ctx, planQuery, weekStart, weekEnd).Scan(
 		&plan.Id,
-		&plan.WeekStartDate,
-		&plan.WeekEndDate,
+		&weekStartDB,
+		&weekEndDB,
 		&statusStr,
 		&plan.Version,
 		&threadID,
@@ -203,6 +207,8 @@ func GetMealPlanByWeek(ctx context.Context, db *sql.DB, weekStart time.Time) (*M
 	if threadID.Valid {
 		plan.ThreadId = &threadID.String
 	}
+	plan.WeekStartDate = timestamppb.New(weekStartDB)
+	plan.WeekEndDate = timestamppb.New(weekEndDB)
 	plan.CreatedAt = timestamppb.New(createdAt)
 	plan.UpdatedAt = timestamppb.New(updatedAt)
 
@@ -261,11 +267,12 @@ func ListMealPlansInRange(ctx context.Context, db *sql.DB, start, end time.Time,
 		var statusStr string
 		var threadID sql.NullString
 		var createdAt, updatedAt time.Time
+		var weekStartDB, weekEndDB time.Time
 
 		err := rows.Scan(
 			&summary.Id,
-			&summary.WeekStartDate,
-			&summary.WeekEndDate,
+			&weekStartDB,
+			&weekEndDB,
 			&statusStr,
 			&summary.Version,
 			&threadID,
@@ -282,6 +289,8 @@ func ListMealPlansInRange(ctx context.Context, db *sql.DB, start, end time.Time,
 		if threadID.Valid {
 			summary.ThreadId = &threadID.String
 		}
+		summary.WeekStartDate = timestamppb.New(weekStartDB)
+		summary.WeekEndDate = timestamppb.New(weekEndDB)
 		summary.CreatedAt = timestamppb.New(createdAt)
 		summary.UpdatedAt = timestamppb.New(updatedAt)
 
