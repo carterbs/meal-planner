@@ -52,3 +52,4 @@ lcov.info
 **/lcov.info
 **/lcov-report/
 **/coverage-final.json
+meal-service/coverage.out
