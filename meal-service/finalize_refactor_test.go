@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -18,17 +19,17 @@ import (
 // that accepts a thread ID and retrieves the meal plan from checkpoint
 func TestFinalizeMealPlan_ThreadIDSignature(t *testing.T) {
 	setupTestEnvironment(t)
-	
+
 	// Store original DB and services for restoration
 	originalDB := server.DB
 	originalServices := server.Services
-	
+
 	t.Cleanup(func() {
 		// Restore original DB and services after test
 		server.DB = originalDB
 		server.Services = originalServices
 	})
-	
+
 	grpcServer := &MealPlannerAPIServer{}
 
 	tests := []struct {
@@ -77,17 +78,19 @@ func TestFinalizeMealPlan_ThreadIDSignature(t *testing.T) {
 					t.Fatalf("Failed to create mock db: %v", err)
 				}
 				defer db.Close()
-				
+
 				// Set up server with mock DB
 				server.DB = db
 				server.Services = services.NewServiceContainer(db)
-				
+
 				// Create test checkpoint data with a valid meal plan
 				checkpointData := map[string]interface{}{
 					"state": map[string]interface{}{
 						"mealPlan": map[string]interface{}{
 							"days": []interface{}{
 								map[string]interface{}{
+									"dayIndex": float64(0),
+									"mealType": "dinner",
 									"meal": map[string]interface{}{
 										"id":   float64(1),
 										"name": "Test Meal",
@@ -97,23 +100,29 @@ func TestFinalizeMealPlan_ThreadIDSignature(t *testing.T) {
 						},
 					},
 				}
-				
+
 				checkpointBytes, _ := json.Marshal(checkpointData)
-				
+
 				// Set up mock expectations
 				mock.ExpectQuery("SELECT checkpoint_data FROM workflow_checkpoints").
 					WithArgs("abc-123-valid-thread").
 					WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data"}).
 						AddRow(checkpointBytes))
-				
+
+				expectMealPlanCreation(mock, true)
+
 				// Mock the UpdateLastPlannedDates transaction
 				mock.ExpectBegin()
-				mock.ExpectExec("UPDATE meals").
+				mock.ExpectExec(regexp.QuoteMeta(`
+		UPDATE meals 
+		SET last_planned = NOW() 
+		WHERE id = ANY($1)
+	`)).
 					WithArgs(sqlmock.AnyArg()).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectCommit()
 			}
-			
+
 			resp, err := grpcServer.FinalizeMealPlan(context.Background(), tt.request)
 
 			if tt.expectError {
@@ -139,19 +148,19 @@ func TestFinalizeMealPlan_ThreadIDSignature(t *testing.T) {
 // TestFinalizeMealPlan_CheckpointRetrieval tests checkpoint lookup logic
 func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 	setupTestEnvironment(t)
-	
+
 	// Store original DB and services for restoration
 	originalDB := server.DB
 	originalServices := server.Services
-	
+
 	t.Cleanup(func() {
 		// Restore original DB and services after test
 		server.DB = originalDB
 		server.Services = originalServices
 	})
-	
+
 	grpcServer := &MealPlannerAPIServer{}
-	
+
 	tests := []struct {
 		name              string
 		threadId          string
@@ -198,11 +207,11 @@ func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 				t.Fatalf("Failed to create mock db: %v", err)
 			}
 			defer db.Close()
-			
+
 			// Set up server with mock DB
 			server.DB = db
 			server.Services = services.NewServiceContainer(db)
-			
+
 			if tt.checkpointExists {
 				if tt.hasMealPlan {
 					// Create checkpoint with meal plan
@@ -210,12 +219,14 @@ func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 					if tt.mealPlanHasZeroId {
 						mealId = float64(0)
 					}
-					
+
 					checkpointData := map[string]interface{}{
 						"state": map[string]interface{}{
 							"mealPlan": map[string]interface{}{
 								"days": []interface{}{
 									map[string]interface{}{
+										"dayIndex": float64(0),
+										"mealType": "dinner",
 										"meal": map[string]interface{}{
 											"id":   mealId,
 											"name": "Test Meal",
@@ -225,18 +236,24 @@ func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 							},
 						},
 					}
-					
+
 					checkpointBytes, _ := json.Marshal(checkpointData)
-					
+
 					mock.ExpectQuery("SELECT checkpoint_data FROM workflow_checkpoints").
 						WithArgs(tt.threadId).
 						WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data"}).
 							AddRow(checkpointBytes))
-					
-					if tt.expectedError == "" {
-						// Mock the UpdateLastPlannedDates transaction
+
+					expectMealPlanCreation(mock, true)
+
+					if tt.expectedError == "" && !tt.mealPlanHasZeroId {
+						// Mock the UpdateLastPlannedDates transaction when meal IDs are present
 						mock.ExpectBegin()
-						mock.ExpectExec("UPDATE meals").
+						mock.ExpectExec(regexp.QuoteMeta(`
+		UPDATE meals 
+		SET last_planned = NOW() 
+		WHERE id = ANY($1)
+	`)).
 							WithArgs(sqlmock.AnyArg()).
 							WillReturnResult(sqlmock.NewResult(0, 1))
 						mock.ExpectCommit()
@@ -248,9 +265,9 @@ func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 							"some_other_field": "value",
 						},
 					}
-					
+
 					checkpointBytes, _ := json.Marshal(checkpointData)
-					
+
 					mock.ExpectQuery("SELECT checkpoint_data FROM workflow_checkpoints").
 						WithArgs(tt.threadId).
 						WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data"}).
@@ -262,12 +279,12 @@ func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 					WithArgs(tt.threadId).
 					WillReturnError(sql.ErrNoRows)
 			}
-			
+
 			// Execute the test
 			resp, err := grpcServer.FinalizeMealPlan(context.Background(), &apipb.FinalizeMealPlanRequest{
 				ThreadId: tt.threadId,
 			})
-			
+
 			if tt.expectedError != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
@@ -278,6 +295,47 @@ func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 			}
 		})
 	}
+}
+
+func expectMealPlanCreation(mock sqlmock.Sqlmock, hasItems bool) {
+	selectQuery := regexp.QuoteMeta(`
+		SELECT id, week_start_date, week_end_date, status, version, thread_id, created_at, updated_at
+		FROM meal_plans
+		WHERE week_start_date = $1 AND week_end_date = $2
+		ORDER BY version DESC
+		LIMIT 1
+	`)
+	mock.ExpectQuery(selectQuery).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnError(sql.ErrNoRows)
+
+	insertQuery := regexp.QuoteMeta(`
+		INSERT INTO meal_plans (week_start_date, week_end_date, status, thread_id, version)
+		VALUES ($1, $2, $3, $4, 1)
+		RETURNING id
+	`)
+	mock.ExpectBegin()
+	mock.ExpectQuery(insertQuery).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(123))
+	mock.ExpectCommit()
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM meal_plan_items WHERE meal_plan_id = $1`)).
+		WithArgs(123).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	if hasItems {
+		mock.ExpectPrepare(regexp.QuoteMeta(`
+		INSERT INTO meal_plan_items (meal_plan_id, day_index, meal_type, meal_id, meal_snapshot)
+		VALUES ($1, $2, $3, $4, $5)
+	`)).
+			ExpectExec().
+			WithArgs(123, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	mock.ExpectCommit()
 }
 
 // TestFinalizeMealPlan_MealIDExtraction tests meal ID extraction from checkpoint

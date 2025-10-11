@@ -326,16 +326,17 @@ func UpdateMealPlanStatus(ctx context.Context, tx *sql.Tx, id int, status MealPl
 func UpsertMealPlanItems(ctx context.Context, tx *sql.Tx, mealPlanID int, items []*MealPlanItem) error {
 	logger := getMealPlanModelLogger()
 
-	if len(items) == 0 {
-		return nil
-	}
-
 	// First, delete existing items for this meal plan
 	deleteQuery := `DELETE FROM meal_plan_items WHERE meal_plan_id = $1`
 	_, err := tx.ExecContext(ctx, deleteQuery, mealPlanID)
 	if err != nil {
 		logger.Errorw("UpsertMealPlanItems: error deleting existing items", "mealPlanID", mealPlanID, "error", err)
 		return err
+	}
+
+	if len(items) == 0 {
+		logger.Debugw("UpsertMealPlanItems: cleared items", "mealPlanID", mealPlanID)
+		return nil
 	}
 
 	// Now insert new items
@@ -383,6 +384,30 @@ func UpsertMealPlanItems(ctx context.Context, tx *sql.Tx, mealPlanID int, items 
 	}
 
 	logger.Debugw("UpsertMealPlanItems: upserted items", "mealPlanID", mealPlanID, "itemCount", len(items))
+	return nil
+}
+
+// UpdateMealPlanVersion updates the version of a meal plan
+func UpdateMealPlanVersion(ctx context.Context, tx *sql.Tx, id int, version int) error {
+	logger := getMealPlanModelLogger()
+
+	query := `UPDATE meal_plans SET version = $1 WHERE id = $2`
+
+	result, err := tx.ExecContext(ctx, query, version, id)
+	if err != nil {
+		logger.Errorw("UpdateMealPlanVersion: error updating version", "id", id, "version", version, "error", err)
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("meal plan not found: %d", id)
+	}
+
+	logger.Debugw("UpdateMealPlanVersion: updated version", "id", id, "version", version)
 	return nil
 }
 

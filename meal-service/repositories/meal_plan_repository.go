@@ -76,6 +76,25 @@ func (r *MealPlanRepositoryImpl) UpdateMealPlanStatus(ctx context.Context, id in
 	return nil
 }
 
+// UpdateMealPlanVersion updates the version of a meal plan with a transaction
+func (r *MealPlanRepositoryImpl) UpdateMealPlanVersion(ctx context.Context, id int, version int) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := models.UpdateMealPlanVersion(ctx, tx, id, version); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
 // UpsertMealPlanItems inserts or updates meal plan items with a transaction
 func (r *MealPlanRepositoryImpl) UpsertMealPlanItems(ctx context.Context, mealPlanID int, items []*models.MealPlanItem) error {
 	tx, err := r.db.BeginTx(ctx, nil)

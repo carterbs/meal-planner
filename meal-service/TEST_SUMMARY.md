@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document summarizes the comprehensive test suite created for the new meal plan functionality, including database migrations, repository operations, and JSON handling.
+This document summarizes the comprehensive test suite created for the new meal plan functionality, including database migrations, repository operations, and JSON handling. These integration-heavy tests are guarded behind the `integration` build tag so the default `go test` run stays fast and database-free. Enable the tag when you explicitly want to run them.
 
 ## Files Created
 

@@ -5,6 +5,10 @@
 DROP TABLE IF EXISTS meal_plan_items;
 DROP TABLE IF EXISTS meal_plans;
 
+-- Drop existing enum types before recreating
+DROP TYPE IF EXISTS meal_plan_status;
+DROP TYPE IF EXISTS meal_slot;
+
 -- Create enum types
 CREATE TYPE meal_plan_status AS ENUM ('draft', 'finalized', 'archived', 'abandoned');
 CREATE TYPE meal_slot AS ENUM ('breakfast', 'lunch', 'dinner');

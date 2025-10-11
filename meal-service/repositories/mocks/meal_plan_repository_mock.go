@@ -74,6 +74,11 @@ func (m *MockMealPlanRepository) GetMealPlanItems(ctx context.Context, mealPlanI
     }
     return args.Get(0).([]models.MealPlanEntry), args.Error(1)
 }
+
+func (m *MockMealPlanRepository) UpdateMealPlanVersion(ctx context.Context, id int, version int) error {
+    args := m.Called(ctx, id, version)
+    return args.Error(0)
+}
 	mock.Mock
 }
 

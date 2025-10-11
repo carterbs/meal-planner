@@ -298,6 +298,12 @@ func (s *MealPlannerAPIServer) GenerateMealPlan(ctx context.Context, req *emptyp
 			return nil, fmt.Errorf("error updating meal plan status: %w", err)
 		}
 
+		err = server.Services.MealPlanRepository.UpdateMealPlanVersion(ctx, planID, int(mealPlan.Version))
+		if err != nil {
+			logger.Errorw("Error updating meal plan version", "error", err, "planID", planID, "version", mealPlan.Version)
+			return nil, fmt.Errorf("error updating meal plan version: %w", err)
+		}
+
 		logger.Infow("Regenerating existing meal plan", "planID", planID, "newVersion", mealPlan.Version)
 	} else {
 		// Create new plan

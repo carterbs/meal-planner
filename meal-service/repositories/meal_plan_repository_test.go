@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package repositories
 
 import (
@@ -285,6 +288,38 @@ func TestUpdateMealPlanStatus(t *testing.T) {
 	t.Run("update non-existent meal plan", func(t *testing.T) {
 		err := repo.UpdateMealPlanStatus(ctx, 99999, apipb.MealPlanStatus_MEAL_PLAN_STATUS_FINALIZED)
 
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "meal plan not found")
+	})
+}
+
+// TestUpdateMealPlanVersion tests updating the version of a meal plan
+func TestUpdateMealPlanVersion(t *testing.T) {
+	harness := testutil.SetupTestDB(t)
+	err := harness.RunMigrations()
+	require.NoError(t, err)
+	defer harness.CleanupTables()
+
+	repo := NewMealPlanRepository(harness.DB)
+	ctx := context.Background()
+
+	weekStart := time.Date(2025, 1, 6, 0, 0, 0, 0, time.UTC)
+	weekEnd := weekStart.AddDate(0, 0, 6)
+
+	t.Run("update existing meal plan version", func(t *testing.T) {
+		id, err := repo.InsertMealPlan(ctx, weekStart, weekEnd, apipb.MealPlanStatus_MEAL_PLAN_STATUS_DRAFT, nil)
+		require.NoError(t, err)
+
+		err = repo.UpdateMealPlanVersion(ctx, id, 5)
+		assert.NoError(t, err)
+
+		plan, err := repo.GetMealPlanByID(ctx, id)
+		require.NoError(t, err)
+		assert.Equal(t, int32(5), plan.Version)
+	})
+
+	t.Run("update non-existent meal plan version", func(t *testing.T) {
+		err := repo.UpdateMealPlanVersion(ctx, 99999, 3)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "meal plan not found")
 	})

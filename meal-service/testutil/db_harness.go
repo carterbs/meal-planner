@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package testutil
 
 import (
@@ -35,8 +38,8 @@ func SetupTestDB(t *testing.T) *DBHarness {
 	cfg := db.Config{
 		Host:            getEnvOrDefault("DB_HOST", "localhost"),
 		Port:            getEnvOrDefault("DB_PORT", "5432"),
-		User:            getEnvOrDefault("DB_USER", "postgres"),
-		Password:        getEnvOrDefault("DB_PASSWORD", "password"),
+		User:            getEnvOrDefault("DB_USER", "mealuser"),
+		Password:        getEnvOrDefault("DB_PASSWORD", "mealpass"),
 		DBName:          getEnvOrDefault("DB_NAME", "mealplanner_test"),
 		MaxOpenConns:    5,
 		MaxIdleConns:    2,

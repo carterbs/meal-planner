@@ -58,6 +58,7 @@ type MealPlanRepository interface {
 	GetMealPlanByWeek(ctx context.Context, weekStart time.Time) (*models.MealPlan, error)
 	ListMealPlansInRange(ctx context.Context, start, end time.Time, status *models.MealPlanStatus) ([]*models.MealPlanSummary, error)
 	UpdateMealPlanStatus(ctx context.Context, id int, status models.MealPlanStatus) error
+	UpdateMealPlanVersion(ctx context.Context, id int, version int) error
 	UpsertMealPlanItems(ctx context.Context, mealPlanID int, items []*models.MealPlanItem) error
 
 	// Legacy meal plan persistence (for backward compatibility)

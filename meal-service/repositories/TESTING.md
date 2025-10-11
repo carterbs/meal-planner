@@ -4,7 +4,9 @@ This document describes the comprehensive test suite for the meal plan functiona
 
 ## Overview
 
-The test suite consists of:
+Integration-style tests now compile only when the `integration` build tag is supplied. By default (`go test`), only the lightweight unit tests run and no database is required. Use the tag if you explicitly want to exercise the migrations and repository code against a real Postgres instance.
+
+The integration suite consists of:
 
 1. **Migration Tests** (`migrations/migrations_test.go`) - Tests for database schema migration 009
 2. **Repository Tests** (`repositories/meal_plan_repository_test.go`) - Tests for meal plan CRUD operations
@@ -33,39 +35,39 @@ Set the following environment variables (or use defaults):
 ```bash
 export DB_HOST=localhost      # Default: localhost
 export DB_PORT=5432           # Default: 5432
-export DB_USER=postgres       # Default: postgres
-export DB_PASSWORD=password   # Default: password
+export DB_USER=mealuser       # Default: mealuser
+export DB_PASSWORD=mealpass   # Default: mealpass
 export DB_NAME=mealplanner_test  # Default: mealplanner_test
 ```
 
 ## Running Tests
 
-### Run All Tests
+### Run All Integration Tests
 
 ```bash
 cd meal-service
-go test ./migrations ./repositories -v
+go test -tags=integration ./migrations ./repositories -v
 ```
 
 ### Run Migration Tests Only
 
 ```bash
 cd meal-service
-go test ./migrations -v
+go test -tags=integration ./migrations -v
 ```
 
 ### Run Repository Tests Only
 
 ```bash
 cd meal-service
-go test ./repositories -v
+go test -tags=integration ./repositories -v
 ```
 
 ### Run Specific Test
 
 ```bash
 cd meal-service
-go test ./repositories -v -run TestInsertMealPlan
+go test -tags=integration ./repositories -v -run TestInsertMealPlan
 ```
 
 ### Skip Integration Tests
@@ -230,7 +232,8 @@ To run tests in CI environments:
 ```bash
 # Start PostgreSQL (if not already running)
 docker run -d --name postgres-test \
-  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_USER=mealuser \
+  -e POSTGRES_PASSWORD=mealpass \
   -e POSTGRES_DB=mealplanner_test \
   -p 5432:5432 \
   postgres:15
@@ -241,8 +244,8 @@ sleep 5
 # Run tests
 export DB_HOST=localhost
 export DB_PORT=5432
-export DB_USER=postgres
-export DB_PASSWORD=password
+export DB_USER=mealuser
+export DB_PASSWORD=mealpass
 export DB_NAME=mealplanner_test
 
 go test ./migrations ./repositories -v
