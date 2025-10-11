@@ -1,6 +1,5 @@
-Before committing code, all build, lints, and tests must pass. 
+Before committing code, all build, lint, and test steps must pass.
 
-Before testing, review @./meal-planner/repositories/TESTING.md
-To test, run `./tools/validate/validate test --json --no-spinner`.
-To test, run `./tools/validate/validate lint --json --no-spinner`.
-To test, run `./tools/validate/validate build --json --no-spinner`.
+- Review `meal-service/AGENTS.md` for service-specific guidance (integration tests must stay behind the `integration` build tag; prefer mocks over Docker).
+- Integration DB notes live in `meal-service/repositories/TESTING.md`.
+- Use the validate tool: `./tools/validate/validate test|lint|build --json --no-spinner`.
