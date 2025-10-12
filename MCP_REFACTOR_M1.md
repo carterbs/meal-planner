@@ -46,12 +46,24 @@ Key data structures & fields:
 - `meal_snapshot` JSONB column holding the point-in-time meal payload (name, effort, ingredients, steps) for each slot while storing `meal_id` for lookups.
 - `MealPlan`, `MealPlanItem`, and `MealPlanSummary` proto messages mirroring the DB schema (week boundaries as timestamps, status, version, optional `thread_id`, slot collection) and used directly in Go via type aliases.
 
-Tasks:
+Assumption: There is no production data to migrate or preserve. All consumers can be updated at the same time without maintaining backwards compatibility.
 
-- Ship `meal-service/migrations/009_activate_meal_plans.up.sql` to create enums (`meal_plan_status`: draft/finalized/archived/abandoned, `meal_slot`: breakfast/lunch/dinner), rebuild `meal_plans` with `week_start_date`, `week_end_date`, `status`, `version`, optional `thread_id`, `created_at`, `updated_at`, and rebuild `meal_plan_items` with `day_index` (0-6), `meal_type`, optional `meal_id`, and `meal_snapshot` JSON. Add `updated_at` triggers, unique constraints on `(week_start_date, week_end_date)` and `(meal_plan_id, day_index, meal_type)`, plus indexes on `(status, week_start_date DESC)` and `meal_id`. Provide a down migration that drops the new tables, enums, triggers, and indexes. Backfill legacy rows by renaming `day_of_week`→`day_index`, `meal`→`meal_snapshot`, defaulting `status` to `finalized`, and inferring week dates when possible.
-- Update `proto/api.proto` to introduce `MealPlanStatus`, `MealPlan`, `MealPlanItem`, and `MealPlanSummary`, include timestamps/status/version/thread fields, and mark `MealPlanIdentifier` deprecated. Regenerate Go/TS bindings and update gRPC/REST responses (`meal-service/grpc_server.go`, `api-gateway` handlers) to return the new `MealPlan` message.
-- Keep proto types canonical in Go (`type MealPlan = apipb.MealPlan`, etc.) while expanding `meal-service/models/mealplan_sql.go` with helpers (`InsertMealPlan`, `GetMealPlanByID`, `GetMealPlanByWeek`, `ListMealPlansInRange`, `UpdateMealPlanStatus`, `UpsertMealPlanItems`) that translate DB rows ↔ proto aliases, marshal/unmarshal `meal_snapshot`, and enforce transactions for writes (week starts Monday UTC).
-- Broaden `meal-service/repositories/meal_plan_repository.go` and `meal-service/repositories/interfaces.go` to the new CRUD contract, regenerate mocks, drop reliance on `MealPlanIdentifier`, and adjust any call sites. Update scripts and utilities that referenced old columns (`scripts/e2e_remove_saturday.sh`, `scripts/e2e_backend_meal_replacement.sh`, `scripts/e2e_new_session_shopping_list.sh`, `scripts/e2e_backend_meal_removal.sh`, `scripts/export_meal_plans.py`) to use `day_index`/`meal_snapshot`.
-- Add repository & migration tests using the existing SQL harness to cover create/read, slot uniqueness violations, status transitions (including `abandoned`), JSON snapshot round-trips, week-range queries, and migration validation. Update `meal-service/README.md` for the new schema and confirm the UI/e2e flows still work without additional front-end changes.
+Remaining Tasks:
 
-Acceptance Criteria: Meal plans (and items) can be created, fetched by week or ID, updated via status transitions, and queried by date range directly from the database; generated clients compile with the updated proto; automated tests cover the new schema and repository logic.
+1. **Expose `MealPlan` on the public API**
+   - Update `proto/api.proto` so `GetMealPlanResponse` and `GenerateMealPlanResponse` return a single `MealPlan` message (remove `WeeklyMealPlan` from these responses and delete the message if nothing else references it).
+   - Remove the `WeeklyMealPlan` helpers in `meal-service/grpc_server.go`; return the DB-backed `MealPlan` directly from `GetMealPlan`/`GenerateMealPlan`/`FinalizeMealPlan`, and delete the legacy conversion code.
+   - Regenerate all protobuf bindings (`yarn generate_code` from repo root) and update the API gateway handlers plus any other Go/TypeScript consumers to handle the new `MealPlan` response shape.
+   - Ensure end-to-end scripts and automated tests exercise the new response fields (status, version, snapshots) and no longer rely on the deleted `WeeklyMealPlan` structure.
+
+2. **Eliminate legacy identifiers**
+   - Delete the `MealPlanIdentifier` message from `proto/api.proto` and rerun code generation so the generated Go/TS packages are updated.
+   - Remove the legacy repository surface area: drop `MealPlanIdentifier` aliases/structs from `meal-service/models/mealplan_sql.go`, remove `GetLatestMealPlan`/`GetMealPlanItems`/other legacy signatures from `meal-service/repositories/interfaces.go`, `meal-service/repositories/meal_plan_repository.go`, and regenerate mocks.
+   - Rip out any agent or service code paths that still call the legacy methods so the only persistence API is the new `MealPlan` CRUD contract. Update documentation that referenced the old workflow identifier.
+
+3. **Add coverage for the new repository layer**
+   - Extend `meal-service/models/mealplan_sql_test.go` (using `sqlmock`) to cover: `InsertMealPlan`, `UpsertMealPlanItems` (including slot uniqueness violations), `UpdateMealPlanStatus` across every enum value (draft→finalized→archived→abandoned), `UpdateMealPlanVersion`, JSON snapshot round-trips (verify stored JSON matches input meal snapshots), and `ListMealPlansInRange` filtering by status.
+   - Write migration validation tests that exercise the new schema through `migrations.test`, confirming the enums, constraints, and triggers exist after applying migration 009.
+   - Gate the new behavior with the validate tool (`./tools/validate/validate test --json --no-spinner`) so future agents can rely on the suite to catch regressions.
+
+Acceptance Criteria: gRPC/REST consumers receive the canonical `MealPlan` message (no `WeeklyMealPlan` or `MealPlanIdentifier` usage remains), the repository interface exposes only the new CRUD operations, and the expanded test suite enforces the expected database behavior for migration 009 and the meal plan helpers.
