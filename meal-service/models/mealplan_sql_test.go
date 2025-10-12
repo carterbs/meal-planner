@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -10,7 +11,17 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"mealplanner/logging"
 )
+
+func TestMain(m *testing.M) {
+	logging.ResetForTest()
+	os.Setenv("DISABLE_GRPC_LOGGING", "true")
+	code := m.Run()
+	logging.ResetForTest()
+	os.Exit(code)
+}
 
 func setupMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock, func()) {
 	t.Helper()
