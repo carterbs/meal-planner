@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"errors"
 
-	// needed for timestamp conversion
-	apipb "mealplanner/generated/go"
 	"mealplanner/logging"
 
 	"github.com/lib/pq"
@@ -16,9 +14,6 @@ import (
 func getMealModelLogger() *zap.SugaredLogger {
 	return logging.GetGrpcLogger("meal-model")
 }
-
-// Meal is an alias to the generated protobuf type
-type Meal = apipb.Meal
 
 // MealColumns defines the column names for Meal queries.
 var MealColumns = []string{"id", "meal_name", "relative_effort", "last_planned", "red_meat", "url", "meal_type"}

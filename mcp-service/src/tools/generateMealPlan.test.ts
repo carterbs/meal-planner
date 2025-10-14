@@ -1,8 +1,72 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { generateMealPlan, registerGenerateMealPlan } from './generateMealPlan.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
-import type { GenerateMealPlanResponse } from '@mealplanner/generated';
+import { MealPlan, MealPlanItem, MealPlanStatus, MealSlot, Meal, GenerateMealPlanResponse } from '@mealplanner/generated';
 import { createMockServer } from '../utils/createMockServer.js';
+
+function slotToMealTypeName(slot: MealSlot): string {
+  switch (slot) {
+    case MealSlot.BREAKFAST:
+      return 'breakfast';
+    case MealSlot.LUNCH:
+      return 'lunch';
+    case MealSlot.DINNER:
+    default:
+      return 'dinner';
+  }
+}
+
+function buildMeal(overrides: Partial<Meal> = {}): Meal {
+  return new Meal({
+    id: overrides.id ?? 1,
+    name: overrides.name ?? 'Meal',
+    effort: overrides.effort ?? 3,
+    hasRedMeat: overrides.hasRedMeat ?? false,
+    url: overrides.url ?? '',
+    mealType: overrides.mealType ?? 'dinner',
+    ingredients: overrides.ingredients ?? [],
+    steps: overrides.steps ?? [],
+  });
+}
+
+function buildPlanItem(options: {
+  id?: number;
+  dayIndex?: number;
+  slot?: MealSlot;
+  meal?: Meal | null;
+} = {}): MealPlanItem {
+  const slot = options.slot ?? MealSlot.DINNER;
+  const mealExplicit = Object.prototype.hasOwnProperty.call(options, 'meal');
+  const meal = mealExplicit
+    ? options.meal
+    : buildMeal({
+        id: options.id ?? 1,
+        name: `Meal ${options.id ?? 1}`,
+        mealType: slotToMealTypeName(slot),
+      });
+
+  return new MealPlanItem({
+    id: options.id ?? 1,
+    dayIndex: options.dayIndex ?? 0,
+    mealType: slot,
+    mealId: meal?.id ?? undefined,
+    mealSnapshot: meal ?? undefined,
+  });
+}
+
+function buildResponse(
+  items: MealPlanItem[],
+  overrides: { id?: number; status?: MealPlanStatus; version?: number } = {},
+): GenerateMealPlanResponse {
+  return new GenerateMealPlanResponse({
+    plan: new MealPlan({
+      id: overrides.id ?? 1,
+      status: overrides.status ?? MealPlanStatus.DRAFT,
+      version: overrides.version ?? 1,
+      items,
+    }),
+  });
+}
 
 // Mock the dependencies
 jest.mock('../logging.js', () => ({
@@ -32,14 +96,17 @@ describe('generateMealPlan tool', () => {
 
   describe('generateMealPlan', () => {
     it('should generate meal plan successfully', async () => {
-      const mockResponse: any = {
-        plan: {
-          days: [
-            { dayIndex: 0, mealType: 'dinner', meal: { id: 1, name: 'Pasta', effort: 3, hasRedMeat: false, url: '', mealType: 'dinner', ingredients: [], steps: [], lastPlanned: undefined } }
-          ],
-          shoppingList: []
-        }
-      };
+      const mockResponse = buildResponse(
+        [
+          buildPlanItem({
+            id: 1,
+            dayIndex: 0,
+            slot: MealSlot.DINNER,
+            meal: buildMeal({ id: 1, name: 'Pasta', mealType: 'dinner' }),
+          }),
+        ],
+        { id: 42, version: 3, status: MealPlanStatus.DRAFT },
+      );
 
       const { infoLog } = await import('../logging.js');
 
@@ -60,9 +127,7 @@ describe('generateMealPlan tool', () => {
     });
 
     it('should log environment variables and API details', async () => {
-      const mockResponse: any = {
-        plan: { days: [], shoppingList: [] }
-      };
+      const mockResponse = buildResponse([], { id: 1, version: 1, status: MealPlanStatus.DRAFT });
 
       const { infoLog } = await import('../logging.js');
 
@@ -81,15 +146,23 @@ describe('generateMealPlan tool', () => {
     });
 
     it('should log day index information for debugging', async () => {
-      const mockResponse: any = {
-        plan: {
-          days: [
-            { dayIndex: 0, mealType: 'dinner', meal: { id: 1, name: 'Pasta', effort: 3, hasRedMeat: false, url: '', mealType: 'dinner', ingredients: [], steps: [], lastPlanned: undefined } },
-            { dayIndex: 1, mealType: 'lunch', meal: { id: 2, name: 'Salad', effort: 1, hasRedMeat: false, url: '', mealType: 'lunch', ingredients: [], steps: [], lastPlanned: undefined } }
-          ],
-          shoppingList: []
-        }
-      };
+      const mockResponse = buildResponse(
+        [
+          buildPlanItem({
+            id: 11,
+            dayIndex: 0,
+            slot: MealSlot.DINNER,
+            meal: buildMeal({ id: 1, name: 'Pasta', mealType: 'dinner' }),
+          }),
+          buildPlanItem({
+            id: 12,
+            dayIndex: 1,
+            slot: MealSlot.LUNCH,
+            meal: buildMeal({ id: 2, name: 'Salad', effort: 1, mealType: 'lunch' }),
+          }),
+        ],
+        { id: 2, version: 7, status: MealPlanStatus.DRAFT },
+      );
 
       const { infoLog } = await import('../logging.js');
 
@@ -104,19 +177,17 @@ describe('generateMealPlan tool', () => {
       await generateMealPlan();
 
       expect(infoLog).toHaveBeenCalledWith('🔍 [MCP] Checking dayIndex values from backend:');
-      expect(infoLog).toHaveBeenCalledWith('🔍 [MCP] Entry 0: dayIndex=0, mealType=dinner, meal=Pasta');
-      expect(infoLog).toHaveBeenCalledWith('🔍 [MCP] Entry 1: dayIndex=1, mealType=lunch, meal=Salad');
+      expect(infoLog).toHaveBeenCalledWith('🔍 [MCP] Entry 0: dayIndex=0, mealType=MEAL_SLOT_DINNER, meal=Pasta');
+      expect(infoLog).toHaveBeenCalledWith('🔍 [MCP] Entry 1: dayIndex=1, mealType=MEAL_SLOT_LUNCH, meal=Salad');
     });
 
     it('should handle response with no meals', async () => {
-      const mockResponse: any = {
-        plan: {
-          days: [
-            { dayIndex: 0, mealType: 'dinner', meal: undefined }
-          ],
-          shoppingList: []
-        }
-      };
+      const mockResponse = buildResponse(
+        [
+          buildPlanItem({ id: 22, dayIndex: 0, slot: MealSlot.DINNER, meal: null }),
+        ],
+        { id: 3, version: 1, status: MealPlanStatus.DRAFT },
+      );
 
       const { infoLog } = await import('../logging.js');
 
@@ -130,7 +201,7 @@ describe('generateMealPlan tool', () => {
 
       await generateMealPlan();
 
-      expect(infoLog).toHaveBeenCalledWith('🔍 [MCP] Entry 0: dayIndex=0, mealType=dinner, meal=nil');
+      expect(infoLog).toHaveBeenCalledWith('🔍 [MCP] Entry 0: dayIndex=0, mealType=MEAL_SLOT_DINNER, meal=nil');
     });
 
     it('should throw McpError when response is not ok', async () => {
@@ -190,12 +261,17 @@ describe('generateMealPlan tool', () => {
     });
 
     it('should return formatted tool response when handler is called', async () => {
-      const mockResponse: any = {
-        plan: {
-          days: [{ dayIndex: 0, mealType: 'dinner', meal: { id: 1, name: 'Test Meal', effort: 3, hasRedMeat: false, url: '', mealType: 'dinner', ingredients: [], steps: [], lastPlanned: undefined } }],
-          shoppingList: []
-        }
-      };
+      const mockResponse = buildResponse(
+        [
+          buildPlanItem({
+            id: 31,
+            dayIndex: 0,
+            slot: MealSlot.DINNER,
+            meal: buildMeal({ id: 1, name: 'Test Meal', mealType: 'dinner' }),
+          }),
+        ],
+        { id: 4, version: 2, status: MealPlanStatus.DRAFT },
+      );
 
       const { retryFetch } = await import('../utils.js');
       (retryFetch as jest.MockedFunction<any>).mockResolvedValue({

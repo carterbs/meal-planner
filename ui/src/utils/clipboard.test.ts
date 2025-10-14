@@ -4,28 +4,37 @@ import {
   copyShoppingListToClipboard,
 } from './clipboard';
 import {
-  WeeklyMealPlan,
-  MealPlanEntry,
+  MealPlan,
+  MealPlanItem,
   Meal,
   ShoppingListItem,
+  MealSlot,
 } from '@mealplanner/generated';
 
 describe('clipboard utils', () => {
-  function buildPlan(): WeeklyMealPlan {
+  function buildPlan(): MealPlan {
     const breakfast = new Meal({ id: 1, name: 'Oatmeal', effort: 1 });
     const dinner = new Meal({ id: 2, name: 'Grilled Chicken', effort: 2 });
 
-    const entries: MealPlanEntry[] = [
-      new MealPlanEntry({
+    const items: MealPlanItem[] = [
+      new MealPlanItem({
         dayIndex: 0,
-        mealType: 'breakfast',
-        meal: breakfast,
+        mealType: MealSlot.BREAKFAST,
+        mealSnapshot: breakfast,
       }),
-      new MealPlanEntry({ dayIndex: 0, mealType: 'dinner', meal: dinner }),
-      new MealPlanEntry({ dayIndex: 1, mealType: 'dinner', meal: dinner }),
+      new MealPlanItem({
+        dayIndex: 0,
+        mealType: MealSlot.DINNER,
+        mealSnapshot: dinner,
+      }),
+      new MealPlanItem({
+        dayIndex: 1,
+        mealType: MealSlot.DINNER,
+        mealSnapshot: dinner,
+      }),
     ];
 
-    return new WeeklyMealPlan({ days: entries });
+    return new MealPlan({ items });
   }
 
   function mockClipboard() {

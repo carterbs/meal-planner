@@ -143,7 +143,7 @@ export type GoFinalizeMealPlanResponse = {
 };
 
 export type GoGenerateMealPlanResponse = {
-    plan?: GoWeeklyMealPlan;
+    plan?: GoMealPlan;
 };
 
 export type GoGetAllMealsResponse = {
@@ -156,7 +156,7 @@ export type GoGetCheckpointResponse = {
 };
 
 export type GoGetMealPlanResponse = {
-    plan?: GoWeeklyMealPlan;
+    plan?: GoMealPlan;
 };
 
 export type GoGetMessagesResponse = {
@@ -180,7 +180,7 @@ export type GoGetStepsResponse = {
 
 export type GoGetWorkflowStateResponse = {
     messages?: Array<GoMessage>;
-    plan?: GoWeeklyMealPlan;
+    plan?: GoMealPlan;
     shoppingList?: GoShoppingList;
 };
 
@@ -227,11 +227,54 @@ export type GoMeal = {
     url?: string;
 };
 
-export type GoMealPlanEntry = {
-    dayIndex?: number;
-    meal?: GoMeal;
-    mealType?: string;
+export type GoMealPlan = {
+    /**
+     * RFC3339 timestamp
+     */
+    createdAt?: string;
+    id?: number;
+    items?: Array<GoMealPlanItem>;
+    status?: GoMealPlanStatus;
+    threadId?: string;
+    /**
+     * RFC3339 timestamp
+     */
+    updatedAt?: string;
+    version?: number;
+    /**
+     * RFC3339 timestamp
+     */
+    weekEndDate?: string;
+    /**
+     * RFC3339 timestamp
+     */
+    weekStartDate?: string;
 };
+
+export type GoMealPlanItem = {
+    /**
+     * RFC3339 timestamp
+     */
+    createdAt?: string;
+    /**
+     * 0-6 (Monday-Sunday)
+     */
+    dayIndex?: number;
+    id?: number;
+    /**
+     * Reference to meals table
+     */
+    mealId?: number;
+    mealPlanId?: number;
+    mealSnapshot?: GoMeal;
+    mealType?: GoMealSlot;
+    /**
+     * RFC3339 timestamp
+     */
+    updatedAt?: string;
+};
+
+export type GoMealPlanStatus = number;
 
 export type GoMealPlanningCheckpointState = {
     /**
@@ -242,7 +285,7 @@ export type GoMealPlanningCheckpointState = {
     feedbackHistory?: Array<GoFeedbackEntryProto>;
     isFinalized?: boolean;
     iterationCount?: number;
-    mealPlan?: GoWeeklyMealPlan;
+    mealPlan?: GoMealPlan;
     participants?: Array<string>;
     shoppingList?: GoShoppingList;
     threadId?: string;
@@ -251,6 +294,8 @@ export type GoMealPlanningCheckpointState = {
      */
     updatedAt?: string;
 };
+
+export type GoMealSlot = number;
 
 export type GoMessage = {
     content?: string;
@@ -355,11 +400,6 @@ export type GoUpdateStepRequest = {
 
 export type GoUpdateStepResponse = {
     step?: GoStep;
-};
-
-export type GoWeeklyMealPlan = {
-    days?: Array<GoMealPlanEntry>;
-    shoppingList?: Array<GoShoppingListItem>;
 };
 
 export type GoWorkflowStatus = {

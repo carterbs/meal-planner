@@ -18,16 +18,6 @@ func getMealPlanModelLogger() *zap.SugaredLogger {
 	return logging.GetGrpcLogger("mealplan-model")
 }
 
-// Proto type aliases
-type MealPlan = apipb.MealPlan
-type MealPlanItem = apipb.MealPlanItem
-type MealPlanSummary = apipb.MealPlanSummary
-type MealPlanStatus = apipb.MealPlanStatus
-type MealSlot = apipb.MealSlot
-
-// Legacy alias for backward compatibility
-type MealPlanEntry = apipb.MealPlanEntry
-
 // Helper functions for enum conversions
 func MealSlotFromString(s string) MealSlot {
 	switch s {
@@ -487,65 +477,4 @@ func getMealPlanItemsInternal(ctx context.Context, db *sql.DB, mealPlanID int) (
 	}
 
 	return items, nil
-}
-
-// Legacy functions for backward compatibility
-
-// MealPlanIdentifier represents a persisted meal plan (legacy structure)
-type MealPlanIdentifier struct {
-	ID        int       `json:"id"`
-	ThreadID  string    `json:"thread_id"`
-	Version   int       `json:"version"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-// GetLatestMealPlan retrieves the latest meal plan identifier for a thread (legacy)
-func GetLatestMealPlan(db *sql.DB, threadID string) (*MealPlanIdentifier, error) {
-	const query = `
-	SELECT id, thread_id, version, created_at
-	FROM meal_plans
-	WHERE thread_id = $1
-	ORDER BY version DESC
-	LIMIT 1`
-	var m MealPlanIdentifier
-	err := db.QueryRow(query, threadID).Scan(&m.ID, &m.ThreadID, &m.Version, &m.CreatedAt)
-	if err != nil {
-		return nil, err
-	}
-	return &m, nil
-}
-
-// GetMealPlanItems retrieves items for a given meal plan (legacy)
-func GetMealPlanItems(db *sql.DB, mealPlanID int) ([]MealPlanEntry, error) {
-	const query = `
-	SELECT day_index, meal_type, meal_snapshot
-	FROM meal_plan_items
-	WHERE meal_plan_id = $1
-	ORDER BY day_index, meal_type`
-	rows, err := db.Query(query, mealPlanID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var entries []MealPlanEntry
-	for rows.Next() {
-		var e MealPlanEntry
-		var mealTypeStr string
-		var mealJSON []byte
-		if err := rows.Scan(&e.DayIndex, &mealTypeStr, &mealJSON); err != nil {
-			return nil, err
-		}
-
-		// Convert meal_type string to legacy format
-		e.MealType = mealTypeStr
-
-		// Unmarshal the JSON into a Meal object
-		var meal Meal
-		if err := json.Unmarshal(mealJSON, &meal); err != nil {
-			return nil, err
-		}
-		e.Meal = &meal
-		entries = append(entries, e)
-	}
-	return entries, nil
 }

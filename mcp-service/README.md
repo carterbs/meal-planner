@@ -32,9 +32,13 @@ AI Agent → HTTP/SSE → MCP Server → HTTP → Go Backend
 
 All resources follow MCP specification with proper URI schemes and content structure:
 
-- **WeeklyMealPlan** (`meal://plan/weekly`) - Current weekly plan with dates, meals, effort levels
+- **MealPlan** (`meal://plan/current`) - Current weekly plan with status/version metadata and `items` containing enum-backed meal slots plus meal snapshots
 - **Recipes** (`meal://recipes/all`) - All recipe summaries with metadata including ID, name, effort level, red meat status
 - **RecipeSteps** (`meal://recipes/steps`) - Detailed cooking steps for specific recipes
+
+### Meal Plan Schema Update
+
+The MCP server now returns the gRPC-backed `MealPlan` message. Clients must read `plan.items` (array of `MealPlanItem`) instead of the legacy `plan.days` shape, and interpret meal slots via the `MealSlot` enum (`BREAKFAST`, `LUNCH`, `DINNER`). Each item carries a `meal_snapshot` payload plus plan-level `status`, `version`, and timestamp metadata for optimistic updates.
 
 ## MCP Tools
 
@@ -142,7 +146,7 @@ const transport = new StreamableHTTPClientTransport({
 ```
 
 **Server Capabilities**: The server advertises these MCP capabilities:
-- Resources: 3 available (WeeklyMealPlan, Recipes, RecipeSteps)
+- Resources: 3 available (MealPlan, Recipes, RecipeSteps)
 - Tools: 10 available (meal planning, recipe management, shopping lists)
 - Sampling: Not supported
 - Logging: Structured logging via gRPC with local fallback
@@ -208,4 +212,3 @@ curl -X POST http://localhost:3001/mcp \
 - **gRPC Logging**: Check connection retry patterns and success rates  
 - **Memory Usage**: Track JSON parsing/serialization overhead
 - **Concurrent Sessions**: Validate stateless operation under load
-

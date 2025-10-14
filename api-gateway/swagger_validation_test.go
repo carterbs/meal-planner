@@ -339,6 +339,7 @@ func shouldSkipMessage(messageName string) bool {
 		"StartAgentWorkflowRequest", "MessageAgentRequest",
 
 		// Internal/unused messages
+		"MealPlanEntry", "MealPlanSummary",
 		"MealPlanIdentifier", "SaveCheckpointRequest", "CheckpointResponse",
 		"AgentFeedbackRequest", "AgentResumeRequest",
 

@@ -29,8 +29,17 @@ describe('getCurrentMealPlan tool', () => {
     it('should get current meal plan successfully', async () => {
       const mockResponse = {
         plan: {
-          days: [{ dayIndex: 0, mealType: 'dinner', meal: { id: 1, name: 'Test Meal' } }],
-          shoppingList: []
+          id: 55,
+          status: 'MEAL_PLAN_STATUS_FINALIZED',
+          version: 4,
+          items: [
+            {
+              id: 10,
+              dayIndex: 0,
+              mealType: 'MEAL_SLOT_DINNER',
+              mealSnapshot: { id: 1, name: 'Test Meal' }
+            }
+          ]
         }
       };
 
@@ -70,15 +79,24 @@ describe('getCurrentMealPlan tool', () => {
 
       expect(mockServer.tool).toHaveBeenCalledWith(
         'getCurrentMealPlan',
-        'Get the current weekly meal plan showing all scheduled meals by day and type (breakfast/lunch/dinner). Provides context for understanding what meals are currently planned and which ones might need replacement.',
+        'Get the current meal plan showing slot assignments (status, version, and meal snapshots) for the active week. Provides context for which meals are currently planned.',
         expect.any(Function)
       );
     });
 
     it('should return formatted response from handler', async () => {
       const mockPlan = {
-        days: [{ dayIndex: 0, mealType: 'dinner', meal: { id: 1, name: 'Test' } }],
-        shoppingList: []
+        id: 100,
+        status: 'MEAL_PLAN_STATUS_DRAFT',
+        version: 1,
+        items: [
+          {
+            id: 200,
+            dayIndex: 0,
+            mealType: 'MEAL_SLOT_BREAKFAST',
+            mealSnapshot: { id: 5, name: 'Test' }
+          }
+        ]
       };
 
       fetchMock.enableMocks();

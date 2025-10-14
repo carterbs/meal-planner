@@ -2,13 +2,13 @@
 
 // Codemod to tighten test typing without using `any`:
 // - Replace `new <Type>({...} as unknown)` with `new <Type>({...} as PartialMessage<<Type>>)`
-//   for protobuf-generated types: Meal, Ingredient, Step, MealPlanEntry, WeeklyMealPlan, ShoppingListItem.
+//   for protobuf-generated types: Meal, Ingredient, Step, MealPlanEntry, MealPlan, ShoppingListItem.
 // - Ensure `import type { PartialMessage } from '@bufbuild/protobuf'` is present when needed.
 // - Replace `resumeData: null` with `resumeData: undefined` in tests.
 // - Fix promise resolver typing in useAgentSession tests.
 // - Fix DnD mock prop types and mockOnDragEnd typing in StepsEditor tests.
 // - Fix clipboard tests casting of navigator.clipboard to a structural type.
-// - Fix mealPlanConverter tests input typing from unknown to GoMealPlanEntry[] shape.
+// - Fix mealPlanConverter tests input typing from unknown to GoMealPlanItem[] shape.
 //
 // Scope: ui/src/**/*.test.ts and ui/src/**/*.test.tsx
 
@@ -70,7 +70,7 @@ function transformConstructors(content) {
         'Ingredient',
         'Step',
         'MealPlanEntry',
-        'WeeklyMealPlan',
+        'MealPlan',
         'ShoppingListItem',
     ];
 
@@ -144,7 +144,7 @@ function transformMealPlanConverterTest(filePath, content) {
     if (!/mealPlanConverter\.test\.ts$/.test(filePath)) return content;
     return content.replace(
         /as\s+unknown;?/g,
-        "as { days?: import('@mealplanner/generated/dist/gateway/types.gen').GoMealPlanEntry[] };",
+        "as { items?: import('@mealplanner/generated/dist/gateway/types.gen').GoMealPlanItem[] };",
     );
 }
 
@@ -201,5 +201,4 @@ function run() {
 if (require.main === module) {
     run();
 }
-
 

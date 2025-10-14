@@ -176,7 +176,7 @@ The meal plan tables were rebuilt as first-class database entities, replacing th
 **Legacy Operations (backward compatibility):**
 - `GetLatestMealPlan(ctx, threadID)` - Retrieve latest plan for workflow thread
 - `GetMealPlanItems(ctx, mealPlanID)` - Get items in legacy format
-- `GenerateWeeklyMealPlan(ctx)` - Generate new weekly plan using algorithm
+- `GenerateMealPlanItems(ctx)` - Generate new weekly plan items using algorithm
 - `GetLastPlannedMeals(ctx)` - Reconstruct plan from last planned meals
 - `PopulateMealDetails(ctx, plan)` - Hydrate meal objects with full data
 

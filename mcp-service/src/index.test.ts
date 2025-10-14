@@ -42,8 +42,8 @@ jest.mock('./logging.js', () => ({
 }));
 
 // Mock all resource registrations
-jest.mock('./resources/weeklyMealPlan.js', () => ({
-  registerWeeklyMealPlan: jest.fn()
+jest.mock('./resources/mealPlan.js', () => ({
+  registerMealPlan: jest.fn()
 }));
 
 jest.mock('./resources/recipes.js', () => ({
@@ -167,7 +167,7 @@ describe('index (main application)', () => {
     });
 
     it('should register all resources', async () => {
-      const { registerWeeklyMealPlan } = await import('./resources/weeklyMealPlan.js');
+      const { registerMealPlan } = await import('./resources/mealPlan.js');
       const { registerRecipes } = await import('./resources/recipes.js');
       const { registerRecipeSteps } = await import('./resources/recipeSteps.js');
 
@@ -175,7 +175,7 @@ describe('index (main application)', () => {
       await import('./index.js');
       await new Promise(resolve => setTimeout(resolve, 50)); // Wait for async main
 
-      expect(registerWeeklyMealPlan).toHaveBeenCalled();
+      expect(registerMealPlan).toHaveBeenCalled();
       expect(registerRecipes).toHaveBeenCalled();
       expect(registerRecipeSteps).toHaveBeenCalled();
     });

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
-import { WeeklyMealPlan } from '@mealplanner/generated';
+import { MealPlan } from '@mealplanner/generated/api_pb';
+import { planToEntries } from '../../../../utils/mealPlanUtils';
 
 const effortIcons = {
   easy: '🙂',
@@ -23,7 +24,7 @@ export const getEffortIcon = (effort: number) => {
 };
 
 interface MealPlanDisplayProps {
-  plan: WeeklyMealPlan;
+  plan: MealPlan;
   highlights?: Set<string>;
   colors?: {
     cardBg: string;
@@ -49,9 +50,10 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
     changedMealHighlight: '#92ca92',
   };
   const activeColors = colors || defaultColors;
+  const entries = planToEntries(plan);
   const grouped = DAYS_OF_THE_WEEK.map((day, idx) => ({
     day,
-    entries: plan.days.filter((d) => d.dayIndex === idx),
+    entries: entries.filter((d) => d.dayIndex === idx),
   }));
 
   return (

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client';
-import { getCheckpointsByThreadId, postWorkflowsByThreadIdAbandon, postShoppinglist } from '@mealplanner/generated/dist/gateway';
-import type { GoMealPlanEntry, GoShoppingList, GoGetCheckpointResponse, GoGetShoppingListResponse } from '@mealplanner/generated/dist/gateway/types.gen';
+import { createClient, createConfig } from '@mealplanner/generated/gateway/client';
+import { getCheckpointsByThreadId, postWorkflowsByThreadIdAbandon, postShoppinglist } from '@mealplanner/generated/gateway';
+import type { GoShoppingList, GoGetCheckpointResponse, GoGetShoppingListResponse } from '@mealplanner/generated/gateway/types.gen';
 
 // Create the API gateway client
 const gatewayClient = createClient(
@@ -10,10 +10,22 @@ const gatewayClient = createClient(
   }),
 );
 
+type MealPlanItemState = {
+  mealId?: number | null;
+  mealSnapshot?: unknown;
+};
+
+type LegacyMealPlanDay = {
+  meal?: unknown;
+};
+
 // Shape of checkpoint.state
 interface CheckpointState {
   currentStep?: string;
-  mealPlan?: { days?: GoMealPlanEntry[] };
+  mealPlan?: {
+    items?: MealPlanItemState[];
+    days?: LegacyMealPlanDay[];
+  };
   participants?: string[];
   threadId?: string;
   shoppingList?: GoShoppingList;
@@ -23,6 +35,61 @@ export interface WorkflowState extends CheckpointState {
   threadId: string;
   shoppingList?: GoShoppingList;
 } // include threadId & optional shoppingList for resumeData
+
+function parseMealIdFromUnknown(value: unknown): number | undefined {
+  if (value == null) {
+    return undefined;
+  }
+
+  if (typeof value === 'number') {
+    return value > 0 ? value : undefined;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value) as { id?: number };
+      return typeof parsed.id === 'number' && parsed.id > 0 ? parsed.id : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (typeof value === 'object') {
+    const maybeId = (value as { id?: unknown }).id;
+    if (typeof maybeId === 'number' && maybeId > 0) {
+      return maybeId;
+    }
+    const nested = (value as { mealSnapshot?: unknown }).mealSnapshot;
+    if (nested && nested !== value) {
+      return parseMealIdFromUnknown(nested);
+    }
+  }
+
+  return undefined;
+}
+
+function collectMealIdsFromItems(items: MealPlanItemState[] | undefined): number[] {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+  return items.map((item) => {
+    if (typeof item.mealId === 'number') {
+      return item.mealId;
+    }
+    const parsed = parseMealIdFromUnknown(item.mealSnapshot);
+    return typeof parsed === 'number' ? parsed : 0;
+  });
+}
+
+function collectMealIdsFromLegacyDays(days: LegacyMealPlanDay[] | undefined): number[] {
+  if (!Array.isArray(days)) {
+    return [];
+  }
+  return days.map((day) => {
+    const parsed = parseMealIdFromUnknown(day.meal);
+    return typeof parsed === 'number' ? parsed : 0;
+  });
+}
 
 export default function useSession(startSession: () => Promise<void>) {
   const [isResuming, setIsResuming] = useState(false);
@@ -79,17 +146,15 @@ export default function useSession(startSession: () => Promise<void>) {
         } as WorkflowState;
         setResumeData(data);
         // Fetch shopping list for resumed meal plan
-        if (state.mealPlan) {
+        let mealIds = collectMealIdsFromItems(state.mealPlan?.items);
+        if (mealIds.length === 0) {
+          mealIds = collectMealIdsFromLegacyDays(state.mealPlan?.days);
+        }
+        if (mealIds.length > 0) {
           postShoppinglist({
             client: gatewayClient,
             body: {
-              plan:
-                state.mealPlan.days?.map((d: GoMealPlanEntry) => {
-                  const mealRaw = d.meal as unknown;
-                  const meal =
-                    typeof mealRaw === 'string' ? (JSON.parse(mealRaw) as { id?: number }) : (mealRaw as { id?: number } | undefined);
-                  return meal?.id ?? 0;
-                }) ?? [],
+              plan: mealIds,
             },
           })
             .then((res) => {

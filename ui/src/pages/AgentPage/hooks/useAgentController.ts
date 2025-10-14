@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
+import { MealPlan, ShoppingListItem } from '@mealplanner/generated/api_pb';
 import { SessionInfo } from '../../../api';
 import useAgentSession from './useAgentSession';
 import useAgentMessages from './useAgentMessages';
@@ -20,11 +20,11 @@ interface UseAgentControllerReturn {
     isWorking: boolean;
 
     messages: ChatMessage[];
-    sendMessage: (text?: string) => Promise<{ newPlan?: WeeklyMealPlan } | void>;
+    sendMessage: (text?: string) => Promise<{ newPlan?: MealPlan } | void>;
 
-    mealPlan: WeeklyMealPlan | null;
+    mealPlan: MealPlan | null;
     shoppingList: ShoppingListItem[] | null;
-    setMealPlanExternal: (plan: WeeklyMealPlan) => void;
+    setMealPlanExternal: (plan: MealPlan) => void;
 }
 
 export default function useAgentController(): UseAgentControllerReturn {
@@ -43,9 +43,6 @@ export default function useAgentController(): UseAgentControllerReturn {
 
     const startSession = useCallback(async () => {
         const result = await start();
-        if (result.initialState?.mealPlan) {
-            setMealPlan(result.initialState.mealPlan);
-        }
         if (result.message) {
             setMessages([{ sender: 'agent', text: result.message }]);
         }

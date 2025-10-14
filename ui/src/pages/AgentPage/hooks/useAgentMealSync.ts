@@ -1,15 +1,13 @@
 import { useCallback, useState } from 'react';
-import { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
+import { MealPlan, ShoppingListItem } from '@mealplanner/generated/api_pb';
 import { convertGatewayMealPlan } from '../../../utils/mealPlanConverter';
 import {
   getAgentCheckpoint,
   goGetShoppingList,
   sendAgentMessage,
 } from '../../../api';
-import type { GoMealPlanEntry } from '@mealplanner/generated/dist/gateway/types.gen';
-
 export default function useAgentMealSync() {
-  const [mealPlan, setMealPlan] = useState<WeeklyMealPlan | null>(null);
+  const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
   const [shoppingList, setShoppingList] = useState<ShoppingListItem[] | null>(
     null,
   );
@@ -21,7 +19,7 @@ export default function useAgentMealSync() {
     if (!state) return;
     const maybePlan = state.mealPlan;
     if (maybePlan) {
-      const newPlan = convertGatewayMealPlan(maybePlan as { days?: GoMealPlanEntry[] });
+      const newPlan = convertGatewayMealPlan(maybePlan);
       setMealPlan(newPlan);
       try {
         const shoppingRes = await goGetShoppingList(newPlan);
@@ -44,17 +42,7 @@ export default function useAgentMealSync() {
   const send = useCallback(async (threadId: string, text: string) => {
     setIsSending(true);
     try {
-      const result = await sendAgentMessage(threadId, text, 'user', true);
-      // Also surface any initial state embedded in the message result
-      const initial = (result.initialState as { state?: { mealPlan?: unknown } } | undefined)?.state?.mealPlan;
-      if (initial) {
-        const plan = convertGatewayMealPlan(initial as { days?: GoMealPlanEntry[] });
-        setMealPlan(plan);
-      }
-      const sl = (result.initialState as { mealPlan?: { shoppingList?: ShoppingListItem[] } } | undefined)?.mealPlan?.shoppingList;
-      if (sl) {
-        setShoppingList(sl);
-      }
+      await sendAgentMessage(threadId, text, 'user', true);
     } finally {
       setIsSending(false);
     }

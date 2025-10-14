@@ -4,16 +4,16 @@ import App from './App';
 
 jest.useFakeTimers();
 
-jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
+jest.mock('@mealplanner/generated/gateway/client/index.js', () => ({
   createClient: jest.fn(() => ({})),
   createConfig: jest.fn(() => ({})),
 }));
 
-jest.mock('@mealplanner/generated/dist/gateway/sdk.gen', () => ({
+jest.mock('@mealplanner/generated/gateway/sdk.gen', () => ({
   getHealth: jest.fn(),
 }));
 
-import { getHealth } from '@mealplanner/generated/dist/gateway/sdk.gen';
+import { getHealth } from '@mealplanner/generated/gateway/sdk.gen';
 
 describe('App', () => {
   beforeEach(() => {

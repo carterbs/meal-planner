@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { initLogging, infoLog, errorLog } from './logging.js';
-import { registerWeeklyMealPlan } from './resources/weeklyMealPlan.js';
+import { registerMealPlan } from './resources/mealPlan.js';
 import { registerRecipes } from './resources/recipes.js';
 import { registerRecipeSteps } from './resources/recipeSteps.js';
 import { registerGenerateMealPlan } from './tools/generateMealPlan.js';
@@ -32,7 +32,7 @@ async function main() {
     const server = new McpServer({ name: 'mealplanner-mcp', version: '1.0.0' });
     
     // Register resources
-    registerWeeklyMealPlan(server);
+    registerMealPlan(server);
     registerRecipes(server);
     registerRecipeSteps(server);
     

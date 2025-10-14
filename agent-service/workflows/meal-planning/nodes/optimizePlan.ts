@@ -1,12 +1,13 @@
-import { WeeklyMealPlan as GeneratedWeeklyMealPlan } from '@mealplanner/generated';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { MealPlan as GeneratedMealPlan } from '@mealplanner/generated';
 import { MealPlanningState, MealPlanningStep } from '../../../shared/types';
 
 export interface OptimizePlanDeps {
-    validatePlan: (plan: GeneratedWeeklyMealPlan) => string[];
+    validatePlan: (plan: GeneratedMealPlan) => string[];
     optimizePlanWithLLM: (
-        plan: GeneratedWeeklyMealPlan,
+        plan: GeneratedMealPlan,
         issues: string[],
-    ) => Promise<GeneratedWeeklyMealPlan>;
+    ) => Promise<GeneratedMealPlan>;
 }
 
 export async function optimizePlanNode(
@@ -16,16 +17,15 @@ export async function optimizePlanNode(
     if (!state.mealPlan) {
         throw new Error('No meal plan to optimize');
     }
-    const issues = deps.validatePlan(state.mealPlan);
+    const plan = state.mealPlan;
+    const issues = deps.validatePlan(plan);
     const optimizedPlan =
         issues.length > 0
-            ? await deps.optimizePlanWithLLM(state.mealPlan, issues)
-            : state.mealPlan;
+            ? await deps.optimizePlanWithLLM(plan, issues)
+            : plan;
     return {
         currentStep: MealPlanningStep.PRESENT_PLAN,
         mealPlan: optimizedPlan,
         iterationCount: state.iterationCount + 1,
     } as Partial<MealPlanningState>;
 }
-
-

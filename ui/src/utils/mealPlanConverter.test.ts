@@ -1,105 +1,66 @@
+import { MealSlot } from '@mealplanner/generated';
 import { convertGatewayMealPlan } from './mealPlanConverter';
 
 describe('mealPlanConverter', () => {
-  it('converts undefined mealPlan to empty WeeklyMealPlan', () => {
+  it('returns empty MealPlan when input is undefined', () => {
     const result = convertGatewayMealPlan(undefined);
-    expect(result.days.length).toBe(0);
+    expect(result.items.length).toBe(0);
   });
 
-  it('converts entries and handles string and object meal forms', () => {
+  it('converts JSON with enum strings into MealPlan', () => {
     const input = {
-      days: [
+      items: [
         {
           dayIndex: 1,
-          mealType: 'dinner',
-          meal: JSON.stringify({
+          mealType: 'MEAL_SLOT_DINNER',
+          mealSnapshot: {
             id: 10,
             name: 'Pasta',
-            ingredients: [],
-            steps: [],
-          }),
+          },
         },
+      ],
+    };
+    const result = convertGatewayMealPlan(input);
+    expect(result.items.length).toBe(1);
+    const item = result.items[0];
+    expect(item.dayIndex).toBe(1);
+    expect(item.mealType).toBe(MealSlot.DINNER);
+    expect(item.mealSnapshot?.name).toBe('Pasta');
+  });
+
+  it('handles numeric enum values from the gateway', () => {
+    const input = {
+      items: [
         {
           dayIndex: 2,
-          mealType: 'lunch',
-          meal: { id: 20, name: 'Salad', ingredients: [], steps: [] },
-        },
-      ],
-    } as { days?: import('@mealplanner/generated/dist/gateway/types.gen').GoMealPlanEntry[] };
-
-    const result = convertGatewayMealPlan(input);
-    expect(result.days.length).toBe(2);
-    expect(result.days[0].dayIndex).toBe(1);
-    expect(result.days[0].mealType).toBe('dinner');
-    expect(result.days[0].meal?.id).toBe(10);
-    expect(result.days[1].meal?.id).toBe(20);
-  });
-
-  it('sets sensible defaults and converts timestamps', () => {
-    const input = {
-      days: [
-        {
-          dayIndex: undefined,
-          mealType: undefined,
-          meal: {
-            id: undefined,
-            name: undefined,
-            effort: undefined,
-            hasRedMeat: undefined,
-            url: undefined,
-            mealType: undefined,
-            lastPlanned: { seconds: 1 },
-            ingredients: [
-              {
-                id: undefined,
-                mealId: undefined,
-                name: undefined,
-                quantity: undefined,
-                unit: undefined,
-              },
-            ],
-            steps: [
-              {
-                id: undefined,
-                mealId: undefined,
-                stepNumber: undefined,
-                instruction: undefined,
-              },
-            ],
+          mealType: 1, // breakfast
+          mealSnapshot: {
+            id: 5,
+            name: 'Oatmeal',
           },
         },
       ],
-    } as unknown as { days?: import('@mealplanner/generated/dist/gateway/types.gen').GoMealPlanEntry[] };
-
+    };
     const result = convertGatewayMealPlan(input);
-    const meal = result.days[0].meal!;
-    expect(result.days[0].dayIndex).toBe(0);
-    expect(result.days[0].mealType).toBe('');
-    expect(meal.id).toBe(0);
-    expect(meal.name).toBe('');
-    expect(meal.effort).toBe(0);
-    expect(meal.hasRedMeat).toBe(false);
-    expect(meal.url).toBe('');
-    expect(meal.mealType).toBe('');
-    expect(meal.lastPlanned).toBeDefined();
-    expect(meal.ingredients[0].id).toBe(0);
-    expect(meal.steps[0].stepNumber).toBe(0);
+    expect(result.items[0].mealType).toBe(MealSlot.BREAKFAST);
+    expect(result.items[0].mealSnapshot?.id).toBe(5);
   });
 
-  it('handles lastPlanned as ISO string', () => {
+  it('ignores unknown fields gracefully', () => {
     const input = {
-      days: [
+      items: [
         {
-          meal: {
-            id: 1,
-            ingredients: [],
-            steps: [],
-            lastPlanned: '2020-01-01T00:00:00.000Z',
-          },
+          dayIndex: 0,
+          mealType: 'MEAL_SLOT_LUNCH',
+          mealSnapshot: { id: 42, name: 'Salad' },
+          unknownField: 'ignored',
         },
       ],
-    } as { days?: import('@mealplanner/generated/dist/gateway/types.gen').GoMealPlanEntry[] };
+      extra: 'ignored',
+    };
+
     const result = convertGatewayMealPlan(input);
-    expect(result.days[0].meal?.lastPlanned).toBeDefined();
+    expect(result.items.length).toBe(1);
+    expect(result.items[0].mealSnapshot?.name).toBe('Salad');
   });
 });

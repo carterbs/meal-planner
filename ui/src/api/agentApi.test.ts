@@ -4,10 +4,10 @@ import {
   getAgentCheckpoint,
   getMessages,
 } from './agentApi';
-import * as gatewayModule from '@mealplanner/generated/dist/gateway';
+import * as gatewayModule from '@mealplanner/generated/gateway';
 
-jest.mock('@mealplanner/generated/dist/gateway');
-jest.mock('@mealplanner/generated/dist/gateway/client', () => ({
+jest.mock('@mealplanner/generated/gateway');
+jest.mock('@mealplanner/generated/gateway/client', () => ({
   createClient: jest.fn(() => 'mockClient'),
   createConfig: jest.fn(() => ({})),
 }));

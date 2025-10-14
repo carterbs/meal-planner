@@ -2,7 +2,15 @@ import { debugLog, infoLog, warnLog, errorLog } from "../logging.js";
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { API, retryFetch } from '../utils.js';
-import { WeeklyMealPlan, GenerateMealPlanResponse } from '@mealplanner/generated';
+import { GenerateMealPlanResponse, MealSlot } from '@mealplanner/generated';
+
+function describeMealSlot(slot: MealSlot | string | undefined): string {
+  if (typeof slot === 'number') {
+    const name = MealSlot[slot];
+    return name ? `MEAL_SLOT_${name}` : `${slot}`;
+  }
+  return slot ?? 'MEAL_SLOT_UNSPECIFIED';
+}
 export async function generateMealPlan(): Promise<GenerateMealPlanResponse> {
     await infoLog(`🔧 [MCP-FETCH] About to fetch: ${API}/api/mealplan/generate`);
     await infoLog(`🔧 [MCP-FETCH] API variable: ${API}`);
@@ -23,10 +31,10 @@ export async function generateMealPlan(): Promise<GenerateMealPlanResponse> {
         await infoLog(JSON.stringify(responseJson));
         // DEBUGGING: Log dayIndex values from backend response
         await infoLog("🔍 [MCP] Checking dayIndex values from backend:");
-        if (responseJson.plan?.days) {
-            for (let i = 0; i < responseJson.plan.days.length; i++) {
-                const day = responseJson.plan.days[i];
-                await infoLog(`🔍 [MCP] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`);
+        if (responseJson.plan?.items) {
+            for (let i = 0; i < responseJson.plan.items.length; i++) {
+                const item = responseJson.plan.items[i];
+                await infoLog(`🔍 [MCP] Entry ${i}: dayIndex=${item.dayIndex}, mealType=${describeMealSlot(item.mealType)}, meal=${item.mealSnapshot?.name || 'nil'}`);
             }
         }
         return responseJson;

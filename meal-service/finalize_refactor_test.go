@@ -109,7 +109,7 @@ func TestFinalizeMealPlan_ThreadIDSignature(t *testing.T) {
 					WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data"}).
 						AddRow(checkpointBytes))
 
-				expectMealPlanCreation(mock, true)
+				expectMealPlanCreation(mock, false)
 
 				// Mock the UpdateLastPlannedDates transaction
 				mock.ExpectBegin()
@@ -244,7 +244,7 @@ func TestFinalizeMealPlan_CheckpointRetrieval(t *testing.T) {
 						WillReturnRows(sqlmock.NewRows([]string{"checkpoint_data"}).
 							AddRow(checkpointBytes))
 
-					expectMealPlanCreation(mock, true)
+					expectMealPlanCreation(mock, false)
 
 					if tt.expectedError == "" && !tt.mealPlanHasZeroId {
 						// Mock the UpdateLastPlannedDates transaction when meal IDs are present

@@ -1,20 +1,20 @@
 /* istanbul ignore file -- pure type re-exports, no runtime logic to cover */
 // Import protobuf types from generated package
-export type {
+export {
   Ingredient,
   Step,
   Meal,
   ShoppingListItem,
-} from '@mealplanner/generated';
+} from '@mealplanner/generated/api_pb';
 
 // Re-export all other types from proto-generated package
-export type {
-  WeeklyMealPlan,
-  AgentStartRequest,
-  AgentFeedbackRequest,
-  AgentResumeRequest,
-  AgentMessageRequest,
-  AgentResponse,
+export {
+  MealPlan,
+  MealPlanItem,
+  MealPlanEntry,
+  MealPlanSummary,
+  MealPlanStatus,
+  MealSlot,
   WorkflowStatus,
   HealthCheckResponse,
   GetMealPlanResponse,
@@ -51,19 +51,4 @@ export type {
   ReorderStepsResponse,
   DeleteAllStepsRequest,
   DeleteAllStepsResponse,
-  StartAgentWorkflowRequest,
-  StartAgentWorkflowResponse,
-  MessageAgentRequest,
-  MessageAgentResponse,
-  GetWorkflowStatusRequest,
-  GetWorkflowStatusResponse,
-  ListWorkflowsResponse,
-  CancelWorkflowRequest,
-  CancelWorkflowResponse,
-  GetWorkflowStateRequest,
-  GetWorkflowStateResponse,
-  AbandonWorkflowRequest,
-  AbandonWorkflowResponse,
-  AddMessageRequest,
-  AddMessageResponse,
-} from '@mealplanner/generated';
+} from '@mealplanner/generated/api_pb';

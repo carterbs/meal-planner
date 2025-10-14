@@ -7,6 +7,78 @@ import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialM
 import { Message as Message$1, proto3, Timestamp } from "@bufbuild/protobuf";
 
 /**
+ * Enums for meal planning
+ *
+ * @generated from enum mealplanner.api.MealPlanStatus
+ */
+export enum MealPlanStatus {
+  /**
+   * @generated from enum value: MEAL_PLAN_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: MEAL_PLAN_STATUS_DRAFT = 1;
+   */
+  DRAFT = 1,
+
+  /**
+   * @generated from enum value: MEAL_PLAN_STATUS_FINALIZED = 2;
+   */
+  FINALIZED = 2,
+
+  /**
+   * @generated from enum value: MEAL_PLAN_STATUS_ARCHIVED = 3;
+   */
+  ARCHIVED = 3,
+
+  /**
+   * @generated from enum value: MEAL_PLAN_STATUS_ABANDONED = 4;
+   */
+  ABANDONED = 4,
+}
+// Retrieve enum metadata with: proto3.getEnumType(MealPlanStatus)
+proto3.util.setEnumType(MealPlanStatus, "mealplanner.api.MealPlanStatus", [
+  { no: 0, name: "MEAL_PLAN_STATUS_UNSPECIFIED" },
+  { no: 1, name: "MEAL_PLAN_STATUS_DRAFT" },
+  { no: 2, name: "MEAL_PLAN_STATUS_FINALIZED" },
+  { no: 3, name: "MEAL_PLAN_STATUS_ARCHIVED" },
+  { no: 4, name: "MEAL_PLAN_STATUS_ABANDONED" },
+]);
+
+/**
+ * @generated from enum mealplanner.api.MealSlot
+ */
+export enum MealSlot {
+  /**
+   * @generated from enum value: MEAL_SLOT_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: MEAL_SLOT_BREAKFAST = 1;
+   */
+  BREAKFAST = 1,
+
+  /**
+   * @generated from enum value: MEAL_SLOT_LUNCH = 2;
+   */
+  LUNCH = 2,
+
+  /**
+   * @generated from enum value: MEAL_SLOT_DINNER = 3;
+   */
+  DINNER = 3,
+}
+// Retrieve enum metadata with: proto3.getEnumType(MealSlot)
+proto3.util.setEnumType(MealSlot, "mealplanner.api.MealSlot", [
+  { no: 0, name: "MEAL_SLOT_UNSPECIFIED" },
+  { no: 1, name: "MEAL_SLOT_BREAKFAST" },
+  { no: 2, name: "MEAL_SLOT_LUNCH" },
+  { no: 3, name: "MEAL_SLOT_DINNER" },
+]);
+
+/**
  * @generated from message mealplanner.api.Ingredient
  */
 export class Ingredient extends Message$1<Ingredient> {
@@ -257,6 +329,265 @@ export class MealPlanEntry extends Message$1<MealPlanEntry> {
 }
 
 /**
+ * New meal plan messages for first-class database entities
+ *
+ * @generated from message mealplanner.api.MealPlanItem
+ */
+export class MealPlanItem extends Message$1<MealPlanItem> {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id = 0;
+
+  /**
+   * @generated from field: int32 meal_plan_id = 2;
+   */
+  mealPlanId = 0;
+
+  /**
+   * 0-6 (Monday-Sunday)
+   *
+   * @generated from field: int32 day_index = 3;
+   */
+  dayIndex = 0;
+
+  /**
+   * @generated from field: mealplanner.api.MealSlot meal_type = 4;
+   */
+  mealType = MealSlot.UNSPECIFIED;
+
+  /**
+   * Reference to meals table
+   *
+   * @generated from field: optional int32 meal_id = 5;
+   */
+  mealId?: number;
+
+  /**
+   * Point-in-time meal data
+   *
+   * @generated from field: mealplanner.api.Meal meal_snapshot = 6;
+   */
+  mealSnapshot?: Meal;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 7;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_at = 8;
+   */
+  updatedAt?: Timestamp;
+
+  constructor(data?: PartialMessage<MealPlanItem>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "mealplanner.api.MealPlanItem";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "meal_plan_id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "day_index", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 4, name: "meal_type", kind: "enum", T: proto3.getEnumType(MealSlot) },
+    { no: 5, name: "meal_id", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 6, name: "meal_snapshot", kind: "message", T: Meal },
+    { no: 7, name: "created_at", kind: "message", T: Timestamp },
+    { no: 8, name: "updated_at", kind: "message", T: Timestamp },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanItem {
+    return new MealPlanItem().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlanItem {
+    return new MealPlanItem().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlanItem {
+    return new MealPlanItem().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MealPlanItem | PlainMessage<MealPlanItem> | undefined, b: MealPlanItem | PlainMessage<MealPlanItem> | undefined): boolean {
+    return proto3.util.equals(MealPlanItem, a, b);
+  }
+}
+
+/**
+ * @generated from message mealplanner.api.MealPlan
+ */
+export class MealPlan extends Message$1<MealPlan> {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id = 0;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp week_start_date = 2;
+   */
+  weekStartDate?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp week_end_date = 3;
+   */
+  weekEndDate?: Timestamp;
+
+  /**
+   * @generated from field: mealplanner.api.MealPlanStatus status = 4;
+   */
+  status = MealPlanStatus.UNSPECIFIED;
+
+  /**
+   * @generated from field: int32 version = 5;
+   */
+  version = 0;
+
+  /**
+   * @generated from field: optional string thread_id = 6;
+   */
+  threadId?: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 7;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_at = 8;
+   */
+  updatedAt?: Timestamp;
+
+  /**
+   * @generated from field: repeated mealplanner.api.MealPlanItem items = 9;
+   */
+  items: MealPlanItem[] = [];
+
+  constructor(data?: PartialMessage<MealPlan>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "mealplanner.api.MealPlan";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "week_start_date", kind: "message", T: Timestamp },
+    { no: 3, name: "week_end_date", kind: "message", T: Timestamp },
+    { no: 4, name: "status", kind: "enum", T: proto3.getEnumType(MealPlanStatus) },
+    { no: 5, name: "version", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 6, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 7, name: "created_at", kind: "message", T: Timestamp },
+    { no: 8, name: "updated_at", kind: "message", T: Timestamp },
+    { no: 9, name: "items", kind: "message", T: MealPlanItem, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlan {
+    return new MealPlan().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlan {
+    return new MealPlan().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlan {
+    return new MealPlan().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MealPlan | PlainMessage<MealPlan> | undefined, b: MealPlan | PlainMessage<MealPlan> | undefined): boolean {
+    return proto3.util.equals(MealPlan, a, b);
+  }
+}
+
+/**
+ * @generated from message mealplanner.api.MealPlanSummary
+ */
+export class MealPlanSummary extends Message$1<MealPlanSummary> {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id = 0;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp week_start_date = 2;
+   */
+  weekStartDate?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp week_end_date = 3;
+   */
+  weekEndDate?: Timestamp;
+
+  /**
+   * @generated from field: mealplanner.api.MealPlanStatus status = 4;
+   */
+  status = MealPlanStatus.UNSPECIFIED;
+
+  /**
+   * @generated from field: int32 version = 5;
+   */
+  version = 0;
+
+  /**
+   * @generated from field: optional string thread_id = 6;
+   */
+  threadId?: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 7;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_at = 8;
+   */
+  updatedAt?: Timestamp;
+
+  /**
+   * Number of items without loading them
+   *
+   * @generated from field: int32 item_count = 9;
+   */
+  itemCount = 0;
+
+  constructor(data?: PartialMessage<MealPlanSummary>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "mealplanner.api.MealPlanSummary";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "week_start_date", kind: "message", T: Timestamp },
+    { no: 3, name: "week_end_date", kind: "message", T: Timestamp },
+    { no: 4, name: "status", kind: "enum", T: proto3.getEnumType(MealPlanStatus) },
+    { no: 5, name: "version", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 6, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 7, name: "created_at", kind: "message", T: Timestamp },
+    { no: 8, name: "updated_at", kind: "message", T: Timestamp },
+    { no: 9, name: "item_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanSummary {
+    return new MealPlanSummary().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlanSummary {
+    return new MealPlanSummary().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlanSummary {
+    return new MealPlanSummary().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: MealPlanSummary | PlainMessage<MealPlanSummary> | undefined, b: MealPlanSummary | PlainMessage<MealPlanSummary> | undefined): boolean {
+    return proto3.util.equals(MealPlanSummary, a, b);
+  }
+}
+
+/**
  * @generated from message mealplanner.api.ShoppingListItem
  */
 export class ShoppingListItem extends Message$1<ShoppingListItem> {
@@ -302,104 +633,6 @@ export class ShoppingListItem extends Message$1<ShoppingListItem> {
 
   static equals(a: ShoppingListItem | PlainMessage<ShoppingListItem> | undefined, b: ShoppingListItem | PlainMessage<ShoppingListItem> | undefined): boolean {
     return proto3.util.equals(ShoppingListItem, a, b);
-  }
-}
-
-/**
- * @generated from message mealplanner.api.WeeklyMealPlan
- */
-export class WeeklyMealPlan extends Message$1<WeeklyMealPlan> {
-  /**
-   * @generated from field: repeated mealplanner.api.MealPlanEntry days = 1;
-   */
-  days: MealPlanEntry[] = [];
-
-  /**
-   * @generated from field: repeated mealplanner.api.ShoppingListItem shopping_list = 2;
-   */
-  shoppingList: ShoppingListItem[] = [];
-
-  constructor(data?: PartialMessage<WeeklyMealPlan>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.WeeklyMealPlan";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "days", kind: "message", T: MealPlanEntry, repeated: true },
-    { no: 2, name: "shopping_list", kind: "message", T: ShoppingListItem, repeated: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WeeklyMealPlan {
-    return new WeeklyMealPlan().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WeeklyMealPlan {
-    return new WeeklyMealPlan().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WeeklyMealPlan {
-    return new WeeklyMealPlan().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: WeeklyMealPlan | PlainMessage<WeeklyMealPlan> | undefined, b: WeeklyMealPlan | PlainMessage<WeeklyMealPlan> | undefined): boolean {
-    return proto3.util.equals(WeeklyMealPlan, a, b);
-  }
-}
-
-/**
- * @generated from message mealplanner.api.MealPlanIdentifier
- */
-export class MealPlanIdentifier extends Message$1<MealPlanIdentifier> {
-  /**
-   * @generated from field: int32 id = 1;
-   */
-  id = 0;
-
-  /**
-   * @generated from field: string thread_id = 2;
-   */
-  threadId = "";
-
-  /**
-   * @generated from field: int32 version = 3;
-   */
-  version = 0;
-
-  /**
-   * @generated from field: string created_at = 4;
-   */
-  createdAt = "";
-
-  constructor(data?: PartialMessage<MealPlanIdentifier>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "mealplanner.api.MealPlanIdentifier";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 2, name: "thread_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "version", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 4, name: "created_at", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanIdentifier {
-    return new MealPlanIdentifier().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlanIdentifier {
-    return new MealPlanIdentifier().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlanIdentifier {
-    return new MealPlanIdentifier().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: MealPlanIdentifier | PlainMessage<MealPlanIdentifier> | undefined, b: MealPlanIdentifier | PlainMessage<MealPlanIdentifier> | undefined): boolean {
-    return proto3.util.equals(MealPlanIdentifier, a, b);
   }
 }
 
@@ -957,9 +1190,9 @@ export class HealthCheckResponse extends Message$1<HealthCheckResponse> {
  */
 export class GetMealPlanResponse extends Message$1<GetMealPlanResponse> {
   /**
-   * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+   * @generated from field: mealplanner.api.MealPlan plan = 1;
    */
-  plan?: WeeklyMealPlan;
+  plan?: MealPlan;
 
   constructor(data?: PartialMessage<GetMealPlanResponse>) {
     super();
@@ -969,7 +1202,7 @@ export class GetMealPlanResponse extends Message$1<GetMealPlanResponse> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "mealplanner.api.GetMealPlanResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "plan", kind: "message", T: WeeklyMealPlan },
+    { no: 1, name: "plan", kind: "message", T: MealPlan },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetMealPlanResponse {
@@ -994,9 +1227,9 @@ export class GetMealPlanResponse extends Message$1<GetMealPlanResponse> {
  */
 export class GenerateMealPlanResponse extends Message$1<GenerateMealPlanResponse> {
   /**
-   * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+   * @generated from field: mealplanner.api.MealPlan plan = 1;
    */
-  plan?: WeeklyMealPlan;
+  plan?: MealPlan;
 
   constructor(data?: PartialMessage<GenerateMealPlanResponse>) {
     super();
@@ -1006,7 +1239,7 @@ export class GenerateMealPlanResponse extends Message$1<GenerateMealPlanResponse
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "mealplanner.api.GenerateMealPlanResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "plan", kind: "message", T: WeeklyMealPlan },
+    { no: 1, name: "plan", kind: "message", T: MealPlan },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GenerateMealPlanResponse {
@@ -2825,9 +3058,9 @@ export class GetWorkflowStateRequest extends Message$1<GetWorkflowStateRequest> 
  */
 export class GetWorkflowStateResponse extends Message$1<GetWorkflowStateResponse> {
   /**
-   * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+   * @generated from field: mealplanner.api.MealPlan plan = 1;
    */
-  plan?: WeeklyMealPlan;
+  plan?: MealPlan;
 
   /**
    * @generated from field: mealplanner.api.ShoppingList shopping_list = 2;
@@ -2847,7 +3080,7 @@ export class GetWorkflowStateResponse extends Message$1<GetWorkflowStateResponse
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "mealplanner.api.GetWorkflowStateResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "plan", kind: "message", T: WeeklyMealPlan },
+    { no: 1, name: "plan", kind: "message", T: MealPlan },
     { no: 2, name: "shopping_list", kind: "message", T: ShoppingList },
     { no: 3, name: "messages", kind: "message", T: Message, repeated: true },
   ]);
@@ -3196,9 +3429,9 @@ export class MealPlanningCheckpointState extends Message$1<MealPlanningCheckpoin
   currentStep = "";
 
   /**
-   * @generated from field: mealplanner.api.WeeklyMealPlan meal_plan = 6;
+   * @generated from field: mealplanner.api.MealPlan meal_plan = 6;
    */
-  mealPlan?: WeeklyMealPlan;
+  mealPlan?: MealPlan;
 
   /**
    * @generated from field: repeated mealplanner.api.FeedbackEntryProto feedback_history = 7;
@@ -3233,7 +3466,7 @@ export class MealPlanningCheckpointState extends Message$1<MealPlanningCheckpoin
     { no: 3, name: "created_at", kind: "message", T: Timestamp },
     { no: 4, name: "updated_at", kind: "message", T: Timestamp },
     { no: 5, name: "current_step", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "meal_plan", kind: "message", T: WeeklyMealPlan },
+    { no: 6, name: "meal_plan", kind: "message", T: MealPlan },
     { no: 7, name: "feedback_history", kind: "message", T: FeedbackEntryProto, repeated: true },
     { no: 8, name: "iteration_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 9, name: "shopping_list", kind: "message", T: ShoppingList },

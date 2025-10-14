@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { WeeklyMealPlan } from '@mealplanner/generated';
+import { MealPlan } from '@mealplanner/generated/api_pb';
+import { planToEntries } from '../utils/mealPlanUtils';
 
 export default function useMealPlanHighlights(
-  currentPlan: WeeklyMealPlan | null,
-  setPlan: (plan: WeeklyMealPlan) => void,
+  currentPlan: MealPlan | null,
+  setPlan: (plan: MealPlan) => void,
 ): {
   highlights: Set<string>;
-  applyHighlights: (newPlan: WeeklyMealPlan) => void;
+  applyHighlights: (newPlan: MealPlan) => void;
   resetHighlights: () => void;
 } {
   const [highlights, setHighlights] = useState<Set<string>>(new Set());
-  const previousPlanRef = useRef<WeeklyMealPlan | null>(currentPlan);
+  const previousPlanRef = useRef<MealPlan | null>(currentPlan);
   const timeoutRef = useRef<number | null>(null);
 
   const scheduleClear = useCallback((keys: Set<string>) => {
@@ -30,21 +31,30 @@ export default function useMealPlanHighlights(
 
   const computeChangedKeys = useCallback(
     (
-      prevPlan: WeeklyMealPlan | null,
-      nextPlan: WeeklyMealPlan | null,
+      prevPlan: MealPlan | null,
+      nextPlan: MealPlan | null,
     ): Set<string> => {
       const changed = new Set<string>();
       if (!prevPlan || !nextPlan) {
         return changed;
       }
-      nextPlan.days.forEach((d) => {
-        const prevEntry = prevPlan.days.find(
-          (p) => p.dayIndex === d.dayIndex && p.mealType === d.mealType,
-        );
-        const prevId = prevEntry?.meal ? prevEntry.meal.id : null;
-        const newId = d.meal ? d.meal.id : null;
-        if (prevId !== newId) {
-          changed.add(`${d.dayIndex}-${d.mealType}`);
+      const prevEntries = planToEntries(prevPlan ?? undefined);
+      const nextEntries = planToEntries(nextPlan ?? undefined);
+      const prevMap = new Map<string, number | null>();
+      prevEntries.forEach((entry) => {
+        const key = `${entry.dayIndex}-${entry.mealType}`;
+        const mealId =
+          typeof entry.meal?.id === 'number' ? entry.meal.id : null;
+        prevMap.set(key, mealId);
+      });
+
+      nextEntries.forEach((entry) => {
+        const key = `${entry.dayIndex}-${entry.mealType}`;
+        const prevId = prevMap.get(key) ?? null;
+        const nextId =
+          typeof entry.meal?.id === 'number' ? entry.meal.id : null;
+        if (prevId !== nextId) {
+          changed.add(key);
         }
       });
       return changed;
@@ -80,7 +90,7 @@ export default function useMealPlanHighlights(
   }, []);
 
   const applyHighlights = useCallback(
-    (newPlan: WeeklyMealPlan) => {
+    (newPlan: MealPlan) => {
       const prevPlan = previousPlanRef.current;
       const changed = computeChangedKeys(prevPlan, newPlan);
       if (changed.size > 0) {

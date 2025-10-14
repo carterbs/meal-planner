@@ -5,8 +5,16 @@ import { TestMockFactory } from '../../../tests/test-utils';
 describe('generateShoppingList node', () => {
     it('returns ShoppingList when items present', async () => {
         const plan = TestMockFactory.createMockWeeklyMealPlan([
-            TestMockFactory.createMockMealPlanEntry({ dayIndex: 0, meal: TestMockFactory.createMockMeal({ id: 1 }) }),
-            TestMockFactory.createMockMealPlanEntry({ dayIndex: 1, meal: TestMockFactory.createMockMeal({ id: 2 }) }),
+            TestMockFactory.createMockMealPlanItem({
+                dayIndex: 0,
+                mealType: 'breakfast',
+                mealSnapshot: TestMockFactory.createMockMeal({ id: 1 }),
+            }),
+            TestMockFactory.createMockMealPlanItem({
+                dayIndex: 1,
+                mealType: 'lunch',
+                mealSnapshot: TestMockFactory.createMockMeal({ id: 2 }),
+            }),
         ]);
         const state = TestMockFactory.createMockMealPlanningState({ mealPlan: plan });
         const deps = { callTool: jest.fn().mockResolvedValue({ isError: false, content: [{ type: 'text', text: '[{"ingredient":"Tomato"}]' }] }) };
@@ -23,5 +31,4 @@ describe('generateShoppingList node', () => {
         expect(result.shoppingList).toBeUndefined();
     });
 });
-
 

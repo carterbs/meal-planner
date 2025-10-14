@@ -3297,25 +3297,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mealplanner/generated@file:../generated/ts::locator=meal-planner-agent-service%40workspace%3Aagent-service":
-  version: 1.0.0
-  resolution: "@mealplanner/generated@file:../generated/ts#../generated/ts::hash=093567&locator=meal-planner-agent-service%40workspace%3Aagent-service"
-  dependencies:
-    "@bufbuild/protobuf": "npm:^1.10.0"
-  peerDependencies:
-    "@connectrpc/connect": ^1.6.0
-    "@connectrpc/connect-node": ^1.6.0
-    "@connectrpc/connect-web": ^1.6.0
-    typescript: ">=4.0.0"
-  checksum: 10c0/63bd7fa224745939a78c8ea45484a047c0b7b9e91579bc2974dfc9249b747facb0806b32ccc8c7e4d8719d82b3ab3a7a036c92cccac2274c39644b6eb69f19b2
-  languageName: node
-  linkType: hard
-
 "@mealplanner/generated@npm:*, @mealplanner/generated@workspace:*, @mealplanner/generated@workspace:generated/ts":
   version: 0.0.0-use.local
   resolution: "@mealplanner/generated@workspace:generated/ts"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
+    typescript: "npm:^5.8.3"
   peerDependencies:
     "@connectrpc/connect": ^1.6.0
     "@connectrpc/connect-node": ^1.6.0
@@ -12787,7 +12774,7 @@ __metadata:
     "@langchain/core": "npm:^0.2.0"
     "@langchain/langgraph": "npm:^0.0.20"
     "@langchain/openai": "npm:^0.1.0"
-    "@mealplanner/generated": "file:../generated/ts"
+    "@mealplanner/generated": "workspace:*"
     "@modelcontextprotocol/sdk": "npm:1.12.3"
     "@types/jest": "npm:^29.5.4"
     "@types/node": "npm:^20.0.0"

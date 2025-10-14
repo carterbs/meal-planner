@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import AgentPage from './AgentPage';
 import Connecting from './components/Connecting';
-import { createClient, createConfig } from '@mealplanner/generated/dist/gateway/client';
-import { getHealth } from '@mealplanner/generated/dist/gateway/sdk.gen';
-import type { GetHealthResponses, GetHealthErrors } from '@mealplanner/generated/dist/gateway/types.gen';
+import { createClient, createConfig } from '@mealplanner/generated/gateway/client';
+import { getHealth } from '@mealplanner/generated/gateway/sdk.gen';
+import type { GetHealthResponses, GetHealthErrors } from '@mealplanner/generated/gateway/types.gen';
 
 const gatewayClient = createClient(
   createConfig({

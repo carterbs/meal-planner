@@ -1,26 +1,35 @@
 import React, { PropsWithChildren, useState } from 'react';
 import { render, screen, act } from '@testing-library/react';
-import { WeeklyMealPlan, MealPlanEntry, Meal } from '@mealplanner/generated';
+import {
+  MealPlan,
+  MealPlanItem,
+  MealSlot,
+  Meal,
+} from '@mealplanner/generated';
 import useMealPlanHighlights from './useMealPlanHighlights';
 
 function makePlan(
-  entries: Array<{ dayIndex: number; mealType: string; mealId: number }>,
-): WeeklyMealPlan {
-  const days = entries.map(
-    (e) =>
-      new MealPlanEntry({
-        dayIndex: e.dayIndex,
-        mealType: e.mealType,
-        meal: new Meal({ id: e.mealId, name: `Meal ${e.mealId}`, effort: 1 }),
+  entries: Array<{ dayIndex: number; mealType: MealSlot; mealId: number }>,
+): MealPlan {
+  const items = entries.map(
+    (entry) =>
+      new MealPlanItem({
+        dayIndex: entry.dayIndex,
+        mealType: entry.mealType,
+        mealSnapshot: new Meal({
+          id: entry.mealId,
+          name: `Meal ${entry.mealId}`,
+          effort: 1,
+        }),
       }),
   );
-  return new WeeklyMealPlan({ days });
+  return new MealPlan({ items });
 }
 
 function HookHarness({
   initialPlan,
-}: PropsWithChildren<{ initialPlan: WeeklyMealPlan | null }>) {
-  const [plan, setPlan] = useState<WeeklyMealPlan | null>(initialPlan);
+}: PropsWithChildren<{ initialPlan: MealPlan | null }>) {
+  const [plan, setPlan] = useState<MealPlan | null>(initialPlan);
   const { highlights, applyHighlights, resetHighlights } =
     useMealPlanHighlights(plan, (p) => setPlan(p));
 
@@ -28,11 +37,11 @@ function HookHarness({
 
   (globalThis as unknown as {
     __harness: {
-      setPlan: (p: WeeklyMealPlan | null) => void;
-      applyHighlights: (p: WeeklyMealPlan) => void;
+      setPlan: (p: MealPlan | null) => void;
+      applyHighlights: (p: MealPlan) => void;
       resetHighlights: () => void;
       getHighlights: () => Set<string>;
-      getPlan: () => WeeklyMealPlan | null;
+      getPlan: () => MealPlan | null;
     };
   }).__harness = {
     setPlan,
@@ -45,7 +54,7 @@ function HookHarness({
   return (
     <div>
       <div data-testid="highlight-count">{highlights.size}</div>
-      <div data-testid="plan-size">{plan?.days.length ?? 0}</div>
+      <div data-testid="plan-size">{plan?.items.length ?? 0}</div>
     </div>
   );
 }
@@ -63,19 +72,19 @@ describe('useMealPlanHighlights', () => {
 
   it('detects changed dayIndex-mealType pairs and sets the plan', () => {
     const base = makePlan([
-      { dayIndex: 0, mealType: 'breakfast', mealId: 1 },
-      { dayIndex: 0, mealType: 'dinner', mealId: 2 },
+      { dayIndex: 0, mealType: MealSlot.BREAKFAST, mealId: 1 },
+      { dayIndex: 0, mealType: MealSlot.DINNER, mealId: 2 },
     ]);
 
     render(<HookHarness initialPlan={base} />);
 
     const newPlan = makePlan([
-      { dayIndex: 0, mealType: 'breakfast', mealId: 3 }, // changed
-      { dayIndex: 0, mealType: 'dinner', mealId: 2 }, // unchanged
+      { dayIndex: 0, mealType: MealSlot.BREAKFAST, mealId: 3 }, // changed
+      { dayIndex: 0, mealType: MealSlot.DINNER, mealId: 2 }, // unchanged
     ]);
 
     act(() => {
-      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(newPlan);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: MealPlan) => void } }).__harness.applyHighlights(newPlan);
     });
 
     const count = screen.getByTestId('highlight-count');
@@ -90,16 +99,18 @@ describe('useMealPlanHighlights', () => {
   });
 
   it('auto clears changed highlights after 5s', () => {
-    const base = makePlan([{ dayIndex: 1, mealType: 'dinner', mealId: 2 }]);
+    const base = makePlan([
+      { dayIndex: 1, mealType: MealSlot.DINNER, mealId: 2 },
+    ]);
 
     render(<HookHarness initialPlan={base} />);
 
     const newPlan = makePlan([
-      { dayIndex: 1, mealType: 'dinner', mealId: 5 }, // changed
+      { dayIndex: 1, mealType: MealSlot.DINNER, mealId: 5 }, // changed
     ]);
 
     act(() => {
-      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(newPlan);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: MealPlan) => void } }).__harness.applyHighlights(newPlan);
     });
 
     expect(screen.getByTestId('highlight-count').textContent).toBe('1');
@@ -112,14 +123,18 @@ describe('useMealPlanHighlights', () => {
   });
 
   it('resetHighlights clears all current highlights', () => {
-    const base = makePlan([{ dayIndex: 2, mealType: 'lunch', mealId: 9 }]);
+    const base = makePlan([
+      { dayIndex: 2, mealType: MealSlot.LUNCH, mealId: 9 },
+    ]);
 
     render(<HookHarness initialPlan={base} />);
 
-    const newPlan = makePlan([{ dayIndex: 2, mealType: 'lunch', mealId: 10 }]);
+    const newPlan = makePlan([
+      { dayIndex: 2, mealType: MealSlot.LUNCH, mealId: 10 },
+    ]);
 
     act(() => {
-      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(newPlan);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: MealPlan) => void } }).__harness.applyHighlights(newPlan);
     });
 
     expect(screen.getByTestId('highlight-count').textContent).toBe('1');
@@ -132,11 +147,13 @@ describe('useMealPlanHighlights', () => {
   });
 
   it('does nothing when plan is unchanged (no highlights scheduled)', () => {
-    const base = makePlan([{ dayIndex: 0, mealType: 'breakfast', mealId: 1 }]);
+    const base = makePlan([
+      { dayIndex: 0, mealType: MealSlot.BREAKFAST, mealId: 1 },
+    ]);
     render(<HookHarness initialPlan={base} />);
 
     act(() => {
-      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(base);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: MealPlan) => void } }).__harness.applyHighlights(base);
     });
 
     expect(screen.getByTestId('highlight-count').textContent).toBe('0');
@@ -148,53 +165,61 @@ describe('useMealPlanHighlights', () => {
 
   it('replaces highlights when multiple changes occur - only shows most recent changes', () => {
     const base = makePlan([
-      { dayIndex: 2, mealType: 'lunch', mealId: 1 },
-      { dayIndex: 1, mealType: 'dinner', mealId: 2 }
+      { dayIndex: 2, mealType: MealSlot.LUNCH, mealId: 1 },
+      { dayIndex: 1, mealType: MealSlot.DINNER, mealId: 2 },
     ]);
     
     render(<HookHarness initialPlan={base} />);
 
     // First change: Remove wednesday lunch (change meal ID to simulate removal)
     const firstChange = makePlan([
-      { dayIndex: 2, mealType: 'lunch', mealId: 999 }, // changed
-      { dayIndex: 1, mealType: 'dinner', mealId: 2 }   // unchanged
+      { dayIndex: 2, mealType: MealSlot.LUNCH, mealId: 999 }, // changed
+      { dayIndex: 1, mealType: MealSlot.DINNER, mealId: 2 }, // unchanged
     ]);
 
     act(() => {
-      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(firstChange);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: MealPlan) => void } }).__harness.applyHighlights(firstChange);
     });
 
     // Should highlight wednesday lunch
-    let highlights: Set<string> = (globalThis as unknown as { __harness: { getHighlights: () => Set<string> } }).__harness.getHighlights();
+    let highlights: Set<string> = (globalThis as unknown as {
+      __harness: { getHighlights: () => Set<string> };
+    }).__harness.getHighlights();
     expect(highlights.has('2-lunch')).toBe(true);
     expect(highlights.has('1-dinner')).toBe(false);
     expect(highlights.size).toBe(1);
 
     // Second change: Swap dinner on tuesday (before first timeout clears)
     const secondChange = makePlan([
-      { dayIndex: 2, mealType: 'lunch', mealId: 999 }, // still different from original
-      { dayIndex: 1, mealType: 'dinner', mealId: 555 } // changed
+      { dayIndex: 2, mealType: MealSlot.LUNCH, mealId: 999 }, // still different from original
+      { dayIndex: 1, mealType: MealSlot.DINNER, mealId: 555 }, // changed
     ]);
 
     act(() => {
-      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(secondChange);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: MealPlan) => void } }).__harness.applyHighlights(secondChange);
     });
 
     // Should only highlight tuesday dinner, not wednesday lunch
-    highlights = (globalThis as unknown as { __harness: { getHighlights: () => Set<string> } }).__harness.getHighlights();
+    highlights = (globalThis as unknown as {
+      __harness: { getHighlights: () => Set<string> };
+    }).__harness.getHighlights();
     expect(highlights.has('1-dinner')).toBe(true);
     expect(highlights.has('2-lunch')).toBe(false); // This should NOT be highlighted
     expect(highlights.size).toBe(1);
   });
 
   it('cleans up pending timeout on unmount', () => {
-    const base = makePlan([{ dayIndex: 0, mealType: 'dinner', mealId: 1 }]);
+    const base = makePlan([
+      { dayIndex: 0, mealType: MealSlot.DINNER, mealId: 1 },
+    ]);
     const { unmount } = render(<HookHarness initialPlan={base} />);
     const spy = jest.spyOn(window, 'clearTimeout');
 
-    const newPlan = makePlan([{ dayIndex: 0, mealType: 'dinner', mealId: 2 }]);
+    const newPlan = makePlan([
+      { dayIndex: 0, mealType: MealSlot.DINNER, mealId: 2 },
+    ]);
     act(() => {
-      (globalThis as unknown as { __harness: { applyHighlights: (p: WeeklyMealPlan) => void } }).__harness.applyHighlights(newPlan);
+      (globalThis as unknown as { __harness: { applyHighlights: (p: MealPlan) => void } }).__harness.applyHighlights(newPlan);
     });
     expect(screen.getByTestId('highlight-count').textContent).toBe('1');
 

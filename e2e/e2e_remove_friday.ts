@@ -39,6 +39,19 @@ interface AgentMessageRequest {
   interactive: boolean;
 }
 
+function mealSlotToString(slot?: number): string {
+  switch (slot) {
+    case 1:
+      return 'breakfast';
+    case 2:
+      return 'lunch';
+    case 3:
+      return 'dinner';
+    default:
+      return '';
+  }
+}
+
 async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -155,18 +168,19 @@ async function getWorkflowState(threadId: string): Promise<WorkflowState> {
 
   // The response structure is: { tuple: { checkpoint: { state: {...} } } }
   const state = data.tuple?.checkpoint?.state;
-  if (!state || !state.mealPlan || !state.mealPlan.days) {
+  const plan = state?.mealPlan;
+  const items = plan?.items;
+  if (!state || !plan || !Array.isArray(items)) {
     throw new Error('Failed to get checkpoint state');
   }
 
   // The meal plan data should be in the mealPlan field
-  console.log('=== FOUND MEAL PLAN DAYS ===');
-  console.log(`Found ${state.mealPlan.days.length} meal plan entries`);
-  // Add dayIndex and mealType fields if they're missing
-  const entries = state.mealPlan.days.map((day: any, index: number) => ({
-    dayIndex: day.dayIndex !== undefined ? day.dayIndex : Math.floor(index / 3), // Approximate dayIndex
-    mealType: day.mealType || (['breakfast', 'lunch', 'dinner'][index % 3]),
-    meal: day.meal
+  console.log('=== FOUND MEAL PLAN ITEMS ===');
+  console.log(`Found ${items.length} meal plan entries`);
+  const entries = items.map((item: any) => ({
+    dayIndex: item?.dayIndex ?? 0,
+    mealType: mealSlotToString(item?.mealType),
+    meal: item?.mealSnapshot ?? item?.meal ?? null
   }));
   return { entries };
 }

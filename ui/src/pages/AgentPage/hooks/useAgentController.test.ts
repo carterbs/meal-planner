@@ -11,7 +11,7 @@ const mockSendAgentMessage = jest.fn().mockResolvedValue({
 });
 const mockGetAgentCheckpoint = jest
     .fn()
-    .mockResolvedValue({ state: { mealPlan: { days: [] } } });
+    .mockResolvedValue({ state: { mealPlan: { items: [] } } });
 const mockGetMessages = jest
     .fn()
     .mockResolvedValue([{ sender: 'agent', content: 'hi' }]);
@@ -54,7 +54,12 @@ jest.mock('@mealplanner/generated', () => ({
             this.category = args.category ?? '';
         }
     },
-    WeeklyMealPlan: class WeeklyMealPlan { },
+    MealPlan: class MealPlan {
+        items: unknown;
+        constructor(args?: { items?: unknown }) {
+            this.items = args?.items ?? [];
+        }
+    },
 }));
 
 // Import after mocks are set up
@@ -118,7 +123,7 @@ describe('useAgentController', () => {
 
     describe('Session Management', () => {
         it('startSession with meal plan in initial state', async () => {
-            const mockMealPlan = { days: [{ date: '2023-01-01', meals: [] }] };
+            const mockMealPlan = { items: [{ dayIndex: 0, mealType: 1 }] };
             const mockResult = {
                 session: { threadId: 'test-thread', currentStep: 'step1' },
                 message: 'Welcome message',
@@ -346,7 +351,7 @@ describe('useAgentController', () => {
 
         it('sendMessage returns newPlan when mealPlan exists', async () => {
             // Mock the useAgentMealSync hook to return a meal plan
-            const mockMealPlan = { days: [] } as unknown as import('@mealplanner/generated').WeeklyMealPlan;
+            const mockMealPlan = { items: [] } as unknown as import('@mealplanner/generated').MealPlan;
 
             const { result } = renderHook(() => useAgentController());
 
@@ -443,7 +448,7 @@ describe('useAgentController', () => {
     describe('External Meal Plan Management', () => {
         it('setMealPlanExternal updates meal plan', () => {
             const { result } = renderHook(() => useAgentController());
-            const mockPlan = { days: [{ date: '2023-01-01' }] } as unknown as import('@mealplanner/generated').WeeklyMealPlan;
+            const mockPlan = { items: [{ dayIndex: 0, mealType: 1 }] } as unknown as import('@mealplanner/generated').MealPlan;
 
             act(() => {
                 result.current.setMealPlanExternal(mockPlan);

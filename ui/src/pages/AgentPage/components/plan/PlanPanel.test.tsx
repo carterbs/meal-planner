@@ -2,14 +2,22 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PlanPanel from './PlanPanel';
-import { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
+import {
+  MealPlan,
+  MealPlanItem,
+  MealSlot,
+  ShoppingListItem,
+} from '@mealplanner/generated';
 import { colorSchemes } from '../../../../theme';
 
 describe('PlanPanel', () => {
   const colors = colorSchemes['earthyNeutrals'];
 
-  function makePlan(): WeeklyMealPlan {
-    return new WeeklyMealPlan({ days: [] });
+  function makePlan(): MealPlan {
+    return new MealPlan({ items: [new MealPlanItem({
+      dayIndex: 0,
+      mealType: MealSlot.BREAKFAST,
+    })] });
   }
 
   function makeShopping(): ShoppingListItem[] {

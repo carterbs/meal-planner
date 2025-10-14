@@ -3,12 +3,12 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import useSession from './useSession';
 
 // Mock generated gateway client and APIs
-jest.mock('@mealplanner/generated/dist/gateway/client/index.js', () => ({
+jest.mock('@mealplanner/generated/gateway/client/index.js', () => ({
   createClient: jest.fn(() => ({})),
   createConfig: jest.fn(() => ({})),
 }));
 
-jest.mock('@mealplanner/generated/dist/gateway/index.js', () => ({
+jest.mock('@mealplanner/generated/gateway/index.js', () => ({
   getCheckpointsByThreadId: jest.fn(),
   postShoppinglist: jest.fn(),
   postWorkflowsByThreadIdAbandon: jest.fn(),
@@ -18,7 +18,7 @@ import {
   getCheckpointsByThreadId,
   postShoppinglist,
   postWorkflowsByThreadIdAbandon,
-} from '@mealplanner/generated/dist/gateway/index.js';
+} from '@mealplanner/generated/gateway/index.js';
 
 function TestHarness({
   triggerStart = false,
@@ -90,7 +90,10 @@ describe('useSession', () => {
     const checkpointState = {
       currentStep: 'step-1',
       mealPlan: {
-        days: [{ meal: JSON.stringify({ id: 12 }) }, { meal: { id: 34 } }],
+        items: [
+          { dayIndex: 0, mealSnapshot: JSON.stringify({ id: 12 }) },
+          { dayIndex: 1, mealSnapshot: { id: 34 } },
+        ],
       },
       participants: ['x'],
     };
@@ -124,11 +127,44 @@ describe('useSession', () => {
     });
   });
 
+  it('falls back to legacy mealPlan.days entries when items are missing', async () => {
+    localStorage.setItem('sessionId', 'legacy');
+
+    const checkpointState = {
+      mealPlan: {
+        days: [{ meal: JSON.stringify({ id: 7 }) }, { meal: { id: 8 } }],
+      },
+    };
+
+    (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({
+      data: { tuple: { checkpoint: { state: checkpointState } } },
+    });
+    (postShoppinglist as jest.Mock).mockResolvedValue({
+      data: { items: [{ name: 'x' }] },
+    });
+
+    render(<TestHarness startSessionMock={startSessionMock} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('shoppingItems').textContent).toBe('1');
+      expect(postShoppinglist).toHaveBeenCalledWith({
+        client: expect.any(Object),
+        body: { plan: [7, 8] },
+      });
+    });
+  });
+
   it('ignores shopping list errors', async () => {
     localStorage.setItem('sessionId', 't3');
     const cp = {
       tuple: {
-        checkpoint: { state: { mealPlan: { days: [{ meal: { id: 1 } }] } } },
+        checkpoint: {
+          state: {
+            mealPlan: {
+              items: [{ dayIndex: 0, mealSnapshot: { id: 1 } }],
+            },
+          },
+        },
       },
     };
     (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });
@@ -251,7 +287,13 @@ describe('useSession', () => {
     localStorage.setItem('sessionId', 't3b');
     const cp = {
       tuple: {
-        checkpoint: { state: { mealPlan: { days: [{ meal: { id: 2 } }] } } },
+        checkpoint: {
+          state: {
+            mealPlan: {
+              items: [{ dayIndex: 0, mealSnapshot: { id: 2 } }],
+            },
+          },
+        },
       },
     };
     (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });
@@ -273,7 +315,13 @@ describe('useSession', () => {
     localStorage.setItem('sessionId', 't7');
     const cp = {
       tuple: {
-        checkpoint: { state: { mealPlan: { days: [{ meal: {} as unknown }] } } },
+        checkpoint: {
+          state: {
+            mealPlan: {
+              items: [{ dayIndex: 0, mealSnapshot: {} as unknown }],
+            },
+          },
+        },
       },
     };
     (getCheckpointsByThreadId as jest.Mock).mockResolvedValue({ data: cp });

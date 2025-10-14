@@ -7,7 +7,7 @@ import {
   act,
 } from '@testing-library/react';
 import AgentPage from './AgentPage';
-import { WeeklyMealPlan } from '@mealplanner/generated';
+import { MealPlan } from '@mealplanner/generated';
 import useMealPlanHighlights from './hooks/useMealPlanHighlights';
 import useSessionHook from './hooks/useSession';
 
@@ -190,7 +190,7 @@ describe('AgentPage', () => {
   });
 
   it('applies highlights when sendMessage returns newPlan', async () => {
-    const plan = new WeeklyMealPlan({ days: [] });
+    const plan = new MealPlan({ items: [] });
     mockController.sendMessage = jest.fn(async () => ({ newPlan: plan }));
     render(<AgentPage />);
     const input = screen.getByTestId('message-input');
@@ -223,7 +223,7 @@ describe('AgentPage', () => {
     unmount();
     type MockShoppingItem = { ingredient: string; quantity: number };
     Object.assign(mockController, {
-      mealPlan: new WeeklyMealPlan({ days: [] }),
+      mealPlan: new MealPlan({ items: [] }),
       shoppingList: [{ ingredient: 'Tomato', quantity: 1 }] as MockShoppingItem[],
     });
     render(<AgentPage />);
@@ -322,7 +322,7 @@ describe('AgentPage', () => {
   });
 
   it('passes correct props to components', () => {
-    mockController.mealPlan = new WeeklyMealPlan({ days: [] });
+    mockController.mealPlan = new MealPlan({ items: [] });
     mockController.shoppingList = [{ ingredient: 'test', quantity: 1 }];
 
     render(<AgentPage />);

@@ -115,17 +115,20 @@ export const MealPlanningStateSchema = BaseWorkflowStateSchema.extend({
   meal_plan: z
     .object({
       id: z.number().optional(),
-      days: z.array(
+      status: z.string().optional(),
+      version: z.number().optional(),
+      items: z.array(
         z.object({
           dayIndex: z.number(),
-          mealType: z.string(),
-          meal: z
+          mealType: z.union([z.string(), z.number()]),
+          mealSnapshot: z
             .object({
-              id: z.number(),
-              name: z.string(),
-              effort: z.number(),
-              hasRedMeat: z.boolean(),
+              id: z.number().optional(),
+              name: z.string().optional(),
+              effort: z.number().optional(),
+              hasRedMeat: z.boolean().optional(),
             })
+            .optional()
             .nullable(),
         }),
       ),

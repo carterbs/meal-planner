@@ -25,9 +25,9 @@ tester.run('no-generated-type-assertion', rule, {
         {
             filename: 'file.ts',
             code: `
-      import type { WeeklyMealPlan } from '@mealplanner/generated';
+      import type { MealPlan } from '@mealplanner/generated';
       // no assertion to generated type, so fine
-      const fn = (p: WeeklyMealPlan) => p;
+      const fn = (p: MealPlan) => p;
       `,
         },
         {
@@ -44,8 +44,8 @@ tester.run('no-generated-type-assertion', rule, {
         {
             filename: 'file.ts',
             code: `
-      import type { WeeklyMealPlan } from '@mealplanner/generated';
-      const plan = {} as WeeklyMealPlan;
+      import type { MealPlan } from '@mealplanner/generated';
+      const plan = {} as MealPlan;
       `,
             errors: [{ messageId: 'avoidGeneratedAssertion' }],
         },
@@ -53,7 +53,7 @@ tester.run('no-generated-type-assertion', rule, {
             filename: 'file.ts',
             code: `
       import * as gen from '@mealplanner/generated';
-      const plan = {} as gen.WeeklyMealPlan;
+      const plan = {} as gen.MealPlan;
       `,
             errors: [{ messageId: 'avoidGeneratedAssertion' }],
         },
@@ -67,5 +67,4 @@ tester.run('no-generated-type-assertion', rule, {
         },
     ],
 });
-
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 )
 
@@ -114,70 +113,7 @@ func (r *MealPlanRepositoryImpl) UpsertMealPlanItems(ctx context.Context, mealPl
 	return nil
 }
 
-// Legacy meal plan operations (for backward compatibility)
-
-// GetLatestMealPlan retrieves the latest meal plan for a thread
-func (r *MealPlanRepositoryImpl) GetLatestMealPlan(ctx context.Context, threadID string) (*models.MealPlanIdentifier, error) {
-	return models.GetLatestMealPlan(r.db, threadID)
-}
-
-// GetMealPlanItems retrieves meal plan entries for a specific meal plan
-func (r *MealPlanRepositoryImpl) GetMealPlanItems(ctx context.Context, mealPlanID int) ([]models.MealPlanEntry, error) {
-	return models.GetMealPlanItems(r.db, mealPlanID)
-}
-
-// RemoveMealFromPlan removes a meal from a specific plan slot
-func (r *MealPlanRepositoryImpl) RemoveMealFromPlan(ctx context.Context, plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error {
-	return models.RemoveMealFromPlan(plan, dayIndex, mealType)
-}
-
-// GenerateWeeklyMealPlan delegates to models layer
-func (r *MealPlanRepositoryImpl) GenerateWeeklyMealPlan(ctx context.Context) (*apipb.WeeklyMealPlan, error) {
-	return models.GenerateWeeklyMealPlan(r.db)
-}
-
-// GetLastPlannedMeals delegates to models layer
-func (r *MealPlanRepositoryImpl) GetLastPlannedMeals(ctx context.Context) (*apipb.WeeklyMealPlan, error) {
-	return models.GetLastPlannedMeals(r.db)
-}
-
-// PopulateMealDetails populates meal objects inside the plan with full details
-func (r *MealPlanRepositoryImpl) PopulateMealDetails(ctx context.Context, plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error) {
-	if plan == nil {
-		return nil, fmt.Errorf("plan is nil")
-	}
-
-	// Gather meal IDs
-	mealIDs := make([]int, 0)
-	for _, d := range plan.Days {
-		if d.Meal != nil && int(d.Meal.GetId()) != 0 {
-			mealIDs = append(mealIDs, int(d.Meal.GetId()))
-		}
-	}
-	if len(mealIDs) == 0 {
-		return plan, nil
-	}
-
-	mealsWithIngredients, err := models.GetMealsByIDs(r.db, mealIDs)
-	if err != nil {
-		return nil, err
-	}
-	mealMap := make(map[int]*models.Meal, len(mealsWithIngredients))
-	for _, m := range mealsWithIngredients {
-		mealMap[int(m.GetId())] = m
-	}
-
-	// Clone plan
-	populated := *plan
-	populated.Days = make([]*models.PlanDay, len(plan.Days))
-	copy(populated.Days, plan.Days)
-
-	for _, d := range populated.Days {
-		if d.Meal != nil {
-			if full, ok := mealMap[int(d.Meal.GetId())]; ok {
-				d.Meal = full
-			}
-		}
-	}
-	return &populated, nil
+// GenerateMealPlanItems delegates to the models layer to build snapshot items.
+func (r *MealPlanRepositoryImpl) GenerateMealPlanItems(ctx context.Context) ([]*models.MealPlanItem, error) {
+	return models.GenerateMealPlanItems(r.db)
 }

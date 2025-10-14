@@ -11,19 +11,25 @@ import {
   replaceAllSteps,
   goGetShoppingList,
 } from './mealsApi';
-import { Meal, Step, WeeklyMealPlan } from '@mealplanner/generated';
+import {
+  Meal,
+  Step,
+  MealPlan,
+  MealPlanItem,
+  MealSlot,
+} from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';
-import * as gatewayModule from '@mealplanner/generated/dist/gateway';
+import * as gatewayModule from '@mealplanner/generated/gateway';
 
-jest.mock('@mealplanner/generated/dist/gateway');
-jest.mock('@mealplanner/generated/dist/gateway/client', () => ({
+jest.mock('@mealplanner/generated/gateway');
+jest.mock('@mealplanner/generated/gateway/client', () => ({
   createClient: jest.fn(() => 'mockClient'),
   createConfig: jest.fn(() => ({})),
 }));
 
 const mockedGateway = gatewayModule as jest.Mocked<typeof gatewayModule>;
 
-type GoMealType = import('@mealplanner/generated/dist/gateway/types.gen').GoMeal;
+type GoMealType = import('@mealplanner/generated/gateway/types.gen').GoMeal;
 
 describe('mealsApi', () => {
   const mockGoMeal = {
@@ -965,10 +971,20 @@ describe('mealsApi', () => {
         error: null,
       } as unknown as ReturnType<typeof mockedGateway.postShoppinglist> extends Promise<infer T> ? T : never);
 
-      const mockMealPlan = new WeeklyMealPlan({
-        days: [
-          { meal: new Meal({ id: 1, name: 'Meal 1' }) },
-          { meal: new Meal({ id: 2, name: 'Meal 2' }) },
+      const mockMealPlan = new MealPlan({
+        items: [
+          new MealPlanItem({
+            dayIndex: 0,
+            mealType: MealSlot.LUNCH,
+            mealId: 1,
+            mealSnapshot: new Meal({ id: 1, name: 'Meal 1' }),
+          }),
+          new MealPlanItem({
+            dayIndex: 1,
+            mealType: MealSlot.DINNER,
+            mealId: 2,
+            mealSnapshot: new Meal({ id: 2, name: 'Meal 2' }),
+          }),
         ],
       });
 
@@ -987,8 +1003,14 @@ describe('mealsApi', () => {
         error: 'Shopping list generation failed',
       } as unknown as ReturnType<typeof mockedGateway.postShoppinglist> extends Promise<infer T> ? T : never);
 
-      const mockMealPlan = new WeeklyMealPlan({
-        days: [{ meal: new Meal({ id: 1, name: 'Meal 1' }) }],
+      const mockMealPlan = new MealPlan({
+        items: [
+          new MealPlanItem({
+            dayIndex: 0,
+            mealType: MealSlot.DINNER,
+            mealSnapshot: new Meal({ id: 1, name: 'Meal 1' }),
+          }),
+        ],
       });
 
       await expect(goGetShoppingList(mockMealPlan)).rejects.toThrow(
@@ -1002,8 +1024,14 @@ describe('mealsApi', () => {
         error: null,
       } as unknown as ReturnType<typeof mockedGateway.postShoppinglist> extends Promise<infer T> ? T : never);
 
-      const mockMealPlan = new WeeklyMealPlan({
-        days: [{ meal: new Meal({ id: 1, name: 'Meal 1' }) }],
+      const mockMealPlan = new MealPlan({
+        items: [
+          new MealPlanItem({
+            dayIndex: 0,
+            mealType: MealSlot.BREAKFAST,
+            mealSnapshot: new Meal({ id: 1, name: 'Meal 1' }),
+          }),
+        ],
       });
 
       await expect(goGetShoppingList(mockMealPlan)).rejects.toThrow(
@@ -1019,9 +1047,7 @@ describe('mealsApi', () => {
         error: null,
       } as unknown as ReturnType<typeof mockedGateway.postShoppinglist> extends Promise<infer T> ? T : never);
 
-      const mockMealPlan = new WeeklyMealPlan({
-        days: [],
-      });
+      const mockMealPlan = new MealPlan({ items: [] });
 
       const result = await goGetShoppingList(mockMealPlan);
 

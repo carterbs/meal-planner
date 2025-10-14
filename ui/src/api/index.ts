@@ -8,6 +8,6 @@ export type {
   Meal,
   Ingredient,
   Step,
-  WeeklyMealPlan,
+  MealPlan,
   ShoppingListItem,
-} from '@mealplanner/generated';
+} from '@mealplanner/generated/api_pb';

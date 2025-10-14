@@ -14,8 +14,7 @@ describe('state helpers', () => {
         });
         const result = deserializeMealPlanFromCheckpoint(state as any);
         expect(result.mealPlan).toBeDefined();
-        expect(result.mealPlan?.days?.length).toBeGreaterThan(0);
+        expect(result.mealPlan?.items?.length).toBeGreaterThan(0);
     });
 });
-
 

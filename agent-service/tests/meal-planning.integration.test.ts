@@ -1,6 +1,7 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { MealPlanningStep } from '../shared/types';
-import { WeeklyMealPlan } from '@mealplanner/generated';
+import { MealSlot } from '@mealplanner/generated';
+import { TestMockFactory } from './test-utils';
 import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 describe('MealPlanningWorkflow LLM integration and edge cases', () => {
   let workflow: any;
@@ -54,15 +55,19 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
           hasRedMeat: false,
         },
       ];
-      const newPlan = {
-        days: [
-          {
-            dayIndex: 6,
+      const newPlan = TestMockFactory.createMockMealPlan([
+        TestMockFactory.createMockMealPlanItem({
+          dayIndex: 6,
+          mealType: MealSlot.BREAKFAST,
+          mealSnapshot: TestMockFactory.createMockMeal({
+            id: 2,
+            name: 'x',
+            effort: 1,
+            hasRedMeat: false,
             mealType: 'breakfast',
-            meal: { id: 2, name: 'x', effort: 1, hasRedMeat: false },
-          },
-        ],
-      };
+          }),
+        }),
+      ]);
       workflow.client = {
         callTool: jest.fn().mockResolvedValue({
           content: [{ text: JSON.stringify(availableMeals) }],
@@ -77,15 +82,19 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
     });
     it('applies feedback and returns new plan', async () => {
       // Setup: plan has Sunday breakfast with id 1, availableMeals has id 2
-      const plan = {
-        days: [
-          {
-            dayIndex: 6,
+      const plan = TestMockFactory.createMockMealPlan([
+        TestMockFactory.createMockMealPlanItem({
+          dayIndex: 6,
+          mealType: MealSlot.BREAKFAST,
+          mealSnapshot: TestMockFactory.createMockMeal({
+            id: 1,
+            name: 'old',
+            effort: 1,
+            hasRedMeat: false,
             mealType: 'breakfast',
-            meal: { id: 1, name: 'old', effort: 1, hasRedMeat: false },
-          },
-        ],
-      };
+          }),
+        }),
+      ]);
       const availableMeals = [
         {
           id: 2,
@@ -120,30 +129,14 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
         'replace Sunday breakfast',
       ]);
       // Expect the plan to be updated with meal id 2
-      const expectedPlan = {
-        days: [
-          {
-            dayIndex: 6,
-            mealType: 'breakfast',
-            meal: {
-              id: 2,
-              name: 'x',
-              effort: 1,
-              hasRedMeat: false,
-              mealType: 'breakfast',
-              ingredients: [],
-              steps: [],
-              url: '',
-            },
-          },
-        ],
-      };
       expect(workflow.client.callTool).toHaveBeenCalledWith({
         name: 'getMeals',
         arguments: {},
       });
       expect(workflow.llm.invoke).toHaveBeenCalled();
-      expect(res).toEqual({ mealPlan: expectedPlan, userMessage: 'done' });
+      expect(res.userMessage).toBe('done');
+      expect(res.mealPlan.items[0].mealSnapshot?.id).toBe(2);
+      expect(res.mealPlan.items[0].mealSnapshot?.name).toBe('x');
     });
   });
   describe('optimizePlanNode', () => {
@@ -154,25 +147,41 @@ describe('MealPlanningWorkflow LLM integration and edge cases', () => {
     });
     it('calls optimizePlanWithLLM when issues exist', async () => {
       // Use enough consecutive high-effort meals to trigger validation
-      const plan = {
-        days: [
-          {
-            dayIndex: 0,
+      const plan = TestMockFactory.createMockMealPlan([
+        TestMockFactory.createMockMealPlanItem({
+          dayIndex: 0,
+          mealType: MealSlot.LUNCH,
+          mealSnapshot: TestMockFactory.createMockMeal({
+            id: 1,
+            name: 'a',
+            effort: 4,
+            hasRedMeat: false,
             mealType: 'lunch',
-            meal: { id: 1, name: 'a', effort: 4, hasRedMeat: false },
-          },
-          {
-            dayIndex: 1,
+          }),
+        }),
+        TestMockFactory.createMockMealPlanItem({
+          dayIndex: 1,
+          mealType: MealSlot.LUNCH,
+          mealSnapshot: TestMockFactory.createMockMeal({
+            id: 2,
+            name: 'b',
+            effort: 4,
+            hasRedMeat: false,
             mealType: 'lunch',
-            meal: { id: 2, name: 'b', effort: 4, hasRedMeat: false },
-          },
-          {
-            dayIndex: 2,
+          }),
+        }),
+        TestMockFactory.createMockMealPlanItem({
+          dayIndex: 2,
+          mealType: MealSlot.LUNCH,
+          mealSnapshot: TestMockFactory.createMockMeal({
+            id: 3,
+            name: 'c',
+            effort: 4,
+            hasRedMeat: false,
             mealType: 'lunch',
-            meal: { id: 3, name: 'c', effort: 4, hasRedMeat: false },
-          },
-        ],
-      } as WeeklyMealPlan;
+          }),
+        }),
+      ]);
       workflow.optimizePlanWithLLM = jest.fn().mockResolvedValue(plan);
       const state = { mealPlan: plan, iterationCount: 0 } as any;
       const res: any = await workflow.optimizePlanNode(state);

@@ -15,15 +15,15 @@ jest.mock('../../langgraph-agent', () => {
                 currentStep: 'initiate',
                 mealPlan: {
                     id: 1,
-                    days: [
+                    items: [
                         {
-                            mealType: 'breakfast',
-                            meal: { id: 1, name: 'A', effort: 1, hasRedMeat: false },
+                            mealType: 'MEAL_SLOT_BREAKFAST',
+                            mealSnapshot: { id: 1, name: 'A', effort: 1, hasRedMeat: false },
                         },
                         {
                             dayIndex: 1,
-                            mealType: 'lunch',
-                            meal: { id: 2, name: 'B', effort: 2, hasRedMeat: false },
+                            mealType: 'MEAL_SLOT_LUNCH',
+                            mealSnapshot: { id: 2, name: 'B', effort: 2, hasRedMeat: false },
                         },
                     ],
                 },
@@ -50,8 +50,8 @@ describe('server/handlers/planStart', () => {
         const bytes = (resp as PlanStartResponse).initialState;
         const stateJson = new TextDecoder().decode(bytes);
         const state = JSON.parse(stateJson);
-        expect(state.mealPlan.days[0].dayIndex).toBe(0);
-        expect(state.mealPlan.days[1].dayIndex).toBe(1);
+        expect(state.mealPlan.items[0].dayIndex).toBe(0);
+        expect(state.mealPlan.items[1].dayIndex).toBe(1);
     });
 
     it('errors when participants missing', async () => {
@@ -65,5 +65,4 @@ describe('server/handlers/planStart', () => {
         expect(err).toBeInstanceOf(Error);
     });
 });
-
 

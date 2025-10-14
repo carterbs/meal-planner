@@ -1,4 +1,4 @@
-import { WeeklyMealPlan } from '@mealplanner/generated';
+import { MealPlan } from '@mealplanner/generated';
 import { MealPlanningState, MealPlanningStep } from '../../../shared/types';
 
 export interface GeneratePlanDeps {
@@ -25,9 +25,9 @@ export async function generatePlanNode(
     const jsonText = deps.extractJsonFromResponse(responseText);
     const parsed: unknown = JSON.parse(jsonText);
     const planObj = (parsed && typeof parsed === 'object' && (parsed as { plan?: unknown }).plan) || {};
-    // WeeklyMealPlan.fromJson expects JsonValue; safe to pass object literal here
-    const mealPlan = WeeklyMealPlan.fromJson(planObj as unknown as import('@bufbuild/protobuf').JsonValue);
+    const mealPlan = MealPlan.fromJson(planObj as unknown as import('@bufbuild/protobuf').JsonValue, {
+        ignoreUnknownFields: true,
+    });
     return { currentStep: MealPlanningStep.OPTIMIZE_PLAN, mealPlan };
 }
-
 

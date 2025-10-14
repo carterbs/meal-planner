@@ -14,6 +14,7 @@ import (
 	"mealplanner/server"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -26,80 +27,30 @@ type MealPlannerAPIServer struct {
 	apipb.UnimplementedMealPlannerAPIServer
 }
 
-// Helper functions for converting between legacy and new meal plan formats
-
-// convertWeeklyMealPlanToMealPlan converts a legacy WeeklyMealPlan to a new MealPlan
-func convertWeeklyMealPlanToMealPlan(weeklyPlan *apipb.WeeklyMealPlan, weekStart time.Time, threadID *string) *apipb.MealPlan {
-	weekEnd := weekStart.AddDate(0, 0, 6)
-
-	items := make([]*apipb.MealPlanItem, 0, len(weeklyPlan.Days))
-	for _, entry := range weeklyPlan.Days {
-		if entry == nil {
-			continue
-		}
-
-		item := &apipb.MealPlanItem{
-			DayIndex:     entry.DayIndex,
-			MealType:     models.MealSlotFromString(entry.MealType),
-			MealSnapshot: entry.Meal,
-		}
-
-		// Set meal_id if the meal has an ID
-		if entry.Meal != nil && entry.Meal.Id != 0 {
-			item.MealId = &entry.Meal.Id
-		}
-
-		items = append(items, item)
+func calculateWeekStart(ref time.Time) time.Time {
+	weekday := int(ref.Weekday())
+	if weekday == 0 {
+		weekday = 7
 	}
-
-	plan := &apipb.MealPlan{
-		WeekStartDate: timestamppb.New(weekStart),
-		WeekEndDate:   timestamppb.New(weekEnd),
-		Status:        apipb.MealPlanStatus_MEAL_PLAN_STATUS_DRAFT,
-		Version:       1,
-		Items:         items,
-		CreatedAt:     timestamppb.Now(),
-		UpdatedAt:     timestamppb.Now(),
-	}
-
-	if threadID != nil {
-		plan.ThreadId = threadID
-	}
-
-	return plan
+	daysUntilMonday := weekday - 1
+	weekStart := ref.AddDate(0, 0, -daysUntilMonday)
+	return time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, weekStart.Location())
 }
 
-// convertMealPlanToWeeklyMealPlan converts a new MealPlan to a legacy WeeklyMealPlan
-func convertMealPlanToWeeklyMealPlan(plan *apipb.MealPlan) *apipb.WeeklyMealPlan {
-	entries := make([]*apipb.MealPlanEntry, 0, len(plan.Items))
+func calculateWeekBounds(ref time.Time) (time.Time, time.Time) {
+    weekStart := calculateWeekStart(ref)
+    return weekStart, weekStart.AddDate(0, 0, 6)
+}
 
-	for _, item := range plan.Items {
-		entry := &apipb.MealPlanEntry{
-			DayIndex: item.DayIndex,
-			MealType: models.MealSlotToString(item.MealType),
-			Meal:     item.MealSnapshot,
-		}
-		entries = append(entries, entry)
-	}
-
-	return &apipb.WeeklyMealPlan{
-		Days: entries,
-	}
+func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
+    return server.Services.ShoppingListService.BuildShoppingList(mealIDs)
 }
 
 // getOrCreateCurrentWeekMealPlan gets or creates a meal plan for the current week
 func getOrCreateCurrentWeekMealPlan(ctx context.Context) (*apipb.MealPlan, error) {
 	logger := getGrpcServerLogger()
 
-	// Calculate current week start (Monday)
-	now := time.Now()
-	weekday := int(now.Weekday())
-	if weekday == 0 { // Sunday
-		weekday = 7
-	}
-	daysUntilMonday := weekday - 1
-	weekStart := now.AddDate(0, 0, -daysUntilMonday)
-	weekStart = time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, weekStart.Location())
+	weekStart, weekEnd := calculateWeekBounds(time.Now())
 
 	// Try to get existing meal plan for this week
 	existingPlan, err := server.Services.MealPlanRepository.GetMealPlanByWeek(ctx, weekStart)
@@ -115,63 +66,34 @@ func getOrCreateCurrentWeekMealPlan(ctx context.Context) (*apipb.MealPlan, error
 
 	// No existing plan, generate a new one
 	logger.Debugw("No existing plan found, generating new one", "weekStart", weekStart)
-	weeklyPlan, err := server.Services.MealPlanRepository.GenerateWeeklyMealPlan(ctx)
+	items, err := server.Services.MealPlanRepository.GenerateMealPlanItems(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error generating weekly meal plan: %w", err)
+		return nil, fmt.Errorf("error generating meal plan items: %w", err)
 	}
 
-	// Populate meal details
-	detailedPlan, err := server.Services.MealPlanRepository.PopulateMealDetails(ctx, weeklyPlan)
-	if err != nil {
-		return nil, fmt.Errorf("error populating meal details: %w", err)
-	}
-
-	// Convert to new MealPlan format
-	newPlan := convertWeeklyMealPlanToMealPlan(detailedPlan, weekStart, nil)
-
-	// Persist to database
-	weekEnd := weekStart.AddDate(0, 0, 6)
 	planID, err := server.Services.MealPlanRepository.InsertMealPlan(ctx, weekStart, weekEnd, apipb.MealPlanStatus_MEAL_PLAN_STATUS_DRAFT, nil)
 	if err != nil {
 		logger.Errorw("Error persisting new meal plan", "error", err)
 		return nil, fmt.Errorf("error persisting meal plan: %w", err)
 	}
 
-	newPlan.Id = int32(planID)
+	for _, item := range items {
+		item.MealPlanId = int32(planID)
+	}
 
-	// Upsert items
-	err = server.Services.MealPlanRepository.UpsertMealPlanItems(ctx, planID, newPlan.Items)
-	if err != nil {
+	if err := server.Services.MealPlanRepository.UpsertMealPlanItems(ctx, planID, items); err != nil {
 		logger.Errorw("Error upserting meal plan items", "error", err, "planID", planID)
 		return nil, fmt.Errorf("error upserting meal plan items: %w", err)
 	}
 
+	newPlan, err := server.Services.MealPlanRepository.GetMealPlanByID(ctx, planID)
+	if err != nil {
+		logger.Errorw("Error fetching newly created meal plan", "error", err, "planID", planID)
+		return nil, fmt.Errorf("error fetching meal plan: %w", err)
+	}
+
 	logger.Infow("Created and persisted new meal plan", "id", planID, "weekStart", weekStart)
 	return newPlan, nil
-}
-
-func generateShoppingListForPlan(plan *apipb.WeeklyMealPlan) error {
-	mealIDs := make([]int, 0)
-	for _, d := range plan.Days {
-		if d.Meal != nil {
-			mealIDs = append(mealIDs, int(d.Meal.GetId()))
-		}
-	}
-	if len(mealIDs) == 0 {
-		plan.ShoppingList = nil
-		return nil
-	}
-
-	items, err := buildShoppingList(mealIDs)
-	if err != nil {
-		return err
-	}
-	plan.ShoppingList = items
-	return nil
-}
-
-func buildShoppingList(mealIDs []int) ([]*apipb.ShoppingListItem, error) {
-	return server.Services.ShoppingListService.BuildShoppingList(mealIDs)
 }
 
 func (s *MealPlannerAPIServer) HealthCheck(ctx context.Context, req *emptypb.Empty) (*apipb.HealthCheckResponse, error) {
@@ -233,51 +155,21 @@ func (s *MealPlannerAPIServer) GetMealPlan(ctx context.Context, req *emptypb.Emp
 		return nil, fmt.Errorf("error getting meal plan: %w", err)
 	}
 
-	// Convert to legacy WeeklyMealPlan format for backward compatibility
-	weeklyPlan := convertMealPlanToWeeklyMealPlan(mealPlan)
-
-	// Generate shopping list
-	if err := generateShoppingListForPlan(weeklyPlan); err != nil {
-		logger.Errorw("Error generating shopping list", "error", err)
-		return nil, fmt.Errorf("error generating shopping list: %w", err)
-	}
-
-	logger.Debugw("GetMealPlan: returning plan", "planID", mealPlan.Id, "itemCount", len(weeklyPlan.Days))
-	return &apipb.GetMealPlanResponse{Plan: weeklyPlan}, nil
+	logger.Debugw("GetMealPlan: returning plan", "planID", mealPlan.Id, "itemCount", len(mealPlan.Items))
+	return &apipb.GetMealPlanResponse{Plan: mealPlan}, nil
 }
 
 func (s *MealPlannerAPIServer) GenerateMealPlan(ctx context.Context, req *emptypb.Empty) (*apipb.GenerateMealPlanResponse, error) {
 	logger := getGrpcServerLogger()
 
-	// Generate a fresh weekly meal plan
-	weeklyPlan, err := server.Services.MealPlanRepository.GenerateWeeklyMealPlan(ctx)
+	items, err := server.Services.MealPlanRepository.GenerateMealPlanItems(ctx)
 	if err != nil {
-		logger.Errorw("Error generating weekly meal plan", "error", err)
+		logger.Errorw("Error generating meal plan items", "error", err)
 		return nil, fmt.Errorf("error generating meal plan: %w", err)
 	}
 
-	// Populate meal details
-	detailedPlan, err := server.Services.MealPlanRepository.PopulateMealDetails(ctx, weeklyPlan)
-	if err != nil {
-		logger.Errorw("Error populating meal details", "error", err)
-		return nil, fmt.Errorf("error fetching meal details: %w", err)
-	}
+	weekStart, weekEnd := calculateWeekBounds(time.Now())
 
-	// Calculate current week start
-	now := time.Now()
-	weekday := int(now.Weekday())
-	if weekday == 0 { // Sunday
-		weekday = 7
-	}
-	daysUntilMonday := weekday - 1
-	weekStart := now.AddDate(0, 0, -daysUntilMonday)
-	weekStart = time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, weekStart.Location())
-	weekEnd := weekStart.AddDate(0, 0, 6)
-
-	// Convert to new MealPlan format and persist
-	mealPlan := convertWeeklyMealPlanToMealPlan(detailedPlan, weekStart, nil)
-
-	// Check if a plan already exists for this week
 	existingPlan, err := server.Services.MealPlanRepository.GetMealPlanByWeek(ctx, weekStart)
 	if err != nil {
 		logger.Errorw("Error checking for existing meal plan", "error", err)
@@ -286,52 +178,46 @@ func (s *MealPlannerAPIServer) GenerateMealPlan(ctx context.Context, req *emptyp
 
 	var planID int
 	if existingPlan != nil {
-		// Update existing plan to draft status and increment version
 		planID = int(existingPlan.Id)
-		mealPlan.Id = existingPlan.Id
-		mealPlan.Version = existingPlan.Version + 1
+		logger.Infow("Regenerating existing meal plan", "planID", planID, "currentVersion", existingPlan.GetVersion())
 
-		// Update status to draft (regenerating the plan)
-		err = server.Services.MealPlanRepository.UpdateMealPlanStatus(ctx, planID, apipb.MealPlanStatus_MEAL_PLAN_STATUS_DRAFT)
-		if err != nil {
+		if err := server.Services.MealPlanRepository.UpdateMealPlanStatus(ctx, planID, apipb.MealPlanStatus_MEAL_PLAN_STATUS_DRAFT); err != nil {
 			logger.Errorw("Error updating meal plan status", "error", err, "planID", planID)
 			return nil, fmt.Errorf("error updating meal plan status: %w", err)
 		}
 
-		err = server.Services.MealPlanRepository.UpdateMealPlanVersion(ctx, planID, int(mealPlan.Version))
-		if err != nil {
-			logger.Errorw("Error updating meal plan version", "error", err, "planID", planID, "version", mealPlan.Version)
+		newVersion := int(existingPlan.GetVersion()) + 1
+		if err := server.Services.MealPlanRepository.UpdateMealPlanVersion(ctx, planID, newVersion); err != nil {
+			logger.Errorw("Error updating meal plan version", "error", err, "planID", planID, "version", newVersion)
 			return nil, fmt.Errorf("error updating meal plan version: %w", err)
 		}
-
-		logger.Infow("Regenerating existing meal plan", "planID", planID, "newVersion", mealPlan.Version)
 	} else {
-		// Create new plan
 		planID, err = server.Services.MealPlanRepository.InsertMealPlan(ctx, weekStart, weekEnd, apipb.MealPlanStatus_MEAL_PLAN_STATUS_DRAFT, nil)
 		if err != nil {
 			logger.Errorw("Error persisting new meal plan", "error", err)
 			return nil, fmt.Errorf("error persisting meal plan: %w", err)
 		}
-		mealPlan.Id = int32(planID)
 		logger.Infow("Created new meal plan", "planID", planID)
 	}
 
-	// Upsert items (replaces existing items)
-	err = server.Services.MealPlanRepository.UpsertMealPlanItems(ctx, planID, mealPlan.Items)
-	if err != nil {
+	for _, item := range items {
+		item.MealPlanId = int32(planID)
+	}
+
+	if err := server.Services.MealPlanRepository.UpsertMealPlanItems(ctx, planID, items); err != nil {
 		logger.Errorw("Error upserting meal plan items", "error", err, "planID", planID)
 		return nil, fmt.Errorf("error upserting meal plan items: %w", err)
 	}
 
-	// Generate shopping list
-	if err := generateShoppingListForPlan(detailedPlan); err != nil {
-		logger.Errorw("Error generating shopping list", "error", err)
-		return nil, fmt.Errorf("error generating shopping list: %w", err)
+	plan, err := server.Services.MealPlanRepository.GetMealPlanByID(ctx, planID)
+	if err != nil {
+		logger.Errorw("Error fetching regenerated meal plan", "error", err, "planID", planID)
+		return nil, fmt.Errorf("error fetching meal plan: %w", err)
 	}
 
-	logger.Infow("GenerateMealPlan: returning new plan", "planID", planID, "itemCount", len(detailedPlan.Days))
+	logger.Infow("GenerateMealPlan: returning new plan", "planID", planID, "itemCount", len(plan.Items))
 	return &apipb.GenerateMealPlanResponse{
-		Plan: detailedPlan,
+		Plan: plan,
 	}, nil
 }
 
@@ -358,40 +244,45 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 		return nil, fmt.Errorf("no meal plan found in checkpoint")
 	}
 
-	logger.Infow("Processing meal plan from checkpoint", "dayCount", len(checkpoint.State.MealPlan.Days))
+	mealPlan := checkpoint.State.MealPlan
+	logger.Infow("Processing meal plan from checkpoint", "itemCount", len(mealPlan.Items))
 
-	// Collect meal IDs from the finalized plan
 	mealIDSet := make(map[int]struct{})
-	for i, entry := range checkpoint.State.MealPlan.Days {
-		if entry != nil && entry.Meal != nil {
-			mealID := int(entry.Meal.GetId())
-			if mealID != 0 {
-				mealIDSet[mealID] = struct{}{}
-				logger.Debugw("Found meal in plan", "index", i, "mealID", mealID, "dayIndex", entry.DayIndex, "mealType", entry.MealType)
-			}
+	for i, item := range mealPlan.Items {
+		if item == nil {
+			continue
+		}
+
+		var mealID int32
+		switch {
+		case item.MealId != nil:
+			mealID = *item.MealId
+		case item.MealSnapshot != nil:
+			mealID = item.MealSnapshot.Id
+		}
+
+		if mealID != 0 {
+			mealIDSet[int(mealID)] = struct{}{}
+			logger.Debugw("Found meal in plan", "index", i, "mealID", mealID, "dayIndex", item.DayIndex, "mealType", models.MealSlotToString(item.MealType))
 		}
 	}
 
-	var mealIDs []int
+	mealIDs := make([]int, 0, len(mealIDSet))
 	for id := range mealIDSet {
 		mealIDs = append(mealIDs, id)
 	}
 
 	logger.Infow("Unique meals to finalize", "mealIDs", mealIDs, "count", len(mealIDs))
 
-	// Calculate current week start
-	now := time.Now()
-	weekday := int(now.Weekday())
-	if weekday == 0 { // Sunday
-		weekday = 7
-	}
-	daysUntilMonday := weekday - 1
-	weekStart := now.AddDate(0, 0, -daysUntilMonday)
-	weekStart = time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, weekStart.Location())
-	weekEnd := weekStart.AddDate(0, 0, 6)
+	weekStart, weekEnd := calculateWeekBounds(time.Now())
 
-	// Convert checkpoint meal plan to new MealPlan format
-	mealPlan := convertWeeklyMealPlanToMealPlan(checkpoint.State.MealPlan, weekStart, &req.ThreadId)
+	mealPlan.WeekStartDate = timestamppb.New(weekStart)
+	mealPlan.WeekEndDate = timestamppb.New(weekEnd)
+	mealPlan.Status = apipb.MealPlanStatus_MEAL_PLAN_STATUS_FINALIZED
+	mealPlan.UpdatedAt = timestamppb.Now()
+	if req.ThreadId != "" {
+		mealPlan.ThreadId = &req.ThreadId
+	}
 
 	// Check if a meal plan already exists for this week
 	existingPlan, err := server.Services.MealPlanRepository.GetMealPlanByWeek(ctx, weekStart)
@@ -409,13 +300,6 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 
 		logger.Infow("Finalizing existing meal plan", "planID", planID, "version", mealPlan.Version)
 
-		// Update items
-		err = server.Services.MealPlanRepository.UpsertMealPlanItems(ctx, planID, mealPlan.Items)
-		if err != nil {
-			logger.Errorw("Error upserting meal plan items", "error", err, "planID", planID)
-			return nil, fmt.Errorf("error upserting meal plan items: %w", err)
-		}
-
 		// Update status to finalized
 		err = server.Services.MealPlanRepository.UpdateMealPlanStatus(ctx, planID, apipb.MealPlanStatus_MEAL_PLAN_STATUS_FINALIZED)
 		if err != nil {
@@ -432,13 +316,17 @@ func (s *MealPlannerAPIServer) FinalizeMealPlan(ctx context.Context, req *apipb.
 
 		mealPlan.Id = int32(planID)
 		logger.Infow("Created new finalized meal plan", "planID", planID)
+	}
 
-		// Insert items
-		err = server.Services.MealPlanRepository.UpsertMealPlanItems(ctx, planID, mealPlan.Items)
-		if err != nil {
-			logger.Errorw("Error upserting meal plan items", "error", err, "planID", planID)
-			return nil, fmt.Errorf("error upserting meal plan items: %w", err)
+	for _, item := range mealPlan.Items {
+		if item != nil {
+			item.MealPlanId = int32(planID)
 		}
+	}
+
+	if err := server.Services.MealPlanRepository.UpsertMealPlanItems(ctx, planID, mealPlan.Items); err != nil {
+		logger.Errorw("Error upserting meal plan items", "error", err, "planID", planID)
+		return nil, fmt.Errorf("error upserting meal plan items: %w", err)
 	}
 
 	// Persist last_planned timestamps for meals
@@ -767,8 +655,8 @@ func getCheckpointFromDB(threadID string) (*apipb.AgentCheckpoint, error) {
 		return nil, fmt.Errorf("meal plan is missing or invalid in checkpoint state")
 	}
 
-	// Convert meal plan data to protobuf WeeklyMealPlan
-	mealPlan, err := convertToWeeklyMealPlan(mealPlanData)
+	// Convert meal plan data to protobuf MealPlan
+	mealPlan, err := convertToMealPlan(mealPlanData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert meal plan: %w", err)
 	}
@@ -783,45 +671,20 @@ func getCheckpointFromDB(threadID string) (*apipb.AgentCheckpoint, error) {
 	return checkpoint, nil
 }
 
-// convertToWeeklyMealPlan converts raw JSON meal plan data to protobuf WeeklyMealPlan
-func convertToWeeklyMealPlan(mealPlanData map[string]interface{}) (*apipb.WeeklyMealPlan, error) {
-	daysData, ok := mealPlanData["days"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("meal plan days data is missing or invalid")
+// convertToMealPlan converts raw JSON meal plan data to protobuf MealPlan.
+func convertToMealPlan(mealPlanData map[string]interface{}) (*apipb.MealPlan, error) {
+	bytes, err := json.Marshal(mealPlanData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal meal plan data: %w", err)
 	}
 
-	var days []*apipb.MealPlanEntry
-	for _, dayData := range daysData {
-		dayMap, ok := dayData.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		entry := &apipb.MealPlanEntry{}
-
-		// Extract meal data
-		if mealData, ok := dayMap["meal"].(map[string]interface{}); ok {
-			if mealID, ok := mealData["id"].(float64); ok {
-				entry.Meal = &apipb.Meal{
-					Id: int32(mealID),
-				}
-			}
-		}
-
-		// Extract day_index if available
-		if dayIndex, ok := dayMap["day_index"].(float64); ok {
-			entry.DayIndex = int32(dayIndex)
-		}
-
-		// Extract meal_type if available
-		if mealType, ok := dayMap["meal_type"].(string); ok {
-			entry.MealType = mealType
-		}
-
-		days = append(days, entry)
+	var plan apipb.MealPlan
+	unmarshaler := protojson.UnmarshalOptions{
+		DiscardUnknown: true,
+	}
+	if err := unmarshaler.Unmarshal(bytes, &plan); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal meal plan: %w", err)
 	}
 
-	return &apipb.WeeklyMealPlan{
-		Days: days,
-	}, nil
+	return &plan, nil
 }

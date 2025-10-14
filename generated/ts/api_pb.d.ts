@@ -1,6 +1,54 @@
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message as Message$1, proto3, Timestamp } from "@bufbuild/protobuf";
 /**
+ * Enums for meal planning
+ *
+ * @generated from enum mealplanner.api.MealPlanStatus
+ */
+export declare enum MealPlanStatus {
+    /**
+     * @generated from enum value: MEAL_PLAN_STATUS_UNSPECIFIED = 0;
+     */
+    UNSPECIFIED = 0,
+    /**
+     * @generated from enum value: MEAL_PLAN_STATUS_DRAFT = 1;
+     */
+    DRAFT = 1,
+    /**
+     * @generated from enum value: MEAL_PLAN_STATUS_FINALIZED = 2;
+     */
+    FINALIZED = 2,
+    /**
+     * @generated from enum value: MEAL_PLAN_STATUS_ARCHIVED = 3;
+     */
+    ARCHIVED = 3,
+    /**
+     * @generated from enum value: MEAL_PLAN_STATUS_ABANDONED = 4;
+     */
+    ABANDONED = 4
+}
+/**
+ * @generated from enum mealplanner.api.MealSlot
+ */
+export declare enum MealSlot {
+    /**
+     * @generated from enum value: MEAL_SLOT_UNSPECIFIED = 0;
+     */
+    UNSPECIFIED = 0,
+    /**
+     * @generated from enum value: MEAL_SLOT_BREAKFAST = 1;
+     */
+    BREAKFAST = 1,
+    /**
+     * @generated from enum value: MEAL_SLOT_LUNCH = 2;
+     */
+    LUNCH = 2,
+    /**
+     * @generated from enum value: MEAL_SLOT_DINNER = 3;
+     */
+    DINNER = 3
+}
+/**
  * @generated from message mealplanner.api.Ingredient
  */
 export declare class Ingredient extends Message$1<Ingredient> {
@@ -137,6 +185,159 @@ export declare class MealPlanEntry extends Message$1<MealPlanEntry> {
     static equals(a: MealPlanEntry | PlainMessage<MealPlanEntry> | undefined, b: MealPlanEntry | PlainMessage<MealPlanEntry> | undefined): boolean;
 }
 /**
+ * New meal plan messages for first-class database entities
+ *
+ * @generated from message mealplanner.api.MealPlanItem
+ */
+export declare class MealPlanItem extends Message$1<MealPlanItem> {
+    /**
+     * @generated from field: int32 id = 1;
+     */
+    id: number;
+    /**
+     * @generated from field: int32 meal_plan_id = 2;
+     */
+    mealPlanId: number;
+    /**
+     * 0-6 (Monday-Sunday)
+     *
+     * @generated from field: int32 day_index = 3;
+     */
+    dayIndex: number;
+    /**
+     * @generated from field: mealplanner.api.MealSlot meal_type = 4;
+     */
+    mealType: MealSlot;
+    /**
+     * Reference to meals table
+     *
+     * @generated from field: optional int32 meal_id = 5;
+     */
+    mealId?: number;
+    /**
+     * Point-in-time meal data
+     *
+     * @generated from field: mealplanner.api.Meal meal_snapshot = 6;
+     */
+    mealSnapshot?: Meal;
+    /**
+     * @generated from field: google.protobuf.Timestamp created_at = 7;
+     */
+    createdAt?: Timestamp;
+    /**
+     * @generated from field: google.protobuf.Timestamp updated_at = 8;
+     */
+    updatedAt?: Timestamp;
+    constructor(data?: PartialMessage<MealPlanItem>);
+    static readonly runtime: typeof proto3;
+    static readonly typeName = "mealplanner.api.MealPlanItem";
+    static readonly fields: FieldList;
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanItem;
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlanItem;
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlanItem;
+    static equals(a: MealPlanItem | PlainMessage<MealPlanItem> | undefined, b: MealPlanItem | PlainMessage<MealPlanItem> | undefined): boolean;
+}
+/**
+ * @generated from message mealplanner.api.MealPlan
+ */
+export declare class MealPlan extends Message$1<MealPlan> {
+    /**
+     * @generated from field: int32 id = 1;
+     */
+    id: number;
+    /**
+     * @generated from field: google.protobuf.Timestamp week_start_date = 2;
+     */
+    weekStartDate?: Timestamp;
+    /**
+     * @generated from field: google.protobuf.Timestamp week_end_date = 3;
+     */
+    weekEndDate?: Timestamp;
+    /**
+     * @generated from field: mealplanner.api.MealPlanStatus status = 4;
+     */
+    status: MealPlanStatus;
+    /**
+     * @generated from field: int32 version = 5;
+     */
+    version: number;
+    /**
+     * @generated from field: optional string thread_id = 6;
+     */
+    threadId?: string;
+    /**
+     * @generated from field: google.protobuf.Timestamp created_at = 7;
+     */
+    createdAt?: Timestamp;
+    /**
+     * @generated from field: google.protobuf.Timestamp updated_at = 8;
+     */
+    updatedAt?: Timestamp;
+    /**
+     * @generated from field: repeated mealplanner.api.MealPlanItem items = 9;
+     */
+    items: MealPlanItem[];
+    constructor(data?: PartialMessage<MealPlan>);
+    static readonly runtime: typeof proto3;
+    static readonly typeName = "mealplanner.api.MealPlan";
+    static readonly fields: FieldList;
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlan;
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlan;
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlan;
+    static equals(a: MealPlan | PlainMessage<MealPlan> | undefined, b: MealPlan | PlainMessage<MealPlan> | undefined): boolean;
+}
+/**
+ * @generated from message mealplanner.api.MealPlanSummary
+ */
+export declare class MealPlanSummary extends Message$1<MealPlanSummary> {
+    /**
+     * @generated from field: int32 id = 1;
+     */
+    id: number;
+    /**
+     * @generated from field: google.protobuf.Timestamp week_start_date = 2;
+     */
+    weekStartDate?: Timestamp;
+    /**
+     * @generated from field: google.protobuf.Timestamp week_end_date = 3;
+     */
+    weekEndDate?: Timestamp;
+    /**
+     * @generated from field: mealplanner.api.MealPlanStatus status = 4;
+     */
+    status: MealPlanStatus;
+    /**
+     * @generated from field: int32 version = 5;
+     */
+    version: number;
+    /**
+     * @generated from field: optional string thread_id = 6;
+     */
+    threadId?: string;
+    /**
+     * @generated from field: google.protobuf.Timestamp created_at = 7;
+     */
+    createdAt?: Timestamp;
+    /**
+     * @generated from field: google.protobuf.Timestamp updated_at = 8;
+     */
+    updatedAt?: Timestamp;
+    /**
+     * Number of items without loading them
+     *
+     * @generated from field: int32 item_count = 9;
+     */
+    itemCount: number;
+    constructor(data?: PartialMessage<MealPlanSummary>);
+    static readonly runtime: typeof proto3;
+    static readonly typeName = "mealplanner.api.MealPlanSummary";
+    static readonly fields: FieldList;
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanSummary;
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlanSummary;
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlanSummary;
+    static equals(a: MealPlanSummary | PlainMessage<MealPlanSummary> | undefined, b: MealPlanSummary | PlainMessage<MealPlanSummary> | undefined): boolean;
+}
+/**
  * @generated from message mealplanner.api.ShoppingListItem
  */
 export declare class ShoppingListItem extends Message$1<ShoppingListItem> {
@@ -160,56 +361,6 @@ export declare class ShoppingListItem extends Message$1<ShoppingListItem> {
     static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ShoppingListItem;
     static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ShoppingListItem;
     static equals(a: ShoppingListItem | PlainMessage<ShoppingListItem> | undefined, b: ShoppingListItem | PlainMessage<ShoppingListItem> | undefined): boolean;
-}
-/**
- * @generated from message mealplanner.api.WeeklyMealPlan
- */
-export declare class WeeklyMealPlan extends Message$1<WeeklyMealPlan> {
-    /**
-     * @generated from field: repeated mealplanner.api.MealPlanEntry days = 1;
-     */
-    days: MealPlanEntry[];
-    /**
-     * @generated from field: repeated mealplanner.api.ShoppingListItem shopping_list = 2;
-     */
-    shoppingList: ShoppingListItem[];
-    constructor(data?: PartialMessage<WeeklyMealPlan>);
-    static readonly runtime: typeof proto3;
-    static readonly typeName = "mealplanner.api.WeeklyMealPlan";
-    static readonly fields: FieldList;
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WeeklyMealPlan;
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WeeklyMealPlan;
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WeeklyMealPlan;
-    static equals(a: WeeklyMealPlan | PlainMessage<WeeklyMealPlan> | undefined, b: WeeklyMealPlan | PlainMessage<WeeklyMealPlan> | undefined): boolean;
-}
-/**
- * @generated from message mealplanner.api.MealPlanIdentifier
- */
-export declare class MealPlanIdentifier extends Message$1<MealPlanIdentifier> {
-    /**
-     * @generated from field: int32 id = 1;
-     */
-    id: number;
-    /**
-     * @generated from field: string thread_id = 2;
-     */
-    threadId: string;
-    /**
-     * @generated from field: int32 version = 3;
-     */
-    version: number;
-    /**
-     * @generated from field: string created_at = 4;
-     */
-    createdAt: string;
-    constructor(data?: PartialMessage<MealPlanIdentifier>);
-    static readonly runtime: typeof proto3;
-    static readonly typeName = "mealplanner.api.MealPlanIdentifier";
-    static readonly fields: FieldList;
-    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MealPlanIdentifier;
-    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): MealPlanIdentifier;
-    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): MealPlanIdentifier;
-    static equals(a: MealPlanIdentifier | PlainMessage<MealPlanIdentifier> | undefined, b: MealPlanIdentifier | PlainMessage<MealPlanIdentifier> | undefined): boolean;
 }
 /**
  * @generated from message mealplanner.api.SaveCheckpointRequest
@@ -503,9 +654,9 @@ export declare class HealthCheckResponse extends Message$1<HealthCheckResponse> 
  */
 export declare class GetMealPlanResponse extends Message$1<GetMealPlanResponse> {
     /**
-     * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+     * @generated from field: mealplanner.api.MealPlan plan = 1;
      */
-    plan?: WeeklyMealPlan;
+    plan?: MealPlan;
     constructor(data?: PartialMessage<GetMealPlanResponse>);
     static readonly runtime: typeof proto3;
     static readonly typeName = "mealplanner.api.GetMealPlanResponse";
@@ -520,9 +671,9 @@ export declare class GetMealPlanResponse extends Message$1<GetMealPlanResponse> 
  */
 export declare class GenerateMealPlanResponse extends Message$1<GenerateMealPlanResponse> {
     /**
-     * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+     * @generated from field: mealplanner.api.MealPlan plan = 1;
      */
-    plan?: WeeklyMealPlan;
+    plan?: MealPlan;
     constructor(data?: PartialMessage<GenerateMealPlanResponse>);
     static readonly runtime: typeof proto3;
     static readonly typeName = "mealplanner.api.GenerateMealPlanResponse";
@@ -1385,9 +1536,9 @@ export declare class GetWorkflowStateRequest extends Message$1<GetWorkflowStateR
  */
 export declare class GetWorkflowStateResponse extends Message$1<GetWorkflowStateResponse> {
     /**
-     * @generated from field: mealplanner.api.WeeklyMealPlan plan = 1;
+     * @generated from field: mealplanner.api.MealPlan plan = 1;
      */
-    plan?: WeeklyMealPlan;
+    plan?: MealPlan;
     /**
      * @generated from field: mealplanner.api.ShoppingList shopping_list = 2;
      */
@@ -1577,9 +1728,9 @@ export declare class MealPlanningCheckpointState extends Message$1<MealPlanningC
      */
     currentStep: string;
     /**
-     * @generated from field: mealplanner.api.WeeklyMealPlan meal_plan = 6;
+     * @generated from field: mealplanner.api.MealPlan meal_plan = 6;
      */
-    mealPlan?: WeeklyMealPlan;
+    mealPlan?: MealPlan;
     /**
      * @generated from field: repeated mealplanner.api.FeedbackEntryProto feedback_history = 7;
      */

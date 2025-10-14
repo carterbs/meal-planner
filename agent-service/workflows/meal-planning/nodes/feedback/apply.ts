@@ -1,12 +1,12 @@
-import { WeeklyMealPlan as GeneratedWeeklyMealPlan } from '@mealplanner/generated';
+import { MealPlan as GeneratedMealPlan } from '@mealplanner/generated';
 import { MealPlanningState } from '../../../../shared/types';
 
 export interface ApplyFeedbackDeps {
     getMessages: (threadId: string) => Promise<string[]>;
     applyFeedbackWithLLM: (
-        plan: GeneratedWeeklyMealPlan,
+        plan: GeneratedMealPlan,
         feedback: string[],
-    ) => Promise<{ mealPlan: GeneratedWeeklyMealPlan; userMessage: string }>;
+    ) => Promise<{ mealPlan: GeneratedMealPlan; userMessage: string }>;
     addMessage: (threadId: string, sender: string, message: string) => Promise<void>;
 }
 
@@ -26,5 +26,4 @@ export async function applyFeedbackNode(
     }
     return { mealPlan: result.mealPlan };
 }
-
 

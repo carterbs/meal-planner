@@ -3,7 +3,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 // API mocks
 const mockGetAgentCheckpoint = jest
   .fn()
-  .mockResolvedValue({ state: { mealPlan: { days: [] } } });
+  .mockResolvedValue({ state: { mealPlan: { items: [] } } });
 const mockGetMessages = jest
   .fn()
   .mockResolvedValue([{ sender: 'agent', content: 'hi' }]);
@@ -29,7 +29,7 @@ jest.mock('../../../hooks/useSession', () => ({
 jest.mock('@mealplanner/generated', () => ({
   __esModule: true,
   ShoppingListItem: class ShoppingListItem {},
-  WeeklyMealPlan: class WeeklyMealPlan {},
+  MealPlan: class MealPlan {},
 }));
 
 // Import after mocks
