@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getMessages } from '../../../api';
+import type { AgentMessage as GatewayAgentMessage } from '../../../utils/gatewayGuards';
 
 export interface ChatMessage {
   sender: 'user' | 'agent';
@@ -12,18 +13,10 @@ export default function useAgentMessages(threadId: string | null | undefined) {
   const fetchMessages = useCallback(async () => {
     if (!threadId) return;
     try {
-      const rawMessages: unknown = await getMessages(threadId);
-      if (!Array.isArray(rawMessages)) {
-        setMessages([]);
-        return;
-      }
-      if (!Array.isArray(rawMessages)) {
-        setMessages([]);
-        return;
-      }
-      const formatted: ChatMessage[] = (rawMessages as Array<{ sender?: string; content?: string; message?: string }>).map((msg) => ({
-        sender: msg.sender === 'user' ? 'user' : 'agent',
-        text: (msg.content ?? msg.message ?? ''),
+      const rawMessages: GatewayAgentMessage[] = await getMessages(threadId);
+      const formatted: ChatMessage[] = rawMessages.map((msg) => ({
+        sender: msg.sender,
+        text: msg.content,
       }));
       setMessages(formatted);
     } catch {

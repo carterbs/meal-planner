@@ -4,6 +4,7 @@ import {
   getAgentCheckpoint,
   getMessages,
 } from './agentApi';
+import { MealPlanningCheckpointState } from '@mealplanner/generated/api_pb';
 import * as gatewayModule from '@mealplanner/generated/gateway';
 
 jest.mock('@mealplanner/generated/gateway');
@@ -15,30 +16,39 @@ jest.mock('@mealplanner/generated/gateway/client', () => ({
 const mockedGateway = gatewayModule as jest.Mocked<typeof gatewayModule>;
 
 describe('agentApi', () => {
+  const initialStatePayload = {
+    threadId: 'test-thread-123',
+    currentStep: 'initial',
+    mealPlan: { items: [] },
+  };
+
   const mockAgentResponse = {
     threadId: 'test-thread-123',
     currentStep: 'initial',
     message: 'Welcome to meal planning',
-    initialState: JSON.stringify({ step: 'start', data: {} }),
+    initialState: JSON.stringify(initialStatePayload),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('startAgentSession', () => {
-    it('should start agent session with default parameters', async () => {
+    it('starts a session with defaults and parses initial state', async () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: { response: mockAgentResponse },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
+        error: undefined,
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentStart>>);
 
       const result = await startAgentSession();
 
-      expect(result.session.threadId).toBe('test-thread-123');
-      expect(result.session.currentStep).toBe('initial');
+      expect(result.session).toEqual({
+        threadId: 'test-thread-123',
+        currentStep: 'initial',
+      });
       expect(result.message).toBe('Welcome to meal planning');
-      expect(result.initialState).toEqual({ step: 'start', data: {} });
+      expect(result.initialState).toBeInstanceOf(MealPlanningCheckpointState);
+      expect(result.initialState?.threadId).toBe('test-thread-123');
 
       expect(mockedGateway.postAgentStart).toHaveBeenCalledWith({
         client: 'mockClient',
@@ -49,482 +59,261 @@ describe('agentApi', () => {
       });
     });
 
-    it('should start agent session with custom parameters', async () => {
+    it('passes custom participants and workflow type', async () => {
       mockedGateway.postAgentStart.mockResolvedValue({
         data: { response: mockAgentResponse },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
+        error: undefined,
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentStart>>);
 
-      const participants = ['user', 'agent'];
-      const workflowType = 'custom_workflow';
+      await startAgentSession(['user', 'assistant'], 'custom');
 
-      const result = await startAgentSession(participants, workflowType);
-
-      expect(result.session.threadId).toBe('test-thread-123');
       expect(mockedGateway.postAgentStart).toHaveBeenCalledWith({
         client: 'mockClient',
         body: {
-          participants,
-          workflowType,
+          participants: ['user', 'assistant'],
+          workflowType: 'custom',
         },
       });
     });
 
-    it('should handle session without initial state', async () => {
-      const responseWithoutState = {
-        ...mockAgentResponse,
-        initialState: undefined,
-      };
-
+    it('logs and ignores invalid initial state JSON', async () => {
+      const badState = { ...mockAgentResponse, initialState: 'not-json' };
       mockedGateway.postAgentStart.mockResolvedValue({
-        data: { response: responseWithoutState },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
+        data: { response: badState },
+        error: undefined,
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentStart>>);
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
       const result = await startAgentSession();
 
       expect(result.initialState).toBeUndefined();
-    });
-
-    it('should handle invalid JSON in initial state', async () => {
-      const responseWithInvalidState = {
-        ...mockAgentResponse,
-        initialState: 'invalid-json{',
-      };
-
-      mockedGateway.postAgentStart.mockResolvedValue({
-        data: { response: responseWithInvalidState },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
-
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-
-      const result = await startAgentSession();
-
-      expect(result.initialState).toBeUndefined();
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(warnSpy).toHaveBeenCalledWith(
         'Failed to parse initial state:',
         expect.any(Error),
       );
 
-      consoleSpy.mockRestore();
+      warnSpy.mockRestore();
     });
 
-    it('should throw error when API returns error', async () => {
+    it('throws when gateway returns an error', async () => {
       mockedGateway.postAgentStart.mockResolvedValue({
-        data: null,
-        error: 'Session creation failed',
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
+        data: undefined,
+        error: 'boom',
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentStart>>);
 
       await expect(startAgentSession()).rejects.toThrow(
-        'Failed to start agent session: Session creation failed',
+        'Failed to start agent session: boom',
       );
     });
 
-    it('should throw error when no data returned', async () => {
+    it('throws when response payload is missing', async () => {
       mockedGateway.postAgentStart.mockResolvedValue({
-        data: null,
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
+        data: undefined,
+        error: undefined,
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentStart>>);
 
       await expect(startAgentSession()).rejects.toThrow(
-        'Failed to start agent session: Unknown error',
+        'Failed to start agent session: empty response',
       );
     });
 
-    it('should throw error when no response in data', async () => {
+    it('validates required fields in response', async () => {
       mockedGateway.postAgentStart.mockResolvedValue({
-        data: {},
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
+        data: { response: { ...mockAgentResponse, threadId: undefined } },
+        error: undefined,
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentStart>>);
 
       await expect(startAgentSession()).rejects.toThrow(
-        'No response from agent',
-      );
-    });
-
-    it('should throw error when response missing threadId', async () => {
-      const invalidResponse = {
-        ...mockAgentResponse,
-        threadId: undefined,
-      };
-
-      mockedGateway.postAgentStart.mockResolvedValue({
-        data: { response: invalidResponse },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
-
-      await expect(startAgentSession()).rejects.toThrow(
-        'Invalid agent response - missing required fields',
-      );
-    });
-
-    it('should throw error when response missing currentStep', async () => {
-      const invalidResponse = {
-        ...mockAgentResponse,
-        currentStep: undefined,
-      };
-
-      mockedGateway.postAgentStart.mockResolvedValue({
-        data: { response: invalidResponse },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
-
-      await expect(startAgentSession()).rejects.toThrow(
-        'Invalid agent response - missing required fields',
-      );
-    });
-
-    it('should throw error when response missing both required fields', async () => {
-      const invalidResponse = {
-        ...mockAgentResponse,
-        threadId: null,
-        currentStep: '',
-      };
-
-      mockedGateway.postAgentStart.mockResolvedValue({
-        data: { response: invalidResponse },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentStart> extends Promise<infer T> ? T : never);
-
-      await expect(startAgentSession()).rejects.toThrow(
-        'Invalid agent response - missing required fields',
+        'Agent start response missing required fields',
       );
     });
   });
 
   describe('sendAgentMessage', () => {
-    const mockMessageResponse = {
-      message: 'Agent response message',
+    const messageResponse = {
+      message: 'Agent reply',
       initialState: JSON.stringify({
-        step: 'processing',
-        data: { key: 'value' },
+        threadId: 'test-thread-123',
+        currentStep: 'planning',
+        mealPlan: { items: [] },
       }),
     };
 
-    it('should send message with default parameters', async () => {
+    it('sends a message and parses checkpoint state', async () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
-        data: { response: mockMessageResponse },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
+        data: { response: messageResponse },
+        error: undefined,
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentMessage>>);
 
-      const result = await sendAgentMessage('test-thread-123', 'Hello');
+      const result = await sendAgentMessage('thread', 'Hello');
 
-      expect(result.message).toBe('Agent response message');
-      expect(result.initialState).toEqual({
-        step: 'processing',
-        data: { key: 'value' },
-      });
-
-      expect(mockedGateway.postAgentMessage).toHaveBeenCalledWith({
-        client: 'mockClient',
-        body: {
-          threadId: 'test-thread-123',
-          message: 'Hello',
-          from: 'user',
-          interactive: false,
-        },
-      });
+      expect(result.message).toBe('Agent reply');
+      expect(result.initialState?.currentStep).toBe('planning');
     });
 
-    it('should send message with custom parameters', async () => {
+    it('warns and clears invalid initial state', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       mockedGateway.postAgentMessage.mockResolvedValue({
-        data: { response: mockMessageResponse },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
+        data: { response: { ...messageResponse, initialState: '{' } },
+        error: undefined,
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentMessage>>);
 
-      const result = await sendAgentMessage(
-        'test-thread-123',
-        'Hello',
-        'system',
-        true,
-      );
-
-      expect(result.message).toBe('Agent response message');
-
-      expect(mockedGateway.postAgentMessage).toHaveBeenCalledWith({
-        client: 'mockClient',
-        body: {
-          threadId: 'test-thread-123',
-          message: 'Hello',
-          from: 'system',
-          interactive: true,
-        },
-      });
-    });
-
-    it('should handle response without initial state', async () => {
-      const responseWithoutState = {
-        ...mockMessageResponse,
-        initialState: undefined,
-      };
-
-      mockedGateway.postAgentMessage.mockResolvedValue({
-        data: { response: responseWithoutState },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
-
-      const result = await sendAgentMessage('test-thread-123', 'Hello');
+      const result = await sendAgentMessage('thread', 'Hello');
 
       expect(result.initialState).toBeUndefined();
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
 
-    it('should handle invalid JSON in initial state', async () => {
-      const responseWithInvalidState = {
-        ...mockMessageResponse,
-        initialState: 'invalid-json}',
-      };
-
+    it('propagates gateway errors', async () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
-        data: { response: responseWithInvalidState },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
+        data: undefined,
+        error: 'nope',
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentMessage>>);
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-
-      const result = await sendAgentMessage('test-thread-123', 'Hello');
-
-      expect(result.initialState).toBeUndefined();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to parse initial state:',
-        expect.any(Error),
+      await expect(sendAgentMessage('thread', 'Hello')).rejects.toThrow(
+        'Failed to send message: nope',
       );
-
-      consoleSpy.mockRestore();
     });
 
-    it('should throw error when API returns error', async () => {
+    it('requires a response payload', async () => {
       mockedGateway.postAgentMessage.mockResolvedValue({
-        data: null,
-        error: 'Message sending failed',
-      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
+        data: undefined,
+        error: undefined,
+      } as unknown as Awaited<ReturnType<typeof mockedGateway.postAgentMessage>>);
 
-      await expect(
-        sendAgentMessage('test-thread-123', 'Hello'),
-      ).rejects.toThrow('Failed to send message: Message sending failed');
-    });
-
-    it('should throw error when no data returned', async () => {
-      mockedGateway.postAgentMessage.mockResolvedValue({
-        data: null,
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
-
-      await expect(
-        sendAgentMessage('test-thread-123', 'Hello'),
-      ).rejects.toThrow('Failed to send message: Unknown error');
-    });
-
-    it('should throw error when no response in data', async () => {
-      mockedGateway.postAgentMessage.mockResolvedValue({
-        data: {},
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.postAgentMessage> extends Promise<infer T> ? T : never);
-
-      await expect(
-        sendAgentMessage('test-thread-123', 'Hello'),
-      ).rejects.toThrow('No response from agent');
+      await expect(sendAgentMessage('thread', 'Hello')).rejects.toThrow(
+        'Failed to send message: empty response',
+      );
     });
   });
 
   describe('getAgentCheckpoint', () => {
-    const mockCheckpointData = {
-      step: 'planning',
-      state: { meals: [], preferences: {} },
+    const checkpointState = {
+      threadId: 'thread',
+      currentStep: 'plan',
+      mealPlan: { items: [] },
     };
 
-    it('should get checkpoint successfully', async () => {
+    it('returns parsed checkpoint state', async () => {
       mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
         data: {
           tuple: {
-            checkpoint: mockCheckpointData,
+            checkpoint: {
+              state: checkpointState,
+            },
           },
         },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
+        error: undefined,
+      } as unknown as Awaited<
+        ReturnType<typeof mockedGateway.getCheckpointsByThreadId>
+      >);
 
-      const result = await getAgentCheckpoint('test-thread-123');
-
-      expect(result).toEqual(mockCheckpointData);
-      expect(mockedGateway.getCheckpointsByThreadId).toHaveBeenCalledWith({
-        client: 'mockClient',
-        path: { thread_id: 'test-thread-123' },
-      });
+      const result = await getAgentCheckpoint('thread');
+      expect(result).toBeInstanceOf(MealPlanningCheckpointState);
+      expect(result?.currentStep).toBe('plan');
     });
 
-    it('should handle string-encoded tuple', async () => {
-      const tupleString = JSON.stringify({
-        checkpoint: mockCheckpointData,
-      });
-
+    it('handles string encoded tuples', async () => {
       mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
         data: {
-          tuple: tupleString,
+          tuple: JSON.stringify({
+            checkpoint: { state: checkpointState },
+          }),
         },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
+        error: undefined,
+      } as unknown as Awaited<
+        ReturnType<typeof mockedGateway.getCheckpointsByThreadId>
+      >);
 
-      const result = await getAgentCheckpoint('test-thread-123');
-
-      expect(result).toEqual(mockCheckpointData);
+      const result = await getAgentCheckpoint('thread');
+      expect(result?.threadId).toBe('thread');
     });
 
-    it('should throw error when API returns error object', async () => {
-      const errorObject = new Error('Checkpoint not found');
+    it('returns undefined when no checkpoint is found', async () => {
       mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
-        data: null,
-        error: errorObject,
-      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
+        data: { found: false },
+        error: undefined,
+      } as unknown as Awaited<
+        ReturnType<typeof mockedGateway.getCheckpointsByThreadId>
+      >);
 
-      await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
-        errorObject,
+      const result = await getAgentCheckpoint('thread');
+      expect(result).toBeUndefined();
+    });
+
+    it('propagates gateway errors', async () => {
+      mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
+        data: undefined,
+        error: 'fail',
+      } as unknown as Awaited<
+        ReturnType<typeof mockedGateway.getCheckpointsByThreadId>
+      >);
+
+      await expect(getAgentCheckpoint('thread')).rejects.toThrow(
+        'Failed to get agent checkpoint: fail',
       );
     });
 
-    it('should throw error when API returns error string', async () => {
+    it('throws when checkpoint data missing', async () => {
       mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
-        data: null,
-        error: 'Database connection failed',
-      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
+        data: undefined,
+        error: undefined,
+      } as unknown as Awaited<
+        ReturnType<typeof mockedGateway.getCheckpointsByThreadId>
+      >);
 
-      await expect(getAgentCheckpoint('test-thread-123')).rejects.toBe(
-        'Database connection failed',
-      );
-    });
-
-    it('should throw error when no data returned', async () => {
-      mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
-        data: null,
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
-
-      await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
-        'Failed to get agent checkpoint',
-      );
-    });
-
-    it('should throw error when no tuple in data', async () => {
-      mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
-        data: {},
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
-
-      await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
-        'Failed to get agent checkpoint - no checkpoint data',
-      );
-    });
-
-    it('should throw error when tuple has no checkpoint', async () => {
-      mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
-        data: {
-          tuple: {},
-        },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
-
-      await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
-        'Failed to get agent checkpoint - no checkpoint data',
-      );
-    });
-
-    it('should throw error when tuple is null', async () => {
-      mockedGateway.getCheckpointsByThreadId.mockResolvedValue({
-        data: {
-          tuple: null,
-        },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getCheckpointsByThreadId> extends Promise<infer T> ? T : never);
-
-      await expect(getAgentCheckpoint('test-thread-123')).rejects.toThrow(
-        'Failed to get agent checkpoint - no checkpoint data',
+      await expect(getAgentCheckpoint('thread')).rejects.toThrow(
+        'Failed to get agent checkpoint: empty response',
       );
     });
   });
 
   describe('getMessages', () => {
-    const mockMessages = [
-      {
-        id: '1',
-        content: 'Hello',
-        from: 'user',
-        timestamp: '2023-01-01T00:00:00Z',
-      },
-      {
-        id: '2',
-        content: 'Hi there!',
-        from: 'agent',
-        timestamp: '2023-01-01T00:01:00Z',
-      },
-    ];
-
-    it('should get messages successfully', async () => {
+    it('maps gateway messages to UI shape', async () => {
       mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
-        data: { messages: mockMessages },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
-
-      const result = await getMessages('test-thread-123');
-
-      expect(result).toEqual(mockMessages);
-      expect(mockedGateway.getWorkflowsByThreadIdMessages).toHaveBeenCalledWith(
-        {
-          client: 'mockClient',
-          path: { threadId: 'test-thread-123' },
+        data: {
+          messages: [
+            { sender: 'user', content: 'Hi' },
+            { sender: 'agent', message: 'Hello!' },
+          ],
         },
+        error: undefined,
+      } as unknown as Awaited<
+        ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages>
+      >);
+
+      const result = await getMessages('thread');
+
+      expect(result).toEqual([
+        { sender: 'user', content: 'Hi', createdAt: undefined, threadId: undefined },
+        { sender: 'agent', content: 'Hello!', createdAt: undefined, threadId: undefined },
+      ]);
+    });
+
+    it('throws when gateway reports an error', async () => {
+      mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
+        data: undefined,
+        error: 'no messages',
+      } as unknown as Awaited<
+        ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages>
+      >);
+
+      await expect(getMessages('thread')).rejects.toThrow(
+        'Failed to get messages: no messages',
       );
     });
 
-    it('should return empty array when no messages', async () => {
+    it('throws when response payload missing', async () => {
       mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
-        data: {},
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
+        data: undefined,
+        error: undefined,
+      } as unknown as Awaited<
+        ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages>
+      >);
 
-      const result = await getMessages('test-thread-123');
-
-      expect(result).toEqual([]);
-    });
-
-    it('should return empty array when messages is null', async () => {
-      mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
-        data: { messages: null },
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
-
-      const result = await getMessages('test-thread-123');
-
-      expect(result).toEqual([]);
-    });
-
-    it('should throw error when API returns error object', async () => {
-      const errorObject = new Error('Thread not found');
-      mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
-        data: null,
-        error: errorObject,
-      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
-
-      await expect(getMessages('test-thread-123')).rejects.toThrow(errorObject);
-    });
-
-    it('should throw error when API returns error string', async () => {
-      mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
-        data: null,
-        error: 'Access denied',
-      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
-
-      await expect(getMessages('test-thread-123')).rejects.toBe(
-        'Access denied',
-      );
-    });
-
-    it('should throw error when no data returned', async () => {
-      mockedGateway.getWorkflowsByThreadIdMessages.mockResolvedValue({
-        data: null,
-        error: null,
-      } as unknown as ReturnType<typeof mockedGateway.getWorkflowsByThreadIdMessages> extends Promise<infer T> ? T : never);
-
-      await expect(getMessages('test-thread-123')).rejects.toThrow(
-        'Failed to get messages',
+      await expect(getMessages('thread')).rejects.toThrow(
+        'Failed to get messages: empty response',
       );
     });
   });

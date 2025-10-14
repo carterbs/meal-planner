@@ -38,8 +38,8 @@ export default function useMealPlanHighlights(
       if (!prevPlan || !nextPlan) {
         return changed;
       }
-      const prevEntries = planToEntries(prevPlan ?? undefined);
-      const nextEntries = planToEntries(nextPlan ?? undefined);
+      const prevEntries = planToEntries(prevPlan);
+      const nextEntries = planToEntries(nextPlan);
       const prevMap = new Map<string, number | null>();
       prevEntries.forEach((entry) => {
         const key = `${entry.dayIndex}-${entry.mealType}`;

@@ -114,8 +114,12 @@ export const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                   meal?: { name: string; effort: number } | null;
                 };
                 const byType: Record<string, EntryLike | undefined> = {};
-                entries.forEach((e) => {
-                  byType[e.mealType] = e as unknown as EntryLike;
+                entries.forEach((entry) => {
+                  byType[entry.mealType] = {
+                    dayIndex: entry.dayIndex,
+                    mealType: entry.mealType,
+                    meal: entry.meal ?? null,
+                  };
                 });
                 const ordered: EntryLike[] = order.map((t) =>
                   byType[t] ?? {

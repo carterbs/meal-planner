@@ -962,8 +962,8 @@ describe('mealsApi', () => {
   describe('goGetShoppingList', () => {
     it('should generate shopping list successfully', async () => {
       const mockShoppingListItems = [
-        { ingredient: 'Tomatoes', quantity: 2, unit: 'lbs' },
-        { ingredient: 'Onions', quantity: 1, unit: 'piece' },
+        { ingredient: 'Tomatoes', quantity: '2', category: 'produce' },
+        { ingredient: 'Onions', quantity: '1', category: 'pantry' },
       ];
 
       mockedGateway.postShoppinglist.mockResolvedValue({
@@ -990,7 +990,10 @@ describe('mealsApi', () => {
 
       const result = await goGetShoppingList(mockMealPlan);
 
-      expect(result).toEqual(mockShoppingListItems);
+      expect(result).toEqual([
+        expect.objectContaining({ ingredient: 'Tomatoes', quantity: '2', category: 'produce' }),
+        expect.objectContaining({ ingredient: 'Onions', quantity: '1', category: 'pantry' }),
+      ]);
       expect(mockedGateway.postShoppinglist).toHaveBeenCalledWith({
         client: 'mockClient',
         body: { plan: [1, 2] },
@@ -1035,15 +1038,13 @@ describe('mealsApi', () => {
       });
 
       await expect(goGetShoppingList(mockMealPlan)).rejects.toThrow(
-        'Failed to generate shopping list: Unknown error',
+        'Failed to generate shopping list: Shopping list response missing items array',
       );
     });
 
     it('should handle meal plan with no meals', async () => {
-      const mockShoppingListItems: unknown[] = [];
-
       mockedGateway.postShoppinglist.mockResolvedValue({
-        data: { items: mockShoppingListItems },
+        data: { items: [] },
         error: null,
       } as unknown as ReturnType<typeof mockedGateway.postShoppinglist> extends Promise<infer T> ? T : never);
 

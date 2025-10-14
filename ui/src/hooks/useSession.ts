@@ -1,95 +1,20 @@
 import { useEffect, useState } from 'react';
-import { createClient, createConfig } from '@mealplanner/generated/gateway/client';
-import { getCheckpointsByThreadId, postWorkflowsByThreadIdAbandon, postShoppinglist } from '@mealplanner/generated/gateway';
-import type { GoShoppingList, GoGetCheckpointResponse, GoGetShoppingListResponse } from '@mealplanner/generated/gateway/types.gen';
+import {
+  createClient,
+  createConfig,
+} from '@mealplanner/generated/gateway/client';
+import { postWorkflowsByThreadIdAbandon } from '@mealplanner/generated/gateway';
+import { MealPlanningCheckpointState } from '@mealplanner/generated/api_pb';
+import { getAgentCheckpoint, goGetShoppingList } from '../api';
+import { toShoppingList } from '../utils/gatewayGuards';
 
-// Create the API gateway client
 const gatewayClient = createClient(
   createConfig({
     baseUrl: 'http://localhost:8090/api',
   }),
 );
 
-type MealPlanItemState = {
-  mealId?: number | null;
-  mealSnapshot?: unknown;
-};
-
-type LegacyMealPlanDay = {
-  meal?: unknown;
-};
-
-// Shape of checkpoint.state
-interface CheckpointState {
-  currentStep?: string;
-  mealPlan?: {
-    items?: MealPlanItemState[];
-    days?: LegacyMealPlanDay[];
-  };
-  participants?: string[];
-  threadId?: string;
-  shoppingList?: GoShoppingList;
-}
-
-export interface WorkflowState extends CheckpointState {
-  threadId: string;
-  shoppingList?: GoShoppingList;
-} // include threadId & optional shoppingList for resumeData
-
-function parseMealIdFromUnknown(value: unknown): number | undefined {
-  if (value == null) {
-    return undefined;
-  }
-
-  if (typeof value === 'number') {
-    return value > 0 ? value : undefined;
-  }
-
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value) as { id?: number };
-      return typeof parsed.id === 'number' && parsed.id > 0 ? parsed.id : undefined;
-    } catch {
-      return undefined;
-    }
-  }
-
-  if (typeof value === 'object') {
-    const maybeId = (value as { id?: unknown }).id;
-    if (typeof maybeId === 'number' && maybeId > 0) {
-      return maybeId;
-    }
-    const nested = (value as { mealSnapshot?: unknown }).mealSnapshot;
-    if (nested && nested !== value) {
-      return parseMealIdFromUnknown(nested);
-    }
-  }
-
-  return undefined;
-}
-
-function collectMealIdsFromItems(items: MealPlanItemState[] | undefined): number[] {
-  if (!Array.isArray(items)) {
-    return [];
-  }
-  return items.map((item) => {
-    if (typeof item.mealId === 'number') {
-      return item.mealId;
-    }
-    const parsed = parseMealIdFromUnknown(item.mealSnapshot);
-    return typeof parsed === 'number' ? parsed : 0;
-  });
-}
-
-function collectMealIdsFromLegacyDays(days: LegacyMealPlanDay[] | undefined): number[] {
-  if (!Array.isArray(days)) {
-    return [];
-  }
-  return days.map((day) => {
-    const parsed = parseMealIdFromUnknown(day.meal);
-    return typeof parsed === 'number' ? parsed : 0;
-  });
-}
+export type WorkflowState = MealPlanningCheckpointState;
 
 export default function useSession(startSession: () => Promise<void>) {
   const [isResuming, setIsResuming] = useState(false);
@@ -98,77 +23,44 @@ export default function useSession(startSession: () => Promise<void>) {
   useEffect(() => {
     const id = localStorage.getItem('sessionId');
     if (!id) return;
+
     setIsResuming(true);
-    getCheckpointsByThreadId({
-      client: gatewayClient,
-      path: { thread_id: id },
-    })
-      .then((result) => {
-        const res = result as { data?: GoGetCheckpointResponse; error?: unknown };
-        if (!res.data || res.error) {
-          return Promise.reject(res.error);
-        }
-        return res.data;
-      })
-      .then((cp) => {
-        // Handle case where the entire cp might be string-encoded
-        let parsedCp: GoGetCheckpointResponse | undefined = cp;
-        if (typeof cp === 'string') {
-          parsedCp = JSON.parse(cp) as GoGetCheckpointResponse;
-        }
-        // parsedCp is defined when res.data exists
-
-        // Handle case where tuple might be string-encoded
-        let tuple = parsedCp.tuple as unknown;
-        if (typeof tuple === 'string') {
-          tuple = JSON.parse(tuple) as { checkpoint?: unknown };
-        }
-
-        // Extract checkpoint state
-        const checkpointData = (tuple as { checkpoint?: unknown } | undefined)?.checkpoint;
-        if (!checkpointData) return;
-
-        // Handle case where checkpoint might be a string (from API response)
-        const checkpoint =
-          typeof checkpointData === 'string'
-            ? (JSON.parse(checkpointData) as { state?: CheckpointState })
-            : (checkpointData as { state?: CheckpointState });
-        const state = checkpoint.state;
+    getAgentCheckpoint(id)
+      .then(async (state) => {
         if (!state) {
           localStorage.removeItem('sessionId');
           return;
         }
 
-        const data: WorkflowState = {
-          ...state,
-          threadId: id,
-          shoppingList: state.shoppingList,
-        } as WorkflowState;
-        setResumeData(data);
-        // Fetch shopping list for resumed meal plan
-        let mealIds = collectMealIdsFromItems(state.mealPlan?.items);
-        if (mealIds.length === 0) {
-          mealIds = collectMealIdsFromLegacyDays(state.mealPlan?.days);
+        if (!state.threadId) {
+          state.threadId = id;
         }
-        if (mealIds.length > 0) {
-          postShoppinglist({
-            client: gatewayClient,
-            body: {
-              plan: mealIds,
-            },
-          })
-            .then((res) => {
-              const r = res as { data?: GoGetShoppingListResponse; error?: unknown };
-              if (r.data && !r.error) {
-                const items = r.data.items ?? [];
-                setResumeData((prev) =>
-                  prev ? { ...prev, shoppingList: { items } } : prev,
-                );
-              }
-            })
-            .catch(() => {
-              // ignore shopping list errors
-            });
+
+        setResumeData(state);
+
+        if (!state.mealPlan) {
+          return;
+        }
+
+        try {
+          const items = await goGetShoppingList(state.mealPlan);
+          if (items.length === 0) {
+            return;
+          }
+
+          setResumeData((prev) => {
+            if (!prev) {
+              return prev;
+            }
+            const updated = new MealPlanningCheckpointState(prev);
+            const shoppingList = toShoppingList(items);
+            if (shoppingList) {
+              updated.shoppingList = shoppingList;
+            }
+            return updated;
+          });
+        } catch {
+          // Ignore shopping list errors when resuming a session
         }
       })
       .catch(() => {
@@ -186,10 +78,11 @@ export default function useSession(startSession: () => Promise<void>) {
           path: { threadId: existing },
         });
       } catch {
-        // ignore
+        // Ignore abandon failures when resetting the session
       }
       localStorage.removeItem('sessionId');
     }
+
     await startSession();
   };
 

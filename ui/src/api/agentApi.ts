@@ -1,5 +1,4 @@
 import { MealPlanningCheckpointState } from '@mealplanner/generated/api_pb';
-import type { GoMealPlan, GoCheckpointTuple } from '@mealplanner/generated/gateway/types.gen';
 import {
   createClient,
   createConfig,
@@ -10,13 +9,63 @@ import {
   getCheckpointsByThreadId,
   getWorkflowsByThreadIdMessages,
 } from '@mealplanner/generated/gateway';
+import type {
+  GoStartAgentWorkflowResponse,
+  GoMessageAgentResponse,
+  GoGetCheckpointResponse,
+  GoGetMessagesResponse,
+} from '@mealplanner/generated/gateway/types.gen';
+import type { AgentMessage } from '../utils/gatewayGuards';
+import {
+  formatGatewayError,
+  parseAgentMessageResponse,
+  parseAgentStartResponse,
+  parseCheckpointResponse,
+  parseCheckpointState,
+  parseMessagesResponse,
+} from '../utils/gatewayGuards';
+import type {
+  GoStartAgentWorkflowResponse,
+  GoMessageAgentResponse,
+  GoGetCheckpointResponse,
+  GoGetMessagesResponse,
+} from '@mealplanner/generated/gateway/types.gen';
 
-// Create the API gateway client
-const gatewayClient = createClient(
+const gatewayClient: ReturnType<typeof createClient> = createClient(
   createConfig({
     baseUrl: 'http://localhost:8090/api',
   }),
 );
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getField(record: Record<string, unknown>, key: string): unknown {
+  return record[key];
+}
+
+async function unwrapGatewayResult<T>(
+  promise: Promise<unknown>,
+  context: string,
+): Promise<T> {
+  const envelope = await promise;
+  if (!isRecord(envelope)) {
+    throw new Error(`${context}: invalid response envelope`);
+  }
+
+  const errorValue = getField(envelope, 'error');
+  if (errorValue != null) {
+    throw new Error(`${context}: ${formatGatewayError(errorValue)}`);
+  }
+
+  const dataValue = getField(envelope, 'data');
+  if (dataValue == null) {
+    throw new Error(`${context}: empty response`);
+  }
+
+  return dataValue as T;
+}
 
 export interface SessionInfo {
   threadId: string;
@@ -29,167 +78,115 @@ export interface StartSessionResult {
   message?: string;
 }
 
-type GatewayInitialState = {
-  state?: { mealPlan?: GoMealPlan };
-  mealPlan?: (GoMealPlan & { shoppingList?: unknown }) | undefined;
-};
-
 export interface SendMessageResult {
   message?: string;
-  // API may return a checkpoint-like object with nested state or a top-level mealPlan
-  initialState?: MealPlanningCheckpointState | GatewayInitialState;
+  initialState?: MealPlanningCheckpointState;
 }
 
-/**
- * Start a new agent session
- */
 export async function startAgentSession(
   participants: string[] = ['user'],
   workflowType: string = 'meal_planning',
 ): Promise<StartSessionResult> {
-  const result = await postAgentStart({
-    client: gatewayClient,
-    body: {
-      participants,
-      workflowType,
-    },
-  });
+  const data = await unwrapGatewayResult<GoStartAgentWorkflowResponse>(
+    postAgentStart({
+      client: gatewayClient,
+      body: {
+        participants,
+        workflowType,
+      },
+    }),
+    'Failed to start agent session',
+  );
 
-  if (result.error) {
-    throw new Error(
-      `Failed to start agent session: ${formatGatewayError(result.error)}`,
-    );
-  }
-
-  const data = result.data;
-  if (!data) {
-    throw new Error('Failed to start agent session: empty response');
-  }
-
-  const agentResponse = data.response;
-  if (!agentResponse || !agentResponse.threadId || !agentResponse.currentStep) {
-    throw new Error('Invalid agent response - missing required fields');
-  }
-
-  const session: SessionInfo = {
-    threadId: agentResponse.threadId,
-    currentStep: agentResponse.currentStep,
-  };
+  const payload = parseAgentStartResponse(data);
 
   let initialState: MealPlanningCheckpointState | undefined;
-  if (typeof agentResponse.initialState === 'string') {
-    try {
-      initialState = JSON.parse(agentResponse.initialState) as MealPlanningCheckpointState;
-    } catch (error) {
-      console.warn('Failed to parse initial state:', error);
-    }
+  try {
+    initialState = parseCheckpointState(
+      payload.initialState,
+      'agent start initial state',
+    );
+  } catch (parseError) {
+    const warnError =
+      parseError instanceof Error
+        ? parseError
+        : new Error(String(parseError));
+    console.warn('Failed to parse initial state:', warnError);
   }
 
   return {
-    session,
+    session: {
+      threadId: payload.threadId,
+      currentStep: payload.currentStep,
+    },
     initialState,
-    message: agentResponse.message,
+    message: payload.message,
   };
 }
 
-/**
- * Send a message to an existing agent session
- */
 export async function sendAgentMessage(
   threadId: string,
   message: string,
   from: string = 'user',
   interactive: boolean = false,
 ): Promise<SendMessageResult> {
-  const requestData = {
-    threadId,
-    message,
-    from,
-    interactive,
-  };
+  const data = await unwrapGatewayResult<GoMessageAgentResponse>(
+    postAgentMessage({
+      client: gatewayClient,
+      body: {
+        threadId,
+        message,
+        from,
+        interactive,
+      },
+    }),
+    'Failed to send message',
+  );
 
-  const result = await postAgentMessage({
-    client: gatewayClient,
-    body: requestData,
-  });
+  const payload = parseAgentMessageResponse(data);
 
-  if (result.error) {
-    throw new Error(`Failed to send message: ${formatGatewayError(result.error)}`);
-  }
-
-  const data = result.data;
-  if (!data) {
-    throw new Error('Failed to send message: empty response');
-  }
-
-  const agentResponse = data.response;
-  if (!agentResponse) {
-    throw new Error('No response from agent');
-  }
-
-  let initialState: SendMessageResult['initialState'];
-  if (typeof agentResponse.initialState === 'string') {
-    try {
-      initialState = JSON.parse(agentResponse.initialState) as SendMessageResult['initialState'];
-    } catch (error) {
-      console.warn('Failed to parse initial state:', error);
-    }
+  let initialState: MealPlanningCheckpointState | undefined;
+  try {
+    initialState = parseCheckpointState(
+      payload.initialState,
+      'agent message initial state',
+    );
+  } catch (parseError) {
+    const warnError =
+      parseError instanceof Error
+        ? parseError
+        : new Error(String(parseError));
+    console.warn('Failed to parse initial state:', warnError);
   }
 
   return {
-    message: agentResponse.message,
+    message: payload.message,
     initialState,
   };
 }
 
-// get agent checkpoint
-export async function getAgentCheckpoint(threadId: string) {
-  const result = await getCheckpointsByThreadId({
-    client: gatewayClient,
-    path: { thread_id: threadId },
-  });
+export async function getAgentCheckpoint(
+  threadId: string,
+): Promise<MealPlanningCheckpointState | undefined> {
+  const data = await unwrapGatewayResult<GoGetCheckpointResponse>(
+    getCheckpointsByThreadId({
+      client: gatewayClient,
+      path: { thread_id: threadId },
+    }),
+    'Failed to get agent checkpoint',
+  );
 
-  if (result.error) {
-    throw new Error(`Failed to get agent checkpoint: ${formatGatewayError(result.error)}`);
-  }
-
-  const data = result.data;
-  if (!data) {
-    throw new Error('Failed to get agent checkpoint: empty response');
-  }
-
-  const tupleLike = data.tuple;
-  let tuple: GoCheckpointTuple | undefined;
-  if (typeof tupleLike === 'string') {
-    try {
-      tuple = JSON.parse(tupleLike) as GoCheckpointTuple;
-    } catch {
-      throw new Error('Failed to parse checkpoint tuple');
-    }
-  } else {
-    tuple = tupleLike;
-  }
-
-  if (!tuple?.checkpoint) {
-    throw new Error('Failed to get agent checkpoint - no checkpoint data');
-  }
-
-  return tuple.checkpoint;
+  return parseCheckpointResponse(data);
 }
 
-/**
- * Get messages for a workflow thread
- */
-import type { GoMessage } from '@mealplanner/generated/gateway/types.gen';
-export async function getMessages(threadId: string): Promise<GoMessage[]> {
-  const result = await getWorkflowsByThreadIdMessages({
-    client: gatewayClient,
-    path: { threadId },
-  });
+export async function getMessages(threadId: string): Promise<AgentMessage[]> {
+  const data = await unwrapGatewayResult<GoGetMessagesResponse>(
+    getWorkflowsByThreadIdMessages({
+      client: gatewayClient,
+      path: { threadId },
+    }),
+    'Failed to get messages',
+  );
 
-  if (result.error) {
-    throw new Error(`Failed to get messages: ${formatGatewayError(result.error)}`);
-  }
-
-  return result.data?.messages ?? [];
+  return parseMessagesResponse(data);
 }

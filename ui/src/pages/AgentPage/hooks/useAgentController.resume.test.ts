@@ -1,42 +1,39 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { MealPlanningCheckpointState, MealPlan } from '@mealplanner/generated/api_pb';
 
-// API mocks
-const mockGetAgentCheckpoint = jest
-  .fn()
-  .mockResolvedValue({ state: { mealPlan: { items: [] } } });
+const mockGetAgentCheckpoint = jest.fn();
 const mockGetMessages = jest
   .fn()
-  .mockResolvedValue([{ sender: 'agent', content: 'hi' }]);
+  .mockResolvedValue([{ sender: 'agent', content: 'hi', threadId: 't1' }]);
 
 jest.mock('../../../api', () => ({
   __esModule: true,
   getAgentCheckpoint: (...args: unknown[]) => mockGetAgentCheckpoint(...args),
   getMessages: (...args: unknown[]) => mockGetMessages(...args),
-  // other API functions unused in this test
 }));
 
-// Provide resumeData so controller hydrates on mount
 jest.mock('../../../hooks/useSession', () => ({
   __esModule: true,
   default: () => ({
     isResuming: false,
-    resumeData: { threadId: 't1', currentStep: '' },
+    resumeData: new MealPlanningCheckpointState({
+      threadId: 't1',
+      currentStep: '',
+      mealPlan: new MealPlan({ items: [] }),
+    }),
     startNewSession: jest.fn(),
   }),
 }));
 
-// Lightweight generated types mock
-jest.mock('@mealplanner/generated', () => ({
-  __esModule: true,
-  ShoppingListItem: class ShoppingListItem {},
-  MealPlan: class MealPlan {},
-}));
-
-// Import after mocks
 import useAgentController from './useAgentController';
 
 describe('useAgentController (resume hydration)', () => {
   it('hydrates checkpoint and messages automatically when sessionId exists (resume path)', async () => {
+    const checkpoint = new MealPlanningCheckpointState({
+      mealPlan: new MealPlan({ items: [] }),
+    });
+    mockGetAgentCheckpoint.mockResolvedValueOnce(checkpoint);
+
     const { result } = renderHook(() => useAgentController());
     // let mount effects run
     await act(async () => {

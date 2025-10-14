@@ -14,28 +14,15 @@ export default function useAgentMealSync() {
   const [isSending, setIsSending] = useState(false);
 
   const syncFromCheckpoint = useCallback(async (threadId: string) => {
-    const checkpoint = await getAgentCheckpoint(threadId);
-    const state = checkpoint?.state;
-    if (!state) return;
-    const maybePlan = state.mealPlan;
-    if (maybePlan) {
-      const newPlan = convertGatewayMealPlan(maybePlan);
-      setMealPlan(newPlan);
-      try {
-        const shoppingRes = await goGetShoppingList(newPlan);
-        setShoppingList(
-          shoppingRes.map(
-            (i) =>
-              new ShoppingListItem({
-                ingredient: i.ingredient ?? '',
-                quantity: i.quantity ?? '',
-                category: i.category ?? '',
-              }),
-          ),
-        );
-      } catch {
-        // ignore
-      }
+    const state = await getAgentCheckpoint(threadId);
+    if (!state?.mealPlan) return;
+    const newPlan = convertGatewayMealPlan(state.mealPlan);
+    setMealPlan(newPlan);
+    try {
+      const shoppingRes = await goGetShoppingList(newPlan);
+      setShoppingList(shoppingRes);
+    } catch {
+      // ignore
     }
   }, []);
 

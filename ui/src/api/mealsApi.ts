@@ -20,19 +20,20 @@ import {
   deleteMealsByMealIdSteps,
   postShoppinglist,
 } from '@mealplanner/generated/gateway';
-import { Meal, Step, Ingredient, MealPlan } from '@mealplanner/generated/api_pb';
+import {
+  Meal,
+  Step,
+  Ingredient,
+  MealPlan,
+  ShoppingListItem,
+} from '@mealplanner/generated/api_pb';
 import { Timestamp } from '@bufbuild/protobuf';
+import {
+  formatGatewayError,
+  parseShoppingListResponse,
+} from '../utils/gatewayGuards';
 
 // Create the API gateway client
-
-function formatGatewayError(err: unknown): string {
-  if (typeof err === 'string') return err;
-  const maybeObj = err as { error?: unknown } | undefined;
-  const nested = maybeObj && typeof maybeObj === 'object' ? maybeObj.error : undefined;
-  if (typeof nested === 'string') return nested;
-  if (err != null) return String(err);
-  return 'Unknown error';
-}
 
 /**
  * Map GoStep to UI Step
@@ -352,7 +353,7 @@ export async function replaceAllSteps(
 
 export async function goGetShoppingList(
   mealPlan: MealPlan,
-): Promise<GoShoppingListItem[]> {
+): Promise<ShoppingListItem[]> {
   const plan = mealPlan.items
     .map((item) => {
       if (typeof item.mealId === 'number' && item.mealId > 0) {
@@ -363,24 +364,16 @@ export async function goGetShoppingList(
     })
     .filter((id): id is number => id !== undefined);
 
-  const result = await postShoppinglist({
+  const { data, error } = await postShoppinglist({
     client: gatewayClient,
     body: { plan },
   });
 
-  if (result.error) {
-    throw new Error(`Failed to generate shopping list: ${formatGatewayError(result.error)}`);
+  if (error) {
+    throw new Error(
+      `Failed to generate shopping list: ${formatGatewayError(error)}`,
+    );
   }
 
-  const data = result.data;
-  if (!data) {
-    throw new Error('Failed to generate shopping list: empty response');
-  }
-
-  const items = data.items;
-  if (!items) {
-    throw new Error('Failed to generate shopping list: empty response');
-  }
-
-  return items;
+  return parseShoppingListResponse(data);
 }

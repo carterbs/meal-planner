@@ -1,17 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import AgentPage from './AgentPage';
 import Connecting from './components/Connecting';
-import { createClient, createConfig } from '@mealplanner/generated/gateway/client';
-import { getHealth } from '@mealplanner/generated/gateway/sdk.gen';
-import type { GetHealthResponses, GetHealthErrors } from '@mealplanner/generated/gateway/types.gen';
-
-const gatewayClient = createClient(
-  createConfig({
-    baseUrl: 'http://localhost:8090/api',
-  }),
-);
 
 const POLL_INTERVAL = 3000;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function parseHealthServices(value: unknown): Record<string, boolean> | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  const servicesValue = value.services;
+  if (!isRecord(servicesValue)) {
+    return undefined;
+  }
+  const entries: Array<[string, boolean]> = [];
+  for (const [key, raw] of Object.entries(servicesValue)) {
+    entries.push([key, Boolean(raw)]);
+  }
+  return Object.fromEntries(entries);
+}
 
 const App: React.FC = () => {
   const [healthy, setHealthy] = useState(false);
@@ -22,31 +32,22 @@ const App: React.FC = () => {
   const checkHealth = async () => {
     setChecking(true);
     try {
-      const result = await getHealth({ client: gatewayClient });
-      type Data = GetHealthResponses[keyof GetHealthResponses];
-      type Err = GetHealthErrors[keyof GetHealthErrors];
-      if ('data' in result && (result as { data?: Data }).data) {
-        const svc = (result as { data: Data }).data.services;
-        setServices(svc);
-        const ok = svc ? Object.values(svc).every(Boolean) : false;
-        setHealthy(ok);
-        setChecking(false);
-        return ok;
-      }
-      if ('error' in result && (result as { error?: Err }).error) {
-        const err = (result as { error?: Err }).error as Err;
-        const svc = (err as unknown as { services?: Record<string, boolean> }).services;
-        if (svc) {
-          setServices(svc);
-          const ok = Object.values(svc).every(Boolean);
-          setHealthy(ok);
-          setChecking(false);
-          return ok;
-        }
+      const response = await fetch('http://localhost:8090/api/health');
+      if (!response.ok) {
         setHealthy(false);
         setChecking(false);
         return false;
       }
+
+      const payload = (await response.json()) as unknown;
+      const servicesResult = parseHealthServices(payload);
+      setServices(servicesResult);
+      const ok = servicesResult
+        ? Object.values(servicesResult).every(Boolean)
+        : false;
+      setHealthy(ok);
+      setChecking(false);
+      return ok;
     } catch {
       // ignore
     }

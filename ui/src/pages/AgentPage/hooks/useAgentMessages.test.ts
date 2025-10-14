@@ -21,6 +21,9 @@ describe('useAgentMessages', () => {
       await result.current.fetchMessages();
     });
     expect(mockGetMessages).toHaveBeenCalledWith('t1');
-    // State updates are asynchronous; it's sufficient here to verify API call occurred
+    expect(result.current.messages).toEqual([
+      { sender: 'user', text: 'hello' },
+      { sender: 'agent', text: 'hi there' },
+    ]);
   });
 });
