@@ -2,8 +2,8 @@ FROM golang:1.24-alpine
 
 WORKDIR /app
 
-# Install hot reload tool
-RUN go install github.com/air-verse/air@latest
+# Install a hot reload tool version that supports Go 1.24
+RUN go install github.com/air-verse/air@v1.62.0
 
 # Copy all files from project root (needed for local module dependencies)
 COPY . .

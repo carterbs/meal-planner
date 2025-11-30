@@ -21,3 +21,6 @@ if [ $? -ne 0 ]; then
 fi
 echo "✅ Swagger validation passed - all protobuf fields are present"
 cd ..
+
+echo "=== Building agent-service TypeScript output ==="
+yarn workspace meal-planner-agent-service build

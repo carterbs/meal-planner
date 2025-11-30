@@ -26,7 +26,7 @@ The service implements a centralized logging pattern for distributed systems:
 go version
 
 # Install Air for hot reloading (optional)
-go install github.com/air-verse/air@latest
+go install github.com/air-verse/air@v1.62.0
 ```
 
 **Local development:**
