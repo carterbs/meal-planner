@@ -1,4 +1,5 @@
-import { MealPlanningCheckpointState, WeeklyMealPlan } from '@mealplanner/generated';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+import { MealPlanningCheckpointState, MealPlan } from '@mealplanner/generated';
 import type { MealPlanningState } from '../../shared/types';
 
 export function cloneAndUpdateState(
@@ -15,8 +16,7 @@ export function cloneAndUpdateState(
 
 export function deserializeMealPlanFromCheckpoint(state: MealPlanningState): MealPlanningState {
     if (!state.mealPlan) return state;
-    const deserialized = WeeklyMealPlan.fromJson(state.mealPlan.toJson());
+    const serialized = state.mealPlan.toJson();
+    const deserialized = MealPlan.fromJson(serialized);
     return new MealPlanningCheckpointState({ ...state, mealPlan: deserialized });
 }
-
-

@@ -1,10 +1,12 @@
-import { WeeklyMealPlan, ShoppingListItem } from '@mealplanner/generated';
+import { MealPlan, ShoppingListItem } from '@mealplanner/generated/api_pb';
 import { DAYS_OF_THE_WEEK } from '@meal-planner/shared';
+import { planToEntries } from './mealPlanUtils';
 
-export function formatMealPlanForClipboard(plan: WeeklyMealPlan): {
+export function formatMealPlanForClipboard(plan: MealPlan): {
     html: string;
     text: string;
 } {
+    const entries = planToEntries(plan);
     let html = '<table style="border-collapse: collapse; width: 100%;">';
     html +=
         '<thead><tr>' +
@@ -16,10 +18,10 @@ export function formatMealPlanForClipboard(plan: WeeklyMealPlan): {
     text += '----|------\n';
 
     DAYS_OF_THE_WEEK.forEach((day, idx) => {
-        const entries = plan.days.filter((d) => d.dayIndex === idx);
-        if (entries.length === 0) return;
+        const dayEntries = entries.filter((d) => d.dayIndex === idx);
+        if (dayEntries.length === 0) return;
 
-        const mealsHtml = entries
+        const mealsHtml = dayEntries
             .filter((e) => e.meal)
             .map((e) => {
                 const meal = e.meal!;
@@ -33,7 +35,7 @@ export function formatMealPlanForClipboard(plan: WeeklyMealPlan): {
             `<tr><td style="border:1px solid #ddd;padding:8px;">${day}</td>` +
             `<td style="border:1px solid #ddd;padding:8px;">${mealsHtml}</td></tr>`;
 
-        const mealsText = entries
+        const mealsText = dayEntries
             .filter((e) => e.meal)
             .map((e) => {
                 const meal = e.meal!;
@@ -48,9 +50,7 @@ export function formatMealPlanForClipboard(plan: WeeklyMealPlan): {
     return { html, text };
 }
 
-export async function copyMealPlanToClipboard(
-    plan: WeeklyMealPlan,
-): Promise<void> {
+export async function copyMealPlanToClipboard(plan: MealPlan): Promise<void> {
     const { html, text } = formatMealPlanForClipboard(plan);
     try {
         // Use rich clipboard when available

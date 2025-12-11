@@ -10,6 +10,22 @@ import "google/protobuf/empty.proto";
 
 // Core data models
 
+// Enums for meal planning
+enum MealPlanStatus {
+  MEAL_PLAN_STATUS_UNSPECIFIED = 0;
+  MEAL_PLAN_STATUS_DRAFT = 1;
+  MEAL_PLAN_STATUS_FINALIZED = 2;
+  MEAL_PLAN_STATUS_ARCHIVED = 3;
+  MEAL_PLAN_STATUS_ABANDONED = 4;
+}
+
+enum MealSlot {
+  MEAL_SLOT_UNSPECIFIED = 0;
+  MEAL_SLOT_BREAKFAST = 1;
+  MEAL_SLOT_LUNCH = 2;
+  MEAL_SLOT_DINNER = 3;
+}
+
 message Ingredient {
   int32 id = 1;
   int32 meal_id = 2;
@@ -43,22 +59,46 @@ message MealPlanEntry {
   string meal_type = 3;
 }
 
+// New meal plan messages for first-class database entities
+message MealPlanItem {
+  int32 id = 1;
+  int32 meal_plan_id = 2;
+  int32 day_index = 3; // 0-6 (Monday-Sunday)
+  MealSlot meal_type = 4;
+  optional int32 meal_id = 5; // Reference to meals table
+  Meal meal_snapshot = 6; // Point-in-time meal data
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message MealPlan {
+  int32 id = 1;
+  google.protobuf.Timestamp week_start_date = 2;
+  google.protobuf.Timestamp week_end_date = 3;
+  MealPlanStatus status = 4;
+  int32 version = 5;
+  optional string thread_id = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+  repeated MealPlanItem items = 9;
+}
+
+message MealPlanSummary {
+  int32 id = 1;
+  google.protobuf.Timestamp week_start_date = 2;
+  google.protobuf.Timestamp week_end_date = 3;
+  MealPlanStatus status = 4;
+  int32 version = 5;
+  optional string thread_id = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+  int32 item_count = 9; // Number of items without loading them
+}
+
 message ShoppingListItem {
   string ingredient = 1;
   string quantity = 2;
   string category = 3;
-}
-
-message WeeklyMealPlan {
-  repeated MealPlanEntry days = 1;
-  repeated ShoppingListItem shopping_list = 2;
-}
-
-message MealPlanIdentifier {
-  int32 id = 1;
-  string thread_id = 2;
-  int32 version = 3;
-  string created_at = 4;
 }
 
 message SaveCheckpointRequest {
@@ -134,11 +174,11 @@ message HealthCheckResponse {
 
 // Meal plan endpoints
 message GetMealPlanResponse {
-  WeeklyMealPlan plan = 1;
+  MealPlan plan = 1;
 }
 
 message GenerateMealPlanResponse {
-  WeeklyMealPlan plan = 1;
+  MealPlan plan = 1;
 }
 
 message FinalizeMealPlanRequest {
@@ -344,7 +384,7 @@ message GetWorkflowStateRequest {
 }
 
 message GetWorkflowStateResponse {
-  WeeklyMealPlan plan = 1;
+  MealPlan plan = 1;
   ShoppingList shopping_list = 2;
   repeated Message messages = 3;
 }
@@ -392,7 +432,7 @@ message MealPlanningCheckpointState {
   google.protobuf.Timestamp created_at = 3;
   google.protobuf.Timestamp updated_at = 4;
   string current_step = 5;
-  WeeklyMealPlan meal_plan = 6;
+  MealPlan meal_plan = 6;
   repeated FeedbackEntryProto feedback_history = 7;
   int32 iteration_count = 8;
   ShoppingList shopping_list = 9;

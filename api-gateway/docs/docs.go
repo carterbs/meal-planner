@@ -1819,7 +1819,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "plan": {
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.MealPlan"
                 }
             }
         },
@@ -1849,7 +1849,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "plan": {
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.MealPlan"
                 }
             }
         },
@@ -1908,7 +1908,7 @@ const docTemplate = `{
                     }
                 },
                 "plan": {
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.MealPlan"
                 },
                 "shopping_list": {
                     "$ref": "#/definitions/_go.ShoppingList"
@@ -2020,19 +2020,93 @@ const docTemplate = `{
                 }
             }
         },
-        "_go.MealPlanEntry": {
+        "_go.MealPlan": {
             "type": "object",
             "properties": {
-                "day_index": {
+                "created_at": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "id": {
                     "type": "integer"
                 },
-                "meal": {
-                    "$ref": "#/definitions/_go.Meal"
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/_go.MealPlanItem"
+                    }
                 },
-                "meal_type": {
+                "status": {
+                    "$ref": "#/definitions/_go.MealPlanStatus"
+                },
+                "thread_id": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "version": {
+                    "type": "integer"
+                },
+                "week_end_date": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "week_start_date": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
                 }
             }
+        },
+        "_go.MealPlanItem": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                },
+                "day_index": {
+                    "description": "0-6 (Monday-Sunday)",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "meal_id": {
+                    "description": "Reference to meals table",
+                    "type": "integer"
+                },
+                "meal_plan_id": {
+                    "type": "integer"
+                },
+                "meal_snapshot": {
+                    "description": "Point-in-time meal data",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/_go.Meal"
+                        }
+                    ]
+                },
+                "meal_type": {
+                    "$ref": "#/definitions/_go.MealSlot"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/timestamppb.Timestamp"
+                }
+            }
+        },
+        "_go.MealPlanStatus": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "x-enum-varnames": [
+                "MealPlanStatus_MEAL_PLAN_STATUS_UNSPECIFIED",
+                "MealPlanStatus_MEAL_PLAN_STATUS_DRAFT",
+                "MealPlanStatus_MEAL_PLAN_STATUS_FINALIZED",
+                "MealPlanStatus_MEAL_PLAN_STATUS_ARCHIVED",
+                "MealPlanStatus_MEAL_PLAN_STATUS_ABANDONED"
+            ]
         },
         "_go.MealPlanningCheckpointState": {
             "type": "object",
@@ -2056,7 +2130,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "meal_plan": {
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.MealPlan"
                 },
                 "participants": {
                     "type": "array",
@@ -2074,6 +2148,21 @@ const docTemplate = `{
                     "$ref": "#/definitions/timestamppb.Timestamp"
                 }
             }
+        },
+        "_go.MealSlot": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "x-enum-varnames": [
+                "MealSlot_MEAL_SLOT_UNSPECIFIED",
+                "MealSlot_MEAL_SLOT_BREAKFAST",
+                "MealSlot_MEAL_SLOT_LUNCH",
+                "MealSlot_MEAL_SLOT_DINNER"
+            ]
         },
         "_go.Message": {
             "type": "object",
@@ -2305,23 +2394,6 @@ const docTemplate = `{
             "properties": {
                 "step": {
                     "$ref": "#/definitions/_go.Step"
-                }
-            }
-        },
-        "_go.WeeklyMealPlan": {
-            "type": "object",
-            "properties": {
-                "days": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.MealPlanEntry"
-                    }
-                },
-                "shopping_list": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/_go.ShoppingListItem"
-                    }
                 }
             }
         },

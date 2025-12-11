@@ -191,7 +191,7 @@ definitions:
   _go.GenerateMealPlanResponse:
     properties:
       plan:
-        $ref: '#/definitions/_go.WeeklyMealPlan'
+        $ref: '#/definitions/_go.MealPlan'
     type: object
   _go.GetAllMealsResponse:
     properties:
@@ -210,7 +210,7 @@ definitions:
   _go.GetMealPlanResponse:
     properties:
       plan:
-        $ref: '#/definitions/_go.WeeklyMealPlan'
+        $ref: '#/definitions/_go.MealPlan'
     type: object
   _go.GetMessagesResponse:
     properties:
@@ -248,7 +248,7 @@ definitions:
           $ref: '#/definitions/_go.Message'
         type: array
       plan:
-        $ref: '#/definitions/_go.WeeklyMealPlan'
+        $ref: '#/definitions/_go.MealPlan'
       shopping_list:
         $ref: '#/definitions/_go.ShoppingList'
     type: object
@@ -320,15 +320,66 @@ definitions:
       url:
         type: string
     type: object
-  _go.MealPlanEntry:
+  _go.MealPlan:
     properties:
-      day_index:
+      created_at:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      id:
         type: integer
-      meal:
-        $ref: '#/definitions/_go.Meal'
-      meal_type:
+      items:
+        items:
+          $ref: '#/definitions/_go.MealPlanItem'
+        type: array
+      status:
+        $ref: '#/definitions/_go.MealPlanStatus'
+      thread_id:
         type: string
+      updated_at:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      version:
+        type: integer
+      week_end_date:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      week_start_date:
+        $ref: '#/definitions/timestamppb.Timestamp'
     type: object
+  _go.MealPlanItem:
+    properties:
+      created_at:
+        $ref: '#/definitions/timestamppb.Timestamp'
+      day_index:
+        description: 0-6 (Monday-Sunday)
+        type: integer
+      id:
+        type: integer
+      meal_id:
+        description: Reference to meals table
+        type: integer
+      meal_plan_id:
+        type: integer
+      meal_snapshot:
+        allOf:
+        - $ref: '#/definitions/_go.Meal'
+        description: Point-in-time meal data
+      meal_type:
+        $ref: '#/definitions/_go.MealSlot'
+      updated_at:
+        $ref: '#/definitions/timestamppb.Timestamp'
+    type: object
+  _go.MealPlanStatus:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    type: integer
+    x-enum-varnames:
+    - MealPlanStatus_MEAL_PLAN_STATUS_UNSPECIFIED
+    - MealPlanStatus_MEAL_PLAN_STATUS_DRAFT
+    - MealPlanStatus_MEAL_PLAN_STATUS_FINALIZED
+    - MealPlanStatus_MEAL_PLAN_STATUS_ARCHIVED
+    - MealPlanStatus_MEAL_PLAN_STATUS_ABANDONED
   _go.MealPlanningCheckpointState:
     properties:
       created_at:
@@ -344,7 +395,7 @@ definitions:
       iteration_count:
         type: integer
       meal_plan:
-        $ref: '#/definitions/_go.WeeklyMealPlan'
+        $ref: '#/definitions/_go.MealPlan'
       participants:
         items:
           type: string
@@ -356,6 +407,18 @@ definitions:
       updated_at:
         $ref: '#/definitions/timestamppb.Timestamp'
     type: object
+  _go.MealSlot:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - MealSlot_MEAL_SLOT_UNSPECIFIED
+    - MealSlot_MEAL_SLOT_BREAKFAST
+    - MealSlot_MEAL_SLOT_LUNCH
+    - MealSlot_MEAL_SLOT_DINNER
   _go.Message:
     properties:
       content:
@@ -504,17 +567,6 @@ definitions:
     properties:
       step:
         $ref: '#/definitions/_go.Step'
-    type: object
-  _go.WeeklyMealPlan:
-    properties:
-      days:
-        items:
-          $ref: '#/definitions/_go.MealPlanEntry'
-        type: array
-      shopping_list:
-        items:
-          $ref: '#/definitions/_go.ShoppingListItem'
-        type: array
     type: object
   _go.WorkflowStatus:
     properties:

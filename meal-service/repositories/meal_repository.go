@@ -68,13 +68,3 @@ func (r *MealRepositoryImpl) SwapMeal(ctx context.Context, mealID int, mealType 
 func (r *MealRepositoryImpl) UpdateLastPlannedDates(ctx context.Context, mealIDs []int) error {
 	return models.UpdateLastPlannedDates(r.db, mealIDs)
 }
-
-// GetLastPlannedMeals retrieves the last planned meals
-func (r *MealRepositoryImpl) GetLastPlannedMeals(ctx context.Context) (*models.WeeklyMealPlan, error) {
-	return models.GetLastPlannedMeals(r.db)
-}
-
-// GenerateWeeklyMealPlan generates a new weekly meal plan
-func (r *MealRepositoryImpl) GenerateWeeklyMealPlan(ctx context.Context) (*models.WeeklyMealPlan, error) {
-	return models.GenerateWeeklyMealPlan(r.db)
-}

@@ -4,12 +4,81 @@
   "main": "index.js",
   "types": "index.d.ts",
   "exports": {
-    ".": "./index.js",
-    "./gateway": "./dist/gateway/index.js",
-    "./gateway/client": "./dist/gateway/client/index.js",
-    "./gateway/types.gen": "./dist/gateway/types.gen.js",
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./api_pb": {
+      "types": "./api_pb.d.ts",
+      "default": "./api_pb.js"
+    },
+    "./api_connect": {
+      "types": "./api_connect.d.ts",
+      "default": "./api_connect.js"
+    },
+    "./agent_pb": {
+      "types": "./agent_pb.d.ts",
+      "default": "./agent_pb.js"
+    },
+    "./agent_connect": {
+      "types": "./agent_connect.d.ts",
+      "default": "./agent_connect.js"
+    },
+    "./gateway": {
+      "types": "./gateway/index.d.ts",
+      "default": "./dist/gateway/index.js"
+    },
+    "./gateway/client": {
+      "types": "./gateway/client/index.d.ts",
+      "default": "./dist/gateway/client/index.js"
+    },
+    "./gateway/types.gen": {
+      "types": "./gateway/types.gen.d.ts",
+      "default": "./dist/gateway/types.gen.js"
+    },
+    "./gateway/sdk.gen": {
+      "types": "./gateway/sdk.gen.d.ts",
+      "default": "./dist/gateway/sdk.gen.js"
+    },
     "./dist/*": "./dist/*",
-    "./*": "./*.js"
+    "./*": {
+      "types": "./*.d.ts",
+      "default": "./*.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "api_pb": [
+        "api_pb.d.ts"
+      ],
+      "api_connect": [
+        "api_connect.d.ts"
+      ],
+      "agent_pb": [
+        "agent_pb.d.ts"
+      ],
+      "agent_connect": [
+        "agent_connect.d.ts"
+      ],
+      "gateway": [
+        "gateway/index.d.ts"
+      ],
+      "gateway/client": [
+        "gateway/client/index.d.ts"
+      ],
+      "gateway/types.gen": [
+        "gateway/types.gen.d.ts"
+      ],
+      "gateway/sdk.gen": [
+        "gateway/sdk.gen.d.ts"
+      ],
+      "dist/*": [
+        "dist/*.d.ts"
+      ],
+      "*": [
+        "*.d.ts"
+      ]
+    }
   },
   "files": [
     "index.ts",

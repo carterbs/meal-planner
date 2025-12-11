@@ -15,7 +15,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // Export all generated protobuf messages and types
-__exportStar(require("./api_pb.js"), exports);
+__exportStar(require("./api_pb"), exports);
 // Export Connect RPC service definitions
-__exportStar(require("./api_connect.js"), exports);
-__exportStar(require("./agent_pb.js"), exports);
+__exportStar(require("./api_connect"), exports);
+__exportStar(require("./agent_pb"), exports);

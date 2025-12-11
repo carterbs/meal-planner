@@ -1,6 +1,7 @@
 import { ChatOpenAI } from '@langchain/openai';
 import { debugLog } from '../logging';
-import type { WeeklyMealPlan } from '@mealplanner/generated';
+import type { MealPlan } from '@mealplanner/generated';
+import { mealSlotToString } from '../workflows/meal-planning/mealPlanUtils';
 export class MessageGenerator {
   private llm: ChatOpenAI;
   constructor() {
@@ -17,37 +18,64 @@ export class MessageGenerator {
     workflowType?: string;
     hasRecentFeedback?: boolean;
     feedbackSummary?: string;
-    mealPlan?: WeeklyMealPlan;
+    mealPlan?: MealPlan;
     shoppingList?: string[];
     iteration?: number;
-    previousMealPlan?: WeeklyMealPlan;
+    previousMealPlan?: MealPlan;
   }): Promise<string> {
     try {
-      let mealPlanSummary = '';
-      if (context.mealPlan?.days) {
-        const mealCount = context.mealPlan.days.length;
-        const uniqueDays = new Set(context.mealPlan.days.map((d) => d.dayIndex))
-          .size;
-        const sampleMeals = context.mealPlan.days
-          .map((d) => d.meal?.name)
+      const details: string[] = [
+        `- Current step: ${context.currentStep || 'unknown'}`,
+        `- Workflow type: ${context.workflowType || 'meal_planning'}`,
+        `- Has recent feedback: ${context.hasRecentFeedback ? 'yes' : 'no'}`,
+        `- Iteration: ${context.iteration || 1}`,
+      ];
+
+      if (context.feedbackSummary) {
+        details.push(`- Recent feedback: ${context.feedbackSummary}`);
+      }
+
+      const planItems = context.mealPlan?.items ?? [];
+      if (planItems.length > 0) {
+        const mealCount = planItems.length;
+        const uniqueDays = new Set(planItems.map((item) => item.dayIndex)).size;
+        const sampleMeals = planItems
+          .map((item) => item.mealSnapshot?.name)
           .filter((name): name is string => Boolean(name))
           .slice(0, 3);
-        mealPlanSummary = `Current meal plan has ${mealCount} meals across ${uniqueDays} days. Sample meals: ${sampleMeals.join(', ')}`;
+        const daySummaries = planItems
+          .slice(0, 3)
+          .map((item) => {
+            const meal = item.mealSnapshot;
+            if (!meal) return null;
+            const slot = mealSlotToString(item.mealType);
+            return `${slot}: ${meal.name}`;
+          })
+          .filter((value): value is string => Boolean(value));
+        details.push(
+          `- Meal plan: ${mealCount} slots across ${uniqueDays} days${
+            sampleMeals.length > 0
+              ? ` (sample meals: ${sampleMeals.join(', ')})`
+              : ''
+          }`,
+        );
+        if (daySummaries.length > 0) {
+          details.push(`- Sample day highlights: ${daySummaries.join(' | ')}`);
+        }
       }
-      let shoppingListSummary = '';
-      if (context.shoppingList && context.shoppingList.length > 0) {
-        shoppingListSummary = `Shopping list has ${context.shoppingList.length} items including: ${context.shoppingList.slice(0, 5).join(', ')}${context.shoppingList.length > 5 ? '...' : ''}`;
+
+      if (context.shoppingList?.length) {
+        details.push(
+          `- Shopping list: ${context.shoppingList.length} items (e.g., ${context.shoppingList
+            .slice(0, 5)
+            .join(', ')}${context.shoppingList.length > 5 ? '...' : ''})`,
+        );
       }
+
       const prompt = `Generate a brief, friendly message (1-2 sentences) for a meal planning assistant that has just resumed processing a user's request. Be conversational, helpful, and reference specific details from the meal plan when possible.
 
 Context:
-- Current step: ${context.currentStep || 'unknown'}
-- Workflow type: ${context.workflowType || 'meal_planning'}
-- Has recent feedback: ${context.hasRecentFeedback ? 'yes' : 'no'}
-- Iteration: ${context.iteration || 1}
-${context.feedbackSummary ? `- Recent feedback: ${context.feedbackSummary}` : ''}
-${mealPlanSummary ? `- Meal plan: ${mealPlanSummary}` : ''}
-${shoppingListSummary ? `- Shopping list: ${shoppingListSummary}` : ''}
+${details.join('\n')}
 
 Generate a message that:
 1. References specific meals or details from the current plan when relevant
@@ -78,17 +106,22 @@ Your Response (just the message, no quotes or formatting):`;
    */
   async generateCompletionMessage(context: {
     workflowType?: string;
-    mealPlan?: WeeklyMealPlan;
+    mealPlan?: MealPlan;
     shoppingList?: string[];
   }): Promise<string> {
     try {
       let mealPlanDetails = '';
-      if (context.mealPlan?.days) {
-        const mealCount = context.mealPlan.days.length;
-        const uniqueDays = new Set(context.mealPlan.days.map((d) => d.dayIndex))
-          .size;
-        const featuredMeals = context.mealPlan.days
-          .map((d) => (d.meal && d.meal.effort >= 3 ? d.meal.name : undefined))
+      if (context.mealPlan?.items) {
+        const mealCount = context.mealPlan.items.length;
+        const uniqueDays = new Set(
+          context.mealPlan.items.map((d) => d.dayIndex),
+        ).size;
+        const featuredMeals = context.mealPlan.items
+          .map((d) =>
+            d.mealSnapshot && d.mealSnapshot.effort >= 3
+              ? d.mealSnapshot.name
+              : undefined,
+          )
           .filter((name): name is string => Boolean(name))
           .slice(0, 2);
         mealPlanDetails = `${mealCount} meals across ${uniqueDays} days${featuredMeals.length > 0 ? `, featuring ${featuredMeals.join(' and ')}` : ''}`;

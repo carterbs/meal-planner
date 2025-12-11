@@ -3,11 +3,11 @@ import type {
   GoStep,
   GoIngredient,
   GoShoppingListItem,
-} from '@mealplanner/generated/dist/gateway/types.gen';
+} from '@mealplanner/generated/gateway/types.gen';
 import {
   createClient,
   createConfig,
-} from '@mealplanner/generated/dist/gateway/client';
+} from '@mealplanner/generated/gateway/client';
 import {
   getMeals as getMealsFromGateway,
   postMeals,
@@ -19,21 +19,21 @@ import {
   postMealsByMealIdStepsBulk,
   deleteMealsByMealIdSteps,
   postShoppinglist,
-} from '@mealplanner/generated/dist/gateway';
-import { Meal, Step, Ingredient } from '@mealplanner/generated';
-import type { WeeklyMealPlan } from '@mealplanner/generated';
+} from '@mealplanner/generated/gateway';
+import {
+  Meal,
+  Step,
+  Ingredient,
+  MealPlan,
+  ShoppingListItem,
+} from '@mealplanner/generated/api_pb';
 import { Timestamp } from '@bufbuild/protobuf';
+import {
+  formatGatewayError,
+  parseShoppingListResponse,
+} from '../utils/gatewayGuards';
 
 // Create the API gateway client
-
-function formatGatewayError(err: unknown): string {
-  if (typeof err === 'string') return err;
-  const maybeObj = err as { error?: unknown } | undefined;
-  const nested = maybeObj && typeof maybeObj === 'object' ? maybeObj.error : undefined;
-  if (typeof nested === 'string') return nested;
-  if (err != null) return String(err);
-  return 'Unknown error';
-}
 
 /**
  * Map GoStep to UI Step
@@ -352,20 +352,28 @@ export async function replaceAllSteps(
 }
 
 export async function goGetShoppingList(
-  mealPlan: WeeklyMealPlan,
-): Promise<GoShoppingListItem[]> {
-  const request = {
-    plan: mealPlan.days.filter((day) => day.meal).map((day) => day.meal!.id),
-  };
-  const result = await postShoppinglist({
+  mealPlan: MealPlan,
+): Promise<ShoppingListItem[]> {
+  const plan = mealPlan.items
+    .map((item) => {
+      if (typeof item.mealId === 'number' && item.mealId > 0) {
+        return item.mealId;
+      }
+      const snapshotId = item.mealSnapshot?.id;
+      return typeof snapshotId === 'number' && snapshotId > 0 ? snapshotId : undefined;
+    })
+    .filter((id): id is number => id !== undefined);
+
+  const { data, error } = await postShoppinglist({
     client: gatewayClient,
-    body: request,
+    body: { plan },
   });
 
-  const res = result as unknown as { data?: { items?: GoShoppingListItem[] | null }; error?: unknown };
-  if (!res.data || !res.data.items || res.error) {
-    throw new Error(`Failed to generate shopping list: ${formatGatewayError(res.error)}`);
+  if (error) {
+    throw new Error(
+      `Failed to generate shopping list: ${formatGatewayError(error)}`,
+    );
   }
 
-  return res.data.items;
+  return parseShoppingListResponse(data);
 }

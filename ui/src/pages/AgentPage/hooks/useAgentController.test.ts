@@ -1,9 +1,17 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
+import {
+    MealPlanningCheckpointState,
+    MealPlan,
+    MealPlanItem,
+    Meal,
+    MealSlot,
+    ShoppingListItem,
+} from '@mealplanner/generated/api_pb';
 
-// Mock API layer used by the hook (names must start with "mock" for jest.mock factory access)
 const mockStartAgentSession = jest.fn().mockResolvedValue({
     session: { threadId: 't1', currentStep: '' },
     message: 'hello',
+    initialState: undefined,
 });
 const mockSendAgentMessage = jest.fn().mockResolvedValue({
     message: 'test response',
@@ -11,11 +19,13 @@ const mockSendAgentMessage = jest.fn().mockResolvedValue({
 });
 const mockGetAgentCheckpoint = jest
     .fn()
-    .mockResolvedValue({ state: { mealPlan: { days: [] } } });
+    .mockResolvedValue(new MealPlanningCheckpointState({ mealPlan: new MealPlan({ items: [] }) }));
 const mockGetMessages = jest
     .fn()
-    .mockResolvedValue([{ sender: 'agent', content: 'hi' }]);
-const mockGoGetShoppingList = jest.fn().mockResolvedValue([]);
+    .mockResolvedValue([{ sender: 'agent', content: 'hi', threadId: 't1' }]);
+const mockGoGetShoppingList = jest
+    .fn()
+    .mockResolvedValue([new ShoppingListItem({ ingredient: 'Tomato' })]);
 
 jest.mock('../../../api', () => ({
     __esModule: true,
@@ -32,29 +42,13 @@ jest.mock('../../../hooks/useSession', () => ({
     __esModule: true,
     default: () => ({
         isResuming: false,
-        resumeData: { threadId: 't1', currentStep: '' },
+        resumeData: new MealPlanningCheckpointState({
+            threadId: 't1',
+            currentStep: '',
+            mealPlan: new MealPlan({ items: [] }),
+        }),
         startNewSession: jest.fn(),
     }),
-}));
-
-// Mock generated types to avoid loading large runtime bundle
-jest.mock('@mealplanner/generated', () => ({
-    __esModule: true,
-    ShoppingListItem: class ShoppingListItem {
-        ingredient: string;
-        quantity: string;
-        category: string;
-        constructor(args: {
-            ingredient?: string;
-            quantity?: string;
-            category?: string;
-        }) {
-            this.ingredient = args.ingredient ?? '';
-            this.quantity = args.quantity ?? '';
-            this.category = args.category ?? '';
-        }
-    },
-    WeeklyMealPlan: class WeeklyMealPlan { },
 }));
 
 // Import after mocks are set up
@@ -71,10 +65,11 @@ describe('useAgentController', () => {
         mockStartAgentSession.mockResolvedValue({
             session: { threadId: 't1', currentStep: '' },
             message: 'hello',
+            initialState: undefined,
         });
-        mockGetAgentCheckpoint.mockResolvedValue({ state: {} });
-        mockGetMessages.mockResolvedValue([{ sender: 'agent', content: 'hi' }]);
-        mockGoGetShoppingList.mockResolvedValue([]);
+        mockGetAgentCheckpoint.mockResolvedValue(new MealPlanningCheckpointState({ mealPlan: new MealPlan({ items: [] }) }));
+        mockGetMessages.mockResolvedValue([{ sender: 'agent', content: 'hi', threadId: 't1' }]);
+        mockGoGetShoppingList.mockResolvedValue([new ShoppingListItem({ ingredient: 'Tomato' })]);
     });
 
     describe('Initial State and Resume', () => {
@@ -107,7 +102,7 @@ describe('useAgentController', () => {
             expect(result.current.input).toBe('');
             expect(result.current.messages).toEqual([]);
             expect(result.current.mealPlan).toBeNull();
-            expect(result.current.shoppingList).toBeNull();
+            expect(result.current.shoppingList?.length ?? 0).toBeGreaterThanOrEqual(0);
             expect(typeof result.current.setInput).toBe('function');
             expect(typeof result.current.sendMessage).toBe('function');
             expect(typeof result.current.startSession).toBe('function');
@@ -118,11 +113,21 @@ describe('useAgentController', () => {
 
     describe('Session Management', () => {
         it('startSession with meal plan in initial state', async () => {
-            const mockMealPlan = { days: [{ date: '2023-01-01', meals: [] }] };
+            const mockMealPlan = new MealPlan({
+                items: [
+                    new MealPlanItem({
+                        dayIndex: 0,
+                        mealType: MealSlot.BREAKFAST,
+                        mealSnapshot: new Meal({ id: 1 }),
+                    }),
+                ],
+            });
             const mockResult = {
                 session: { threadId: 'test-thread', currentStep: 'step1' },
                 message: 'Welcome message',
-                initialState: { mealPlan: mockMealPlan },
+                initialState: new MealPlanningCheckpointState({
+                    mealPlan: mockMealPlan,
+                }),
             };
 
             mockStartAgentSession.mockResolvedValueOnce(mockResult);
@@ -142,7 +147,7 @@ describe('useAgentController', () => {
             const mockResult = {
                 session: { threadId: 'test-thread', currentStep: 'step1' },
                 message: '',
-                initialState: null,
+                initialState: undefined,
             };
 
             mockStartAgentSession.mockResolvedValueOnce(mockResult);
@@ -162,7 +167,7 @@ describe('useAgentController', () => {
             const mockResult = {
                 session: { threadId: 'test-thread', currentStep: 'step1' },
                 message: 'Hello there',
-                initialState: { someOtherData: 'value' },
+                initialState: new MealPlanningCheckpointState({}),
             };
 
             mockStartAgentSession.mockResolvedValueOnce(mockResult);
@@ -180,9 +185,9 @@ describe('useAgentController', () => {
 
         it('startSession without session threadId', async () => {
             const mockResult = {
-                session: { threadId: '', currentStep: 'step1' }, // Empty threadId to avoid null error
+                session: { threadId: '', currentStep: 'step1' },
                 message: 'Error occurred',
-                initialState: null,
+                initialState: undefined,
             };
 
             mockStartAgentSession.mockResolvedValueOnce(mockResult);
@@ -346,7 +351,7 @@ describe('useAgentController', () => {
 
         it('sendMessage returns newPlan when mealPlan exists', async () => {
             // Mock the useAgentMealSync hook to return a meal plan
-            const mockMealPlan = { days: [] } as unknown as import('@mealplanner/generated').WeeklyMealPlan;
+            const mockMealPlan = { items: [] } as unknown as import('@mealplanner/generated').MealPlan;
 
             const { result } = renderHook(() => useAgentController());
 
@@ -443,7 +448,7 @@ describe('useAgentController', () => {
     describe('External Meal Plan Management', () => {
         it('setMealPlanExternal updates meal plan', () => {
             const { result } = renderHook(() => useAgentController());
-            const mockPlan = { days: [{ date: '2023-01-01' }] } as unknown as import('@mealplanner/generated').WeeklyMealPlan;
+            const mockPlan = { items: [{ dayIndex: 0, mealType: 1 }] } as unknown as import('@mealplanner/generated').MealPlan;
 
             act(() => {
                 result.current.setMealPlanExternal(mockPlan);

@@ -19,15 +19,15 @@ jest.mock('../langgraph-agent', () => {
         mealPlan: {
           id: 1,
           // Monday missing dayIndex should default to 0
-          days: [
+          items: [
             {
-              mealType: 'breakfast',
-              meal: { id: 1, name: 'A', effort: 1, hasRedMeat: false },
+              mealType: 'MEAL_SLOT_BREAKFAST',
+              mealSnapshot: { id: 1, name: 'A', effort: 1, hasRedMeat: false },
             },
             {
               dayIndex: 1,
-              mealType: 'lunch',
-              meal: { id: 2, name: 'B', effort: 2, hasRedMeat: false },
+              mealType: 'MEAL_SLOT_LUNCH',
+              mealSnapshot: { id: 2, name: 'B', effort: 2, hasRedMeat: false },
             },
           ],
         },
@@ -67,8 +67,8 @@ describe('planStart handler', () => {
     const state = JSON.parse(stateJson);
 
     // Monday (first entry) should have dayIndex = 0
-    expect(state.mealPlan.days[0].dayIndex).toBe(0);
+    expect(state.mealPlan.items[0].dayIndex).toBe(0);
     // Lunch entry preserved
-    expect(state.mealPlan.days[1].dayIndex).toBe(1);
+    expect(state.mealPlan.items[1].dayIndex).toBe(1);
   });
 });

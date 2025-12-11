@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 )
 
@@ -156,4 +157,63 @@ func (b *StepBuilder) WithInstruction(instruction string) *StepBuilder {
 // Build returns the built step
 func (b *StepBuilder) Build() *models.Step {
 	return b.step
+}
+
+// MealPlanItemBuilder helps create test meal plan item data
+type MealPlanItemBuilder struct {
+	item *models.MealPlanItem
+}
+
+// NewMealPlanItemBuilder creates a new meal plan item builder with default values
+func NewMealPlanItemBuilder() *MealPlanItemBuilder {
+	return &MealPlanItemBuilder{
+		item: &models.MealPlanItem{
+			MealPlanId: 1,
+			DayIndex:   0,
+			MealType:   apipb.MealSlot_MEAL_SLOT_DINNER,
+			MealSnapshot: &models.Meal{
+				Name:        "Test Meal",
+				MealType:    "dinner",
+				Effort:      2,
+				Ingredients: []*models.Ingredient{},
+				Steps:       []*models.Step{},
+			},
+		},
+	}
+}
+
+// WithMealPlanID sets the meal plan ID
+func (b *MealPlanItemBuilder) WithMealPlanID(id int) *MealPlanItemBuilder {
+	b.item.MealPlanId = int32(id)
+	return b
+}
+
+// WithDayIndex sets the day index (0-6, Monday-Sunday)
+func (b *MealPlanItemBuilder) WithDayIndex(dayIndex int) *MealPlanItemBuilder {
+	b.item.DayIndex = int32(dayIndex)
+	return b
+}
+
+// WithMealType sets the meal type slot
+func (b *MealPlanItemBuilder) WithMealType(slot apipb.MealSlot) *MealPlanItemBuilder {
+	b.item.MealType = slot
+	return b
+}
+
+// WithMealID sets the optional meal ID reference
+func (b *MealPlanItemBuilder) WithMealID(mealID int) *MealPlanItemBuilder {
+	mealIDInt32 := int32(mealID)
+	b.item.MealId = &mealIDInt32
+	return b
+}
+
+// WithMealSnapshot sets the meal snapshot
+func (b *MealPlanItemBuilder) WithMealSnapshot(meal *models.Meal) *MealPlanItemBuilder {
+	b.item.MealSnapshot = meal
+	return b
+}
+
+// Build returns the built meal plan item
+func (b *MealPlanItemBuilder) Build() *models.MealPlanItem {
+	return b.item
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { v4 as uuidv4 } from 'uuid';
 import type { ExtendedRunnableConfig } from './types';
 import type { WorkflowStatus } from '@mealplanner/generated/api_pb';
@@ -84,9 +85,12 @@ export class HttpCheckpointSaver {
       } as ExtendedRunnableConfig;
     } catch (e) {
       await infoLog(`[CHECKPOINT] Save failed: ${String(e)}`);
-      for (const day of (checkpoint.state?.mealPlan?.days ?? [])) {
-        if (day.meal) {
-          await infoLog(`[CHECKPOINT] lastPlanned: ${String(day.meal.lastPlanned)}`);
+      const items = checkpoint.state?.mealPlan?.items ?? [];
+      for (const item of items) {
+        if (item.mealSnapshot) {
+          await infoLog(
+            `[CHECKPOINT] lastPlanned: ${String(item.mealSnapshot.lastPlanned)}`,
+          );
         }
       }
       throw e;

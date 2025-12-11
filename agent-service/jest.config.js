@@ -26,11 +26,11 @@ module.exports = {
         module: 'ES2022',
         moduleResolution: 'node'
       }
-    }],
-    '^.+\\.js$': ['ts-jest', { useESM: true }]
+    }]
   },
   moduleNameMapper: {
     '^\.\./cli\.js$': '<rootDir>/tests/__mocks__/cli.ts',
-    '^(\\.{1,2}/.*)\\.js$': '$1'
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@mealplanner/generated$': '<rootDir>/../generated/ts/index.js'
   }
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import * as grpc from '@grpc/grpc-js';
 import { LangGraphAgent } from '../../langgraph-agent';
 import { debugLog } from '../../logging';
@@ -44,14 +45,12 @@ export function planStart(
                 return callback(e as Error);
             }
             // Normalize missing dayIndex values to 0 to satisfy client expectations/tests
-            const mealPlanDays = initialState.mealPlan?.days;
-            if (Array.isArray(mealPlanDays)) {
-                mealPlanDays.forEach((entry) => {
-                    if (typeof entry.dayIndex !== 'number') {
-                        entry.dayIndex = 0;
-                    }
-                });
-            }
+            const mealPlanItems = initialState.mealPlan?.items ?? [];
+            mealPlanItems.forEach((entry) => {
+                if (typeof entry.dayIndex !== 'number') {
+                    entry.dayIndex = 0;
+                }
+            });
             const maybeToJson = (initialState as Partial<MealPlanningState> & { toJsonString?: (opts?: unknown) => string }).toJsonString;
             const stateString = typeof maybeToJson === 'function'
                 ? maybeToJson({ emitDefaultValues: true })
@@ -71,5 +70,3 @@ export function planStart(
         }
     })();
 }
-
-

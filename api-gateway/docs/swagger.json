@@ -312,7 +312,7 @@
             "properties": {
                 "plan": {
                     "type": "",
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.MealPlan"
                 }
             }
         },
@@ -345,7 +345,7 @@
             "properties": {
                 "plan": {
                     "type": "",
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.MealPlan"
                 }
             }
         },
@@ -409,7 +409,7 @@
                 },
                 "plan": {
                     "type": "",
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.MealPlan"
                 },
                 "shoppingList": {
                     "type": "",
@@ -529,20 +529,91 @@
                 }
             }
         },
-        "_go.MealPlanEntry": {
+        "_go.MealPlan": {
             "type": "object",
             "properties": {
-                "dayIndex": {
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "RFC3339 timestamp"
+                },
+                "id": {
                     "type": "integer"
                 },
-                "meal": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "",
+                        "$ref": "#/definitions/_go.MealPlanItem"
+                    }
+                },
+                "status": {
+                    "type": "",
+                    "$ref": "#/definitions/_go.MealPlanStatus"
+                },
+                "threadId": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "RFC3339 timestamp"
+                },
+                "version": {
+                    "type": "integer"
+                },
+                "weekEndDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "RFC3339 timestamp"
+                },
+                "weekStartDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "RFC3339 timestamp"
+                }
+            }
+        },
+        "_go.MealPlanItem": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "RFC3339 timestamp"
+                },
+                "dayIndex": {
+                    "type": "integer",
+                    "description": "0-6 (Monday-Sunday)"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "mealId": {
+                    "type": "integer",
+                    "description": "Reference to meals table"
+                },
+                "mealPlanId": {
+                    "type": "integer"
+                },
+                "mealSnapshot": {
                     "type": "",
                     "$ref": "#/definitions/_go.Meal"
                 },
                 "mealType": {
-                    "type": "string"
+                    "type": "",
+                    "$ref": "#/definitions/_go.MealSlot"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "RFC3339 timestamp"
                 }
             }
+        },
+        "_go.MealPlanStatus": {
+            "type": "integer",
+            "properties": null
         },
         "_go.MealPlanningCheckpointState": {
             "type": "object",
@@ -570,7 +641,7 @@
                 },
                 "mealPlan": {
                     "type": "",
-                    "$ref": "#/definitions/_go.WeeklyMealPlan"
+                    "$ref": "#/definitions/_go.MealPlan"
                 },
                 "participants": {
                     "type": "array",
@@ -591,6 +662,10 @@
                     "description": "RFC3339 timestamp"
                 }
             }
+        },
+        "_go.MealSlot": {
+            "type": "integer",
+            "properties": null
         },
         "_go.Message": {
             "type": "object",
@@ -835,25 +910,6 @@
                 "step": {
                     "type": "",
                     "$ref": "#/definitions/_go.Step"
-                }
-            }
-        },
-        "_go.WeeklyMealPlan": {
-            "type": "object",
-            "properties": {
-                "days": {
-                    "type": "array",
-                    "items": {
-                        "type": "",
-                        "$ref": "#/definitions/_go.MealPlanEntry"
-                    }
-                },
-                "shoppingList": {
-                    "type": "array",
-                    "items": {
-                        "type": "",
-                        "$ref": "#/definitions/_go.ShoppingListItem"
-                    }
                 }
             }
         },

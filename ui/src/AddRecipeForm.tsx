@@ -19,7 +19,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
-import { Ingredient, Step, Meal } from '@mealplanner/generated';
+import { Ingredient, Step, Meal } from '@mealplanner/generated/api_pb';
 import { createMeal } from './api';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RepeatIcon from '@mui/icons-material/Repeat';

@@ -30,7 +30,7 @@ import {
   updateMeal as updateMealApi,
 } from '../../../api';
 
-import type { GoMeal } from '@mealplanner/generated/dist/gateway/types.gen';
+import type { GoMeal } from '@mealplanner/generated/gateway/types.gen';
 
 import { Meal, Ingredient, Step } from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';

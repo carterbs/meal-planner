@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
 import { ShoppingList, ShoppingListItem } from '@mealplanner/generated';
 import { MealPlanningState, MealPlanningStep } from '../../../shared/types';
 
@@ -13,16 +14,19 @@ export async function generateShoppingListNode(
         throw new Error('No meal plan for shopping list generation');
     }
     try {
-        const mealIds = state.mealPlan.days
-            .map((d) => d.meal?.id)
+        const mealIds = state.mealPlan.items
+            .map((item) => item.mealId ?? item.mealSnapshot?.id)
             .filter((id): id is number => id !== undefined)
             .filter((id, i, self) => self.indexOf(id) === i);
         const result = await deps.callTool({ name: 'generateShoppingList', arguments: { plan: mealIds } });
+        const content = Array.isArray(result.content)
+            ? (result.content as Array<{ type?: string; text?: string }>)
+            : undefined;
         if (result.isError) {
-            const text = Array.isArray(result.content) && (result.content as Array<{ type?: string; text?: string }>)[0]?.type === 'text' ? (result.content as Array<{ type?: string; text?: string }>)[0].text ?? 'Unknown error' : 'Unknown error';
+            const text = content?.[0]?.type === 'text' ? content[0].text ?? 'Unknown error' : 'Unknown error';
             throw new Error(`MCP tool error: ${text}`);
         }
-        const responseText = Array.isArray(result.content) && (result.content as Array<{ type?: string; text?: string }>)[0]?.type === 'text' ? (result.content as Array<{ type?: string; text?: string }>)[0].text ?? '[]' : '[]';
+        const responseText = content?.[0]?.type === 'text' ? content[0].text ?? '[]' : '[]';
         const parsed = JSON.parse(responseText) as Array<{ ingredient: string; quantity?: string; category?: string }>;
         if (!Array.isArray(parsed) || parsed.length === 0) {
             return { currentStep: MealPlanningStep.COMPLETE, shoppingList: undefined };
@@ -36,5 +40,4 @@ export async function generateShoppingListNode(
         return { currentStep: MealPlanningStep.COMPLETE, shoppingList: undefined };
     }
 }
-
 

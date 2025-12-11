@@ -2,9 +2,10 @@ package mocks
 
 import (
 	"context"
-	"mealplanner/models"
+	"time"
 
 	"github.com/stretchr/testify/mock"
+	"mealplanner/models"
 )
 
 // MockMealPlanRepository satisfies repositories.MealPlanRepository for tests.
@@ -23,48 +24,54 @@ func NewMockMealPlanRepository(t interface {
 	return m
 }
 
-// GenerateWeeklyMealPlan implements MealPlanRepository.
-func (m *MockMealPlanRepository) GenerateWeeklyMealPlan(ctx context.Context) (*models.WeeklyMealPlan, error) {
-	args := m.Called(ctx)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+func (m *MockMealPlanRepository) InsertMealPlan(ctx context.Context, weekStart, weekEnd time.Time, status models.MealPlanStatus, threadID *string) (int, error) {
+	args := m.Called(ctx, weekStart, weekEnd, status, threadID)
+	return args.Int(0), args.Error(1)
 }
 
-func (m *MockMealPlanRepository) GetLastPlannedMeals(ctx context.Context) (*models.WeeklyMealPlan, error) {
-	args := m.Called(ctx)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+func (m *MockMealPlanRepository) GetMealPlanByID(ctx context.Context, id int) (*models.MealPlan, error) {
+	args := m.Called(ctx, id)
+	if plan := args.Get(0); plan != nil {
+		return plan.(*models.MealPlan), args.Error(1)
 	}
-	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+	return nil, args.Error(1)
 }
 
-func (m *MockMealPlanRepository) PopulateMealDetails(ctx context.Context, plan *models.WeeklyMealPlan) (*models.WeeklyMealPlan, error) {
-	args := m.Called(ctx, plan)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+func (m *MockMealPlanRepository) GetMealPlanByWeek(ctx context.Context, weekStart time.Time) (*models.MealPlan, error) {
+	args := m.Called(ctx, weekStart)
+	if plan := args.Get(0); plan != nil {
+		return plan.(*models.MealPlan), args.Error(1)
 	}
-	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
+	return nil, args.Error(1)
 }
 
-func (m *MockMealPlanRepository) RemoveMealFromPlan(ctx context.Context, plan *models.WeeklyMealPlan, dayIndex int, mealType string) error {
-	args := m.Called(ctx, plan, dayIndex, mealType)
+func (m *MockMealPlanRepository) ListMealPlansInRange(ctx context.Context, start, end time.Time, status *models.MealPlanStatus) ([]*models.MealPlanSummary, error) {
+	args := m.Called(ctx, start, end, status)
+	if res := args.Get(0); res != nil {
+		return res.([]*models.MealPlanSummary), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
+func (m *MockMealPlanRepository) UpdateMealPlanStatus(ctx context.Context, id int, status models.MealPlanStatus) error {
+	args := m.Called(ctx, id, status)
 	return args.Error(0)
 }
 
-func (m *MockMealPlanRepository) GetLatestMealPlan(ctx context.Context, threadID string) (*models.MealPlanIdentifier, error) {
-	args := m.Called(ctx, threadID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.MealPlanIdentifier), args.Error(1)
+func (m *MockMealPlanRepository) UpdateMealPlanVersion(ctx context.Context, id int, version int) error {
+	args := m.Called(ctx, id, version)
+	return args.Error(0)
 }
 
-func (m *MockMealPlanRepository) GetMealPlanItems(ctx context.Context, mealPlanID int) ([]models.MealPlanEntry, error) {
-	args := m.Called(ctx, mealPlanID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+func (m *MockMealPlanRepository) UpsertMealPlanItems(ctx context.Context, mealPlanID int, items []*models.MealPlanItem) error {
+	args := m.Called(ctx, mealPlanID, items)
+	return args.Error(0)
+}
+
+func (m *MockMealPlanRepository) GenerateMealPlanItems(ctx context.Context) ([]*models.MealPlanItem, error) {
+	args := m.Called(ctx)
+	if res := args.Get(0); res != nil {
+		return res.([]*models.MealPlanItem), args.Error(1)
 	}
-	return args.Get(0).([]models.MealPlanEntry), args.Error(1)
+	return nil, args.Error(1)
 }

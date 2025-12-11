@@ -1,23 +1,71 @@
-import { MealPlanningCheckpointState } from '@mealplanner/generated';
-import type { GoMealPlanEntry } from '@mealplanner/generated/dist/gateway/types.gen';
-import type { GoCheckpointTuple } from '@mealplanner/generated/dist/gateway/types.gen';
+import { MealPlanningCheckpointState } from '@mealplanner/generated/api_pb';
 import {
   createClient,
   createConfig,
-} from '@mealplanner/generated/dist/gateway/client';
+} from '@mealplanner/generated/gateway/client';
 import {
   postAgentStart,
   postAgentMessage,
   getCheckpointsByThreadId,
   getWorkflowsByThreadIdMessages,
-} from '@mealplanner/generated/dist/gateway';
+} from '@mealplanner/generated/gateway';
+import type {
+  GoStartAgentWorkflowResponse,
+  GoMessageAgentResponse,
+  GoGetCheckpointResponse,
+  GoGetMessagesResponse,
+} from '@mealplanner/generated/gateway/types.gen';
+import type { AgentMessage } from '../utils/gatewayGuards';
+import {
+  formatGatewayError,
+  parseAgentMessageResponse,
+  parseAgentStartResponse,
+  parseCheckpointResponse,
+  parseCheckpointState,
+  parseMessagesResponse,
+} from '../utils/gatewayGuards';
+import type {
+  GoStartAgentWorkflowResponse,
+  GoMessageAgentResponse,
+  GoGetCheckpointResponse,
+  GoGetMessagesResponse,
+} from '@mealplanner/generated/gateway/types.gen';
 
-// Create the API gateway client
-const gatewayClient = createClient(
+const gatewayClient: ReturnType<typeof createClient> = createClient(
   createConfig({
     baseUrl: 'http://localhost:8090/api',
   }),
 );
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getField(record: Record<string, unknown>, key: string): unknown {
+  return record[key];
+}
+
+async function unwrapGatewayResult<T>(
+  promise: Promise<unknown>,
+  context: string,
+): Promise<T> {
+  const envelope = await promise;
+  if (!isRecord(envelope)) {
+    throw new Error(`${context}: invalid response envelope`);
+  }
+
+  const errorValue = getField(envelope, 'error');
+  if (errorValue != null) {
+    throw new Error(`${context}: ${formatGatewayError(errorValue)}`);
+  }
+
+  const dataValue = getField(envelope, 'data');
+  if (dataValue == null) {
+    throw new Error(`${context}: empty response`);
+  }
+
+  return dataValue as T;
+}
 
 export interface SessionInfo {
   threadId: string;
@@ -32,166 +80,113 @@ export interface StartSessionResult {
 
 export interface SendMessageResult {
   message?: string;
-  // API may return a checkpoint-like object with nested state or a top-level mealPlan
-  initialState?: {
-    state?: { mealPlan?: { days?: GoMealPlanEntry[] } };
-    mealPlan?: { shoppingList?: unknown }
-  } | MealPlanningCheckpointState;
+  initialState?: MealPlanningCheckpointState;
 }
 
-/**
- * Start a new agent session
- */
 export async function startAgentSession(
   participants: string[] = ['user'],
   workflowType: string = 'meal_planning',
 ): Promise<StartSessionResult> {
-  const requestData = {
-    participants,
-    workflowType,
-  };
+  const data = await unwrapGatewayResult<GoStartAgentWorkflowResponse>(
+    postAgentStart({
+      client: gatewayClient,
+      body: {
+        participants,
+        workflowType,
+      },
+    }),
+    'Failed to start agent session',
+  );
 
-  const result = await postAgentStart({
-    client: gatewayClient,
-    body: requestData,
-  });
-
-  const resStart = result as unknown as { data?: { response?: unknown }; error?: unknown };
-  if (!resStart.data || resStart.error) {
-    const msg = typeof resStart.error === 'string' ? resStart.error : resStart.error != null ? String(resStart.error) : 'Unknown error';
-    throw new Error(`Failed to start agent session: ${msg}`);
-  }
-
-  const data = resStart.data as { response?: { threadId?: string; currentStep?: string; initialState?: string; message?: string } };
-
-  if (!data.response) {
-    throw new Error('No response from agent');
-  }
-
-  const agentResponse = data.response;
-
-  if (!agentResponse.threadId || !agentResponse.currentStep) {
-    throw new Error('Invalid agent response - missing required fields');
-  }
-
-  const session: SessionInfo = {
-    threadId: agentResponse.threadId,
-    currentStep: agentResponse.currentStep,
-  };
+  const payload = parseAgentStartResponse(data);
 
   let initialState: MealPlanningCheckpointState | undefined;
-  if (agentResponse.initialState) {
-    try {
-      initialState = JSON.parse(agentResponse.initialState) as MealPlanningCheckpointState;
-    } catch (error) {
-      console.warn('Failed to parse initial state:', error);
-    }
+  try {
+    initialState = parseCheckpointState(
+      payload.initialState,
+      'agent start initial state',
+    );
+  } catch (parseError) {
+    const warnError =
+      parseError instanceof Error
+        ? parseError
+        : new Error(String(parseError));
+    console.warn('Failed to parse initial state:', warnError);
   }
 
   return {
-    session,
+    session: {
+      threadId: payload.threadId,
+      currentStep: payload.currentStep,
+    },
     initialState,
-    message: agentResponse.message,
+    message: payload.message,
   };
 }
 
-/**
- * Send a message to an existing agent session
- */
 export async function sendAgentMessage(
   threadId: string,
   message: string,
   from: string = 'user',
   interactive: boolean = false,
 ): Promise<SendMessageResult> {
-  const requestData = {
-    threadId,
-    message,
-    from,
-    interactive,
-  };
+  const data = await unwrapGatewayResult<GoMessageAgentResponse>(
+    postAgentMessage({
+      client: gatewayClient,
+      body: {
+        threadId,
+        message,
+        from,
+        interactive,
+      },
+    }),
+    'Failed to send message',
+  );
 
-  const result = await postAgentMessage({
-    client: gatewayClient,
-    body: requestData,
-  });
+  const payload = parseAgentMessageResponse(data);
 
-  const resMsg = result as unknown as { data?: { response?: unknown }; error?: unknown };
-  if (!resMsg.data || resMsg.error) {
-    const msg = typeof resMsg.error === 'string' ? resMsg.error : resMsg.error != null ? String(resMsg.error) : 'Unknown error';
-    throw new Error(`Failed to send message: ${msg}`);
-  }
-
-  const data = resMsg.data as { response?: { message?: string; initialState?: string } };
-
-  if (!data.response) {
-    throw new Error('No response from agent');
-  }
-
-  const agentResponse = data.response;
-
-  let initialState: SendMessageResult['initialState'];
-  if (agentResponse.initialState) {
-    try {
-      // API may return either a MealPlanningCheckpointState or a nested object
-      initialState = JSON.parse(agentResponse.initialState) as SendMessageResult['initialState'];
-    } catch (error) {
-      console.warn('Failed to parse initial state:', error);
-    }
+  let initialState: MealPlanningCheckpointState | undefined;
+  try {
+    initialState = parseCheckpointState(
+      payload.initialState,
+      'agent message initial state',
+    );
+  } catch (parseError) {
+    const warnError =
+      parseError instanceof Error
+        ? parseError
+        : new Error(String(parseError));
+    console.warn('Failed to parse initial state:', warnError);
   }
 
   return {
-    message: agentResponse.message,
+    message: payload.message,
     initialState,
   };
 }
 
-// get agent checkpoint
-export async function getAgentCheckpoint(threadId: string) {
-  const result = await getCheckpointsByThreadId({
-    client: gatewayClient,
-    path: { thread_id: threadId },
-  });
-  const possibleError = (result as unknown as { error?: unknown }).error;
-  if (!result.data) {
-    if (possibleError) throw possibleError as Error;
-    throw new Error('Failed to get agent checkpoint');
-  }
+export async function getAgentCheckpoint(
+  threadId: string,
+): Promise<MealPlanningCheckpointState | undefined> {
+  const data = await unwrapGatewayResult<GoGetCheckpointResponse>(
+    getCheckpointsByThreadId({
+      client: gatewayClient,
+      path: { thread_id: threadId },
+    }),
+    'Failed to get agent checkpoint',
+  );
 
-  // Handle case where tuple might be string-encoded
-  let tuple: GoCheckpointTuple | string | undefined = result.data.tuple;
-  if (typeof tuple === 'string') {
-    try {
-      tuple = JSON.parse(tuple) as GoCheckpointTuple;
-    } catch {
-      throw new Error('Failed to parse checkpoint tuple');
-    }
-  }
-
-  if (!tuple || typeof tuple !== 'object' || !('checkpoint' in tuple)) {
-    throw new Error('Failed to get agent checkpoint - no checkpoint data');
-  }
-
-  return tuple.checkpoint;
+  return parseCheckpointResponse(data);
 }
 
-/**
- * Get messages for a workflow thread
- */
-import type { GoMessage } from '@mealplanner/generated/dist/gateway/types.gen';
-export async function getMessages(threadId: string): Promise<GoMessage[]> {
-  const result = await getWorkflowsByThreadIdMessages({
-    client: gatewayClient,
-    path: { threadId },
-  });
+export async function getMessages(threadId: string): Promise<AgentMessage[]> {
+  const data = await unwrapGatewayResult<GoGetMessagesResponse>(
+    getWorkflowsByThreadIdMessages({
+      client: gatewayClient,
+      path: { threadId },
+    }),
+    'Failed to get messages',
+  );
 
-  const res = result as unknown as { data?: { messages?: unknown[] | null }; error?: unknown };
-  if (!res.data) {
-    if (res.error) {
-      throw res.error;
-    }
-    throw new Error('Failed to get messages');
-  }
-
-  return (res.data.messages || []) as GoMessage[];
+  return parseMessagesResponse(data);
 }

@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { API } from '../utils.js';
-import { ReplaceMealRequest, ReplaceMealResponse, WeeklyMealPlan } from '@mealplanner/generated';
+import { ReplaceMealRequest, ReplaceMealResponse } from '@mealplanner/generated';
 export const replaceArgs = z.object({
     day: z.string().describe("Day to replace (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)"),
     mealType: z.enum(['breakfast', 'lunch', 'dinner']).describe("Which meal type to replace"),

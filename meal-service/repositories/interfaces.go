@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"context"
+	"time"
 
-	apipb "mealplanner/generated/go"
 	"mealplanner/models"
 )
 
@@ -20,10 +20,6 @@ type MealRepository interface {
 	// Specialized operations
 	SwapMeal(ctx context.Context, mealID int, mealType string) (*models.Meal, error)
 	UpdateLastPlannedDates(ctx context.Context, mealIDs []int) error
-
-	// Meal planning specific
-	GetLastPlannedMeals(ctx context.Context) (*models.WeeklyMealPlan, error)
-	GenerateWeeklyMealPlan(ctx context.Context) (*models.WeeklyMealPlan, error)
 }
 
 // IngredientRepository handles ingredient-related database operations
@@ -51,15 +47,15 @@ type RecipeStepRepository interface {
 
 // MealPlanRepository handles meal plan-related database operations
 type MealPlanRepository interface {
-	// Meal plan persistence
-	GetLatestMealPlan(ctx context.Context, threadID string) (*models.MealPlanIdentifier, error)
-	GetMealPlanItems(ctx context.Context, mealPlanID int) ([]models.MealPlanEntry, error)
-	RemoveMealFromPlan(ctx context.Context, plan *apipb.WeeklyMealPlan, dayIndex int, mealType string) error
-
-	// Meal plan generation & retrieval
-	GenerateWeeklyMealPlan(ctx context.Context) (*apipb.WeeklyMealPlan, error)
-	GetLastPlannedMeals(ctx context.Context) (*apipb.WeeklyMealPlan, error)
-	PopulateMealDetails(ctx context.Context, plan *apipb.WeeklyMealPlan) (*apipb.WeeklyMealPlan, error)
+	// New first-class meal plan CRUD operations
+	InsertMealPlan(ctx context.Context, weekStart, weekEnd time.Time, status models.MealPlanStatus, threadID *string) (int, error)
+	GetMealPlanByID(ctx context.Context, id int) (*models.MealPlan, error)
+	GetMealPlanByWeek(ctx context.Context, weekStart time.Time) (*models.MealPlan, error)
+	ListMealPlansInRange(ctx context.Context, start, end time.Time, status *models.MealPlanStatus) ([]*models.MealPlanSummary, error)
+	UpdateMealPlanStatus(ctx context.Context, id int, status models.MealPlanStatus) error
+	UpdateMealPlanVersion(ctx context.Context, id int, version int) error
+	UpsertMealPlanItems(ctx context.Context, mealPlanID int, items []*models.MealPlanItem) error
+	GenerateMealPlanItems(ctx context.Context) ([]*models.MealPlanItem, error)
 }
 
 // ShoppingListRepository handles shopping list generation (if needed for future extensions)

@@ -28,6 +28,7 @@ gateway.
 - **Avoid global logger initialization.** Use lazy initialization functions like `getMyLogger()` instead of global variables like `var myLogger = logging.GetGrpcLogger("name")` to prevent tests from hanging on gRPC connections.
 - **Use `setupTestEnvironment(t)`** in main package tests to disable gRPC logging during tests.
 - **Package-level tests** should set `os.Setenv("DISABLE_GRPC_LOGGING", "true")` in an `init()` function to prevent connection attempts.
+- **No integration test suites.** Do not add tests that hit a live database or require Docker. Use sqlmock or in-memory helpers instead so `go test ./...` stays fast and portable.
 
 ## Adding a new RPC
 

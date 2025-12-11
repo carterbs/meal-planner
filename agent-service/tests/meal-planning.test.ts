@@ -1,6 +1,6 @@
 import { MealPlanningWorkflow } from '../workflows/meal-planning';
 import { VALIDATION_CRITERIA } from '../shared/types';
-import { WeeklyMealPlan, MealPlanEntry, Meal } from '@mealplanner/generated';
+import { MealPlan, MealPlanItem, MealSlot, Meal } from '@mealplanner/generated';
 import { DbCheckpointSaver } from '../shared/dbCheckpointer';
 describe('MealPlanningWorkflow logic', () => {
   let workflow: any;
@@ -20,72 +20,87 @@ describe('MealPlanningWorkflow logic', () => {
     });
   });
   describe('validatePlan', () => {
-    function makePlan(days: MealPlanEntry[]): WeeklyMealPlan {
-      return new WeeklyMealPlan({ days, shoppingList: [] });
+    function makePlan(items: MealPlanItem[]): MealPlan {
+      return new MealPlan({ items });
     }
+
+    function createItem(
+      dayIndex: number,
+      mealSlot: MealSlot,
+      meal: Meal,
+    ): MealPlanItem {
+      return new MealPlanItem({
+        dayIndex,
+        mealType: mealSlot,
+        mealSnapshot: meal,
+        mealId: meal.id,
+      });
+    }
+
     it('returns no issues for empty plan', () => {
       expect(workflow.validatePlan(makePlan([]))).toEqual([]);
     });
+
     it('flags too many consecutive high-effort meals', () => {
       const { maxConsecutiveHighEffort } = VALIDATION_CRITERIA;
-      const days = Array(maxConsecutiveHighEffort + 2)
+      const items = Array(maxConsecutiveHighEffort + 2)
         .fill(null)
-        .map(
-          (_, i) =>
-            new MealPlanEntry({
-              dayIndex: i,
-              mealType: 'dinner',
-              meal: new Meal({
-                id: i,
-                name: 'm',
-                effort: 4,
-                hasRedMeat: false,
-                lastPlanned: undefined,
-                url: '',
-                mealType: '',
-                ingredients: [],
-                steps: [],
-              }),
+        .map((_, i) =>
+          createItem(
+            i,
+            MealSlot.DINNER,
+            new Meal({
+              id: i,
+              name: 'm',
+              effort: 4,
+              hasRedMeat: false,
+              lastPlanned: undefined,
+              url: '',
+              mealType: '',
+              ingredients: [],
+              steps: [],
             }),
+          ),
         );
-      const issues = workflow.validatePlan(makePlan(days));
+      const issues = workflow.validatePlan(makePlan(items));
       expect(issues).toContain(
         `Too many consecutive high-effort meals (day ${maxConsecutiveHighEffort + 1})`,
       );
     });
+
     it('flags too many red meat meals', () => {
       const { maxRedMeatPerWeek } = VALIDATION_CRITERIA;
-      const days = Array(maxRedMeatPerWeek + 1)
+      const items = Array(maxRedMeatPerWeek + 1)
         .fill(null)
-        .map(
-          (_, i) =>
-            new MealPlanEntry({
-              dayIndex: i,
-              mealType: 'lunch',
-              meal: new Meal({
-                id: i,
-                name: 'm',
-                effort: 1,
-                hasRedMeat: true,
-                lastPlanned: undefined,
-                url: '',
-                mealType: '',
-                ingredients: [],
-                steps: [],
-              }),
+        .map((_, i) =>
+          createItem(
+            i,
+            MealSlot.LUNCH,
+            new Meal({
+              id: i,
+              name: 'm',
+              effort: 1,
+              hasRedMeat: true,
+              lastPlanned: undefined,
+              url: '',
+              mealType: '',
+              ingredients: [],
+              steps: [],
             }),
+          ),
         );
-      const issues = workflow.validatePlan(makePlan(days));
+      const issues = workflow.validatePlan(makePlan(items));
       expect(issues).toContain(
         `Too many red meat meals: ${maxRedMeatPerWeek + 1} (max ${maxRedMeatPerWeek})`,
       );
     });
+
     it('flags duplicate meals', () => {
-      const days = [
-        new MealPlanEntry({
-          dayIndex: 0,
-          mealType: 'breakfast',
-          meal: new Meal({
+      const items = [
+        createItem(
+          0,
+          MealSlot.BREAKFAST,
+          new Meal({
             id: 1,
             name: 'a',
             effort: 1,
@@ -96,11 +111,11 @@ describe('MealPlanningWorkflow logic', () => {
             ingredients: [],
             steps: [],
           }),
-        }),
-        new MealPlanEntry({
-          dayIndex: 1,
-          mealType: 'lunch',
-          meal: new Meal({
+        ),
+        createItem(
+          1,
+          MealSlot.LUNCH,
+          new Meal({
             id: 2,
             name: 'b',
             effort: 1,
@@ -111,11 +126,11 @@ describe('MealPlanningWorkflow logic', () => {
             ingredients: [],
             steps: [],
           }),
-        }),
-        new MealPlanEntry({
-          dayIndex: 2,
-          mealType: 'dinner',
-          meal: new Meal({
+        ),
+        createItem(
+          2,
+          MealSlot.DINNER,
+          new Meal({
             id: 1,
             name: 'a',
             effort: 1,
@@ -126,17 +141,18 @@ describe('MealPlanningWorkflow logic', () => {
             ingredients: [],
             steps: [],
           }),
-        }),
+        ),
       ];
-      const issues = workflow.validatePlan(makePlan(days));
+      const issues = workflow.validatePlan(makePlan(items));
       expect(issues).toContain('Duplicate meals found: 1');
     });
+
     it('returns no issues for valid plan', () => {
-      const days = [
-        new MealPlanEntry({
-          dayIndex: 0,
-          mealType: 'breakfast',
-          meal: new Meal({
+      const items = [
+        createItem(
+          0,
+          MealSlot.BREAKFAST,
+          new Meal({
             id: 1,
             name: 'a',
             effort: 1,
@@ -147,11 +163,11 @@ describe('MealPlanningWorkflow logic', () => {
             ingredients: [],
             steps: [],
           }),
-        }),
-        new MealPlanEntry({
-          dayIndex: 1,
-          mealType: 'lunch',
-          meal: new Meal({
+        ),
+        createItem(
+          1,
+          MealSlot.LUNCH,
+          new Meal({
             id: 2,
             name: 'b',
             effort: 2,
@@ -162,11 +178,11 @@ describe('MealPlanningWorkflow logic', () => {
             ingredients: [],
             steps: [],
           }),
-        }),
-        new MealPlanEntry({
-          dayIndex: 2,
-          mealType: 'dinner',
-          meal: new Meal({
+        ),
+        createItem(
+          2,
+          MealSlot.DINNER,
+          new Meal({
             id: 3,
             name: 'c',
             effort: 1,
@@ -177,9 +193,9 @@ describe('MealPlanningWorkflow logic', () => {
             ingredients: [],
             steps: [],
           }),
-        }),
+        ),
       ];
-      expect(workflow.validatePlan(makePlan(days))).toEqual([]);
+      expect(workflow.validatePlan(makePlan(items))).toEqual([]);
     });
   });
 });

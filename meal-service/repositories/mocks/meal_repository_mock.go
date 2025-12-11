@@ -77,15 +77,3 @@ func (m *MockMealRepository) UpdateLastPlannedDates(ctx context.Context, mealIDs
 	args := m.Called(ctx, mealIDs)
 	return args.Error(0)
 }
-
-// GetLastPlannedMeals mock implementation
-func (m *MockMealRepository) GetLastPlannedMeals(ctx context.Context) (*models.WeeklyMealPlan, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
-}
-
-// GenerateWeeklyMealPlan mock implementation
-func (m *MockMealRepository) GenerateWeeklyMealPlan(ctx context.Context) (*models.WeeklyMealPlan, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(*models.WeeklyMealPlan), args.Error(1)
-}

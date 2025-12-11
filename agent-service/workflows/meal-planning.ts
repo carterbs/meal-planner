@@ -3,14 +3,15 @@ import { ChatOpenAI } from '@langchain/openai';
 import { FakeChatModel } from '@langchain/core/utils/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { WeeklyMealPlan as GeneratedWeeklyMealPlan, Meal as GeneratedMeal } from '@mealplanner/generated';
-import type { ExtendedRunnableConfig } from '../shared/types';
 import {
-  WeeklyMealPlan,
+  MealPlan as GeneratedMealPlan,
+  Meal as GeneratedMeal,
+  MealPlan,
   AgentCheckpoint,
   AgentCheckpointMetadata,
-  MealPlanEntry,
+  MealPlanItem,
 } from '@mealplanner/generated';
+import type { ExtendedRunnableConfig } from '../shared/types';
 import { MealPlanningCheckpointState } from '@mealplanner/generated';
 import { Timestamp } from '@bufbuild/protobuf';
 import {
@@ -31,6 +32,7 @@ import type { DayOfTheWeek } from '../shared/days';
 import { getUpdateMealPlanPrompt, getOptimizeMealPlanPrompt } from './meal-planning-prompts';
 import { v4 as uuidv4 } from 'uuid';
 import { MessageRepository } from '../database/messages';
+import { mealSlotFromString, mealSlotToString } from './meal-planning/mealPlanUtils';
 // Extracted node imports (keep imports at top of file)
 import { initiateNode as initiateNodeExternal } from './meal-planning/nodes/initiate.js';
 import { generatePlanNode as generatePlanNodeExternal } from './meal-planning/nodes/generatePlan.js';
@@ -387,7 +389,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
               const feedbackResult = await applyFeedbackNodeExternal(stateWithFeedback, {
                 getMessages: (threadId: string) => this.getMessages(threadId),
                 applyFeedbackWithLLM: (
-                  plan: GeneratedWeeklyMealPlan,
+                  plan: GeneratedMealPlan,
                   messages: string[],
                 ) => this.applyFeedbackWithLLM(plan, messages),
                 addMessage: (threadId: string, sender: string, message: string) =>
@@ -414,11 +416,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 await infoLog(
                   '🔍 [CHECKPOINT-SAVE-FEEDBACK] mealPlan before checkpoint serialization:',
                 );
-                if (Array.isArray(state.mealPlan.days)) {
-                  for (let i = 0; i < state.mealPlan.days.length; i++) {
-                    const day = state.mealPlan.days[i];
+                if (Array.isArray(state.mealPlan.items)) {
+                  for (let i = 0; i < state.mealPlan.items.length; i++) {
+                    const day = state.mealPlan.items[i];
                     await infoLog(
-                      `🔍 [CHECKPOINT-SAVE-FEEDBACK] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${day.mealType}, meal=${day.meal?.name || 'nil'}`,
+                      `🔍 [CHECKPOINT-SAVE-FEEDBACK] Entry ${i}: dayIndex=${day.dayIndex}, mealType=${mealSlotToString(day.mealType)}, meal=${day.mealSnapshot?.name || 'nil'}`,
                     );
                   }
                 }
@@ -428,9 +430,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
                 `🔍 [FINAL-CHECKPOINT] About to save final checkpoint with mealPlan: ${state.mealPlan ? 'EXISTS' : 'NULL/UNDEFINED'}`,
               );
               if (state.mealPlan) {
-                await infoLog(
-                  `🔍 [FINAL-CHECKPOINT] meal_plan has ${state.mealPlan.days.length} days`,
-                );
+              await infoLog(
+                `🔍 [FINAL-CHECKPOINT] meal_plan has ${state.mealPlan.items.length} items`,
+              );
               }
               // State is already a proto object
               const checkpoint = new AgentCheckpoint({
@@ -511,10 +513,10 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     };
   }
   private async applyFeedbackWithLLM(
-    plan: GeneratedWeeklyMealPlan,
+    plan: GeneratedMealPlan,
     feedback: string[],
   ): Promise<{
-    mealPlan: GeneratedWeeklyMealPlan;
+    mealPlan: GeneratedMealPlan;
     userMessage: string;
   }> {
     await infoLog('MealPlanningWorkflow.applyFeedbackWithLLM called');
@@ -538,11 +540,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       )
       .join('\n');
     const dayNames = DAYS_OF_THE_WEEK;
-    const planDescription = plan.days
-      .filter((day) => day.meal)
+    const planDescription = plan.items
+      .filter((item) => item.mealSnapshot)
       .map(
-        (day) =>
-          `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal!.name} (ID: ${day.meal!.id}, effort: ${day.meal!.effort}, red meat: ${day.meal!.hasRedMeat})`,
+        (item) =>
+          `${dayNames[item.dayIndex]} ${mealSlotToString(item.mealType)}: ${item.mealSnapshot!.name} (ID: ${item.mealSnapshot!.id}, effort: ${item.mealSnapshot!.effort}, red meat: ${item.mealSnapshot!.hasRedMeat})`,
       )
       .join('\n');
     const feedbackText =
@@ -565,8 +567,8 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     await infoLog(
       `${`🤖 [MEAL-WORKFLOW] Feedback being processed:`} ${feedbackText}`,
     );
-    // Create a proper WeeklyMealPlan object to preserve protobuf structure
-    const updatedPlan: WeeklyMealPlan = plan;
+    // Create a proper MealPlan object to preserve protobuf structure
+    const updatedPlan = MealPlan.fromJson(plan.toJson());
     let userMessage = "I've updated your meal plan based on your feedback!"; // Default fallback message
     const cleanedResponse = this.extractJsonFromResponse(llmResponse);
     await infoLog(`🤖 [MEAL-WORKFLOW] Cleaned JSON response:`);
@@ -594,25 +596,29 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           );
           // Handle "all" mealType by removing each meal type individually
           const mealTypesToRemove =
-            mealType === 'all'
-              ? ['breakfast', 'lunch', 'dinner']
-              : [mealType];
+            mealType === 'all' ? ['breakfast', 'lunch', 'dinner'] : [mealType];
           // Apply all removals locally to avoid race conditions with multiple MCP calls
           for (const specificMealType of mealTypesToRemove) {
             await infoLog(
               `🤖 [MEAL-WORKFLOW] Applying local removal: dayIndex=${dayIndex}, mealType=${specificMealType}`,
             );
             // Find and remove the meal from the local plan
-            updatedPlan.days = updatedPlan.days.map((planDay) => {
+            const slotToRemove = mealSlotFromString(specificMealType);
+            updatedPlan.items = updatedPlan.items.map((planDay) => {
               if (
                 planDay.dayIndex === dayIndex &&
-                planDay.mealType === specificMealType
+                planDay.mealType === slotToRemove
               ) {
                 // Remove the meal by setting it to null
-                return new MealPlanEntry({
+                return new MealPlanItem({
+                  id: planDay.id,
+                  mealPlanId: planDay.mealPlanId,
                   dayIndex: planDay.dayIndex,
                   mealType: planDay.mealType,
-                  meal: undefined,
+                  mealSnapshot: undefined,
+                  mealId: undefined,
+                  createdAt: planDay.createdAt,
+                  updatedAt: planDay.updatedAt,
                 });
               }
               return planDay;
@@ -634,15 +640,21 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `🤖 [MEAL-WORKFLOW] Applying feedback from the LLM: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.name} (ID ${newMealId}) - ${reason}`,
           );
-          updatedPlan.days = updatedPlan.days.map((planDay) => {
+          const replacementSlot = mealSlotFromString(mealType);
+          updatedPlan.items = updatedPlan.items.map((planDay) => {
             if (
               planDay.dayIndex === dayIndex &&
-              planDay.mealType === mealType
+              planDay.mealType === replacementSlot
             ) {
-              return new MealPlanEntry({
+              return new MealPlanItem({
+                id: planDay.id,
+                mealPlanId: planDay.mealPlanId,
                 dayIndex: planDay.dayIndex,
                 mealType: planDay.mealType,
-                meal: newMeal,
+                mealSnapshot: new GeneratedMeal(newMeal),
+                mealId: newMeal.id,
+                createdAt: planDay.createdAt,
+                updatedAt: planDay.updatedAt,
               });
             }
             return planDay;
@@ -677,18 +689,19 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       currentStep: MealPlanningStep.COMPLETE,
     };
   }
-  private validatePlan(plan: GeneratedWeeklyMealPlan): string[] {
+  private validatePlan(plan: GeneratedMealPlan): string[] {
     const issues: string[] = [];
     // Check consecutive high-effort meals
     let consecutiveHighEffort = 0;
-    for (const day of plan.days) {
-      if (day.meal && day.meal.effort > 3) {
+    for (const item of plan.items) {
+      const meal = item.mealSnapshot;
+      if (meal && meal.effort > 3) {
         consecutiveHighEffort++;
         if (
           consecutiveHighEffort > VALIDATION_CRITERIA.maxConsecutiveHighEffort
         ) {
           issues.push(
-            `Too many consecutive high-effort meals (day ${day.dayIndex})`,
+            `Too many consecutive high-effort meals (day ${item.dayIndex})`,
           );
         }
       } else {
@@ -696,15 +709,17 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       }
     }
     // Check red meat count
-    const redMeatCount = plan.days.filter((d) => d.meal?.hasRedMeat).length;
+    const redMeatCount = plan.items.filter(
+      (item) => item.mealSnapshot?.hasRedMeat,
+    ).length;
     if (redMeatCount > VALIDATION_CRITERIA.maxRedMeatPerWeek) {
       issues.push(
         `Too many red meat meals: ${redMeatCount} (max ${VALIDATION_CRITERIA.maxRedMeatPerWeek})`,
       );
     }
     // Check for duplicates
-    const mealIds = plan.days
-      .map((d) => d.meal?.id)
+    const mealIds = plan.items
+      .map((item) => item.mealSnapshot?.id)
       .filter((id): id is number => id !== undefined);
     const duplicates = mealIds.filter(
       (id, index) => mealIds.indexOf(id) !== index,
@@ -715,9 +730,9 @@ export class MealPlanningWorkflow implements BaseWorkflow {
     return issues;
   }
   private async optimizePlanWithLLM(
-    plan: GeneratedWeeklyMealPlan,
+    plan: GeneratedMealPlan,
     issues: string[],
-  ): Promise<GeneratedWeeklyMealPlan> {
+  ): Promise<GeneratedMealPlan> {
     await infoLog('MealPlanningWorkflow.optimizePlanWithLLM called');
     // Fetch available meals
     const mealsResp = await this.client.callTool({
@@ -734,11 +749,11 @@ export class MealPlanningWorkflow implements BaseWorkflow {
       )
       .join('\n');
     const dayNames = DAYS_OF_THE_WEEK;
-    const planDescription = plan.days
-      .filter((day) => day.meal)
+    const planDescription = plan.items
+      .filter((item) => item.mealSnapshot)
       .map(
-        (day) =>
-          `${dayNames[day.dayIndex]} ${day.mealType}: ${day.meal!.name} (ID: ${day.meal!.id}, effort: ${day.meal!.effort}, red meat: ${day.meal!.hasRedMeat})`,
+        (item) =>
+          `${dayNames[item.dayIndex]} ${mealSlotToString(item.mealType)}: ${item.mealSnapshot!.name} (ID: ${item.mealSnapshot!.id}, effort: ${item.mealSnapshot!.effort}, red meat: ${item.mealSnapshot!.hasRedMeat})`,
       )
       .join('\n');
     const prompt = getOptimizeMealPlanPrompt(
@@ -752,7 +767,7 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         ? result.content
         : JSON.stringify(result.content);
     // Parse and apply recommendations
-    const optimizedPlan = { ...plan, days: [...plan.days] };
+    const optimizedPlan = MealPlan.fromJson(plan.toJson());
     const parsed: unknown = JSON.parse(
       this.extractJsonFromResponse(llmResponse),
     );
@@ -772,15 +787,21 @@ export class MealPlanningWorkflow implements BaseWorkflow {
           await infoLog(
             `🤖 [MEAL-WORKFLOW] Applying optimization: Replace ${day} ${mealType} (ID ${oldMealId}) with ${newMeal.name} (ID ${newMealId}) - ${reason}`,
           );
-          optimizedPlan.days = optimizedPlan.days.map((planDay) => {
+          const replacementSlot = mealSlotFromString(mealType);
+          optimizedPlan.items = optimizedPlan.items.map((planDay) => {
             if (
               planDay.dayIndex === dayIndex &&
-              planDay.mealType === mealType
+              planDay.mealType === replacementSlot
             ) {
-              return new MealPlanEntry({
+              return new MealPlanItem({
+                id: planDay.id,
+                mealPlanId: planDay.mealPlanId,
                 dayIndex: planDay.dayIndex,
                 mealType: planDay.mealType,
-                meal: newMeal,
+                mealSnapshot: new GeneratedMeal(newMeal),
+                mealId: newMeal.id,
+                createdAt: planDay.createdAt,
+                updatedAt: planDay.updatedAt,
               });
             }
             return planDay;
@@ -788,27 +809,27 @@ export class MealPlanningWorkflow implements BaseWorkflow {
         }
       }
     }
-    return new WeeklyMealPlan(optimizedPlan);
+    return optimizedPlan;
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private formatPlanForPresentation(plan: GeneratedWeeklyMealPlan): string {
+  private formatPlanForPresentation(plan: GeneratedMealPlan): string {
     const dayNames = DAYS_OF_THE_WEEK;
     const lines: string[] = [];
     lines.push('📅 Weekly Meal Plan:');
     lines.push('='.repeat(50));
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-      const dayMeals = plan.days.filter((d) => d.dayIndex === dayIndex);
+      const dayMeals = plan.items.filter((d) => d.dayIndex === dayIndex);
       if (dayMeals.length > 0) {
         lines.push(`\n${dayNames[dayIndex]}:`);
         for (const dayMeal of dayMeals) {
-          if (!dayMeal.meal) {
-            lines.push(`  ${dayMeal.mealType}: (no meal)`);
+          if (!dayMeal.mealSnapshot) {
+            lines.push(`  ${mealSlotToString(dayMeal.mealType)}: (no meal)`);
             continue;
           }
-          const effort = '🔥'.repeat(dayMeal.meal.effort);
-          const redMeat = dayMeal.meal.hasRedMeat ? '🥩' : '';
+          const effort = '🔥'.repeat(dayMeal.mealSnapshot.effort);
+          const redMeat = dayMeal.mealSnapshot.hasRedMeat ? '🥩' : '';
           lines.push(
-            `  ${dayMeal.mealType}: ${dayMeal.meal.name} ${effort} ${redMeat}`,
+            `  ${mealSlotToString(dayMeal.mealType)}: ${dayMeal.mealSnapshot.name} ${effort} ${redMeat}`,
           );
         }
       }

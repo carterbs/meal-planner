@@ -86,10 +86,8 @@ describe('replaceMeal tool', () => {
       const day = 'Wednesday';
       const mealType = 'lunch';
       const newMealId = 456;
-      const mockResponse = { 
-        success: true, 
-        updatedPlan: { days: [], shoppingList: [] },
-        replacedMeal: { id: newMealId, name: 'New Meal' }
+      const mockResponse = {
+        meal: { id: newMealId, name: 'New Meal', effort: 3 }
       };
 
       const { ReplaceMealRequest, ReplaceMealResponse } = await import('@mealplanner/generated');
@@ -125,7 +123,7 @@ describe('replaceMeal tool', () => {
     });
 
     it('should handle different days and meal types', async () => {
-      const mockResponse = { success: true };
+      const mockResponse = { meal: { id: 1, name: 'New Meal' } };
 
       fetchMock.enableMocks();
       fetchMock.mockResponse(JSON.stringify(mockResponse), { status: 200 });
@@ -161,8 +159,7 @@ describe('replaceMeal tool', () => {
 
     it('should return formatted response from handler', async () => {
       const mockResponse = {
-        success: true,
-        updatedPlan: { days: [], shoppingList: [] }
+        meal: { id: 42, name: 'Updated Meal' }
       };
 
       const mockFetchResponse: MockResponse = {

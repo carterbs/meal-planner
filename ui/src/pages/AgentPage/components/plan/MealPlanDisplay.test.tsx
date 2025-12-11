@@ -1,22 +1,31 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import MealPlanDisplay, { getEffortIcon } from './MealPlanDisplay';
-import { WeeklyMealPlan, MealPlanEntry, Meal } from '@mealplanner/generated';
+import {
+  MealPlan,
+  MealPlanItem,
+  Meal,
+  MealSlot,
+} from '@mealplanner/generated';
 
 function makePlan(
-  entries: Array<{ dayIndex: number; mealType: string; mealId?: number }>,
-): WeeklyMealPlan {
-  const days = entries.map(
-    (e) =>
-      new MealPlanEntry({
-        dayIndex: e.dayIndex,
-        mealType: e.mealType,
-        meal: e.mealId
-          ? new Meal({ id: e.mealId, name: `Meal ${e.mealId}`, effort: 1 })
-          : undefined,
-      }),
+  entries: Array<{ dayIndex: number; mealType: MealSlot; mealId?: number }>,
+): MealPlan {
+  const items = entries.map((entry) =>
+    new MealPlanItem({
+      dayIndex: entry.dayIndex,
+      mealType: entry.mealType,
+      mealId: entry.mealId,
+      mealSnapshot: entry.mealId
+        ? new Meal({
+            id: entry.mealId,
+            name: `Meal ${entry.mealId}`,
+            effort: 1,
+          })
+        : undefined,
+    }),
   );
-  return new WeeklyMealPlan({ days });
+  return new MealPlan({ items });
 }
 
 describe('MealPlanDisplay highlights', () => {
@@ -29,8 +38,8 @@ describe('MealPlanDisplay highlights', () => {
 
   it('renders highlight state when provided and visually fades (non-visual assert via data attribute)', () => {
     const plan = makePlan([
-      { dayIndex: 0, mealType: 'breakfast', mealId: 1 },
-      { dayIndex: 0, mealType: 'dinner', mealId: 2 },
+      { dayIndex: 0, mealType: MealSlot.BREAKFAST, mealId: 1 },
+      { dayIndex: 0, mealType: MealSlot.DINNER, mealId: 2 },
     ]);
 
     const highlights = new Set<string>(['0-breakfast']);

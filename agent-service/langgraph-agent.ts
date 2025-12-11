@@ -11,10 +11,6 @@ import { workflowFactories } from './workflows/factories';
 import { WorkflowType } from './shared/types';
 import { CLIHandler } from './io/cliHandler';
 import { formatMealPlan } from './utils/formatMealPlan';
-import type {
-  WeeklyMealPlan as GeneratedWeeklyMealPlan,
-  ShoppingListItem as GeneratedShoppingListItem,
-} from '@mealplanner/generated';
 import type { MealPlanningState } from './shared/types';
 import { spawnSync } from 'child_process';
 import { debugLog } from './logging';
@@ -251,10 +247,7 @@ async function main() {
         if (threadId) {
           const state = await agent.getWorkflowState(threadId);
           if (state.mealPlan) {
-            const { text, html } = formatMealPlan({
-              days: state.mealPlan.days,
-              shoppingList: (state.shoppingList || []) as GeneratedShoppingListItem[],
-            } as GeneratedWeeklyMealPlan);
+            const { text, html } = formatMealPlan(state.mealPlan);
             await io.sendMessage(text, 'System');
             await debugLog(`\nHTML version:\n${html}`);
             // Auto copy HTML table to clipboard as HTML

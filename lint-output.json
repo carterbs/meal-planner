@@ -1,0 +1,1674 @@
+[
+  {
+    "service": "agent-service",
+    "phase": "lint",
+    "status": "success",
+    "duration": "2.84569325s"
+  },
+  {
+    "service": "mcp-service",
+    "phase": "lint",
+    "status": "failure",
+    "failures": [
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/mcp-service/src/index.ts",
+        "line": 35,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      }
+    ],
+    "duration": "3.60179675s"
+  },
+  {
+    "service": "meal-service",
+    "phase": "lint",
+    "status": "success",
+    "duration": "2.533917ms"
+  },
+  {
+    "service": "ui",
+    "phase": "lint",
+    "status": "failure",
+    "failures": [
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 34,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 34,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 35,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 90,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 91,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `Promise\u003cunknown\u003e` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 91,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 92,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 133,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 134,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `Promise\u003cunknown\u003e` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 134,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 135,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 171,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 172,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `Promise\u003cunknown\u003e` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 172,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 173,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 183,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 184,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `Promise\u003cunknown\u003e` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 184,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/agentApi.ts",
+        "line": 185,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 5,
+        "message": "'GoShoppingListItem' is defined but never used. Allowed unused vars must match /^_/u (@typescript-eslint/no-unused-vars)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 5,
+        "message": "'GoShoppingListItem' is defined but never used (unused-imports/no-unused-imports)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 43,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 43,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 44,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 44,
+        "message": "Unsafe member access .mealId on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 45,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 45,
+        "message": "Unsafe member access .stepNumber on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 46,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 46,
+        "message": "Unsafe member access .instruction on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 55,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 55,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 56,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 56,
+        "message": "Unsafe member access .mealId on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 57,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 57,
+        "message": "Unsafe member access .name on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 58,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 58,
+        "message": "Unsafe member access .quantity on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 59,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 59,
+        "message": "Unsafe member access .unit on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 69,
+        "message": "Unsafe member access .lastPlanned on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 78,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 78,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 79,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 79,
+        "message": "Unsafe member access .name on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 80,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 80,
+        "message": "Unsafe member access .effort on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 82,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 82,
+        "message": "Unsafe member access .hasRedMeat on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 83,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 83,
+        "message": "Unsafe member access .url on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 84,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 84,
+        "message": "Unsafe member access .mealType on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 85,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 85,
+        "message": "Unsafe call of a(n) `any` typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 85,
+        "message": "Unsafe member access .ingredients on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 85,
+        "message": "Unsafe member access .map on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 86,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 86,
+        "message": "Unsafe call of a(n) `any` typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 86,
+        "message": "Unsafe member access .steps on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 86,
+        "message": "Unsafe member access .map on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 91,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 91,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 92,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 103,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 103,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 104,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 125,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 125,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 126,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 159,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 159,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 160,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 164,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 178,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 189,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 189,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 190,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 210,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 210,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 211,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 214,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 230,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 244,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 244,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 245,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 248,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 263,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 277,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 277,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 278,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 292,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 306,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 306,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 307,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 324,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 324,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 325,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 367,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 367,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/api/mealsApi.ts",
+        "line": 368,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/hooks/useSession.ts",
+        "line": 11,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/hooks/useSession.ts",
+        "line": 11,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/hooks/useSession.ts",
+        "line": 12,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/hooks/useSession.ts",
+        "line": 76,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/hooks/useSession.ts",
+        "line": 77,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/AgentPage/hooks/useAgentController.ts",
+        "line": 54,
+        "message": "React Hook useCallback has an unnecessary dependency: 'setMealPlan'. Either exclude it or remove the dependency array (react-hooks/exhaustive-deps)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/AgentPage/hooks/useAgentSession.ts",
+        "line": 33,
+        "message": "Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined (@typescript-eslint/no-unnecessary-condition)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/MealManagementPage.tsx",
+        "line": 22,
+        "message": "Unsafe array destructuring of a tuple element with an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/MealManagementPage.tsx",
+        "line": 66,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/LibraryPanel.tsx",
+        "line": 28,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/LibraryPanel.tsx",
+        "line": 28,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/LibraryPanel.tsx",
+        "line": 28,
+        "message": "Unsafe member access .name on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/LibraryPanel.tsx",
+        "line": 28,
+        "message": "Unsafe member access .includes on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/LibraryPanel.tsx",
+        "line": 47,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/LibraryPanel.tsx",
+        "line": 47,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/LibraryPanel.tsx",
+        "line": 80,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/LibraryPanel.tsx",
+        "line": 80,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 52,
+        "message": "Unsafe array destructuring of a tuple element with an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 57,
+        "message": "Unsafe array destructuring of a tuple element with an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 68,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 68,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 70,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 70,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 75,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 75,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 77,
+        "message": "Unsafe spread of an error typed value in an array (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 77,
+        "message": "Unsafe member access .ingredients on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 80,
+        "message": "Unsafe member access .ingredients on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 85,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 85,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 85,
+        "message": "Unsafe member access .ingredients on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 86,
+        "message": "Unsafe member access .id on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 86,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 89,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `SetStateAction\u003cnumber | null\u003e` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 90,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 105,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 115,
+        "message": "Unsafe member access .id on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 117,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 117,
+        "message": "Unsafe member access .id on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 118,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 118,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 119,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 119,
+        "message": "Unsafe member access .name on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 120,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 120,
+        "message": "Unsafe member access .quantity on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 121,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 121,
+        "message": "Unsafe member access .unit on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 125,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `number` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 125,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 127,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `number` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 127,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 128,
+        "message": "Unsafe argument of type `any` assigned to a parameter of type `number` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 128,
+        "message": "Unsafe member access .id on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 154,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 154,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 154,
+        "message": "Unsafe member access .ingredients on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 155,
+        "message": "Unsafe member access .id on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 157,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 157,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 159,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 167,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `number` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 167,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 183,
+        "message": "Unsafe argument of type `Step[]` assigned to a parameter of type `Step[]` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 184,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 184,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 198,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 202,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 203,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 206,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 207,
+        "message": "Unsafe call of a(n) `any` typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 207,
+        "message": "Unsafe call of a(n) `any` typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 207,
+        "message": "Unsafe member access .toDate on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 207,
+        "message": "Unsafe member access .toISOString on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 211,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `number` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 211,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 261,
+        "message": "Unsafe member access .name on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 295,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 295,
+        "message": "Unsafe member access .mealType on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 299,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 299,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 316,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 316,
+        "message": "Unsafe member access .lastPlanned on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 317,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 317,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 317,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 317,
+        "message": "Unsafe member access .lastPlanned on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 319,
+        "message": "Unsafe member access .toISOString on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 320,
+        "message": "Unsafe member access .split on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 320,
+        "message": "Unsafe member access [0] on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 326,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 364,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 364,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 364,
+        "message": "Unsafe member access .mealType on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 364,
+        "message": "Unsafe member access .toUpperCase on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 365,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 365,
+        "message": "Unsafe member access .mealType on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 380,
+        "message": "Unsafe member access .effort on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 386,
+        "message": "Unsafe member access .hasRedMeat on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 389,
+        "message": "Unsafe member access .hasRedMeat on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 399,
+        "message": "Unsafe member access .hasRedMeat on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 403,
+        "message": "Unsafe member access .url on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 407,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 407,
+        "message": "Unsafe member access .url on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 442,
+        "message": "Unsafe member access .ingredients on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 452,
+        "message": "Unsafe call of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 452,
+        "message": "Unsafe member access .ingredients on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 454,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 454,
+        "message": "Unsafe member access .id on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 481,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 481,
+        "message": "Unsafe member access .name on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 493,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 493,
+        "message": "Unsafe member access .quantity on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 507,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 507,
+        "message": "Unsafe member access .unit on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 542,
+        "message": "Unsafe member access .quantity on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 542,
+        "message": "Unsafe member access .quantity on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 542,
+        "message": "Unsafe member access .unit on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 542,
+        "message": "Unsafe member access .unit on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 542,
+        "message": "Unsafe member access .name on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 557,
+        "message": "Unsafe argument of type `any` assigned to a parameter of type `number` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 557,
+        "message": "Unsafe member access .id on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 581,
+        "message": "Unsafe member access .steps on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 587,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 587,
+        "message": "Unsafe member access .steps on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 589,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 601,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `number` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 601,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 601,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `Step[]` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/MealEditView.tsx",
+        "line": 601,
+        "message": "Unsafe member access .steps on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/RecipeEditorPanel.tsx",
+        "line": 20,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 91,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 91,
+        "message": "Unsafe member access .instruction on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 93,
+        "message": "Unsafe spread of an `any` value in an array (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 94,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 95,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 95,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 96,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 96,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 97,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 97,
+        "message": "Unsafe member access .mealId on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 98,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 98,
+        "message": "Unsafe member access .stepNumber on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 101,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 115,
+        "message": "Unsafe member access .instruction on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 162,
+        "message": "Unsafe member access .instruction on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 251,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 252,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 253,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 253,
+        "message": "Unsafe member access .id on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 254,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 254,
+        "message": "Unsafe member access .mealId on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 270,
+        "message": "Unsafe spread of an `any` value in an array (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 271,
+        "message": "Unsafe construction of a(n) `error` type typed value (@typescript-eslint/no-unsafe-call)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 284,
+        "message": "Unsafe spread of an `any` value in an array (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 285,
+        "message": "Unsafe member access .instruction on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 290,
+        "message": "Unsafe spread of an `any` value in an array (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 293,
+        "message": "Unsafe member access .stepNumber on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 309,
+        "message": "Unsafe spread of an `any` value in an array (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 313,
+        "message": "Unsafe member access .stepNumber on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 330,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 330,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 332,
+        "message": "Unsafe member access .instruction on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/components/StepsEditor.tsx",
+        "line": 426,
+        "message": "Unsafe assignment of an error typed value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 34,
+        "message": "Unsafe array destructuring of a tuple element with an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 87,
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `number` (@typescript-eslint/no-unsafe-argument)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 87,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 88,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 88,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 89,
+        "message": "Unsafe member access .id on an `any` value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 89,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 97,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 97,
+        "message": "Unsafe member access .id on an `error` typed value (@typescript-eslint/no-unsafe-member-access)",
+        "type": "error"
+      },
+      {
+        "file": "/Users/bradcarter/Documents/Dev/meal-planner/ui/src/pages/MealManagementPage/hooks/useMealManagementController.ts",
+        "line": 112,
+        "message": "Unsafe assignment of an `any` value (@typescript-eslint/no-unsafe-assignment)",
+        "type": "error"
+      }
+    ],
+    "duration": "7.844032708s"
+  }
+]
